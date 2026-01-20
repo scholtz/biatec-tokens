@@ -10,6 +10,7 @@ Thank you for your interest in contributing to Biatec Tokens! This document prov
 - [Coding Standards](#coding-standards)
 - [Commit Guidelines](#commit-guidelines)
 - [Pull Request Process](#pull-request-process)
+- [Branch Protection and CI Requirements](#branch-protection-and-ci-requirements)
 - [Testing](#testing)
 - [Documentation](#documentation)
 - [Branch Protection Rules](#branch-protection-rules)
@@ -355,6 +356,128 @@ docs(contributing): add PR guidelines
 - Your branch can be deleted
 - Celebrate! 🎉
 
+## Branch Protection and CI Requirements
+
+### Branch Protection Rules
+
+The `main` branch is protected with the following requirements to ensure code quality and stability:
+
+#### Required Status Checks
+
+All pull requests must pass the following automated checks before merging:
+
+1. **Test Suite** (`test` workflow)
+   - All tests must pass (currently 225+ tests)
+   - Must maintain minimum code coverage thresholds:
+     - **80%** line coverage (currently: 87.09%)
+     - **70%** branch coverage (currently: 82.03%)
+     - **70%** function coverage (currently: 91.74%)
+   - TypeScript compilation must succeed with no errors
+
+2. **Build Verification**
+   - Production build must complete successfully
+   - No build warnings or errors
+   - All assets must be generated correctly
+
+#### Required Reviews
+
+- **Minimum 1 approval** from project maintainers required before merge
+- Reviewers should verify:
+  - Code quality and adherence to project standards
+  - Test coverage for new features
+  - Documentation updates (if applicable)
+  - No security vulnerabilities introduced
+
+#### Merge Requirements
+
+Before your PR can be merged, you must ensure:
+
+- ✅ All CI checks pass (tests + build)
+- ✅ Code coverage meets thresholds (80%/70%)
+- ✅ At least 1 maintainer approval
+- ✅ No merge conflicts with main branch
+- ✅ All review comments addressed
+- ✅ Commits follow conventional commit format
+
+### CI/CD Pipeline
+
+The project uses GitHub Actions for continuous integration and deployment:
+
+#### Automated Testing
+
+Every push and pull request triggers:
+
+```yaml
+# .github/workflows/test.yml
+- Install dependencies
+- Run unit tests with coverage
+- Verify coverage thresholds
+- Build application
+```
+
+**Coverage Thresholds** (enforced in CI):
+```javascript
+// vitest.config.ts
+thresholds: {
+  statements: 80,  // 80% minimum
+  branches: 70,    // 70% minimum
+  functions: 70,   // 70% minimum
+  lines: 80,       // 80% minimum
+}
+```
+
+If coverage drops below these thresholds, the CI build will **fail** and prevent merging.
+
+#### Automated Deployment
+
+On successful merge to `main`:
+
+```yaml
+# .github/workflows/build-fe.yml
+- Run tests with coverage
+- Build production bundle
+- Deploy to staging server (if on main branch)
+```
+
+### Dependabot Security Updates
+
+The project uses Dependabot for automated dependency updates:
+
+- **Weekly scans** on Mondays at 9:00 AM UTC
+- Automatically creates PRs for:
+  - Security patches
+  - Minor version updates
+  - Dependency updates
+- Major version updates require manual review
+- PRs are labeled with `dependencies` and `automated`
+
+Configuration: `.github/dependabot.yml`
+
+### Setting Up Branch Protection (Maintainers Only)
+
+Repository maintainers can configure branch protection via:
+
+**GitHub UI:**
+1. Go to repository **Settings** → **Branches**
+2. Add rule for `main` branch
+3. Enable:
+   - ✅ Require a pull request before merging
+   - ✅ Require approvals (minimum: 1)
+   - ✅ Require status checks to pass before merging
+     - Add `test` workflow as required
+   - ✅ Require branches to be up to date before merging
+   - ✅ Do not allow bypassing the above settings
+
+**Required Status Checks:**
+- `test` (from test.yml workflow)
+- All other relevant CI jobs
+
+This ensures:
+- No direct pushes to main
+- All changes reviewed by at least one maintainer
+- All tests pass before merge
+- Coverage thresholds maintained
+
 ## Testing
 
 ### Test Framework
@@ -608,7 +731,7 @@ The project has two main CI workflows:
   2. Setup Node.js 18
   3. Install dependencies
   4. Run tests with coverage (`npm run test:coverage`)
-  5. Check coverage thresholds (min 70%)
+  5. Check coverage thresholds (min 80% lines, 70% branches)
   6. Run build to verify no TypeScript errors
 
 **2. Build and Deploy Workflow** (`.github/workflows/build-fe.yml`)

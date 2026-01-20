@@ -53,13 +53,12 @@ TDD_COMMENT_HEADER="Product Owner Review"
 
 ### 3) **Primary Flow**
 
-Follow the sequence **per repo** with this priority:
+Follow the sequence **per repo** with this priority. Output information for each step.
 
 1.  **Open Pull Requests (review first)**
 2.  **Approvals (if PR pending review)**
 3.  **Merges (if fully green)**
 4.  **Create a next-step Issue (if no open PR and no active issue)**
-5.  **Create/update `po-instructions.md` via PR (only when allowed by the single-active-item rule)**
 
 Process **Frontend first**, then **Backend**. Stop creating new items if doing so would violate the single-active-item rule.
 
@@ -136,9 +135,12 @@ gh pr comment "$PR\_NUMBER" -R "$repo" -b "$COMMENT\_BODY"
 
 ### 5) **Handle active issue if exists, then create next-step issue if no active issue**
 
-*   If an active issue exists, check its status.
+Next step issue is the product owner command to issue assignees to progress the project further towards the main project vision.
+
+*   If an active issue or PR exists in the repo, do not create new issue, but make sure to progress the issue or PR to its close.
 *   If the issue is closed, unassign it from **copilot-swe-agent**.
-*   Only create a new issue if no active issue exists after handling.
+*   Only create a new issue if no active issue or PR exists in the repo after handling.
+*   Output information of the current issues and reason why new issue has to be created.
 
 **Check and handle active issue:**
 
