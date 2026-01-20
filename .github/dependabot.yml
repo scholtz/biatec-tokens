@@ -1,0 +1,72 @@
+# Dependabot configuration for automated dependency updates and security patches
+# See: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Enable version updates for npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    # Group dependencies for cleaner PRs
+    groups:
+      # Group production dependencies together
+      production-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@types/*"
+          - "@vitest/*"
+          - "@vue/*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Group dev dependencies together
+      development-dependencies:
+        patterns:
+          - "@types/*"
+          - "@vitest/*"
+          - "@vue/*"
+        update-types:
+          - "minor"
+          - "patch"
+    # Limit number of open PRs
+    open-pull-requests-limit: 5
+    # Add labels for easy filtering
+    labels:
+      - "dependencies"
+      - "automated"
+    # Automatically rebase PRs when outdated
+    rebase-strategy: "auto"
+    # Set commit message prefix
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    # Review PRs before merging
+    reviewers:
+      - "scholtz"
+    # Ignore specific dependencies that need manual review
+    ignore:
+      # Ignore major version updates (require manual review)
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Enable security updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "ci"
+      - "automated"
+    commit-message:
+      prefix: "ci(actions)"
+    reviewers:
+      - "scholtz"
