@@ -46,6 +46,7 @@ updates:
       prefix: "chore(deps)"
       include: "scope"
     # Review PRs before merging
+    # Note: Update reviewer username when maintainers change
     reviewers:
       - "scholtz"
     # Ignore specific dependencies that need manual review
@@ -68,5 +69,6 @@ updates:
       - "automated"
     commit-message:
       prefix: "ci(actions)"
+    # Note: Update reviewer username when maintainers change
     reviewers:
       - "scholtz"

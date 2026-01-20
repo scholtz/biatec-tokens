@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useSubscriptionStore } from './subscription';
 
@@ -22,10 +22,25 @@ vi.mock('../stripe-config', () => ({
 }));
 
 describe('Subscription Store', () => {
+  let originalLocation: any;
+
   beforeEach(() => {
     // Create a new pinia instance for each test
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    
+    // Mock window.location.href for checkout tests
+    originalLocation = window.location.href;
+    delete (window as any).location;
+    window.location = { href: originalLocation } as any;
+  });
+
+  afterEach(() => {
+    // Restore original location
+    if (originalLocation) {
+      delete (window as any).location;
+      window.location = { href: originalLocation } as any;
+    }
   });
 
   it('should initialize with null subscription', () => {
@@ -135,17 +150,12 @@ describe('Subscription Store', () => {
     const store = useSubscriptionStore();
     const mockPriceId = 'price_test_123';
     
-    // Mock window.location.href
-    const originalLocation = window.location.href;
-    delete (window as any).location;
-    window.location = { href: originalLocation } as any;
-    
     const promise = store.createCheckoutSession(mockPriceId);
     
     // Check loading is true during operation
     expect(store.loading).toBe(true);
     
-    // Wait for promise to complete with timeout to prevent hanging
+    // Wait for promise with timeout to prevent hanging
     await Promise.race([
       promise,
       new Promise(resolve => setTimeout(() => resolve('timeout'), 2000))
@@ -160,14 +170,9 @@ describe('Subscription Store', () => {
     const store = useSubscriptionStore();
     const mockPriceId = 'price_test_456';
     
-    // Mock window.location.href
-    const originalLocation = window.location.href;
-    delete (window as any).location;
-    window.location = { href: originalLocation } as any;
-    
     const promise = store.createCheckoutSession(mockPriceId, 'payment');
     
-    // Wait for promise to complete with timeout
+    // Wait for promise with timeout to prevent hanging
     await Promise.race([
       promise,
       new Promise(resolve => setTimeout(() => resolve('timeout'), 2000))
