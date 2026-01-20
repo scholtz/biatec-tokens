@@ -97,6 +97,194 @@ npm run dev
 
 The application will be available at `http://localhost:5173`
 
+## 🔌 Backend API Integration
+
+This frontend integrates with the [BiatecTokensApi](https://github.com/scholtz/BiatecTokensApi) backend for token deployment and management. The integration is implemented following Test-Driven Development (TDD) practices.
+
+### Backend Configuration
+
+Add the backend API URL to your `.env` file:
+
+```env
+# Backend API Configuration
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+For production environments, replace with your production API URL:
+
+```env
+VITE_API_BASE_URL=https://api.biatec-tokens.com/api
+```
+
+### API Client Usage
+
+The application provides type-safe API clients for interacting with the backend:
+
+#### 1. API Client (Basic HTTP Operations)
+
+```typescript
+import { BiatecTokensApiClient } from '@/services/BiatecTokensApiClient';
+
+// Create a client instance
+const apiClient = new BiatecTokensApiClient();
+
+// Or use the default instance
+import { apiClient } from '@/services/BiatecTokensApiClient';
+
+// Check API health
+const health = await apiClient.healthCheck();
+console.log(health); // { status: 'healthy', timestamp: '...' }
+
+// Make custom API calls
+const response = await apiClient.get('/tokens/list');
+const newToken = await apiClient.post('/tokens/deploy', tokenData);
+```
+
+#### 2. Token Deployment Service (High-Level Operations)
+
+```typescript
+import { tokenDeploymentService } from '@/services/TokenDeploymentService';
+import { TokenStandard } from '@/types/api';
+
+// Deploy an ERC20 token
+const erc20Request = {
+  standard: TokenStandard.ERC20,
+  name: 'My Token',
+  symbol: 'MTK',
+  decimals: 18,
+  totalSupply: '1000000',
+  walletAddress: '0x1234567890123456789012345678901234567890',
+};
+
+const result = await tokenDeploymentService.deployToken(erc20Request);
+console.log(result.transactionId); // txn_123456
+console.log(result.tokenId); // token_789
+
+// Deploy an ARC3 NFT
+const arc3Request = {
+  standard: TokenStandard.ARC3,
+  name: 'My NFT Collection',
+  unitName: 'MNFT',
+  total: 1,
+  decimals: 0,
+  url: 'ipfs://QmYourMetadataHash',
+  walletAddress: 'YOUR_ALGORAND_ADDRESS_HERE',
+  metadata: {
+    name: 'My NFT',
+    description: 'A unique digital collectible',
+    image: 'ipfs://QmYourImageHash',
+  },
+};
+
+const nftResult = await tokenDeploymentService.deployToken(arc3Request);
+
+// Check deployment status
+const status = await tokenDeploymentService.checkDeploymentStatus(
+  result.transactionId
+);
+
+// List all deployed tokens for a wallet
+const { tokens } = await tokenDeploymentService.listDeployedTokens(
+  '0x1234567890123456789012345678901234567890'
+);
+```
+
+### API Type Definitions
+
+All API types are fully typed and validated:
+
+```typescript
+import {
+  TokenStandard,
+  ERC20DeploymentRequest,
+  ARC3DeploymentRequest,
+  ARC200DeploymentRequest,
+  ARC1400DeploymentRequest,
+  TokenDeploymentResponse,
+  validateTokenDeploymentRequest,
+} from '@/types/api';
+
+// Validate request before sending
+const request: ERC20DeploymentRequest = {
+  standard: TokenStandard.ERC20,
+  name: 'Test Token',
+  symbol: 'TST',
+  decimals: 18,
+  totalSupply: '1000000',
+  walletAddress: '0x1234567890123456789012345678901234567890',
+};
+
+const validation = validateTokenDeploymentRequest(request);
+if (!validation.valid) {
+  console.error('Validation errors:', validation.errors);
+} else {
+  // Proceed with deployment
+  const result = await tokenDeploymentService.deployToken(request);
+}
+```
+
+### Supported Token Standards
+
+The backend integration supports the following token standards:
+
+| Standard | Type | Description |
+|----------|------|-------------|
+| **ERC20** | Fungible | Standard Ethereum fungible tokens |
+| **ARC3** | NFT/Fungible | Algorand Standard Assets with metadata (NFTs or fractional NFTs) |
+| **ARC200** | Fungible | Smart contract tokens compatible with ERC20 |
+| **ARC1400** | Security Token | Security tokens with partition support |
+
+### Error Handling
+
+The API integration includes comprehensive error handling:
+
+```typescript
+try {
+  const result = await tokenDeploymentService.deployToken(request);
+  
+  if (result.success) {
+    console.log('Token deployed successfully!', result.tokenId);
+  } else {
+    console.error('Deployment failed:', result.error);
+    console.error('Error code:', result.errorCode);
+  }
+} catch (error) {
+  if (error.response) {
+    // API returned an error response
+    console.error('API error:', error.response.status);
+    console.error('Error details:', error.response.data);
+  } else if (error.code === 'ECONNREFUSED') {
+    // Backend is not reachable
+    console.error('Cannot connect to backend API');
+  } else {
+    // Other error
+    console.error('Unexpected error:', error.message);
+  }
+}
+```
+
+### Testing
+
+The backend integration is fully tested with 91+ passing tests:
+
+```bash
+# Run all tests
+npm test
+
+# Run specific test suites
+npm test -- src/services/__tests__/BiatecTokensApiClient.test.ts
+npm test -- src/services/__tests__/TokenDeploymentService.test.ts
+npm test -- src/types/__tests__/api.test.ts
+
+# Run tests in watch mode
+npm run test:watch
+
+# Generate coverage report
+npm run test:coverage
+```
+
+For more information on writing tests, see [CONTRIBUTING.md](CONTRIBUTING.md#testing).
+
 ## 🏗️ Project Structure
 
 ```
@@ -105,6 +293,13 @@ biatec-tokens/
 │   ├── components/          # Vue components
 │   │   ├── ui/             # Reusable UI components (Button, Modal, Card, etc.)
 │   │   └── layout/         # Layout components (Navbar, Sidebar)
+│   ├── services/           # Backend API integration services
+│   │   ├── BiatecTokensApiClient.ts      # HTTP client for backend API
+│   │   ├── TokenDeploymentService.ts     # Token deployment service
+│   │   └── __tests__/      # Service tests (16 API client + 15 deployment tests)
+│   ├── types/              # TypeScript type definitions
+│   │   ├── api.ts          # Backend API types and validation
+│   │   └── __tests__/      # Type tests (18 tests)
 │   ├── stores/             # Pinia state management stores
 │   │   ├── auth.ts         # Authentication state
 │   │   ├── tokens.ts       # Token management state
@@ -119,6 +314,8 @@ biatec-tokens/
 │   │   ├── TokenDashboard.vue  # Token management dashboard
 │   │   ├── Settings.vue    # User settings
 │   │   └── subscription/   # Subscription-related views
+│   ├── utils/              # Utility functions
+│   ├── test/               # Test setup files
 │   ├── assets/             # Static assets (images, styles)
 │   ├── main.ts             # Application entry point
 │   ├── App.vue             # Root component
@@ -129,6 +326,7 @@ biatec-tokens/
 ├── .github/                # GitHub Actions workflows
 ├── package.json            # Project dependencies
 ├── vite.config.ts          # Vite configuration
+├── vitest.config.ts        # Vitest test configuration
 ├── tailwind.config.js      # Tailwind CSS configuration
 └── tsconfig.json           # TypeScript configuration
 ```
@@ -140,6 +338,10 @@ biatec-tokens/
 - **`npm run dev`**: Start development server with hot-reload
 - **`npm run build`**: Build for production (includes TypeScript type checking)
 - **`npm run preview`**: Preview production build locally
+- **`npm test`**: Run all tests once
+- **`npm run test:watch`**: Run tests in watch mode
+- **`npm run test:ui`**: Run tests with interactive UI
+- **`npm run test:coverage`**: Generate test coverage report
 
 ### Development Workflow
 
@@ -150,9 +352,14 @@ biatec-tokens/
 
 2. **Make your changes**: The app will hot-reload automatically
 
-3. **Type checking**: TypeScript errors will be shown in your IDE and during build
+3. **Run tests**: Ensure your changes don't break existing functionality
+   ```bash
+   npm test
+   ```
 
-4. **Build for production**: 
+4. **Type checking**: TypeScript errors will be shown in your IDE and during build
+
+5. **Build for production**: 
    ```bash
    npm run build
    ```
@@ -162,9 +369,12 @@ biatec-tokens/
 - **Frontend Framework**: Vue 3 (Composition API with `<script setup>`)
 - **Language**: TypeScript (strict mode)
 - **Build Tool**: Vite
+- **Testing**: Vitest with Vue Test Utils
 - **Styling**: Tailwind CSS with custom configuration
 - **State Management**: Pinia
 - **Router**: Vue Router
+- **HTTP Client**: Axios
+- **Backend Integration**: BiatecTokensApi with type-safe API client
 - **Blockchain SDK**: Algorand SDK (algosdk)
 - **Wallet Integration**: @txnlab/use-wallet-vue
 
@@ -266,11 +476,14 @@ kubectl apply -f k8s/
 
 | Variable | Description | Required | Default |
 |----------|-------------|----------|---------|
+| `VITE_API_BASE_URL` | Backend API base URL | No | `http://localhost:5000/api` |
 | `VITE_ALGOD_URL` | Algorand node API URL | No | Configured per network in main.ts |
 | `VITE_ALGOD_TOKEN` | Algorand node API token | No | Empty for public nodes |
 | `VITE_INDEXER_URL` | Algorand indexer URL | No | - |
 | `VITE_INDEXER_TOKEN` | Algorand indexer token | No | - |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe public key (for subscriptions) | No | - |
+
+> **Note**: `VITE_API_BASE_URL` connects the frontend to the BiatecTokensApi backend. See [Backend API Integration](#-backend-api-integration) section for more details.
 
 ### Wallet Configuration
 
