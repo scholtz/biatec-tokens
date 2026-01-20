@@ -156,7 +156,7 @@ Stabilize the delivery pipeline and ensure TDD discipline to accelerate safe mer
 @copilot
 EOF
 )
-gh issue create -R "$repo" --title "$NEXT_TITLE" --body "$NEXT_BODY" --assignee "$ASSIGNEE_HANDLE"
+gh issue create -R "$repo" --title "$NEXT_TITLE" --body "$NEXT_BODY" --assignee Copilot
 ```
 
 *   **Output** the newly created issue URL.
@@ -201,7 +201,7 @@ At most **one** active PR (non-draft) or **one** active issue (assigned to @copi
 - Comment on PR: `gh pr comment <PR_NUMBER> -R <REPO> -b "<text>"`
 - Approve PR: `gh pr review <PR_NUMBER> -R <REPO> --approve -b "<reason>"`
 - Merge PR: `gh pr merge <PR_NUMBER> -R <REPO> --squash --delete-branch`
-- Create issue: `gh issue create -R <REPO> --title "<title>" --body "<body>" --assignee @copilot`
+- Create issue: `gh issue create -R <REPO> --title "<title>" --body "<body>" --assignee Copilot`
 - Check Actions: `gh run list -R <REPO>`
 
 _Last updated: ${DATE}_
