@@ -12,6 +12,7 @@ Thank you for your interest in contributing to Biatec Tokens! This document prov
 - [Pull Request Process](#pull-request-process)
 - [Testing](#testing)
 - [Documentation](#documentation)
+- [Branch Protection Rules](#branch-protection-rules)
 - [Getting Help](#getting-help)
 
 ## Code of Conduct
@@ -621,12 +622,12 @@ The project has two main CI workflows:
 #### Coverage Requirements
 
 The CI enforces minimum coverage thresholds:
-- **Statements**: 70%
+- **Statements**: 80%
 - **Branches**: 70%
 - **Functions**: 70%
-- **Lines**: 70%
+- **Lines**: 80%
 
-Current coverage: **84.65% statements** (exceeding requirements) ✅
+Current coverage: **87.66% statements** (exceeding requirements) ✅
 
 If your changes cause coverage to drop below these thresholds, the CI will fail. To check coverage locally:
 
@@ -644,9 +645,10 @@ The coverage report will show:
 Before your PR can be merged, it must:
 
 1. ✅ **All tests pass** - No failing test cases
-2. ✅ **Coverage thresholds met** - Minimum 70% in all categories
+2. ✅ **Coverage thresholds met** - Minimum 80% lines, 70% branches
 3. ✅ **Build succeeds** - No TypeScript errors
 4. ✅ **Code review approved** - At least one maintainer approval
+5. ✅ **Status checks pass** - All CI workflows must be green
 
 To ensure CI success before opening a PR:
 
@@ -782,6 +784,64 @@ Update documentation when:
 - **Examples**: Include code examples
 - **Up-to-date**: Keep in sync with code
 - **Beginner-Friendly**: Don't assume expert knowledge
+
+## Branch Protection Rules
+
+The `main` branch is protected with the following rules to ensure code quality and security:
+
+### Required Status Checks
+
+All of the following checks must pass before a PR can be merged:
+
+1. **Run Tests** - All tests must pass
+   - Workflow: `.github/workflows/test.yml`
+   - Runs on every PR and push to main
+   - Checks:
+     - Unit tests pass
+     - Coverage meets minimum thresholds (80% lines, 70% branches)
+     - Build succeeds without errors
+
+2. **Build and Deploy FE** - Application builds successfully
+   - Workflow: `.github/workflows/build-fe.yml`
+   - Runs tests and builds the application
+   - Ensures no TypeScript errors
+
+### Required Reviews
+
+- **Minimum 1 approval** from a maintainer or contributor with write access
+- Code reviews help catch bugs, ensure quality, and share knowledge
+- Address all review comments before requesting re-review
+
+### Enforcing Branch Protection
+
+Repository administrators should configure these settings in GitHub:
+
+1. Go to **Settings** → **Branches** → **Branch protection rules**
+2. Add rule for `main` branch:
+   - ✅ Require a pull request before merging
+   - ✅ Require approvals (minimum: 1)
+   - ✅ Dismiss stale pull request approvals when new commits are pushed
+   - ✅ Require status checks to pass before merging
+     - ✅ Require branches to be up to date before merging
+     - Select: `test` (from test.yml workflow)
+     - Select: `test` (from build-fe.yml workflow)
+   - ✅ Require conversation resolution before merging
+   - ✅ Do not allow bypassing the above settings
+
+### Dependabot Security Updates
+
+Dependabot is configured to automatically:
+- Check for security vulnerabilities in dependencies
+- Create PRs to update vulnerable packages
+- Check for updates weekly (npm packages and GitHub Actions)
+
+Configuration is in `.github/dependabot.yml`
+
+When Dependabot creates a PR:
+- Review the changelog and release notes
+- Ensure tests pass
+- Test locally if the update affects critical functionality
+- Merge promptly if no issues are found
 
 ## Getting Help
 
