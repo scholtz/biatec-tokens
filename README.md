@@ -270,23 +270,43 @@ try {
 
 ### Testing
 
-The backend integration is fully tested with 91+ passing tests:
+The backend integration is fully tested with 167+ passing tests and 84%+ code coverage:
 
 ```bash
 # Run all tests
 npm test
-
-# Run specific test suites
-npm test -- src/services/__tests__/BiatecTokensApiClient.test.ts
-npm test -- src/services/__tests__/TokenDeploymentService.test.ts
-npm test -- src/types/__tests__/api.test.ts
 
 # Run tests in watch mode
 npm run test:watch
 
 # Generate coverage report
 npm run test:coverage
+
+# Run tests with interactive UI
+npm run test:ui
 ```
+
+#### Test Coverage
+
+The project maintains high test coverage standards:
+- **Overall Coverage**: 84.65% statements
+- **Components**: 100% coverage (UI components fully tested)
+- **Services**: 56.62% coverage
+- **Stores**: 93.51% coverage
+- **Utils**: 100% coverage
+
+Coverage thresholds enforced by CI:
+- Minimum 70% for statements, branches, functions, and lines
+- Pull requests must maintain or improve coverage
+
+#### Test Structure
+
+Tests are organized by category:
+- **Component Tests**: `src/components/**/*.test.ts` (86 tests)
+- **Service Tests**: `src/services/__tests__/*.test.ts` (31 tests)
+- **Store Tests**: `src/stores/*.test.ts` (19 tests)
+- **Type Tests**: `src/types/__tests__/*.test.ts` (18 tests)
+- **Utility Tests**: `src/utils/*.test.ts` (9 tests)
 
 For more information on writing tests, see [CONTRIBUTING.md](CONTRIBUTING.md#testing).
 
@@ -475,6 +495,41 @@ Kubernetes manifests are available in the `k8s/` directory:
 kubectl apply -f k8s/
 ```
 
+## 🔄 CI/CD
+
+The project uses GitHub Actions for continuous integration and deployment:
+
+### Test Workflow
+
+Runs on all pushes and pull requests:
+1. **Install dependencies**: `npm ci`
+2. **Run tests with coverage**: `npm run test:coverage`
+3. **Verify coverage thresholds**: Minimum 70% required
+4. **Build application**: `npm run build`
+
+All checks must pass before merging. Coverage reports ensure code quality is maintained.
+
+### Build and Deploy Workflow
+
+Runs on all changes, deploys on main branch:
+1. **Test Job**: Run all tests and build
+2. **Deploy Job** (main branch only): Deploy to staging server via SSH
+
+### Coverage Requirements
+
+Pull requests must meet these minimum thresholds:
+- ✅ 70% statement coverage
+- ✅ 70% branch coverage
+- ✅ 70% function coverage
+- ✅ 70% line coverage
+
+Current coverage: **84.65%** (exceeding requirements)
+
+To verify your changes will pass CI:
+```bash
+npm run test:coverage && npm run build
+```
+
 ## 🔧 Configuration
 
 ### Environment Variables
@@ -516,10 +571,25 @@ We welcome contributions to Biatec Tokens! Here's how you can help:
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
 3. Make your changes
-4. Run type checking: `npm run build`
-5. Commit your changes: `git commit -m 'Add amazing feature'`
-6. Push to the branch: `git push origin feature/amazing-feature`
-7. Open a Pull Request
+4. **Run tests**: `npm run test:coverage` (must pass with 70%+ coverage)
+5. **Run type checking**: `npm run build` (must succeed)
+6. Commit your changes: `git commit -m 'Add amazing feature'`
+7. Push to the branch: `git push origin feature/amazing-feature`
+8. Open a Pull Request
+
+### Before Submitting a PR
+
+Ensure all CI checks will pass:
+
+```bash
+# 1. Run tests with coverage (must meet 70% thresholds)
+npm run test:coverage
+
+# 2. Verify build succeeds (no TypeScript errors)
+npm run build
+
+# If both pass, you're ready to submit! ✅
+```
 
 ### Code Style
 

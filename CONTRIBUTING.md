@@ -593,8 +593,110 @@ global.window = {
 
 Tests run automatically on every push and pull request via GitHub Actions:
 - All tests must pass before merging
-- Coverage reports are generated
+- Coverage reports are generated and must meet minimum thresholds
 - Failed tests block deployment
+
+#### CI Workflows
+
+The project has two main CI workflows:
+
+**1. Test Workflow** (`.github/workflows/test.yml`)
+- Runs on every push to main and all pull requests
+- Steps:
+  1. Checkout code
+  2. Setup Node.js 18
+  3. Install dependencies
+  4. Run tests with coverage (`npm run test:coverage`)
+  5. Check coverage thresholds (min 70%)
+  6. Run build to verify no TypeScript errors
+
+**2. Build and Deploy Workflow** (`.github/workflows/build-fe.yml`)
+- Runs on push to main and pull requests
+- Test Job:
+  1. Run all tests with coverage
+  2. Build application
+- Deploy Job (main branch only):
+  1. Deploy to staging server via SSH
+
+#### Coverage Requirements
+
+The CI enforces minimum coverage thresholds:
+- **Statements**: 70%
+- **Branches**: 70%
+- **Functions**: 70%
+- **Lines**: 70%
+
+Current coverage: **84.65% statements** (exceeding requirements) ✅
+
+If your changes cause coverage to drop below these thresholds, the CI will fail. To check coverage locally:
+
+```bash
+npm run test:coverage
+```
+
+The coverage report will show:
+- Text summary in the terminal
+- Detailed HTML report in `coverage/` directory (open `coverage/index.html`)
+- JSON report for programmatic access
+
+#### CI Expectations for Pull Requests
+
+Before your PR can be merged, it must:
+
+1. ✅ **All tests pass** - No failing test cases
+2. ✅ **Coverage thresholds met** - Minimum 70% in all categories
+3. ✅ **Build succeeds** - No TypeScript errors
+4. ✅ **Code review approved** - At least one maintainer approval
+
+To ensure CI success before opening a PR:
+
+```bash
+# Run all tests
+npm test
+
+# Check coverage
+npm run test:coverage
+
+# Verify build works
+npm run build
+
+# If all pass locally, CI should pass too!
+```
+
+#### Handling CI Failures
+
+**Test Failures:**
+```bash
+# Run tests in watch mode to debug
+npm run test:watch
+
+# Run specific test file
+npm test -- path/to/test.test.ts
+```
+
+**Coverage Failures:**
+```bash
+# Generate coverage report
+npm run test:coverage
+
+# Open HTML report to see uncovered lines
+open coverage/index.html  # macOS
+xdg-open coverage/index.html  # Linux
+start coverage/index.html  # Windows
+
+# Add tests for uncovered code
+```
+
+**Build Failures:**
+```bash
+# Run build locally
+npm run build
+
+# Check TypeScript errors
+npx vue-tsc -b
+
+# Fix type errors and try again
+```
 
 ### Manual Testing
 
@@ -609,16 +711,40 @@ In addition to automated tests, manual testing is important for:
 
 ### Testing Checklist
 
-Before submitting a PR, verify:
+Before submitting a PR, verify all of the following to ensure CI passes:
 
+#### Required Checks (CI will verify these)
 - [ ] All existing tests pass (`npm test`)
+- [ ] Test coverage meets minimum requirements:
+  - [ ] 70%+ statements coverage
+  - [ ] 70%+ branches coverage
+  - [ ] 70%+ functions coverage
+  - [ ] 70%+ lines coverage
+- [ ] Build completes without errors (`npm run build`)
+- [ ] No TypeScript errors
+
+#### Best Practices
 - [ ] New features have corresponding tests
-- [ ] Test coverage meets minimum requirements (70%+ for new code)
 - [ ] All tests are independent and can run in any order
 - [ ] No console errors or warnings in tests
 - [ ] Mock external dependencies (API calls, localStorage, etc.)
 - [ ] Tests follow naming conventions ("should do something")
 - [ ] Edge cases and error conditions are tested
+- [ ] Tests use Arrange-Act-Assert pattern
+
+#### Quick Pre-PR Verification
+
+Run these commands to verify everything will pass CI:
+
+```bash
+# 1. Run all tests with coverage
+npm run test:coverage
+
+# 2. Verify build works
+npm run build
+
+# If both succeed, CI should pass! ✅
+```
 
 ### UI/Manual Testing Checklist
 
