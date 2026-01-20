@@ -41,6 +41,7 @@ Biatec Tokens is a comprehensive Vue 3-based frontend application that simplifie
   - Token creation wizard with validation
   - Real-time dashboard for token management
   - Transaction history and analytics
+  - **API Health Monitoring**: Real-time backend connectivity status with automatic retry
   
 - **Enterprise-Grade Security**:
   - Algorand-based authentication
@@ -268,9 +269,107 @@ try {
 }
 ```
 
+### API Health Monitoring
+
+The application includes an automatic API health monitoring system that provides real-time feedback on the backend API's availability and performance.
+
+#### Features
+
+- **Automatic Health Checks**: Polls the backend API every 30 seconds to verify connectivity
+- **Smart Status Detection**: 
+  - 🟢 **Healthy**: API responding normally (< 5 seconds)
+  - 🟡 **Slow**: API responding slowly (> 5 seconds)
+  - 🔴 **Unreachable**: API is down or not responding
+- **Exponential Backoff**: Automatically adjusts polling frequency when API is unreachable (5s → 10s → 20s → max 60s)
+- **User-Friendly Notifications**: Non-intrusive banner appears only when there are issues
+- **Manual Retry**: One-click retry button to immediately check connectivity
+- **Dismissible**: Users can temporarily dismiss the banner if needed
+
+#### Health Banner Behavior
+
+The health indicator banner automatically appears at the top of the page when issues are detected:
+
+```
+⚠️ API is responding slowly                     [Dismiss]
+```
+
+```
+❌ API is unreachable: Connection timeout        [Retry] [Dismiss]
+```
+
+- **Slow Performance Warning**: Yellow/orange banner when API response time exceeds 5 seconds
+- **Connection Error**: Red banner with error details when API is unreachable
+- **Retry Button**: Click to manually trigger an immediate health check (only shown when unreachable)
+- **Auto-Recovery**: Banner automatically disappears when connection is restored
+- **Smart Dismissal**: Dismissed banners reappear if status changes (e.g., from slow to unreachable)
+
+#### Using the Health Check Composable
+
+You can integrate health monitoring into your own components:
+
+```typescript
+import { useApiHealth } from '@/composables/useApiHealth';
+
+export default {
+  setup() {
+    const { 
+      status,       // Current status: 'healthy' | 'slow' | 'unreachable'
+      isHealthy,    // Boolean: true if healthy
+      isSlow,       // Boolean: true if slow
+      isUnreachable,// Boolean: true if unreachable
+      isChecking,   // Boolean: true during health check
+      error,        // Error message (if any)
+      lastChecked,  // ISO timestamp of last check
+      checkHealth,  // Manual health check function
+      startPolling, // Start automatic polling
+      stopPolling,  // Stop automatic polling
+    } = useApiHealth();
+    
+    // Start polling on mount
+    onMounted(() => {
+      startPolling();
+    });
+    
+    // Stop polling on unmount
+    onUnmounted(() => {
+      stopPolling();
+    });
+    
+    // Manual retry
+    const handleRetry = async () => {
+      await checkHealth();
+    };
+    
+    return {
+      status,
+      isHealthy,
+      isSlow,
+      isUnreachable,
+      isChecking,
+      error,
+      handleRetry,
+    };
+  }
+};
+```
+
+#### Health Check Implementation
+
+The health monitoring system is built following Test-Driven Development (TDD) principles:
+
+- **15 Unit Tests**: Comprehensive coverage of health check logic, polling, backoff, and error handling
+- **17 Component Tests**: Complete UI state testing, retry functionality, and accessibility
+- **Type-Safe**: Full TypeScript support with proper typing
+
+```bash
+# Run health check tests
+npm test -- src/composables/__tests__/useApiHealth.test.ts
+npm test -- src/components/__tests__/ApiHealthBanner.test.ts
+```
+
 ### Testing
 
-The backend integration is fully tested with 91+ passing tests:
+The backend integration is fully tested with 123+ passing tests:
 
 ```bash
 # Run all tests
@@ -280,6 +379,8 @@ npm test
 npm test -- src/services/__tests__/BiatecTokensApiClient.test.ts
 npm test -- src/services/__tests__/TokenDeploymentService.test.ts
 npm test -- src/types/__tests__/api.test.ts
+npm test -- src/composables/__tests__/useApiHealth.test.ts
+npm test -- src/components/__tests__/ApiHealthBanner.test.ts
 
 # Run tests in watch mode
 npm run test:watch
@@ -297,7 +398,12 @@ biatec-tokens/
 ├── src/
 │   ├── components/          # Vue components
 │   │   ├── ui/             # Reusable UI components (Button, Modal, Card, etc.)
-│   │   └── layout/         # Layout components (Navbar, Sidebar)
+│   │   ├── layout/         # Layout components (Navbar, Sidebar)
+│   │   ├── ApiHealthBanner.vue  # API health status banner
+│   │   └── __tests__/      # Component tests (17 API health banner tests)
+│   ├── composables/        # Vue composables (reusable logic)
+│   │   ├── useApiHealth.ts # API health monitoring composable
+│   │   └── __tests__/      # Composable tests (15 health check tests)
 │   ├── services/           # Backend API integration services
 │   │   ├── BiatecTokensApiClient.ts      # HTTP client for backend API
 │   │   ├── TokenDeploymentService.ts     # Token deployment service
@@ -311,6 +417,8 @@ biatec-tokens/
 │   │   ├── theme.ts        # Theme management (dark/light mode)
 │   │   ├── settings.ts     # User settings
 │   │   └── subscription.ts # Subscription management
+│   ├── layout/             # Layout components
+│   │   └── MainLayout.vue  # Main application layout with API health banner
 │   ├── router/             # Vue Router configuration
 │   │   └── index.ts        # Route definitions
 │   ├── views/              # Page components
