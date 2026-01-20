@@ -46,7 +46,7 @@ export function useApiHealth() {
   const MAX_BACKOFF = 60000; // 60 seconds
   const BACKOFF_MULTIPLIER = 2;
   
-  let pollingTimer: number | null = null;
+  let pollingTimer: ReturnType<typeof setTimeout> | null = null;
   let currentBackoff = INITIAL_BACKOFF;
   let isPolling = false;
   
@@ -84,9 +84,9 @@ export function useApiHealth() {
       // Reset backoff on successful check
       currentBackoff = INITIAL_BACKOFF;
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       status.value = ApiHealthStatus.Unreachable;
-      error.value = err?.message || 'Unknown error';
+      error.value = err instanceof Error ? err.message : 'Unknown error';
       
       // Increase backoff for next poll
       currentBackoff = Math.min(currentBackoff * BACKOFF_MULTIPLIER, MAX_BACKOFF);
@@ -113,7 +113,7 @@ export function useApiHealth() {
         ? NORMAL_INTERVAL 
         : currentBackoff;
       
-      pollingTimer = window.setTimeout(async () => {
+      pollingTimer = setTimeout(async () => {
         await checkHealth();
         scheduleNextCheck();
       }, interval);
