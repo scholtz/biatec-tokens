@@ -14,8 +14,6 @@ updates:
         update-types:
           - "patch"
     # Separate major and minor updates
-    assignees:
-      - "scholtz"
     labels:
       - "dependencies"
       - "security"
@@ -29,8 +27,6 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
-    assignees:
-      - "scholtz"
     labels:
       - "dependencies"
       - "github-actions"
