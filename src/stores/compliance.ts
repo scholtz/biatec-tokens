@@ -22,6 +22,9 @@ export interface ComplianceChecklistMetrics {
   exportCount: number
 }
 
+// Category types for consistency
+export const CHECKLIST_CATEGORIES = ['kyc-aml', 'jurisdiction', 'disclosure', 'network-specific'] as const;
+
 export const useComplianceStore = defineStore('compliance', () => {
   const checklistItems = ref<ComplianceCheckItem[]>([
     // KYC/AML Section
@@ -272,8 +275,7 @@ export const useComplianceStore = defineStore('compliance', () => {
   })
 
   const categoryProgress = computed(() => {
-    const categories = ['kyc-aml', 'jurisdiction', 'disclosure', 'network-specific'] as const
-    return categories.map(category => {
+    return CHECKLIST_CATEGORIES.map(category => {
       const items = filteredChecklist.value.filter(item => item.category === category)
       const completed = items.filter(item => item.completed).length
       return {

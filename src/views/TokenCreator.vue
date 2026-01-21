@@ -473,6 +473,9 @@ const tokenForm = reactive({
 watch(selectedNetwork, (newNetwork) => {
   if (newNetwork) {
     complianceStore.setNetwork(newNetwork);
+  } else {
+    // Default to 'Both' when network is deselected
+    complianceStore.setNetwork('Both');
   }
 });
 

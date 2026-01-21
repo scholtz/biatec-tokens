@@ -199,7 +199,7 @@
 
 <script setup lang="ts">
 import { reactive } from 'vue'
-import { useComplianceStore } from '../stores/compliance'
+import { useComplianceStore, CHECKLIST_CATEGORIES } from '../stores/compliance'
 import { useSubscriptionStore } from '../stores/subscription'
 
 const complianceStore = useComplianceStore()
@@ -207,7 +207,7 @@ const subscriptionStore = useSubscriptionStore()
 
 const expandedItems = reactive<Record<string, boolean>>({})
 
-const categories = ['kyc-aml', 'jurisdiction', 'disclosure', 'network-specific'] as const
+const categories = CHECKLIST_CATEGORIES
 
 const getCategoryLabel = (category: string): string => {
   const labels: Record<string, string> = {
