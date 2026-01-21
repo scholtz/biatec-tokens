@@ -385,6 +385,20 @@ describe('BiatecTokensApiClient', () => {
   });
 
   describe('getBaseURL', () => {
+    let originalBaseURL: string | undefined;
+
+    beforeEach(() => {
+      originalBaseURL = import.meta.env.VITE_API_BASE_URL;
+    });
+
+    afterEach(() => {
+      if (originalBaseURL !== undefined) {
+        import.meta.env.VITE_API_BASE_URL = originalBaseURL;
+      } else {
+        delete import.meta.env.VITE_API_BASE_URL;
+      }
+    });
+
     it('should return the configured base URL', () => {
       const customURL = 'https://api.example.com';
       client = new BiatecTokensApiClient(customURL);
@@ -393,15 +407,11 @@ describe('BiatecTokensApiClient', () => {
     });
 
     it('should return the environment base URL', () => {
-      const originalBaseURL = import.meta.env.VITE_API_BASE_URL;
       import.meta.env.VITE_API_BASE_URL = 'https://env.example.com/api';
       
       client = new BiatecTokensApiClient();
       
       expect(client.getBaseURL()).toBe('https://env.example.com/api');
-      
-      // Restore original value
-      import.meta.env.VITE_API_BASE_URL = originalBaseURL;
     });
   });
 
