@@ -408,7 +408,7 @@ const router = useRouter();
 const tokenStore = useTokenStore();
 const subscriptionStore = useSubscriptionStore();
 
-const selectedNetwork = ref<"VOI" | "Aramid" | "">("");
+const selectedNetwork = ref<"VOI" | "Aramid" | null>(null);
 const selectedStandard = ref("");
 const selectedTemplate = ref<string>("");
 const isCreating = ref(false);
@@ -524,7 +524,7 @@ const createToken = async () => {
       attributes: [],
     });
     selectedStandard.value = "";
-    selectedNetwork.value = "";
+    selectedNetwork.value = null;
 
     // Redirect to dashboard
     router.push("/dashboard");

@@ -56,6 +56,23 @@ export interface NetworkGuidance {
   };
   bestFor: string[];
 }
+
+export interface TokenStandard {
+  name: string;
+  type: string;
+  description: string;
+  detailedDescription: string;
+  icon: any;
+  bgClass: string;
+  badgeVariant: "default" | "info" | "success" | "warning" | "error";
+  statusColor: string;
+  network: string;
+  count: number;
+  pros: string[];
+  cons: string[];
+  useWhen: string[];
+}
+
 import { CubeIcon, CurrencyDollarIcon, PhotoIcon } from "@heroicons/vue/24/outline";
 
 export const useTokenStore = defineStore("tokens", () => {
@@ -322,7 +339,7 @@ export const useTokenStore = defineStore("tokens", () => {
     }
   ];
 
-  const tokenStandards = [
+  const tokenStandards: TokenStandard[] = [
     {
       name: "ASA",
       type: "Fungible",

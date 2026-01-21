@@ -15,7 +15,7 @@ interface SubscriptionData {
   payment_method_last4: string | null
 }
 
-interface ConversionMetrics {
+export interface ConversionMetrics {
   tokenCreationAttempts: number
   successfulCreations: number
   templateUsageCount: Record<string, number>
