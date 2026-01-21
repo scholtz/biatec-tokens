@@ -5,12 +5,73 @@
         <!-- Header -->
         <div class="text-center mb-8">
           <h1 class="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-4">Create New Token</h1>
-          <p class="text-gray-300 text-lg">Choose your token standard and deploy in seconds</p>
+          <p class="text-gray-300 text-lg">Choose a template or token standard and deploy in seconds</p>
+        </div>
+
+        <!-- Template Selection (New Step) -->
+        <div class="glass-effect rounded-xl p-6 mb-8">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Quick Start with Templates</h2>
+            <span class="text-sm text-gray-400">Recommended for VOI/Aramid networks</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <button
+              v-for="template in tokenStore.tokenTemplates"
+              :key="template.id"
+              @click="applyTemplate(template.id)"
+              :class="[
+                'p-5 rounded-xl border-2 transition-all duration-200 text-left',
+                selectedTemplate === template.id
+                  ? 'border-biatec-accent bg-biatec-accent/10'
+                  : 'border-white/20 hover:border-white/40 hover:bg-white/5',
+              ]"
+            >
+              <div class="flex items-start justify-between mb-3">
+                <h3 class="font-semibold text-gray-900 dark:text-white text-base">{{ template.name }}</h3>
+                <span
+                  v-if="template.micaCompliant"
+                  class="px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded-lg flex-shrink-0 ml-2"
+                  title="MICA Compliant"
+                >
+                  <i class="pi pi-shield-check mr-1"></i>MICA
+                </span>
+              </div>
+              <p class="text-sm text-gray-400 mb-3">{{ template.description }}</p>
+              <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
+                <span class="px-2 py-1 bg-blue-500/20 text-blue-400 rounded">{{ template.standard }}</span>
+                <span class="px-2 py-1 bg-purple-500/20 text-purple-400 rounded">{{ template.network }}</span>
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                <strong>Use cases:</strong> {{ template.useCases.slice(0, 2).join(", ") }}
+              </div>
+            </button>
+          </div>
+          <div v-if="selectedTemplate" class="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+            <div class="flex items-start space-x-3">
+              <i class="pi pi-info-circle text-blue-400 mt-1"></i>
+              <div class="flex-1">
+                <h4 class="text-sm font-semibold text-blue-400 mb-2">Template Guidance</h4>
+                <p class="text-sm text-gray-300 mb-2">
+                  {{ tokenStore.tokenTemplates.find((t) => t.id === selectedTemplate)?.guidance }}
+                </p>
+                <p class="text-xs text-gray-400 border-t border-blue-500/20 pt-2 mt-2">
+                  <strong>Compliance Note:</strong>
+                  {{ tokenStore.tokenTemplates.find((t) => t.id === selectedTemplate)?.compliance }}
+                </p>
+              </div>
+            </div>
+            <button
+              @click="clearTemplate"
+              class="mt-3 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              Clear template and customize manually
+            </button>
+          </div>
         </div>
 
         <!-- Token Standard Selection -->
         <div class="glass-effect rounded-xl p-6 mb-8">
-          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Select Token Standard</h2>
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Or Select Token Standard Manually</h2>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
               v-for="standard in tokenStore.tokenStandards"
@@ -185,6 +246,7 @@ const router = useRouter();
 const tokenStore = useTokenStore();
 
 const selectedStandard = ref("");
+const selectedTemplate = ref<string>("");
 const isCreating = ref(false);
 const imageInput = ref<HTMLInputElement>();
 
@@ -213,6 +275,22 @@ const addAttribute = () => {
 
 const removeAttribute = (index: number) => {
   tokenForm.attributes.splice(index, 1);
+};
+
+const applyTemplate = (templateId: string) => {
+  const template = tokenStore.tokenTemplates.find((t) => t.id === templateId);
+  if (template) {
+    selectedTemplate.value = templateId;
+    selectedStandard.value = template.standard;
+    tokenForm.supply = template.defaults.supply;
+    tokenForm.decimals = template.defaults.decimals || 6;
+    tokenForm.description = template.defaults.description;
+    tokenForm.type = template.type;
+  }
+};
+
+const clearTemplate = () => {
+  selectedTemplate.value = "";
 };
 
 const createToken = async () => {

@@ -18,6 +18,24 @@ export interface Token {
   assetId?: number;
   contractAddress?: string;
 }
+
+export interface TokenTemplate {
+  id: string;
+  name: string;
+  description: string;
+  standard: Token["standard"];
+  type: Token["type"];
+  network: "VOI" | "Aramid" | "Both";
+  compliance: string;
+  guidance: string;
+  defaults: {
+    supply: number;
+    decimals?: number;
+    description: string;
+  };
+  useCases: string[];
+  micaCompliant: boolean;
+}
 import { CubeIcon, CurrencyDollarIcon, PhotoIcon } from "@heroicons/vue/24/outline";
 
 export const useTokenStore = defineStore("tokens", () => {
@@ -93,6 +111,145 @@ export const useTokenStore = defineStore("tokens", () => {
       token.status = status;
     }
   };
+  const tokenTemplates: TokenTemplate[] = [
+    {
+      id: "voi-utility-token",
+      name: "VOI Utility Token",
+      description: "Standard utility token for VOI network - perfect for rewards, governance, or platform currencies",
+      standard: "ARC3FT",
+      type: "FT",
+      network: "VOI",
+      compliance: "Suitable for utility tokens under MICA regulation. Ensure proper disclosures about token purpose and rights.",
+      guidance: "Best for: Platform rewards, in-app currency, governance tokens. Recommended decimals: 6 for standard divisibility.",
+      defaults: {
+        supply: 1000000,
+        decimals: 6,
+        description: "A utility token for the VOI ecosystem, designed for seamless integration with dApps and services.",
+      },
+      useCases: ["Platform rewards", "Governance voting", "Service payments", "In-app currency"],
+      micaCompliant: true,
+    },
+    {
+      id: "aramid-payment-token",
+      name: "Aramid Payment Token",
+      description: "Payment-focused token for Aramid network - ideal for e-commerce and cross-border transactions",
+      standard: "ARC3FT",
+      type: "FT",
+      network: "Aramid",
+      compliance: "E-money tokens under MICA require authorization from relevant authorities. Ensure compliance with payment service regulations.",
+      guidance: "Best for: Payment systems, remittances, e-commerce. Higher decimals (8-18) recommended for precise value representation.",
+      defaults: {
+        supply: 10000000,
+        decimals: 8,
+        description: "A payment token built on Aramid network for fast, secure, and low-cost transactions.",
+      },
+      useCases: ["E-commerce payments", "Cross-border transfers", "Merchant solutions", "Remittance services"],
+      micaCompliant: true,
+    },
+    {
+      id: "voi-security-token",
+      name: "VOI Security Token",
+      description: "Security token for VOI network - compliant structure for asset-backed or equity tokens",
+      standard: "ARC200",
+      type: "FT",
+      network: "VOI",
+      compliance: "Asset-referenced tokens under MICA require prospectus and authorization. Consult legal counsel for securities compliance.",
+      guidance: "Best for: Equity representation, asset-backed tokens, tokenized securities. Requires KYC/AML procedures and proper documentation.",
+      defaults: {
+        supply: 1000000,
+        decimals: 0,
+        description: "A security token representing ownership or rights in accordance with applicable securities regulations.",
+      },
+      useCases: ["Equity tokens", "Asset-backed tokens", "Real estate tokens", "Fund shares"],
+      micaCompliant: true,
+    },
+    {
+      id: "aramid-loyalty-token",
+      name: "Aramid Loyalty Token",
+      description: "Loyalty rewards token for Aramid network - engage customers with blockchain-based rewards",
+      standard: "ASA",
+      type: "FT",
+      network: "Aramid",
+      compliance: "Loyalty tokens typically exempt from MICA if non-transferable outside closed ecosystem. Review portability restrictions.",
+      guidance: "Best for: Customer loyalty programs, rewards systems, membership benefits. Lower supply for exclusive programs.",
+      defaults: {
+        supply: 500000,
+        decimals: 2,
+        description: "A loyalty token designed to reward customer engagement and build long-term relationships.",
+      },
+      useCases: ["Customer rewards", "Membership programs", "Brand loyalty", "Partner ecosystems"],
+      micaCompliant: true,
+    },
+    {
+      id: "voi-nft-collection",
+      name: "VOI NFT Collection",
+      description: "Non-fungible token collection for VOI network - perfect for digital art, collectibles, and unique assets",
+      standard: "ARC3NFT",
+      type: "NFT",
+      network: "VOI",
+      compliance: "NFTs generally outside core MICA scope unless fungible. Ensure intellectual property rights and consumer protection compliance.",
+      guidance: "Best for: Digital art, collectibles, certificates, gaming assets. Supply of 1 for unique items, higher for limited editions.",
+      defaults: {
+        supply: 1,
+        decimals: 0,
+        description: "A unique digital collectible with verified ownership and provenance on the VOI blockchain.",
+      },
+      useCases: ["Digital art", "Collectibles", "Gaming items", "Certificates", "Event tickets"],
+      micaCompliant: true,
+    },
+    {
+      id: "aramid-fractional-nft",
+      name: "Aramid Fractional NFT",
+      description: "Fractional ownership NFT for Aramid network - enable shared ownership of high-value assets",
+      standard: "ARC3FNFT",
+      type: "NFT",
+      network: "Aramid",
+      compliance: "Fractional NFTs may trigger securities regulations if representing investment rights. Seek legal advice on structuring.",
+      guidance: "Best for: Shared ownership of real estate, art, or luxury items. Use decimals to define fraction size.",
+      defaults: {
+        supply: 1000000,
+        decimals: 6,
+        description: "A fractional NFT enabling shared ownership of a valuable asset with transparent, on-chain governance.",
+      },
+      useCases: ["Fractional real estate", "Art ownership", "Luxury goods", "Revenue-sharing assets"],
+      micaCompliant: false,
+    },
+    {
+      id: "cross-chain-bridge-token",
+      name: "Cross-Chain Bridge Token",
+      description: "Bridge token compatible with both VOI and Aramid networks",
+      standard: "ARC200",
+      type: "FT",
+      network: "Both",
+      compliance: "Bridge tokens facilitating cross-chain transfers must comply with MICA across all jurisdictions. Enhanced AML/CFT controls required.",
+      guidance: "Best for: Cross-chain transfers, interoperability solutions. Requires robust bridge infrastructure and security audits.",
+      defaults: {
+        supply: 5000000,
+        decimals: 6,
+        description: "A bridge token enabling seamless asset transfers between VOI and Aramid networks.",
+      },
+      useCases: ["Cross-chain transfers", "Liquidity bridges", "Multi-chain dApps", "Interoperability solutions"],
+      micaCompliant: true,
+    },
+    {
+      id: "stablecoin-template",
+      name: "Algorithmic Stablecoin",
+      description: "Stablecoin template with mechanisms for price stability on VOI/Aramid",
+      standard: "ARC200",
+      type: "FT",
+      network: "Both",
+      compliance: "Stablecoins under MICA require authorization as e-money tokens or asset-referenced tokens. Reserve requirements and redemption rights mandatory.",
+      guidance: "Best for: Price-stable medium of exchange. Requires collateral management and stability mechanisms. High decimals for precision.",
+      defaults: {
+        supply: 1000000,
+        decimals: 18,
+        description: "A stablecoin maintaining price stability through algorithmic mechanisms and collateral backing.",
+      },
+      useCases: ["Stable payments", "DeFi collateral", "Trading pairs", "Savings instruments"],
+      micaCompliant: true,
+    },
+  ];
+
   const tokenStandards = [
     {
       name: "ASA",
@@ -194,5 +351,6 @@ export const useTokenStore = defineStore("tokens", () => {
     deleteToken,
     updateTokenStatus,
     tokenStandards,
+    tokenTemplates,
   };
 });
