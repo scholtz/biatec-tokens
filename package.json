@@ -33,16 +33,15 @@
     "whatamesh": "^0.2.0"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.0.15",
     "@types/node": "^25.0.9",
     "@vitejs/plugin-vue": "^6.0.3",
     "@vitest/coverage-v8": "^4.0.17",
     "@vitest/ui": "^4.0.17",
     "@vue/test-utils": "^2.4.6",
-    "autoprefixer": "^10.4.23",
     "happy-dom": "^20.3.4",
-    "postcss": "^8.5.5",
     "prettier": "^3.8.0",
-    "tailwindcss": "^3.4.19",
+    "tailwindcss": "^4.0.15",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "vitest": "^4.0.17",
