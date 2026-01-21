@@ -52,11 +52,11 @@
               <div class="flex-1">
                 <h4 class="text-sm font-semibold text-blue-400 mb-2">Template Guidance</h4>
                 <p class="text-sm text-gray-300 mb-2">
-                  {{ tokenStore.tokenTemplates.find((t) => t.id === selectedTemplate)?.guidance }}
+                  {{ currentTemplate?.guidance }}
                 </p>
                 <p class="text-xs text-gray-400 border-t border-blue-500/20 pt-2 mt-2">
                   <strong>Compliance Note:</strong>
-                  {{ tokenStore.tokenTemplates.find((t) => t.id === selectedTemplate)?.compliance }}
+                  {{ currentTemplate?.compliance }}
                 </p>
               </div>
             </div>
@@ -237,7 +237,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useTokenStore } from "../stores/tokens";
 import MainLayout from "../layout/MainLayout.vue";
@@ -261,6 +261,10 @@ const tokenForm = reactive({
   attributes: [] as Array<{ trait_type: string; value: string }>,
 });
 
+const currentTemplate = computed(() => 
+  selectedTemplate.value ? tokenStore.tokenTemplates.find((t) => t.id === selectedTemplate.value) : undefined
+);
+
 const handleImageUpload = (event: Event) => {
   const file = (event.target as HTMLInputElement).files?.[0];
   if (file) {
@@ -283,7 +287,7 @@ const applyTemplate = (templateId: string) => {
     selectedTemplate.value = templateId;
     selectedStandard.value = template.standard;
     tokenForm.supply = template.defaults.supply;
-    tokenForm.decimals = template.defaults.decimals || 6;
+    tokenForm.decimals = template.defaults.decimals ?? 6;
     tokenForm.description = template.defaults.description;
     tokenForm.type = template.type;
   }

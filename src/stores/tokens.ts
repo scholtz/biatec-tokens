@@ -171,7 +171,7 @@ export const useTokenStore = defineStore("tokens", () => {
       type: "FT",
       network: "Aramid",
       compliance: "Loyalty tokens typically exempt from MICA if non-transferable outside closed ecosystem. Review portability restrictions.",
-      guidance: "Best for: Customer loyalty programs, rewards systems, membership benefits. Lower supply for exclusive programs.",
+      guidance: "Best for: Customer loyalty programs, rewards systems, membership benefits. Lower supply recommended for exclusive programs.",
       defaults: {
         supply: 500000,
         decimals: 2,
@@ -204,7 +204,7 @@ export const useTokenStore = defineStore("tokens", () => {
       standard: "ARC3FNFT",
       type: "NFT",
       network: "Aramid",
-      compliance: "Fractional NFTs may trigger securities regulations if representing investment rights. Seek legal advice on structuring.",
+      compliance: "Fractional NFTs may trigger securities regulations if representing investment rights. Not automatically MICA-compliant - requires legal review and may need prospectus approval. Consult legal counsel before deployment.",
       guidance: "Best for: Shared ownership of real estate, art, or luxury items. Use decimals to define fraction size.",
       defaults: {
         supply: 1000000,
