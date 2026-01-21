@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@agoralabs-sh/avm-web-provider": "^1.7.0",
-    "@algorandfoundation/algokit-utils": "^9.1.0",
+    "@algorandfoundation/algokit-utils": "^9.2.0",
     "@blockshake/defly-connect": "^1.2.1",
     "@heroicons/vue": "^2.0.18",
     "@magic-ext/algorand": "^23.20.0",
