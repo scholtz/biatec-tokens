@@ -15,10 +15,29 @@ interface SubscriptionData {
   payment_method_last4: string | null
 }
 
+interface ConversionMetrics {
+  tokenCreationAttempts: number
+  successfulCreations: number
+  templateUsageCount: Record<string, number>
+  standardUsageCount: Record<string, number>
+  networkPreference: Record<string, number>
+  guidanceInteractions: number
+  lastActivity: Date | null
+}
+
 export const useSubscriptionStore = defineStore('subscription', () => {
   const subscription = ref<SubscriptionData | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const conversionMetrics = ref<ConversionMetrics>({
+    tokenCreationAttempts: 0,
+    successfulCreations: 0,
+    templateUsageCount: {},
+    standardUsageCount: {},
+    networkPreference: {},
+    guidanceInteractions: 0,
+    lastActivity: null
+  })
 
   const isActive = computed(() => {
     return subscription.value?.subscription_status === 'active'
@@ -85,6 +104,53 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     }
   }
 
+  const trackTokenCreationAttempt = () => {
+    conversionMetrics.value.tokenCreationAttempts++
+    conversionMetrics.value.lastActivity = new Date()
+  }
+
+  const trackTokenCreationSuccess = (standard: string, template?: string, network?: string) => {
+    conversionMetrics.value.successfulCreations++
+    conversionMetrics.value.lastActivity = new Date()
+    
+    if (standard) {
+      conversionMetrics.value.standardUsageCount[standard] = 
+        (conversionMetrics.value.standardUsageCount[standard] || 0) + 1
+    }
+    
+    if (template) {
+      conversionMetrics.value.templateUsageCount[template] = 
+        (conversionMetrics.value.templateUsageCount[template] || 0) + 1
+    }
+    
+    if (network) {
+      conversionMetrics.value.networkPreference[network] = 
+        (conversionMetrics.value.networkPreference[network] || 0) + 1
+    }
+  }
+
+  const trackGuidanceInteraction = () => {
+    conversionMetrics.value.guidanceInteractions++
+    conversionMetrics.value.lastActivity = new Date()
+  }
+
+  const getConversionRate = computed(() => {
+    if (conversionMetrics.value.tokenCreationAttempts === 0) return 0
+    return (conversionMetrics.value.successfulCreations / conversionMetrics.value.tokenCreationAttempts) * 100
+  })
+
+  const getMostUsedTemplate = computed(() => {
+    const templates = conversionMetrics.value.templateUsageCount
+    if (Object.keys(templates).length === 0) return null
+    return Object.entries(templates).sort((a, b) => b[1] - a[1])[0]
+  })
+
+  const getMostUsedStandard = computed(() => {
+    const standards = conversionMetrics.value.standardUsageCount
+    if (Object.keys(standards).length === 0) return null
+    return Object.entries(standards).sort((a, b) => b[1] - a[1])[0]
+  })
+
   return {
     subscription,
     loading,
@@ -93,6 +159,13 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     currentProduct,
     currentPeriodEnd,
     fetchSubscription,
-    createCheckoutSession
+    createCheckoutSession,
+    conversionMetrics,
+    trackTokenCreationAttempt,
+    trackTokenCreationSuccess,
+    trackGuidanceInteraction,
+    getConversionRate,
+    getMostUsedTemplate,
+    getMostUsedStandard,
   }
 })

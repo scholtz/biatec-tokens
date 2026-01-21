@@ -8,6 +8,107 @@
           <p class="text-gray-300 text-lg">Choose a template or token standard and deploy in seconds</p>
         </div>
 
+        <!-- Network Selection (New) -->
+        <div class="glass-effect rounded-xl p-6 mb-8">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Select Network</h2>
+            <span class="text-sm text-gray-400">Choose your deployment target</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <button
+              v-for="network in tokenStore.networkGuidance"
+              :key="network.name"
+              @click="selectNetwork(network.name)"
+              :class="[
+                'p-6 rounded-xl border-2 transition-all duration-200 text-left',
+                selectedNetwork === network.name
+                  ? 'border-biatec-accent bg-biatec-accent/10'
+                  : 'border-white/20 hover:border-white/40 hover:bg-white/5',
+              ]"
+            >
+              <div class="flex items-start justify-between mb-3">
+                <h3 class="font-semibold text-gray-900 dark:text-white text-lg">{{ network.displayName }}</h3>
+                <i class="pi pi-check-circle text-biatec-accent" v-if="selectedNetwork === network.name"></i>
+              </div>
+              <p class="text-sm text-gray-400 mb-4">{{ network.description }}</p>
+              <div class="space-y-2 text-xs">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-bolt text-blue-400"></i>
+                  <span class="text-gray-300">Creation: {{ network.fees.creation }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-send text-green-400"></i>
+                  <span class="text-gray-300">Transaction: {{ network.fees.transaction }}</span>
+                </div>
+              </div>
+            </button>
+          </div>
+          
+          <!-- Network-Specific Guidance -->
+          <div v-if="selectedNetwork && currentNetworkGuidance" class="mt-6 p-5 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-lg">
+            <div class="space-y-4">
+              <div>
+                <h4 class="text-sm font-semibold text-blue-400 mb-2 flex items-center gap-2">
+                  <i class="pi pi-info-circle"></i>
+                  Fee Structure
+                </h4>
+                <p class="text-sm text-gray-300">{{ currentNetworkGuidance.fees.description }}</p>
+              </div>
+              
+              <div>
+                <h4 class="text-sm font-semibold text-purple-400 mb-2 flex items-center gap-2">
+                  <i class="pi pi-cloud"></i>
+                  Metadata Hosting
+                </h4>
+                <p class="text-sm text-gray-300 mb-2">{{ currentNetworkGuidance.metadataHosting.description }}</p>
+                <div class="flex flex-wrap gap-2">
+                  <span 
+                    v-for="provider in currentNetworkGuidance.metadataHosting.recommended" 
+                    :key="provider"
+                    class="px-2 py-1 bg-purple-500/20 text-purple-300 rounded text-xs"
+                  >
+                    {{ provider }}
+                  </span>
+                </div>
+              </div>
+              
+              <div>
+                <h4 class="text-sm font-semibold text-green-400 mb-2 flex items-center gap-2">
+                  <i class="pi pi-shield-check"></i>
+                  MICA Compliance
+                </h4>
+                <p class="text-sm text-gray-300 mb-2">{{ currentNetworkGuidance.compliance.micaRelevance }}</p>
+                <ul class="space-y-1 ml-4">
+                  <li 
+                    v-for="(consideration, idx) in currentNetworkGuidance.compliance.considerations" 
+                    :key="idx"
+                    class="text-xs text-gray-400 flex items-start gap-2"
+                  >
+                    <i class="pi pi-check text-green-500 mt-0.5"></i>
+                    <span>{{ consideration }}</span>
+                  </li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 class="text-sm font-semibold text-yellow-400 mb-2 flex items-center gap-2">
+                  <i class="pi pi-star"></i>
+                  Best Use Cases
+                </h4>
+                <div class="flex flex-wrap gap-2">
+                  <span 
+                    v-for="useCase in currentNetworkGuidance.bestFor" 
+                    :key="useCase"
+                    class="px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded text-xs"
+                  >
+                    {{ useCase }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Template Selection (New Step) -->
         <div class="glass-effect rounded-xl p-6 mb-8">
           <div class="flex items-center justify-between mb-6">
@@ -76,7 +177,7 @@
             <button
               v-for="standard in tokenStore.tokenStandards"
               :key="standard.name"
-              @click="selectedStandard = standard.name"
+              @click="selectStandard(standard.name)"
               :class="[
                 'p-6 rounded-xl border-2 transition-all duration-200 text-left',
                 selectedStandard === standard.name ? 'border-biatec-accent bg-biatec-accent/10' : 'border-white/20 hover:border-white/40 hover:bg-white/5',
@@ -93,6 +194,66 @@
               </div>
               <p class="text-sm text-gray-300">{{ standard.description }}</p>
             </button>
+          </div>
+          
+          <!-- Standard Detailed Guidance -->
+          <div v-if="selectedStandard && currentStandardDetails" class="mt-6 p-5 bg-gradient-to-r from-indigo-500/10 to-cyan-500/10 border border-indigo-500/20 rounded-lg">
+            <div class="space-y-4">
+              <div>
+                <h4 class="text-sm font-semibold text-indigo-400 mb-2">About {{ currentStandardDetails.name }}</h4>
+                <p class="text-sm text-gray-300">{{ currentStandardDetails.detailedDescription }}</p>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h5 class="text-xs font-semibold text-green-400 mb-2 flex items-center gap-1">
+                    <i class="pi pi-thumbs-up"></i>
+                    Advantages
+                  </h5>
+                  <ul class="space-y-1">
+                    <li 
+                      v-for="pro in currentStandardDetails.pros" 
+                      :key="pro"
+                      class="text-xs text-gray-400 flex items-start gap-2"
+                    >
+                      <i class="pi pi-check text-green-500 mt-0.5"></i>
+                      <span>{{ pro }}</span>
+                    </li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h5 class="text-xs font-semibold text-orange-400 mb-2 flex items-center gap-1">
+                    <i class="pi pi-exclamation-triangle"></i>
+                    Considerations
+                  </h5>
+                  <ul class="space-y-1">
+                    <li 
+                      v-for="con in currentStandardDetails.cons" 
+                      :key="con"
+                      class="text-xs text-gray-400 flex items-start gap-2"
+                    >
+                      <i class="pi pi-info-circle text-orange-500 mt-0.5"></i>
+                      <span>{{ con }}</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div>
+                <h5 class="text-xs font-semibold text-cyan-400 mb-2">Use this standard when:</h5>
+                <ul class="space-y-1">
+                  <li 
+                    v-for="when in currentStandardDetails.useWhen" 
+                    :key="when"
+                    class="text-xs text-gray-400 flex items-start gap-2"
+                  >
+                    <i class="pi pi-arrow-right text-cyan-500 mt-0.5"></i>
+                    <span>{{ when }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -240,11 +401,14 @@
 import { ref, reactive, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useTokenStore } from "../stores/tokens";
+import { useSubscriptionStore } from "../stores/subscription";
 import MainLayout from "../layout/MainLayout.vue";
 
 const router = useRouter();
 const tokenStore = useTokenStore();
+const subscriptionStore = useSubscriptionStore();
 
+const selectedNetwork = ref<"VOI" | "Aramid" | "">("");
 const selectedStandard = ref("");
 const selectedTemplate = ref<string>("");
 const isCreating = ref(false);
@@ -264,6 +428,24 @@ const tokenForm = reactive({
 const currentTemplate = computed(() => 
   selectedTemplate.value ? tokenStore.tokenTemplates.find((t) => t.id === selectedTemplate.value) : undefined
 );
+
+const currentNetworkGuidance = computed(() => 
+  selectedNetwork.value ? tokenStore.networkGuidance.find((n) => n.name === selectedNetwork.value) : undefined
+);
+
+const currentStandardDetails = computed(() => 
+  selectedStandard.value ? tokenStore.tokenStandards.find((s) => s.name === selectedStandard.value) : undefined
+);
+
+const selectNetwork = (network: "VOI" | "Aramid") => {
+  selectedNetwork.value = network;
+  subscriptionStore.trackGuidanceInteraction();
+};
+
+const selectStandard = (standard: string) => {
+  selectedStandard.value = standard;
+  subscriptionStore.trackGuidanceInteraction();
+};
 
 const handleImageUpload = (event: Event) => {
   const file = (event.target as HTMLInputElement).files?.[0];
@@ -290,6 +472,13 @@ const applyTemplate = (templateId: string) => {
     tokenForm.decimals = template.defaults.decimals ?? 6;
     tokenForm.description = template.defaults.description;
     tokenForm.type = template.type;
+    
+    // Auto-select network if template specifies one
+    if (template.network !== "Both") {
+      selectedNetwork.value = template.network;
+    }
+    
+    subscriptionStore.trackGuidanceInteraction();
   }
 };
 
@@ -301,6 +490,7 @@ const createToken = async () => {
   if (!selectedStandard.value) return;
 
   isCreating.value = true;
+  subscriptionStore.trackTokenCreationAttempt();
 
   try {
     await tokenStore.createToken({
@@ -315,6 +505,13 @@ const createToken = async () => {
       attributes: tokenForm.type === "NFT" ? tokenForm.attributes.filter((attr) => attr.trait_type && attr.value) : undefined,
     });
 
+    // Track successful creation with details
+    subscriptionStore.trackTokenCreationSuccess(
+      selectedStandard.value,
+      selectedTemplate.value || undefined,
+      selectedNetwork.value || undefined
+    );
+
     // Reset form
     Object.assign(tokenForm, {
       name: "",
@@ -327,6 +524,7 @@ const createToken = async () => {
       attributes: [],
     });
     selectedStandard.value = "";
+    selectedNetwork.value = "";
 
     // Redirect to dashboard
     router.push("/dashboard");

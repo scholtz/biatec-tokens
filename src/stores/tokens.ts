@@ -36,6 +36,26 @@ export interface TokenTemplate {
   useCases: string[];
   micaCompliant: boolean;
 }
+
+export interface NetworkGuidance {
+  name: "VOI" | "Aramid";
+  displayName: string;
+  description: string;
+  fees: {
+    creation: string;
+    transaction: string;
+    description: string;
+  };
+  metadataHosting: {
+    recommended: string[];
+    description: string;
+  };
+  compliance: {
+    considerations: string[];
+    micaRelevance: string;
+  };
+  bestFor: string[];
+}
 import { CubeIcon, CurrencyDollarIcon, PhotoIcon } from "@heroicons/vue/24/outline";
 
 export const useTokenStore = defineStore("tokens", () => {
@@ -250,94 +270,178 @@ export const useTokenStore = defineStore("tokens", () => {
     },
   ];
 
+  const networkGuidance: NetworkGuidance[] = [
+    {
+      name: "VOI",
+      displayName: "VOI Network",
+      description: "High-performance blockchain optimized for DeFi and utility tokens with fast finality",
+      fees: {
+        creation: "~0.1 VOI",
+        transaction: "~0.001 VOI",
+        description: "VOI offers minimal transaction costs, making it ideal for high-volume applications and microtransactions"
+      },
+      metadataHosting: {
+        recommended: ["IPFS", "Arweave", "VOI native storage"],
+        description: "Store token metadata on decentralized networks for permanence and censorship resistance. VOI native storage recommended for best integration."
+      },
+      compliance: {
+        considerations: [
+          "Ensure KYC/AML procedures for security tokens",
+          "Maintain transparent token documentation",
+          "Implement proper disclosure of token rights and limitations",
+          "Consider data protection requirements (GDPR)"
+        ],
+        micaRelevance: "VOI tokens must comply with MICA regulations when operating in EU markets. Utility tokens require proper disclosure of purpose and limitations."
+      },
+      bestFor: ["DeFi applications", "Gaming tokens", "DAO governance", "High-frequency trading"]
+    },
+    {
+      name: "Aramid",
+      displayName: "Aramid Network",
+      description: "Enterprise-grade blockchain designed for regulated assets and cross-border payments",
+      fees: {
+        creation: "~0.2 ARAMID",
+        transaction: "~0.002 ARAMID",
+        description: "Aramid provides predictable fee structure suitable for enterprise applications and regulated environments"
+      },
+      metadataHosting: {
+        recommended: ["IPFS", "Arweave", "Private enterprise storage", "Aramid certified providers"],
+        description: "Use certified metadata providers for compliance requirements. Enterprise storage options available for regulated use cases."
+      },
+      compliance: {
+        considerations: [
+          "Enhanced KYC/AML requirements for payment tokens",
+          "Reserve requirements for stablecoins",
+          "Regular compliance audits recommended",
+          "Maintain audit trail for all transactions",
+          "Implement geo-blocking if required by regulations"
+        ],
+        micaRelevance: "Aramid is optimized for MICA-compliant tokens. E-money tokens and asset-referenced tokens require authorization and reserve management."
+      },
+      bestFor: ["Payment systems", "Stablecoins", "Security tokens", "Cross-border transfers", "Regulated assets"]
+    }
+  ];
+
   const tokenStandards = [
     {
       name: "ASA",
       type: "Fungible",
-      description: "Native Algorand ASA token without ARC3 metadata.",
+      description: "Native Algorand Standard Asset - lightweight, fast, and cost-effective fungible token without metadata",
+      detailedDescription: "ASA is the foundational token standard on Algorand-based chains. It provides native Layer-1 token functionality with minimal fees and instant finality. Best for simple fungible tokens that don't require complex metadata or smart contract logic.",
       icon: CubeIcon,
       bgClass: "bg-gray-500",
       badgeVariant: "default" as const,
       statusColor: "bg-gray-500",
       network: "Algorand",
       count: 0,
+      pros: ["Lowest fees", "Native Layer-1", "Instant finality", "Simple implementation"],
+      cons: ["No metadata support", "Limited functionality", "No smart contract features"],
+      useWhen: ["You need a simple fungible token", "Cost efficiency is critical", "Metadata is not required"]
     },
     {
-      name: "ARC3 Fungible Token",
+      name: "ARC3FT",
       type: "Fungible",
-      description: "Native Algorand Standard Assets with built-in metadata support.",
+      description: "Algorand Standard Asset with ARC3 metadata standard - includes rich token information and visual assets",
+      detailedDescription: "ARC3 extends ASA with comprehensive metadata support stored on IPFS. Ideal for tokens requiring branding, detailed descriptions, and visual identity. Fully compatible with wallets and explorers supporting ARC3.",
       icon: CurrencyDollarIcon,
       bgClass: "bg-blue-500",
       badgeVariant: "info" as const,
       statusColor: "bg-blue-500",
       network: "Algorand",
       count: 0,
+      pros: ["Rich metadata support", "Wallet compatibility", "Native Layer-1 speed", "IPFS integration"],
+      cons: ["Requires IPFS hosting", "Slightly higher setup cost", "Metadata is immutable"],
+      useWhen: ["You need token branding/logo", "Metadata is important", "Wallet display matters", "Building consumer-facing tokens"]
     },
     {
-      name: "ARC3 NFT",
+      name: "ARC3NFT",
       type: "NFT",
-      description: "Native Algorand ASA NFT with metadata like picture, project description and project URL stored in IPFS. The total supply is 1.",
+      description: "True NFT standard with unique supply of 1 - perfect for digital art, certificates, and collectibles",
+      detailedDescription: "ARC3 NFT enforces true non-fungibility with a supply of exactly 1. Metadata includes artwork, properties, and provenance stored on IPFS. Widely supported across Algorand ecosystem wallets and marketplaces.",
       icon: CubeIcon,
       bgClass: "bg-orange-500",
       badgeVariant: "info" as const,
       statusColor: "bg-orange-500",
       network: "Algorand",
       count: 0,
+      pros: ["True uniqueness (supply = 1)", "Full metadata support", "Marketplace compatible", "Proven standard"],
+      cons: ["Not fractionizable", "Requires IPFS", "Fixed supply post-creation"],
+      useWhen: ["Creating unique digital art", "Issuing certificates", "Building collectibles", "Single-owner assets"]
     },
     {
-      name: "ARC3 Fractional NFT",
+      name: "ARC3FNFT",
       type: "NFT",
-      description: "Native Algorand ASA NFT with metadata like picture, project description and project URL stored in IPFS. The total supply must be 10^decimals representation.",
+      description: "Fractional NFT enabling shared ownership - split valuable assets into tradeable fractions",
+      detailedDescription: "ARC3 Fractional NFT allows multiple owners to hold portions of a single asset. Supply equals 10^decimals for precise fractional division. Ideal for high-value assets requiring shared ownership models.",
       icon: CubeIcon,
       bgClass: "bg-orange-200",
       badgeVariant: "info" as const,
       statusColor: "bg-orange-200",
       network: "Algorand",
       count: 0,
+      pros: ["Shared ownership model", "Divisible into fractions", "Liquidity for high-value assets", "NFT metadata retained"],
+      cons: ["Complex legal considerations", "May trigger securities laws", "Requires governance model"],
+      useWhen: ["Fractionalizing expensive assets", "Creating shared ownership", "Building investment vehicles", "Real estate tokenization"]
     },
     {
       name: "ARC200",
       type: "Fungible",
-      description: "Algorand smart contract tokens compatible with ERC20 standards and functionality.",
+      description: "Smart contract token with ERC20-like functionality - programmable logic and advanced features",
+      detailedDescription: "ARC200 provides ERC20-compatible functionality through smart contracts. Enables complex tokenomics, access control, minting/burning logic, and custom transfer rules. Best for tokens requiring programmable behavior.",
       icon: CurrencyDollarIcon,
       bgClass: "bg-green-500",
       badgeVariant: "success" as const,
       statusColor: "bg-green-500",
       network: "Algorand",
       count: 0,
+      pros: ["Programmable logic", "ERC20 compatibility", "Custom tokenomics", "Advanced features"],
+      cons: ["Higher fees than ASA", "Requires smart contract development", "More complex deployment"],
+      useWhen: ["Need programmable tokenomics", "Require access control", "Building DeFi protocols", "Need minting/burning logic"]
     },
     {
       name: "ARC72",
       type: "NFT",
-      description: "Algorand NFT standard with Ethereum-style functionality and metadata handling.",
+      description: "Advanced NFT standard with ERC721-style features - dynamic metadata and enhanced functionality",
+      detailedDescription: "ARC72 brings Ethereum's ERC721 capabilities to Algorand. Supports mutable metadata, royalties, and advanced NFT features. Ideal for gaming, evolving collectibles, and applications requiring dynamic NFT properties.",
       icon: PhotoIcon,
       bgClass: "bg-purple-500",
       badgeVariant: "default" as const,
       statusColor: "bg-green-500",
       network: "Algorand",
       count: 0,
+      pros: ["Mutable metadata", "Royalty support", "ERC721 compatibility", "Advanced NFT features"],
+      cons: ["Smart contract complexity", "Higher fees", "Newer standard with evolving support"],
+      useWhen: ["Need dynamic metadata", "Building NFT games", "Require royalty mechanisms", "Need ERC721 compatibility"]
     },
     {
       name: "ERC20",
       type: "Fungible",
-      description: "Standard Ethereum fungible tokens with full EVM compatibility and features.",
+      description: "Industry-standard Ethereum fungible token - maximum ecosystem compatibility and tooling",
+      detailedDescription: "ERC20 is the most widely adopted fungible token standard in blockchain. Full EVM compatibility means extensive tooling, wallet support, and DeFi integration. Best for Ethereum-native applications and cross-chain bridges.",
       icon: CurrencyDollarIcon,
       bgClass: "bg-yellow-500",
       badgeVariant: "warning" as const,
       statusColor: "bg-yellow-500",
       network: "Ethereum",
       count: 0,
+      pros: ["Widest adoption", "Extensive tooling", "DeFi integration", "Maximum compatibility"],
+      cons: ["Higher gas fees", "Network congestion", "Ethereum-only"],
+      useWhen: ["Need Ethereum ecosystem", "Maximum DeFi compatibility", "Building on EVM", "Cross-chain bridges"]
     },
     {
       name: "ERC721",
       type: "NFT",
-      description: "Ethereum non-fungible tokens with rich metadata and ownership tracking capabilities.",
+      description: "Ethereum NFT standard - vast marketplace support and proven track record",
+      detailedDescription: "ERC721 pioneered NFT standards and remains the most supported format. Deep integration with NFT marketplaces, galleries, and tools. The go-to choice for Ethereum-native NFT projects with maximum discoverability.",
       icon: PhotoIcon,
       bgClass: "bg-pink-500",
       badgeVariant: "error" as const,
       statusColor: "bg-yellow-500",
       network: "Ethereum",
       count: 0,
+      pros: ["Largest NFT ecosystem", "Maximum marketplace support", "Proven standard", "Rich tooling"],
+      cons: ["High gas fees", "Ethereum network limitations", "Not suitable for high-volume"],
+      useWhen: ["Targeting Ethereum NFT market", "Need marketplace visibility", "Building on Ethereum", "Premium NFT projects"]
     },
   ];
   return {
@@ -352,5 +456,6 @@ export const useTokenStore = defineStore("tokens", () => {
     updateTokenStatus,
     tokenStandards,
     tokenTemplates,
+    networkGuidance,
   };
 });
