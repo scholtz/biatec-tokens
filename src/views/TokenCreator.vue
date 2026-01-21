@@ -109,6 +109,46 @@
           </div>
         </div>
 
+        <!-- Compliance Checklist (New) -->
+        <div class="glass-effect rounded-xl p-6 mb-8">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <i class="pi pi-shield-check text-biatec-accent"></i>
+              Compliance Checklist
+            </h2>
+            <button
+              @click="showComplianceChecklist = !showComplianceChecklist"
+              :class="[
+                'px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2',
+                showComplianceChecklist
+                  ? 'bg-biatec-accent text-gray-900'
+                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
+              ]"
+            >
+              <i :class="showComplianceChecklist ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+              {{ showComplianceChecklist ? 'Hide' : 'Show' }} Checklist
+            </button>
+          </div>
+
+          <div v-if="!showComplianceChecklist" class="text-center py-8">
+            <i class="pi pi-shield-check text-5xl text-biatec-accent/50 mb-4"></i>
+            <p class="text-gray-300 mb-2">MICA-compliant token launch preparation</p>
+            <p class="text-sm text-gray-400 mb-4">
+              Complete {{ complianceStore.metrics.completedChecks }} of {{ complianceStore.metrics.totalChecks }} compliance items
+              ({{ complianceStore.metrics.completionPercentage }}% complete)
+            </p>
+            <button
+              @click="showComplianceChecklist = true"
+              class="btn-primary px-6 py-2 rounded-lg text-gray-900 dark:text-white font-semibold inline-flex items-center gap-2"
+            >
+              <i class="pi pi-check-square"></i>
+              Open Compliance Checklist
+            </button>
+          </div>
+
+          <ComplianceChecklist v-if="showComplianceChecklist" />
+        </div>
+
         <!-- Template Selection (New Step) -->
         <div class="glass-effect rounded-xl p-6 mb-8">
           <div class="flex items-center justify-between mb-6">
@@ -398,21 +438,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useTokenStore } from "../stores/tokens";
 import { useSubscriptionStore } from "../stores/subscription";
+import { useComplianceStore } from "../stores/compliance";
 import MainLayout from "../layout/MainLayout.vue";
+import ComplianceChecklist from "../components/ComplianceChecklist.vue";
 
 const router = useRouter();
 const tokenStore = useTokenStore();
 const subscriptionStore = useSubscriptionStore();
+const complianceStore = useComplianceStore();
 
 const selectedNetwork = ref<"VOI" | "Aramid" | null>(null);
 const selectedStandard = ref("");
 const selectedTemplate = ref<string>("");
 const isCreating = ref(false);
 const imageInput = ref<HTMLInputElement>();
+const showComplianceChecklist = ref(false);
 
 const tokenForm = reactive({
   name: "",
@@ -423,6 +467,13 @@ const tokenForm = reactive({
   decimals: 6,
   imageUrl: "",
   attributes: [] as Array<{ trait_type: string; value: string }>,
+});
+
+// Watch for network changes and sync with compliance store
+watch(selectedNetwork, (newNetwork) => {
+  if (newNetwork) {
+    complianceStore.setNetwork(newNetwork);
+  }
 });
 
 const currentTemplate = computed(() => 
