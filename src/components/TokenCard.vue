@@ -54,6 +54,13 @@
         {{ formatDate(token.createdAt) }}
       </span>
       <div class="flex items-center space-x-2">
+        <router-link
+          :to="`/tokens/${token.id}`"
+          class="p-2 rounded-lg bg-biatec-accent/20 text-biatec-accent hover:bg-biatec-accent/30 transition-colors"
+          title="View Details"
+        >
+          <i class="pi pi-eye text-sm"></i>
+        </router-link>
         <button
           v-if="token.status === 'deployed'"
           @click="copyToClipboard"

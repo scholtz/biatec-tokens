@@ -1,12 +1,15 @@
 <template>
   <canvas id="gradient-canvas" data-transition-in />
   <RouterView />
+  <Toast />
 </template>
 
 <script setup lang="ts">
 import { onMounted } from "vue";
 import { useThemeStore } from "./stores/theme";
 import { Gradient } from "whatamesh";
+import Toast from "./components/Toast.vue";
+
 let gradient = new Gradient();
 
 const themeStore = useThemeStore();

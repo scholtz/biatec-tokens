@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import Home from "../views/Home.vue";
 import TokenCreator from "../views/TokenCreator.vue";
 import TokenDashboard from "../views/TokenDashboard.vue";
+import TokenDetail from "../views/TokenDetail.vue";
 import Settings from "../views/Settings.vue";
 
 // Subscription views
@@ -27,6 +28,12 @@ const router = createRouter({
       path: "/dashboard",
       name: "TokenDashboard",
       component: TokenDashboard,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/tokens/:id",
+      name: "TokenDetail",
+      component: TokenDetail,
       meta: { requiresAuth: true },
     },
     {
