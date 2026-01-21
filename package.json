@@ -33,7 +33,7 @@
     "whatamesh": "^0.2.0"
   },
   "devDependencies": {
-    "@types/node": "^22.10.6",
+    "@types/node": "^25.0.9",
     "@vitejs/plugin-vue": "^6.0.3",
     "@vitest/coverage-v8": "^4.0.17",
     "@vitest/ui": "^4.0.17",
