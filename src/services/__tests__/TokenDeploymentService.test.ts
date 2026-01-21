@@ -379,6 +379,15 @@ describe('TokenDeploymentService', () => {
     });
 
     it('should fail batch deployment if any request is invalid', async () => {
+      const invalidRequest: Partial<ERC20DeploymentRequest> = {
+        standard: TokenStandard.ERC20,
+        name: '', // Invalid - empty name
+        symbol: 'TK2',
+        decimals: 18,
+        totalSupply: '2000000',
+        walletAddress: '0x1234567890123456789012345678901234567890',
+      };
+
       const requests: TokenDeploymentRequest[] = [
         {
           standard: TokenStandard.ERC20,
@@ -388,14 +397,7 @@ describe('TokenDeploymentService', () => {
           totalSupply: '1000000',
           walletAddress: '0x1234567890123456789012345678901234567890',
         },
-        {
-          standard: TokenStandard.ERC20,
-          name: '', // Invalid - empty name
-          symbol: 'TK2',
-          decimals: 18,
-          totalSupply: '2000000',
-          walletAddress: '0x1234567890123456789012345678901234567890',
-        } as any,
+        invalidRequest as TokenDeploymentRequest,
       ];
 
       await expect(service.deployTokensBatch(requests)).rejects.toThrow();

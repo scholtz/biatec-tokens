@@ -320,9 +320,6 @@ describe('BiatecTokensApiClient', () => {
 
   describe('Interceptors', () => {
     it('should setup request interceptor in production mode', () => {
-      const originalDev = import.meta.env.DEV;
-      import.meta.env.DEV = false;
-      
       const mockInstance = {
         get: vi.fn(),
         interceptors: {
@@ -336,8 +333,6 @@ describe('BiatecTokensApiClient', () => {
       
       expect(mockInstance.interceptors.request.use).toHaveBeenCalled();
       expect(mockInstance.interceptors.response.use).toHaveBeenCalled();
-      
-      import.meta.env.DEV = originalDev;
     });
 
     it('should setup request interceptor and handle errors', () => {
@@ -362,9 +357,6 @@ describe('BiatecTokensApiClient', () => {
     });
 
     it('should setup response interceptor and handle errors', () => {
-      const originalDev = import.meta.env.DEV;
-      import.meta.env.DEV = true;
-      
       const mockInstance = {
         get: vi.fn(),
         interceptors: {
@@ -389,8 +381,6 @@ describe('BiatecTokensApiClient', () => {
         },
       };
       expect(responseErrorHandler(testError)).rejects.toBe(testError);
-      
-      import.meta.env.DEV = originalDev;
     });
   });
 
@@ -403,10 +393,15 @@ describe('BiatecTokensApiClient', () => {
     });
 
     it('should return the environment base URL', () => {
+      const originalBaseURL = import.meta.env.VITE_API_BASE_URL;
       import.meta.env.VITE_API_BASE_URL = 'https://env.example.com/api';
+      
       client = new BiatecTokensApiClient();
       
       expect(client.getBaseURL()).toBe('https://env.example.com/api');
+      
+      // Restore original value
+      import.meta.env.VITE_API_BASE_URL = originalBaseURL;
     });
   });
 
