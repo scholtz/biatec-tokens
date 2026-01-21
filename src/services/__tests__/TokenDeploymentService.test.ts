@@ -377,5 +377,118 @@ describe('TokenDeploymentService', () => {
       expect(results[0].success).toBe(true);
       expect(results[1].success).toBe(true);
     });
+
+    it('should fail batch deployment if any request is invalid', async () => {
+      const requests: TokenDeploymentRequest[] = [
+        {
+          standard: TokenStandard.ERC20,
+          name: 'Token 1',
+          symbol: 'TK1',
+          decimals: 18,
+          totalSupply: '1000000',
+          walletAddress: '0x1234567890123456789012345678901234567890',
+        },
+        {
+          standard: TokenStandard.ERC20,
+          name: '', // Invalid - empty name
+          symbol: 'TK2',
+          decimals: 18,
+          totalSupply: '2000000',
+          walletAddress: '0x1234567890123456789012345678901234567890',
+        } as any,
+      ];
+
+      await expect(service.deployTokensBatch(requests)).rejects.toThrow();
+    });
+
+    it('should handle batch deployment errors', async () => {
+      const requests: TokenDeploymentRequest[] = [
+        {
+          standard: TokenStandard.ERC20,
+          name: 'Token 1',
+          symbol: 'TK1',
+          decimals: 18,
+          totalSupply: '1000000',
+          walletAddress: '0x1234567890123456789012345678901234567890',
+        },
+      ];
+
+      mockApiClient.post.mockRejectedValue(new Error('Deployment failed'));
+
+      await expect(service.deployTokensBatch(requests)).rejects.toThrow('Deployment failed');
+    });
+  });
+
+  describe('getTokenDetails', () => {
+    it('should get token details successfully', async () => {
+      const tokenId = 'token_123';
+      const mockToken = {
+        id: tokenId,
+        name: 'Test Token',
+        standard: TokenStandard.ERC20,
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+      };
+
+      mockApiClient.get.mockResolvedValue(mockToken);
+
+      const result = await service.getTokenDetails(tokenId);
+
+      expect(mockApiClient.get).toHaveBeenCalledWith(`/tokens/${tokenId}`);
+      expect(result.id).toBe(tokenId);
+      expect(result.name).toBe('Test Token');
+    });
+
+    it('should handle errors when getting token details', async () => {
+      const tokenId = 'invalid_token';
+      mockApiClient.get.mockRejectedValue(new Error('Token not found'));
+
+      await expect(service.getTokenDetails(tokenId)).rejects.toThrow('Token not found');
+    });
+  });
+
+  describe('cancelDeployment', () => {
+    it('should cancel deployment successfully', async () => {
+      const transactionId = 'txn_123';
+      const mockResponse = { success: true };
+
+      mockApiClient.delete.mockResolvedValue(mockResponse);
+
+      const result = await service.cancelDeployment(transactionId);
+
+      expect(mockApiClient.delete).toHaveBeenCalledWith(`/tokens/deploy/${transactionId}`);
+      expect(result.success).toBe(true);
+    });
+
+    it('should handle errors when canceling deployment', async () => {
+      const transactionId = 'txn_123';
+      mockApiClient.delete.mockRejectedValue(new Error('Cannot cancel completed deployment'));
+
+      await expect(service.cancelDeployment(transactionId)).rejects.toThrow('Cannot cancel completed deployment');
+    });
+  });
+
+  describe('updateTokenMetadata', () => {
+    it('should update token metadata successfully', async () => {
+      const tokenId = 'token_123';
+      const metadata = { description: 'Updated description', image: 'https://example.com/image.png' };
+      const mockResponse = { success: true };
+
+      mockApiClient.put.mockResolvedValue(mockResponse);
+
+      const result = await service.updateTokenMetadata(tokenId, metadata);
+
+      expect(mockApiClient.put).toHaveBeenCalledWith(`/tokens/${tokenId}/metadata`, metadata);
+      expect(result.success).toBe(true);
+    });
+
+    it('should handle errors when updating token metadata', async () => {
+      const tokenId = 'token_123';
+      const metadata = { description: 'Updated description' };
+      mockApiClient.put.mockRejectedValue(new Error('Token is immutable'));
+
+      await expect(service.updateTokenMetadata(tokenId, metadata)).rejects.toThrow('Token is immutable');
+    });
   });
 });

@@ -317,4 +317,109 @@ describe('BiatecTokensApiClient', () => {
       }));
     });
   });
+
+  describe('Interceptors', () => {
+    it('should setup request interceptor in production mode', () => {
+      const originalDev = import.meta.env.DEV;
+      import.meta.env.DEV = false;
+      
+      const mockInstance = {
+        get: vi.fn(),
+        interceptors: {
+          request: { use: vi.fn() },
+          response: { use: vi.fn() },
+        },
+      };
+      
+      mockedAxios.create.mockReturnValue(mockInstance);
+      client = new BiatecTokensApiClient();
+      
+      expect(mockInstance.interceptors.request.use).toHaveBeenCalled();
+      expect(mockInstance.interceptors.response.use).toHaveBeenCalled();
+      
+      import.meta.env.DEV = originalDev;
+    });
+
+    it('should setup request interceptor and handle errors', () => {
+      const mockInstance = {
+        get: vi.fn(),
+        interceptors: {
+          request: { use: vi.fn() },
+          response: { use: vi.fn() },
+        },
+      };
+      
+      mockedAxios.create.mockReturnValue(mockInstance);
+      client = new BiatecTokensApiClient();
+      
+      // Get the error handler passed to request interceptor
+      const requestUseCall = mockInstance.interceptors.request.use.mock.calls[0];
+      const requestErrorHandler = requestUseCall[1];
+      
+      // Test that it rejects errors
+      const testError = new Error('Request error');
+      expect(requestErrorHandler(testError)).rejects.toBe(testError);
+    });
+
+    it('should setup response interceptor and handle errors', () => {
+      const originalDev = import.meta.env.DEV;
+      import.meta.env.DEV = true;
+      
+      const mockInstance = {
+        get: vi.fn(),
+        interceptors: {
+          request: { use: vi.fn() },
+          response: { use: vi.fn() },
+        },
+      };
+      
+      mockedAxios.create.mockReturnValue(mockInstance);
+      client = new BiatecTokensApiClient();
+      
+      // Get the error handler passed to response interceptor
+      const responseUseCall = mockInstance.interceptors.response.use.mock.calls[0];
+      const responseErrorHandler = responseUseCall[1];
+      
+      // Test that it rejects errors with response data
+      const testError = {
+        message: 'API Error',
+        response: {
+          data: { error: 'Bad request' },
+          status: 400,
+        },
+      };
+      expect(responseErrorHandler(testError)).rejects.toBe(testError);
+      
+      import.meta.env.DEV = originalDev;
+    });
+  });
+
+  describe('getBaseURL', () => {
+    it('should return the configured base URL', () => {
+      const customURL = 'https://api.example.com';
+      client = new BiatecTokensApiClient(customURL);
+      
+      expect(client.getBaseURL()).toBe(customURL);
+    });
+
+    it('should return the environment base URL', () => {
+      import.meta.env.VITE_API_BASE_URL = 'https://env.example.com/api';
+      client = new BiatecTokensApiClient();
+      
+      expect(client.getBaseURL()).toBe('https://env.example.com/api');
+    });
+  });
+
+  describe('Custom Base URL', () => {
+    it('should allow custom base URL in constructor', () => {
+      const customURL = 'https://custom.api.com';
+      client = new BiatecTokensApiClient(customURL);
+      
+      expect(mockedAxios.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          baseURL: customURL,
+        })
+      );
+    });
+  });
 });
