@@ -56,7 +56,7 @@
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-2">
-                <span class="text-sm font-medium text-white">{{ getAttestationTypeLabel(attestation.type) }}</span>
+                <span class="text-sm font-medium text-white">{{ getAttestationTypeLabelLocal(attestation.type) }}</span>
                 <span
                   :class="[
                     'px-2 py-0.5 text-xs rounded-full',
@@ -237,6 +237,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { WalletAttestation, AttestationType } from '../types/compliance';
+import { getAttestationTypeLabel } from '../utils/attestation';
 
 // Props
 interface Props {
@@ -289,7 +290,7 @@ const addAttestation = () => {
   if (!isNewAttestationValid.value) return;
 
   const attestation: WalletAttestation = {
-    id: `att-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: `att-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
     type: newAttestation.value.type,
     proofHash: newAttestation.value.proofHash || undefined,
     documentUrl: newAttestation.value.documentUrl || undefined,
@@ -332,15 +333,8 @@ const handleFileUpload = (event: Event) => {
   }
 };
 
-const getAttestationTypeLabel = (type: AttestationType): string => {
-  const labels: Record<AttestationType, string> = {
-    kyc_aml: 'KYC/AML Verification',
-    accredited_investor: 'Accredited Investor',
-    jurisdiction: 'Jurisdiction Approval',
-    issuer_verification: 'Issuer Verification',
-    other: 'Other',
-  };
-  return labels[type] || type;
+const getAttestationTypeLabelLocal = (type: AttestationType): string => {
+  return getAttestationTypeLabel(type);
 };
 
 const hasAttestationType = (type: AttestationType): boolean => {

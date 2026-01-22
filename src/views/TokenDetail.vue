@@ -177,7 +177,7 @@
                   <div class="flex items-start justify-between mb-2">
                     <div class="flex items-center gap-2">
                       <i class="pi pi-file-check text-biatec-accent"></i>
-                      <span class="text-sm font-medium text-white">{{ getAttestationTypeLabel(attestation.type) }}</span>
+                      <span class="text-sm font-medium text-white">{{ getAttestationTypeLabelLocal(attestation.type) }}</span>
                     </div>
                     <span
                       :class="[
@@ -292,6 +292,7 @@ import WhitelistManagement from '../components/WhitelistManagement.vue';
 import ComplianceChecklist from '../components/ComplianceChecklist.vue';
 import AuditLogViewer from '../components/AuditLogViewer.vue';
 import type { AttestationType } from '../types/compliance';
+import { getAttestationTypeLabel } from '../utils/attestation';
 
 const route = useRoute();
 const tokenStore = useTokenStore();
@@ -318,15 +319,8 @@ const formatDate = (date: Date) => {
   }).format(date);
 };
 
-const getAttestationTypeLabel = (type: AttestationType): string => {
-  const labels: Record<AttestationType, string> = {
-    kyc_aml: 'KYC/AML Verification',
-    accredited_investor: 'Accredited Investor',
-    jurisdiction: 'Jurisdiction Approval',
-    issuer_verification: 'Issuer Verification',
-    other: 'Other',
-  };
-  return labels[type] || type;
+const getAttestationTypeLabelLocal = (type: AttestationType): string => {
+  return getAttestationTypeLabel(type);
 };
 
 const statusClass = (status: string) => {

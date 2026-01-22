@@ -442,9 +442,9 @@
                 <div class="flex items-center gap-2 text-sm">
                   <i :class="[
                     'pi pi-check-circle',
-                    tokenForm.attestations.some((att: WalletAttestation) => att.type === 'kyc_aml') ? 'text-green-400' : 'text-gray-500'
+                    tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.KYC_AML) ? 'text-green-400' : 'text-gray-500'
                   ]"></i>
-                  <span :class="tokenForm.attestations.some((att: WalletAttestation) => att.type === 'kyc_aml') ? 'text-white' : 'text-gray-400'">
+                  <span :class="tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.KYC_AML) ? 'text-white' : 'text-gray-400'">
                     KYC/AML Verified
                   </span>
                 </div>
@@ -452,9 +452,9 @@
                 <div class="flex items-center gap-2 text-sm">
                   <i :class="[
                     'pi pi-check-circle',
-                    tokenForm.attestations.some((att: WalletAttestation) => att.type === 'accredited_investor') ? 'text-green-400' : 'text-gray-500'
+                    tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.ACCREDITED_INVESTOR) ? 'text-green-400' : 'text-gray-500'
                   ]"></i>
-                  <span :class="tokenForm.attestations.some((att: WalletAttestation) => att.type === 'accredited_investor') ? 'text-white' : 'text-gray-400'">
+                  <span :class="tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.ACCREDITED_INVESTOR) ? 'text-white' : 'text-gray-400'">
                     Accredited Investor
                   </span>
                 </div>
@@ -462,9 +462,9 @@
                 <div class="flex items-center gap-2 text-sm">
                   <i :class="[
                     'pi pi-check-circle',
-                    tokenForm.attestations.some((att: WalletAttestation) => att.type === 'jurisdiction') ? 'text-green-400' : 'text-gray-500'
+                    tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.JURISDICTION) ? 'text-green-400' : 'text-gray-500'
                   ]"></i>
-                  <span :class="tokenForm.attestations.some((att: WalletAttestation) => att.type === 'jurisdiction') ? 'text-white' : 'text-gray-400'">
+                  <span :class="tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.JURISDICTION) ? 'text-white' : 'text-gray-400'">
                     Jurisdiction Approved
                   </span>
                 </div>
@@ -507,7 +507,7 @@ import MainLayout from "../layout/MainLayout.vue";
 import ComplianceChecklist from "../components/ComplianceChecklist.vue";
 import RwaPresetSelector from "../components/RwaPresetSelector.vue";
 import WalletAttestationForm from "../components/WalletAttestationForm.vue";
-import type { WalletAttestation } from "../types/compliance";
+import { WalletAttestation, AttestationType } from "../types/compliance";
 
 const router = useRouter();
 const tokenStore = useTokenStore();
@@ -620,9 +620,9 @@ const createToken = async () => {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           complianceSummary: {
-            kycCompliant: tokenForm.attestations.some((att: WalletAttestation) => att.type === 'kyc_aml'),
-            accreditedInvestor: tokenForm.attestations.some((att: WalletAttestation) => att.type === 'accredited_investor'),
-            jurisdictionApproved: tokenForm.attestations.some((att: WalletAttestation) => att.type === 'jurisdiction'),
+            kycCompliant: tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.KYC_AML),
+            accreditedInvestor: tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.ACCREDITED_INVESTOR),
+            jurisdictionApproved: tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.JURISDICTION),
             overallStatus: tokenForm.attestations.length >= 2 ? 'compliant' : (tokenForm.attestations.length === 1 ? 'partial' : 'non_compliant') as 'compliant' | 'partial' | 'non_compliant',
           },
         }
