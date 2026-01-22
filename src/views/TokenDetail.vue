@@ -136,6 +136,8 @@
 
           <!-- Audit Trail Tab -->
           <div v-if="activeTab === 'audit'">
+            <!-- Note: network prop is intentionally omitted to show audit logs from all networks.
+                 Users can filter by network using the dropdown in AuditLogViewer. -->
             <AuditLogViewer :token-id="tokenId" />
           </div>
         </div>
