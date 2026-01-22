@@ -73,6 +73,16 @@
           </div>
         </div>
 
+        <!-- MICA Compliance Summary Dashboard -->
+        <div v-if="tokenId" class="mb-8">
+          <MicaDashboardSummary
+            :token-id="tokenId"
+            :network="selectedNetwork"
+            @navigate-to-whitelist="activeTab = 'whitelist'"
+            @navigate-to-audit-log="activeTab = 'audit-log'"
+          />
+        </div>
+
         <!-- Compliance Issues Alert -->
         <div
           v-if="complianceStatus?.issues && complianceStatus.issues.length > 0"
@@ -168,6 +178,7 @@ import WhitelistManagement from '../components/WhitelistManagement.vue';
 import TransferValidationForm from '../components/TransferValidationForm.vue';
 import AuditLogViewer from '../components/AuditLogViewer.vue';
 import ComplianceChecklist from '../components/ComplianceChecklist.vue';
+import MicaDashboardSummary from '../components/MicaDashboardSummary.vue';
 import { complianceService } from '../services/ComplianceService';
 import type { ComplianceStatus } from '../types/compliance';
 

@@ -5,6 +5,7 @@ import type {
   AuditLogFilters,
   AuditLogResponse,
   ComplianceStatus,
+  MicaComplianceMetrics,
 } from '../types/compliance';
 
 /**
@@ -90,6 +91,23 @@ export class ComplianceService {
 
     const query = params.toString() ? `?${params.toString()}` : '';
     return this.apiClient.get<string>(`/v1/audit-log/export${query}`);
+  }
+
+  /**
+   * Get MICA compliance metrics for a token
+   * Includes token supply, holder distribution, whitelist status, and transfer activity
+   * 
+   * @param tokenId - The token identifier
+   * @param network - The network (VOI or Aramid)
+   * @returns MICA compliance metrics for dashboard display
+   */
+  async getMicaComplianceMetrics(
+    tokenId: string,
+    network: string
+  ): Promise<MicaComplianceMetrics> {
+    return this.apiClient.get<MicaComplianceMetrics>(
+      `/v1/compliance/mica-metrics/${tokenId}?network=${network}`
+    );
   }
 }
 

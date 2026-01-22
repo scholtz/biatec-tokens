@@ -129,3 +129,71 @@ export interface ComplianceIssue {
   affectedAddresses?: string[];
   timestamp: string;
 }
+
+/**
+ * Token supply metrics for MICA compliance reporting
+ */
+export interface TokenSupplyMetrics {
+  totalSupply: string;
+  circulatingSupply: string;
+  reserveSupply?: string;
+  burnedSupply?: string;
+  lastUpdated: string;
+}
+
+/**
+ * Holder distribution metrics for MICA compliance reporting
+ */
+export interface HolderDistributionMetrics {
+  totalHolders: number;
+  top10Concentration: number; // Percentage held by top 10 holders
+  top50Concentration: number; // Percentage held by top 50 holders
+  averageHolding: string;
+  medianHolding: string;
+  lastUpdated: string;
+}
+
+/**
+ * Transfer activity for RWA tokens
+ */
+export interface TransferActivity {
+  id: string;
+  timestamp: string;
+  from: string;
+  to: string;
+  amount: string;
+  status: 'completed' | 'pending' | 'failed' | 'blocked';
+  transactionId?: string;
+  reason?: string;
+}
+
+/**
+ * RWA transfer activity metrics for MICA compliance
+ */
+export interface RwaTransferActivityMetrics {
+  last24Hours: number;
+  last7Days: number;
+  last30Days: number;
+  recentTransfers: TransferActivity[];
+  totalVolume24h: string;
+  averageTransferSize: string;
+  lastUpdated: string;
+}
+
+/**
+ * Comprehensive MICA compliance metrics
+ */
+export interface MicaComplianceMetrics {
+  tokenId: string;
+  network: Network;
+  tokenSupply: TokenSupplyMetrics;
+  holderDistribution: HolderDistributionMetrics;
+  whitelistStatus: {
+    enabled: boolean;
+    totalWhitelisted: number;
+    pendingApprovals: number;
+    recentlyAdded: number;
+  };
+  transferActivity: RwaTransferActivityMetrics;
+  lastUpdated: string;
+}
