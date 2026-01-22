@@ -149,15 +149,20 @@
           <ComplianceChecklist v-if="showComplianceChecklist" />
         </div>
 
+        <!-- RWA Compliance Presets (NEW) -->
+        <div class="glass-effect rounded-xl p-6 mb-8">
+          <RwaPresetSelector @apply-preset="applyTemplate" />
+        </div>
+
         <!-- Template Selection (New Step) -->
         <div class="glass-effect rounded-xl p-6 mb-8">
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Quick Start with Templates</h2>
-            <span class="text-sm text-gray-400">Recommended for VOI/Aramid networks</span>
+            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Quick Start with Standard Templates</h2>
+            <span class="text-sm text-gray-400">General-purpose token templates</span>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
             <button
-              v-for="template in tokenStore.tokenTemplates"
+              v-for="template in tokenStore.standardTokenTemplates"
               :key="template.id"
               @click="applyTemplate(template.id)"
               :class="[
@@ -445,6 +450,7 @@ import { useSubscriptionStore } from "../stores/subscription";
 import { useComplianceStore } from "../stores/compliance";
 import MainLayout from "../layout/MainLayout.vue";
 import ComplianceChecklist from "../components/ComplianceChecklist.vue";
+import RwaPresetSelector from "../components/RwaPresetSelector.vue";
 
 const router = useRouter();
 const tokenStore = useTokenStore();

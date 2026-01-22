@@ -35,6 +35,15 @@ export interface TokenTemplate {
   };
   useCases: string[];
   micaCompliant: boolean;
+  isRwaPreset?: boolean;
+  rwaFeatures?: {
+    whitelistEnabled: boolean;
+    transferRestrictions: boolean;
+    issuerControls: boolean;
+    kycRequired: boolean;
+    jurisdictionRestrictions: boolean;
+  };
+  complianceImplications?: string[];
 }
 
 export interface NetworkGuidance {
@@ -285,6 +294,178 @@ export const useTokenStore = defineStore("tokens", () => {
       useCases: ["Stable payments", "DeFi collateral", "Trading pairs", "Savings instruments"],
       micaCompliant: true,
     },
+    // RWA Compliance Presets
+    {
+      id: "rwa-security-token",
+      name: "RWA Security Token (Whitelisted)",
+      description: "MICA-compliant security token with mandatory KYC/AML whitelist for regulated asset tokenization",
+      standard: "ARC200",
+      type: "FT",
+      network: "Both",
+      isRwaPreset: true,
+      rwaFeatures: {
+        whitelistEnabled: true,
+        transferRestrictions: true,
+        issuerControls: true,
+        kycRequired: true,
+        jurisdictionRestrictions: true,
+      },
+      compliance: "Asset-referenced tokens under MICA require prospectus approval, authorization from competent authorities, and ongoing regulatory supervision. Full KYC/AML compliance mandatory.",
+      guidance: "Best for: Tokenized securities, equity representation, regulated investment products. Requires legal opinion, prospectus, and authorization before deployment.",
+      defaults: {
+        supply: 1000000,
+        decimals: 0,
+        description: "A regulated security token representing ownership rights with mandatory whitelist and KYC verification for all participants.",
+      },
+      useCases: ["Equity tokenization", "Bond tokens", "Investment funds", "Regulated securities"],
+      micaCompliant: true,
+      complianceImplications: [
+        "All token holders must complete KYC/AML verification before receiving tokens",
+        "Transfers only permitted between whitelisted addresses",
+        "Issuer maintains control to pause transfers or freeze accounts for compliance",
+        "Geographic restrictions enforced based on regulatory authorization",
+        "Real-time transfer validation against sanctions lists and jurisdiction rules",
+        "Comprehensive audit trail maintained for all transactions",
+        "Regular reporting to regulatory authorities required"
+      ]
+    },
+    {
+      id: "rwa-real-estate-token",
+      name: "RWA Real Estate Token",
+      description: "Fractional real estate ownership with transfer restrictions and accredited investor verification",
+      standard: "ARC200",
+      type: "FT",
+      network: "Aramid",
+      isRwaPreset: true,
+      rwaFeatures: {
+        whitelistEnabled: true,
+        transferRestrictions: true,
+        issuerControls: true,
+        kycRequired: true,
+        jurisdictionRestrictions: true,
+      },
+      compliance: "Real estate tokens typically qualify as securities under MICA. Requires authorization, investor accreditation verification, and compliance with property law. May require real estate fund authorization.",
+      guidance: "Best for: Tokenized property ownership, REITs, fractional real estate. Requires property legal structure, custody arrangements, and accredited investor verification.",
+      defaults: {
+        supply: 10000000,
+        decimals: 6,
+        description: "A fractional real estate ownership token with restricted transfers and mandatory investor verification for compliant property tokenization.",
+      },
+      useCases: ["Commercial real estate", "Residential property tokens", "REIT tokenization", "Property fractional ownership"],
+      micaCompliant: true,
+      complianceImplications: [
+        "Enhanced KYC including accredited investor status verification",
+        "Transfer lockup periods enforced by smart contract",
+        "Secondary transfers require issuer approval and compliance check",
+        "Automatic distribution of rental income or property proceeds",
+        "Legal ownership structure must comply with local property law",
+        "Issuer controls enable forced buybacks or redemptions if required",
+        "Property valuation and custody documentation required"
+      ]
+    },
+    {
+      id: "rwa-emoney-token",
+      name: "RWA E-Money Token",
+      description: "MICA e-money token with reserve requirements, redemption rights, and payment controls",
+      standard: "ARC200",
+      type: "FT",
+      network: "Aramid",
+      isRwaPreset: true,
+      rwaFeatures: {
+        whitelistEnabled: true,
+        transferRestrictions: false,
+        issuerControls: true,
+        kycRequired: true,
+        jurisdictionRestrictions: true,
+      },
+      compliance: "E-money tokens under MICA require e-money institution authorization. Must maintain 1:1 reserves in segregated accounts, provide redemption at par value, and comply with payment service regulations.",
+      guidance: "Best for: Digital currency, payment tokens, remittances. Requires e-money institution license, reserve management, and redemption infrastructure.",
+      defaults: {
+        supply: 100000000,
+        decimals: 2,
+        description: "A MICA-compliant e-money token backed by fiat reserves with guaranteed redemption at par value and payment service capabilities.",
+      },
+      useCases: ["Digital payments", "Cross-border remittances", "Merchant payments", "B2B settlements"],
+      micaCompliant: true,
+      complianceImplications: [
+        "Requires e-money institution authorization under MICA",
+        "1:1 fiat reserves maintained in segregated, safeguarded accounts",
+        "Holders have legal right to redeem at par value at any time",
+        "KYC required for issuance, optional whitelist for transactions",
+        "Issuer controls enable transaction monitoring and sanctions screening",
+        "Regular reserve audits and public disclosure required",
+        "Compliance with payment service regulations (PSD2 in EU)",
+        "Customer funds protection and deposit insurance considerations"
+      ]
+    },
+    {
+      id: "rwa-carbon-credit",
+      name: "RWA Carbon Credit Token",
+      description: "Tokenized carbon credits with registry linkage, transfer tracking, and retirement controls",
+      standard: "ARC200",
+      type: "FT",
+      network: "VOI",
+      isRwaPreset: true,
+      rwaFeatures: {
+        whitelistEnabled: false,
+        transferRestrictions: true,
+        issuerControls: true,
+        kycRequired: false,
+        jurisdictionRestrictions: false,
+      },
+      compliance: "Carbon credits may fall under environmental commodity regulations. Requires linkage to certified carbon registry, transparent tracking, and retirement mechanism to prevent double-counting.",
+      guidance: "Best for: Verified carbon offsets, renewable energy credits, environmental commodities. Requires certification from recognized registry (Gold Standard, Verra, etc.).",
+      defaults: {
+        supply: 1000000,
+        decimals: 3,
+        description: "A tokenized carbon credit representing verified emissions reductions with registry linkage and transparent retirement tracking.",
+      },
+      useCases: ["Carbon offset trading", "Corporate sustainability", "Renewable energy credits", "Environmental commodities"],
+      micaCompliant: true,
+      complianceImplications: [
+        "Each token backed by verified carbon credit in recognized registry",
+        "Transfer restrictions prevent retired credits from re-entering circulation",
+        "Issuer controls enable permanent retirement when credits are used",
+        "Transparent tracking of credit vintage, project, and methodology",
+        "Integration with carbon registries (Gold Standard, Verra, ACR, etc.)",
+        "Prevents double-counting through blockchain transparency",
+        "May require commodity trading license depending on jurisdiction"
+      ]
+    },
+    {
+      id: "rwa-supply-chain-token",
+      name: "RWA Supply Chain Asset Token",
+      description: "Tokenized supply chain assets with provenance tracking and controlled transfer",
+      standard: "ARC3FT",
+      type: "FT",
+      network: "Both",
+      isRwaPreset: true,
+      rwaFeatures: {
+        whitelistEnabled: true,
+        transferRestrictions: true,
+        issuerControls: true,
+        kycRequired: true,
+        jurisdictionRestrictions: false,
+      },
+      compliance: "Supply chain tokens representing physical assets require proof of custody, insurance, and trade compliance. May trigger commodity or warehouse receipt regulations.",
+      guidance: "Best for: Invoice factoring, commodity tokenization, warehouse receipts, trade finance. Requires custody verification and trade documentation.",
+      defaults: {
+        supply: 5000000,
+        decimals: 4,
+        description: "A supply chain asset token with provenance tracking and restricted transfers for compliant trade finance and commodity tokenization.",
+      },
+      useCases: ["Invoice factoring", "Commodity tokens", "Warehouse receipts", "Trade finance"],
+      micaCompliant: true,
+      complianceImplications: [
+        "Whitelist restricted to verified supply chain participants",
+        "Transfer validation ensures custody chain integrity",
+        "Issuer controls enable recall for quality or compliance issues",
+        "Integration with physical asset custody and insurance",
+        "Trade compliance checking (export controls, sanctions)",
+        "Audit trail links on-chain tokens to physical asset documentation",
+        "May require commodity trading or warehouse license"
+      ]
+    },
   ];
 
   const networkGuidance: NetworkGuidance[] = [
@@ -461,6 +642,16 @@ export const useTokenStore = defineStore("tokens", () => {
       useWhen: ["Targeting Ethereum NFT market", "Need marketplace visibility", "Building on Ethereum", "Premium NFT projects"]
     },
   ];
+  
+  // Computed properties to filter templates
+  const rwaTokenTemplates = computed(() => 
+    tokenTemplates.filter(t => t.isRwaPreset === true)
+  );
+  
+  const standardTokenTemplates = computed(() => 
+    tokenTemplates.filter(t => !t.isRwaPreset)
+  );
+  
   return {
     tokens,
     tokensByStandard,
@@ -473,6 +664,8 @@ export const useTokenStore = defineStore("tokens", () => {
     updateTokenStatus,
     tokenStandards,
     tokenTemplates,
+    rwaTokenTemplates,
+    standardTokenTemplates,
     networkGuidance,
   };
 });

@@ -140,10 +140,10 @@ describe('Token Store', () => {
   });
 
   describe('Token Templates', () => {
-    it('should have 8 token templates available', () => {
+    it('should have 13 token templates available (8 standard + 5 RWA)', () => {
       const store = useTokenStore();
       
-      expect(store.tokenTemplates).toHaveLength(8);
+      expect(store.tokenTemplates).toHaveLength(13);
       expect(store.tokenTemplates).toBeDefined();
     });
 
@@ -270,8 +270,190 @@ describe('Token Store', () => {
       const compliantTemplates = store.tokenTemplates.filter(t => t.micaCompliant);
       const nonCompliantTemplates = store.tokenTemplates.filter(t => !t.micaCompliant);
       
-      expect(compliantTemplates.length).toBe(7);
+      expect(compliantTemplates.length).toBe(12);
       expect(nonCompliantTemplates.length).toBe(1);
+    });
+  });
+
+  describe('RWA Token Presets', () => {
+    it('should have 5 RWA compliance presets', () => {
+      const store = useTokenStore();
+      
+      expect(store.rwaTokenTemplates).toHaveLength(5);
+      expect(store.rwaTokenTemplates.every(t => t.isRwaPreset === true)).toBe(true);
+    });
+
+    it('should have standard non-RWA templates', () => {
+      const store = useTokenStore();
+      
+      expect(store.standardTokenTemplates).toHaveLength(8);
+      expect(store.standardTokenTemplates.every(t => !t.isRwaPreset)).toBe(true);
+    });
+
+    it('should have total of 13 templates (8 standard + 5 RWA)', () => {
+      const store = useTokenStore();
+      
+      expect(store.tokenTemplates).toHaveLength(13);
+    });
+
+    it('should have RWA security token with whitelist features', () => {
+      const store = useTokenStore();
+      
+      const securityToken = store.rwaTokenTemplates.find(t => t.id === 'rwa-security-token');
+      
+      expect(securityToken).toBeDefined();
+      expect(securityToken?.name).toBe('RWA Security Token (Whitelisted)');
+      expect(securityToken?.isRwaPreset).toBe(true);
+      expect(securityToken?.rwaFeatures?.whitelistEnabled).toBe(true);
+      expect(securityToken?.rwaFeatures?.transferRestrictions).toBe(true);
+      expect(securityToken?.rwaFeatures?.issuerControls).toBe(true);
+      expect(securityToken?.rwaFeatures?.kycRequired).toBe(true);
+      expect(securityToken?.rwaFeatures?.jurisdictionRestrictions).toBe(true);
+      expect(securityToken?.micaCompliant).toBe(true);
+      expect(securityToken?.complianceImplications).toBeDefined();
+      expect(securityToken?.complianceImplications?.length).toBeGreaterThan(0);
+    });
+
+    it('should have RWA real estate token', () => {
+      const store = useTokenStore();
+      
+      const realEstateToken = store.rwaTokenTemplates.find(t => t.id === 'rwa-real-estate-token');
+      
+      expect(realEstateToken).toBeDefined();
+      expect(realEstateToken?.name).toBe('RWA Real Estate Token');
+      expect(realEstateToken?.network).toBe('Aramid');
+      expect(realEstateToken?.rwaFeatures?.whitelistEnabled).toBe(true);
+      expect(realEstateToken?.rwaFeatures?.kycRequired).toBe(true);
+      expect(realEstateToken?.complianceImplications?.some(i => 
+        i.includes('accredited investor')
+      )).toBe(true);
+    });
+
+    it('should have RWA e-money token with reserve requirements', () => {
+      const store = useTokenStore();
+      
+      const eMoneyToken = store.rwaTokenTemplates.find(t => t.id === 'rwa-emoney-token');
+      
+      expect(eMoneyToken).toBeDefined();
+      expect(eMoneyToken?.name).toBe('RWA E-Money Token');
+      expect(eMoneyToken?.network).toBe('Aramid');
+      expect(eMoneyToken?.rwaFeatures?.whitelistEnabled).toBe(true);
+      expect(eMoneyToken?.rwaFeatures?.transferRestrictions).toBe(false);
+      expect(eMoneyToken?.rwaFeatures?.issuerControls).toBe(true);
+      expect(eMoneyToken?.complianceImplications?.some(i => 
+        i.includes('e-money institution authorization')
+      )).toBe(true);
+      expect(eMoneyToken?.complianceImplications?.some(i => 
+        i.includes('1:1 fiat reserves')
+      )).toBe(true);
+    });
+
+    it('should have RWA carbon credit token', () => {
+      const store = useTokenStore();
+      
+      const carbonToken = store.rwaTokenTemplates.find(t => t.id === 'rwa-carbon-credit');
+      
+      expect(carbonToken).toBeDefined();
+      expect(carbonToken?.name).toBe('RWA Carbon Credit Token');
+      expect(carbonToken?.network).toBe('VOI');
+      expect(carbonToken?.rwaFeatures?.whitelistEnabled).toBe(false);
+      expect(carbonToken?.rwaFeatures?.transferRestrictions).toBe(true);
+      expect(carbonToken?.rwaFeatures?.kycRequired).toBe(false);
+      expect(carbonToken?.complianceImplications?.some(i => 
+        i.toLowerCase().includes('carbon credit') || i.toLowerCase().includes('registry')
+      )).toBe(true);
+    });
+
+    it('should have RWA supply chain asset token', () => {
+      const store = useTokenStore();
+      
+      const supplyChainToken = store.rwaTokenTemplates.find(t => t.id === 'rwa-supply-chain-token');
+      
+      expect(supplyChainToken).toBeDefined();
+      expect(supplyChainToken?.name).toBe('RWA Supply Chain Asset Token');
+      expect(supplyChainToken?.network).toBe('Both');
+      expect(supplyChainToken?.rwaFeatures?.whitelistEnabled).toBe(true);
+      expect(supplyChainToken?.rwaFeatures?.issuerControls).toBe(true);
+      expect(supplyChainToken?.complianceImplications?.some(i => 
+        i.includes('supply chain participants')
+      )).toBe(true);
+    });
+
+    it('should have compliance implications for all RWA presets', () => {
+      const store = useTokenStore();
+      
+      store.rwaTokenTemplates.forEach(preset => {
+        expect(preset.complianceImplications).toBeDefined();
+        expect(preset.complianceImplications?.length).toBeGreaterThan(5);
+        expect(preset.rwaFeatures).toBeDefined();
+      });
+    });
+
+    it('should have detailed compliance guidance for RWA presets', () => {
+      const store = useTokenStore();
+      
+      store.rwaTokenTemplates.forEach(preset => {
+        expect(preset.compliance).toBeDefined();
+        expect(preset.compliance.length).toBeGreaterThan(50);
+        expect(preset.guidance).toBeDefined();
+        expect(preset.guidance.length).toBeGreaterThan(30);
+      });
+    });
+
+    it('should have appropriate use cases for RWA presets', () => {
+      const store = useTokenStore();
+      
+      store.rwaTokenTemplates.forEach(preset => {
+        expect(preset.useCases).toBeDefined();
+        expect(preset.useCases.length).toBeGreaterThan(2);
+      });
+    });
+
+    it('should use appropriate token standards for RWA presets', () => {
+      const store = useTokenStore();
+      
+      const standards = store.rwaTokenTemplates.map(t => t.standard);
+      
+      // RWA presets should use ARC200 or ARC3FT for advanced features
+      expect(standards.every(s => s === 'ARC200' || s === 'ARC3FT')).toBe(true);
+    });
+
+    it('should mark all RWA presets as MICA compliant', () => {
+      const store = useTokenStore();
+      
+      store.rwaTokenTemplates.forEach(preset => {
+        expect(preset.micaCompliant).toBe(true);
+      });
+    });
+
+    it('should have RWA features with correct structure', () => {
+      const store = useTokenStore();
+      
+      store.rwaTokenTemplates.forEach(preset => {
+        expect(preset.rwaFeatures).toBeDefined();
+        expect(typeof preset.rwaFeatures?.whitelistEnabled).toBe('boolean');
+        expect(typeof preset.rwaFeatures?.transferRestrictions).toBe('boolean');
+        expect(typeof preset.rwaFeatures?.issuerControls).toBe('boolean');
+        expect(typeof preset.rwaFeatures?.kycRequired).toBe('boolean');
+        expect(typeof preset.rwaFeatures?.jurisdictionRestrictions).toBe('boolean');
+      });
+    });
+
+    it('should filter RWA presets from standard templates correctly', () => {
+      const store = useTokenStore();
+      
+      const allTemplates = store.tokenTemplates;
+      const rwaTemplates = store.rwaTokenTemplates;
+      const standardTemplates = store.standardTokenTemplates;
+      
+      expect(allTemplates.length).toBe(rwaTemplates.length + standardTemplates.length);
+      
+      // Check no overlap
+      const rwaIds = rwaTemplates.map(t => t.id);
+      const standardIds = standardTemplates.map(t => t.id);
+      
+      const overlap = rwaIds.filter(id => standardIds.includes(id));
+      expect(overlap.length).toBe(0);
     });
   });
 });
