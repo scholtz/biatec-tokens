@@ -197,3 +197,46 @@ export interface MicaComplianceMetrics {
   transferActivity: RwaTransferActivityMetrics;
   lastUpdated: string;
 }
+
+/**
+ * Wallet attestation types for compliance verification
+ */
+export enum AttestationType {
+  KYC_AML = 'kyc_aml',
+  ACCREDITED_INVESTOR = 'accredited_investor',
+  JURISDICTION = 'jurisdiction',
+  ISSUER_VERIFICATION = 'issuer_verification',
+  OTHER = 'other',
+}
+
+/**
+ * Wallet attestation for compliance checks
+ */
+export interface WalletAttestation {
+  id: string;
+  type: AttestationType;
+  proofHash?: string;
+  documentUrl?: string;
+  status: 'pending' | 'verified' | 'rejected';
+  verifiedBy?: string;
+  verifiedAt?: string;
+  expiresAt?: string;
+  notes?: string;
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Token attestation metadata for audit trail
+ */
+export interface TokenAttestationMetadata {
+  enabled: boolean;
+  attestations: WalletAttestation[];
+  createdAt: string;
+  updatedAt: string;
+  complianceSummary?: {
+    kycCompliant: boolean;
+    accreditedInvestor: boolean;
+    jurisdictionApproved: boolean;
+    overallStatus: 'compliant' | 'partial' | 'non_compliant';
+  };
+}

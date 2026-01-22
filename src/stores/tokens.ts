@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
+import type { TokenAttestationMetadata } from "../types/compliance";
 
 export interface Token {
   id: string;
@@ -17,6 +18,7 @@ export interface Token {
   txId?: string;
   assetId?: number;
   contractAddress?: string;
+  attestationMetadata?: TokenAttestationMetadata;
 }
 
 export interface TokenTemplate {

@@ -154,6 +154,14 @@
           <RwaPresetSelector @apply-preset="applyTemplate" />
         </div>
 
+        <!-- Wallet Attestation (NEW - Optional) -->
+        <div class="mb-8">
+          <WalletAttestationForm 
+            v-model="tokenForm.attestations"
+            v-model:enabled="tokenForm.attestationEnabled"
+          />
+        </div>
+
         <!-- Template Selection (New Step) -->
         <div class="glass-effect rounded-xl p-6 mb-8">
           <div class="flex items-center justify-between mb-6">
@@ -423,6 +431,53 @@
               </div>
             </div>
 
+            <!-- Pre-Deployment Compliance Summary -->
+            <div v-if="tokenForm.attestationEnabled && tokenForm.attestations.length > 0" class="p-6 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded-xl">
+              <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <i class="pi pi-shield-check text-green-400"></i>
+                Pre-Deployment Compliance Status
+              </h3>
+              
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                <div class="flex items-center gap-2 text-sm">
+                  <i :class="[
+                    'pi pi-check-circle',
+                    tokenForm.attestations.some((att: WalletAttestation) => att.type === 'kyc_aml') ? 'text-green-400' : 'text-gray-500'
+                  ]"></i>
+                  <span :class="tokenForm.attestations.some((att: WalletAttestation) => att.type === 'kyc_aml') ? 'text-white' : 'text-gray-400'">
+                    KYC/AML Verified
+                  </span>
+                </div>
+                
+                <div class="flex items-center gap-2 text-sm">
+                  <i :class="[
+                    'pi pi-check-circle',
+                    tokenForm.attestations.some((att: WalletAttestation) => att.type === 'accredited_investor') ? 'text-green-400' : 'text-gray-500'
+                  ]"></i>
+                  <span :class="tokenForm.attestations.some((att: WalletAttestation) => att.type === 'accredited_investor') ? 'text-white' : 'text-gray-400'">
+                    Accredited Investor
+                  </span>
+                </div>
+                
+                <div class="flex items-center gap-2 text-sm">
+                  <i :class="[
+                    'pi pi-check-circle',
+                    tokenForm.attestations.some((att: WalletAttestation) => att.type === 'jurisdiction') ? 'text-green-400' : 'text-gray-500'
+                  ]"></i>
+                  <span :class="tokenForm.attestations.some((att: WalletAttestation) => att.type === 'jurisdiction') ? 'text-white' : 'text-gray-400'">
+                    Jurisdiction Approved
+                  </span>
+                </div>
+              </div>
+
+              <div class="text-sm text-gray-300 flex items-start gap-2">
+                <i class="pi pi-info-circle text-blue-400 mt-0.5"></i>
+                <span>
+                  <strong class="text-white">{{ tokenForm.attestations.length }}</strong> attestation(s) will be included with this token deployment for compliance audit trail.
+                </span>
+              </div>
+            </div>
+
             <!-- Submit Button -->
             <div class="flex justify-end">
               <button
@@ -451,6 +506,8 @@ import { useComplianceStore } from "../stores/compliance";
 import MainLayout from "../layout/MainLayout.vue";
 import ComplianceChecklist from "../components/ComplianceChecklist.vue";
 import RwaPresetSelector from "../components/RwaPresetSelector.vue";
+import WalletAttestationForm from "../components/WalletAttestationForm.vue";
+import type { WalletAttestation } from "../types/compliance";
 
 const router = useRouter();
 const tokenStore = useTokenStore();
@@ -473,6 +530,8 @@ const tokenForm = reactive({
   decimals: 6,
   imageUrl: "",
   attributes: [] as Array<{ trait_type: string; value: string }>,
+  attestationEnabled: false,
+  attestations: [] as WalletAttestation[],
 });
 
 // Watch for network changes and sync with compliance store
@@ -553,6 +612,22 @@ const createToken = async () => {
   subscriptionStore.trackTokenCreationAttempt();
 
   try {
+    // Prepare attestation metadata if enabled
+    const attestationMetadata = tokenForm.attestationEnabled && tokenForm.attestations.length > 0
+      ? {
+          enabled: true,
+          attestations: tokenForm.attestations,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          complianceSummary: {
+            kycCompliant: tokenForm.attestations.some((att: WalletAttestation) => att.type === 'kyc_aml'),
+            accreditedInvestor: tokenForm.attestations.some((att: WalletAttestation) => att.type === 'accredited_investor'),
+            jurisdictionApproved: tokenForm.attestations.some((att: WalletAttestation) => att.type === 'jurisdiction'),
+            overallStatus: tokenForm.attestations.length >= 2 ? 'compliant' : (tokenForm.attestations.length === 1 ? 'partial' : 'non_compliant') as 'compliant' | 'partial' | 'non_compliant',
+          },
+        }
+      : undefined;
+
     await tokenStore.createToken({
       name: tokenForm.name,
       symbol: tokenForm.symbol,
@@ -563,6 +638,7 @@ const createToken = async () => {
       description: tokenForm.description,
       imageUrl: tokenForm.imageUrl || undefined,
       attributes: tokenForm.type === "NFT" ? tokenForm.attributes.filter((attr) => attr.trait_type && attr.value) : undefined,
+      attestationMetadata,
     });
 
     // Track successful creation with details
@@ -582,6 +658,8 @@ const createToken = async () => {
       decimals: 6,
       imageUrl: "",
       attributes: [],
+      attestationEnabled: false,
+      attestations: [],
     });
     selectedStandard.value = "";
     selectedNetwork.value = null;

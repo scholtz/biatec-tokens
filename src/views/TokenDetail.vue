@@ -106,6 +106,137 @@
                 </div>
               </div>
             </div>
+
+            <!-- Attestation Metadata -->
+            <div v-if="token.attestationMetadata && token.attestationMetadata.enabled" class="glass-effect rounded-xl p-6">
+              <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                <i class="pi pi-verified text-biatec-accent"></i>
+                Wallet Attestation & Compliance
+              </h3>
+              
+              <!-- Compliance Summary -->
+              <div v-if="token.attestationMetadata.complianceSummary" class="mb-6 p-4 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded-lg">
+                <div class="flex items-center gap-2 mb-3">
+                  <i class="pi pi-info-circle text-blue-400"></i>
+                  <span class="text-sm font-semibold text-white">Compliance Status</span>
+                  <span 
+                    :class="[
+                      'ml-auto px-2 py-1 text-xs rounded-full',
+                      token.attestationMetadata.complianceSummary.overallStatus === 'compliant' 
+                        ? 'bg-green-500/20 text-green-400'
+                        : token.attestationMetadata.complianceSummary.overallStatus === 'partial'
+                        ? 'bg-yellow-500/20 text-yellow-400'
+                        : 'bg-red-500/20 text-red-400'
+                    ]"
+                  >
+                    {{ token.attestationMetadata.complianceSummary.overallStatus }}
+                  </span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div class="flex items-center gap-2 text-sm">
+                    <i :class="[
+                      'pi',
+                      token.attestationMetadata.complianceSummary.kycCompliant ? 'pi-check-circle text-green-400' : 'pi-times-circle text-gray-500'
+                    ]"></i>
+                    <span :class="token.attestationMetadata.complianceSummary.kycCompliant ? 'text-white' : 'text-gray-400'">
+                      KYC/AML Verified
+                    </span>
+                  </div>
+                  
+                  <div class="flex items-center gap-2 text-sm">
+                    <i :class="[
+                      'pi',
+                      token.attestationMetadata.complianceSummary.accreditedInvestor ? 'pi-check-circle text-green-400' : 'pi-times-circle text-gray-500'
+                    ]"></i>
+                    <span :class="token.attestationMetadata.complianceSummary.accreditedInvestor ? 'text-white' : 'text-gray-400'">
+                      Accredited Investor
+                    </span>
+                  </div>
+                  
+                  <div class="flex items-center gap-2 text-sm">
+                    <i :class="[
+                      'pi',
+                      token.attestationMetadata.complianceSummary.jurisdictionApproved ? 'pi-check-circle text-green-400' : 'pi-times-circle text-gray-500'
+                    ]"></i>
+                    <span :class="token.attestationMetadata.complianceSummary.jurisdictionApproved ? 'text-white' : 'text-gray-400'">
+                      Jurisdiction Approved
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Attestations List -->
+              <div class="space-y-3">
+                <h4 class="text-sm font-semibold text-gray-300 mb-3">Attestations ({{ token.attestationMetadata.attestations.length }})</h4>
+                <div
+                  v-for="attestation in token.attestationMetadata.attestations"
+                  :key="attestation.id"
+                  class="p-4 bg-white/5 rounded-lg border border-white/10"
+                >
+                  <div class="flex items-start justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                      <i class="pi pi-file-check text-biatec-accent"></i>
+                      <span class="text-sm font-medium text-white">{{ getAttestationTypeLabel(attestation.type) }}</span>
+                    </div>
+                    <span
+                      :class="[
+                        'px-2 py-0.5 text-xs rounded-full',
+                        attestation.status === 'verified'
+                          ? 'bg-green-500/20 text-green-400'
+                          : attestation.status === 'rejected'
+                          ? 'bg-red-500/20 text-red-400'
+                          : 'bg-yellow-500/20 text-yellow-400'
+                      ]"
+                    >
+                      {{ attestation.status }}
+                    </span>
+                  </div>
+                  
+                  <dl class="space-y-2 text-xs">
+                    <div v-if="attestation.proofHash">
+                      <dt class="text-gray-400 inline">Proof Hash:</dt>
+                      <dd class="text-gray-300 inline ml-2 font-mono">{{ attestation.proofHash }}</dd>
+                    </div>
+                    
+                    <div v-if="attestation.documentUrl">
+                      <dt class="text-gray-400 inline">Document:</dt>
+                      <dd class="text-gray-300 inline ml-2">
+                        <a :href="attestation.documentUrl" target="_blank" class="text-biatec-accent hover:underline">
+                          View Document <i class="pi pi-external-link text-xs"></i>
+                        </a>
+                      </dd>
+                    </div>
+                    
+                    <div v-if="attestation.verifiedAt">
+                      <dt class="text-gray-400 inline">Verified:</dt>
+                      <dd class="text-gray-300 inline ml-2">
+                        {{ formatDate(new Date(attestation.verifiedAt)) }}
+                        <span v-if="attestation.verifiedBy" class="text-gray-400">by {{ attestation.verifiedBy }}</span>
+                      </dd>
+                    </div>
+                    
+                    <div v-if="attestation.expiresAt">
+                      <dt class="text-gray-400 inline">Expires:</dt>
+                      <dd class="text-gray-300 inline ml-2">{{ formatDate(new Date(attestation.expiresAt)) }}</dd>
+                    </div>
+                    
+                    <div v-if="attestation.notes">
+                      <dt class="text-gray-400">Notes:</dt>
+                      <dd class="text-gray-300 mt-1">{{ attestation.notes }}</dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+
+              <!-- Metadata Timestamps -->
+              <div class="mt-4 pt-4 border-t border-white/10 text-xs text-gray-400">
+                <div class="flex justify-between">
+                  <span>Attestation Created: {{ formatDate(new Date(token.attestationMetadata.createdAt)) }}</span>
+                  <span>Last Updated: {{ formatDate(new Date(token.attestationMetadata.updatedAt)) }}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Whitelist Tab -->
@@ -160,6 +291,7 @@ import MainLayout from '../layout/MainLayout.vue';
 import WhitelistManagement from '../components/WhitelistManagement.vue';
 import ComplianceChecklist from '../components/ComplianceChecklist.vue';
 import AuditLogViewer from '../components/AuditLogViewer.vue';
+import type { AttestationType } from '../types/compliance';
 
 const route = useRoute();
 const tokenStore = useTokenStore();
@@ -184,6 +316,17 @@ const formatDate = (date: Date) => {
     hour: '2-digit',
     minute: '2-digit',
   }).format(date);
+};
+
+const getAttestationTypeLabel = (type: AttestationType): string => {
+  const labels: Record<AttestationType, string> = {
+    kyc_aml: 'KYC/AML Verification',
+    accredited_investor: 'Accredited Investor',
+    jurisdiction: 'Jurisdiction Approval',
+    issuer_verification: 'Issuer Verification',
+    other: 'Other',
+  };
+  return labels[type] || type;
 };
 
 const statusClass = (status: string) => {
