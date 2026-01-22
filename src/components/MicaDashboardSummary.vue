@@ -259,11 +259,11 @@
 import { ref, onMounted } from 'vue';
 import MicaSummaryWidget from './MicaSummaryWidget.vue';
 import { complianceService } from '../services/ComplianceService';
-import type { MicaComplianceMetrics } from '../types/compliance';
+import type { MicaComplianceMetrics, Network } from '../types/compliance';
 
 interface Props {
   tokenId: string;
-  network: string;
+  network: Network | string;
 }
 
 const props = defineProps<Props>();
@@ -295,9 +295,8 @@ const loadMetrics = async () => {
     );
   } catch (err) {
     console.error('Failed to load MICA metrics:', err);
-    // Don't set error - use mock data for development/testing if API fails
+    // Use mock data for development/testing if API fails
     
-    // Set mock data for development/testing if API fails
     micaMetrics.value = {
       tokenId: props.tokenId,
       network: props.network as 'VOI' | 'Aramid',
