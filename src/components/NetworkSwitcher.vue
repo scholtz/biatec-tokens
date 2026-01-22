@@ -162,7 +162,7 @@ const handleNetworkSwitch = async (networkId: NetworkId) => {
 
 // Close dropdown when clicking outside
 const handleClickOutside = (event: MouseEvent) => {
-  if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
+  if (dropdownRef.value && event.target && !dropdownRef.value.contains(event.target as Node)) {
     isOpen.value = false
   }
 }

@@ -258,46 +258,38 @@ export function useWalletManager() {
   }
 
   /**
-   * Persist connection state
-   */
-  const persistConnectionState = () => {
-    if (walletState.value.isConnected && walletState.value.activeWallet) {
-      localStorage.setItem('wallet_connected', 'true')
-      localStorage.setItem('active_wallet_id', walletState.value.activeWallet)
-    }
-  }
-
-  /**
    * Setup event listeners
    */
   const setupListeners = () => {
-    // Note: @txnlab/use-wallet-vue doesn't have a subscribe method
-    // Instead, we'll rely on Vue's reactivity system
-    // Persist state whenever wallet state changes
-    const cleanup = () => {
-      // Cleanup function if needed
-    }
-    
     // Persist connection state when wallet is connected
     if (walletState.value.isConnected) {
-      persistConnectionState()
+      if (walletState.value.activeWallet) {
+        localStorage.setItem('wallet_connected', 'true')
+        localStorage.setItem('active_wallet_id', walletState.value.activeWallet)
+      }
     }
-    
-    return cleanup
+
+    // Cleanup function for event listeners
+    return () => {
+      // Placeholder for cleanup if needed in the future
+    }
   }
+
+  // Cleanup reference
+  let cleanup: (() => void) | null = null
 
   // Initialize on mount
   onMounted(async () => {
-    const unwatch = setupListeners()
+    cleanup = setupListeners()
     updateWalletState()
     await attemptReconnect()
+  })
 
-    // Cleanup on unmount
-    onUnmounted(() => {
-      if (typeof unwatch === 'function') {
-        unwatch()
-      }
-    })
+  // Cleanup on unmount
+  onUnmounted(() => {
+    if (cleanup && typeof cleanup === 'function') {
+      cleanup()
+    }
   })
 
   return {

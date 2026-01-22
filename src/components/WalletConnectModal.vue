@@ -117,7 +117,7 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   showNetworkSelector: true,
-  defaultNetwork: 'voi-mainnet',
+  defaultNetwork: 'voi-mainnet' as NetworkId,
 })
 
 const emit = defineEmits<Emits>()
