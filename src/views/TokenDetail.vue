@@ -133,6 +133,11 @@
               <ComplianceChecklist />
             </div>
           </div>
+
+          <!-- Audit Trail Tab -->
+          <div v-if="activeTab === 'audit'">
+            <AuditLogViewer :token-id="tokenId" />
+          </div>
         </div>
 
         <!-- Loading State -->
@@ -152,6 +157,7 @@ import { useTokenStore } from '../stores/tokens';
 import MainLayout from '../layout/MainLayout.vue';
 import WhitelistManagement from '../components/WhitelistManagement.vue';
 import ComplianceChecklist from '../components/ComplianceChecklist.vue';
+import AuditLogViewer from '../components/AuditLogViewer.vue';
 
 const route = useRoute();
 const tokenStore = useTokenStore();
@@ -165,6 +171,7 @@ const tabs = [
   { id: 'overview', label: 'Overview', icon: 'pi pi-info-circle' },
   { id: 'whitelist', label: 'Whitelist', icon: 'pi pi-list' },
   { id: 'compliance', label: 'Compliance', icon: 'pi pi-shield-check' },
+  { id: 'audit', label: 'Audit Trail', icon: 'pi pi-history' },
 ];
 
 const formatDate = (date: Date) => {
