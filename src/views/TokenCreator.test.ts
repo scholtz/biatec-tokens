@@ -32,7 +32,7 @@ describe('TokenCreator Component', () => {
   });
 
   describe('Template Selection', () => {
-    it('should display 8 token templates', () => {
+    it('should display 13 token templates (8 standard + 5 RWA)', () => {
       const wrapper = mount(TokenCreator, {
         global: {
           plugins: [pinia, router],
@@ -44,7 +44,9 @@ describe('TokenCreator Component', () => {
       );
 
       const store = useTokenStore();
-      expect(store.tokenTemplates).toHaveLength(8);
+      expect(store.tokenTemplates).toHaveLength(13);
+      expect(store.standardTokenTemplates).toHaveLength(8);
+      expect(store.rwaTokenTemplates).toHaveLength(5);
     });
 
     it('should show MICA compliance badge for compliant templates', () => {
