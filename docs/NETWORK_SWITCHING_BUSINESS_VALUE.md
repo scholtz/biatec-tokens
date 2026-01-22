@@ -1,5 +1,13 @@
 # Network Switching Business Value & Risk Assessment
 
+**Related Issue**: [Improve wallet integration for VOI/Aramid](https://github.com/scholtz/biatec-tokens/issues) - Add UX and connectivity improvements for Algorand wallets on VOI and Aramid networks
+
+**Related PR**: Implement wallet integration with network switching for VOI/Aramid
+
+**Related Documentation**:
+- `docs/WALLET_INTEGRATION.md` - Technical integration guide
+- `TEST_COVERAGE_SUMMARY.md` - Test coverage details
+
 ## Executive Summary
 
 Network switching functionality enables users to seamlessly transition between VOI and Aramid blockchain networks within the Biatec Tokens platform. This capability is critical for enterprise users managing multi-network token portfolios and compliance workflows.
