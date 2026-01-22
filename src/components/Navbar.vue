@@ -51,19 +51,50 @@
 
         <!-- Wallet Connection -->
         <div class="flex items-center space-x-4">
-          <div class="hidden sm:flex items-center space-x-3 text-sm text-gray-300 bg-white/5 px-4 py-2 rounded-lg">
-            <span class="status-dot" :class="`status-${networkStatus.toLowerCase()}`"></span>
-            <span class="font-medium">{{ networkStatus }}</span>
+          <!-- Network Switcher -->
+          <NetworkSwitcher class="hidden sm:flex" />
+          
+          <!-- Wallet Button -->
+          <div class="relative">
+            <button
+              @click="handleWalletClick"
+              :disabled="walletState.isConnecting"
+              class="btn-primary px-6 py-3 rounded-xl text-white font-medium text-sm flex items-center space-x-2 disabled:opacity-50 relative"
+            >
+              <i class="pi pi-wallet text-lg"></i>
+              <span>{{ walletButtonText }}</span>
+              <i v-if="isConnected" class="pi pi-chevron-down text-sm"></i>
+            </button>
+
+            <!-- Account Menu Dropdown -->
+            <Transition name="dropdown">
+              <div
+                v-if="showAccountMenu && isConnected"
+                class="absolute right-0 mt-2 w-64 glass-effect rounded-xl shadow-2xl border border-white/10 p-2 z-50"
+              >
+                <div class="p-3 border-b border-white/10 mb-2">
+                  <div class="text-xs text-gray-400 mb-1">Connected Address</div>
+                  <div class="text-sm text-white font-mono break-all">{{ activeAddress }}</div>
+                </div>
+                
+                <button
+                  @click="handleDisconnect"
+                  class="w-full p-3 rounded-lg text-left hover:bg-red-500/10 transition-colors flex items-center gap-3 text-red-400"
+                >
+                  <i class="pi pi-sign-out"></i>
+                  <span class="font-medium">Disconnect</span>
+                </button>
+              </div>
+            </Transition>
           </div>
-          <button
-            @click="connectWallet"
-            :disabled="isConnecting"
-            class="btn-primary px-6 py-3 rounded-xl text-white font-medium text-sm flex items-center space-x-2 disabled:opacity-50"
-          >
-            <i class="pi pi-wallet text-lg"></i>
-            <span>{{ walletButtonText }}</span>
-          </button>
         </div>
+
+        <!-- Wallet Connect Modal -->
+        <WalletConnectModal
+          :is-open="showWalletModal"
+          @close="showWalletModal = false"
+          @connected="handleConnected"
+        />
 
         <!-- Mobile Menu Button -->
         <button
@@ -113,22 +144,19 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useSettingsStore } from '../stores/settings'
+import { useWalletManager } from '../composables/useWalletManager'
+import WalletConnectModal from './WalletConnectModal.vue'
+import NetworkSwitcher from './NetworkSwitcher.vue'
 
-const settingsStore = useSettingsStore()
+const { isConnected, activeAddress, formattedAddress, disconnect, walletState } = useWalletManager()
+
 const showMobileMenu = ref(false)
-const isConnecting = ref(false)
-const isConnected = ref(false)
-const walletAddress = ref('')
-
-const networkStatus = computed(() => {
-  const network = settingsStore.settings.network
-  return network.charAt(0).toUpperCase() + network.slice(1)
-})
+const showWalletModal = ref(false)
+const showAccountMenu = ref(false)
 
 const walletButtonText = computed(() => {
-  if (isConnecting.value) return 'Connecting...'
-  if (isConnected.value) return `${walletAddress.value.slice(0, 6)}...${walletAddress.value.slice(-4)}`
+  if (walletState.value.isConnecting) return 'Connecting...'
+  if (isConnected.value && formattedAddress.value) return formattedAddress.value
   return 'Connect Wallet'
 })
 
@@ -136,20 +164,36 @@ const toggleMobileMenu = () => {
   showMobileMenu.value = !showMobileMenu.value
 }
 
-const connectWallet = async () => {
-  if (isConnected.value) return
-  
-  isConnecting.value = true
-  
-  try {
-    // Mock wallet connection
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    isConnected.value = true
-    walletAddress.value = 'DEMO' + Math.random().toString(36).substr(2, 54).toUpperCase()
-  } catch (error) {
-    console.error('Failed to connect wallet:', error)
-  } finally {
-    isConnecting.value = false
+const handleWalletClick = () => {
+  if (isConnected.value) {
+    showAccountMenu.value = !showAccountMenu.value
+  } else {
+    showWalletModal.value = true
   }
 }
+
+const handleDisconnect = async () => {
+  try {
+    await disconnect()
+    showAccountMenu.value = false
+  } catch (error) {
+    console.error('Failed to disconnect:', error)
+  }
+}
+
+const handleConnected = () => {
+  showWalletModal.value = false
+}
 </script>
+<style scoped>
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.2s ease;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+</style>

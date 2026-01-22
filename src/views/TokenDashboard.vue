@@ -37,13 +37,16 @@
             <div class="text-sm text-gray-400 mt-1">In progress</div>
           </div>
 
-          <div class="glass-effect rounded-xl p-6">
+          <div class="glass-effect rounded-xl p-6 cursor-pointer hover:border-biatec-accent/50 transition-colors" @click="navigateToCompliance">
             <div class="flex items-center justify-between mb-2">
-              <h3 class="text-sm font-medium text-gray-400">Failed</h3>
-              <i class="pi pi-exclamation-triangle text-red-400"></i>
+              <h3 class="text-sm font-medium text-gray-400">MICA Compliance</h3>
+              <i class="pi pi-shield-check text-biatec-accent"></i>
             </div>
-            <div class="text-3xl font-bold text-gray-900 dark:text-white">{{ failedTokens }}</div>
-            <div class="text-sm text-gray-400 mt-1">Deployment failed</div>
+            <div class="text-2xl font-bold text-gray-900 dark:text-white">Enterprise</div>
+            <div class="text-sm text-biatec-accent mt-1 flex items-center gap-1">
+              Manage Compliance
+              <i class="pi pi-arrow-right text-xs"></i>
+            </div>
           </div>
         </div>
 
@@ -108,10 +111,12 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { useRouter } from "vue-router";
 import { useTokenStore } from "../stores/tokens";
 import TokenCard from "../components/TokenCard.vue";
 import MainLayout from "../layout/MainLayout.vue";
 
+const router = useRouter();
 const tokenStore = useTokenStore();
 
 const selectedStandardFilter = ref("");
@@ -120,7 +125,6 @@ const selectedStatusFilter = ref("");
 const tokens = computed(() => tokenStore.tokens);
 const totalTokens = computed(() => tokenStore.totalTokens);
 const deployedTokens = computed(() => tokenStore.deployedTokens);
-const failedTokens = computed(() => tokenStore.failedTokens);
 const deployingTokens = computed(() => tokens.value.filter((t) => t.status === "deploying").length);
 
 const filteredTokens = computed(() => {
@@ -147,5 +151,10 @@ const deleteToken = (tokenId: string) => {
 const refreshTokens = () => {
   // In a real app, this would fetch the latest data from the API
   console.log("Refreshing tokens...");
+};
+
+const navigateToCompliance = () => {
+  // Navigate to compliance dashboard
+  router.push({ name: 'ComplianceDashboard' });
 };
 </script>

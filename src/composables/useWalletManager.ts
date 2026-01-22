@@ -1,0 +1,326 @@
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useWallet, type WalletAccount } from '@txnlab/use-wallet-vue'
+import { useAuthStore } from '../stores/auth'
+
+export interface WalletState {
+  isConnected: boolean
+  activeAddress: string | null
+  activeWallet: string | null
+  accounts: WalletAccount[]
+  isConnecting: boolean
+  error: string | null
+}
+
+export type NetworkId = 'voi-mainnet' | 'aramidmain' | 'dockernet'
+
+export interface NetworkInfo {
+  id: NetworkId
+  name: string
+  displayName: string
+  algodUrl: string
+  genesisId: string
+  isTestnet: boolean
+}
+
+export const NETWORKS: Record<NetworkId, NetworkInfo> = {
+  'voi-mainnet': {
+    id: 'voi-mainnet',
+    name: 'voi-mainnet',
+    displayName: 'VOI Mainnet',
+    algodUrl: 'https://mainnet-api.voi.nodely.dev',
+    genesisId: 'voimain-v1.0',
+    isTestnet: false,
+  },
+  'aramidmain': {
+    id: 'aramidmain',
+    name: 'aramidmain',
+    displayName: 'Aramid Mainnet',
+    algodUrl: 'https://algod.aramidmain.a-wallet.net',
+    genesisId: 'aramidmain-v1.0',
+    isTestnet: false,
+  },
+  'dockernet': {
+    id: 'dockernet',
+    name: 'dockernet',
+    displayName: 'Dockernet (Local)',
+    algodUrl: 'http://localhost:4001',
+    genesisId: 'dockernet-v1',
+    isTestnet: true,
+  },
+}
+
+/**
+ * Composable for managing wallet connections and network switching
+ * Integrates with @txnlab/use-wallet-vue and provides resilient connection handling
+ */
+export function useWalletManager() {
+  const wallet = useWallet()
+  const authStore = useAuthStore()
+  
+  const walletState = ref<WalletState>({
+    isConnected: false,
+    activeAddress: null,
+    activeWallet: null,
+    accounts: [],
+    isConnecting: false,
+    error: null,
+  })
+
+  const currentNetwork = ref<NetworkId>('voi-mainnet')
+  const isReconnecting = ref(false)
+
+  // Computed properties
+  const isConnected = computed(() => walletState.value.isConnected)
+  const activeAddress = computed(() => walletState.value.activeAddress)
+  const activeWallet = computed(() => walletState.value.activeWallet)
+  const accounts = computed(() => walletState.value.accounts)
+  const networkInfo = computed(() => NETWORKS[currentNetwork.value])
+  const formattedAddress = computed(() => {
+    if (!activeAddress.value) return null
+    return `${activeAddress.value.slice(0, 6)}...${activeAddress.value.slice(-4)}`
+  })
+
+  /**
+   * Update wallet state from the wallet manager
+   */
+  const updateWalletState = () => {
+    try {
+      const activeAccount = wallet.activeAccount.value
+      const walletAccounts = wallet.activeWallet.value?.accounts || []
+
+      walletState.value = {
+        isConnected: !!activeAccount,
+        activeAddress: activeAccount?.address || null,
+        activeWallet: wallet.activeWallet.value?.id || null,
+        accounts: walletAccounts,
+        isConnecting: false,
+        error: null,
+      }
+
+      // Sync with auth store
+      if (activeAccount) {
+        authStore.connectWallet(activeAccount.address, {
+          name: activeAccount.name || `User ${activeAccount.address.slice(0, 6)}...`,
+        })
+      }
+    } catch (error) {
+      console.error('Error updating wallet state:', error)
+      walletState.value.error = error instanceof Error ? error.message : 'Unknown error'
+    }
+  }
+
+  /**
+   * Connect to a specific wallet
+   */
+  const connect = async (walletId?: string) => {
+    walletState.value.isConnecting = true
+    walletState.value.error = null
+
+    try {
+      if (walletId) {
+        // Connect to specific wallet
+        const walletToConnect = wallet.wallets.value.find(w => w.id === walletId)
+        if (walletToConnect) {
+          await walletToConnect.connect()
+        } else {
+          throw new Error(`Wallet ${walletId} not found`)
+        }
+      } else {
+        // Let user choose wallet
+        const availableWallets = wallet.wallets.value.filter(w => w.isActive)
+        if (availableWallets.length > 0) {
+          await availableWallets[0].connect()
+        } else {
+          throw new Error('No wallets available')
+        }
+      }
+
+      updateWalletState()
+    } catch (error) {
+      console.error('Failed to connect wallet:', error)
+      walletState.value.error = error instanceof Error ? error.message : 'Failed to connect wallet'
+      walletState.value.isConnecting = false
+      throw error
+    }
+  }
+
+  /**
+   * Disconnect current wallet
+   */
+  const disconnect = async () => {
+    try {
+      if (wallet.activeWallet.value) {
+        await wallet.activeWallet.value.disconnect()
+      }
+
+      walletState.value = {
+        isConnected: false,
+        activeAddress: null,
+        activeWallet: null,
+        accounts: [],
+        isConnecting: false,
+        error: null,
+      }
+
+      // Clear auth store
+      await authStore.signOut()
+
+      // Clear persisted state
+      localStorage.removeItem('wallet_connected')
+      localStorage.removeItem('active_wallet_id')
+    } catch (error) {
+      console.error('Failed to disconnect wallet:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Switch to a different network
+   */
+  const switchNetwork = async (networkId: NetworkId) => {
+    try {
+      const network = NETWORKS[networkId]
+      if (!network) {
+        throw new Error(`Network ${networkId} not found`)
+      }
+
+      // If wallet is connected, we need to reconnect to apply new network
+      const wasConnected = walletState.value.isConnected
+      const previousWalletId = walletState.value.activeWallet
+
+      if (wasConnected) {
+        await disconnect()
+      }
+
+      // Update network
+      currentNetwork.value = networkId
+      localStorage.setItem('selected_network', networkId)
+
+      // Reconnect if was previously connected
+      if (wasConnected && previousWalletId) {
+        await connect(previousWalletId)
+      }
+
+      return network
+    } catch (error) {
+      console.error('Failed to switch network:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Set active account by address
+   */
+  const setActiveAccount = (address: string) => {
+    try {
+      if (wallet.activeWallet.value) {
+        wallet.activeWallet.value.setActiveAccount(address)
+        updateWalletState()
+      }
+    } catch (error) {
+      console.error('Failed to set active account:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Attempt to reconnect on page load
+   */
+  const attemptReconnect = async () => {
+    const wasConnected = localStorage.getItem('wallet_connected') === 'true'
+    const savedWalletId = localStorage.getItem('active_wallet_id')
+    const savedNetwork = localStorage.getItem('selected_network') as NetworkId
+
+    if (!wasConnected || !savedWalletId) {
+      return
+    }
+
+    isReconnecting.value = true
+
+    try {
+      // Restore network
+      if (savedNetwork && NETWORKS[savedNetwork]) {
+        currentNetwork.value = savedNetwork
+      }
+
+      // Attempt reconnection
+      await connect(savedWalletId)
+
+      console.log('Successfully reconnected to wallet')
+    } catch (error) {
+      console.warn('Failed to reconnect wallet:', error)
+      // Clear persisted state on reconnection failure
+      localStorage.removeItem('wallet_connected')
+      localStorage.removeItem('active_wallet_id')
+    } finally {
+      isReconnecting.value = false
+    }
+  }
+
+  /**
+   * Persist connection state
+   */
+  const persistConnectionState = () => {
+    if (walletState.value.isConnected && walletState.value.activeWallet) {
+      localStorage.setItem('wallet_connected', 'true')
+      localStorage.setItem('active_wallet_id', walletState.value.activeWallet)
+    }
+  }
+
+  /**
+   * Setup event listeners
+   */
+  const setupListeners = () => {
+    // Note: @txnlab/use-wallet-vue doesn't have a subscribe method
+    // Instead, we'll rely on Vue's reactivity system
+    // Persist state whenever wallet state changes
+    const cleanup = () => {
+      // Cleanup function if needed
+    }
+    
+    // Persist connection state when wallet is connected
+    if (walletState.value.isConnected) {
+      persistConnectionState()
+    }
+    
+    return cleanup
+  }
+
+  // Initialize on mount
+  onMounted(async () => {
+    const unwatch = setupListeners()
+    updateWalletState()
+    await attemptReconnect()
+
+    // Cleanup on unmount
+    onUnmounted(() => {
+      if (typeof unwatch === 'function') {
+        unwatch()
+      }
+    })
+  })
+
+  return {
+    // State
+    walletState,
+    isConnected,
+    activeAddress,
+    activeWallet,
+    accounts,
+    formattedAddress,
+    isReconnecting,
+    currentNetwork,
+    networkInfo,
+    availableNetworks: NETWORKS,
+
+    // Actions
+    connect,
+    disconnect,
+    switchNetwork,
+    setActiveAccount,
+    updateWalletState,
+
+    // Wallet manager instance for advanced usage
+    walletManager: wallet,
+  }
+}
