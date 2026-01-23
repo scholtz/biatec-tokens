@@ -256,6 +256,9 @@ const ENTERPRISE_FUNGIBLE_STANDARDS = ['ASA', 'ARC3FT', 'ARC200', 'ERC20'] as co
 // Standards for broad wallet support including NFTs
 const WALLET_COMPATIBLE_STANDARDS = ['ASA', 'ARC3FT', 'ARC3NFT', 'ERC20', 'ERC721'] as const;
 
+// Standards with compliance features (smart contracts for programmability)
+const COMPLIANCE_CAPABLE_STANDARDS = ['ARC200', 'ERC20'] as const;
+
 // Recommendation matrix data
 const recommendations = [
   {
@@ -263,7 +266,7 @@ const recommendations = [
     description: 'Tokens requiring EU MICA regulation compliance',
     icon: ScaleIcon,
     iconColor: 'text-blue-600',
-    standards: ['ARC200', 'ERC20'],
+    standards: Array.from(COMPLIANCE_CAPABLE_STANDARDS),
     capability: 'Built-in compliance flags and programmable restrictions'
   },
   {
@@ -271,7 +274,7 @@ const recommendations = [
     description: 'Real-World Assets with restricted transfer capabilities',
     icon: LockClosedIcon,
     iconColor: 'text-purple-600',
-    standards: ['ARC200', 'ERC20'],
+    standards: Array.from(COMPLIANCE_CAPABLE_STANDARDS),
     capability: 'Smart contract-based whitelisting and transfer controls'
   },
   {
@@ -279,7 +282,7 @@ const recommendations = [
     description: 'Comprehensive audit trails and reporting capabilities',
     icon: DocumentChartBarIcon,
     iconColor: 'text-green-600',
-    standards: ['ARC200', 'ERC20'],
+    standards: Array.from(COMPLIANCE_CAPABLE_STANDARDS),
     capability: 'Event logs and on-chain transparency for auditors'
   },
   {
@@ -384,7 +387,8 @@ const getStandardBadgeVariant = (standardName: string): "default" | "info" | "su
 };
 
 const hasFeature = (standard: TokenStandard, featureKey: string): boolean => {
-  // Map enterprise feature keys to standard features where they differ
+  // Map enterprise feature keys to standard features where naming differs
+  // Currently only 'micaCompliant' maps to the standard 'complianceFlags' feature
   const featureMap: Record<string, string> = {
     'micaCompliant': 'complianceFlags',
   };
@@ -393,15 +397,12 @@ const hasFeature = (standard: TokenStandard, featureKey: string): boolean => {
   
   if (!standard.features) return false;
   
-  // Special handling for audit trail - all standards have on-chain transparency
-  // Smart contracts add event logs for enhanced auditability
+  // All blockchain standards provide audit trails via on-chain transparency
   if (featureKey === 'auditTrail') {
-    // All blockchain standards provide basic audit trail via transaction history
-    // Smart contracts provide additional event logs for detailed compliance tracking
     return true;
   }
   
-  // Special handling for wallet support - native L1 standards plus widely adopted standards
+  // Wallet support: native L1 standards plus widely adopted standards
   if (featureKey === 'walletSupport') {
     return standard.features.nativeL1 === true || 
            standard.name === 'ERC20' || 
