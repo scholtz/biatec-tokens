@@ -247,6 +247,9 @@ import {
 
 const tokenStore = useTokenStore();
 
+// List of token standards relevant for enterprise use
+const ENTERPRISE_STANDARD_NAMES = ['ASA', 'ARC3FT', 'ARC200', 'ERC20'] as const;
+
 // Recommendation matrix data
 const recommendations = [
   {
@@ -286,7 +289,7 @@ const recommendations = [
 // Enterprise-relevant standards
 const enterpriseStandards = computed(() => {
   return tokenStore.tokenStandards.filter(s => 
-    ['ASA', 'ARC3FT', 'ARC200', 'ERC20'].includes(s.name)
+    ENTERPRISE_STANDARD_NAMES.includes(s.name as typeof ENTERPRISE_STANDARD_NAMES[number])
   );
 });
 
@@ -375,12 +378,9 @@ const getStandardBadgeVariant = (standardName: string): "default" | "info" | "su
 };
 
 const hasFeature = (standard: any, featureKey: string): boolean => {
-  // Map enterprise feature keys to standard features
+  // Map enterprise feature keys to standard features where they differ
   const featureMap: Record<string, string> = {
     'micaCompliant': 'complianceFlags',
-    'whitelisting': 'whitelisting',
-    'complianceFlags': 'complianceFlags',
-    'programmableLogic': 'programmableLogic',
     'auditTrail': 'smartContract', // Smart contracts have event logs
     'walletSupport': 'nativeL1', // Native L1 has broad support
   };
