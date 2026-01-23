@@ -247,8 +247,14 @@ import {
 
 const tokenStore = useTokenStore();
 
-// List of token standards relevant for enterprise use
-const ENTERPRISE_STANDARD_NAMES = ['ASA', 'ARC3FT', 'ARC200', 'ERC20'] as const;
+// Import TokenStandard type for type safety
+import type { TokenStandard } from '../stores/tokens';
+
+// List of token standards relevant for enterprise use (fungible tokens)
+const ENTERPRISE_FUNGIBLE_STANDARDS = ['ASA', 'ARC3FT', 'ARC200', 'ERC20'] as const;
+
+// Standards for broad wallet support including NFTs
+const WALLET_COMPATIBLE_STANDARDS = ['ASA', 'ARC3FT', 'ARC3NFT', 'ERC20', 'ERC721'] as const;
 
 // Recommendation matrix data
 const recommendations = [
@@ -281,15 +287,15 @@ const recommendations = [
     description: 'Maximum compatibility across wallet providers',
     icon: GlobeAltIcon,
     iconColor: 'text-amber-600',
-    standards: ['ASA', 'ARC3FT', 'ARC3NFT', 'ERC20', 'ERC721'],
+    standards: Array.from(WALLET_COMPATIBLE_STANDARDS),
     capability: 'Native L1 or widely adopted standards'
   },
 ];
 
-// Enterprise-relevant standards
+// Enterprise-relevant standards (fungible tokens for feature comparison)
 const enterpriseStandards = computed(() => {
   return tokenStore.tokenStandards.filter(s => 
-    ENTERPRISE_STANDARD_NAMES.includes(s.name as typeof ENTERPRISE_STANDARD_NAMES[number])
+    ENTERPRISE_FUNGIBLE_STANDARDS.includes(s.name as typeof ENTERPRISE_FUNGIBLE_STANDARDS[number])
   );
 });
 
@@ -377,19 +383,18 @@ const getStandardBadgeVariant = (standardName: string): "default" | "info" | "su
   return standard?.badgeVariant || 'default';
 };
 
-const hasFeature = (standard: any, featureKey: string): boolean => {
+const hasFeature = (standard: TokenStandard, featureKey: string): boolean => {
   // Map enterprise feature keys to standard features where they differ
   const featureMap: Record<string, string> = {
     'micaCompliant': 'complianceFlags',
-    'auditTrail': 'smartContract', // Smart contracts have event logs
-    'walletSupport': 'nativeL1', // Native L1 has broad support
+    'auditTrail': 'smartContract', // Smart contracts have event logs for auditing
   };
 
   const mappedKey = featureMap[featureKey] || featureKey;
   
   if (!standard.features) return false;
   
-  // Special handling for wallet support - both native L1 and well-known standards
+  // Special handling for wallet support - native L1 standards plus widely adopted standards
   if (featureKey === 'walletSupport') {
     return standard.features.nativeL1 === true || 
            standard.name === 'ERC20' || 
