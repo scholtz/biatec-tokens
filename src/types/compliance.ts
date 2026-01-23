@@ -240,3 +240,80 @@ export interface TokenAttestationMetadata {
     overallStatus: 'compliant' | 'partial' | 'non_compliant';
   };
 }
+
+/**
+ * Attestation package signature metadata
+ */
+export interface AttestationSignatureMetadata {
+  algorithm: string; // e.g., 'SHA-256'
+  hash: string; // Hash of the attestation content
+  timestamp: string; // ISO 8601 timestamp
+  signedBy: string; // Wallet address or identifier
+  version: string; // Attestation format version
+}
+
+/**
+ * Issuer credentials for attestation
+ */
+export interface IssuerCredentials {
+  name: string;
+  registrationNumber?: string;
+  jurisdiction: string;
+  regulatoryLicense?: string;
+  contactEmail?: string;
+  walletAddress: string;
+}
+
+/**
+ * Attestation export request
+ */
+export interface AttestationExportRequest {
+  tokenId: string;
+  network: Network;
+  issuerCredentials: IssuerCredentials;
+  includeWhitelistPolicy: boolean;
+  includeComplianceStatus: boolean;
+  format: 'pdf' | 'json' | 'both';
+}
+
+/**
+ * Attestation package for MICA audit compliance
+ */
+export interface AttestationPackage {
+  id: string;
+  version: string; // Format version
+  generatedAt: string; // ISO 8601 timestamp
+  tokenId: string;
+  network: Network;
+  issuerCredentials: IssuerCredentials;
+  complianceStatus?: ComplianceStatus;
+  whitelistPolicy?: {
+    enabled: boolean;
+    whitelistedCount: number;
+    kycRequired: boolean;
+    jurisdictionRestrictions: string[];
+  };
+  attestationMetadata: {
+    purpose: 'MICA_AUDIT' | 'REGULATORY_SUBMISSION' | 'INTERNAL_AUDIT';
+    validUntil?: string;
+    auditPeriod?: {
+      startDate: string;
+      endDate: string;
+    };
+  };
+  signature: AttestationSignatureMetadata;
+}
+
+/**
+ * Attestation download history item
+ */
+export interface AttestationHistoryItem {
+  id: string;
+  timestamp: string;
+  tokenId: string;
+  network: Network;
+  format: 'pdf' | 'json' | 'both';
+  fileSize?: string;
+  status: 'success' | 'failed';
+  errorMessage?: string;
+}
