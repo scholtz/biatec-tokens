@@ -33,6 +33,10 @@ vi.mock('../components/ComplianceChecklist.vue', () => ({
   default: { name: 'ComplianceChecklist', template: '<div>ComplianceChecklist</div>' },
 }));
 
+vi.mock('../components/ComplianceExports.vue', () => ({
+  default: { name: 'ComplianceExports', template: '<div>ComplianceExports</div>' },
+}));
+
 vi.mock('../layout/MainLayout.vue', () => ({
   default: {
     name: 'MainLayout',
@@ -462,6 +466,65 @@ describe('ComplianceDashboard', () => {
 
         expect(wrapper.text()).toContain('ComplianceChecklist');
       }
+    });
+
+    it('should switch to compliance exports tab', async () => {
+      const mockStatus: ComplianceStatus = {
+        tokenId: 'token123',
+        network: 'VOI',
+        whitelistEnabled: true,
+        whitelistCount: 10,
+      };
+      vi.mocked(complianceService.getComplianceStatus).mockResolvedValue(mockStatus);
+
+      await router.push('/compliance/token123?network=VOI');
+      await router.isReady();
+
+      const wrapper = mount(ComplianceDashboard, {
+        global: {
+          plugins: [router],
+        },
+      });
+
+      await flushPromises();
+
+      const tabs = wrapper.findAll('button').filter(btn =>
+        btn.text().includes('Compliance Exports')
+      );
+      
+      if (tabs.length > 0) {
+        await tabs[0].trigger('click');
+        await flushPromises();
+
+        expect(wrapper.text()).toContain('ComplianceExports');
+      }
+    });
+
+    it('should display all tab labels', async () => {
+      const mockStatus: ComplianceStatus = {
+        tokenId: 'token123',
+        network: 'VOI',
+        whitelistEnabled: true,
+        whitelistCount: 10,
+      };
+      vi.mocked(complianceService.getComplianceStatus).mockResolvedValue(mockStatus);
+
+      await router.push('/compliance/token123?network=VOI');
+      await router.isReady();
+
+      const wrapper = mount(ComplianceDashboard, {
+        global: {
+          plugins: [router],
+        },
+      });
+
+      await flushPromises();
+
+      expect(wrapper.text()).toContain('Whitelist Management');
+      expect(wrapper.text()).toContain('Transfer Validation');
+      expect(wrapper.text()).toContain('Audit Log');
+      expect(wrapper.text()).toContain('Compliance Exports');
+      expect(wrapper.text()).toContain('Compliance Checklist');
     });
   });
 

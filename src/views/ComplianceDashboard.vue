@@ -160,6 +160,11 @@
             <AuditLogViewer :token-id="tokenId" :network="selectedNetwork" />
           </div>
 
+          <!-- Exports Tab -->
+          <div v-if="activeTab === 'exports'">
+            <ComplianceExports :token-id="tokenId" :network="selectedNetwork" />
+          </div>
+
           <!-- Checklist Tab -->
           <div v-if="activeTab === 'checklist'">
             <ComplianceChecklist />
@@ -179,6 +184,7 @@ import TransferValidationForm from '../components/TransferValidationForm.vue';
 import AuditLogViewer from '../components/AuditLogViewer.vue';
 import ComplianceChecklist from '../components/ComplianceChecklist.vue';
 import MicaDashboardSummary from '../components/MicaDashboardSummary.vue';
+import ComplianceExports from '../components/ComplianceExports.vue';
 import { complianceService } from '../services/ComplianceService';
 import type { ComplianceStatus } from '../types/compliance';
 
@@ -195,6 +201,7 @@ const tabs = [
   { id: 'whitelist', label: 'Whitelist Management', icon: 'pi pi-users' },
   { id: 'validation', label: 'Transfer Validation', icon: 'pi pi-shield-check' },
   { id: 'audit-log', label: 'Audit Log', icon: 'pi pi-list' },
+  { id: 'exports', label: 'Compliance Exports', icon: 'pi pi-download' },
   { id: 'checklist', label: 'Compliance Checklist', icon: 'pi pi-check-square' },
 ];
 
