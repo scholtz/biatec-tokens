@@ -68,7 +68,7 @@
           </div>
 
           <!-- Attestations List -->
-          <AttestationsList :network="selectedNetwork === 'All Networks' ? undefined : selectedNetwork as any" />
+          <AttestationsList :network="selectedNetwork === 'All Networks' ? undefined : (selectedNetwork as 'VOI' | 'Aramid')" />
         </div>
       </div>
     </div>

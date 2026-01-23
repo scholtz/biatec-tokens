@@ -364,13 +364,13 @@ const { setFilters, resetFilters, setPage, loadAttestations, downloadCSV, downlo
 
 const showExportMenu = ref(false)
 const searchQuery = ref('')
-let searchDebounceTimer: number | null = null
+const searchDebounceTimer = ref<number | null>(null)
 
 const debouncedSearch = () => {
-  if (searchDebounceTimer) {
-    clearTimeout(searchDebounceTimer)
+  if (searchDebounceTimer.value) {
+    clearTimeout(searchDebounceTimer.value)
   }
-  searchDebounceTimer = window.setTimeout(() => {
+  searchDebounceTimer.value = window.setTimeout(() => {
     setFilters({ search: searchQuery.value })
   }, 300)
 }

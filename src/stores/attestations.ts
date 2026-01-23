@@ -158,11 +158,12 @@ export const useAttestationsStore = defineStore('attestations', () => {
     error.value = null
 
     try {
-      // In production, this would call the backend API
-      // For now, generate mock data
+      // TODO: Replace with actual backend API call
+      // Expected endpoint: GET /api/v1/attestations?tokenId={tokenId}&network={network}
+      // Backend should return AttestationListItem[] with proper pagination support
       await new Promise(resolve => setTimeout(resolve, 500))
 
-      // Mock data
+      // Mock data for demonstration
       const mockAttestations: AttestationListItem[] = [
         {
           id: 'att-001',
@@ -230,6 +231,14 @@ export const useAttestationsStore = defineStore('attestations', () => {
       'Notes'
     ]
 
+    // Helper function to escape CSV values
+    const escapeCsvValue = (value: string) => {
+      if (value.includes('"') || value.includes(',') || value.includes('\n')) {
+        return `"${value.replace(/"/g, '""')}"`
+      }
+      return `"${value}"`
+    }
+
     const rows = filteredAttestations.value.map(a => [
       a.id,
       a.type,
@@ -247,7 +256,7 @@ export const useAttestationsStore = defineStore('attestations', () => {
 
     const csv = [
       headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ...rows.map(row => row.map(cell => escapeCsvValue(cell)).join(','))
     ].join('\n')
 
     return csv
