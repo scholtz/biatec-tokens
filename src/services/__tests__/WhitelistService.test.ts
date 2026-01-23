@@ -361,5 +361,114 @@ KYC Passed,John Doe`;
         expect(result.summary.kycVerifiedCount).toBe(1);
       }
     });
+
+    it('generates local CSV report when API fails', async () => {
+      const testEntry: WhitelistEntry = {
+        address: 'A23456723456723456723456723456723456723456723456723456723A',
+        status: 'active',
+        addedAt: '2024-01-15T10:00:00Z',
+        reason: 'KYC Passed',
+      };
+      
+      mockApiClient.get
+        .mockRejectedValueOnce(new Error('API unavailable'))
+        .mockResolvedValueOnce([testEntry]);
+
+      const result = await service.exportComplianceReport('token123', 'VOI', 'csv');
+
+      expect(typeof result).toBe('string');
+      expect(result).toContain('Address'); // Note: Capital A in CSV header
+      expect(result).toContain('Status');
+      expect(result).toContain('Reason');
+    });
+
+    it('handles empty whitelist in local report', async () => {
+      mockApiClient.get
+        .mockRejectedValueOnce(new Error('API unavailable'))
+        .mockResolvedValueOnce([]);
+
+      const result = await service.exportComplianceReport('token123', 'VOI', 'json');
+
+      if (typeof result !== 'string') {
+        expect(result.summary.totalWhitelisted).toBe(0);
+        expect(result.summary.activeAddresses).toBe(0);
+        expect(result.entries.length).toBe(0);
+      }
+    });
+
+    it('calculates jurisdiction coverage correctly', async () => {
+      const entries: WhitelistEntry[] = [
+        {
+          address: 'A23456723456723456723456723456723456723456723456723456723A',
+          status: 'active',
+          addedAt: '2024-01-15T10:00:00Z',
+          jurisdictionCode: 'US',
+        },
+        {
+          address: 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+          status: 'active',
+          addedAt: '2024-01-15T10:00:00Z',
+          jurisdictionCode: 'US',
+        },
+        {
+          address: 'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+          status: 'active',
+          addedAt: '2024-01-15T10:00:00Z',
+          jurisdictionCode: 'EU',
+        },
+      ];
+      
+      mockApiClient.get
+        .mockRejectedValueOnce(new Error('API unavailable'))
+        .mockResolvedValueOnce(entries);
+
+      const result = await service.exportComplianceReport('token123', 'VOI', 'json');
+
+      if (typeof result !== 'string') {
+        expect(result.complianceMetrics.jurisdictionCoverage).toHaveProperty('US');
+        expect(result.complianceMetrics.jurisdictionCoverage).toHaveProperty('EU');
+        expect(result.complianceMetrics.jurisdictionCoverage.US).toBeGreaterThan(0);
+      }
+    });
+
+    it('handles entries without metadata gracefully', async () => {
+      const minimalEntry: WhitelistEntry = {
+        address: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        status: 'active' as const,
+        addedAt: '2024-01-01T00:00:00Z',
+      };
+      
+      mockApiClient.get
+        .mockRejectedValueOnce(new Error('API unavailable'))
+        .mockResolvedValueOnce([minimalEntry]);
+
+      const result = await service.exportComplianceReport('token123', 'VOI', 'json');
+
+      if (typeof result !== 'string') {
+        expect(result.entries.length).toBe(1);
+        expect(result.summary.kycVerifiedCount).toBe(0);
+        // KYC verification rate is calculated from percentage, will be 0 or NaN for empty data
+        expect(result.summary.complianceScore).toBeGreaterThanOrEqual(0);
+      }
+    });
+  });
+
+  describe('Error handling', () => {
+    it('handles removeAddress with missing reason gracefully', async () => {
+      const testAddress = 'A23456723456723456723456723456723456723456723456723456723A';
+      mockApiClient.delete.mockRejectedValue(new Error('Reason required'));
+
+      await expect(
+        service.removeAddress('token123', testAddress, '')
+      ).rejects.toThrow();
+    });
+
+    it('handles importFromCsv with invalid data', async () => {
+      const invalidCsv = 'invalid,data\nno,address,column';
+
+      await expect(
+        service.importFromCsv('token123', invalidCsv)
+      ).rejects.toThrow('address');
+    });
   });
 });
