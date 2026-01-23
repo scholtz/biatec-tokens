@@ -40,6 +40,14 @@
             <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-biatec-accent transition-all duration-200 group-hover:w-full" :class="{ 'w-full': $route.name === 'TokenDashboard' }"></span>
           </router-link>
           <router-link
+            to="/attestations"
+            class="text-white hover:text-biatec-accent transition-colors duration-200 font-medium text-lg relative group"
+            :class="{ 'text-biatec-accent': $route.name === 'AttestationsDashboard' }"
+          >
+            Attestations
+            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-biatec-accent transition-all duration-200 group-hover:w-full" :class="{ 'w-full': $route.name === 'AttestationsDashboard' }"></span>
+          </router-link>
+          <router-link
             to="/settings"
             class="text-white hover:text-biatec-accent transition-colors duration-200 font-medium text-lg relative group"
             :class="{ 'text-biatec-accent': $route.name === 'Settings' }"
@@ -129,6 +137,13 @@
           class="block px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors font-medium"
         >
           Dashboard
+        </router-link>
+        <router-link
+          to="/attestations"
+          @click="toggleMobileMenu"
+          class="block px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors font-medium"
+        >
+          Attestations
         </router-link>
         <router-link
           to="/settings"

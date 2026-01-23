@@ -5,6 +5,7 @@ import TokenDashboard from "../views/TokenDashboard.vue";
 import TokenDetail from "../views/TokenDetail.vue";
 import Settings from "../views/Settings.vue";
 import ComplianceDashboard from "../views/ComplianceDashboard.vue";
+import AttestationsDashboard from "../views/AttestationsDashboard.vue";
 
 // Subscription views
 import Pricing from "../views/subscription/Pricing.vue";
@@ -47,6 +48,12 @@ const router = createRouter({
       path: "/compliance/:id?",
       name: "ComplianceDashboard",
       component: ComplianceDashboard,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/attestations",
+      name: "AttestationsDashboard",
+      component: AttestationsDashboard,
       meta: { requiresAuth: true },
     },
     // Subscription routes
