@@ -130,7 +130,7 @@
 ### Test Summary
 
 - **Total Tests**: 911 passing (increased from 831)
-- **New Tests Added**: 80 tests for attestations dashboard
+- **New Tests Added**: 48 tests for attestations dashboard
 - **Pass Rate**: 897/911 (98.5%)
 
 ### Test Breakdown
@@ -161,6 +161,39 @@ Tests cover:
 ✓ Select and deselect attestations
 ```
 
+#### 2. Integration Tests (26 tests)
+**File**: `src/__tests__/integration/AttestationsDashboard.integration.test.ts`
+
+Tests cover:
+- Complete attestations workflow
+- Multi-criteria filtering
+- Pagination workflows
+- Export data integrity
+- Multi-network support
+- Search and filter combinations
+- Date range filtering
+- Status count tracking
+- CSV export data integrity
+- Error handling
+- Pagination edge cases
+
+**Key Scenarios:**
+```typescript
+✓ Load attestations and display them
+✓ Filter attestations by multiple criteria
+✓ Paginate through attestations
+✓ Export filtered attestations to CSV
+✓ Export filtered attestations to JSON
+✓ Load attestations for VOI network
+✓ Load attestations for Aramid network
+✓ Search across wallet address, asset ID, and issuer
+✓ Combine search with filters
+✓ Filter by date range
+✓ Accurately count attestations by status
+✓ Properly escape special characters in CSV
+✓ Handle load errors gracefully
+✓ Reset to page 1 when filters change
+```
 #### 2. AttestationsList Component Tests (19 tests)
 **File**: `src/components/AttestationsList.test.ts`
 
