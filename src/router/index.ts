@@ -7,6 +7,7 @@ import Settings from "../views/Settings.vue";
 import ComplianceDashboard from "../views/ComplianceDashboard.vue";
 import AttestationsDashboard from "../views/AttestationsDashboard.vue";
 import TokenStandardsView from "../views/TokenStandardsView.vue";
+import EnterpriseGuideView from "../views/EnterpriseGuideView.vue";
 
 // Subscription views
 import Pricing from "../views/subscription/Pricing.vue";
@@ -43,6 +44,11 @@ const router = createRouter({
       path: "/token-standards",
       name: "TokenStandards",
       component: TokenStandardsView,
+    },
+    {
+      path: "/enterprise-guide",
+      name: "EnterpriseGuide",
+      component: EnterpriseGuideView,
     },
     {
       path: "/settings",

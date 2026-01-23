@@ -27,6 +27,13 @@
                 <CubeIcon class="mr-3 h-5 w-5" />
                 Token Standards
               </router-link>
+              <router-link
+                to="/enterprise-guide"
+                class="group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <BuildingOfficeIcon class="mr-3 h-5 w-5" />
+                Enterprise Guide
+              </router-link>
             </div>
           </div>
 
@@ -61,7 +68,7 @@
 <script setup lang="ts">
 import { useTokenStore } from "../../stores/tokens";
 import Badge from "../ui/Badge.vue";
-import { PlusCircleIcon, ChartBarIcon, CubeIcon } from "@heroicons/vue/24/outline";
+import { PlusCircleIcon, ChartBarIcon, CubeIcon, BuildingOfficeIcon } from "@heroicons/vue/24/outline";
 
 const tokenStore = useTokenStore();
 

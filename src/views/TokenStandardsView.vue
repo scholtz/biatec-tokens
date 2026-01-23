@@ -4,7 +4,17 @@
       <div class="max-w-7xl mx-auto">
         <!-- Page Header -->
         <div class="mb-8">
-          <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">Token Standards</h1>
+          <div class="flex items-center justify-between mb-4">
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white">Token Standards</h1>
+            <router-link to="/enterprise-guide">
+              <Button variant="outline" size="md">
+                <template #icon>
+                  <BuildingOfficeIcon class="w-5 h-5 mr-2" />
+                </template>
+                Enterprise Guide
+              </Button>
+            </router-link>
+          </div>
           <p class="text-gray-600 dark:text-gray-300 text-lg">
             Comprehensive comparison of supported token standards across Algorand-based networks (VOI, Aramid) and Ethereum
           </p>
@@ -148,6 +158,7 @@ import {
   CheckBadgeIcon,
   PlusCircleIcon,
   ChartBarIcon,
+  BuildingOfficeIcon,
 } from '@heroicons/vue/24/outline';
 
 const tokenStore = useTokenStore();
