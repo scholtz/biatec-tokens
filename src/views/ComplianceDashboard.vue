@@ -147,7 +147,7 @@
         <div>
           <!-- Whitelist Management Tab -->
           <div v-if="activeTab === 'whitelist'">
-            <WhitelistManagement :token-id="tokenId" />
+            <MicaWhitelistManagement :token-id="tokenId" :network="selectedNetwork" />
           </div>
 
           <!-- Transfer Validation Tab -->
@@ -174,7 +174,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import MainLayout from '../layout/MainLayout.vue';
-import WhitelistManagement from '../components/WhitelistManagement.vue';
+import MicaWhitelistManagement from '../components/MicaWhitelistManagement.vue';
 import TransferValidationForm from '../components/TransferValidationForm.vue';
 import AuditLogViewer from '../components/AuditLogViewer.vue';
 import ComplianceChecklist from '../components/ComplianceChecklist.vue';
