@@ -20,11 +20,18 @@
                 <ChartBarIcon class="mr-3 h-5 w-5" />
                 View Dashboard
               </router-link>
+              <router-link
+                to="/token-standards"
+                class="group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <CubeIcon class="mr-3 h-5 w-5" />
+                Token Standards
+              </router-link>
             </div>
           </div>
 
           <div class="mb-6">
-            <h3 class="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Token Standards</h3>
+            <h3 class="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Your Tokens</h3>
             <div class="mt-3 space-y-1">
               <div v-for="standard in tokenStore.tokenStandards" :key="standard.name" class="flex items-center justify-between px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
                 <div class="flex items-center">
@@ -54,7 +61,7 @@
 <script setup lang="ts">
 import { useTokenStore } from "../../stores/tokens";
 import Badge from "../ui/Badge.vue";
-import { PlusCircleIcon, ChartBarIcon } from "@heroicons/vue/24/outline";
+import { PlusCircleIcon, ChartBarIcon, CubeIcon } from "@heroicons/vue/24/outline";
 
 const tokenStore = useTokenStore();
 

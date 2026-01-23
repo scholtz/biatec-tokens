@@ -82,6 +82,21 @@ export interface TokenStandard {
   pros: string[];
   cons: string[];
   useWhen: string[];
+  features?: TokenStandardFeatures;
+}
+
+export interface TokenStandardFeatures {
+  metadataSupport: boolean;
+  smartContract: boolean;
+  whitelisting: boolean;
+  complianceFlags: boolean;
+  royalties: boolean;
+  mutableMetadata: boolean;
+  programmableLogic: boolean;
+  nativeL1: boolean;
+  erc20Compatible?: boolean;
+  erc721Compatible?: boolean;
+  fractionalOwnership?: boolean;
 }
 
 import { CubeIcon, CurrencyDollarIcon, PhotoIcon } from "@heroicons/vue/24/outline";
@@ -536,7 +551,17 @@ export const useTokenStore = defineStore("tokens", () => {
       count: 0,
       pros: ["Lowest fees", "Native Layer-1", "Instant finality", "Simple implementation"],
       cons: ["No metadata support", "Limited functionality", "No smart contract features"],
-      useWhen: ["You need a simple fungible token", "Cost efficiency is critical", "Metadata is not required"]
+      useWhen: ["You need a simple fungible token", "Cost efficiency is critical", "Metadata is not required"],
+      features: {
+        metadataSupport: false,
+        smartContract: false,
+        whitelisting: false,
+        complianceFlags: false,
+        royalties: false,
+        mutableMetadata: false,
+        programmableLogic: false,
+        nativeL1: true,
+      }
     },
     {
       name: "ARC3FT",
@@ -551,7 +576,17 @@ export const useTokenStore = defineStore("tokens", () => {
       count: 0,
       pros: ["Rich metadata support", "Wallet compatibility", "Native Layer-1 speed", "IPFS integration"],
       cons: ["Requires IPFS hosting", "Slightly higher setup cost", "Metadata is immutable"],
-      useWhen: ["You need token branding/logo", "Metadata is important", "Wallet display matters", "Building consumer-facing tokens"]
+      useWhen: ["You need token branding/logo", "Metadata is important", "Wallet display matters", "Building consumer-facing tokens"],
+      features: {
+        metadataSupport: true,
+        smartContract: false,
+        whitelisting: false,
+        complianceFlags: false,
+        royalties: false,
+        mutableMetadata: false,
+        programmableLogic: false,
+        nativeL1: true,
+      }
     },
     {
       name: "ARC3NFT",
@@ -566,7 +601,18 @@ export const useTokenStore = defineStore("tokens", () => {
       count: 0,
       pros: ["True uniqueness (supply = 1)", "Full metadata support", "Marketplace compatible", "Proven standard"],
       cons: ["Not fractionizable", "Requires IPFS", "Fixed supply post-creation"],
-      useWhen: ["Creating unique digital art", "Issuing certificates", "Building collectibles", "Single-owner assets"]
+      useWhen: ["Creating unique digital art", "Issuing certificates", "Building collectibles", "Single-owner assets"],
+      features: {
+        metadataSupport: true,
+        smartContract: false,
+        whitelisting: false,
+        complianceFlags: false,
+        royalties: false,
+        mutableMetadata: false,
+        programmableLogic: false,
+        nativeL1: true,
+        fractionalOwnership: false,
+      }
     },
     {
       name: "ARC3FNFT",
@@ -581,7 +627,18 @@ export const useTokenStore = defineStore("tokens", () => {
       count: 0,
       pros: ["Shared ownership model", "Divisible into fractions", "Liquidity for high-value assets", "NFT metadata retained"],
       cons: ["Complex legal considerations", "May trigger securities laws", "Requires governance model"],
-      useWhen: ["Fractionalizing expensive assets", "Creating shared ownership", "Building investment vehicles", "Real estate tokenization"]
+      useWhen: ["Fractionalizing expensive assets", "Creating shared ownership", "Building investment vehicles", "Real estate tokenization"],
+      features: {
+        metadataSupport: true,
+        smartContract: false,
+        whitelisting: false,
+        complianceFlags: false,
+        royalties: false,
+        mutableMetadata: false,
+        programmableLogic: false,
+        nativeL1: true,
+        fractionalOwnership: true,
+      }
     },
     {
       name: "ARC200",
@@ -596,7 +653,18 @@ export const useTokenStore = defineStore("tokens", () => {
       count: 0,
       pros: ["Programmable logic", "ERC20 compatibility", "Custom tokenomics", "Advanced features"],
       cons: ["Higher fees than ASA", "Requires smart contract development", "More complex deployment"],
-      useWhen: ["Need programmable tokenomics", "Require access control", "Building DeFi protocols", "Need minting/burning logic"]
+      useWhen: ["Need programmable tokenomics", "Require access control", "Building DeFi protocols", "Need minting/burning logic"],
+      features: {
+        metadataSupport: true,
+        smartContract: true,
+        whitelisting: true,
+        complianceFlags: true,
+        royalties: false,
+        mutableMetadata: false,
+        programmableLogic: true,
+        nativeL1: false,
+        erc20Compatible: true,
+      }
     },
     {
       name: "ARC72",
@@ -611,7 +679,18 @@ export const useTokenStore = defineStore("tokens", () => {
       count: 0,
       pros: ["Mutable metadata", "Royalty support", "ERC721 compatibility", "Advanced NFT features"],
       cons: ["Smart contract complexity", "Higher fees", "Newer standard with evolving support"],
-      useWhen: ["Need dynamic metadata", "Building NFT games", "Require royalty mechanisms", "Need ERC721 compatibility"]
+      useWhen: ["Need dynamic metadata", "Building NFT games", "Require royalty mechanisms", "Need ERC721 compatibility"],
+      features: {
+        metadataSupport: true,
+        smartContract: true,
+        whitelisting: false,
+        complianceFlags: false,
+        royalties: true,
+        mutableMetadata: true,
+        programmableLogic: true,
+        nativeL1: false,
+        erc721Compatible: true,
+      }
     },
     {
       name: "ERC20",
@@ -626,7 +705,18 @@ export const useTokenStore = defineStore("tokens", () => {
       count: 0,
       pros: ["Widest adoption", "Extensive tooling", "DeFi integration", "Maximum compatibility"],
       cons: ["Higher gas fees", "Network congestion", "Ethereum-only"],
-      useWhen: ["Need Ethereum ecosystem", "Maximum DeFi compatibility", "Building on EVM", "Cross-chain bridges"]
+      useWhen: ["Need Ethereum ecosystem", "Maximum DeFi compatibility", "Building on EVM", "Cross-chain bridges"],
+      features: {
+        metadataSupport: true,
+        smartContract: true,
+        whitelisting: true,
+        complianceFlags: true,
+        royalties: false,
+        mutableMetadata: false,
+        programmableLogic: true,
+        nativeL1: false,
+        erc20Compatible: true,
+      }
     },
     {
       name: "ERC721",
@@ -641,7 +731,18 @@ export const useTokenStore = defineStore("tokens", () => {
       count: 0,
       pros: ["Largest NFT ecosystem", "Maximum marketplace support", "Proven standard", "Rich tooling"],
       cons: ["High gas fees", "Ethereum network limitations", "Not suitable for high-volume"],
-      useWhen: ["Targeting Ethereum NFT market", "Need marketplace visibility", "Building on Ethereum", "Premium NFT projects"]
+      useWhen: ["Targeting Ethereum NFT market", "Need marketplace visibility", "Building on Ethereum", "Premium NFT projects"],
+      features: {
+        metadataSupport: true,
+        smartContract: true,
+        whitelisting: false,
+        complianceFlags: false,
+        royalties: true,
+        mutableMetadata: true,
+        programmableLogic: true,
+        nativeL1: false,
+        erc721Compatible: true,
+      }
     },
   ];
   
