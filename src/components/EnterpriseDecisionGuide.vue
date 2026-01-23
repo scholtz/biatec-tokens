@@ -387,12 +387,19 @@ const hasFeature = (standard: TokenStandard, featureKey: string): boolean => {
   // Map enterprise feature keys to standard features where they differ
   const featureMap: Record<string, string> = {
     'micaCompliant': 'complianceFlags',
-    'auditTrail': 'smartContract', // Smart contracts have event logs for auditing
   };
 
   const mappedKey = featureMap[featureKey] || featureKey;
   
   if (!standard.features) return false;
+  
+  // Special handling for audit trail - all standards have on-chain transparency
+  // Smart contracts add event logs for enhanced auditability
+  if (featureKey === 'auditTrail') {
+    // All blockchain standards provide basic audit trail via transaction history
+    // Smart contracts provide additional event logs for detailed compliance tracking
+    return true;
+  }
   
   // Special handling for wallet support - native L1 standards plus widely adopted standards
   if (featureKey === 'walletSupport') {
