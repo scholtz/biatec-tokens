@@ -425,7 +425,12 @@ const generateAttestation = async () => {
       status: 'success',
     };
 
-    await attestationService.saveToHistory(historyItem);
+    try {
+      await attestationService.saveToHistory(historyItem);
+    } catch (historyError) {
+      console.error('Failed to save to history:', historyError);
+      // Continue anyway - history save failure shouldn't break the flow
+    }
     downloadHistory.value.unshift(historyItem);
 
     successMessage.value = `Attestation package downloaded successfully (${exportOptions.value.format.toUpperCase()})`;
@@ -446,7 +451,12 @@ const generateAttestation = async () => {
       errorMessage: error instanceof Error ? error.message : 'Unknown error',
     };
 
-    await attestationService.saveToHistory(historyItem);
+    try {
+      await attestationService.saveToHistory(historyItem);
+    } catch (historyError) {
+      console.error('Failed to save failed attestation to history:', historyError);
+      // Continue anyway
+    }
     downloadHistory.value.unshift(historyItem);
 
     errorMessage.value = 'Failed to generate attestation package';
@@ -494,7 +504,12 @@ const formatType = (format: string): string => {
 };
 
 const loadHistory = async () => {
-  downloadHistory.value = await attestationService.getAttestationHistory(props.tokenId);
+  try {
+    downloadHistory.value = await attestationService.getAttestationHistory(props.tokenId);
+  } catch (error) {
+    console.error('Failed to load attestation history:', error);
+    downloadHistory.value = [];
+  }
 };
 
 // Initialize

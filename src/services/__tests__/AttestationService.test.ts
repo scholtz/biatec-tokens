@@ -529,4 +529,300 @@ describe('AttestationService', () => {
       expect(attestationService).toBeInstanceOf(AttestationService);
     });
   });
+
+  describe('Edge Cases and Error Handling', () => {
+    it('should handle missing issuer credentials gracefully', async () => {
+      const request: AttestationExportRequest = {
+        tokenId: 'token123',
+        network: 'VOI',
+        issuerCredentials: {
+          name: '',
+          jurisdiction: '',
+          walletAddress: '',
+        },
+        includeWhitelistPolicy: false,
+        includeComplianceStatus: false,
+        format: 'json',
+      };
+
+      const result = await service.generateAttestation(request);
+
+      // Should still generate attestation with empty fields
+      expect(result).toBeDefined();
+      expect(result.issuerCredentials.name).toBe('');
+    });
+
+    it('should generate different hashes for different content', async () => {
+      const request1: AttestationExportRequest = {
+        tokenId: 'token123',
+        network: 'VOI',
+        issuerCredentials: {
+          name: 'Company A',
+          jurisdiction: 'EU',
+          walletAddress: 'A'.repeat(58),
+        },
+        includeWhitelistPolicy: false,
+        includeComplianceStatus: false,
+        format: 'json',
+      };
+
+      const request2: AttestationExportRequest = {
+        ...request1,
+        issuerCredentials: {
+          name: 'Company B',
+          jurisdiction: 'US',
+          walletAddress: 'B'.repeat(58),
+        },
+      };
+
+      const result1 = await service.generateAttestation(request1);
+      const result2 = await service.generateAttestation(request2);
+
+      expect(result1.signature.hash).not.toBe(result2.signature.hash);
+    });
+
+    it('should handle Aramid network in attestation generation', async () => {
+      const request: AttestationExportRequest = {
+        tokenId: 'token456',
+        network: 'Aramid',
+        issuerCredentials: {
+          name: 'Test Company',
+          jurisdiction: 'EU',
+          walletAddress: 'A'.repeat(58),
+        },
+        includeWhitelistPolicy: true,
+        includeComplianceStatus: true,
+        format: 'both',
+      };
+
+      const result = await service.generateAttestation(request);
+
+      expect(result.network).toBe('Aramid');
+      expect(result.tokenId).toBe('token456');
+    });
+
+    it('should include optional fields when both flags are true', async () => {
+      const request: AttestationExportRequest = {
+        tokenId: 'token123',
+        network: 'VOI',
+        issuerCredentials: {
+          name: 'Test Company',
+          jurisdiction: 'EU',
+          walletAddress: 'A'.repeat(58),
+        },
+        includeWhitelistPolicy: true,
+        includeComplianceStatus: true,
+        format: 'json',
+      };
+
+      const result = await service.generateAttestation(request);
+
+      expect(result.complianceStatus).toBeDefined();
+      expect(result.whitelistPolicy).toBeDefined();
+      expect(result.complianceStatus?.whitelistEnabled).toBe(true);
+      expect(result.whitelistPolicy?.enabled).toBe(true);
+    });
+
+    it('should handle localStorage getItem returning null', async () => {
+      const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
+
+      const history = await service.getAttestationHistory();
+
+      expect(history).toEqual([]);
+      getItemSpy.mockRestore();
+    });
+
+    it('should handle corrupted JSON in localStorage', async () => {
+      const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('invalid json {');
+
+      const history = await service.getAttestationHistory();
+
+      expect(history).toEqual([]);
+      getItemSpy.mockRestore();
+    });
+
+    it('should handle PDF generation with all optional fields', async () => {
+      const attestation: AttestationPackage = {
+        id: 'attestation-123',
+        version: '1.0.0',
+        generatedAt: '2026-01-23T12:00:00Z',
+        tokenId: 'token123',
+        network: 'VOI',
+        issuerCredentials: {
+          name: 'Test Company',
+          registrationNumber: '12345',
+          jurisdiction: 'EU',
+          regulatoryLicense: 'LIC123',
+          contactEmail: 'test@example.com',
+          walletAddress: 'A'.repeat(58),
+        },
+        complianceStatus: {
+          tokenId: 'token123',
+          network: 'VOI',
+          whitelistEnabled: true,
+          whitelistCount: 42,
+          complianceScore: 95,
+          lastAuditTimestamp: '2026-01-23T11:00:00Z',
+        },
+        whitelistPolicy: {
+          enabled: true,
+          whitelistedCount: 50,
+          kycRequired: true,
+          jurisdictionRestrictions: ['US', 'CN', 'RU'],
+        },
+        attestationMetadata: {
+          purpose: 'MICA_AUDIT',
+          validUntil: '2027-01-23T12:00:00Z',
+          auditPeriod: {
+            startDate: '2025-12-23T12:00:00Z',
+            endDate: '2026-01-23T12:00:00Z',
+          },
+        },
+        signature: {
+          algorithm: 'SHA-256',
+          hash: 'abc123',
+          timestamp: '2026-01-23T12:00:00Z',
+          signedBy: 'A'.repeat(58),
+          version: '1.0.0',
+        },
+      };
+
+      const blob = await service.downloadAsPDF(attestation);
+      const text = await blob.text();
+
+      expect(text).toContain('Test Company');
+      expect(text).toContain('12345');
+      expect(text).toContain('LIC123');
+      expect(text).toContain('test@example.com');
+      expect(text).toContain('95');
+      expect(text).toContain('US, CN, RU');
+      expect(text).toContain('2027');
+    });
+
+    it('should generate audit period with correct date range', async () => {
+      const request: AttestationExportRequest = {
+        tokenId: 'token123',
+        network: 'VOI',
+        issuerCredentials: {
+          name: 'Test Company',
+          jurisdiction: 'EU',
+          walletAddress: 'A'.repeat(58),
+        },
+        includeWhitelistPolicy: false,
+        includeComplianceStatus: false,
+        format: 'json',
+      };
+
+      const result = await service.generateAttestation(request);
+
+      expect(result.attestationMetadata.auditPeriod).toBeDefined();
+      
+      const startDate = new Date(result.attestationMetadata.auditPeriod!.startDate);
+      const endDate = new Date(result.attestationMetadata.auditPeriod!.endDate);
+      const diffInDays = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+      
+      // Should be approximately 30 days
+      expect(diffInDays).toBeGreaterThan(29);
+      expect(diffInDays).toBeLessThan(31);
+    });
+
+    it('should handle filtering history by non-existent tokenId', async () => {
+      const mockHistory = [
+        {
+          id: 'attestation-1',
+          timestamp: '2026-01-23T10:00:00Z',
+          tokenId: 'token123',
+          network: 'VOI' as const,
+          format: 'pdf' as const,
+          status: 'success' as const,
+        },
+        {
+          id: 'attestation-2',
+          timestamp: '2026-01-23T11:00:00Z',
+          tokenId: 'token456',
+          network: 'VOI' as const,
+          format: 'json' as const,
+          status: 'success' as const,
+        },
+      ];
+      localStorage.setItem('attestation-history', JSON.stringify(mockHistory));
+
+      const history = await service.getAttestationHistory('token999');
+
+      expect(history).toHaveLength(0);
+    });
+
+    it('should handle JSON export with nested metadata', async () => {
+      const attestation: AttestationPackage = {
+        id: 'attestation-123',
+        version: '1.0.0',
+        generatedAt: '2026-01-23T12:00:00Z',
+        tokenId: 'token123',
+        network: 'VOI',
+        issuerCredentials: {
+          name: 'Test Company',
+          jurisdiction: 'EU',
+          walletAddress: 'A'.repeat(58),
+        },
+        attestationMetadata: {
+          purpose: 'REGULATORY_SUBMISSION',
+          validUntil: '2027-01-23T12:00:00Z',
+        },
+        signature: {
+          algorithm: 'SHA-256',
+          hash: 'abc123',
+          timestamp: '2026-01-23T12:00:00Z',
+          signedBy: 'A'.repeat(58),
+          version: '1.0.0',
+        },
+      };
+
+      const blob = await service.downloadAsJSON(attestation);
+      const text = await blob.text();
+      const parsed = JSON.parse(text);
+
+      expect(parsed.attestationMetadata.purpose).toBe('REGULATORY_SUBMISSION');
+      expect(parsed.attestationMetadata.validUntil).toBe('2027-01-23T12:00:00Z');
+    });
+
+    it('should prepend items to history in correct order', async () => {
+      const item1 = {
+        id: 'attestation-1',
+        timestamp: '2026-01-23T10:00:00Z',
+        tokenId: 'token123',
+        network: 'VOI' as const,
+        format: 'pdf' as const,
+        status: 'success' as const,
+      };
+
+      const item2 = {
+        id: 'attestation-2',
+        timestamp: '2026-01-23T11:00:00Z',
+        tokenId: 'token123',
+        network: 'VOI' as const,
+        format: 'json' as const,
+        status: 'success' as const,
+      };
+
+      const item3 = {
+        id: 'attestation-3',
+        timestamp: '2026-01-23T12:00:00Z',
+        tokenId: 'token123',
+        network: 'VOI' as const,
+        format: 'both' as const,
+        status: 'success' as const,
+      };
+
+      await service.saveToHistory(item1);
+      await service.saveToHistory(item2);
+      await service.saveToHistory(item3);
+
+      const history = await service.getAttestationHistory();
+
+      // Most recent should be first
+      expect(history[0].id).toBe('attestation-3');
+      expect(history[1].id).toBe('attestation-2');
+      expect(history[2].id).toBe('attestation-1');
+    });
+  });
 });

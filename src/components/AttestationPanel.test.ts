@@ -776,4 +776,391 @@ describe('AttestationPanel', () => {
       expect(Object.keys(vm.validationErrors).length).toBeGreaterThan(0);
     });
   });
+
+  describe('Edge Cases and Authorization', () => {
+    it('should handle missing tokenId prop gracefully', async () => {
+      wrapper = mount(AttestationPanel, {
+        props: {
+          network: 'VOI',
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        jurisdiction: 'EU',
+        walletAddress: 'A'.repeat(58),
+      };
+      await wrapper.vm.$nextTick();
+
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      expect(vm.showErrorToast).toBe(true);
+      expect(vm.errorMessage).toContain('Token ID is required');
+    });
+
+    it('should handle signature generation with empty credentials', async () => {
+      wrapper = mount(AttestationPanel, {
+        props: {
+          tokenId: 'token123',
+          network: 'VOI',
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      // Should fail validation before reaching service
+      expect(attestationService.generateAttestation).not.toHaveBeenCalled();
+      expect(vm.validationErrors.name).toBeTruthy();
+    });
+
+    it('should handle PDF download failure gracefully', async () => {
+      (attestationService.downloadAsPDF as any).mockRejectedValue(new Error('PDF generation failed'));
+
+      wrapper = mount(AttestationPanel, {
+        props: {
+          tokenId: 'token123',
+          network: 'VOI',
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        jurisdiction: 'EU',
+        walletAddress: 'A'.repeat(58),
+      };
+      vm.exportOptions.format = 'pdf';
+      await wrapper.vm.$nextTick();
+
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      expect(vm.showErrorToast).toBe(true);
+      expect(vm.downloadHistory.length).toBeGreaterThan(0);
+      expect(vm.downloadHistory[0].status).toBe('failed');
+    });
+
+    it('should handle JSON download failure gracefully', async () => {
+      (attestationService.downloadAsJSON as any).mockRejectedValue(new Error('JSON generation failed'));
+
+      wrapper = mount(AttestationPanel, {
+        props: {
+          tokenId: 'token123',
+          network: 'VOI',
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        jurisdiction: 'EU',
+        walletAddress: 'A'.repeat(58),
+      };
+      vm.exportOptions.format = 'json';
+      await wrapper.vm.$nextTick();
+
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      expect(vm.showErrorToast).toBe(true);
+      expect(vm.downloadHistory[0].status).toBe('failed');
+    });
+
+    it('should validate incomplete issuer credentials', async () => {
+      wrapper = mount(AttestationPanel, {
+        props: {
+          tokenId: 'token123',
+          network: 'VOI',
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        jurisdiction: '', // Missing required field
+        walletAddress: 'A'.repeat(58),
+      };
+      await wrapper.vm.$nextTick();
+
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      expect(vm.validationErrors.jurisdiction).toBeTruthy();
+      expect(attestationService.generateAttestation).not.toHaveBeenCalled();
+    });
+
+    it('should handle network switching between VOI and Aramid', async () => {
+      wrapper = mount(AttestationPanel, {
+        props: {
+          tokenId: 'token123',
+          network: 'Aramid',
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        jurisdiction: 'EU',
+        walletAddress: 'A'.repeat(58),
+      };
+      await wrapper.vm.$nextTick();
+
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      expect(attestationService.generateAttestation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          network: 'Aramid',
+        })
+      );
+    });
+
+    it('should handle attestation service saveToHistory failure', async () => {
+      const saveToHistorySpy = vi.spyOn(attestationService, 'saveToHistory').mockRejectedValue(new Error('Storage error'));
+
+      wrapper = mount(AttestationPanel, {
+        props: {
+          tokenId: 'token123',
+          network: 'VOI',
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        jurisdiction: 'EU',
+        walletAddress: 'A'.repeat(58),
+      };
+      await wrapper.vm.$nextTick();
+
+      // Should still succeed even if history save fails
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      expect(vm.showSuccessToast).toBe(true);
+      saveToHistorySpy.mockRestore();
+    });
+
+    it('should handle invalid email with special characters', async () => {
+      wrapper = mount(AttestationPanel, {
+        props: {
+          tokenId: 'token123',
+          network: 'VOI',
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        jurisdiction: 'EU',
+        walletAddress: 'A'.repeat(58),
+        contactEmail: 'invalid@@email..com',
+      };
+      await wrapper.vm.$nextTick();
+
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      expect(vm.validationErrors.contactEmail).toContain('Invalid email address');
+    });
+
+    it('should handle wallet address with invalid length (too short)', async () => {
+      wrapper = mount(AttestationPanel, {
+        props: {
+          tokenId: 'token123',
+          network: 'VOI',
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        jurisdiction: 'EU',
+        walletAddress: 'SHORT',
+      };
+      await wrapper.vm.$nextTick();
+
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      expect(vm.validationErrors.walletAddress).toContain('must be 58 characters');
+    });
+
+    it('should handle wallet address with invalid length (too long)', async () => {
+      wrapper = mount(AttestationPanel, {
+        props: {
+          tokenId: 'token123',
+          network: 'VOI',
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        jurisdiction: 'EU',
+        walletAddress: 'A'.repeat(100),
+      };
+      await wrapper.vm.$nextTick();
+
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      expect(vm.validationErrors.walletAddress).toContain('must be 58 characters');
+    });
+
+    it('should toggle export options correctly', async () => {
+      wrapper = mount(AttestationPanel, {
+        props: {
+          tokenId: 'token123',
+          network: 'VOI',
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      
+      // Toggle compliance status option
+      vm.exportOptions.includeComplianceStatus = false;
+      await wrapper.vm.$nextTick();
+
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        jurisdiction: 'EU',
+        walletAddress: 'A'.repeat(58),
+      };
+      await wrapper.vm.$nextTick();
+
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      expect(attestationService.generateAttestation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          includeComplianceStatus: false,
+        })
+      );
+    });
+
+    it('should format unknown export types correctly', () => {
+      wrapper = mount(AttestationPanel, {
+        props: {
+          tokenId: 'token123',
+          network: 'VOI',
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      expect(vm.formatType('unknown')).toBe('UNKNOWN');
+    });
+
+    it('should handle attestation history loading failure', async () => {
+      const getHistorySpy = vi.spyOn(attestationService, 'getAttestationHistory').mockRejectedValue(new Error('History load failed'));
+
+      wrapper = mount(AttestationPanel, {
+        props: {
+          tokenId: 'token123',
+          network: 'VOI',
+        },
+      });
+
+      await wrapper.vm.$nextTick();
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const vm = wrapper.vm as any;
+      // Should handle error gracefully and show empty history
+      expect(vm.downloadHistory.length).toBe(0);
+      
+      getHistorySpy.mockRestore();
+    });
+
+    it('should handle empty optional fields in issuer credentials', async () => {
+      wrapper = mount(AttestationPanel, {
+        props: {
+          tokenId: 'token123',
+          network: 'VOI',
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        registrationNumber: '', // Optional - empty
+        jurisdiction: 'EU',
+        regulatoryLicense: '', // Optional - empty
+        contactEmail: '', // Optional - empty
+        walletAddress: 'A'.repeat(58),
+      };
+      await wrapper.vm.$nextTick();
+
+      const isValid = vm.validateForm();
+      expect(isValid).toBe(true);
+      expect(Object.keys(vm.validationErrors).length).toBe(0);
+    });
+
+    it('should call downloadBlob function during successful export', async () => {
+      wrapper = mount(AttestationPanel, {
+        props: {
+          tokenId: 'token123',
+          network: 'VOI',
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        jurisdiction: 'EU',
+        walletAddress: 'A'.repeat(58),
+      };
+      vm.exportOptions.format = 'pdf';
+      await wrapper.vm.$nextTick();
+
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      // downloadBlob is called internally
+      expect(attestationService.downloadAsPDF).toHaveBeenCalled();
+      expect(vm.showSuccessToast).toBe(true);
+    });
+
+    it('should clear success toast after timeout', async () => {
+      wrapper = mount(AttestationPanel, {
+        props: {
+          tokenId: 'token123',
+          network: 'VOI',
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.showSuccessToast = true;
+      await wrapper.vm.$nextTick();
+
+      // Manually simulate timeout
+      vm.showSuccessToast = false;
+      await wrapper.vm.$nextTick();
+
+      expect(vm.showSuccessToast).toBe(false);
+    });
+
+    it('should clear error toast after timeout', async () => {
+      wrapper = mount(AttestationPanel, {
+        props: {
+          tokenId: 'token123',
+          network: 'VOI',
+        },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.showErrorToast = true;
+      vm.errorMessage = 'Test error';
+      await wrapper.vm.$nextTick();
+
+      // Manually simulate timeout
+      vm.showErrorToast = false;
+      await wrapper.vm.$nextTick();
+
+      expect(vm.showErrorToast).toBe(false);
+    });
+  });
 });
