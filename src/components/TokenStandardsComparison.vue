@@ -159,7 +159,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useTokenStore } from '../stores/tokens';
+import { useTokenStore, type TokenStandard } from '../stores/tokens';
 import Card from './ui/Card.vue';
 import Badge from './ui/Badge.vue';
 import {
@@ -245,8 +245,8 @@ const featureRows = [
   },
 ];
 
-const getFeatureValue = (standard: any, featureKey: string) => {
+const getFeatureValue = (standard: TokenStandard, featureKey: string) => {
   if (!standard.features) return false;
-  return standard.features[featureKey] === true;
+  return standard.features[featureKey as keyof typeof standard.features] === true;
 };
 </script>

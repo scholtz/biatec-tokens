@@ -85,17 +85,31 @@ export interface TokenStandard {
   features?: TokenStandardFeatures;
 }
 
+/**
+ * Feature comparison data for token standards
+ */
 export interface TokenStandardFeatures {
+  /** Whether the standard supports rich metadata (images, descriptions, etc.) */
   metadataSupport: boolean;
+  /** Whether the standard is implemented as a smart contract */
   smartContract: boolean;
+  /** Whether the standard supports whitelisting/restricted transfers */
   whitelisting: boolean;
+  /** Whether the standard has built-in compliance flag capabilities */
   complianceFlags: boolean;
+  /** Whether the standard supports automatic royalty payments */
   royalties: boolean;
+  /** Whether token metadata can be modified after creation */
   mutableMetadata: boolean;
+  /** Whether the standard supports custom programmable logic */
   programmableLogic: boolean;
+  /** Whether the standard is native Layer-1 (vs smart contract) */
   nativeL1: boolean;
+  /** Optional: Whether the standard is compatible with ERC20 (fungible tokens) */
   erc20Compatible?: boolean;
+  /** Optional: Whether the standard is compatible with ERC721 (NFTs) */
   erc721Compatible?: boolean;
+  /** Optional: Whether the standard supports fractional ownership (for NFTs) */
   fractionalOwnership?: boolean;
 }
 
