@@ -168,7 +168,6 @@ import {
   InformationCircleIcon,
   ChartBarSquareIcon,
   ExclamationCircleIcon,
-  CubeIcon,
   ShieldCheckIcon,
   CodeBracketIcon,
   DocumentTextIcon,
