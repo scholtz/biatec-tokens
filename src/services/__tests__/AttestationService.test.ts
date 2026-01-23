@@ -3,7 +3,7 @@ import { attestationService, AttestationService } from '../AttestationService';
 import type {
   AttestationExportRequest,
   AttestationPackage,
-} from '../types/compliance';
+} from '../../types/compliance';
 
 describe('AttestationService', () => {
   let service: AttestationService;

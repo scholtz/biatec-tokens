@@ -192,7 +192,7 @@
         <ul class="list-disc list-inside space-y-1 ml-4 text-gray-400">
           <li><strong class="text-gray-300">Token Information:</strong> Token ID, network, and metadata</li>
           <li><strong class="text-gray-300">Issuer Credentials:</strong> Complete issuer details for verification</li>
-          <li><strong class="text-gray-300">Compliance Status:</strong> Current whitelist count, compliance score, and issues (optional)</li>
+          <li><strong class="text-gray-300">Compliance Status:</strong> Current whitelist count, compliance score, and compliance issues (optional)</li>
           <li><strong class="text-gray-300">Whitelist Policy:</strong> KYC requirements and jurisdiction restrictions (optional)</li>
           <li><strong class="text-gray-300">Digital Signature:</strong> Cryptographic hash for document integrity verification</li>
           <li><strong class="text-gray-300">Audit Timestamp:</strong> ISO 8601 formatted generation timestamp</li>
@@ -285,6 +285,8 @@ import type {
   AttestationHistoryItem,
 } from '../types/compliance';
 
+const ALGORAND_ADDRESS_LENGTH = 58;
+
 interface ValidationErrors {
   name?: string;
   jurisdiction?: string;
@@ -335,8 +337,8 @@ const validateForm = (): boolean => {
 
   if (!issuerCredentials.value.walletAddress.trim()) {
     validationErrors.value.walletAddress = 'Wallet address is required';
-  } else if (issuerCredentials.value.walletAddress.length !== 58) {
-    validationErrors.value.walletAddress = 'Invalid Algorand wallet address (must be 58 characters)';
+  } else if (issuerCredentials.value.walletAddress.length !== ALGORAND_ADDRESS_LENGTH) {
+    validationErrors.value.walletAddress = `Invalid Algorand wallet address (must be ${ALGORAND_ADDRESS_LENGTH} characters)`;
   }
 
   if (issuerCredentials.value.contactEmail && issuerCredentials.value.contactEmail.trim()) {

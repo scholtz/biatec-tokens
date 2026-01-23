@@ -5,6 +5,8 @@ import type {
   AttestationSignatureMetadata,
 } from '../types/compliance';
 
+const MAX_HISTORY_ITEMS = 20;
+
 /**
  * Service for generating and managing wallet compliance attestations
  * Supports MICA audit requirements with signed PDF/JSON packages
@@ -224,8 +226,8 @@ The digital signature ensures the integrity and authenticity of this document.
       const history = await this.getAttestationHistory();
       history.unshift(item);
       
-      // Keep only last 20 items
-      const trimmed = history.slice(0, 20);
+      // Keep only last MAX_HISTORY_ITEMS items
+      const trimmed = history.slice(0, MAX_HISTORY_ITEMS);
       
       localStorage.setItem('attestation-history', JSON.stringify(trimmed));
     } catch (error) {
