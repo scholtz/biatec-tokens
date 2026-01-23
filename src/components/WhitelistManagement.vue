@@ -430,7 +430,9 @@ const addAddress = async () => {
     await whitelistService.addAddress(
       props.tokenId,
       newAddress.value,
-      newAddressNotes.value
+      {
+        notes: newAddressNotes.value
+      }
     );
     
     toast.success('Address added to whitelist');

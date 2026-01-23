@@ -904,7 +904,9 @@ const exportReport = async (format: 'json' | 'csv') => {
 
     // Create download
     const filename = `mica-whitelist-report-${props.tokenId}-${Date.now()}.${format}`;
-    const content = format === 'json' ? JSON.stringify(report, null, 2) : report;
+    const content = format === 'json' 
+      ? JSON.stringify(report, null, 2) 
+      : typeof report === 'string' ? report : JSON.stringify(report, null, 2);
     const blob = new Blob([content], { type: format === 'json' ? 'application/json' : 'text/csv' });
     const url = URL.createObjectURL(blob);
     
