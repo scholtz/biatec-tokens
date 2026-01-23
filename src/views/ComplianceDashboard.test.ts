@@ -13,8 +13,12 @@ vi.mock('../services/ComplianceService', () => ({
 }));
 
 // Mock child components
-vi.mock('../components/WhitelistManagement.vue', () => ({
-  default: { name: 'WhitelistManagement', template: '<div>WhitelistManagement</div>' },
+vi.mock('../components/MicaWhitelistManagement.vue', () => ({
+  default: { name: 'MicaWhitelistManagement', template: '<div>MicaWhitelistManagement</div>' },
+}));
+
+vi.mock('../components/MicaDashboardSummary.vue', () => ({
+  default: { name: 'MicaDashboardSummary', template: '<div>MicaDashboardSummary</div>' },
 }));
 
 vi.mock('../components/TransferValidationForm.vue', () => ({
