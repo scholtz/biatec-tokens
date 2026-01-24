@@ -677,6 +677,7 @@ Comprehensive guides and documentation are available in the `docs/` directory:
 - **[MICA Wallet Integration Checklist](docs/MICA_WALLET_INTEGRATION_CHECKLIST.md)** - Vision-aligned checklist for MICA-compliant wallet integration with acceptance criteria, UX flows, and security considerations
 
 ### Business Value & Compliance
+- **[MICA/RWA Competitor Feature Map](docs/MICA_RWA_COMPETITOR_FEATURE_MAP.md)** - Comprehensive competitive analysis for MICA compliance dashboards and RWA token issuance tools
 - **[MICA Whitelist Business Value](docs/MICA_WHITELIST_BUSINESS_VALUE.md)** - ROI analysis and compliance requirements for MICA whitelist management
 - **[Enterprise Guide](docs/ENTERPRISE_GUIDE_BUSINESS_VALUE.md)** - Enterprise features and business value proposition
 - **[RWA Compliance Presets](docs/RWA_COMPLIANCE_PRESETS_BUSINESS_VALUE.md)** - Real-world asset compliance templates
