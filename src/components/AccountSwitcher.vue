@@ -148,7 +148,7 @@ const switchAccount = async (address: string) => {
 const copyAddress = async (address: string) => {
   try {
     await navigator.clipboard.writeText(address)
-    // You could add a toast notification here
+    // Address copied successfully - could add toast notification via global event bus
   } catch (error) {
     console.error('Failed to copy address:', error)
   }
@@ -156,8 +156,8 @@ const copyAddress = async (address: string) => {
 
 const handleAddAccount = () => {
   isOpen.value = false
-  // This would trigger the wallet connect modal
-  // You could emit an event or use a global state
+  // Future enhancement: trigger wallet connect modal to add additional accounts
+  // This would emit an event or update global state to open the WalletConnectModal
 }
 
 // Close dropdown when clicking outside

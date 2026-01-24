@@ -221,7 +221,8 @@ const getStandardBadgeVariant = (standard: string): 'success' | 'info' | 'defaul
 
 const selectAsset = (asset: TokenBalance) => {
   selectedAssetId.value = asset.assetId
-  // Could navigate to asset details page or show modal
+  // Future enhancement: navigate to asset details page or show detailed modal
+  // router.push(`/assets/${asset.assetId}`)
 }
 
 // Load metadata for assets when they appear

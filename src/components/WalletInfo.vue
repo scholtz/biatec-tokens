@@ -161,7 +161,7 @@ const copyAddress = async () => {
   if (activeAddress.value) {
     try {
       await navigator.clipboard.writeText(activeAddress.value)
-      // You could add a toast notification here
+      // Address copied successfully - could add toast notification via global event bus
     } catch (error) {
       console.error('Failed to copy address:', error)
     }

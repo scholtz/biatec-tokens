@@ -43,6 +43,10 @@ export function useTokenMetadata() {
   const { networkInfo } = useWalletManager()
   const metadataCache = ref<Map<number, AssetMetadata>>(new Map())
 
+  // Configuration constants
+  const IPFS_GATEWAY_URL = import.meta.env.VITE_IPFS_GATEWAY || 'https://ipfs.io/ipfs/'
+  const ARC3_FETCH_TIMEOUT_MS = 5000
+
   /**
    * Creates an Algodv2 client for the current network
    */
@@ -63,7 +67,7 @@ export function useTokenMetadata() {
   const resolveIpfsUrl = (url: string): string => {
     if (url.startsWith('ipfs://')) {
       const cid = url.replace('ipfs://', '')
-      return `https://ipfs.io/ipfs/${cid}`
+      return `${IPFS_GATEWAY_URL}${cid}`
     }
     return url
   }
@@ -74,7 +78,7 @@ export function useTokenMetadata() {
   const fetchARC3Metadata = async (url: string): Promise<ARC3Metadata | null> => {
     try {
       const resolvedUrl = resolveIpfsUrl(url)
-      const response = await axios.get(resolvedUrl, { timeout: 5000 })
+      const response = await axios.get(resolvedUrl, { timeout: ARC3_FETCH_TIMEOUT_MS })
       return response.data
     } catch (error) {
       console.error('Error fetching ARC3 metadata:', error)
