@@ -16,11 +16,13 @@ describe('Token Store', () => {
     expect(store.failedTokens).toBe(0);
   });
 
-  it('should have 8 token standards available', () => {
+  it('should have 10 token standards available', () => {
     const store = useTokenStore();
     
-    expect(store.tokenStandards).toHaveLength(8);
+    expect(store.tokenStandards).toHaveLength(10);
     expect(store.tokenStandards.map(s => s.name)).toContain('ASA');
+    expect(store.tokenStandards.map(s => s.name)).toContain('ARC19');
+    expect(store.tokenStandards.map(s => s.name)).toContain('ARC69');
     expect(store.tokenStandards.map(s => s.name)).toContain('ARC200');
     expect(store.tokenStandards.map(s => s.name)).toContain('ARC72');
   });
@@ -140,10 +142,10 @@ describe('Token Store', () => {
   });
 
   describe('Token Templates', () => {
-    it('should have 13 token templates available (8 standard + 5 RWA)', () => {
+    it('should have 15 token templates available (10 standard + 5 RWA)', () => {
       const store = useTokenStore();
       
-      expect(store.tokenTemplates).toHaveLength(13);
+      expect(store.tokenTemplates).toHaveLength(15);
       expect(store.tokenTemplates).toBeDefined();
     });
 
@@ -270,7 +272,7 @@ describe('Token Store', () => {
       const compliantTemplates = store.tokenTemplates.filter(t => t.micaCompliant);
       const nonCompliantTemplates = store.tokenTemplates.filter(t => !t.micaCompliant);
       
-      expect(compliantTemplates.length).toBe(12);
+      expect(compliantTemplates.length).toBe(14);
       expect(nonCompliantTemplates.length).toBe(1);
     });
   });
@@ -286,14 +288,14 @@ describe('Token Store', () => {
     it('should have standard non-RWA templates', () => {
       const store = useTokenStore();
       
-      expect(store.standardTokenTemplates).toHaveLength(8);
+      expect(store.standardTokenTemplates).toHaveLength(10);
       expect(store.standardTokenTemplates.every(t => !t.isRwaPreset)).toBe(true);
     });
 
-    it('should have total of 13 templates (8 standard + 5 RWA)', () => {
+    it('should have total of 15 templates (10 standard + 5 RWA)', () => {
       const store = useTokenStore();
       
-      expect(store.tokenTemplates).toHaveLength(13);
+      expect(store.tokenTemplates).toHaveLength(15);
     });
 
     it('should have RWA security token with whitelist features', () => {

@@ -27,6 +27,9 @@ describe('RWA Preset Selection Integration Tests', () => {
   let router: any;
 
   beforeEach(() => {
+    // Clear localStorage before each test
+    localStorage.clear();
+    
     pinia = createPinia();
     setActivePinia(pinia);
 
@@ -320,9 +323,9 @@ describe('RWA Preset Selection Integration Tests', () => {
       const tokenStore = useTokenStore();
       
       // Verify filtering works correctly
-      expect(tokenStore.standardTokenTemplates).toHaveLength(8);
+      expect(tokenStore.standardTokenTemplates).toHaveLength(10);
       expect(tokenStore.rwaTokenTemplates).toHaveLength(5);
-      expect(tokenStore.tokenTemplates).toHaveLength(13);
+      expect(tokenStore.tokenTemplates).toHaveLength(15);
 
       // Standard templates should include VOI Utility Token
       expect(tokenStore.standardTokenTemplates.some(t => t.id === 'voi-utility-token')).toBe(true);

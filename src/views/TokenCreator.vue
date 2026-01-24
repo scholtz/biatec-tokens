@@ -615,14 +615,22 @@ onMounted(() => {
   const savedNetwork = localStorage.getItem(NETWORK_STORAGE_KEY);
   const savedStandard = localStorage.getItem(STANDARD_STORAGE_KEY);
   
-  if (savedTemplate) {
+  // Validate and restore template (which also sets standard and network)
+  if (savedTemplate && tokenStore.tokenTemplates.find(t => t.id === savedTemplate)) {
     applyTemplate(savedTemplate);
   } else if (savedStandard) {
-    selectedStandard.value = savedStandard;
+    // Validate that the saved standard exists before restoring
+    if (tokenStore.tokenStandards.find(s => s.name === savedStandard)) {
+      selectedStandard.value = savedStandard;
+    }
   }
   
-  if (savedNetwork && (savedNetwork === 'VOI' || savedNetwork === 'Aramid')) {
-    selectedNetwork.value = savedNetwork;
+  // Only restore network if no template was applied and network value is valid
+  if (!savedTemplate && savedNetwork) {
+    const validNetworks: Array<"VOI" | "Aramid"> = ["VOI", "Aramid"];
+    if (validNetworks.includes(savedNetwork as "VOI" | "Aramid")) {
+      selectedNetwork.value = savedNetwork as "VOI" | "Aramid";
+    }
   }
 });
 

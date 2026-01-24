@@ -734,7 +734,7 @@ export const useTokenStore = defineStore("tokens", () => {
         whitelisting: false,
         complianceFlags: false,
         royalties: false,
-        mutableMetadata: true,
+        mutableMetadata: false,
         programmableLogic: false,
         nativeL1: true,
         fractionalOwnership: false,
