@@ -184,18 +184,28 @@ export const useComplianceDashboardStore = defineStore('complianceDashboard', ()
       return {
         network,
         totalAssets: networkAssets.length,
-        compliantAssets: networkAssets.filter(a => 
-          a.complianceFlags?.micaReady || 
-          (!a.complianceFlags?.whitelistRequired && 
-           !a.complianceFlags?.jurisdictionRestricted)
-        ).length,
+        compliantAssets: networkAssets.filter(a => {
+          // An asset is compliant if:
+          // 1. It is explicitly MICA ready, OR
+          // 2. It has no explicit restrictions (all flags are false or undefined)
+          const flags = a.complianceFlags
+          if (!flags) return false // No compliance metadata = not compliant
+          
+          // Explicitly MICA ready = compliant
+          if (flags.micaReady) return true
+          
+          // No restrictions = compliant
+          return !flags.whitelistRequired && 
+                 !flags.jurisdictionRestricted && 
+                 !flags.transferRestricted
+        }).length,
         restrictedAssets: networkAssets.filter(a => 
           a.complianceFlags?.whitelistRequired || 
           a.complianceFlags?.jurisdictionRestricted ||
           a.complianceFlags?.transferRestricted
         ).length,
-        micaReadyAssets: networkAssets.filter(a => a.complianceFlags?.micaReady).length,
-        whitelistedAssets: networkAssets.filter(a => a.complianceFlags?.whitelistRequired).length
+        micaReadyAssets: networkAssets.filter(a => a.complianceFlags?.micaReady === true).length,
+        whitelistedAssets: networkAssets.filter(a => a.complianceFlags?.whitelistRequired === true).length
       }
     }
 

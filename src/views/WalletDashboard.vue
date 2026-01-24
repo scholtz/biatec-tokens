@@ -230,7 +230,7 @@ import { useWalletManager } from '../composables/useWalletManager'
 import { useTokenBalance } from '../composables/useTokenBalance'
 import { useTokenMetadata } from '../composables/useTokenMetadata'
 import { useComplianceDashboardStore } from '../stores/complianceDashboard'
-import type { Network } from '../types/compliance'
+import { detectNetworkType } from '../utils/network'
 
 const router = useRouter()
 const { isConnected, networkInfo, disconnect } = useWalletManager()
@@ -243,14 +243,14 @@ const showNetworkSwitcher = ref(false)
 
 // Calculate compliance metrics from wallet assets
 const complianceMetrics = computed(() => {
-  // Get current network from networkInfo
-  const currentNetwork = networkInfo.value?.displayName || 'VOI'
+  // Get current network from networkInfo using utility function
+  const currentNetwork = detectNetworkType(networkInfo.value?.displayName)
   
   // Map assets with their compliance flags
   const assetsWithCompliance = accountBalance.value.assets.map(asset => {
     const metadata = metadataCache.value.get(asset.assetId)
     return {
-      network: (currentNetwork.includes('Aramid') ? 'Aramid' : 'VOI') as Network,
+      network: currentNetwork,
       complianceFlags: metadata?.complianceFlags
     }
   })

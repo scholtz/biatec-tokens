@@ -189,7 +189,7 @@ import { useWalletManager } from '../composables/useWalletManager'
 import { useTokenBalance, type TokenBalance } from '../composables/useTokenBalance'
 import { useTokenMetadata } from '../composables/useTokenMetadata'
 import { useComplianceDashboardStore } from '../stores/complianceDashboard'
-import type { Network } from '../types/compliance'
+import { detectNetworkType } from '../utils/network'
 
 const { isConnected, networkInfo } = useWalletManager()
 const { 
@@ -223,8 +223,8 @@ const filteredAssets = computed(() => {
     })
   }
 
-  // Apply compliance filters
-  const currentNetwork = (networkInfo.value?.displayName?.includes('Aramid') ? 'Aramid' : 'VOI') as Network
+  // Apply compliance filters using utility function for network detection
+  const currentNetwork = detectNetworkType(networkInfo.value?.displayName)
   
   assets = assets.filter(asset => {
     const metadata = assetMetadata.value.get(asset.assetId)
