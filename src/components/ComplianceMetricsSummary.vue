@@ -203,7 +203,9 @@ const restrictedAssets = computed(() => {
 
 const compliantPercentage = computed(() => {
   if (totalAssets.value === 0) return 0
-  return Math.round((compliantAssets.value / totalAssets.value) * 100)
+  const percentage = Math.round((compliantAssets.value / totalAssets.value) * 100)
+  // Ensure percentage is within 0-100 bounds to handle any floating point edge cases
+  return Math.min(100, Math.max(0, percentage))
 })
 
 const hasRestrictedAssets = computed(() => restrictedAssets.value > 0)

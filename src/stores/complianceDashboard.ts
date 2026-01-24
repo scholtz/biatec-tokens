@@ -187,14 +187,18 @@ export const useComplianceDashboardStore = defineStore('complianceDashboard', ()
         compliantAssets: networkAssets.filter(a => {
           // An asset is compliant if:
           // 1. It is explicitly MICA ready, OR
-          // 2. It has no explicit restrictions (all flags are false or undefined)
+          // 2. It has compliance metadata and no explicit restrictions
+          // 
+          // Note: Assets without compliance metadata are treated as non-compliant
+          // to ensure a conservative compliance stance. This can be adjusted based
+          // on business requirements.
           const flags = a.complianceFlags
-          if (!flags) return false // No compliance metadata = not compliant
+          if (!flags) return false // No compliance metadata = assume not compliant (conservative approach)
           
           // Explicitly MICA ready = compliant
           if (flags.micaReady) return true
           
-          // No restrictions = compliant
+          // Has metadata with no restrictions = compliant
           return !flags.whitelistRequired && 
                  !flags.jurisdictionRestricted && 
                  !flags.transferRestricted

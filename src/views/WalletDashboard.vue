@@ -246,8 +246,9 @@ const complianceMetrics = computed(() => {
   // Get current network from networkInfo using utility function
   const currentNetwork = detectNetworkType(networkInfo.value?.displayName)
   
-  // Map assets with their compliance flags
-  const assetsWithCompliance = accountBalance.value.assets.map(asset => {
+  // Map assets with their compliance flags, safely handling empty arrays
+  const assets = accountBalance.value.assets || []
+  const assetsWithCompliance = assets.map(asset => {
     const metadata = metadataCache.value.get(asset.assetId)
     return {
       network: currentNetwork,
