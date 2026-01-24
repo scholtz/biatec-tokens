@@ -8,6 +8,11 @@
           <p class="text-gray-300 text-lg">Monitor and manage your deployed tokens</p>
         </div>
 
+        <!-- MICA Readiness Summary -->
+        <div class="mb-8">
+          <MicaReadinessSummary />
+        </div>
+
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div class="glass-effect rounded-xl p-6">
@@ -115,6 +120,7 @@ import { useRouter } from "vue-router";
 import { useTokenStore } from "../stores/tokens";
 import TokenCard from "../components/TokenCard.vue";
 import MainLayout from "../layout/MainLayout.vue";
+import MicaReadinessSummary from "../components/MicaReadinessSummary.vue";
 
 const router = useRouter();
 const tokenStore = useTokenStore();

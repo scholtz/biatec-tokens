@@ -21,6 +21,14 @@
               <div>
                 <h1 class="text-4xl font-bold text-white mb-2">{{ token.name }}</h1>
                 <p class="text-gray-400">{{ token.symbol }} • {{ token.standard }}</p>
+                <!-- On-Chain Compliance Badge for VOI/Aramid tokens -->
+                <div v-if="isVoiOrAramidToken" class="mt-2">
+                  <OnChainComplianceBadge
+                    :token-id="tokenId"
+                    :network="getTokenNetwork()"
+                    :compliance-score="getComplianceScore()"
+                  />
+                </div>
               </div>
             </div>
             <span
@@ -291,7 +299,8 @@ import MainLayout from '../layout/MainLayout.vue';
 import WhitelistManagement from '../components/WhitelistManagement.vue';
 import ComplianceChecklist from '../components/ComplianceChecklist.vue';
 import AuditLogViewer from '../components/AuditLogViewer.vue';
-import type { AttestationType } from '../types/compliance';
+import OnChainComplianceBadge from '../components/OnChainComplianceBadge.vue';
+import type { AttestationType, Network } from '../types/compliance';
 import { getAttestationTypeLabel } from '../utils/attestation';
 
 const route = useRoute();
@@ -335,6 +344,44 @@ const statusClass = (status: string) => {
     default:
       return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
   }
+};
+
+const isVoiOrAramidToken = computed(() => {
+  if (!token.value) return false;
+  // Check if token standard is compatible with VOI/Aramid (Algorand-based)
+  const algorandStandards = ['ASA', 'ARC3FT', 'ARC3NFT', 'ARC3FNFT', 'ARC200', 'ARC72'];
+  return algorandStandards.includes(token.value.standard);
+});
+
+const getTokenNetwork = (): Network => {
+  // In a real application, this would be determined from token metadata or deployment info
+  // For now, defaulting to VOI for Algorand-based tokens
+  return 'VOI';
+};
+
+const getComplianceScore = (): number => {
+  if (!token.value) return 0;
+  
+  let score = 0;
+  
+  // Base score for deployed tokens
+  if (token.value.status === 'deployed') {
+    score += 20;
+  }
+  
+  // Check attestation metadata
+  if (token.value.attestationMetadata?.enabled) {
+    score += 30;
+    
+    const summary = token.value.attestationMetadata.complianceSummary;
+    if (summary) {
+      if (summary.kycCompliant) score += 20;
+      if (summary.accreditedInvestor) score += 15;
+      if (summary.jurisdictionApproved) score += 15;
+    }
+  }
+  
+  return Math.min(score, 100);
 };
 
 onMounted(() => {
