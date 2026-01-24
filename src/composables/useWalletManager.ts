@@ -1,6 +1,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useWallet, type WalletAccount } from '@txnlab/use-wallet-vue'
 import { useAuthStore } from '../stores/auth'
+import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from '../constants/auth'
 
 export interface WalletState {
   isConnected: boolean
@@ -167,7 +168,7 @@ export function useWalletManager() {
 
       // Clear persisted state
       localStorage.removeItem('wallet_connected')
-      localStorage.removeItem('active_wallet_id')
+      localStorage.removeItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID)
     } catch (error) {
       console.error('Failed to disconnect wallet:', error)
       throw error
@@ -227,9 +228,9 @@ export function useWalletManager() {
    * Attempt to reconnect on page load
    */
   const attemptReconnect = async () => {
-    const wasConnected = localStorage.getItem('wallet_connected') === 'true'
-    const savedWalletId = localStorage.getItem('active_wallet_id')
-    const savedNetwork = localStorage.getItem('selected_network') as NetworkId
+    const wasConnected = localStorage.getItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED) === WALLET_CONNECTION_STATE.CONNECTED
+    const savedWalletId = localStorage.getItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID)
+    const savedNetwork = localStorage.getItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK) as NetworkId
 
     if (!wasConnected || !savedWalletId) {
       // Still restore network preference even if not connected
@@ -255,7 +256,7 @@ export function useWalletManager() {
       console.warn('Failed to reconnect wallet:', error)
       // Clear persisted state on reconnection failure
       localStorage.removeItem('wallet_connected')
-      localStorage.removeItem('active_wallet_id')
+      localStorage.removeItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID)
     } finally {
       isReconnecting.value = false
     }
@@ -268,7 +269,7 @@ export function useWalletManager() {
     // Persist connection state when wallet is connected
     if (walletState.value.isConnected) {
       if (walletState.value.activeWallet) {
-        localStorage.setItem('wallet_connected', 'true')
+        localStorage.setItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED, WALLET_CONNECTION_STATE.CONNECTED)
         localStorage.setItem('active_wallet_id', walletState.value.activeWallet)
       }
     }

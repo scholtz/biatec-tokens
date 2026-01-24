@@ -371,6 +371,7 @@
 import { ref, computed } from 'vue'
 import { useWallet } from '@txnlab/use-wallet-vue'
 import { NETWORKS, type NetworkId } from '../composables/useWalletManager'
+import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from '../constants/auth'
 
 interface Props {
   isOpen: boolean
@@ -436,10 +437,10 @@ const formattedAddress = computed(() => {
 })
 
 const canProceedToNextStep = computed(() => {
-  if (currentStep.value === 0) return true
-  if (currentStep.value === 1) return !!selectedNetwork.value
+  if (currentStep.value === 0) return true // Welcome step
+  if (currentStep.value === 1) return !!selectedNetwork.value // Network selection
   if (currentStep.value === 2) return true // Can skip wallet connection
-  if (currentStep.value === 3) return canProceedFromCompliance.value
+  if (currentStep.value === 3) return canProceedFromCompliance.value // Compliance
   return true
 })
 
@@ -452,9 +453,9 @@ const nextStep = () => {
   if (currentStep.value < steps.length - 1 && canProceedToNextStep.value) {
     currentStep.value++
     
-    // If skipping wallet connection (step 2), move directly to compliance
+    // If skipping wallet connection (step 2), move directly to success
     if (currentStep.value === 3 && !connectedAddress.value) {
-      // Skip compliance if no wallet connected
+      // Skip compliance and go to success if no wallet connected
       currentStep.value = 4
     }
   }
@@ -487,10 +488,10 @@ const handleWalletConnect = async (walletId: string) => {
 
     connectedAddress.value = activeAccount.address
 
-    // Store network preference
-    localStorage.setItem('selected_network', selectedNetwork.value)
-    localStorage.setItem('wallet_connected', 'true')
-    localStorage.setItem('active_wallet_id', walletId)
+    // Store network preference and wallet info
+    localStorage.setItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK, selectedNetwork.value)
+    localStorage.setItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED, WALLET_CONNECTION_STATE.CONNECTED)
+    localStorage.setItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID, walletId)
 
     // Move to next step (compliance)
     currentStep.value = 3
@@ -512,13 +513,15 @@ const finishOnboarding = () => {
   }
   
   // Mark onboarding as completed
-  localStorage.setItem('onboarding_completed', 'true')
+  localStorage.setItem(AUTH_STORAGE_KEYS.ONBOARDING_COMPLETED, WALLET_CONNECTION_STATE.CONNECTED)
   
   emit('close')
 }
 
 const handleClose = () => {
-  if (!isConnecting.value && currentStep.value !== 2) {
+  // Don't allow closing during wallet connection
+  const isWalletStep = currentStep.value === 2
+  if (!isConnecting.value && !isWalletStep) {
     emit('close')
   }
 }

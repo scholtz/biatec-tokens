@@ -8,6 +8,7 @@ import ComplianceDashboard from "../views/ComplianceDashboard.vue";
 import AttestationsDashboard from "../views/AttestationsDashboard.vue";
 import TokenStandardsView from "../views/TokenStandardsView.vue";
 import EnterpriseGuideView from "../views/EnterpriseGuideView.vue";
+import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from "../constants/auth";
 
 // Subscription views
 import Pricing from "../views/subscription/Pricing.vue";
@@ -94,11 +95,11 @@ router.beforeEach((to, _from, next) => {
   
   if (requiresAuth) {
     // Check if user is authenticated by checking localStorage
-    const walletConnected = localStorage.getItem('wallet_connected') === 'true'
+    const walletConnected = localStorage.getItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED) === WALLET_CONNECTION_STATE.CONNECTED
     
     if (!walletConnected) {
       // Store the intended destination
-      localStorage.setItem('redirect_after_auth', to.fullPath)
+      localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, to.fullPath)
       
       // Redirect to home with a flag to show onboarding
       next({ 

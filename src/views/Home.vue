@@ -108,6 +108,7 @@ import { computed, ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useTokenStore } from "../stores/tokens";
 import { useWalletManager } from "../composables/useWalletManager";
+import { AUTH_STORAGE_KEYS } from "../constants/auth";
 import Button from "../components/ui/Button.vue";
 import Card from "../components/ui/Card.vue";
 import Badge from "../components/ui/Badge.vue";
@@ -167,9 +168,9 @@ const handleOnboardingComplete = () => {
   showOnboardingWizard.value = false;
   
   // Check if there's a redirect destination
-  const redirectPath = localStorage.getItem('redirect_after_auth');
+  const redirectPath = localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);
   if (redirectPath) {
-    localStorage.removeItem('redirect_after_auth');
+    localStorage.removeItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);
     router.push(redirectPath);
   } else {
     router.push("/create");

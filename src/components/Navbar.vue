@@ -167,6 +167,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useWalletManager } from '../composables/useWalletManager'
+import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from '../constants/auth'
 import WalletConnectModal from './WalletConnectModal.vue'
 import WalletOnboardingWizard from './WalletOnboardingWizard.vue'
 import NetworkSwitcher from './NetworkSwitcher.vue'
@@ -180,7 +181,7 @@ const showAccountMenu = ref(false)
 
 // Check if user has completed onboarding before
 const hasCompletedOnboarding = computed(() => {
-  return localStorage.getItem('onboarding_completed') === 'true'
+  return localStorage.getItem(AUTH_STORAGE_KEYS.ONBOARDING_COMPLETED) === WALLET_CONNECTION_STATE.CONNECTED
 })
 
 const walletButtonText = computed(() => {
