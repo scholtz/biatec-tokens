@@ -3,9 +3,20 @@
     <div class="space-y-4">
       <!-- Header -->
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-          Token Holdings
-        </h3>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+            Token Holdings
+          </h3>
+          <div v-if="complianceDashboardStore.hasActiveFilters" class="mt-1 flex items-center gap-2">
+            <Badge variant="info" class="text-xs">
+              <i class="pi pi-filter mr-1"></i>
+              {{ complianceDashboardStore.activeFilterCount }} filter(s) active
+            </Badge>
+            <span class="text-xs text-gray-600 dark:text-gray-400">
+              Showing {{ filteredAssets.length }} of {{ accountBalance.assets.length }} assets
+            </span>
+          </div>
+        </div>
         <div class="flex items-center gap-2">
           <button
             @click="refresh"
@@ -177,8 +188,10 @@ import ComplianceBadge from './ComplianceBadge.vue'
 import { useWalletManager } from '../composables/useWalletManager'
 import { useTokenBalance, type TokenBalance } from '../composables/useTokenBalance'
 import { useTokenMetadata } from '../composables/useTokenMetadata'
+import { useComplianceDashboardStore } from '../stores/complianceDashboard'
+import type { Network } from '../types/compliance'
 
-const { isConnected } = useWalletManager()
+const { isConnected, networkInfo } = useWalletManager()
 const { 
   accountBalance, 
   isLoading, 
@@ -188,6 +201,7 @@ const {
 } = useTokenBalance()
 
 const { getMetadata, metadataCache } = useTokenMetadata()
+const complianceDashboardStore = useComplianceDashboardStore()
 
 const searchQuery = ref('')
 const selectedAssetId = ref<number | null>(null)
@@ -195,16 +209,32 @@ const loadingMetadata = ref(new Set<number>())
 const assetMetadata = computed(() => metadataCache.value)
 
 const filteredAssets = computed(() => {
-  if (!searchQuery.value) return accountBalance.value.assets
+  let assets = accountBalance.value.assets
 
-  const query = searchQuery.value.toLowerCase()
-  return accountBalance.value.assets.filter(asset => {
-    const name = getAssetName(asset).toLowerCase()
-    const id = asset.assetId.toString()
-    const unitName = (asset.unitName || '').toLowerCase()
-    
-    return name.includes(query) || id.includes(query) || unitName.includes(query)
+  // Apply search filter
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    assets = assets.filter(asset => {
+      const name = getAssetName(asset).toLowerCase()
+      const id = asset.assetId.toString()
+      const unitName = (asset.unitName || '').toLowerCase()
+      
+      return name.includes(query) || id.includes(query) || unitName.includes(query)
+    })
+  }
+
+  // Apply compliance filters
+  const currentNetwork = (networkInfo.value?.displayName?.includes('Aramid') ? 'Aramid' : 'VOI') as Network
+  
+  assets = assets.filter(asset => {
+    const metadata = assetMetadata.value.get(asset.assetId)
+    return complianceDashboardStore.matchesFilters({
+      network: currentNetwork,
+      complianceFlags: metadata?.complianceFlags
+    })
   })
+
+  return assets
 })
 
 const formatAmount = (amount: number, decimals: number): string => {
