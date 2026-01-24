@@ -302,6 +302,7 @@ import AuditLogViewer from '../components/AuditLogViewer.vue';
 import OnChainComplianceBadge from '../components/OnChainComplianceBadge.vue';
 import type { AttestationType, Network } from '../types/compliance';
 import { getAttestationTypeLabel } from '../utils/attestation';
+import { isAlgorandBasedToken, calculateComplianceScore, getDefaultNetwork } from '../utils/compliance';
 
 const route = useRoute();
 const tokenStore = useTokenStore();
@@ -348,40 +349,16 @@ const statusClass = (status: string) => {
 
 const isVoiOrAramidToken = computed(() => {
   if (!token.value) return false;
-  // Check if token standard is compatible with VOI/Aramid (Algorand-based)
-  const algorandStandards = ['ASA', 'ARC3FT', 'ARC3NFT', 'ARC3FNFT', 'ARC200', 'ARC72'];
-  return algorandStandards.includes(token.value.standard);
+  return isAlgorandBasedToken(token.value.standard);
 });
 
 const getTokenNetwork = (): Network => {
-  // In a real application, this would be determined from token metadata or deployment info
-  // For now, defaulting to VOI for Algorand-based tokens
-  return 'VOI';
+  return getDefaultNetwork();
 };
 
 const getComplianceScore = (): number => {
   if (!token.value) return 0;
-  
-  let score = 0;
-  
-  // Base score for deployed tokens
-  if (token.value.status === 'deployed') {
-    score += 20;
-  }
-  
-  // Check attestation metadata
-  if (token.value.attestationMetadata?.enabled) {
-    score += 30;
-    
-    const summary = token.value.attestationMetadata.complianceSummary;
-    if (summary) {
-      if (summary.kycCompliant) score += 20;
-      if (summary.accreditedInvestor) score += 15;
-      if (summary.jurisdictionApproved) score += 15;
-    }
-  }
-  
-  return Math.min(score, 100);
+  return calculateComplianceScore(token.value);
 };
 
 onMounted(() => {

@@ -165,7 +165,7 @@ import type { Network } from '../types/compliance';
 
 interface Props {
   tokenId: string;
-  network: Network | string;
+  network: Network;
   complianceScore?: number;
   variant?: 'badge' | 'full';
 }
@@ -281,7 +281,8 @@ const requiredArtifacts = computed<RequiredArtifact[]>(() => {
       label: 'Token Whitepaper',
       description: 'Comprehensive documentation of token economics and use case',
       status: props.complianceScore > 70 ? 'verified' : props.complianceScore > 40 ? 'pending' : 'missing',
-      link: props.complianceScore > 70 ? '#' : undefined,
+      // TODO: Integrate with actual document storage service
+      link: undefined,
       hash: props.complianceScore > 70 ? '0x7a8f...' : undefined
     },
     {
@@ -289,7 +290,8 @@ const requiredArtifacts = computed<RequiredArtifact[]>(() => {
       label: 'Legal Opinion',
       description: 'Third-party legal assessment of regulatory compliance',
       status: props.complianceScore > 80 ? 'verified' : props.complianceScore > 50 ? 'pending' : 'missing',
-      link: props.complianceScore > 80 ? '#' : undefined,
+      // TODO: Integrate with actual document storage service
+      link: undefined,
       hash: props.complianceScore > 80 ? '0x9bc2...' : undefined
     },
     {
@@ -297,7 +299,8 @@ const requiredArtifacts = computed<RequiredArtifact[]>(() => {
       label: 'KYC/AML Policy',
       description: 'Know Your Customer and Anti-Money Laundering procedures',
       status: props.complianceScore > 60 ? 'verified' : props.complianceScore > 30 ? 'pending' : 'missing',
-      link: props.complianceScore > 60 ? '#' : undefined,
+      // TODO: Integrate with actual document storage service
+      link: undefined,
       hash: props.complianceScore > 60 ? '0x3def...' : undefined
     },
     {
@@ -305,7 +308,8 @@ const requiredArtifacts = computed<RequiredArtifact[]>(() => {
       label: 'Issuer Disclosure',
       description: 'Detailed information about token issuer and governance',
       status: props.complianceScore > 65 ? 'verified' : props.complianceScore > 35 ? 'pending' : 'missing',
-      link: props.complianceScore > 65 ? '#' : undefined,
+      // TODO: Integrate with actual document storage service
+      link: undefined,
       hash: props.complianceScore > 65 ? '0x5a1b...' : undefined
     }
   ];
@@ -335,7 +339,11 @@ const dataSources = computed(() => {
 
 const navigateToCompliance = () => {
   showDetails.value = false;
-  router.push(`/compliance/${props.tokenId}?network=${props.network}`);
+  router.push({ 
+    name: 'ComplianceDashboard', 
+    params: { id: props.tokenId }, 
+    query: { network: props.network } 
+  });
 };
 
 const exportArtifacts = () => {
