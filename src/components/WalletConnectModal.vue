@@ -59,6 +59,21 @@
                 <div class="flex-1">
                   <p class="text-sm text-red-400 font-medium">Connection Failed</p>
                   <p class="text-xs text-gray-400 mt-1">{{ error }}</p>
+                  <div class="mt-3 space-y-2">
+                    <p class="text-xs text-gray-300 font-medium">Troubleshooting:</p>
+                    <ul class="text-xs text-gray-400 space-y-1 ml-4 list-disc">
+                      <li>Make sure your wallet app is installed and unlocked</li>
+                      <li>Check if you're on the correct network</li>
+                      <li>Try refreshing the page and reconnecting</li>
+                      <li>Some wallets may require you to approve the connection in the app</li>
+                    </ul>
+                  </div>
+                  <button
+                    @click="error = null"
+                    class="mt-3 text-xs text-blue-400 hover:text-blue-300 underline"
+                  >
+                    Try again
+                  </button>
                 </div>
               </div>
             </div>
@@ -83,13 +98,40 @@
             </button>
           </div>
 
-          <!-- Info -->
-          <div class="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-            <div class="flex items-start gap-3">
-              <i class="pi pi-info-circle text-blue-400"></i>
-              <p class="text-sm text-gray-300">
-                By connecting your wallet, you agree to our Terms of Service and acknowledge that you've read our Privacy Policy.
-              </p>
+          <!-- Info & Links -->
+          <div class="mt-6 space-y-3">
+            <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+              <div class="flex items-start gap-3">
+                <i class="pi pi-info-circle text-blue-400"></i>
+                <div class="text-sm text-gray-300">
+                  <p class="mb-2">
+                    By connecting your wallet, you agree to our Terms of Service and acknowledge that you've read our Privacy Policy.
+                  </p>
+                  <p class="text-xs text-gray-400">
+                    <strong class="text-blue-400">Note:</strong> We never store your private keys. All transactions require your approval.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+              <div class="flex items-start gap-3">
+                <i class="pi pi-exclamation-circle text-yellow-400"></i>
+                <div class="text-sm text-gray-300">
+                  <p class="font-medium text-yellow-400 mb-2">Don't have a supported wallet?</p>
+                  <div class="space-y-1 text-xs">
+                    <a href="https://perawallet.app/" target="_blank" rel="noopener noreferrer" class="block text-blue-400 hover:text-blue-300 underline">
+                      Download Pera Wallet (Recommended) →
+                    </a>
+                    <a href="https://defly.app/" target="_blank" rel="noopener noreferrer" class="block text-blue-400 hover:text-blue-300 underline">
+                      Download Defly Wallet →
+                    </a>
+                    <a href="https://www.exodus.com/" target="_blank" rel="noopener noreferrer" class="block text-blue-400 hover:text-blue-300 underline">
+                      Download Exodus Wallet →
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

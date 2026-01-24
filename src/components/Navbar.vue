@@ -104,6 +104,13 @@
           @connected="handleConnected"
         />
 
+        <!-- Wallet Onboarding Wizard -->
+        <WalletOnboardingWizard
+          :is-open="showOnboardingWizard"
+          @close="showOnboardingWizard = false"
+          @complete="handleConnected"
+        />
+
         <!-- Mobile Menu Button -->
         <button
           @click="toggleMobileMenu"
@@ -161,13 +168,20 @@
 import { ref, computed } from 'vue'
 import { useWalletManager } from '../composables/useWalletManager'
 import WalletConnectModal from './WalletConnectModal.vue'
+import WalletOnboardingWizard from './WalletOnboardingWizard.vue'
 import NetworkSwitcher from './NetworkSwitcher.vue'
 
 const { isConnected, activeAddress, formattedAddress, disconnect, walletState } = useWalletManager()
 
 const showMobileMenu = ref(false)
 const showWalletModal = ref(false)
+const showOnboardingWizard = ref(false)
 const showAccountMenu = ref(false)
+
+// Check if user has completed onboarding before
+const hasCompletedOnboarding = computed(() => {
+  return localStorage.getItem('onboarding_completed') === 'true'
+})
 
 const walletButtonText = computed(() => {
   if (walletState.value.isConnecting) return 'Connecting...'
@@ -183,7 +197,12 @@ const handleWalletClick = () => {
   if (isConnected.value) {
     showAccountMenu.value = !showAccountMenu.value
   } else {
-    showWalletModal.value = true
+    // Show onboarding wizard for first-time users, otherwise simple modal
+    if (hasCompletedOnboarding.value) {
+      showWalletModal.value = true
+    } else {
+      showOnboardingWizard.value = true
+    }
   }
 }
 
@@ -198,6 +217,7 @@ const handleDisconnect = async () => {
 
 const handleConnected = () => {
   showWalletModal.value = false
+  showOnboardingWizard.value = false
 }
 </script>
 <style scoped>

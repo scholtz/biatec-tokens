@@ -88,4 +88,29 @@ const router = createRouter({
   ],
 });
 
+// Navigation guard for protected routes
+router.beforeEach((to, _from, next) => {
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+  
+  if (requiresAuth) {
+    // Check if user is authenticated by checking localStorage
+    const walletConnected = localStorage.getItem('wallet_connected') === 'true'
+    
+    if (!walletConnected) {
+      // Store the intended destination
+      localStorage.setItem('redirect_after_auth', to.fullPath)
+      
+      // Redirect to home with a flag to show onboarding
+      next({ 
+        name: 'Home',
+        query: { showOnboarding: 'true' }
+      })
+    } else {
+      next()
+    }
+  } else {
+    next()
+  }
+})
+
 export default router;

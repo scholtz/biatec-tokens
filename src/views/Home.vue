@@ -15,22 +15,28 @@
 
             <!-- CTA Buttons -->
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-              <router-link to="/create">
-                <Button variant="primary" size="lg" class="text-lg px-8 py-4">
-                  <template #icon>
-                    <PlusCircleIcon class="w-6 h-6 mr-2" />
-                  </template>
-                  Create Your First Token
-                </Button>
-              </router-link>
-              <router-link to="/dashboard">
-                <Button variant="outline" size="lg" class="text-lg px-8 py-4">
-                  <template #icon>
-                    <ChartBarIcon class="w-6 h-6 mr-2" />
-                  </template>
-                  View Dashboard
-                </Button>
-              </router-link>
+              <Button 
+                @click="handleCreateToken"
+                variant="primary" 
+                size="lg" 
+                class="text-lg px-8 py-4"
+              >
+                <template #icon>
+                  <PlusCircleIcon class="w-6 h-6 mr-2" />
+                </template>
+                Create Your First Token
+              </Button>
+              <Button 
+                @click="handleViewDashboard"
+                variant="outline" 
+                size="lg" 
+                class="text-lg px-8 py-4"
+              >
+                <template #icon>
+                  <ChartBarIcon class="w-6 h-6 mr-2" />
+                </template>
+                View Dashboard
+              </Button>
             </div>
           </div>
 
@@ -87,19 +93,34 @@
         </div>
       </div>
     </div>
+
+    <!-- Wallet Onboarding Wizard -->
+    <WalletOnboardingWizard
+      :is-open="showOnboardingWizard"
+      @close="showOnboardingWizard = false"
+      @complete="handleOnboardingComplete"
+    />
   </MainLayout>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { useTokenStore } from "../stores/tokens";
+import { useWalletManager } from "../composables/useWalletManager";
 import Button from "../components/ui/Button.vue";
 import Card from "../components/ui/Card.vue";
 import Badge from "../components/ui/Badge.vue";
 import MainLayout from "../layout/MainLayout.vue";
+import WalletOnboardingWizard from "../components/WalletOnboardingWizard.vue";
 import { PlusCircleIcon, ChartBarIcon, BoltIcon, ShieldCheckIcon, GlobeAltIcon } from "@heroicons/vue/24/outline";
 
 const tokenStore = useTokenStore();
+const router = useRouter();
+const route = useRoute();
+const { isConnected } = useWalletManager();
+
+const showOnboardingWizard = ref(false);
 
 const features = [
   {
@@ -125,4 +146,40 @@ const stats = computed(() => [
   { label: "Standards", value: "5" },
   { label: "Uptime", value: "99.9%" },
 ]);
+
+const handleCreateToken = () => {
+  if (isConnected.value) {
+    router.push("/create");
+  } else {
+    showOnboardingWizard.value = true;
+  }
+};
+
+const handleViewDashboard = () => {
+  if (isConnected.value) {
+    router.push("/dashboard");
+  } else {
+    showOnboardingWizard.value = true;
+  }
+};
+
+const handleOnboardingComplete = () => {
+  showOnboardingWizard.value = false;
+  
+  // Check if there's a redirect destination
+  const redirectPath = localStorage.getItem('redirect_after_auth');
+  if (redirectPath) {
+    localStorage.removeItem('redirect_after_auth');
+    router.push(redirectPath);
+  } else {
+    router.push("/create");
+  }
+};
+
+onMounted(() => {
+  // Check if we should show onboarding
+  if (route.query.showOnboarding === 'true') {
+    showOnboardingWizard.value = true;
+  }
+});
 </script>

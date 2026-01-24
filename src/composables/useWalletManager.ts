@@ -232,6 +232,10 @@ export function useWalletManager() {
     const savedNetwork = localStorage.getItem('selected_network') as NetworkId
 
     if (!wasConnected || !savedWalletId) {
+      // Still restore network preference even if not connected
+      if (savedNetwork && NETWORKS[savedNetwork]) {
+        currentNetwork.value = savedNetwork
+      }
       return
     }
 
