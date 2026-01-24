@@ -2,7 +2,7 @@
 
 ## Tracking Issue
 
-**Issue**: [Add wallet integration checklist for MICA dashboard](https://github.com/scholtz/biatec-tokens/issues/)
+**Issue**: [Add wallet integration checklist for MICA dashboard](https://github.com/scholtz/biatec-tokens/issues/77)
 
 **Issue Description**: Create a vision-aligned checklist and acceptance criteria for integrating key wallets (e.g., Pera, Defly) into the MICA-compliant dashboard. Include UX flows for whitelisting and token issuance, and note any performance/security considerations for Algorand-based networks (VOI/Aramid).
 

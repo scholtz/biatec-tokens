@@ -296,7 +296,7 @@ This document provides a comprehensive, vision-aligned checklist for integrating
   - [ ] Clear display of transaction details
   - [ ] Warning for unusual transactions
   - [ ] Transaction amount confirmation
-  - [ ] Gas fee estimation and warnings
+  - [ ] Transaction fee estimation and warnings
 
 #### 5.2 MICA Compliance Features
 - [ ] **Audit Trail**
@@ -419,7 +419,7 @@ This document provides a comprehensive, vision-aligned checklist for integrating
    │   ├─> Recipient: [Address] [Status]
    │   ├─> Amount: [Value]
    │   ├─> Network: VOI/Aramid
-   │   ├─> Estimated Fee: [Gas]
+   │   ├─> Estimated Fee: [Network fee]
    │   └─> Compliance Status: [OK/Warning]
    ├─> Click "Confirm Transfer"
    ├─> Wallet prompts for transaction signature
@@ -464,7 +464,7 @@ This document provides a comprehensive, vision-aligned checklist for integrating
    ├─> Fill CSV with addresses to whitelist
    ├─> Upload CSV file
    ├─> System validates CSV
-   │   ├─> Check address format (58 chars, base32)
+   │   ├─> Check address format (Algorand: 58-char base32; Ethereum: 0x + 40 hex)
    │   ├─> Check required fields
    │   └─> Check for duplicates
    ├─> Show preview of addresses to be added
@@ -795,11 +795,11 @@ This document provides a comprehensive, vision-aligned checklist for integrating
    - Check address against whitelist before operations
    - Warn on sending to non-whitelisted addresses
 
-3. **Gas Fee Protection**
-   - Display estimated gas fees clearly
+3. **Fee Protection (Transaction/Network Fees, "Gas" on EVM)**
+   - Display estimated transaction/network fees clearly (gas on EVM)
    - Warn on unusually high fees
-   - Implement maximum fee limits
-   - Show fee comparison across networks
+   - Implement maximum fee limits for transactions
+   - Show fee comparison across supported networks
 
 4. **Phishing Protection**
    - Display connected address prominently
@@ -1338,8 +1338,8 @@ This document provides a comprehensive, vision-aligned checklist for integrating
 ### E. Contact & Support
 
 **Development Team:**
-- Technical Lead: @scholtz
-- Product Owner: @copilot
+- Technical Lead: scholtz (GitHub handle)
+- Product Owner: copilot (GitHub handle)
 - Security Team: security@biatec.io
 
 **Regulatory Compliance:**
