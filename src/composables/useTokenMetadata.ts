@@ -1,0 +1,235 @@
+import { ref, computed } from 'vue'
+import algosdk from 'algosdk'
+import axios from 'axios'
+import { useWalletManager } from './useWalletManager'
+
+export interface ARC3Metadata {
+  name?: string
+  description?: string
+  image?: string
+  image_integrity?: string
+  image_mimetype?: string
+  external_url?: string
+  properties?: Record<string, any>
+  decimals?: number
+  unitName?: string
+}
+
+export interface AssetMetadata {
+  assetId: number
+  name: string
+  unitName: string
+  decimals: number
+  total: number
+  creator: string
+  manager?: string
+  reserve?: string
+  freeze?: string
+  clawback?: string
+  url?: string
+  metadataHash?: string
+  arc3?: ARC3Metadata
+  standard?: 'ARC3' | 'ARC19' | 'ASA'
+  isVerified: boolean
+  isLoading: boolean
+  error?: string
+}
+
+/**
+ * Composable for fetching and managing token metadata from Algorand networks
+ * Supports ARC3, ARC19, and standard ASA tokens
+ */
+export function useTokenMetadata() {
+  const { networkInfo } = useWalletManager()
+  const metadataCache = ref<Map<number, AssetMetadata>>(new Map())
+
+  /**
+   * Creates an Algodv2 client for the current network
+   */
+  const createAlgodClient = () => {
+    if (!networkInfo.value) {
+      throw new Error('Network information not available')
+    }
+
+    const { algodUrl } = networkInfo.value
+    const token = ''
+    const headers = {}
+
+    return new algosdk.Algodv2(token, algodUrl, headers)
+  }
+
+  /**
+   * Resolves IPFS URLs to HTTP gateways
+   */
+  const resolveIpfsUrl = (url: string): string => {
+    if (url.startsWith('ipfs://')) {
+      const cid = url.replace('ipfs://', '')
+      return `https://ipfs.io/ipfs/${cid}`
+    }
+    return url
+  }
+
+  /**
+   * Fetches ARC3 metadata from URL
+   */
+  const fetchARC3Metadata = async (url: string): Promise<ARC3Metadata | null> => {
+    try {
+      const resolvedUrl = resolveIpfsUrl(url)
+      const response = await axios.get(resolvedUrl, { timeout: 5000 })
+      return response.data
+    } catch (error) {
+      console.error('Error fetching ARC3 metadata:', error)
+      return null
+    }
+  }
+
+  /**
+   * Determines asset standard based on metadata
+   */
+  const determineStandard = (assetParams: any): 'ARC3' | 'ARC19' | 'ASA' => {
+    const url = assetParams.url || ''
+    
+    // ARC3: Has URL ending in #arc3
+    if (url.endsWith('#arc3')) {
+      return 'ARC3'
+    }
+    
+    // ARC19: Has URL starting with template-ipfs://
+    if (url.startsWith('template-ipfs://')) {
+      return 'ARC19'
+    }
+    
+    return 'ASA'
+  }
+
+  /**
+   * Fetches asset metadata from the blockchain
+   */
+  const fetchMetadata = async (assetId: number): Promise<AssetMetadata> => {
+    // Check cache first
+    if (metadataCache.value.has(assetId)) {
+      const cached = metadataCache.value.get(assetId)!
+      if (!cached.isLoading) {
+        return cached
+      }
+    }
+
+    // Set loading state
+    const loadingMetadata: AssetMetadata = {
+      assetId,
+      name: 'Loading...',
+      unitName: '',
+      decimals: 0,
+      total: 0,
+      creator: '',
+      standard: 'ASA',
+      isVerified: false,
+      isLoading: true
+    }
+    metadataCache.value.set(assetId, loadingMetadata)
+
+    try {
+      const algodClient = createAlgodClient()
+      const assetInfo = await algodClient.getAssetByID(assetId).do()
+      const params = assetInfo.params
+
+      const standard = determineStandard(params)
+      let arc3Metadata: ARC3Metadata | undefined
+
+      // Fetch ARC3 metadata if applicable
+      if (standard === 'ARC3' && params.url) {
+        const url = params.url.replace('#arc3', '')
+        arc3Metadata = await fetchARC3Metadata(url) || undefined
+      }
+
+      const metadata: AssetMetadata = {
+        assetId,
+        name: arc3Metadata?.name || params.name || `Asset ${assetId}`,
+        unitName: arc3Metadata?.unitName || params['unit-name'] || '',
+        decimals: arc3Metadata?.decimals ?? params.decimals ?? 0,
+        total: params.total || 0,
+        creator: params.creator || '',
+        manager: params.manager,
+        reserve: params.reserve,
+        freeze: params.freeze,
+        clawback: params.clawback,
+        url: params.url,
+        metadataHash: params['metadata-hash'],
+        arc3: arc3Metadata,
+        standard,
+        isVerified: !!arc3Metadata || standard === 'ARC3',
+        isLoading: false
+      }
+
+      metadataCache.value.set(assetId, metadata)
+      return metadata
+    } catch (error: any) {
+      console.error(`Error fetching metadata for asset ${assetId}:`, error)
+      
+      const errorMetadata: AssetMetadata = {
+        assetId,
+        name: `Asset ${assetId}`,
+        unitName: '',
+        decimals: 0,
+        total: 0,
+        creator: '',
+        standard: 'ASA',
+        isVerified: false,
+        isLoading: false,
+        error: error.message || 'Failed to fetch metadata'
+      }
+      
+      metadataCache.value.set(assetId, errorMetadata)
+      return errorMetadata
+    }
+  }
+
+  /**
+   * Gets cached metadata or fetches if not available
+   */
+  const getMetadata = async (assetId: number): Promise<AssetMetadata> => {
+    const cached = metadataCache.value.get(assetId)
+    if (cached && !cached.isLoading && !cached.error) {
+      return cached
+    }
+    return fetchMetadata(assetId)
+  }
+
+  /**
+   * Batch fetches metadata for multiple assets
+   */
+  const fetchBatchMetadata = async (assetIds: number[]): Promise<AssetMetadata[]> => {
+    const promises = assetIds.map(id => getMetadata(id))
+    return Promise.all(promises)
+  }
+
+  /**
+   * Clears the metadata cache
+   */
+  const clearCache = () => {
+    metadataCache.value.clear()
+  }
+
+  /**
+   * Gets the verification badge for an asset
+   */
+  const getVerificationBadge = (standard: string): { color: string; label: string } => {
+    switch (standard) {
+      case 'ARC3':
+        return { color: 'green', label: 'ARC3 Verified' }
+      case 'ARC19':
+        return { color: 'blue', label: 'ARC19' }
+      default:
+        return { color: 'gray', label: 'Standard ASA' }
+    }
+  }
+
+  return {
+    metadataCache: computed(() => metadataCache.value),
+    fetchMetadata,
+    getMetadata,
+    fetchBatchMetadata,
+    clearCache,
+    getVerificationBadge
+  }
+}
