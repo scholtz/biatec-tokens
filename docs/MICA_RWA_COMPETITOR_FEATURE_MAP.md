@@ -343,7 +343,7 @@ Traditional financial software adding tokenization.
 |--------|------------------|-------------------------|------------------------------|
 | **Security Token** | Whitelist, transfer restrictions, issuer controls, KYC, jurisdiction | 7 MICA implications | Tokeny, Polymesh (but not on Algorand) |
 | **Real Estate** | Whitelist, fractional ownership, income distribution | 7 implications | RealT, Lofty (US-only, no MICA) |
-| **E-Money** | Reserve monitoring, redemption rights, regulatory reporting | 8 implications | **No direct competitor** (gap!) |
+| **E-Money** | Reserve monitoring, redemption rights, regulatory reporting | 8 implications | Circle, Tether (not on Algorand with MICA presets) |
 | **Carbon Credit** | Retirement tracking, registry linkage, double-counting prevention | 6 implications | Toucan (Polygon), **we're competitive** |
 | **Supply Chain** | Provenance tracking, custody verification, trade compliance | 6 implications | Centrifuge (different model) |
 
