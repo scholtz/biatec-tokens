@@ -6,7 +6,7 @@ export interface Token {
   id: string;
   name: string;
   symbol: string;
-  standard: "ASA" | "ARC3FT" | "ARC3NFT" | "ARC3FNFT" | "ARC200" | "ARC72" | "ERC20" | "ERC721";
+  standard: "ASA" | "ARC3FT" | "ARC3NFT" | "ARC3FNFT" | "ARC19" | "ARC69" | "ARC200" | "ARC72" | "ERC20" | "ERC721";
   type: "FT" | "NFT";
   supply: number;
   decimals?: number;
@@ -290,6 +290,40 @@ export const useTokenStore = defineStore("tokens", () => {
       },
       useCases: ["Fractional real estate", "Art ownership", "Luxury goods", "Revenue-sharing assets"],
       micaCompliant: false,
+    },
+    {
+      id: "voi-mutable-nft",
+      name: "VOI Mutable NFT (ARC-19)",
+      description: "Dynamic NFT with updatable metadata for VOI network - perfect for evolving digital assets",
+      standard: "ARC19",
+      type: "NFT",
+      network: "VOI",
+      compliance: "Mutable NFTs must maintain clear disclosure about mutability rights and conditions. Ensure transparency about who can update metadata and under what circumstances.",
+      guidance: "Best for: Evolving collectibles, gaming assets that level up, membership passes, dynamic art. Use Reserve Address to control metadata updates.",
+      defaults: {
+        supply: 1,
+        decimals: 0,
+        description: "A mutable NFT with updatable metadata stored off-chain, enabling dynamic content evolution while maintaining on-chain ownership.",
+      },
+      useCases: ["Gaming assets", "Evolving art", "Membership passes", "Dynamic collectibles", "Achievement badges"],
+      micaCompliant: true,
+    },
+    {
+      id: "aramid-onchain-nft",
+      name: "Aramid On-Chain NFT (ARC-69)",
+      description: "Lightweight NFT with on-chain metadata for Aramid network - no external storage dependencies",
+      standard: "ARC69",
+      type: "NFT",
+      network: "Aramid",
+      compliance: "On-chain metadata NFTs offer transparency and permanence. Ensure metadata complies with content regulations and does not contain prohibited information.",
+      guidance: "Best for: Simple collectibles, event tickets, certificates, proofs of attendance. Metadata must fit within 1024 bytes. Ideal when IPFS hosting is not desired.",
+      defaults: {
+        supply: 1,
+        decimals: 0,
+        description: "An on-chain NFT with metadata stored directly on the blockchain for maximum permanence and reliability.",
+      },
+      useCases: ["Event tickets", "Certificates", "Proof of attendance", "Simple collectibles", "Badges"],
+      micaCompliant: true,
     },
     {
       id: "cross-chain-bridge-token",
@@ -652,6 +686,58 @@ export const useTokenStore = defineStore("tokens", () => {
         programmableLogic: false,
         nativeL1: true,
         fractionalOwnership: true,
+      }
+    },
+    {
+      name: "ARC19",
+      type: "NFT",
+      description: "Mutable NFT with templated URLs - update metadata after minting via reserve address",
+      detailedDescription: "ARC19 enables NFT metadata mutability by using templated Asset URLs that reference the Reserve Address. Change NFT content by updating the Reserve Address, allowing dynamic or evolving NFTs while maintaining on-chain provenance.",
+      icon: PhotoIcon,
+      bgClass: "bg-teal-500",
+      badgeVariant: "info" as const,
+      statusColor: "bg-teal-500",
+      network: "Algorand",
+      count: 0,
+      pros: ["Mutable metadata", "Dynamic NFT content", "On-chain mutability control", "Combines well with ARC-3"],
+      cons: ["Requires Reserve Address management", "More complex setup", "Must maintain metadata infrastructure"],
+      useWhen: ["Need updatable NFT metadata", "Building evolving collectibles", "Creating dynamic game assets", "Require content versioning"],
+      features: {
+        metadataSupport: true,
+        smartContract: false,
+        whitelisting: false,
+        complianceFlags: false,
+        royalties: false,
+        mutableMetadata: true,
+        programmableLogic: false,
+        nativeL1: true,
+        fractionalOwnership: false,
+      }
+    },
+    {
+      name: "ARC69",
+      type: "NFT",
+      description: "On-chain metadata NFT - lightweight metadata stored directly in transaction notes",
+      detailedDescription: "ARC69 stores NFT metadata on-chain in the transaction NOTE field (max 1024 bytes), eliminating the need for external metadata storage. Ideal for simple NFTs with lightweight metadata that require fast, reliable access.",
+      icon: PhotoIcon,
+      bgClass: "bg-cyan-500",
+      badgeVariant: "info" as const,
+      statusColor: "bg-cyan-500",
+      network: "Algorand",
+      count: 0,
+      pros: ["On-chain metadata", "No IPFS required", "Fast metadata access", "Simple implementation"],
+      cons: ["1024 byte metadata limit", "Less flexible than ARC-3", "Metadata size constrained"],
+      useWhen: ["Need fully on-chain NFTs", "Metadata is simple/small", "Want to avoid IPFS dependencies", "Building lightweight collectibles"],
+      features: {
+        metadataSupport: true,
+        smartContract: false,
+        whitelisting: false,
+        complianceFlags: false,
+        royalties: false,
+        mutableMetadata: true,
+        programmableLogic: false,
+        nativeL1: true,
+        fractionalOwnership: false,
       }
     },
     {

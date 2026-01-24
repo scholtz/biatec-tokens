@@ -149,6 +149,45 @@
           <ComplianceChecklist v-if="showComplianceChecklist" />
         </div>
 
+        <!-- Competitor Parity Checklist (NEW) -->
+        <div class="glass-effect rounded-xl p-6 mb-8">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <i class="pi pi-chart-bar text-purple-400"></i>
+              Feature Parity Tracker
+            </h2>
+            <button
+              @click="showCompetitorParity = !showCompetitorParity"
+              :class="[
+                'px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2',
+                showCompetitorParity
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
+              ]"
+            >
+              <i :class="showCompetitorParity ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+              {{ showCompetitorParity ? 'Hide' : 'Show' }} Parity Checklist
+            </button>
+          </div>
+
+          <div v-if="!showCompetitorParity" class="text-center py-8">
+            <i class="pi pi-chart-bar text-5xl text-purple-400/50 mb-4"></i>
+            <p class="text-gray-300 mb-2">Track feature parity with leading Algorand tools</p>
+            <p class="text-sm text-gray-400 mb-4">
+              Ensure Biatec Tokens stays competitive with Pera Wallet, Defly, and Folks Finance
+            </p>
+            <button
+              @click="showCompetitorParity = true"
+              class="bg-purple-500 hover:bg-purple-600 px-6 py-2 rounded-lg text-white font-semibold inline-flex items-center gap-2 transition-all"
+            >
+              <i class="pi pi-chart-bar"></i>
+              Open Parity Tracker
+            </button>
+          </div>
+
+          <CompetitorParityChecklist v-if="showCompetitorParity" />
+        </div>
+
         <!-- RWA Compliance Presets (NEW) -->
         <div class="glass-effect rounded-xl p-6 mb-8">
           <RwaPresetSelector @apply-preset="applyTemplate" />
@@ -498,7 +537,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from "vue";
+import { ref, reactive, computed, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useTokenStore } from "../stores/tokens";
 import { useSubscriptionStore } from "../stores/subscription";
@@ -507,6 +546,7 @@ import MainLayout from "../layout/MainLayout.vue";
 import ComplianceChecklist from "../components/ComplianceChecklist.vue";
 import RwaPresetSelector from "../components/RwaPresetSelector.vue";
 import WalletAttestationForm from "../components/WalletAttestationForm.vue";
+import CompetitorParityChecklist from "../components/CompetitorParityChecklist.vue";
 import { WalletAttestation, AttestationType } from "../types/compliance";
 
 const router = useRouter();
@@ -520,6 +560,11 @@ const selectedTemplate = ref<string>("");
 const isCreating = ref(false);
 const imageInput = ref<HTMLInputElement>();
 const showComplianceChecklist = ref(false);
+const showCompetitorParity = ref(false);
+
+const TEMPLATE_STORAGE_KEY = 'biatec_selected_template';
+const NETWORK_STORAGE_KEY = 'biatec_selected_network';
+const STANDARD_STORAGE_KEY = 'biatec_selected_standard';
 
 const tokenForm = reactive({
   name: "",
@@ -538,9 +583,46 @@ const tokenForm = reactive({
 watch(selectedNetwork, (newNetwork) => {
   if (newNetwork) {
     complianceStore.setNetwork(newNetwork);
+    localStorage.setItem(NETWORK_STORAGE_KEY, newNetwork);
   } else {
     // Default to 'Both' when network is deselected
     complianceStore.setNetwork('Both');
+    localStorage.removeItem(NETWORK_STORAGE_KEY);
+  }
+});
+
+// Watch for template changes and save to localStorage
+watch(selectedTemplate, (newTemplate) => {
+  if (newTemplate) {
+    localStorage.setItem(TEMPLATE_STORAGE_KEY, newTemplate);
+  } else {
+    localStorage.removeItem(TEMPLATE_STORAGE_KEY);
+  }
+});
+
+// Watch for standard changes and save to localStorage
+watch(selectedStandard, (newStandard) => {
+  if (newStandard) {
+    localStorage.setItem(STANDARD_STORAGE_KEY, newStandard);
+  } else {
+    localStorage.removeItem(STANDARD_STORAGE_KEY);
+  }
+});
+
+// Load saved selections from localStorage on mount
+onMounted(() => {
+  const savedTemplate = localStorage.getItem(TEMPLATE_STORAGE_KEY);
+  const savedNetwork = localStorage.getItem(NETWORK_STORAGE_KEY);
+  const savedStandard = localStorage.getItem(STANDARD_STORAGE_KEY);
+  
+  if (savedTemplate) {
+    applyTemplate(savedTemplate);
+  } else if (savedStandard) {
+    selectedStandard.value = savedStandard;
+  }
+  
+  if (savedNetwork && (savedNetwork === 'VOI' || savedNetwork === 'Aramid')) {
+    selectedNetwork.value = savedNetwork;
   }
 });
 
