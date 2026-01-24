@@ -56,6 +56,7 @@ export function useTokenMetadata() {
   // Configuration constants
   const IPFS_GATEWAY_URL = import.meta.env.VITE_IPFS_GATEWAY || 'https://ipfs.io/ipfs/'
   const ARC3_FETCH_TIMEOUT_MS = 5000
+  const ALGORAND_ZERO_ADDRESS = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ'
 
   /**
    * Creates an Algodv2 client for the current network
@@ -121,8 +122,8 @@ export function useTokenMetadata() {
    */
   const determineComplianceFlags = (assetParams: any, arc3Metadata?: ARC3Metadata): ComplianceFlags => {
     // Check if asset has freeze or clawback addresses (indicates potential compliance controls)
-    const hasFreeze = !!assetParams.freeze && assetParams.freeze !== 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ'
-    const hasClawback = !!assetParams.clawback && assetParams.clawback !== 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ'
+    const hasFreeze = !!assetParams.freeze && assetParams.freeze !== ALGORAND_ZERO_ADDRESS
+    const hasClawback = !!assetParams.clawback && assetParams.clawback !== ALGORAND_ZERO_ADDRESS
     
     // Check for compliance keywords in metadata
     const description = (arc3Metadata?.description || '').toLowerCase()

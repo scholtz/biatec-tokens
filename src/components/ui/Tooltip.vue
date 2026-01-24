@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onUnmounted } from 'vue'
 
 interface Props {
   content?: string
@@ -104,6 +104,14 @@ const hideTooltip = () => {
   }
   visible.value = false
 }
+
+// Cleanup on unmount
+onUnmounted(() => {
+  if (timeoutId) {
+    clearTimeout(timeoutId)
+    timeoutId = null
+  }
+})
 </script>
 
 <style scoped>
