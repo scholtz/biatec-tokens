@@ -8,7 +8,7 @@
 
 ## Comprehensive Documentation
 
-**Full Documentation**: See `docs/MICA_WALLET_INTEGRATION_CHECKLIST.md` (1,368 lines, 47 KB)
+**Full Documentation**: See `docs/MICA_WALLET_INTEGRATION_CHECKLIST.md` (1,216 lines, 44 KB)
 
 ### Executive Summary
 
@@ -323,7 +323,7 @@ The full document includes:
 
 ## Related Documentation
 
-- `docs/MICA_WALLET_INTEGRATION_CHECKLIST.md` - Full 1,368-line comprehensive checklist
+- `docs/MICA_WALLET_INTEGRATION_CHECKLIST.md` - Full 1,216-line comprehensive checklist
 - `docs/WALLET_INTEGRATION.md` - Technical implementation guide
 - `docs/MICA_WHITELIST_BUSINESS_VALUE.md` - Business case and ROI analysis
 - `docs/RWA_COMPLIANCE_PRESETS_BUSINESS_VALUE.md` - Token preset features
