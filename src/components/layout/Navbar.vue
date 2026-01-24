@@ -148,7 +148,7 @@ import { useThemeStore } from "../../stores/theme";
 import { useSettingsStore } from "../../stores/settings";
 import { useSubscriptionStore } from "../../stores/subscription";
 import { useAVMAuthentication } from "algorand-authentication-component-vue";
-import { HomeIcon, PlusCircleIcon, ChartBarIcon, Cog6ToothIcon, SunIcon, MoonIcon, Bars3Icon, XMarkIcon, ChevronDownIcon } from "@heroicons/vue/24/outline";
+import { HomeIcon, PlusCircleIcon, ChartBarIcon, Cog6ToothIcon, SunIcon, MoonIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, WalletIcon } from "@heroicons/vue/24/outline";
 
 const route = useRoute();
 const router = useRouter();
@@ -164,6 +164,7 @@ const navigationItems = [
   { name: "Home", path: "/", icon: HomeIcon },
   { name: "Create", path: "/create", icon: PlusCircleIcon },
   { name: "Dashboard", path: "/dashboard", icon: ChartBarIcon },
+  { name: "Wallet", path: "/wallet", icon: WalletIcon },
   { name: "Settings", path: "/settings", icon: Cog6ToothIcon },
 ];
 

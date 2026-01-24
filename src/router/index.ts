@@ -3,6 +3,7 @@ import Home from "../views/Home.vue";
 import TokenCreator from "../views/TokenCreator.vue";
 import TokenDashboard from "../views/TokenDashboard.vue";
 import TokenDetail from "../views/TokenDetail.vue";
+import WalletDashboard from "../views/WalletDashboard.vue";
 import Settings from "../views/Settings.vue";
 import ComplianceDashboard from "../views/ComplianceDashboard.vue";
 import AttestationsDashboard from "../views/AttestationsDashboard.vue";
@@ -33,6 +34,12 @@ const router = createRouter({
       path: "/dashboard",
       name: "TokenDashboard",
       component: TokenDashboard,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/wallet",
+      name: "WalletDashboard",
+      component: WalletDashboard,
       meta: { requiresAuth: true },
     },
     {
