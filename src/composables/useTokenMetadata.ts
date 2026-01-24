@@ -53,9 +53,8 @@ export function useTokenMetadata() {
 
     const { algodUrl } = networkInfo.value
     const token = ''
-    const headers = {}
 
-    return new algosdk.Algodv2(token, algodUrl, headers)
+    return new algosdk.Algodv2(token, algodUrl, '')
   }
 
   /**
@@ -145,16 +144,16 @@ export function useTokenMetadata() {
       const metadata: AssetMetadata = {
         assetId,
         name: arc3Metadata?.name || params.name || `Asset ${assetId}`,
-        unitName: arc3Metadata?.unitName || params['unit-name'] || '',
+        unitName: arc3Metadata?.unitName || params.unitName || '',
         decimals: arc3Metadata?.decimals ?? params.decimals ?? 0,
-        total: params.total || 0,
+        total: Number(params.total || 0),
         creator: params.creator || '',
         manager: params.manager,
         reserve: params.reserve,
         freeze: params.freeze,
         clawback: params.clawback,
         url: params.url,
-        metadataHash: params['metadata-hash'],
+        metadataHash: params.metadataHash ? Buffer.from(params.metadataHash).toString('base64') : undefined,
         arc3: arc3Metadata,
         standard,
         isVerified: !!arc3Metadata || standard === 'ARC3',

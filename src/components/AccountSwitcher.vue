@@ -179,7 +179,7 @@ onUnmounted(() => {
 })
 
 // Watch for account changes to update balances
-watch(accounts, async (newAccounts) => {
+watch(accounts, async () => {
   // Here you could fetch balances for all accounts
   // For now, we'll leave it as a placeholder
 }, { immediate: true })

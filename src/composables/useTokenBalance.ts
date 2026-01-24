@@ -1,6 +1,6 @@
 import { ref, computed, watch } from 'vue'
 import algosdk from 'algosdk'
-import { useWalletManager, type NetworkId } from './useWalletManager'
+import { useWalletManager } from './useWalletManager'
 
 export interface TokenBalance {
   assetId: number
@@ -51,9 +51,8 @@ export function useTokenBalance() {
 
     const { algodUrl } = networkInfo.value
     const token = ''
-    const headers = {}
 
-    return new algosdk.Algodv2(token, algodUrl, headers)
+    return new algosdk.Algodv2(token, algodUrl, '')
   }
 
   /**
@@ -80,8 +79,8 @@ export function useTokenBalance() {
       const algodClient = createAlgodClient()
       const accountInfo = await algodClient.accountInformation(targetAddress).do()
 
-      // Extract algo balance
-      const algoBalance = accountInfo.amount || 0
+      // Extract algo balance (convert bigint to number)
+      const algoBalance = Number(accountInfo.amount || 0)
 
       // Extract asset holdings
       const assets: TokenBalance[] = (accountInfo.assets || []).map((asset: any) => ({

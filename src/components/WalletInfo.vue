@@ -139,7 +139,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import Card from './ui/Card.vue'
 import { useWalletManager } from '../composables/useWalletManager'
 import { useTokenBalance } from '../composables/useTokenBalance'

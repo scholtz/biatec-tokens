@@ -222,7 +222,7 @@ const badgeVariant = computed(() => {
   if (percentage === 100) return 'success'
   if (percentage >= 75) return 'info'
   if (percentage >= 50) return 'warning'
-  return 'danger'
+  return 'error'
 })
 
 const statusColor = computed(() => {
@@ -250,13 +250,19 @@ const progressBarColor = computed(() => {
 })
 
 const categoryBreakdown = computed(() => {
-  const categories = complianceStore.getCategoryBreakdown()
-  return Object.entries(categories).map(([key, value]) => ({
-    name: key,
-    label: value.label,
-    total: value.total,
-    completed: value.completed,
-    percentage: value.total > 0 ? Math.round((value.completed / value.total) * 100) : 0
+  const categoryLabels: Record<string, string> = {
+    'kyc-aml': 'KYC/AML',
+    'jurisdiction': 'Jurisdiction',
+    'disclosure': 'Disclosure',
+    'network-specific': 'Network-Specific'
+  }
+  
+  return complianceStore.categoryProgress.map(cat => ({
+    name: cat.category,
+    label: categoryLabels[cat.category] || cat.category,
+    total: cat.total,
+    completed: cat.completed,
+    percentage: cat.percentage
   }))
 })
 
