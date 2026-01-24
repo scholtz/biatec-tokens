@@ -79,7 +79,10 @@ export const useComplianceDashboardStore = defineStore('complianceDashboard', ()
   })
 
   // Methods
-  const setFilter = (key: keyof ComplianceDashboardFilters, value: any) => {
+  const setFilter = <K extends keyof ComplianceDashboardFilters>(
+    key: K, 
+    value: ComplianceDashboardFilters[K]
+  ) => {
     filters.value[key] = value
     persistFilters()
   }
