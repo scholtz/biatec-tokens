@@ -15,6 +15,15 @@ export interface ARC3Metadata {
   unitName?: string
 }
 
+export interface ComplianceFlags {
+  micaReady: boolean
+  whitelistRequired: boolean
+  kycRequired: boolean
+  jurisdictionRestricted: boolean
+  transferRestricted: boolean
+  notes?: string
+}
+
 export interface AssetMetadata {
   assetId: number
   name: string
@@ -33,6 +42,7 @@ export interface AssetMetadata {
   isVerified: boolean
   isLoading: boolean
   error?: string
+  complianceFlags?: ComplianceFlags
 }
 
 /**
@@ -106,6 +116,40 @@ export function useTokenMetadata() {
   }
 
   /**
+   * Determines compliance flags based on asset parameters and network
+   * This is a heuristic approach - in production this would query on-chain compliance data
+   */
+  const determineComplianceFlags = (assetParams: any, arc3Metadata?: ARC3Metadata): ComplianceFlags => {
+    // Check if asset has freeze or clawback addresses (indicates potential compliance controls)
+    const hasFreeze = !!assetParams.freeze && assetParams.freeze !== 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ'
+    const hasClawback = !!assetParams.clawback && assetParams.clawback !== 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ'
+    
+    // Check for compliance keywords in metadata
+    const description = (arc3Metadata?.description || '').toLowerCase()
+    const properties = arc3Metadata?.properties || {}
+    
+    const hasComplianceKeywords = description.includes('kyc') || 
+                                   description.includes('whitelist') || 
+                                   description.includes('mica') ||
+                                   description.includes('compliant') ||
+                                   description.includes('regulated')
+    
+    // Check properties for explicit compliance flags
+    const explicitWhitelist = properties.whitelistRequired === true || properties.whitelist_required === true
+    const explicitKyc = properties.kycRequired === true || properties.kyc_required === true
+    const explicitMica = properties.micaCompliant === true || properties.mica_compliant === true
+    
+    return {
+      micaReady: explicitMica || (hasFreeze && hasClawback && hasComplianceKeywords),
+      whitelistRequired: explicitWhitelist || hasFreeze,
+      kycRequired: explicitKyc || (hasFreeze && hasComplianceKeywords),
+      jurisdictionRestricted: hasClawback && hasComplianceKeywords,
+      transferRestricted: hasFreeze || hasClawback,
+      notes: hasFreeze || hasClawback ? 'Token has compliance controls enabled' : undefined
+    }
+  }
+
+  /**
    * Fetches asset metadata from the blockchain
    */
   const fetchMetadata = async (assetId: number): Promise<AssetMetadata> => {
@@ -161,7 +205,8 @@ export function useTokenMetadata() {
         arc3: arc3Metadata,
         standard,
         isVerified: !!arc3Metadata || standard === 'ARC3',
-        isLoading: false
+        isLoading: false,
+        complianceFlags: determineComplianceFlags(params, arc3Metadata)
       }
 
       metadataCache.value.set(assetId, metadata)

@@ -51,6 +51,26 @@
               {{ networkInfo?.displayName || 'Unknown' }}
             </span>
           </div>
+          
+          <!-- Network Compliance Info -->
+          <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-gray-600 dark:text-gray-400">Network Compliance:</span>
+              <Tooltip position="left">
+                <Badge :variant="networkComplianceBadge.variant" class="text-xs">
+                  {{ networkComplianceBadge.label }}
+                </Badge>
+                <template #content>
+                  <div class="space-y-1 max-w-xs">
+                    <div class="font-semibold">{{ networkInfo?.displayName }} Compliance</div>
+                    <div class="text-xs opacity-90">
+                      {{ networkComplianceInfo }}
+                    </div>
+                  </div>
+                </template>
+              </Tooltip>
+            </div>
+          </div>
         </div>
 
         <!-- Algo Balance -->
@@ -139,7 +159,10 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import Card from './ui/Card.vue'
+import Badge from './ui/Badge.vue'
+import Tooltip from './ui/Tooltip.vue'
 import { useWalletManager } from '../composables/useWalletManager'
 import { useTokenBalance } from '../composables/useTokenBalance'
 
@@ -151,6 +174,33 @@ const {
   formattedAlgoBalance, 
   refresh 
 } = useTokenBalance()
+
+// Network-specific compliance information
+const networkComplianceInfo = computed(() => {
+  const networkName = networkInfo.value?.name
+  
+  if (networkName === 'voi-mainnet') {
+    return 'VOI Network supports MICA-compliant tokens with advanced whitelisting and KYC features. Ideal for enterprise and regulated assets.'
+  } else if (networkName === 'aramidmain') {
+    return 'Aramid Network provides compliance-ready infrastructure for regulated digital assets with built-in transfer controls and audit trails.'
+  } else if (networkName === 'dockernet') {
+    return 'Dockernet is a local testing environment. Compliance features are available for testing purposes only.'
+  }
+  
+  return 'Network compliance features vary by network. Check token-level compliance indicators for specific requirements.'
+})
+
+const networkComplianceBadge = computed(() => {
+  const networkName = networkInfo.value?.name
+  
+  if (networkName === 'voi-mainnet' || networkName === 'aramidmain') {
+    return { label: 'Enterprise Ready', variant: 'success' as const }
+  } else if (networkName === 'dockernet') {
+    return { label: 'Test Network', variant: 'warning' as const }
+  }
+  
+  return { label: 'Standard', variant: 'default' as const }
+})
 
 const formatAmount = (amount: number, decimals: number): string => {
   const divisor = Math.pow(10, decimals)

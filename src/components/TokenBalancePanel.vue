@@ -84,6 +84,11 @@
                   <span class="w-1 h-1 rounded-full bg-gray-400"></span>
                   <span>{{ asset.unitName || 'N/A' }}</span>
                 </div>
+
+                <!-- Compliance Badges -->
+                <div v-if="assetMetadata.has(asset.assetId) && assetMetadata.get(asset.assetId)!.complianceFlags" class="mt-2">
+                  <ComplianceBadge :compliance-flags="assetMetadata.get(asset.assetId)!.complianceFlags!" />
+                </div>
               </div>
               <div class="text-right">
                 <div class="text-sm font-bold text-gray-900 dark:text-white">
@@ -168,6 +173,7 @@
 import { ref, computed, watch } from 'vue'
 import Card from './ui/Card.vue'
 import Badge from './ui/Badge.vue'
+import ComplianceBadge from './ComplianceBadge.vue'
 import { useWalletManager } from '../composables/useWalletManager'
 import { useTokenBalance, type TokenBalance } from '../composables/useTokenBalance'
 import { useTokenMetadata } from '../composables/useTokenMetadata'
