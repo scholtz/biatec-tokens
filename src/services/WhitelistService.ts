@@ -289,7 +289,7 @@ export class WhitelistService {
    */
   async exportComplianceReport(tokenId: string, network: string, format: "json" | "csv" = "json"): Promise<MicaComplianceReport | string> {
     try {
-      const response = await (this.apiClient as any).get(`/tokens/${tokenId}/whitelist/export?network=${network}&format=${format}`);
+      const response = await this.apiClient.instance.get(`/tokens/${tokenId}/whitelist/export?network=${network}&format=${format}`);
       return response.data;
     } catch (error) {
       // Fallback: Generate report locally if API is not available

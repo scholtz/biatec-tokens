@@ -11,6 +11,9 @@ vi.mock("../apiClient", () => {
       v1WhitelistDelete: vi.fn(),
       v1WhitelistBulkCreate: vi.fn(),
     },
+    instance: {
+      get: vi.fn(),
+    },
     get: vi.fn(),
     delete: vi.fn(),
   };
@@ -346,7 +349,7 @@ KYC Passed,John Doe`;
         },
       ];
 
-      mockApiClient.get.mockRejectedValue(new Error("API unavailable"));
+      mockApiClient.instance.get.mockRejectedValue(new Error("API unavailable"));
 
       mockApiClient.api.v1WhitelistDetail.mockResolvedValue({ data: { entries: mockEntries } });
 
@@ -369,7 +372,7 @@ KYC Passed,John Doe`;
         reason: "KYC Passed",
       };
 
-      mockApiClient.get.mockRejectedValueOnce(new Error("API unavailable")).mockResolvedValueOnce([testEntry]);
+      mockApiClient.instance.get.mockRejectedValueOnce(new Error("API unavailable")).mockResolvedValueOnce([testEntry]);
 
       const result = await service.exportComplianceReport("token123", "VOI", "csv");
 
@@ -380,34 +383,9 @@ KYC Passed,John Doe`;
     });
 
     it("handles empty whitelist in local report", async () => {
-      const emptyReport: MicaComplianceReport = {
-        reportId: "report_123",
-        tokenId: "123",
-        network: "VOI",
-        generatedAt: "2024-01-01T00:00:00Z",
-        generatedBy: "system",
-        reportPeriod: {
-          startDate: "2024-01-01T00:00:00Z",
-          endDate: "2024-01-01T00:00:00Z",
-        },
-        summary: {
-          totalWhitelisted: 0,
-          activeAddresses: 0,
-          pendingAddresses: 0,
-          removedAddresses: 0,
-          kycVerifiedCount: 0,
-          complianceScore: 0,
-        },
-        entries: [],
-        auditTrail: [],
-        complianceMetrics: {
-          sanctionsScreeningRate: 0,
-          amlVerificationRate: 0,
-          jurisdictionCoverage: {},
-        },
-      };
+      mockApiClient.instance.get.mockRejectedValue(new Error("API unavailable"));
 
-      mockApiClient.get.mockResolvedValue({ data: emptyReport });
+      mockApiClient.api.v1WhitelistDetail.mockResolvedValue({ data: { entries: [] } });
 
       const result = await service.exportComplianceReport("123", "VOI", "json");
 
@@ -470,7 +448,7 @@ KYC Passed,John Doe`;
         },
       ];
 
-      mockApiClient.get.mockRejectedValue(new Error("API unavailable"));
+      mockApiClient.instance.get.mockRejectedValue(new Error("API unavailable"));
 
       mockApiClient.api.v1WhitelistDetail.mockResolvedValue({ data: { entries: mockEntries } });
 
@@ -491,7 +469,7 @@ KYC Passed,John Doe`;
         addedAt: "2024-01-01T00:00:00Z",
       };
 
-      mockApiClient.get.mockRejectedValue(new Error("API unavailable"));
+      mockApiClient.instance.get.mockRejectedValue(new Error("API unavailable"));
 
       mockApiClient.api.v1WhitelistDetail.mockResolvedValue({ data: { entries: [minimalEntry] } });
 

@@ -54,7 +54,7 @@ src/
 
 ### TypeScript
 
-- **Strict Mode**: Always enabled - use proper typing, avoid `any`
+- **Strict Mode**: Always enabled - use proper typing, never use `as any` or `any` type
 - **Compiler Options**: Target ES2020, use ESNext modules
 - **Type Checking**: The build command includes `vue-tsc -b` for type checking
 - Follow existing patterns in `tsconfig.app.json`:
