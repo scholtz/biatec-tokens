@@ -53,7 +53,6 @@ export class TelemetryService {
       wallet_id: data.walletId,
       network: data.network,
       address_prefix: data.address.slice(0, 6),
-      timestamp: new Date().toISOString(),
     })
   }
 
@@ -64,7 +63,6 @@ export class TelemetryService {
     this.track('network_switched', {
       from_network: data.fromNetwork,
       to_network: data.toNetwork,
-      timestamp: new Date().toISOString(),
     })
   }
 
