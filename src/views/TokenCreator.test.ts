@@ -47,8 +47,8 @@ describe('TokenCreator Component', () => {
       );
 
       const store = useTokenStore();
-      expect(store.tokenTemplates).toHaveLength(15);
-      expect(store.standardTokenTemplates).toHaveLength(10);
+      expect(store.tokenTemplates).toHaveLength(21);
+      expect(store.standardTokenTemplates).toHaveLength(16);
       expect(store.rwaTokenTemplates).toHaveLength(5);
     });
 

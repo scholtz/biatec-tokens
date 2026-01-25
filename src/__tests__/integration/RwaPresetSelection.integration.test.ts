@@ -323,9 +323,9 @@ describe('RWA Preset Selection Integration Tests', () => {
       const tokenStore = useTokenStore();
       
       // Verify filtering works correctly
-      expect(tokenStore.standardTokenTemplates).toHaveLength(10);
+      expect(tokenStore.standardTokenTemplates).toHaveLength(16);
       expect(tokenStore.rwaTokenTemplates).toHaveLength(5);
-      expect(tokenStore.tokenTemplates).toHaveLength(15);
+      expect(tokenStore.tokenTemplates).toHaveLength(21);
 
       // Standard templates should include VOI Utility Token
       expect(tokenStore.standardTokenTemplates.some(t => t.id === 'voi-utility-token')).toBe(true);

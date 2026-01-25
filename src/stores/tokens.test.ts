@@ -142,10 +142,10 @@ describe('Token Store', () => {
   });
 
   describe('Token Templates', () => {
-    it('should have 15 token templates available (10 standard + 5 RWA)', () => {
+    it('should have 21 token templates available (16 standard + 5 RWA)', () => {
       const store = useTokenStore();
       
-      expect(store.tokenTemplates).toHaveLength(15);
+      expect(store.tokenTemplates).toHaveLength(21);
       expect(store.tokenTemplates).toBeDefined();
     });
 
@@ -214,14 +214,15 @@ describe('Token Store', () => {
       expect(bridgeToken?.micaCompliant).toBe(true);
     });
 
-    it('should have stablecoin template with high decimals', () => {
+    it('should have algorithmic stablecoin template with high decimals', () => {
       const store = useTokenStore();
       
-      const stablecoin = store.tokenTemplates.find(t => t.id === 'stablecoin-template');
+      const stablecoin = store.tokenTemplates.find(t => t.id === 'both-arc200-algorithmic-stablecoin');
       
       expect(stablecoin).toBeDefined();
       expect(stablecoin?.defaults.decimals).toBe(18);
       expect(stablecoin?.network).toBe('Both');
+      expect(stablecoin?.standard).toBe('ARC200');
     });
 
     it('should have NFT templates with appropriate supply', () => {
@@ -272,8 +273,106 @@ describe('Token Store', () => {
       const compliantTemplates = store.tokenTemplates.filter(t => t.micaCompliant);
       const nonCompliantTemplates = store.tokenTemplates.filter(t => !t.micaCompliant);
       
-      expect(compliantTemplates.length).toBe(14);
+      expect(compliantTemplates.length).toBe(20);
       expect(nonCompliantTemplates.length).toBe(1);
+    });
+
+    it('should have VOI ARC-200 utility token template', () => {
+      const store = useTokenStore();
+      
+      const voiArc200Utility = store.tokenTemplates.find(t => t.id === 'voi-arc200-utility');
+      
+      expect(voiArc200Utility).toBeDefined();
+      expect(voiArc200Utility?.name).toBe('VOI ARC-200 Utility Token');
+      expect(voiArc200Utility?.standard).toBe('ARC200');
+      expect(voiArc200Utility?.type).toBe('FT');
+      expect(voiArc200Utility?.network).toBe('VOI');
+      expect(voiArc200Utility?.micaCompliant).toBe(true);
+      expect(voiArc200Utility?.defaults.supply).toBe(10000000);
+      expect(voiArc200Utility?.defaults.decimals).toBe(6);
+    });
+
+    it('should have Aramid ARC-200 payment token template', () => {
+      const store = useTokenStore();
+      
+      const aramidArc200Payment = store.tokenTemplates.find(t => t.id === 'aramid-arc200-payment');
+      
+      expect(aramidArc200Payment).toBeDefined();
+      expect(aramidArc200Payment?.name).toBe('Aramid ARC-200 Payment Token');
+      expect(aramidArc200Payment?.standard).toBe('ARC200');
+      expect(aramidArc200Payment?.network).toBe('Aramid');
+      expect(aramidArc200Payment?.defaults.supply).toBe(50000000);
+      expect(aramidArc200Payment?.defaults.decimals).toBe(8);
+    });
+
+    it('should have VOI ARC-200 governance token template', () => {
+      const store = useTokenStore();
+      
+      const voiArc200Governance = store.tokenTemplates.find(t => t.id === 'voi-arc200-governance');
+      
+      expect(voiArc200Governance).toBeDefined();
+      expect(voiArc200Governance?.standard).toBe('ARC200');
+      expect(voiArc200Governance?.network).toBe('VOI');
+      expect(voiArc200Governance?.defaults.supply).toBe(100000000);
+    });
+
+    it('should have Aramid ARC-200 stablecoin template', () => {
+      const store = useTokenStore();
+      
+      const aramidArc200Stablecoin = store.tokenTemplates.find(t => t.id === 'aramid-arc200-stablecoin');
+      
+      expect(aramidArc200Stablecoin).toBeDefined();
+      expect(aramidArc200Stablecoin?.standard).toBe('ARC200');
+      expect(aramidArc200Stablecoin?.network).toBe('Aramid');
+      expect(aramidArc200Stablecoin?.compliance).toContain('MICA');
+    });
+
+    it('should have VOI ARC-200 rewards token template', () => {
+      const store = useTokenStore();
+      
+      const voiArc200Rewards = store.tokenTemplates.find(t => t.id === 'voi-arc200-rewards');
+      
+      expect(voiArc200Rewards).toBeDefined();
+      expect(voiArc200Rewards?.standard).toBe('ARC200');
+      expect(voiArc200Rewards?.network).toBe('VOI');
+    });
+
+    it('should have Aramid ARC-200 security token template', () => {
+      const store = useTokenStore();
+      
+      const aramidArc200Security = store.tokenTemplates.find(t => t.id === 'aramid-arc200-security');
+      
+      expect(aramidArc200Security).toBeDefined();
+      expect(aramidArc200Security?.standard).toBe('ARC200');
+      expect(aramidArc200Security?.network).toBe('Aramid');
+      expect(aramidArc200Security?.defaults.decimals).toBe(0);
+      expect(aramidArc200Security?.compliance).toContain('whitelisting');
+    });
+
+    it('should have all ARC-200 templates marked as MICA compliant', () => {
+      const store = useTokenStore();
+      
+      const arc200Templates = store.tokenTemplates.filter(t => t.standard === 'ARC200');
+      
+      expect(arc200Templates.length).toBeGreaterThan(0);
+      expect(arc200Templates.every(t => t.micaCompliant)).toBe(true);
+    });
+
+    it('should have network-specific compliance guidance for ARC-200 templates', () => {
+      const store = useTokenStore();
+      
+      const voiArc200 = store.tokenTemplates.filter(t => t.standard === 'ARC200' && t.network === 'VOI');
+      const aramidArc200 = store.tokenTemplates.filter(t => t.standard === 'ARC200' && t.network === 'Aramid');
+      
+      expect(voiArc200.length).toBeGreaterThan(0);
+      expect(aramidArc200.length).toBeGreaterThan(0);
+      
+      // VOI templates should have different guidance than Aramid templates
+      const voiCompliance = voiArc200[0].compliance;
+      const aramidCompliance = aramidArc200[0].compliance;
+      
+      expect(voiCompliance).toBeDefined();
+      expect(aramidCompliance).toBeDefined();
     });
   });
 
@@ -288,14 +387,14 @@ describe('Token Store', () => {
     it('should have standard non-RWA templates', () => {
       const store = useTokenStore();
       
-      expect(store.standardTokenTemplates).toHaveLength(10);
+      expect(store.standardTokenTemplates).toHaveLength(16);
       expect(store.standardTokenTemplates.every(t => !t.isRwaPreset)).toBe(true);
     });
 
-    it('should have total of 15 templates (10 standard + 5 RWA)', () => {
+    it('should have total of 21 templates (16 standard + 5 RWA)', () => {
       const store = useTokenStore();
       
-      expect(store.tokenTemplates).toHaveLength(15);
+      expect(store.tokenTemplates).toHaveLength(21);
     });
 
     it('should have RWA security token with whitelist features', () => {
