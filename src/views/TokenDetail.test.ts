@@ -243,7 +243,7 @@ describe('TokenDetail', () => {
       expect(wrapper.text()).toContain('Test Token');
       expect(wrapper.text()).toContain('TEST');
       expect(wrapper.text()).toContain('ARC-200');
-      expect(wrapper.text()).toContain('1,000,000');
+      expect(wrapper.text()).toContain('1\u00A0000\u00A0000');
     });
 
     it('should display deployed status badge', async () => {
