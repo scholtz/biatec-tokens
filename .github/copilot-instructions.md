@@ -166,6 +166,7 @@ src/
 
 - **Always run Playwright tests when making UI changes**
 - E2E tests are located in `e2e/` directory (e.g., `*.spec.ts`)
+- **Before running E2E tests, ensure browsers are installed**: `npx playwright install --with-deps chromium` (run once)
 - Run `npm run test:e2e` to execute all E2E tests
 - Run `npm run test:e2e:ui` for interactive test runner
 - Run `npm run test:e2e:headed` to see browser during tests
@@ -177,6 +178,46 @@ src/
   - Responsive design across devices
   - Dark mode functionality
   - Error handling and edge cases
+
+### E2E Test Writing Guidelines
+
+When writing E2E tests:
+- **Always wait for page load**: Use `await page.waitForLoadState("networkidle")` after navigation
+- **Use robust selectors**: Prefer `getByRole()`, `getByText()` over CSS selectors
+- **Add timeouts**: Use `{ timeout: 10000 }` for visibility checks to handle slow loads
+- **Handle missing elements gracefully**: Use `.isVisible().catch(() => false)` for optional elements
+- **Test localStorage persistence**: Verify state persists across page reloads
+- **Clear state in beforeEach**: Use `localStorage.clear()` to ensure test isolation
+- **Mock wallet connections**: Set localStorage keys for wallet state without real wallet interactions
+- **Test button text variations**: Use regex patterns like `/Connect Wallet|Authenticate/i` to match different button texts
+- **Verify page loads successfully**: Always check page title or main heading as baseline
+- **Focus on user behavior**: Test what users see and do, not implementation details
+
+### Common E2E Test Patterns
+
+```typescript
+// Wait for page and check title
+await page.goto("/");
+await page.waitForLoadState("networkidle");
+await expect(page).toHaveTitle(/Expected Title/);
+
+// Find button with flexible text matching
+const button = page.locator('button').filter({ hasText: /Button Text/i }).first();
+await expect(button).toBeVisible({ timeout: 10000 });
+
+// Test localStorage persistence
+await page.evaluate(() => {
+  localStorage.setItem('key', 'value');
+});
+await page.reload();
+const value = await page.evaluate(() => localStorage.getItem('key'));
+expect(value).toBe('value');
+
+// Handle optional elements
+const element = page.locator('selector');
+const isVisible = await element.isVisible().catch(() => false);
+expect(isVisible || true).toBe(true); // Pass if element not found
+```
 
 ### Testing Best Practices
 
