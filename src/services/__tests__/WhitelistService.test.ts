@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { WhitelistService, type WhitelistEntry } from '../WhitelistService';
-import { Api } from '../../generated/ApiClient';
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { WhitelistService, type WhitelistEntry } from "../WhitelistService";
+import { Api } from "../../generated/ApiClient";
 
 // Mock the API client
-vi.mock('../apiClient', () => {
+vi.mock("../apiClient", () => {
   const mockApiClient = {
     api: {
       v1WhitelistDetail: vi.fn(),
@@ -14,13 +14,13 @@ vi.mock('../apiClient', () => {
     get: vi.fn(),
     delete: vi.fn(),
   };
-  
+
   return {
     getApiClient: vi.fn(() => mockApiClient),
   };
 });
 
-describe('WhitelistService', () => {
+describe("WhitelistService", () => {
   let service: WhitelistService;
   let mockApiClient: any;
 
@@ -30,165 +30,152 @@ describe('WhitelistService', () => {
     mockApiClient = (service as any).apiClient;
   });
 
-  describe('getWhitelist', () => {
-    it('should fetch whitelist entries without filters', async () => {
+  describe("getWhitelist", () => {
+    it("should fetch whitelist entries without filters", async () => {
       const mockEntries: WhitelistEntry[] = [
         {
-          address: 'A23456723456723456723456723456723456723456723456723456723A',
-          status: 'active',
-          addedAt: '2024-01-15T10:00:00Z',
+          address: "A23456723456723456723456723456723456723456723456723456723A",
+          status: "active",
+          addedAt: "2024-01-15T10:00:00Z",
         },
       ];
 
       mockApiClient.api.v1WhitelistDetail.mockResolvedValue({ data: { entries: mockEntries } });
 
-      const result = await service.getWhitelist('123');
+      const result = await service.getWhitelist("123");
 
       expect(mockApiClient.api.v1WhitelistDetail).toHaveBeenCalledWith(123, {});
       expect(result).toEqual(mockEntries);
     });
 
-    it('should fetch whitelist entries with search filter', async () => {
+    it("should fetch whitelist entries with search filter", async () => {
       const mockEntries: WhitelistEntry[] = [];
       mockApiClient.api.v1WhitelistDetail.mockResolvedValue({ data: { entries: mockEntries } });
 
-      await service.getWhitelist('123', { search: 'AAAA' });
+      await service.getWhitelist("123", { search: "AAAA" });
 
-      expect(mockApiClient.api.v1WhitelistDetail).toHaveBeenCalledWith(123, { search: 'AAAA' });
+      expect(mockApiClient.api.v1WhitelistDetail).toHaveBeenCalledWith(123, { search: "AAAA" });
     });
 
-    it('should fetch whitelist entries with status filter', async () => {
+    it("should fetch whitelist entries with status filter", async () => {
       const mockEntries: WhitelistEntry[] = [];
       mockApiClient.api.v1WhitelistDetail.mockResolvedValue({ data: { entries: mockEntries } });
 
-      await service.getWhitelist('123', { status: 'active' });
+      await service.getWhitelist("123", { status: "active" });
 
       expect(mockApiClient.api.v1WhitelistDetail).toHaveBeenCalledWith(123, { status: 0 });
     });
 
-    it('should fetch whitelist entries with both filters', async () => {
+    it("should fetch whitelist entries with both filters", async () => {
       const mockEntries: WhitelistEntry[] = [];
       mockApiClient.api.v1WhitelistDetail.mockResolvedValue({ data: { entries: mockEntries } });
 
-      await service.getWhitelist('123', { search: 'AAAA', status: 'active' });
+      await service.getWhitelist("123", { search: "AAAA", status: "active" });
 
-      expect(mockApiClient.api.v1WhitelistDetail).toHaveBeenCalledWith(123, { search: 'AAAA', status: 0 });
+      expect(mockApiClient.api.v1WhitelistDetail).toHaveBeenCalledWith(123, { search: "AAAA", status: 0 });
     });
   });
 
-  describe('addAddress', () => {
-    it('should add an address without metadata', async () => {
+  describe("addAddress", () => {
+    it("should add an address without metadata", async () => {
       const mockEntry: WhitelistEntry = {
-        address: 'A23456723456723456723456723456723456723456723456723456723A',
-        status: 'active',
-        addedAt: '2024-01-15T10:00:00Z',
+        address: "A23456723456723456723456723456723456723456723456723456723A",
+        status: "active",
+        addedAt: "2024-01-15T10:00:00Z",
       };
 
       mockApiClient.api.v1WhitelistCreate.mockResolvedValue({ data: mockEntry });
 
-      const result = await service.addAddress(
-        '123',
-        'A23456723456723456723456723456723456723456723456723456723A'
-      );
+      const result = await service.addAddress("123", "A23456723456723456723456723456723456723456723456723456723A");
 
       expect(mockApiClient.api.v1WhitelistCreate).toHaveBeenCalledWith({
         assetId: 123,
-        address: 'A23456723456723456723456723456723456723456723456723456723A',
+        address: "A23456723456723456723456723456723456723456723456723456723A",
       });
       expect(result).toEqual(mockEntry);
     });
 
-    it('should add an address with MICA compliance metadata', async () => {
+    it("should add an address with MICA compliance metadata", async () => {
       const mockEntry: WhitelistEntry = {
-        address: 'A23456723456723456723456723456723456723456723456723456723A',
-        status: 'active',
-        addedAt: '2024-01-15T10:00:00Z',
-        reason: 'KYC Verification Passed',
-        requester: 'John Doe',
+        address: "A23456723456723456723456723456723456723456723456723456723A",
+        status: "active",
+        addedAt: "2024-01-15T10:00:00Z",
+        reason: "KYC Verification Passed",
+        requester: "John Doe",
         kycVerified: true,
-        jurisdictionCode: 'US',
+        jurisdictionCode: "US",
         complianceChecks: {
           sanctionsScreening: true,
           amlVerification: true,
           accreditedInvestor: false,
         },
-        notes: 'Test address',
+        notes: "Test address",
       };
 
       mockApiClient.api.v1WhitelistCreate.mockResolvedValue({ data: mockEntry });
 
-      const result = await service.addAddress(
-        '123',
-        'A23456723456723456723456723456723456723456723456723456723A',
-        {
-          reason: 'KYC Verification Passed',
-          requester: 'John Doe',
-          kycVerified: true,
-          jurisdictionCode: 'US',
-          complianceChecks: {
-            sanctionsScreening: true,
-            amlVerification: true,
-            accreditedInvestor: false,
-          },
-          notes: 'Test address',
-        }
-      );
+      const result = await service.addAddress("123", "A23456723456723456723456723456723456723456723456723456723A", {
+        reason: "KYC Verification Passed",
+        requester: "John Doe",
+        kycVerified: true,
+        jurisdictionCode: "US",
+        complianceChecks: {
+          sanctionsScreening: true,
+          amlVerification: true,
+          accreditedInvestor: false,
+        },
+        notes: "Test address",
+      });
 
       expect(mockApiClient.api.v1WhitelistCreate).toHaveBeenCalledWith({
         assetId: 123,
-        address: 'A23456723456723456723456723456723456723456723456723456723A',
-        reason: 'KYC Verification Passed',
+        address: "A23456723456723456723456723456723456723456723456723456723A",
+        reason: "KYC Verification Passed",
         kycVerified: true,
       });
       expect(result).toEqual(mockEntry);
     });
   });
 
-  describe('removeAddress', () => {
-    it('should remove an address from the whitelist with reason', async () => {
+  describe("removeAddress", () => {
+    it("should remove an address from the whitelist with reason", async () => {
       mockApiClient.api.v1WhitelistDelete.mockResolvedValue(undefined);
 
-      await service.removeAddress(
-        '123',
-        'A23456723456723456723456723456723456723456723456723456723A'
-      );
+      await service.removeAddress("123", "A23456723456723456723456723456723456723456723456723456723A");
 
       expect(mockApiClient.api.v1WhitelistDelete).toHaveBeenCalledWith({
         assetId: 123,
-        address: 'A23456723456723456723456723456723456723456723456723456723A',
+        address: "A23456723456723456723456723456723456723456723456723456723A",
       });
     });
 
-    it('should remove an address without reason', async () => {
+    it("should remove an address without reason", async () => {
       mockApiClient.api.v1WhitelistDelete.mockResolvedValue({ data: undefined });
 
-      await service.removeAddress(
-        '123',
-        'A23456723456723456723456723456723456723456723456723456723A'
-      );
+      await service.removeAddress("123", "A23456723456723456723456723456723456723456723456723456723A");
 
       expect(mockApiClient.api.v1WhitelistDelete).toHaveBeenCalledWith({
         assetId: 123,
-        address: 'A23456723456723456723456723456723456723456723456723456723A',
+        address: "A23456723456723456723456723456723456723456723456723456723A",
       });
     });
   });
 
-  describe('bulkUpload', () => {
-    it('should upload multiple addresses via CSV', async () => {
-      const csvData = 'address\nA23456723456723456723456723456723456723456723456723456723A\nB23456723456723456723456723456723456723456723456723456723B';
+  describe("bulkUpload", () => {
+    it("should upload multiple addresses via CSV", async () => {
+      const csvData = "address\nA23456723456723456723456723456723456723456723456723456723A\nB23456723456723456723456723456723456723456723456723456723B";
       const mockResponse = {
         success: 2,
         failed: 0,
         results: [
-          { valid: true, row: 2, address: 'A23456723456723456723456723456723456723456723456723456723A' },
-          { valid: true, row: 3, address: 'B23456723456723456723456723456723456723456723456723456723B' },
+          { valid: true, row: 2, address: "A23456723456723456723456723456723456723456723456723456723A" },
+          { valid: true, row: 3, address: "B23456723456723456723456723456723456723456723456723456723B" },
         ],
       };
 
       mockApiClient.api.v1WhitelistBulkCreate.mockResolvedValue({ data: mockResponse });
 
-      const result = await service.bulkUpload('123', csvData);
+      const result = await service.bulkUpload("123", csvData);
 
       expect(mockApiClient.api.v1WhitelistBulkCreate).toHaveBeenCalledWith({
         assetId: 123,
@@ -198,80 +185,80 @@ describe('WhitelistService', () => {
     });
   });
 
-  describe('validateCsv', () => {
-    it('should validate valid Algorand addresses', async () => {
+  describe("validateCsv", () => {
+    it("should validate valid Algorand addresses", async () => {
       // 58 character Algorand address
-      const csvData = 'address\nA23456723456723456723456723456723456723456723456723456723A';
-      
+      const csvData = "address\nA23456723456723456723456723456723456723456723456723456723A";
+
       const result = await service.validateCsv(csvData);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
         valid: true,
         row: 2,
-        address: 'A23456723456723456723456723456723456723456723456723456723A',
+        address: "A23456723456723456723456723456723456723456723456723456723A",
       });
     });
 
-    it('should validate valid Ethereum addresses', async () => {
-      const csvData = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb2';
-      
+    it("should validate valid Ethereum addresses", async () => {
+      const csvData = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb2";
+
       const result = await service.validateCsv(csvData);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
         valid: true,
         row: 1,
-        address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb2',
+        address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb2",
       });
     });
 
-    it('should reject invalid address formats', async () => {
-      const csvData = 'address\ninvalid-address';
-      
+    it("should reject invalid address formats", async () => {
+      const csvData = "address\ninvalid-address";
+
       const result = await service.validateCsv(csvData);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
         valid: false,
         row: 2,
-        address: 'invalid-address',
-        error: 'Invalid address format',
+        address: "invalid-address",
+        error: "Invalid address format",
       });
     });
 
-    it('should reject empty addresses', async () => {
-      const csvData = '\n\n';
-      
+    it("should reject empty addresses", async () => {
+      const csvData = "\n\n";
+
       const result = await service.validateCsv(csvData);
 
       expect(result).toHaveLength(0);
     });
 
-    it('should skip header row if present', async () => {
-      const csvData = 'address\nA23456723456723456723456723456723456723456723456723456723A';
-      
+    it("should skip header row if present", async () => {
+      const csvData = "address\nA23456723456723456723456723456723456723456723456723456723A";
+
       const result = await service.validateCsv(csvData);
 
       expect(result).toHaveLength(1);
       expect(result[0].row).toBe(2); // Row 2, not 1
     });
 
-    it('should handle CSV with multiple columns', async () => {
-      const csvData = 'A23456723456723456723456723456723456723456723456723456723A,notes here';
-      
+    it("should handle CSV with multiple columns", async () => {
+      const csvData = "A23456723456723456723456723456723456723456723456723456723A,notes here";
+
       const result = await service.validateCsv(csvData);
 
       expect(result).toHaveLength(1);
-      expect(result[0].address).toBe('A23456723456723456723456723456723456723456723456723456723A');
+      expect(result[0].address).toBe("A23456723456723456723456723456723456723456723456723456723A");
     });
 
-    it('should validate multiple addresses', async () => {
+    it("should validate multiple addresses", async () => {
       const csvData = `A23456723456723456723456723456723456723456723456723456723A
 B23456723456723456723456723456723456723456723456723456723B
 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb2
 invalid-address`;
-      
+
       const result = await service.validateCsv(csvData);
 
       expect(result).toHaveLength(4);
@@ -279,65 +266,63 @@ invalid-address`;
       expect(result[1].valid).toBe(true);
       expect(result[2].valid).toBe(true);
       expect(result[3].valid).toBe(false);
-      expect(result[3].error).toBe('Invalid address format');
+      expect(result[3].error).toBe("Invalid address format");
     });
 
-    it('should handle empty lines correctly', async () => {
+    it("should handle empty lines correctly", async () => {
       const csvData = `A23456723456723456723456723456723456723456723456723456723A
 
 
 B23456723456723456723456723456723456723456723456723456723B`;
-      
+
       const result = await service.validateCsv(csvData);
 
       expect(result).toHaveLength(2);
-      expect(result[0].address).toBe('A23456723456723456723456723456723456723456723456723456723A');
-      expect(result[1].address).toBe('B23456723456723456723456723456723456723456723456723456723B');
+      expect(result[0].address).toBe("A23456723456723456723456723456723456723456723456723456723A");
+      expect(result[1].address).toBe("B23456723456723456723456723456723456723456723456723456723B");
     });
   });
 
-  describe('importFromCsv', () => {
-    it('should import addresses with MICA metadata', async () => {
+  describe("importFromCsv", () => {
+    it("should import addresses with MICA metadata", async () => {
       const csvData = `address,reason,requester,kyc_verified,jurisdiction
 A23456723456723456723456723456723456723456723456723456723A,KYC Passed,John Doe,true,US`;
 
       mockApiClient.api.v1WhitelistCreate.mockResolvedValue({
         data: {
-          address: 'A23456723456723456723456723456723456723456723456723456723A',
-          status: 'active',
-          addedAt: '2024-01-01T00:00:00Z',
-        }
+          address: "A23456723456723456723456723456723456723456723456723456723A",
+          status: "active",
+          addedAt: "2024-01-01T00:00:00Z",
+        },
       });
 
-      const result = await service.importFromCsv('123', csvData);
+      const result = await service.importFromCsv("123", csvData);
 
       expect(result.success).toBe(1);
       expect(result.failed).toBe(0);
       expect(mockApiClient.api.v1WhitelistCreate).toHaveBeenCalledWith({
         assetId: 123,
-        address: 'A23456723456723456723456723456723456723456723456723456723A',
-        reason: 'KYC Passed',
+        address: "A23456723456723456723456723456723456723456723456723456723A",
+        reason: "KYC Passed",
         kycVerified: true,
       });
     });
 
-    it('should throw error if address column is missing', async () => {
+    it("should throw error if address column is missing", async () => {
       const csvData = `reason,requester
 KYC Passed,John Doe`;
 
-      await expect(service.importFromCsv('token123', csvData)).rejects.toThrow(
-        'CSV must contain an "address" column'
-      );
+      await expect(service.importFromCsv("token123", csvData)).rejects.toThrow('CSV must contain an "address" column');
     });
   });
 
-  describe('exportComplianceReport', () => {
-    it('should generate local report when API is unavailable', async () => {
+  describe("exportComplianceReport", () => {
+    it("should generate local report when API is unavailable", async () => {
       const mockEntries: WhitelistEntry[] = [
         {
-          address: 'A23456723456723456723456723456723456723456723456723456723A',
-          status: 'active',
-          addedAt: '2024-01-01T00:00:00Z',
+          address: "A23456723456723456723456723456723456723456723456723456723A",
+          status: "active",
+          addedAt: "2024-01-01T00:00:00Z",
           kycVerified: true,
           complianceChecks: {
             sanctionsScreening: true,
@@ -346,52 +331,49 @@ KYC Passed,John Doe`;
         },
       ];
 
-      mockApiClient.get
-        .mockRejectedValue(new Error('API unavailable'));
+      mockApiClient.get.mockRejectedValue(new Error("API unavailable"));
 
       mockApiClient.api.v1WhitelistDetail.mockResolvedValue({ data: { entries: mockEntries } });
 
-      const result = await service.exportComplianceReport('123', 'VOI', 'json');
+      const result = await service.exportComplianceReport("123", "VOI", "json");
 
-      expect(result).toHaveProperty('reportId');
-      expect(result).toHaveProperty('tokenId', '123');
-      expect(result).toHaveProperty('network', 'VOI');
-      if (typeof result !== 'string') {
+      expect(result).toHaveProperty("reportId");
+      expect(result).toHaveProperty("tokenId", "123");
+      expect(result).toHaveProperty("network", "VOI");
+      if (typeof result !== "string") {
         expect(result.summary.totalWhitelisted).toBe(1);
         expect(result.summary.kycVerifiedCount).toBe(1);
       }
     });
 
-    it('generates local CSV report when API fails', async () => {
+    it("generates local CSV report when API fails", async () => {
       const testEntry: WhitelistEntry = {
-        address: 'A23456723456723456723456723456723456723456723456723456723A',
-        status: 'active',
-        addedAt: '2024-01-15T10:00:00Z',
-        reason: 'KYC Passed',
+        address: "A23456723456723456723456723456723456723456723456723456723A",
+        status: "active",
+        addedAt: "2024-01-15T10:00:00Z",
+        reason: "KYC Passed",
       };
-      
-      mockApiClient.get
-        .mockRejectedValueOnce(new Error('API unavailable'))
-        .mockResolvedValueOnce([testEntry]);
 
-      const result = await service.exportComplianceReport('token123', 'VOI', 'csv');
+      mockApiClient.get.mockRejectedValueOnce(new Error("API unavailable")).mockResolvedValueOnce([testEntry]);
 
-      expect(typeof result).toBe('string');
-      expect(result).toContain('Address'); // Note: Capital A in CSV header
-      expect(result).toContain('Status');
-      expect(result).toContain('Reason');
+      const result = await service.exportComplianceReport("token123", "VOI", "csv");
+
+      expect(typeof result).toBe("string");
+      expect(result).toContain("Address"); // Note: Capital A in CSV header
+      expect(result).toContain("Status");
+      expect(result).toContain("Reason");
     });
 
-    it('handles empty whitelist in local report', async () => {
+    it("handles empty whitelist in local report", async () => {
       const emptyReport: MicaComplianceReport = {
-        reportId: 'report_123',
-        tokenId: '123',
-        network: 'VOI',
-        generatedAt: '2024-01-01T00:00:00Z',
-        generatedBy: 'system',
+        reportId: "report_123",
+        tokenId: "123",
+        network: "VOI",
+        generatedAt: "2024-01-01T00:00:00Z",
+        generatedBy: "system",
         reportPeriod: {
-          startDate: '2024-01-01T00:00:00Z',
-          endDate: '2024-01-01T00:00:00Z',
+          startDate: "2024-01-01T00:00:00Z",
+          endDate: "2024-01-01T00:00:00Z",
         },
         summary: {
           totalWhitelisted: 0,
@@ -412,25 +394,25 @@ KYC Passed,John Doe`;
 
       mockApiClient.get.mockResolvedValue(emptyReport);
 
-      const result = await service.exportComplianceReport('123', 'VOI', 'json');
+      const result = await service.exportComplianceReport("123", "VOI", "json");
 
-      if (typeof result !== 'string') {
+      if (typeof result !== "string") {
         expect(result.summary.totalWhitelisted).toBe(0);
         expect(result.summary.activeAddresses).toBe(0);
         expect(result.entries.length).toBe(0);
       }
     });
 
-    it('calculates jurisdiction coverage correctly', async () => {
+    it("calculates jurisdiction coverage correctly", async () => {
       const mockReport: MicaComplianceReport = {
-        reportId: 'report_123',
-        tokenId: '123',
-        network: 'VOI',
-        generatedAt: '2024-01-01T00:00:00Z',
-        generatedBy: 'system',
+        reportId: "report_123",
+        tokenId: "123",
+        network: "VOI",
+        generatedAt: "2024-01-01T00:00:00Z",
+        generatedBy: "system",
         reportPeriod: {
-          startDate: '2024-01-01T00:00:00Z',
-          endDate: '2024-01-01T00:00:00Z',
+          startDate: "2024-01-01T00:00:00Z",
+          endDate: "2024-01-01T00:00:00Z",
         },
         summary: {
           totalWhitelisted: 3,
@@ -454,30 +436,29 @@ KYC Passed,John Doe`;
 
       mockApiClient.get.mockResolvedValue(mockReport);
 
-      const result = await service.exportComplianceReport('123', 'VOI', 'json');
+      const result = await service.exportComplianceReport("123", "VOI", "json");
 
-      if (typeof result !== 'string') {
-        expect(result.complianceMetrics.jurisdictionCoverage).toHaveProperty('US');
-        expect(result.complianceMetrics.jurisdictionCoverage).toHaveProperty('EU');
+      if (typeof result !== "string") {
+        expect(result.complianceMetrics.jurisdictionCoverage).toHaveProperty("US");
+        expect(result.complianceMetrics.jurisdictionCoverage).toHaveProperty("EU");
         expect(result.complianceMetrics.jurisdictionCoverage.US).toBeGreaterThan(0);
       }
     });
 
-    it('handles entries without metadata gracefully', async () => {
+    it("handles entries without metadata gracefully", async () => {
       const minimalEntry: WhitelistEntry = {
-        address: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-        status: 'active' as const,
-        addedAt: '2024-01-01T00:00:00Z',
+        address: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        status: "active" as const,
+        addedAt: "2024-01-01T00:00:00Z",
       };
-      
-      mockApiClient.get
-        .mockRejectedValue(new Error('API unavailable'));
+
+      mockApiClient.get.mockRejectedValue(new Error("API unavailable"));
 
       mockApiClient.api.v1WhitelistDetail.mockResolvedValue({ data: { entries: [minimalEntry] } });
 
-      const result = await service.exportComplianceReport('123', 'VOI', 'json');
+      const result = await service.exportComplianceReport("123", "VOI", "json");
 
-      if (typeof result !== 'string') {
+      if (typeof result !== "string") {
         expect(result.entries.length).toBe(1);
         expect(result.summary.kycVerifiedCount).toBe(0);
         // KYC verification rate is calculated from percentage, will be 0 or NaN for empty data
@@ -486,22 +467,18 @@ KYC Passed,John Doe`;
     });
   });
 
-  describe('Error handling', () => {
-    it('handles removeAddress with missing reason gracefully', async () => {
-      const testAddress = 'A23456723456723456723456723456723456723456723456723456723A';
-      mockApiClient.api.v1WhitelistDelete.mockRejectedValue(new Error('Reason required'));
+  describe("Error handling", () => {
+    it("handles removeAddress with missing reason gracefully", async () => {
+      const testAddress = "A23456723456723456723456723456723456723456723456723456723A";
+      mockApiClient.api.v1WhitelistDelete.mockRejectedValue(new Error("Reason required"));
 
-      await expect(
-        service.removeAddress('123', testAddress)
-      ).rejects.toThrow();
+      await expect(service.removeAddress("123", testAddress)).rejects.toThrow();
     });
 
-    it('handles importFromCsv with invalid data', async () => {
-      const invalidCsv = 'invalid,data\nno,address,column';
+    it("handles importFromCsv with invalid data", async () => {
+      const invalidCsv = "invalid,data\nno,address,column";
 
-      await expect(
-        service.importFromCsv('token123', invalidCsv)
-      ).rejects.toThrow('address');
+      await expect(service.importFromCsv("token123", invalidCsv)).rejects.toThrow("address");
     });
   });
 });

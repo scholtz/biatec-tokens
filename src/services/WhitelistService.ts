@@ -1,11 +1,11 @@
-import { getApiClient } from './apiClient';
+import { getApiClient } from "./apiClient";
 
 /**
  * Represents a whitelisted address with MICA compliance metadata
  */
 export interface WhitelistEntry {
   address: string;
-  status: 'active' | 'pending' | 'removed';
+  status: "active" | "pending" | "removed";
   addedAt: string;
   updatedAt?: string;
   addedBy?: string;
@@ -78,7 +78,7 @@ export interface MicaComplianceReport {
 export interface AuditEntry {
   id: string;
   timestamp: string;
-  action: 'add' | 'remove' | 'update' | 'bulk_import';
+  action: "add" | "remove" | "update" | "bulk_import";
   address: string;
   performedBy: string;
   reason?: string;
@@ -96,41 +96,44 @@ export class WhitelistService {
    * @param tokenId - The token identifier
    * @param filters - Optional filters (search, status)
    */
-  async getWhitelist(
-    tokenId: string,
-    filters?: { search?: string; status?: string }
-  ): Promise<WhitelistEntry[]> {
+  async getWhitelist(tokenId: string, filters?: { search?: string; status?: string }): Promise<WhitelistEntry[]> {
     const assetId = parseInt(tokenId, 10);
     const query: any = {};
     if (filters?.search) query.search = filters.search;
     if (filters?.status) {
       // Convert status string to enum
       switch (filters.status) {
-        case 'active':
+        case "active":
           query.status = 0; // WhitelistStatus.Value0
           break;
-        case 'pending':
+        case "pending":
           query.status = 1; // WhitelistStatus.Value1
           break;
-        case 'removed':
+        case "removed":
           query.status = 2; // WhitelistStatus.Value2
           break;
       }
     }
-    
+
     const response = await this.apiClient.api.v1WhitelistDetail(assetId, query);
     const entries = response.data?.entries || [];
-    return entries.map(entry => {
-      let status: 'active' | 'pending' | 'removed' = 'active';
+    return entries.map((entry) => {
+      let status: "active" | "pending" | "removed" = "active";
       switch (entry.status) {
-        case 0: status = 'active'; break;
-        case 1: status = 'pending'; break;
-        case 2: status = 'removed'; break;
+        case 0:
+          status = "active";
+          break;
+        case 1:
+          status = "pending";
+          break;
+        case 2:
+          status = "removed";
+          break;
       }
       return {
-        address: entry.address || '',
+        address: entry.address || "",
         status,
-        addedAt: entry.createdAt || '',
+        addedAt: entry.createdAt || "",
         kycVerified: false, // Default, as the generated type doesn't have this
         complianceChecks: {},
         jurisdictionCode: undefined,
@@ -159,7 +162,7 @@ export class WhitelistService {
         accreditedInvestor?: boolean;
       };
       documentIds?: string[];
-    }
+    },
   ): Promise<WhitelistEntry> {
     const assetId = parseInt(tokenId, 10);
     const request = {
@@ -169,7 +172,7 @@ export class WhitelistService {
       kycVerified: metadata?.kycVerified,
       // Map other fields as needed
     };
-    
+
     const response = await this.apiClient.api.v1WhitelistCreate(request);
     return response.data as WhitelistEntry;
   }
@@ -180,16 +183,13 @@ export class WhitelistService {
    * @param address - The address to remove
    * @param reason - Reason for removal (MICA compliance requirement)
    */
-  async removeAddress(
-    tokenId: string,
-    address: string
-  ): Promise<void> {
+  async removeAddress(tokenId: string, address: string): Promise<void> {
     const assetId = parseInt(tokenId, 10);
     const request = {
       assetId,
       address,
     };
-    
+
     await this.apiClient.api.v1WhitelistDelete(request);
   }
 
@@ -200,34 +200,34 @@ export class WhitelistService {
    */
   async bulkUpload(tokenId: string, csvData: string): Promise<BulkUploadResponse> {
     const assetId = parseInt(tokenId, 10);
-    
+
     // Parse CSV to extract addresses
-    const lines = csvData.split('\n').filter(line => line.trim());
+    const lines = csvData.split("\n").filter((line) => line.trim());
     const addresses: string[] = [];
-    
+
     // Skip header if present
-    const startIndex = lines[0]?.toLowerCase().includes('address') ? 1 : 0;
-    
+    const startIndex = lines[0]?.toLowerCase().includes("address") ? 1 : 0;
+
     for (let i = startIndex; i < lines.length; i++) {
       const line = lines[i].trim();
       if (line) {
-        const address = line.split(',')[0].trim();
+        const address = line.split(",")[0].trim();
         if (address) {
           addresses.push(address);
         }
       }
     }
-    
+
     const request = {
       assetId,
       addresses,
     };
-    
+
     const response = await this.apiClient.api.v1WhitelistBulkCreate(request);
     const data = response.data;
     return {
       success: data.successCount || 0,
-      failed: (data.failedAddresses?.length || 0),
+      failed: data.failedAddresses?.length || 0,
       results: [], // Not provided by API
     };
   }
@@ -238,36 +238,36 @@ export class WhitelistService {
    */
   async validateCsv(csvData: string): Promise<CsvValidationResult[]> {
     const results: CsvValidationResult[] = [];
-    const lines = csvData.split('\n').filter(line => line.trim());
-    
+    const lines = csvData.split("\n").filter((line) => line.trim());
+
     // Skip header if present
-    const startIndex = lines[0]?.toLowerCase().includes('address') ? 1 : 0;
-    
+    const startIndex = lines[0]?.toLowerCase().includes("address") ? 1 : 0;
+
     for (let i = startIndex; i < lines.length; i++) {
       const line = lines[i].trim();
-      const address = line.split(',')[0].trim();
-      
+      const address = line.split(",")[0].trim();
+
       if (!address) {
         results.push({
           valid: false,
           row: i + 1,
-          address: '',
-          error: 'Empty address',
+          address: "",
+          error: "Empty address",
         });
         continue;
       }
-      
+
       // Basic Algorand address validation (58 characters)
       const isValidAlgorand = /^[A-Z2-7]{58}$/.test(address);
       // Basic Ethereum address validation (42 characters starting with 0x)
       const isValidEthereum = /^0x[a-fA-F0-9]{40}$/.test(address);
-      
+
       if (!isValidAlgorand && !isValidEthereum) {
         results.push({
           valid: false,
           row: i + 1,
           address,
-          error: 'Invalid address format',
+          error: "Invalid address format",
         });
       } else {
         results.push({
@@ -277,7 +277,7 @@ export class WhitelistService {
         });
       }
     }
-    
+
     return results;
   }
 
@@ -287,22 +287,16 @@ export class WhitelistService {
    * @param network - Network identifier
    * @param format - Export format (json or csv)
    */
-  async exportComplianceReport(
-    tokenId: string,
-    network: string,
-    format: 'json' | 'csv' = 'json'
-  ): Promise<MicaComplianceReport | string> {
+  async exportComplianceReport(tokenId: string, network: string, format: "json" | "csv" = "json"): Promise<MicaComplianceReport | string> {
     try {
-      const report = await (this.apiClient as any).get(
-        `/tokens/${tokenId}/whitelist/export?network=${network}&format=${format}`
-      );
+      const report = await (this.apiClient as any).get(`/tokens/${tokenId}/whitelist/export?network=${network}&format=${format}`);
       return report;
     } catch (error) {
       // Fallback: Generate report locally if API is not available
       const entries = await this.getWhitelist(tokenId);
       const report = this.generateLocalReport(tokenId, network, entries);
-      
-      if (format === 'csv') {
+
+      if (format === "csv") {
         return this.convertReportToCsv(report);
       }
       return report;
@@ -316,20 +310,23 @@ export class WhitelistService {
    */
   async importFromCsv(tokenId: string, csvData: string): Promise<BulkUploadResponse> {
     const results: CsvValidationResult[] = [];
-    const lines = csvData.split('\n').filter(line => line.trim());
-    
+    const lines = csvData.split("\n").filter((line) => line.trim());
+
     if (lines.length === 0) {
       return { success: 0, failed: 0, results: [] };
     }
 
     // Parse header to detect MICA metadata columns
-    const header = lines[0].toLowerCase().split(',').map(h => h.trim());
-    const addressIndex = header.findIndex(h => h === 'address');
-    const reasonIndex = header.findIndex(h => h === 'reason');
-    const requesterIndex = header.findIndex(h => h === 'requester');
-    const notesIndex = header.findIndex(h => h === 'notes');
-    const kycVerifiedIndex = header.findIndex(h => h === 'kyc_verified' || h === 'kycverified');
-    const jurisdictionIndex = header.findIndex(h => h === 'jurisdiction' || h === 'jurisdiction_code');
+    const header = lines[0]
+      .toLowerCase()
+      .split(",")
+      .map((h) => h.trim());
+    const addressIndex = header.findIndex((h) => h === "address");
+    const reasonIndex = header.findIndex((h) => h === "reason");
+    const requesterIndex = header.findIndex((h) => h === "requester");
+    const notesIndex = header.findIndex((h) => h === "notes");
+    const kycVerifiedIndex = header.findIndex((h) => h === "kyc_verified" || h === "kycverified");
+    const jurisdictionIndex = header.findIndex((h) => h === "jurisdiction" || h === "jurisdiction_code");
 
     if (addressIndex === -1) {
       throw new Error('CSV must contain an "address" column');
@@ -343,15 +340,15 @@ export class WhitelistService {
       const line = lines[i].trim();
       if (!line) continue;
 
-      const columns = line.split(',').map(c => c.trim());
+      const columns = line.split(",").map((c) => c.trim());
       const address = columns[addressIndex];
 
       if (!address) {
         results.push({
           valid: false,
           row: i + 1,
-          address: '',
-          error: 'Empty address',
+          address: "",
+          error: "Empty address",
         });
         failedCount++;
         continue;
@@ -366,7 +363,7 @@ export class WhitelistService {
           valid: false,
           row: i + 1,
           address,
-          error: 'Invalid address format',
+          error: "Invalid address format",
         });
         failedCount++;
         continue;
@@ -378,12 +375,12 @@ export class WhitelistService {
           reason: reasonIndex >= 0 ? columns[reasonIndex] : undefined,
           requester: requesterIndex >= 0 ? columns[requesterIndex] : undefined,
           notes: notesIndex >= 0 ? columns[notesIndex] : undefined,
-          kycVerified: kycVerifiedIndex >= 0 ? columns[kycVerifiedIndex]?.toLowerCase() === 'true' : undefined,
+          kycVerified: kycVerifiedIndex >= 0 ? columns[kycVerifiedIndex]?.toLowerCase() === "true" : undefined,
           jurisdictionCode: jurisdictionIndex >= 0 ? columns[jurisdictionIndex] : undefined,
         };
 
         await this.addAddress(tokenId, address, metadata);
-        
+
         results.push({
           valid: true,
           row: i + 1,
@@ -395,7 +392,7 @@ export class WhitelistService {
           valid: false,
           row: i + 1,
           address,
-          error: err.message || 'Failed to add address',
+          error: err.message || "Failed to add address",
         });
         failedCount++;
       }
@@ -408,48 +405,35 @@ export class WhitelistService {
    * Generate a local compliance report
    * @private
    */
-  private generateLocalReport(
-    tokenId: string,
-    network: string,
-    entries: WhitelistEntry[]
-  ): MicaComplianceReport {
+  private generateLocalReport(tokenId: string, network: string, entries: WhitelistEntry[]): MicaComplianceReport {
     const now = new Date().toISOString();
-    const activeEntries = entries.filter(e => e.status === 'active');
-    const pendingEntries = entries.filter(e => e.status === 'pending');
-    const removedEntries = entries.filter(e => e.status === 'removed');
-    const kycVerifiedEntries = entries.filter(e => e.kycVerified);
+    const activeEntries = entries.filter((e) => e.status === "active");
+    const pendingEntries = entries.filter((e) => e.status === "pending");
+    const removedEntries = entries.filter((e) => e.status === "removed");
+    const kycVerifiedEntries = entries.filter((e) => e.kycVerified);
 
     // Calculate compliance metrics
-    const sanctionsScreeningRate = entries.filter(
-      e => e.complianceChecks?.sanctionsScreening
-    ).length / entries.length * 100;
-    
-    const amlVerificationRate = entries.filter(
-      e => e.complianceChecks?.amlVerification
-    ).length / entries.length * 100;
+    const sanctionsScreeningRate = (entries.filter((e) => e.complianceChecks?.sanctionsScreening).length / entries.length) * 100;
+
+    const amlVerificationRate = (entries.filter((e) => e.complianceChecks?.amlVerification).length / entries.length) * 100;
 
     // Jurisdiction coverage
     const jurisdictionCoverage: Record<string, number> = {};
-    entries.forEach(entry => {
+    entries.forEach((entry) => {
       if (entry.jurisdictionCode) {
-        jurisdictionCoverage[entry.jurisdictionCode] = 
-          (jurisdictionCoverage[entry.jurisdictionCode] || 0) + 1;
+        jurisdictionCoverage[entry.jurisdictionCode] = (jurisdictionCoverage[entry.jurisdictionCode] || 0) + 1;
       }
     });
 
     // Calculate compliance score (0-100)
-    const complianceScore = Math.round(
-      (kycVerifiedEntries.length / entries.length * 0.4 +
-       sanctionsScreeningRate * 0.3 +
-       amlVerificationRate * 0.3)
-    );
+    const complianceScore = Math.round((kycVerifiedEntries.length / entries.length) * 0.4 + sanctionsScreeningRate * 0.3 + amlVerificationRate * 0.3);
 
     return {
       reportId: `report_${Date.now()}`,
       tokenId,
       network,
       generatedAt: now,
-      generatedBy: 'system',
+      generatedBy: "system",
       reportPeriod: {
         startDate: entries[0]?.addedAt || now,
         endDate: now,
@@ -478,28 +462,30 @@ export class WhitelistService {
    */
   private convertReportToCsv(report: MicaComplianceReport): string {
     const lines: string[] = [];
-    
+
     // Header
-    lines.push('Address,Status,Added At,Added By,Reason,Requester,KYC Verified,Jurisdiction,Notes');
-    
+    lines.push("Address,Status,Added At,Added By,Reason,Requester,KYC Verified,Jurisdiction,Notes");
+
     // Data rows
-    report.entries.forEach(entry => {
+    report.entries.forEach((entry) => {
       const row = [
         entry.address,
         entry.status,
         entry.addedAt,
-        entry.addedBy || '',
-        entry.reason || '',
-        entry.requester || '',
-        entry.kycVerified ? 'true' : 'false',
-        entry.jurisdictionCode || '',
-        entry.notes || '',
-      ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
-      
+        entry.addedBy || "",
+        entry.reason || "",
+        entry.requester || "",
+        entry.kycVerified ? "true" : "false",
+        entry.jurisdictionCode || "",
+        entry.notes || "",
+      ]
+        .map((field) => `"${String(field).replace(/"/g, '""')}"`)
+        .join(",");
+
       lines.push(row);
     });
-    
-    return lines.join('\n');
+
+    return lines.join("\n");
   }
 }
 
