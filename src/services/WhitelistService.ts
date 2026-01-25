@@ -135,8 +135,8 @@ export class WhitelistService {
         status,
         addedAt: entry.createdAt || "",
         kycVerified: entry.kycVerified || false,
-        complianceChecks: entry.complianceChecks || {},
-        jurisdictionCode: entry.jurisdictionCode,
+        complianceChecks: (entry as any).complianceChecks || {},
+        jurisdictionCode: (entry as any).jurisdictionCode,
       };
     });
   }
