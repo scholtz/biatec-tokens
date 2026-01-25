@@ -6,6 +6,11 @@ import type {
   AuditLogResponse,
   ComplianceStatus,
   MicaComplianceMetrics,
+  ComplianceMonitoringFilters,
+  ComplianceMonitoringMetrics,
+  WhitelistEnforcementMetrics,
+  AuditHealthMetrics,
+  RetentionStatusMetrics,
 } from '../types/compliance';
 
 /**
@@ -117,8 +122,8 @@ export class ComplianceService {
    * @returns Comprehensive monitoring metrics including whitelist, audit, and retention
    */
   async getMonitoringMetrics(
-    filters: import('../types/compliance').ComplianceMonitoringFilters
-  ): Promise<import('../types/compliance').ComplianceMonitoringMetrics> {
+    filters: ComplianceMonitoringFilters
+  ): Promise<ComplianceMonitoringMetrics> {
     const params = new URLSearchParams();
     
     if (filters.network && filters.network !== 'all') {
@@ -129,7 +134,7 @@ export class ComplianceService {
     if (filters.endDate) params.append('endDate', filters.endDate);
 
     const query = params.toString() ? `?${params.toString()}` : '';
-    return this.apiClient.get<import('../types/compliance').ComplianceMonitoringMetrics>(
+    return this.apiClient.get<ComplianceMonitoringMetrics>(
       `/v1/compliance/monitoring/metrics${query}`
     );
   }
@@ -141,8 +146,8 @@ export class ComplianceService {
    * @returns Whitelist enforcement metrics
    */
   async getWhitelistEnforcement(
-    filters: import('../types/compliance').ComplianceMonitoringFilters
-  ): Promise<import('../types/compliance').WhitelistEnforcementMetrics> {
+    filters: ComplianceMonitoringFilters
+  ): Promise<WhitelistEnforcementMetrics> {
     const params = new URLSearchParams();
     
     if (filters.network && filters.network !== 'all') {
@@ -153,7 +158,7 @@ export class ComplianceService {
     if (filters.endDate) params.append('endDate', filters.endDate);
 
     const query = params.toString() ? `?${params.toString()}` : '';
-    return this.apiClient.get<import('../types/compliance').WhitelistEnforcementMetrics>(
+    return this.apiClient.get<WhitelistEnforcementMetrics>(
       `/v1/compliance/monitoring/whitelist${query}`
     );
   }
@@ -165,8 +170,8 @@ export class ComplianceService {
    * @returns Audit health metrics
    */
   async getAuditHealth(
-    filters: import('../types/compliance').ComplianceMonitoringFilters
-  ): Promise<import('../types/compliance').AuditHealthMetrics> {
+    filters: ComplianceMonitoringFilters
+  ): Promise<AuditHealthMetrics> {
     const params = new URLSearchParams();
     
     if (filters.network && filters.network !== 'all') {
@@ -177,7 +182,7 @@ export class ComplianceService {
     if (filters.endDate) params.append('endDate', filters.endDate);
 
     const query = params.toString() ? `?${params.toString()}` : '';
-    return this.apiClient.get<import('../types/compliance').AuditHealthMetrics>(
+    return this.apiClient.get<AuditHealthMetrics>(
       `/v1/compliance/monitoring/audit-health${query}`
     );
   }
@@ -189,8 +194,8 @@ export class ComplianceService {
    * @returns Retention status metrics
    */
   async getRetentionStatus(
-    filters: import('../types/compliance').ComplianceMonitoringFilters
-  ): Promise<import('../types/compliance').RetentionStatusMetrics> {
+    filters: ComplianceMonitoringFilters
+  ): Promise<RetentionStatusMetrics> {
     const params = new URLSearchParams();
     
     if (filters.network && filters.network !== 'all') {
@@ -201,7 +206,7 @@ export class ComplianceService {
     if (filters.endDate) params.append('endDate', filters.endDate);
 
     const query = params.toString() ? `?${params.toString()}` : '';
-    return this.apiClient.get<import('../types/compliance').RetentionStatusMetrics>(
+    return this.apiClient.get<RetentionStatusMetrics>(
       `/v1/compliance/monitoring/retention${query}`
     );
   }
@@ -213,7 +218,7 @@ export class ComplianceService {
    * @returns CSV content as string
    */
   async exportMonitoringData(
-    filters: import('../types/compliance').ComplianceMonitoringFilters
+    filters: ComplianceMonitoringFilters
   ): Promise<string> {
     const params = new URLSearchParams();
     
