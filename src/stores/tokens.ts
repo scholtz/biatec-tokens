@@ -451,8 +451,8 @@ export const useTokenStore = defineStore("tokens", () => {
       standard: "ARC200",
       type: "FT",
       network: "Both",
-      compliance: "Algorithmic stablecoins under MICA may require authorization as asset-referenced tokens. Reserve requirements and redemption rights mandatory. Smart contract must ensure price stability mechanisms.",
-      guidance: "Best for: Price-stable medium of exchange, DeFi collateral. Requires collateral management and algorithmic stability mechanisms. High decimals for precision. Works on both VOI and Aramid.",
+      compliance: "Algorithmic stablecoins under MICA may require authorization as asset-referenced tokens. Must maintain adequate collateral backing and provide redemption mechanisms. Smart contract enforces algorithmic price stability through supply adjustments.",
+      guidance: "Best for: Price-stable medium of exchange, DeFi collateral. Requires algorithmic stabilization mechanisms (supply expansion/contraction, collateral pools, arbitrage incentives). High decimals for precision. Works on both VOI and Aramid.",
       defaults: {
         supply: 1000000,
         decimals: 18,
