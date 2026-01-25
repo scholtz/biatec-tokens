@@ -60,33 +60,38 @@ const networks = new NetworkConfigBuilder()
   })
   .build();
 
-app.use(WalletManagerPlugin, {
-  wallets: [
-    {
-      id: WalletId.BIATEC,
-      options: { projectId: "fcfde0713d43baa0d23be0773c80a72b" },
-    },
-    WalletId.PERA,
-    WalletId.DEFLY,
-    //WalletId.DEFLY_WEB,
-    WalletId.EXODUS,
-    // WalletId.PERA,
-    // {
-    //   id: WalletId.WALLETCONNECT,
-    //   options: { projectId: 'fcfde0713d43baa0d23be0773c80a72b' },
-    // },
-    // WalletId.KMD,
-    WalletId.KIBISIS,
-    WalletId.LUTE,
-    // {
-    //   id: WalletId.MAGIC,
-    //   options: { apiKey: 'pk_live_D17FD8D89621B5F3' },
-    // },
-    //WalletId.MNEMONIC,
-  ],
-  networks: networks,
-  defaultNetwork: NetworkId.TESTNET,
-});
+try {
+  app.use(WalletManagerPlugin, {
+    wallets: [
+      {
+        id: WalletId.BIATEC,
+        options: { projectId: "fcfde0713d43baa0d23be0773c80a72b" },
+      },
+      WalletId.PERA,
+      WalletId.DEFLY,
+      //WalletId.DEFLY_WEB,
+      WalletId.EXODUS,
+      // WalletId.PERA,
+      // {
+      //   id: WalletId.WALLETCONNECT,
+      //   options: { projectId: 'fcfde0713d43baa0d23be0773c80a72b' },
+      // },
+      // WalletId.KMD,
+      WalletId.KIBISIS,
+      WalletId.LUTE,
+      // {
+      //   id: WalletId.MAGIC,
+      //   options: { apiKey: 'pk_live_D17FD8D89621B5F3' },
+      // },
+      //WalletId.MNEMONIC,
+    ],
+    networks: networks,
+    defaultNetwork: NetworkId.TESTNET,
+  });
+} catch (error) {
+  console.warn('Wallet manager initialization failed:', error);
+  // Continue without wallet manager
+}
 
 app.use(pinia);
 app.use(router);

@@ -2,6 +2,11 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Wallet Connection Flow', () => {
   test.beforeEach(async ({ page }) => {
+    // Mock wallet connection and onboarding completion to avoid onboarding redirects
+    await page.addInitScript(() => {
+      localStorage.setItem('wallet_connected', 'true');
+      localStorage.setItem('onboarding_completed', 'true');
+    });
     await page.goto('/');
     // Wait for page to be fully loaded
     await page.waitForLoadState('networkidle');

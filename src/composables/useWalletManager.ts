@@ -55,7 +55,40 @@ export const NETWORKS: Record<NetworkId, NetworkInfo> = {
  * Integrates with @txnlab/use-wallet-vue and provides resilient connection handling
  */
 export function useWalletManager() {
-  const wallet = useWallet()
+  let wallet: any = null;
+  let walletAvailable = true;
+  try {
+    wallet = useWallet();
+  } catch (error) {
+    console.warn('Wallet manager not available:', error);
+    walletAvailable = false;
+  }
+
+  if (!walletAvailable) {
+    // Return mock implementation
+    return {
+      isConnected: computed(() => false),
+      activeAddress: computed(() => null),
+      activeWallet: computed(() => null),
+      accounts: computed(() => []),
+      networkInfo: computed(() => NETWORKS['voi-mainnet']),
+      formattedAddress: computed(() => null),
+      walletState: ref({
+        isConnected: false,
+        activeAddress: null,
+        activeWallet: null,
+        accounts: [],
+        isConnecting: false,
+        error: null,
+      }),
+      currentNetwork: ref<NetworkId>('voi-mainnet'),
+      connect: async () => { throw new Error('Wallet manager not available') },
+      disconnect: async () => {},
+      switchNetwork: async () => {},
+      reconnect: async () => {},
+    };
+  }
+
   const authStore = useAuthStore()
   
   const walletState = ref<WalletState>({
@@ -71,7 +104,7 @@ export function useWalletManager() {
   const isReconnecting = ref(false)
 
   // Computed properties
-  const isConnected = computed(() => walletState.value.isConnected)
+  const isConnected = computed(() => walletAvailable ? !!wallet.activeAccount.value : false)
   const activeAddress = computed(() => walletState.value.activeAddress)
   const activeWallet = computed(() => walletState.value.activeWallet)
   const accounts = computed(() => walletState.value.accounts)
