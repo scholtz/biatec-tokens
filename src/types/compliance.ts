@@ -317,3 +317,88 @@ export interface AttestationHistoryItem {
   status: 'success' | 'failed';
   errorMessage?: string;
 }
+
+/**
+ * Compliance monitoring dashboard types
+ * For enterprise-grade compliance observability
+ */
+
+/**
+ * Whitelist enforcement metrics for MICA compliance monitoring
+ */
+export interface WhitelistEnforcementMetrics {
+  totalAddresses: number;
+  activeAddresses: number;
+  pendingAddresses: number;
+  removedAddresses: number;
+  enforcementRate: number; // Percentage
+  recentViolations: number;
+  lastUpdated: string;
+}
+
+/**
+ * Audit health metrics for compliance monitoring
+ */
+export interface AuditHealthMetrics {
+  totalAuditEntries: number;
+  successfulActions: number;
+  failedActions: number;
+  criticalIssues: number;
+  warningIssues: number;
+  auditCoverage: number; // Percentage
+  lastAuditTimestamp: string;
+}
+
+/**
+ * Data retention status for compliance monitoring
+ */
+export interface RetentionStatusMetrics {
+  totalRecords: number;
+  activeRecords: number;
+  archivedRecords: number;
+  retentionCompliance: number; // Percentage
+  oldestRecord: string;
+  retentionPolicyDays: number;
+  lastUpdated: string;
+}
+
+/**
+ * Overall compliance monitoring metrics
+ */
+export interface ComplianceMonitoringMetrics {
+  network: Network;
+  assetId?: string;
+  whitelistEnforcement: WhitelistEnforcementMetrics;
+  auditHealth: AuditHealthMetrics;
+  retentionStatus: RetentionStatusMetrics;
+  overallComplianceScore: number;
+  lastUpdated: string;
+}
+
+/**
+ * Filters for compliance monitoring dashboard
+ */
+export interface ComplianceMonitoringFilters {
+  network?: Network | 'all';
+  assetId?: string;
+  startDate?: string; // ISO 8601
+  endDate?: string; // ISO 8601
+}
+
+/**
+ * Compliance monitoring chart data point
+ */
+export interface ComplianceChartDataPoint {
+  timestamp: string;
+  value: number;
+  label?: string;
+}
+
+/**
+ * Compliance monitoring trend data
+ */
+export interface ComplianceMonitoringTrend {
+  metric: 'whitelist' | 'audit' | 'retention';
+  dataPoints: ComplianceChartDataPoint[];
+  trend: 'improving' | 'stable' | 'declining';
+}
