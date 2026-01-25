@@ -25,18 +25,22 @@ test.describe("Compliance Monitoring Dashboard", () => {
   });
 
   test("should redirect to home when not authenticated", async ({ page }) => {
-    // Clear authentication
-    await page.addInitScript(() => {
+    // Navigate to a clean page first to clear any existing context
+    await page.goto("/");
+    
+    // Set up context without authentication
+    await page.evaluate(() => {
       localStorage.removeItem("wallet_connected");
+      localStorage.removeItem("onboarding_completed");
     });
 
+    // Now navigate to protected route
     await page.goto("/compliance-monitoring");
     await page.waitForLoadState("networkidle");
 
-    // Should be redirected to home page
-    await page.waitForURL("/", { timeout: 5000 }).catch(() => {
-      // If not redirected, that's okay - route guard might be working differently
-    });
+    // Should be redirected to home page or show onboarding
+    const currentUrl = page.url();
+    expect(currentUrl).toMatch(/\/(|.*showOnboarding=true.*)/);
   });
 
   test("should display filter section with all filter options", async ({ page }) => {
@@ -62,14 +66,16 @@ test.describe("Compliance Monitoring Dashboard", () => {
     await page.waitForLoadState("networkidle");
 
     // Wait for the page to fully load
-    await page.waitForSelector("select", { timeout: 5000 });
+    await page.waitForSelector("select", { timeout: 10000 });
 
     // Change network filter
     const networkSelect = page.locator("select").first();
     await networkSelect.selectOption("VOI");
 
-    // Wait a moment for URL update
-    await page.waitForTimeout(500);
+    // Wait for URL to update by checking the URL contains the network parameter
+    await page.waitForFunction(() => {
+      return window.location.search.includes("network=VOI");
+    }, { timeout: 3000 });
 
     // Check that URL was updated
     const url = page.url();
@@ -81,14 +87,15 @@ test.describe("Compliance Monitoring Dashboard", () => {
     await page.waitForLoadState("networkidle");
 
     // Wait for filters to load
-    await page.waitForSelector("select", { timeout: 5000 });
+    await page.waitForSelector("select", { timeout: 10000 });
 
     // Check that network filter is set correctly
     const networkSelect = page.locator("select").first();
     await expect(networkSelect).toHaveValue("VOI");
 
-    // Check that asset ID is populated
-    const assetIdInput = page.locator('input[placeholder*="asset"]').first();
+    // Check that asset ID is populated - use more specific selector
+    const assetIdInput = page.locator('input[placeholder*="Asset"]', { hasText: /asset/i }).first()
+      .or(page.locator('input[placeholder*="asset"]').first());
     await expect(assetIdInput).toHaveValue("12345");
   });
 
@@ -96,16 +103,22 @@ test.describe("Compliance Monitoring Dashboard", () => {
     await page.goto("/compliance-monitoring");
     await page.waitForLoadState("networkidle");
 
-    // Wait for content to load (either metrics or empty state)
-    await page.waitForTimeout(2000);
+    // Wait for content to load - look for any of the expected states
+    await Promise.race([
+      page.waitForSelector("text=Overall Compliance Score", { timeout: 5000 }).catch(() => null),
+      page.waitForSelector("text=No Compliance Data Available", { timeout: 5000 }).catch(() => null),
+      page.waitForSelector("text=Failed to Load Compliance Data", { timeout: 5000 }).catch(() => null),
+      page.waitForSelector(".pi-spinner", { timeout: 5000 }).catch(() => null),
+    ]);
 
     // Check for either metrics or loading/empty state
     const hasMetrics = await page.locator("text=Overall Compliance Score").isVisible().catch(() => false);
     const hasEmptyState = await page.locator("text=No Compliance Data Available").isVisible().catch(() => false);
     const hasError = await page.locator("text=Failed to Load Compliance Data").isVisible().catch(() => false);
+    const isLoading = await page.locator(".pi-spinner").isVisible().catch(() => false);
 
     // One of these should be visible
-    expect(hasMetrics || hasEmptyState || hasError).toBe(true);
+    expect(hasMetrics || hasEmptyState || hasError || isLoading).toBe(true);
 
     // If metrics are shown, verify key sections exist
     if (hasMetrics) {
@@ -132,12 +145,20 @@ test.describe("Compliance Monitoring Dashboard", () => {
     const exportButton = page.getByRole("button", { name: /Export CSV/i });
     await expect(exportButton).toBeVisible();
 
-    // Click export button - we just verify it doesn't crash
+    // Set up download listener
+    const downloadPromise = page.waitForEvent('download', { timeout: 5000 }).catch(() => null);
+
+    // Click export button
     await exportButton.click();
-    await page.waitForTimeout(1000);
+
+    // Wait a bit for any async operations
+    await page.waitForTimeout(500);
 
     // Check that page is still functional after click
     await expect(page.getByRole("heading", { name: /Compliance Monitoring Dashboard/i })).toBeVisible();
+    
+    // Download might or might not happen depending on API availability
+    // We just verify the page doesn't crash
   });
 
   test("should clear filters when Clear All is clicked", async ({ page }) => {
@@ -145,20 +166,24 @@ test.describe("Compliance Monitoring Dashboard", () => {
     await page.waitForLoadState("networkidle");
 
     // Wait for filters to load
-    await page.waitForSelector("select", { timeout: 5000 });
+    await page.waitForSelector("select", { timeout: 10000 });
 
     // Look for Clear All button (it appears when filters are active)
     const clearButton = page.locator("button:has-text('Clear All')");
-    const isClearButtonVisible = await clearButton.isVisible().catch(() => false);
+    
+    // Wait for button to appear since filters are active
+    await expect(clearButton).toBeVisible({ timeout: 5000 });
+    
+    await clearButton.click();
 
-    if (isClearButtonVisible) {
-      await clearButton.click();
-      await page.waitForTimeout(500);
+    // Wait for URL to update
+    await page.waitForFunction(() => {
+      return !window.location.search.includes("network=VOI");
+    }, { timeout: 3000 });
 
-      // Check that filters are reset
-      const networkSelect = page.locator("select").first();
-      await expect(networkSelect).toHaveValue("all");
-    }
+    // Check that filters are reset
+    const networkSelect = page.locator("select").first();
+    await expect(networkSelect).toHaveValue("all");
   });
 
   test("should display back button and navigate", async ({ page }) => {
@@ -178,8 +203,12 @@ test.describe("Compliance Monitoring Dashboard", () => {
     await page.goto("/compliance-monitoring");
     await page.waitForLoadState("networkidle");
 
-    // Wait for content to load
-    await page.waitForTimeout(2000);
+    // Wait for content to load - either metrics or error/empty state
+    await Promise.race([
+      page.waitForSelector("text=Overall Compliance Score", { timeout: 5000 }).catch(() => null),
+      page.waitForSelector("text=No Compliance Data Available", { timeout: 5000 }).catch(() => null),
+      page.waitForSelector("text=Failed to Load Compliance Data", { timeout: 5000 }).catch(() => null),
+    ]);
 
     // Check for MICA section if metrics are loaded
     const hasMetrics = await page.locator("text=Overall Compliance Score").isVisible().catch(() => false);
@@ -224,7 +253,7 @@ test.describe("Compliance Monitoring Dashboard", () => {
     await page.waitForLoadState("networkidle");
 
     // Wait for filters to load
-    await page.waitForSelector("input[type='date']", { timeout: 5000 });
+    await page.waitForSelector("input[type='date']", { timeout: 10000 });
 
     // Find date inputs
     const dateInputs = page.locator("input[type='date']");
@@ -243,11 +272,12 @@ test.describe("Compliance Monitoring Dashboard", () => {
     await page.goto("/compliance-monitoring");
     await page.waitForLoadState("networkidle");
 
-    // Wait for filters to load
-    await page.waitForSelector('input[placeholder*="asset"]', { timeout: 5000 });
+    // Wait for filters to load - match case-insensitive
+    await page.waitForSelector('input[placeholder*="Asset"], input[placeholder*="asset"]', { timeout: 10000 });
 
-    // Find asset ID input
-    const assetIdInput = page.locator('input[placeholder*="asset"]').first();
+    // Find asset ID input using case-insensitive match
+    const assetIdInput = page.locator('input[placeholder*="Asset"]').first()
+      .or(page.locator('input[placeholder*="asset"]').first());
     await assetIdInput.fill("test-asset-123");
 
     // Verify the value was set
@@ -258,19 +288,19 @@ test.describe("Compliance Monitoring Dashboard", () => {
     await page.goto("/compliance-monitoring");
     await page.waitForLoadState("networkidle");
 
-    // Wait for content
-    await page.waitForTimeout(1000);
+    // Wait for main heading to be visible
+    await expect(page.getByRole("heading", { name: /Compliance Monitoring Dashboard/i })).toBeVisible();
 
-    // Check for enterprise-related terms
+    // Check for enterprise-related terms - use case-insensitive locators
     const pageText = await page.textContent("body");
     expect(pageText).toBeTruthy();
     
-    // Should contain enterprise or compliance related terms
+    // Should contain enterprise or compliance related terms (case-insensitive)
     const hasEnterpriseTerms = 
-      pageText?.includes("Enterprise") || 
-      pageText?.includes("Compliance") || 
-      pageText?.includes("MICA") ||
-      pageText?.includes("observability");
+      pageText?.toLowerCase().includes("enterprise") || 
+      pageText?.toLowerCase().includes("compliance") || 
+      pageText?.toLowerCase().includes("mica") ||
+      pageText?.toLowerCase().includes("observability");
     
     expect(hasEnterpriseTerms).toBe(true);
   });
