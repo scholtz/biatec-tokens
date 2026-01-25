@@ -89,7 +89,7 @@ try {
     defaultNetwork: NetworkId.TESTNET,
   });
 } catch (error) {
-  console.warn('Wallet manager initialization failed:', error);
+  console.warn("Wallet manager initialization failed:", error);
   // Continue without wallet manager
 }
 
