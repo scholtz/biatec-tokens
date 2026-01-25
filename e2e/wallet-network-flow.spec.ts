@@ -60,15 +60,18 @@ test.describe("Wallet Connect Flow with Network Selection", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
     
-    // Look for network badge or testnet indicator
-    // The navbar should show network status (could be Testnet, VOI Mainnet, or Aramid Mainnet)
-    const networkBadge = page.locator('text=/Testnet|VOI|Aramid|Mainnet/i').first();
+    // Verify page loaded successfully
+    await expect(page).toHaveTitle(/Biatec Tokens/);
     
-    // Check if network indicator is present (it may not be visible in all viewport sizes)
+    // Look for network badge or testnet indicator (optional - may not be visible in all viewports)
+    const networkBadge = page.locator('text=/Testnet|VOI|Aramid|Mainnet/i').first();
     const isVisible = await networkBadge.isVisible().catch(() => false);
     
-    // At minimum, the page should load successfully
-    expect(isVisible || true).toBe(true);
+    // If visible, verify it's actually displaying network info
+    if (isVisible) {
+      await expect(networkBadge).toBeVisible();
+    }
+    // Note: Network badge may not be visible in all viewport sizes, so we don't fail if not found
   });
 
   test("should survive page refresh with wallet connection state", async ({ page }) => {
@@ -147,13 +150,19 @@ test.describe("Wallet Connect Flow with Network Selection", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
     
-    // Verify that network configuration is accessible
-    const hasNetworkConfig = await page.evaluate(() => {
-      // Check if we can access the network configuration
-      const savedNetwork = localStorage.getItem('selected_network');
-      return savedNetwork !== undefined; // Can be null or a value
+    // Verify that localStorage is accessible and can store network configuration
+    const canAccessLocalStorage = await page.evaluate(() => {
+      try {
+        // Test if we can read/write to localStorage
+        localStorage.setItem('test_key', 'test_value');
+        const value = localStorage.getItem('test_key');
+        localStorage.removeItem('test_key');
+        return value === 'test_value';
+      } catch (e) {
+        return false;
+      }
     });
     
-    expect(hasNetworkConfig).toBe(true);
+    expect(canAccessLocalStorage).toBe(true);
   });
 });
