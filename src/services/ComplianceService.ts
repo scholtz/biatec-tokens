@@ -37,7 +37,7 @@ export class ComplianceService {
     const data = response.data;
     return {
       allowed: data.isAllowed || false,
-      reasons: data.denialReason ? [data.denialReason] : [],
+      reasons: Array.isArray(data.denialReason) ? data.denialReason : (data.denialReason ? [data.denialReason] : []),
       senderStatus: (data.senderStatus?.status as any) || "unknown",
       receiverStatus: (data.receiverStatus?.status as any) || "unknown",
       timestamp: new Date().toISOString(),
@@ -83,8 +83,10 @@ export class ComplianceService {
    * @param network - The network (VOI or Aramid)
    * @returns Compliance status including whitelist count and issues
    */
-  async getComplianceStatus(tokenId: string): Promise<ComplianceStatus> {
-    const response = await this.apiClient.api.v1ComplianceDetail(parseInt(tokenId, 10));
+  async getComplianceStatus(tokenId: string, network?: string): Promise<ComplianceStatus> {
+    const query: any = {};
+    if (network) query.network = network;
+    const response = await this.apiClient.api.v1ComplianceDetail(parseInt(tokenId, 10), query);
     return response.data as ComplianceStatus;
   }
 
@@ -140,6 +142,7 @@ export class ComplianceService {
     const data = response.data;
     return {
       network: (filters.network || "all") as any,
+      assetId: filters.assetId,
       whitelistEnforcement: data.whitelistEnforcement as any,
       auditHealth: data.auditHealth as any,
       retentionStatus: data.networkRetentionStatus?.[0] as any,

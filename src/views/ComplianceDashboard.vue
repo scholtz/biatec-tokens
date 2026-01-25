@@ -184,7 +184,7 @@ const loadComplianceStatus = async () => {
   isLoadingStatus.value = true;
 
   try {
-    complianceStatus.value = await complianceService.getComplianceStatus(tokenId.value);
+    complianceStatus.value = await complianceService.getComplianceStatus(tokenId.value, selectedNetwork.value);
   } catch (err) {
     console.error("Failed to load compliance status:", err);
     // Set default values if API call fails

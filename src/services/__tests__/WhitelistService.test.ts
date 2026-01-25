@@ -45,7 +45,18 @@ describe("WhitelistService", () => {
       const result = await service.getWhitelist("123");
 
       expect(mockApiClient.api.v1WhitelistDetail).toHaveBeenCalledWith(123, {});
-      expect(result).toEqual(mockEntries);
+      const expectedResult = [
+        {
+          address: "A23456723456723456723456723456723456723456723456723456723A",
+          status: "active",
+          addedAt: "",
+          kycVerified: false,
+          complianceChecks: {},
+          jurisdictionCode: undefined,
+        },
+      ];
+
+      expect(result).toEqual(expectedResult);
     });
 
     it("should fetch whitelist entries with search filter", async () => {
@@ -173,15 +184,22 @@ describe("WhitelistService", () => {
         ],
       };
 
-      mockApiClient.api.v1WhitelistBulkCreate.mockResolvedValue({ data: mockResponse });
+      mockApiClient.api.v1WhitelistBulkCreate.mockResolvedValue({ data: { successCount: 2, failedAddresses: [] } });
 
       const result = await service.bulkUpload("123", csvData);
 
       expect(mockApiClient.api.v1WhitelistBulkCreate).toHaveBeenCalledWith({
         assetId: 123,
-        csvData,
+        addresses: [
+          "A23456723456723456723456723456723456723456723456723456723A",
+          "B23456723456723456723456723456723456723456723456723456723B",
+        ],
       });
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual({
+        success: 2,
+        failed: 0,
+        results: [],
+      });
     });
   });
 
@@ -392,7 +410,7 @@ KYC Passed,John Doe`;
         },
       };
 
-      mockApiClient.get.mockResolvedValue(emptyReport);
+      mockApiClient.get.mockResolvedValue({ data: emptyReport });
 
       const result = await service.exportComplianceReport("123", "VOI", "json");
 
@@ -434,14 +452,38 @@ KYC Passed,John Doe`;
         },
       };
 
-      mockApiClient.get.mockResolvedValue(mockReport);
+      const mockEntries: WhitelistEntry[] = [
+        {
+          address: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          status: "active",
+          addedAt: "2024-01-01T00:00:00Z",
+          jurisdictionCode: "US",
+        },
+        {
+          address: "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          status: "active",
+          addedAt: "2024-01-01T00:00:00Z",
+          jurisdictionCode: "US",
+        },
+        {
+          address: "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+          status: "active",
+          addedAt: "2024-01-01T00:00:00Z",
+          jurisdictionCode: "EU",
+        },
+      ];
+
+      mockApiClient.get.mockRejectedValue(new Error("API unavailable"));
+
+      mockApiClient.api.v1WhitelistDetail.mockResolvedValue({ data: { entries: mockEntries } });
 
       const result = await service.exportComplianceReport("123", "VOI", "json");
 
       if (typeof result !== "string") {
         expect(result.complianceMetrics.jurisdictionCoverage).toHaveProperty("US");
         expect(result.complianceMetrics.jurisdictionCoverage).toHaveProperty("EU");
-        expect(result.complianceMetrics.jurisdictionCoverage.US).toBeGreaterThan(0);
+        expect(result.complianceMetrics.jurisdictionCoverage.US).toBe(2);
+        expect(result.complianceMetrics.jurisdictionCoverage.EU).toBe(1);
       }
     });
 

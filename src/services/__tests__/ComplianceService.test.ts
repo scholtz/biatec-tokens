@@ -35,79 +35,61 @@ describe("ComplianceService", () => {
   describe("validateTransfer", () => {
     it("should validate a transfer successfully", async () => {
       const request: TransferValidationRequest = {
-        tokenId: "token123",
+        tokenId: "123",
         network: "VOI",
         sender: "A23456723456723456723456723456723456723456723456723456723A",
         receiver: "B23456723456723456723456723456723456723456723456723456723B",
         amount: "100",
       };
 
-      const mockResponse: TransferValidationResponse = {
-        allowed: true,
-        reasons: ["Both addresses are whitelisted"],
+      const mockApiResponse = {
+        isAllowed: true,
+        denialReason: [],
         senderStatus: {
-          address: request.sender,
-          whitelisted: true,
           status: "active",
-          kycVerified: true,
-          jurisdictionAllowed: true,
-          sanctioned: false,
+          isWhitelisted: true,
         },
         receiverStatus: {
-          address: request.receiver,
-          whitelisted: true,
           status: "active",
-          kycVerified: true,
-          jurisdictionAllowed: true,
-          sanctioned: false,
-        },
-        timestamp: "2024-01-15T10:00:00Z",
-        details: {
-          senderCompliant: true,
-          receiverCompliant: true,
-          jurisdictionCheck: true,
-          sanctionsCheck: true,
+          isWhitelisted: true,
         },
       };
 
-      mockApiClient.api.v1WhitelistValidateTransferCreate.mockResolvedValue({ data: mockResponse });
+      mockApiClient.api.v1WhitelistValidateTransferCreate.mockResolvedValue({ data: mockApiResponse });
 
       const result = await service.validateTransfer(request);
 
-      expect(mockApiClient.api.v1WhitelistValidateTransferCreate).toHaveBeenCalledWith(request);
-      expect(result).toEqual(mockResponse);
+      expect(mockApiClient.api.v1WhitelistValidateTransferCreate).toHaveBeenCalledWith({
+        assetId: 123,
+        fromAddress: request.sender,
+        toAddress: request.receiver,
+        amount: 100,
+      });
       expect(result.allowed).toBe(true);
     });
 
     it("should return denied validation when addresses are not whitelisted", async () => {
       const request: TransferValidationRequest = {
-        tokenId: "token123",
+        tokenId: "123",
         network: "VOI",
         sender: "A23456723456723456723456723456723456723456723456723456723A",
         receiver: "B23456723456723456723456723456723456723456723456723456723B",
       };
 
-      const mockResponse: TransferValidationResponse = {
-        allowed: false,
-        reasons: ["Sender is not whitelisted", "Receiver is not whitelisted"],
+      const mockApiResponse = {
+        isAllowed: false,
+        denialReason: ["Sender is not whitelisted", "Receiver is not whitelisted"],
         senderStatus: {
-          address: request.sender,
-          whitelisted: false,
           status: "not_listed",
+          isWhitelisted: false,
         },
         receiverStatus: {
-          address: request.receiver,
-          whitelisted: false,
           status: "not_listed",
-        },
-        timestamp: "2024-01-15T10:00:00Z",
-        details: {
-          senderCompliant: false,
-          receiverCompliant: false,
+          isWhitelisted: false,
         },
       };
 
-      mockApiClient.api.v1WhitelistValidateTransferCreate.mockResolvedValue({ data: mockResponse });
+      mockApiClient.api.v1WhitelistValidateTransferCreate.mockResolvedValue({ data: mockApiResponse });
 
       const result = await service.validateTransfer(request);
 
@@ -117,33 +99,35 @@ describe("ComplianceService", () => {
 
     it("should validate transfer without amount", async () => {
       const request: TransferValidationRequest = {
-        tokenId: "token123",
+        tokenId: "123",
         network: "Aramid",
         sender: "A23456723456723456723456723456723456723456723456723456723A",
         receiver: "B23456723456723456723456723456723456723456723456723456723B",
       };
 
-      const mockResponse: TransferValidationResponse = {
-        allowed: true,
-        reasons: [],
+      const mockApiResponse = {
+        isAllowed: true,
+        denialReason: [],
         senderStatus: {
-          address: request.sender,
-          whitelisted: true,
           status: "active",
+          isWhitelisted: true,
         },
         receiverStatus: {
-          address: request.receiver,
-          whitelisted: true,
           status: "active",
+          isWhitelisted: true,
         },
-        timestamp: "2024-01-15T10:00:00Z",
       };
 
-      mockApiClient.api.v1WhitelistValidateTransferCreate.mockResolvedValue({ data: mockResponse });
+      mockApiClient.api.v1WhitelistValidateTransferCreate.mockResolvedValue({ data: mockApiResponse });
 
       const result = await service.validateTransfer(request);
 
-      expect(mockApiClient.api.v1WhitelistValidateTransferCreate).toHaveBeenCalledWith(request);
+      expect(mockApiClient.api.v1WhitelistValidateTransferCreate).toHaveBeenCalledWith({
+        assetId: 123,
+        fromAddress: request.sender,
+        toAddress: request.receiver,
+        amount: undefined,
+      });
       expect(result.allowed).toBe(true);
     });
   });
@@ -274,7 +258,7 @@ describe("ComplianceService", () => {
 
       const result = await service.getComplianceStatus("123");
 
-      expect(mockApiClient.api.v1ComplianceDetail).toHaveBeenCalledWith(123);
+      expect(mockApiClient.api.v1ComplianceDetail).toHaveBeenCalledWith(123, {});
       expect(result).toEqual(mockStatus);
       expect(result.whitelistCount).toBe(50);
     });
@@ -300,7 +284,7 @@ describe("ComplianceService", () => {
 
       const result = await service.getComplianceStatus("123");
 
-      expect(mockApiClient.api.v1ComplianceDetail).toHaveBeenCalledWith(123);
+      expect(mockApiClient.api.v1ComplianceDetail).toHaveBeenCalledWith(123, {});
       expect(result.issues).toHaveLength(1);
       expect(result.issues![0].severity).toBe("high");
     });
@@ -388,7 +372,15 @@ describe("ComplianceService", () => {
         lastUpdated: "2024-01-31T23:59:59Z",
       };
 
-      mockApiClient.api.v1ComplianceMonitoringMetricsList.mockResolvedValue({ data: mockMetrics });
+      const mockApiResponse = {
+        whitelistEnforcement: mockMetrics.whitelistEnforcement,
+        auditHealth: mockMetrics.auditHealth,
+        networkRetentionStatus: [mockMetrics.retentionStatus],
+        overallHealthScore: mockMetrics.overallComplianceScore,
+        calculatedAt: mockMetrics.lastUpdated,
+      };
+
+      mockApiClient.api.v1ComplianceMonitoringMetricsList.mockResolvedValue({ data: mockApiResponse });
 
       const result = await service.getMonitoringMetrics(filters);
 
@@ -397,8 +389,12 @@ describe("ComplianceService", () => {
         fromDate: "2024-01-01",
         toDate: "2024-01-31",
       });
-      expect(result).toEqual(mockMetrics);
+      expect(result.network).toBe("VOI");
+      expect(result.whitelistEnforcement).toEqual(mockMetrics.whitelistEnforcement);
+      expect(result.auditHealth).toEqual(mockMetrics.auditHealth);
+      expect(result.retentionStatus).toEqual(mockMetrics.retentionStatus);
       expect(result.overallComplianceScore).toBe(95);
+      expect(result.lastUpdated).toBe("2024-01-31T23:59:59Z");
     });
 
     it("should get monitoring metrics with all networks filter", async () => {
@@ -439,12 +435,21 @@ describe("ComplianceService", () => {
         lastUpdated: "2024-01-31T23:59:59Z",
       };
 
-      mockApiClient.api.v1ComplianceMonitoringMetricsList.mockResolvedValue({ data: mockMetrics });
+      const mockApiResponse = {
+        whitelistEnforcement: mockMetrics.whitelistEnforcement,
+        auditHealth: mockMetrics.auditHealth,
+        networkRetentionStatus: [mockMetrics.retentionStatus],
+        overallHealthScore: mockMetrics.overallComplianceScore,
+        calculatedAt: mockMetrics.lastUpdated,
+      };
 
-      await service.getMonitoringMetrics(filters);
+      mockApiClient.api.v1ComplianceMonitoringMetricsList.mockResolvedValue({ data: mockApiResponse });
+
+      const result = await service.getMonitoringMetrics(filters);
 
       // Should not include 'all' in the query params
       expect(mockApiClient.api.v1ComplianceMonitoringMetricsList).toHaveBeenCalledWith({});
+      expect(result.network).toBe("all");
     });
 
     it("should get monitoring metrics with asset ID filter", async () => {
@@ -486,7 +491,15 @@ describe("ComplianceService", () => {
         lastUpdated: "2024-01-31T23:59:59Z",
       };
 
-      mockApiClient.api.v1ComplianceMonitoringMetricsList.mockResolvedValue({ data: mockMetrics });
+      const mockApiResponse = {
+        whitelistEnforcement: mockMetrics.whitelistEnforcement,
+        auditHealth: mockMetrics.auditHealth,
+        networkRetentionStatus: [mockMetrics.retentionStatus],
+        overallHealthScore: mockMetrics.overallComplianceScore,
+        calculatedAt: mockMetrics.lastUpdated,
+      };
+
+      mockApiClient.api.v1ComplianceMonitoringMetricsList.mockResolvedValue({ data: mockApiResponse });
 
       const result = await service.getMonitoringMetrics(filters);
 

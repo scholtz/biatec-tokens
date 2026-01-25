@@ -134,9 +134,9 @@ export class WhitelistService {
         address: entry.address || "",
         status,
         addedAt: entry.createdAt || "",
-        kycVerified: false, // Default, as the generated type doesn't have this
-        complianceChecks: {},
-        jurisdictionCode: undefined,
+        kycVerified: entry.kycVerified || false,
+        complianceChecks: entry.complianceChecks || {},
+        jurisdictionCode: entry.jurisdictionCode,
       };
     });
   }
@@ -289,8 +289,8 @@ export class WhitelistService {
    */
   async exportComplianceReport(tokenId: string, network: string, format: "json" | "csv" = "json"): Promise<MicaComplianceReport | string> {
     try {
-      const report = await (this.apiClient as any).get(`/tokens/${tokenId}/whitelist/export?network=${network}&format=${format}`);
-      return report;
+      const response = await (this.apiClient as any).get(`/tokens/${tokenId}/whitelist/export?network=${network}&format=${format}`);
+      return response.data;
     } catch (error) {
       // Fallback: Generate report locally if API is not available
       const entries = await this.getWhitelist(tokenId);
