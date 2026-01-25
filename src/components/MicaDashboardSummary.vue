@@ -7,9 +7,7 @@
           <i class="pi pi-chart-bar text-biatec-accent"></i>
           MICA Compliance Summary
         </h2>
-        <p class="text-sm text-gray-400 mt-1">
-          Key reporting metrics aligned with MICA regulatory requirements
-        </p>
+        <p class="text-sm text-gray-400 mt-1">Key reporting metrics aligned with MICA regulatory requirements</p>
       </div>
       <button
         v-if="!isLoading && micaMetrics"
@@ -36,12 +34,7 @@
         <div>
           <h3 class="text-lg font-semibold text-red-400">Failed to load MICA metrics</h3>
           <p class="text-sm text-gray-400 mt-1">{{ error }}</p>
-          <button
-            @click="loadMetrics"
-            class="mt-3 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors"
-          >
-            Try Again
-          </button>
+          <button @click="loadMetrics" class="mt-3 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors">Try Again</button>
         </div>
       </div>
     </div>
@@ -97,14 +90,12 @@
             <div>
               <div class="text-sm text-gray-400">Total Holders</div>
               <div class="text-2xl font-bold text-white">
-                {{ micaMetrics.holderDistribution.totalHolders.toLocaleString('en-US') }}
+                {{ micaMetrics.holderDistribution.totalHolders.toLocaleString("en-US") }}
               </div>
             </div>
             <div class="flex items-center justify-between text-sm">
               <span class="text-gray-400">Top 10 Concentration</span>
-              <span class="text-white font-medium">
-                {{ micaMetrics.holderDistribution.top10Concentration.toFixed(1) }}%
-              </span>
+              <span class="text-white font-medium"> {{ micaMetrics.holderDistribution.top10Concentration.toFixed(1) }}% </span>
             </div>
             <div class="flex items-center justify-between text-sm">
               <span class="text-gray-400">Average Holding</span>
@@ -130,13 +121,13 @@
             <div>
               <div class="text-sm text-gray-400">Status</div>
               <div class="text-2xl font-bold" :class="micaMetrics.whitelistStatus.enabled ? 'text-green-400' : 'text-yellow-400'">
-                {{ micaMetrics.whitelistStatus.enabled ? 'Enabled' : 'Disabled' }}
+                {{ micaMetrics.whitelistStatus.enabled ? "Enabled" : "Disabled" }}
               </div>
             </div>
             <div class="flex items-center justify-between text-sm">
               <span class="text-gray-400">Whitelisted Addresses</span>
               <span class="text-white font-medium">
-                {{ micaMetrics.whitelistStatus.totalWhitelisted.toLocaleString('en-US') }}
+                {{ micaMetrics.whitelistStatus.totalWhitelisted.toLocaleString("en-US") }}
               </span>
             </div>
             <div class="flex items-center justify-between text-sm">
@@ -147,9 +138,7 @@
             </div>
             <div v-if="micaMetrics.whitelistStatus.recentlyAdded > 0" class="flex items-center justify-between text-sm">
               <span class="text-gray-400">Added (24h)</span>
-              <span class="text-green-400 font-medium">
-                +{{ micaMetrics.whitelistStatus.recentlyAdded }}
-              </span>
+              <span class="text-green-400 font-medium"> +{{ micaMetrics.whitelistStatus.recentlyAdded }} </span>
             </div>
           </div>
         </template>
@@ -203,30 +192,18 @@
           <i class="pi pi-history text-biatec-accent"></i>
           Recent Transfers
         </h3>
-        <button
-          @click="$emit('navigate-to-audit-log')"
-          class="text-sm text-biatec-accent hover:text-biatec-accent/80 transition-colors flex items-center gap-1"
-        >
+        <button @click="$emit('navigate-to-audit-log')" class="text-sm text-biatec-accent hover:text-biatec-accent/80 transition-colors flex items-center gap-1">
           View All <i class="pi pi-arrow-right"></i>
         </button>
       </div>
 
       <div class="space-y-2">
-        <div
-          v-for="transfer in micaMetrics.transferActivity.recentTransfers.slice(0, 5)"
-          :key="transfer.id"
-          class="p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-        >
+        <div v-for="transfer in micaMetrics.transferActivity.recentTransfers.slice(0, 5)" :key="transfer.id" class="p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
           <div class="flex items-center justify-between">
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 mb-1">
                 <span class="text-sm text-gray-400">{{ formatTimestamp(transfer.timestamp) }}</span>
-                <span
-                  :class="[
-                    'px-2 py-0.5 text-xs font-medium rounded-full',
-                    getTransferStatusClass(transfer.status)
-                  ]"
-                >
+                <span :class="['px-2 py-0.5 text-xs font-medium rounded-full', getTransferStatusClass(transfer.status)]">
                   {{ transfer.status }}
                 </span>
               </div>
@@ -256,10 +233,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import MicaSummaryWidget from './MicaSummaryWidget.vue';
-import { complianceService } from '../services/ComplianceService';
-import type { MicaComplianceMetrics, Network } from '../types/compliance';
+import { ref, onMounted } from "vue";
+import MicaSummaryWidget from "./MicaSummaryWidget.vue";
+import { complianceService } from "../services/ComplianceService";
+import type { MicaComplianceMetrics, Network } from "../types/compliance";
 
 interface Props {
   tokenId: string;
@@ -269,8 +246,8 @@ interface Props {
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  'navigate-to-whitelist': [];
-  'navigate-to-audit-log': [];
+  "navigate-to-whitelist": [];
+  "navigate-to-audit-log": [];
 }>();
 
 const micaMetrics = ref<MicaComplianceMetrics | null>(null);
@@ -289,30 +266,27 @@ const loadMetrics = async () => {
   error.value = null;
 
   try {
-    micaMetrics.value = await complianceService.getMicaComplianceMetrics(
-      props.tokenId,
-      props.network
-    );
+    micaMetrics.value = await complianceService.getMicaComplianceMetrics(props.tokenId, props.network);
   } catch (err) {
-    console.error('Failed to load MICA metrics:', err);
+    console.error("Failed to load MICA metrics:", err);
     // Use mock data for development/testing if API fails
-    
+
     micaMetrics.value = {
       tokenId: props.tokenId,
-      network: props.network as 'VOI' | 'Aramid',
+      network: props.network as "VOI" | "Aramid",
       tokenSupply: {
-        totalSupply: '10000000',
-        circulatingSupply: '8500000',
-        reserveSupply: '1000000',
-        burnedSupply: '500000',
+        totalSupply: "10000000",
+        circulatingSupply: "8500000",
+        reserveSupply: "1000000",
+        burnedSupply: "500000",
         lastUpdated: new Date().toISOString(),
       },
       holderDistribution: {
         totalHolders: 1247,
         top10Concentration: 42.5,
         top50Concentration: 68.3,
-        averageHolding: '8020.05',
-        medianHolding: '2500.00',
+        averageHolding: "8020.05",
+        medianHolding: "2500.00",
         lastUpdated: new Date().toISOString(),
       },
       whitelistStatus: {
@@ -325,36 +299,36 @@ const loadMetrics = async () => {
         last24Hours: 47,
         last7Days: 312,
         last30Days: 1456,
-        totalVolume24h: '125000',
-        averageTransferSize: '2659.57',
+        totalVolume24h: "125000",
+        averageTransferSize: "2659.57",
         recentTransfers: [
           {
-            id: '1',
+            id: "1",
             timestamp: new Date(Date.now() - 30 * 60000).toISOString(),
-            from: 'VOI7XKJKLJHGFDSAQWERTYUIOPLKJHGFDSAZXCVBNM',
-            to: 'VOI9MNBVCXZASDFGHJKLPOIUYTREWQASDFGHJKLMNB',
-            amount: '5000',
-            status: 'completed',
-            transactionId: 'TXN1234567890ABCDEF',
+            from: "VOI7XKJKLJHGFDSAQWERTYUIOPLKJHGFDSAZXCVBNM",
+            to: "VOI9MNBVCXZASDFGHJKLPOIUYTREWQASDFGHJKLMNB",
+            amount: "5000",
+            status: "completed",
+            transactionId: "TXN1234567890ABCDEF",
           },
           {
-            id: '2',
+            id: "2",
             timestamp: new Date(Date.now() - 120 * 60000).toISOString(),
-            from: 'VOI3LKJHGFDSAZXCVBNMASDFGHJKLPOIUYTREWQASD',
-            to: 'VOI5QWERTYUIOPLKJHGFDSAZXCVBNMASDFGHJKLPOI',
-            amount: '2500',
-            status: 'completed',
-            transactionId: 'TXN2345678901BCDEFG',
+            from: "VOI3LKJHGFDSAZXCVBNMASDFGHJKLPOIUYTREWQASD",
+            to: "VOI5QWERTYUIOPLKJHGFDSAZXCVBNMASDFGHJKLPOI",
+            amount: "2500",
+            status: "completed",
+            transactionId: "TXN2345678901BCDEFG",
           },
           {
-            id: '3',
+            id: "3",
             timestamp: new Date(Date.now() - 180 * 60000).toISOString(),
-            from: 'VOI8ASDFGHJKLPOIUYTREWQASDFGHJKLMNBVCXZAS',
-            to: 'VOI2ZXCVBNMASDFGHJKLPOIUYTREWQASDFGHJKLMN',
-            amount: '1000',
-            status: 'blocked',
-            transactionId: 'TXN3456789012CDEFGH',
-            reason: 'Receiver not whitelisted',
+            from: "VOI8ASDFGHJKLPOIUYTREWQASDFGHJKLMNBVCXZAS",
+            to: "VOI2ZXCVBNMASDFGHJKLPOIUYTREWQASDFGHJKLMN",
+            amount: "1000",
+            status: "blocked",
+            transactionId: "TXN3456789012CDEFGH",
+            reason: "Receiver not whitelisted",
           },
         ],
         lastUpdated: new Date().toISOString(),
@@ -373,13 +347,13 @@ const refreshMetrics = async () => {
 };
 
 const formatNumber = (value: string | number): string => {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
+  const num = typeof value === "string" ? parseFloat(value) : value;
   if (num >= 1000000) {
-    return (num / 1000000).toFixed(2) + 'M';
+    return (num / 1000000).toFixed(2) + "M";
   } else if (num >= 1000) {
-    return (num / 1000).toFixed(2) + 'K';
+    return (num / 1000).toFixed(2) + "K";
   }
-  return num.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  return num.toLocaleString("en-US", { maximumFractionDigits: 2 });
 };
 
 const formatTimestamp = (timestamp: string) => {
@@ -387,16 +361,16 @@ const formatTimestamp = (timestamp: string) => {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
-  
-  if (diffMins < 1) return 'Just now';
+
+  if (diffMins < 1) return "Just now";
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-  
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(date);
 };
 
@@ -407,16 +381,16 @@ const shortenAddress = (address: string) => {
 
 const getTransferStatusClass = (status: string) => {
   switch (status) {
-    case 'completed':
-      return 'bg-green-500/20 text-green-400 border border-green-500/50';
-    case 'pending':
-      return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50';
-    case 'failed':
-      return 'bg-red-500/20 text-red-400 border border-red-500/50';
-    case 'blocked':
-      return 'bg-orange-500/20 text-orange-400 border border-orange-500/50';
+    case "completed":
+      return "bg-green-500/20 text-green-400 border border-green-500/50";
+    case "pending":
+      return "bg-yellow-500/20 text-yellow-400 border border-yellow-500/50";
+    case "failed":
+      return "bg-red-500/20 text-red-400 border border-red-500/50";
+    case "blocked":
+      return "bg-orange-500/20 text-orange-400 border border-orange-500/50";
     default:
-      return 'bg-gray-500/20 text-gray-400 border border-gray-500/50';
+      return "bg-gray-500/20 text-gray-400 border border-gray-500/50";
   }
 };
 
