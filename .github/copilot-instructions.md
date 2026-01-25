@@ -14,6 +14,9 @@ This is a Vue 3 + TypeScript frontend application for managing and deploying tok
 - **Router**: Vue Router
 - **Blockchain**: Algorand SDK (algosdk) with wallet integrations
 - **Wallet Support**: @txnlab/use-wallet-vue, Pera Wallet, Defly Connect, Lute Connect, WalletConnect
+- **Testing**: 
+  - **Unit Tests**: Vitest + Vue Test Utils
+  - **E2E Tests**: Playwright (cross-browser testing)
 
 ## Project Structure
 
@@ -35,6 +38,15 @@ src/
 - **Development Server**: `npm run dev`
 - **Build**: `npm run build` (runs vue-tsc type checking then vite build)
 - **Preview Production Build**: `npm run preview`
+- **Unit Tests**: `npm test` (Vitest)
+- **Unit Tests (Watch)**: `npm run test:watch`
+- **Unit Tests (UI)**: `npm run test:ui`
+- **Test Coverage**: `npm run test:coverage`
+- **E2E Tests**: `npm run test:e2e` (Playwright)
+- **E2E Tests (UI Mode)**: `npm run test:e2e:ui`
+- **E2E Tests (Headed)**: `npm run test:e2e:headed`
+- **E2E Tests (Debug)**: `npm run test:e2e:debug`
+- **E2E Test Report**: `npm run test:e2e:report`
 
 ## Code Style and Conventions
 
@@ -126,10 +138,46 @@ src/
 
 ## Testing and Validation
 
+### Unit Tests (Vitest)
+- Always run `npm test` for unit tests with Vitest
+- Unit tests are located in `src/` directories alongside components (e.g., `*.test.ts`, `*.spec.ts`)
+- Test files use Vitest with Vue Test Utils for component testing
+- Run `npm run test:coverage` to check test coverage
+- Existing test patterns:
+  - Component tests: Mock dependencies, test user interactions
+  - Store tests: Test state management and actions
+  - Service tests: Mock API calls, test business logic
+
+### E2E Tests (Playwright)
+- **Always run Playwright tests when making UI changes**
+- E2E tests are located in `e2e/` directory (e.g., `*.spec.ts`)
+- Run `npm run test:e2e` to execute all E2E tests
+- Run `npm run test:e2e:ui` for interactive test runner
+- Run `npm run test:e2e:headed` to see browser during tests
+- Run `npm run test:e2e:debug` for debugging tests
+- Playwright tests cover:
+  - User flows (wallet connection, token creation)
+  - Navigation between pages
+  - Form interactions and validations
+  - Responsive design across devices
+  - Dark mode functionality
+  - Error handling and edge cases
+
+### Testing Best Practices
+- **With every code change, run appropriate tests**:
+  - Component changes → Unit tests + E2E tests for affected flows
+  - UI/UX changes → E2E tests for visual verification
+  - Business logic → Unit tests
+  - New features → Both unit and E2E tests
 - Always run `npm run build` to ensure TypeScript compilation and type checking pass
 - Test in development mode with `npm run dev` for hot reload
 - Verify dark mode compatibility for UI changes
 - Test wallet connectivity when modifying blockchain features
+- Write tests that are:
+  - Maintainable and readable
+  - Independent (no dependencies between tests)
+  - Fast to execute
+  - Focused on user behavior, not implementation details
 
 ## Additional Notes
 

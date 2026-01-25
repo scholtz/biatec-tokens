@@ -25,3 +25,8 @@ dist-ssr
 
 tsconfig.app.tsbuildinfo
 coverage/
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
