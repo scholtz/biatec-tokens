@@ -212,7 +212,7 @@ export function useWalletManager() {
       await authStore.signOut();
 
       // Clear persisted state
-      localStorage.removeItem("wallet_connected");
+      localStorage.removeItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED);
       localStorage.removeItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID);
     } catch (error) {
       console.error("Failed to disconnect wallet:", error);
@@ -307,7 +307,7 @@ export function useWalletManager() {
     } catch (error) {
       console.warn("Failed to reconnect wallet:", error);
       // Clear persisted state on reconnection failure
-      localStorage.removeItem("wallet_connected");
+      localStorage.removeItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED);
       localStorage.removeItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID);
     } finally {
       isReconnecting.value = false;
@@ -322,7 +322,7 @@ export function useWalletManager() {
     if (walletState.value.isConnected) {
       if (walletState.value.activeWallet) {
         localStorage.setItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED, WALLET_CONNECTION_STATE.CONNECTED);
-        localStorage.setItem("active_wallet_id", walletState.value.activeWallet);
+        localStorage.setItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID, walletState.value.activeWallet);
       }
     }
 
