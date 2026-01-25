@@ -342,4 +342,280 @@ describe('ComplianceService', () => {
       );
     });
   });
+
+  describe('getMonitoringMetrics', () => {
+    it('should get monitoring metrics successfully', async () => {
+      const filters = {
+        network: 'VOI' as const,
+        startDate: '2024-01-01',
+        endDate: '2024-01-31',
+      };
+
+      const mockMetrics = {
+        network: 'VOI' as const,
+        whitelistEnforcement: {
+          totalAddresses: 100,
+          activeAddresses: 95,
+          pendingAddresses: 3,
+          removedAddresses: 2,
+          enforcementRate: 95.0,
+          recentViolations: 1,
+          lastUpdated: '2024-01-31T23:59:59Z',
+        },
+        auditHealth: {
+          totalAuditEntries: 500,
+          successfulActions: 490,
+          failedActions: 10,
+          criticalIssues: 0,
+          warningIssues: 2,
+          auditCoverage: 98.0,
+          lastAuditTimestamp: '2024-01-31T23:00:00Z',
+        },
+        retentionStatus: {
+          totalRecords: 1000,
+          activeRecords: 900,
+          archivedRecords: 100,
+          retentionCompliance: 99.0,
+          oldestRecord: '2022-01-01T00:00:00Z',
+          retentionPolicyDays: 730,
+          lastUpdated: '2024-01-31T23:59:59Z',
+        },
+        overallComplianceScore: 95,
+        lastUpdated: '2024-01-31T23:59:59Z',
+      };
+
+      mockApiClient.get.mockResolvedValue(mockMetrics);
+
+      const result = await service.getMonitoringMetrics(filters);
+
+      expect(mockApiClient.get).toHaveBeenCalledWith(
+        '/v1/compliance/monitoring/metrics?network=VOI&startDate=2024-01-01&endDate=2024-01-31'
+      );
+      expect(result).toEqual(mockMetrics);
+      expect(result.overallComplianceScore).toBe(95);
+    });
+
+    it('should get monitoring metrics with all networks filter', async () => {
+      const filters = {
+        network: 'all' as const,
+      };
+
+      const mockMetrics = {
+        network: 'VOI' as const,
+        whitelistEnforcement: {
+          totalAddresses: 100,
+          activeAddresses: 95,
+          pendingAddresses: 3,
+          removedAddresses: 2,
+          enforcementRate: 95.0,
+          recentViolations: 1,
+          lastUpdated: '2024-01-31T23:59:59Z',
+        },
+        auditHealth: {
+          totalAuditEntries: 500,
+          successfulActions: 490,
+          failedActions: 10,
+          criticalIssues: 0,
+          warningIssues: 2,
+          auditCoverage: 98.0,
+          lastAuditTimestamp: '2024-01-31T23:00:00Z',
+        },
+        retentionStatus: {
+          totalRecords: 1000,
+          activeRecords: 900,
+          archivedRecords: 100,
+          retentionCompliance: 99.0,
+          oldestRecord: '2022-01-01T00:00:00Z',
+          retentionPolicyDays: 730,
+          lastUpdated: '2024-01-31T23:59:59Z',
+        },
+        overallComplianceScore: 95,
+        lastUpdated: '2024-01-31T23:59:59Z',
+      };
+
+      mockApiClient.get.mockResolvedValue(mockMetrics);
+
+      await service.getMonitoringMetrics(filters);
+
+      // Should not include 'all' in the query params
+      expect(mockApiClient.get).toHaveBeenCalledWith(
+        '/v1/compliance/monitoring/metrics'
+      );
+    });
+
+    it('should get monitoring metrics with asset ID filter', async () => {
+      const filters = {
+        assetId: 'asset123',
+      };
+
+      const mockMetrics = {
+        network: 'VOI' as const,
+        assetId: 'asset123',
+        whitelistEnforcement: {
+          totalAddresses: 50,
+          activeAddresses: 48,
+          pendingAddresses: 1,
+          removedAddresses: 1,
+          enforcementRate: 96.0,
+          recentViolations: 0,
+          lastUpdated: '2024-01-31T23:59:59Z',
+        },
+        auditHealth: {
+          totalAuditEntries: 200,
+          successfulActions: 198,
+          failedActions: 2,
+          criticalIssues: 0,
+          warningIssues: 1,
+          auditCoverage: 99.0,
+          lastAuditTimestamp: '2024-01-31T23:00:00Z',
+        },
+        retentionStatus: {
+          totalRecords: 500,
+          activeRecords: 450,
+          archivedRecords: 50,
+          retentionCompliance: 100.0,
+          oldestRecord: '2023-01-01T00:00:00Z',
+          retentionPolicyDays: 730,
+          lastUpdated: '2024-01-31T23:59:59Z',
+        },
+        overallComplianceScore: 98,
+        lastUpdated: '2024-01-31T23:59:59Z',
+      };
+
+      mockApiClient.get.mockResolvedValue(mockMetrics);
+
+      const result = await service.getMonitoringMetrics(filters);
+
+      expect(mockApiClient.get).toHaveBeenCalledWith(
+        '/v1/compliance/monitoring/metrics?assetId=asset123'
+      );
+      expect(result.assetId).toBe('asset123');
+    });
+  });
+
+  describe('getWhitelistEnforcement', () => {
+    it('should get whitelist enforcement metrics', async () => {
+      const filters = {
+        network: 'Aramid' as const,
+      };
+
+      const mockMetrics = {
+        totalAddresses: 150,
+        activeAddresses: 140,
+        pendingAddresses: 8,
+        removedAddresses: 2,
+        enforcementRate: 93.3,
+        recentViolations: 2,
+        lastUpdated: '2024-01-31T23:59:59Z',
+      };
+
+      mockApiClient.get.mockResolvedValue(mockMetrics);
+
+      const result = await service.getWhitelistEnforcement(filters);
+
+      expect(mockApiClient.get).toHaveBeenCalledWith(
+        '/v1/compliance/monitoring/whitelist?network=Aramid'
+      );
+      expect(result).toEqual(mockMetrics);
+      expect(result.enforcementRate).toBe(93.3);
+    });
+  });
+
+  describe('getAuditHealth', () => {
+    it('should get audit health metrics', async () => {
+      const filters = {
+        network: 'VOI' as const,
+        startDate: '2024-01-01',
+      };
+
+      const mockMetrics = {
+        totalAuditEntries: 750,
+        successfulActions: 720,
+        failedActions: 30,
+        criticalIssues: 1,
+        warningIssues: 5,
+        auditCoverage: 96.0,
+        lastAuditTimestamp: '2024-01-31T22:00:00Z',
+      };
+
+      mockApiClient.get.mockResolvedValue(mockMetrics);
+
+      const result = await service.getAuditHealth(filters);
+
+      expect(mockApiClient.get).toHaveBeenCalledWith(
+        '/v1/compliance/monitoring/audit-health?network=VOI&startDate=2024-01-01'
+      );
+      expect(result).toEqual(mockMetrics);
+      expect(result.criticalIssues).toBe(1);
+    });
+  });
+
+  describe('getRetentionStatus', () => {
+    it('should get retention status metrics', async () => {
+      const filters = {
+        network: 'VOI' as const,
+      };
+
+      const mockMetrics = {
+        totalRecords: 2000,
+        activeRecords: 1800,
+        archivedRecords: 200,
+        retentionCompliance: 100.0,
+        oldestRecord: '2021-01-01T00:00:00Z',
+        retentionPolicyDays: 730,
+        lastUpdated: '2024-01-31T23:59:59Z',
+      };
+
+      mockApiClient.get.mockResolvedValue(mockMetrics);
+
+      const result = await service.getRetentionStatus(filters);
+
+      expect(mockApiClient.get).toHaveBeenCalledWith(
+        '/v1/compliance/monitoring/retention?network=VOI'
+      );
+      expect(result).toEqual(mockMetrics);
+      expect(result.retentionCompliance).toBe(100.0);
+    });
+  });
+
+  describe('exportMonitoringData', () => {
+    it('should export monitoring data as CSV', async () => {
+      const filters = {
+        network: 'VOI' as const,
+        startDate: '2024-01-01',
+        endDate: '2024-01-31',
+      };
+
+      const mockCsv = 'metric,value,timestamp\noverall_score,95,2024-01-31T23:59:59Z';
+
+      mockApiClient.get.mockResolvedValue(mockCsv);
+
+      const result = await service.exportMonitoringData(filters);
+
+      expect(mockApiClient.get).toHaveBeenCalledWith(
+        '/v1/compliance/monitoring/export?network=VOI&startDate=2024-01-01&endDate=2024-01-31&format=csv'
+      );
+      expect(result).toBe(mockCsv);
+    });
+
+    it('should export monitoring data with all filters', async () => {
+      const filters = {
+        network: 'Aramid' as const,
+        assetId: 'asset456',
+        startDate: '2024-01-01',
+        endDate: '2024-01-31',
+      };
+
+      const mockCsv = 'metric,value,timestamp\noverall_score,92,2024-01-31T23:59:59Z';
+
+      mockApiClient.get.mockResolvedValue(mockCsv);
+
+      const result = await service.exportMonitoringData(filters);
+
+      expect(mockApiClient.get).toHaveBeenCalledWith(
+        '/v1/compliance/monitoring/export?network=Aramid&assetId=asset456&startDate=2024-01-01&endDate=2024-01-31&format=csv'
+      );
+      expect(result).toBe(mockCsv);
+    });
+  });
 });
