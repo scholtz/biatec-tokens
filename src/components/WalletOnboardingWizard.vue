@@ -141,9 +141,16 @@
               </p>
 
               <div v-if="isConnecting" class="text-center py-12">
-                <i class="pi pi-spin pi-spinner text-5xl text-biatec-accent mb-4"></i>
-                <p class="text-gray-300 text-lg">Connecting to wallet...</p>
-                <p class="text-sm text-gray-400 mt-2">Please approve the connection in your wallet</p>
+                <div class="relative inline-block">
+                  <i class="pi pi-spin pi-spinner text-5xl text-biatec-accent mb-4"></i>
+                  <div class="absolute inset-0 blur-xl bg-biatec-accent/20 animate-pulse"></div>
+                </div>
+                <p class="text-gray-300 text-lg font-medium mb-2">Connecting to wallet...</p>
+                <p class="text-sm text-gray-400 mt-2">Please check your wallet app to approve the connection</p>
+                <div class="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500">
+                  <i class="pi pi-lock"></i>
+                  <span>This connection is secure and encrypted</span>
+                </div>
               </div>
 
               <div v-else-if="connectionError" class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl mb-4">
@@ -151,10 +158,18 @@
                   <i class="pi pi-exclamation-triangle text-red-400 text-xl"></i>
                   <div class="flex-1">
                     <p class="text-sm text-red-400 font-medium mb-1">Connection Failed</p>
-                    <p class="text-xs text-gray-400">{{ connectionError }}</p>
+                    <p class="text-xs text-gray-400 mb-3">{{ connectionError }}</p>
+                    <div class="space-y-1 text-xs text-gray-400 mb-3">
+                      <p class="font-medium text-gray-300">Quick fixes:</p>
+                      <ul class="list-disc list-inside space-y-1 ml-2">
+                        <li>Ensure wallet is unlocked and ready</li>
+                        <li>Check network compatibility</li>
+                        <li>Try a different wallet if issue persists</li>
+                      </ul>
+                    </div>
                     <button
                       @click="connectionError = null"
-                      class="mt-2 text-xs text-blue-400 hover:text-blue-300 underline"
+                      class="px-3 py-1.5 text-xs bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg transition-colors"
                     >
                       Try again
                     </button>

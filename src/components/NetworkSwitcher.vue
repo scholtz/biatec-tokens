@@ -3,15 +3,24 @@
     <!-- Network Button -->
     <button
       @click="toggleDropdown"
-      class="flex items-center space-x-3 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
-      :class="{ 'ring-2 ring-biatec-accent': isOpen }"
+      class="flex items-center space-x-3 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-biatec-accent/30 transition-all"
+      :class="{ 'ring-2 ring-biatec-accent border-biatec-accent': isOpen }"
     >
       <span
         class="w-2 h-2 rounded-full"
         :class="networkStatusColor"
+        :title="networkStatus"
       ></span>
       <div class="text-left">
-        <div class="text-sm font-medium text-white">{{ currentNetworkInfo.displayName }}</div>
+        <div class="text-sm font-medium text-white flex items-center gap-2">
+          {{ currentNetworkInfo.displayName }}
+          <span
+            v-if="!currentNetworkInfo.isTestnet"
+            class="px-1.5 py-0.5 text-xs font-medium rounded bg-green-500/20 text-green-400"
+          >
+            Mainnet
+          </span>
+        </div>
         <div class="text-xs text-gray-400">{{ networkStatus }}</div>
       </div>
       <i class="pi pi-chevron-down text-gray-400 text-sm transition-transform" :class="{ 'rotate-180': isOpen }"></i>
@@ -24,20 +33,23 @@
         class="absolute right-0 mt-2 w-80 glass-effect rounded-xl shadow-2xl border border-white/10 p-2 z-50"
       >
         <!-- Current Network Info -->
-        <div class="p-4 mb-2 bg-white/5 rounded-lg">
+        <div class="p-4 mb-2 bg-gradient-to-br from-white/5 to-white/10 rounded-lg border border-white/10">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-gray-400">Current Network</span>
+            <span class="text-sm font-medium text-gray-300 flex items-center gap-2">
+              <i class="pi pi-server text-biatec-accent"></i>
+              Current Network
+            </span>
             <span
               class="px-2 py-1 text-xs font-medium rounded-full"
-              :class="currentNetworkInfo.isTestnet ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'"
+              :class="currentNetworkInfo.isTestnet ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30'"
             >
               {{ currentNetworkInfo.isTestnet ? 'Testnet' : 'Mainnet' }}
             </span>
           </div>
-          <div class="text-white font-semibold mb-1">{{ currentNetworkInfo.displayName }}</div>
+          <div class="text-white font-semibold mb-2">{{ currentNetworkInfo.displayName }}</div>
           <div class="text-xs text-gray-400 space-y-1">
             <div class="flex items-center gap-2">
-              <i class="pi pi-server text-xs"></i>
+              <i class="pi pi-globe text-xs"></i>
               <span class="truncate">{{ currentNetworkInfo.algodUrl }}</span>
             </div>
             <div class="flex items-center gap-2">

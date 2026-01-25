@@ -20,7 +20,10 @@
 
           <!-- Network Selection -->
           <div v-if="showNetworkSelector" class="mb-6">
-            <label class="block text-sm font-medium text-gray-300 mb-3">Select Network</label>
+            <label class="block text-sm font-medium text-gray-300 mb-3 flex items-center gap-2">
+              <i class="pi pi-server text-biatec-accent"></i>
+              Select Network
+            </label>
             <div class="space-y-2">
               <button
                 v-for="network in availableNetworks"
@@ -29,13 +32,27 @@
                 :class="[
                   'w-full p-4 rounded-xl text-left transition-all border-2',
                   selectedNetwork === network.id
-                    ? 'border-biatec-accent bg-biatec-accent/10'
-                    : 'border-white/10 bg-white/5 hover:bg-white/10',
+                    ? 'border-biatec-accent bg-biatec-accent/10 shadow-lg shadow-biatec-accent/20'
+                    : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20',
                 ]"
               >
                 <div class="flex items-center justify-between">
-                  <div>
-                    <div class="text-white font-semibold">{{ network.displayName }}</div>
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                      <div class="text-white font-semibold">{{ network.displayName }}</div>
+                      <span
+                        v-if="!network.isTestnet"
+                        class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-500/20 text-green-400"
+                      >
+                        Mainnet
+                      </span>
+                      <span
+                        v-else
+                        class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-500/20 text-yellow-400"
+                      >
+                        Testnet
+                      </span>
+                    </div>
                     <div class="text-sm text-gray-400">{{ network.genesisId }}</div>
                   </div>
                   <div v-if="selectedNetwork === network.id" class="text-biatec-accent">
@@ -50,7 +67,8 @@
           <div class="space-y-3">
             <div v-if="isConnecting" class="text-center py-8">
               <i class="pi pi-spin pi-spinner text-4xl text-biatec-accent mb-4"></i>
-              <p class="text-gray-300">Connecting to wallet...</p>
+              <p class="text-gray-300 font-medium mb-2">Connecting to wallet...</p>
+              <p class="text-sm text-gray-400">Please check your wallet app to approve the connection</p>
             </div>
 
             <div v-else-if="error" class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl mb-4">
@@ -62,15 +80,16 @@
                   <div class="mt-3 space-y-2">
                     <p class="text-xs text-gray-300 font-medium">Troubleshooting:</p>
                     <ul class="text-xs text-gray-400 space-y-1 ml-4 list-disc">
-                      <li>Make sure your wallet app is installed and unlocked</li>
-                      <li>Check if you're on the correct network</li>
+                      <li>Ensure your wallet app is installed and unlocked</li>
+                      <li>Verify you're on the correct network ({{ getNetworkDisplayName(selectedNetwork) }})</li>
                       <li>Try refreshing the page and reconnecting</li>
-                      <li>Some wallets may require you to approve the connection in the app</li>
+                      <li>Check if your wallet supports the selected network</li>
+                      <li>Some wallets require approval in the app before connecting</li>
                     </ul>
                   </div>
                   <button
                     @click="error = null"
-                    class="mt-3 text-xs text-blue-400 hover:text-blue-300 underline"
+                    class="mt-3 px-3 py-1.5 text-xs bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg transition-colors"
                   >
                     Try again
                   </button>
@@ -83,7 +102,7 @@
               :key="wallet.id"
               @click="handleConnect(wallet.id)"
               :disabled="isConnecting"
-              class="w-full p-4 rounded-xl text-left transition-all border border-white/10 bg-white/5 hover:bg-white/10 hover:border-biatec-accent/50 disabled:opacity-50 disabled:cursor-not-allowed group"
+              class="w-full p-4 rounded-xl text-left transition-all border border-white/10 bg-white/5 hover:bg-white/10 hover:border-biatec-accent/50 hover:shadow-lg hover:shadow-biatec-accent/10 disabled:opacity-50 disabled:cursor-not-allowed group"
             >
               <div class="flex items-center gap-4">
                 <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-biatec-accent/20 transition-colors">
@@ -93,7 +112,7 @@
                   <div class="text-white font-semibold">{{ getWalletName(wallet.id) }}</div>
                   <div class="text-sm text-gray-400">{{ getWalletDescription(wallet.id) }}</div>
                 </div>
-                <i class="pi pi-chevron-right text-gray-400 group-hover:text-biatec-accent"></i>
+                <i class="pi pi-chevron-right text-gray-400 group-hover:text-biatec-accent transition-colors"></i>
               </div>
             </button>
           </div>
@@ -215,6 +234,11 @@ const getWalletIcon = (walletId: string): string => {
     kmd: 'pi pi-server',
   }
   return icons[walletId] || 'pi pi-wallet'
+}
+
+const getNetworkDisplayName = (networkId: NetworkId): string => {
+  const network = NETWORKS[networkId]
+  return network ? network.displayName : networkId
 }
 
 const handleConnect = async (walletId: string) => {
