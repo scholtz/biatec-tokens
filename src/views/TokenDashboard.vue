@@ -61,7 +61,12 @@
             <div class="flex items-center space-x-4">
               <select v-model="selectedStandardFilter" class="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-biatec-accent">
                 <option value="">All Standards</option>
-                <option value="ARC3">ARC3</option>
+                <option value="ASA">ASA</option>
+                <option value="ARC3FT">ARC3 FT</option>
+                <option value="ARC3NFT">ARC3 NFT</option>
+                <option value="ARC3FNFT">ARC3 Fractional NFT</option>
+                <option value="ARC19">ARC19</option>
+                <option value="ARC69">ARC69</option>
                 <option value="ARC200">ARC200</option>
                 <option value="ARC72">ARC72</option>
                 <option value="ERC20">ERC20</option>
