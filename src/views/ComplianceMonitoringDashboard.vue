@@ -383,10 +383,21 @@ import { complianceService } from '../services/ComplianceService';
 import type {
   ComplianceMonitoringMetrics,
   ComplianceMonitoringFilters,
+  Network,
 } from '../types/compliance';
 
 const route = useRoute();
 const router = useRouter();
+
+// Type guard for Network
+const isNetwork = (value: string): value is Network => {
+  return value === 'VOI' || value === 'Aramid';
+};
+
+// Utility function for CSV filename
+const generateCsvFilename = (): string => {
+  return `compliance-monitoring-${new Date().toISOString().split('T')[0]}.csv`;
+};
 
 // State
 const metrics = ref<ComplianceMonitoringMetrics | null>(null);
@@ -394,9 +405,11 @@ const isLoading = ref(false);
 const isExporting = ref(false);
 const error = ref<string | null>(null);
 
-// Filters from URL params
+// Filters from URL params with type safety
 const filters = ref<ComplianceMonitoringFilters>({
-  network: (route.query.network as any) || 'all',
+  network: (route.query.network && isNetwork(route.query.network as string))
+    ? route.query.network as Network
+    : (route.query.network === 'all' ? 'all' : 'all'),
   assetId: route.query.assetId as string,
   startDate: route.query.startDate as string,
   endDate: route.query.endDate as string,
@@ -421,7 +434,20 @@ const loadData = async () => {
     metrics.value = await complianceService.getMonitoringMetrics(filters.value);
   } catch (err: any) {
     console.error('Failed to load monitoring metrics:', err);
-    error.value = err.message || 'An error occurred while loading compliance data';
+    
+    // Provide specific error messages
+    if (err.response?.status === 401) {
+      error.value = 'Unauthorized access. Please ensure you are logged in.';
+    } else if (err.response?.status === 403) {
+      error.value = 'Access denied. You do not have permission to view compliance data.';
+    } else if (err.response?.status === 404) {
+      error.value = 'Compliance monitoring endpoint not found. Please contact support.';
+    } else if (err.code === 'ECONNREFUSED' || err.message?.includes('Network Error')) {
+      error.value = 'Cannot connect to the server. Please check your network connection.';
+    } else {
+      error.value = err.message || 'An unexpected error occurred while loading compliance data.';
+    }
+    
     // Set mock data for development/demo purposes when API fails
     if (process.env.NODE_ENV === 'development') {
       metrics.value = getMockMetrics();
@@ -467,7 +493,7 @@ const handleExport = async () => {
     const url = URL.createObjectURL(blob);
     
     link.setAttribute('href', url);
-    link.setAttribute('download', `compliance-monitoring-${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', generateCsvFilename());
     link.style.visibility = 'hidden';
     
     document.body.appendChild(link);
@@ -518,8 +544,11 @@ const getScoreGrade = (score: number): string => {
 
 // Mock data for development
 const getMockMetrics = (): ComplianceMonitoringMetrics => {
+  const networkValue = filters.value.network;
+  const network: Network = (networkValue === 'all' || !networkValue || !isNetwork(networkValue)) ? 'VOI' : networkValue;
+  
   return {
-    network: filters.value.network === 'all' ? 'VOI' : (filters.value.network as any),
+    network,
     assetId: filters.value.assetId,
     whitelistEnforcement: {
       totalAddresses: 1247,
@@ -563,7 +592,9 @@ watch(
   () => route.query,
   (newQuery) => {
     filters.value = {
-      network: (newQuery.network as any) || 'all',
+      network: (newQuery.network && isNetwork(newQuery.network as string))
+        ? newQuery.network as Network
+        : (newQuery.network === 'all' ? 'all' : 'all'),
       assetId: newQuery.assetId as string,
       startDate: newQuery.startDate as string,
       endDate: newQuery.endDate as string,
