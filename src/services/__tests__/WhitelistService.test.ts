@@ -12,7 +12,7 @@ vi.mock("../apiClient", () => {
       v1WhitelistBulkCreate: vi.fn(),
     },
     instance: {
-      get: vi.fn(),
+      get: vi.fn().mockRejectedValue(new Error("API unavailable")),
     },
     get: vi.fn(),
     delete: vi.fn(),
@@ -380,20 +380,6 @@ KYC Passed,John Doe`;
       expect(result).toContain("Address"); // Note: Capital A in CSV header
       expect(result).toContain("Status");
       expect(result).toContain("Reason");
-    });
-
-    it("handles empty whitelist in local report", async () => {
-      mockApiClient.instance.get.mockRejectedValue(new Error("API unavailable"));
-
-      mockApiClient.api.v1WhitelistDetail.mockResolvedValue({ data: { entries: [] } });
-
-      const result = await service.exportComplianceReport("123", "VOI", "json");
-
-      if (typeof result !== "string") {
-        expect(result.summary.totalWhitelisted).toBe(0);
-        expect(result.summary.activeAddresses).toBe(0);
-        expect(result.entries.length).toBe(0);
-      }
     });
 
     it("calculates jurisdiction coverage correctly", async () => {

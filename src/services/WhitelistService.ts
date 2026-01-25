@@ -413,9 +413,9 @@ export class WhitelistService {
     const kycVerifiedEntries = entries.filter((e) => e.kycVerified);
 
     // Calculate compliance metrics
-    const sanctionsScreeningRate = (entries.filter((e) => e.complianceChecks?.sanctionsScreening).length / entries.length) * 100;
+    const sanctionsScreeningRate = entries.length > 0 ? (entries.filter((e) => e.complianceChecks?.sanctionsScreening).length / entries.length) * 100 : 0;
 
-    const amlVerificationRate = (entries.filter((e) => e.complianceChecks?.amlVerification).length / entries.length) * 100;
+    const amlVerificationRate = entries.length > 0 ? (entries.filter((e) => e.complianceChecks?.amlVerification).length / entries.length) * 100 : 0;
 
     // Jurisdiction coverage
     const jurisdictionCoverage: Record<string, number> = {};
@@ -426,7 +426,8 @@ export class WhitelistService {
     });
 
     // Calculate compliance score (0-100)
-    const complianceScore = Math.round((kycVerifiedEntries.length / entries.length) * 0.4 + sanctionsScreeningRate * 0.3 + amlVerificationRate * 0.3);
+    const baseScore = entries.length > 0 ? (kycVerifiedEntries.length / entries.length) * 0.4 : 0;
+    const complianceScore = Math.round(baseScore + sanctionsScreeningRate * 0.3 + amlVerificationRate * 0.3);
 
     return {
       reportId: `report_${Date.now()}`,
