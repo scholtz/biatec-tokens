@@ -93,9 +93,8 @@ test.describe("Compliance Monitoring Dashboard", () => {
     const networkSelect = page.locator("select").first();
     await expect(networkSelect).toHaveValue("VOI");
 
-    // Check that asset ID is populated - use more specific selector
-    const assetIdInput = page.locator('input[placeholder*="Asset"]', { hasText: /asset/i }).first()
-      .or(page.locator('input[placeholder*="asset"]').first());
+    // Check that asset ID is populated - simplified selector
+    const assetIdInput = page.locator('input[placeholder*="asset" i]').first();
     await expect(assetIdInput).toHaveValue("12345");
   });
 
@@ -167,6 +166,10 @@ test.describe("Compliance Monitoring Dashboard", () => {
 
     // Wait for filters to load
     await page.waitForSelector("select", { timeout: 10000 });
+    
+    // Verify filters are actually applied (this ensures Clear All button should be visible)
+    const networkSelect = page.locator("select").first();
+    await expect(networkSelect).toHaveValue("VOI");
 
     // Look for Clear All button (it appears when filters are active)
     const clearButton = page.locator("button:has-text('Clear All')");
@@ -182,7 +185,6 @@ test.describe("Compliance Monitoring Dashboard", () => {
     }, { timeout: 3000 });
 
     // Check that filters are reset
-    const networkSelect = page.locator("select").first();
     await expect(networkSelect).toHaveValue("all");
   });
 
@@ -272,12 +274,11 @@ test.describe("Compliance Monitoring Dashboard", () => {
     await page.goto("/compliance-monitoring");
     await page.waitForLoadState("networkidle");
 
-    // Wait for filters to load - match case-insensitive
-    await page.waitForSelector('input[placeholder*="Asset"], input[placeholder*="asset"]', { timeout: 10000 });
+    // Wait for filters to load - use case-insensitive attribute selector
+    await page.waitForSelector('input[placeholder*="asset" i]', { timeout: 10000 });
 
-    // Find asset ID input using case-insensitive match
-    const assetIdInput = page.locator('input[placeholder*="Asset"]').first()
-      .or(page.locator('input[placeholder*="asset"]').first());
+    // Find asset ID input using case-insensitive selector
+    const assetIdInput = page.locator('input[placeholder*="asset" i]').first();
     await assetIdInput.fill("test-asset-123");
 
     // Verify the value was set
