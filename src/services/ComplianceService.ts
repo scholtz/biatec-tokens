@@ -109,6 +109,126 @@ export class ComplianceService {
       `/v1/compliance/mica-metrics/${tokenId}?network=${network}`
     );
   }
+
+  /**
+   * Get compliance monitoring metrics for enterprise observability
+   * 
+   * @param filters - Filters for network, asset, and date range
+   * @returns Comprehensive monitoring metrics including whitelist, audit, and retention
+   */
+  async getMonitoringMetrics(
+    filters: import('../types/compliance').ComplianceMonitoringFilters
+  ): Promise<import('../types/compliance').ComplianceMonitoringMetrics> {
+    const params = new URLSearchParams();
+    
+    if (filters.network && filters.network !== 'all') {
+      params.append('network', filters.network);
+    }
+    if (filters.assetId) params.append('assetId', filters.assetId);
+    if (filters.startDate) params.append('startDate', filters.startDate);
+    if (filters.endDate) params.append('endDate', filters.endDate);
+
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.apiClient.get<import('../types/compliance').ComplianceMonitoringMetrics>(
+      `/v1/compliance/monitoring/metrics${query}`
+    );
+  }
+
+  /**
+   * Get whitelist enforcement metrics
+   * 
+   * @param filters - Filters for network, asset, and date range
+   * @returns Whitelist enforcement metrics
+   */
+  async getWhitelistEnforcement(
+    filters: import('../types/compliance').ComplianceMonitoringFilters
+  ): Promise<import('../types/compliance').WhitelistEnforcementMetrics> {
+    const params = new URLSearchParams();
+    
+    if (filters.network && filters.network !== 'all') {
+      params.append('network', filters.network);
+    }
+    if (filters.assetId) params.append('assetId', filters.assetId);
+    if (filters.startDate) params.append('startDate', filters.startDate);
+    if (filters.endDate) params.append('endDate', filters.endDate);
+
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.apiClient.get<import('../types/compliance').WhitelistEnforcementMetrics>(
+      `/v1/compliance/monitoring/whitelist${query}`
+    );
+  }
+
+  /**
+   * Get audit health metrics
+   * 
+   * @param filters - Filters for network, asset, and date range
+   * @returns Audit health metrics
+   */
+  async getAuditHealth(
+    filters: import('../types/compliance').ComplianceMonitoringFilters
+  ): Promise<import('../types/compliance').AuditHealthMetrics> {
+    const params = new URLSearchParams();
+    
+    if (filters.network && filters.network !== 'all') {
+      params.append('network', filters.network);
+    }
+    if (filters.assetId) params.append('assetId', filters.assetId);
+    if (filters.startDate) params.append('startDate', filters.startDate);
+    if (filters.endDate) params.append('endDate', filters.endDate);
+
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.apiClient.get<import('../types/compliance').AuditHealthMetrics>(
+      `/v1/compliance/monitoring/audit-health${query}`
+    );
+  }
+
+  /**
+   * Get retention status metrics
+   * 
+   * @param filters - Filters for network, asset, and date range
+   * @returns Retention status metrics
+   */
+  async getRetentionStatus(
+    filters: import('../types/compliance').ComplianceMonitoringFilters
+  ): Promise<import('../types/compliance').RetentionStatusMetrics> {
+    const params = new URLSearchParams();
+    
+    if (filters.network && filters.network !== 'all') {
+      params.append('network', filters.network);
+    }
+    if (filters.assetId) params.append('assetId', filters.assetId);
+    if (filters.startDate) params.append('startDate', filters.startDate);
+    if (filters.endDate) params.append('endDate', filters.endDate);
+
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.apiClient.get<import('../types/compliance').RetentionStatusMetrics>(
+      `/v1/compliance/monitoring/retention${query}`
+    );
+  }
+
+  /**
+   * Export compliance monitoring data to CSV format for regulators
+   * 
+   * @param filters - Filters for network, asset, and date range
+   * @returns CSV content as string
+   */
+  async exportMonitoringData(
+    filters: import('../types/compliance').ComplianceMonitoringFilters
+  ): Promise<string> {
+    const params = new URLSearchParams();
+    
+    if (filters.network && filters.network !== 'all') {
+      params.append('network', filters.network);
+    }
+    if (filters.assetId) params.append('assetId', filters.assetId);
+    if (filters.startDate) params.append('startDate', filters.startDate);
+    if (filters.endDate) params.append('endDate', filters.endDate);
+    
+    params.append('format', 'csv');
+
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.apiClient.get<string>(`/v1/compliance/monitoring/export${query}`);
+  }
 }
 
 /**

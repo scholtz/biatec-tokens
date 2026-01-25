@@ -6,6 +6,7 @@ import TokenDetail from "../views/TokenDetail.vue";
 import WalletDashboard from "../views/WalletDashboard.vue";
 import Settings from "../views/Settings.vue";
 import ComplianceDashboard from "../views/ComplianceDashboard.vue";
+import ComplianceMonitoringDashboard from "../views/ComplianceMonitoringDashboard.vue";
 import AttestationsDashboard from "../views/AttestationsDashboard.vue";
 import TokenStandardsView from "../views/TokenStandardsView.vue";
 import EnterpriseGuideView from "../views/EnterpriseGuideView.vue";
@@ -68,6 +69,12 @@ const router = createRouter({
       path: "/compliance/:id?",
       name: "ComplianceDashboard",
       component: ComplianceDashboard,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/compliance-monitoring",
+      name: "ComplianceMonitoringDashboard",
+      component: ComplianceMonitoringDashboard,
       meta: { requiresAuth: true },
     },
     {
