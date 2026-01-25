@@ -37,7 +37,7 @@ export class ComplianceService {
     const data = response.data;
     return {
       allowed: data.isAllowed || false,
-      reasons: Array.isArray(data.denialReason) ? data.denialReason : (data.denialReason ? [data.denialReason] : []),
+      reasons: Array.isArray(data.denialReason) ? data.denialReason : data.denialReason ? [data.denialReason] : [],
       senderStatus: (data.senderStatus?.status as any) || "unknown",
       receiverStatus: (data.receiverStatus?.status as any) || "unknown",
       timestamp: new Date().toISOString(),

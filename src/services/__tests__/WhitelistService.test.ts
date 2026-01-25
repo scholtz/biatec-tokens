@@ -190,10 +190,7 @@ describe("WhitelistService", () => {
 
       expect(mockApiClient.api.v1WhitelistBulkCreate).toHaveBeenCalledWith({
         assetId: 123,
-        addresses: [
-          "A23456723456723456723456723456723456723456723456723456723A",
-          "B23456723456723456723456723456723456723456723456723456723B",
-        ],
+        addresses: ["A23456723456723456723456723456723456723456723456723456723A", "B23456723456723456723456723456723456723456723456723456723B"],
       });
       expect(result).toEqual({
         success: 2,
