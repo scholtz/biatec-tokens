@@ -3,10 +3,10 @@ import { test, expect } from "@playwright/test";
 test.describe("Compliance Monitoring Dashboard", () => {
   test.beforeEach(async ({ page }) => {
     // Mock the compliance monitoring API
-    await page.route('https://api.tokens.biatec.io/api/v1/compliance/monitoring/metrics**', async route => {
+    await page.route("https://api.tokens.biatec.io/api/v1/compliance/monitoring/metrics**", async (route) => {
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify({
           whitelistEnforcement: {
             totalAddresses: 1247,
@@ -26,27 +26,29 @@ test.describe("Compliance Monitoring Dashboard", () => {
             auditCoverage: 98.1,
             lastAuditTimestamp: new Date(Date.now() - 3600000).toISOString(),
           },
-          networkRetentionStatus: [{
-            totalRecords: 15832,
-            activeRecords: 12456,
-            archivedRecords: 3376,
-            retentionCompliance: 99.2,
-            oldestRecord: new Date(Date.now() - 365 * 24 * 3600000).toISOString(),
-            retentionPolicyDays: 730,
-            lastUpdated: new Date().toISOString(),
-          }],
+          networkRetentionStatus: [
+            {
+              totalRecords: 15832,
+              activeRecords: 12456,
+              archivedRecords: 3376,
+              retentionCompliance: 99.2,
+              oldestRecord: new Date(Date.now() - 365 * 24 * 3600000).toISOString(),
+              retentionPolicyDays: 730,
+              lastUpdated: new Date().toISOString(),
+            },
+          ],
           overallHealthScore: 92,
           calculatedAt: new Date().toISOString(),
-        })
+        }),
       });
     });
 
     // Mock the export API
-    await page.route('https://api.tokens.biatec.io/api/v1/compliance/monitoring/export**', async route => {
+    await page.route("https://api.tokens.biatec.io/api/v1/compliance/monitoring/export**", async (route) => {
       await route.fulfill({
         status: 200,
-        contentType: 'text/csv',
-        body: 'Network,Score,Date\nVOI,92,2024-01-01'
+        contentType: "text/csv",
+        body: "Network,Score,Date\nVOI,92,2024-01-01",
       });
     });
 
@@ -107,9 +109,12 @@ test.describe("Compliance Monitoring Dashboard", () => {
     await networkSelect.selectOption("VOI");
 
     // Wait for URL to update by checking the URL contains the network parameter
-    await page.waitForFunction(() => {
-      return window.location.search.includes("network=VOI");
-    }, { timeout: 3000 });
+    await page.waitForFunction(
+      () => {
+        return window.location.search.includes("network=VOI");
+      },
+      { timeout: 3000 },
+    );
 
     // Check that URL was updated
     const url = page.url();
@@ -145,10 +150,22 @@ test.describe("Compliance Monitoring Dashboard", () => {
     ]);
 
     // Check for either metrics or loading/empty state
-    const hasMetrics = await page.locator("text=Overall Compliance Score").isVisible().catch(() => false);
-    const hasEmptyState = await page.locator("text=No Compliance Data Available").isVisible().catch(() => false);
-    const hasError = await page.locator("text=Failed to Load Compliance Data").isVisible().catch(() => false);
-    const isLoading = await page.locator(".pi-spinner").isVisible().catch(() => false);
+    const hasMetrics = await page
+      .locator("text=Overall Compliance Score")
+      .isVisible()
+      .catch(() => false);
+    const hasEmptyState = await page
+      .locator("text=No Compliance Data Available")
+      .isVisible()
+      .catch(() => false);
+    const hasError = await page
+      .locator("text=Failed to Load Compliance Data")
+      .isVisible()
+      .catch(() => false);
+    const isLoading = await page
+      .locator(".pi-spinner")
+      .isVisible()
+      .catch(() => false);
 
     // One of these should be visible
     expect(hasMetrics || hasEmptyState || hasError || isLoading).toBe(true);
@@ -179,7 +196,7 @@ test.describe("Compliance Monitoring Dashboard", () => {
     await expect(exportButton).toBeVisible();
 
     // Set up download listener
-    const downloadPromise = page.waitForEvent('download', { timeout: 5000 }).catch(() => null);
+    const downloadPromise = page.waitForEvent("download", { timeout: 5000 }).catch(() => null);
 
     // Click export button
     await exportButton.click();
@@ -189,7 +206,7 @@ test.describe("Compliance Monitoring Dashboard", () => {
 
     // Check that page is still functional after click
     await expect(page.getByRole("heading", { name: /Compliance Monitoring Dashboard/i })).toBeVisible();
-    
+
     // Download might or might not happen depending on API availability
     // We just verify the page doesn't crash
   });
@@ -200,23 +217,26 @@ test.describe("Compliance Monitoring Dashboard", () => {
 
     // Wait for filters to load
     await page.waitForSelector("select", { timeout: 10000 });
-    
+
     // Verify filters are actually applied (this ensures Clear All button should be visible)
     const networkSelect = page.locator("select").first();
     await expect(networkSelect).toHaveValue("VOI");
 
     // Look for Clear All button (it appears when filters are active)
     const clearButton = page.locator("button:has-text('Clear All')");
-    
+
     // Wait for button to appear since filters are active
     await expect(clearButton).toBeVisible({ timeout: 5000 });
-    
+
     await clearButton.click();
 
     // Wait for URL to update
-    await page.waitForFunction(() => {
-      return !window.location.search.includes("network=VOI");
-    }, { timeout: 3000 });
+    await page.waitForFunction(
+      () => {
+        return !window.location.search.includes("network=VOI");
+      },
+      { timeout: 3000 },
+    );
 
     // Check that filters are reset
     await expect(networkSelect).toHaveValue("all");
@@ -247,8 +267,11 @@ test.describe("Compliance Monitoring Dashboard", () => {
     ]);
 
     // Check for MICA section if metrics are loaded
-    const hasMetrics = await page.locator("text=Overall Compliance Score").isVisible().catch(() => false);
-    
+    const hasMetrics = await page
+      .locator("text=Overall Compliance Score")
+      .isVisible()
+      .catch(() => false);
+
     if (hasMetrics) {
       // MICA section should be visible
       await expect(page.locator("text=MICA Compliance")).toBeVisible();
@@ -329,14 +352,11 @@ test.describe("Compliance Monitoring Dashboard", () => {
     // Check for enterprise-related terms - use case-insensitive locators
     const pageText = await page.textContent("body");
     expect(pageText).toBeTruthy();
-    
+
     // Should contain enterprise or compliance related terms (case-insensitive)
-    const hasEnterpriseTerms = 
-      pageText?.toLowerCase().includes("enterprise") || 
-      pageText?.toLowerCase().includes("compliance") || 
-      pageText?.toLowerCase().includes("mica") ||
-      pageText?.toLowerCase().includes("observability");
-    
+    const hasEnterpriseTerms =
+      pageText?.toLowerCase().includes("enterprise") || pageText?.toLowerCase().includes("compliance") || pageText?.toLowerCase().includes("mica") || pageText?.toLowerCase().includes("observability");
+
     expect(hasEnterpriseTerms).toBe(true);
   });
 });
