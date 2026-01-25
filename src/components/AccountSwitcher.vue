@@ -138,7 +138,9 @@ const formatBalance = (balance: number): string => {
 
 const switchAccount = async (address: string) => {
   try {
-    await setActiveAccount(address)
+    if (setActiveAccount) {
+      setActiveAccount(address)
+    }
     isOpen.value = false
   } catch (error) {
     console.error('Failed to switch account:', error)

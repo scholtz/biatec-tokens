@@ -155,7 +155,7 @@ export function useWalletManager() {
     try {
       if (walletId) {
         // Connect to specific wallet
-        const walletToConnect = wallet.wallets.value.find((w) => w.id === walletId);
+        const walletToConnect = wallet.wallets.value.find((w: any) => w.id === walletId);
         if (walletToConnect) {
           await walletToConnect.connect();
         } else {
@@ -163,7 +163,7 @@ export function useWalletManager() {
         }
       } else {
         // Let user choose wallet
-        const availableWallets = wallet.wallets.value.filter((w) => w.isActive);
+        const availableWallets = wallet.wallets.value.filter((w: any) => w.isActive);
         if (availableWallets.length > 0) {
           await availableWallets[0].connect();
         } else {

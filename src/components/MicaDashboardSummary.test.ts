@@ -191,7 +191,7 @@ describe("MicaDashboardSummary Component", () => {
       await flushPromises();
 
       expect(wrapper.text()).toContain("Total Holders");
-      expect(wrapper.text()).toContain("1\u00A0247");
+      expect(wrapper.text()).toContain("1,247");
       expect(wrapper.text()).toContain("Top 10 Concentration");
       expect(wrapper.text()).toContain("42.5%");
     });
