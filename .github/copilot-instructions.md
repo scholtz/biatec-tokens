@@ -25,6 +25,7 @@ src/
 ├── components/       # Vue components
 │   ├── ui/          # Reusable UI components (Button, Modal, Card, Input, Select, Badge)
 │   └── layout/      # Layout components (Navbar, Sidebar)
+├── generated/       # Auto-generated API client from backend Swagger spec
 ├── stores/          # Pinia stores (auth, tokens, theme, settings, subscription)
 ├── router/          # Vue Router configuration
 ├── views/           # Page components
@@ -38,6 +39,7 @@ src/
 - **Development Server**: `npm run dev`
 - **Build**: `npm run build` (runs vue-tsc type checking then vite build)
 - **Preview Production Build**: `npm run preview`
+- **Generate API Client**: `npm run generate-api` (generates TypeScript client from backend Swagger spec)
 - **Unit Tests**: `npm test` (Vitest)
 - **Unit Tests (Watch)**: `npm run test:watch`
 - **Unit Tests (UI)**: `npm run test:ui`
@@ -111,6 +113,14 @@ src/
 - Network configurations defined in `main.ts`
 - Always handle wallet connection states properly
 
+### Backend API Integration
+
+- **Generated API Client**: Use the auto-generated TypeScript client from `src/generated/ApiClient.ts`
+- **Generation Command**: Run `npm run generate-api` to update the client when backend API changes
+- **Base URL**: Configured via `VITE_API_BASE_URL` environment variable
+- **Usage**: Import and instantiate the client for type-safe API calls
+- **Regeneration**: Always regenerate the client after backend API schema changes to maintain type safety
+
 ### File Naming
 
 - Vue components: PascalCase (e.g., `TokenCard.vue`, `Button.vue`)
@@ -175,6 +185,7 @@ src/
   - UI/UX changes → E2E tests for visual verification
   - Business logic → Unit tests
   - New features → Both unit and E2E tests
+  - **API changes** → Regenerate API client with `npm run generate-api` and update related code
 - Always run `npm run build` to ensure TypeScript compilation and type checking pass
 - Test in development mode with `npm run dev` for hot reload
 - Verify dark mode compatibility for UI changes
