@@ -17,7 +17,7 @@ test.describe("Network Selection UX", () => {
 
   test("network indicator should show connection status", async ({ page }) => {
     // Check that the home page loads properly
-    await expect(page.getByRole('heading', { name: /Next-Generation Tokenization Platform/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /Next-Generation Tokenization Platform/i })).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -85,7 +85,7 @@ test.describe("Responsive Design", () => {
     await page.waitForSelector("nav", { timeout: 10000 });
 
     // Check that main content is visible
-    await expect(page.getByRole('heading', { name: /Next-Generation Tokenization Platform/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: /Next-Generation Tokenization Platform/i })).toBeVisible({ timeout: 10000 });ble({ timeout: 10000 });
   });
 
   test("should be tablet responsive", async ({ page }) => {
