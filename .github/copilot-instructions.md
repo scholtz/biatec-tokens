@@ -14,7 +14,7 @@ This is a Vue 3 + TypeScript frontend application for managing and deploying tok
 - **Router**: Vue Router
 - **Blockchain**: Algorand SDK (algosdk) with wallet integrations
 - **Wallet Support**: @txnlab/use-wallet-vue, Pera Wallet, Defly Connect, Lute Connect, WalletConnect
-- **Testing**: 
+- **Testing**:
   - **Unit Tests**: Vitest + Vue Test Utils
   - **E2E Tests**: Playwright (cross-browser testing)
 
@@ -64,6 +64,7 @@ src/
 
 - Use **Composition API** with `<script setup>` syntax
 - Component structure example:
+
   ```vue
   <script setup lang="ts">
   // imports
@@ -78,6 +79,7 @@ src/
     <!-- markup -->
   </template>
   ```
+
 - Use TypeScript for all component logic
 - Prefer composition over options API
 
@@ -85,13 +87,14 @@ src/
 
 - **Primary Framework**: Tailwind CSS
 - **Dark Mode**: Use `class` strategy (check `tailwind.config.js`)
-- **Custom Colors**: 
+- **Custom Colors**:
   - Use extended gray palette (50-950)
   - Biatec-specific colors defined in theme
 - **Custom Animations**: `fade-in`, `slide-up`, `float`, `pulse-slow` available
 - **Utility Classes**: Extensive safelist defined in `tailwind.config.js` - use these classes
 - **Font**: Inter font family is primary
 - Follow the glass-effect and gradient patterns seen in existing components
+- Aloways produce professional UX and UI designs
 
 ### State Management
 
@@ -139,6 +142,7 @@ src/
 ## Testing and Validation
 
 ### Unit Tests (Vitest)
+
 - Always run `npm test` for unit tests with Vitest
 - Unit tests are located in `src/` directories alongside components (e.g., `*.test.ts`, `*.spec.ts`)
 - Test files use Vitest with Vue Test Utils for component testing
@@ -149,6 +153,7 @@ src/
   - Service tests: Mock API calls, test business logic
 
 ### E2E Tests (Playwright)
+
 - **Always run Playwright tests when making UI changes**
 - E2E tests are located in `e2e/` directory (e.g., `*.spec.ts`)
 - Run `npm run test:e2e` to execute all E2E tests
@@ -164,6 +169,7 @@ src/
   - Error handling and edge cases
 
 ### Testing Best Practices
+
 - **With every code change, run appropriate tests**:
   - Component changes → Unit tests + E2E tests for affected flows
   - UI/UX changes → E2E tests for visual verification
