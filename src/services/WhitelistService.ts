@@ -1,4 +1,4 @@
-import { getApiClient } from './BiatecTokensApiClient';
+import { getApiClient } from './apiClient';
 
 /**
  * Represents a whitelisted address with MICA compliance metadata
@@ -100,12 +100,42 @@ export class WhitelistService {
     tokenId: string,
     filters?: { search?: string; status?: string }
   ): Promise<WhitelistEntry[]> {
-    const params = new URLSearchParams();
-    if (filters?.search) params.append('search', filters.search);
-    if (filters?.status) params.append('status', filters.status);
+    const assetId = parseInt(tokenId, 10);
+    const query: any = {};
+    if (filters?.search) query.search = filters.search;
+    if (filters?.status) {
+      // Convert status string to enum
+      switch (filters.status) {
+        case 'active':
+          query.status = 0; // WhitelistStatus.Value0
+          break;
+        case 'pending':
+          query.status = 1; // WhitelistStatus.Value1
+          break;
+        case 'removed':
+          query.status = 2; // WhitelistStatus.Value2
+          break;
+      }
+    }
     
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return this.apiClient.get<WhitelistEntry[]>(`/tokens/${tokenId}/whitelist${query}`);
+    const response = await this.apiClient.api.v1WhitelistDetail(assetId, query);
+    const entries = response.data?.entries || [];
+    return entries.map(entry => {
+      let status: 'active' | 'pending' | 'removed' = 'active';
+      switch (entry.status) {
+        case 0: status = 'active'; break;
+        case 1: status = 'pending'; break;
+        case 2: status = 'removed'; break;
+      }
+      return {
+        address: entry.address || '',
+        status,
+        addedAt: entry.createdAt || '',
+        kycVerified: false, // Default, as the generated type doesn't have this
+        complianceChecks: {},
+        jurisdictionCode: undefined,
+      };
+    });
   }
 
   /**
@@ -131,10 +161,17 @@ export class WhitelistService {
       documentIds?: string[];
     }
   ): Promise<WhitelistEntry> {
-    return this.apiClient.post<WhitelistEntry>(`/tokens/${tokenId}/whitelist`, {
+    const assetId = parseInt(tokenId, 10);
+    const request = {
+      assetId,
       address,
-      ...metadata,
-    });
+      reason: metadata?.reason,
+      kycVerified: metadata?.kycVerified,
+      // Map other fields as needed
+    };
+    
+    const response = await this.apiClient.api.v1WhitelistCreate(request);
+    return response.data as WhitelistEntry;
   }
 
   /**
@@ -145,12 +182,15 @@ export class WhitelistService {
    */
   async removeAddress(
     tokenId: string,
-    address: string,
-    reason?: string
+    address: string
   ): Promise<void> {
-    return this.apiClient.delete(`/tokens/${tokenId}/whitelist/${address}`, {
-      data: { reason },
-    });
+    const assetId = parseInt(tokenId, 10);
+    const request = {
+      assetId,
+      address,
+    };
+    
+    await this.apiClient.api.v1WhitelistDelete(request);
   }
 
   /**
@@ -159,9 +199,37 @@ export class WhitelistService {
    * @param csvData - CSV content with addresses
    */
   async bulkUpload(tokenId: string, csvData: string): Promise<BulkUploadResponse> {
-    return this.apiClient.post<BulkUploadResponse>(`/tokens/${tokenId}/whitelist/bulk`, {
-      csvData,
-    });
+    const assetId = parseInt(tokenId, 10);
+    
+    // Parse CSV to extract addresses
+    const lines = csvData.split('\n').filter(line => line.trim());
+    const addresses: string[] = [];
+    
+    // Skip header if present
+    const startIndex = lines[0]?.toLowerCase().includes('address') ? 1 : 0;
+    
+    for (let i = startIndex; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line) {
+        const address = line.split(',')[0].trim();
+        if (address) {
+          addresses.push(address);
+        }
+      }
+    }
+    
+    const request = {
+      assetId,
+      addresses,
+    };
+    
+    const response = await this.apiClient.api.v1WhitelistBulkCreate(request);
+    const data = response.data;
+    return {
+      success: data.successCount || 0,
+      failed: (data.failedAddresses?.length || 0),
+      results: [], // Not provided by API
+    };
   }
 
   /**
@@ -225,7 +293,7 @@ export class WhitelistService {
     format: 'json' | 'csv' = 'json'
   ): Promise<MicaComplianceReport | string> {
     try {
-      const report = await this.apiClient.get<MicaComplianceReport>(
+      const report = await (this.apiClient as any).get(
         `/tokens/${tokenId}/whitelist/export?network=${network}&format=${format}`
       );
       return report;

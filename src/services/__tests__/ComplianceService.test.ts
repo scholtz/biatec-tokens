@@ -9,14 +9,21 @@ import type {
 } from '../../types/compliance';
 
 // Mock the API client
-vi.mock('../BiatecTokensApiClient', () => {
+vi.mock('../apiClient', () => {
   const mockApiClient = {
     get: vi.fn(),
-    post: vi.fn(),
+    api: {
+      v1WhitelistValidateTransferCreate: vi.fn(),
+      v1EnterpriseAuditExportList: vi.fn(),
+      v1EnterpriseAuditExportCsvList: vi.fn(),
+      v1ComplianceMonitoringMetricsList: vi.fn(),
+      v1ComplianceMonitoringAuditHealthList: vi.fn(),
+      v1ComplianceMonitoringRetentionStatusList: vi.fn(),
+      v1ComplianceDetail: vi.fn(),
+    },
   };
   
   return {
-    BiatecTokensApiClient: vi.fn(() => mockApiClient),
     getApiClient: vi.fn(() => mockApiClient),
   };
 });
@@ -69,14 +76,11 @@ describe('ComplianceService', () => {
         },
       };
 
-      mockApiClient.post.mockResolvedValue(mockResponse);
+      mockApiClient.api.v1WhitelistValidateTransferCreate.mockResolvedValue({ data: mockResponse });
 
       const result = await service.validateTransfer(request);
 
-      expect(mockApiClient.post).toHaveBeenCalledWith(
-        '/v1/whitelist/validate-transfer',
-        request
-      );
+      expect(mockApiClient.api.v1WhitelistValidateTransferCreate).toHaveBeenCalledWith(request);
       expect(result).toEqual(mockResponse);
       expect(result.allowed).toBe(true);
     });
@@ -109,7 +113,7 @@ describe('ComplianceService', () => {
         },
       };
 
-      mockApiClient.post.mockResolvedValue(mockResponse);
+      mockApiClient.api.v1WhitelistValidateTransferCreate.mockResolvedValue({ data: mockResponse });
 
       const result = await service.validateTransfer(request);
 
@@ -141,14 +145,11 @@ describe('ComplianceService', () => {
         timestamp: '2024-01-15T10:00:00Z',
       };
 
-      mockApiClient.post.mockResolvedValue(mockResponse);
+      mockApiClient.api.v1WhitelistValidateTransferCreate.mockResolvedValue({ data: mockResponse });
 
       const result = await service.validateTransfer(request);
 
-      expect(mockApiClient.post).toHaveBeenCalledWith(
-        '/v1/whitelist/validate-transfer',
-        request
-      );
+      expect(mockApiClient.api.v1WhitelistValidateTransferCreate).toHaveBeenCalledWith(request);
       expect(result.allowed).toBe(true);
     });
   });
@@ -163,17 +164,17 @@ describe('ComplianceService', () => {
         hasMore: false,
       };
 
-      mockApiClient.get.mockResolvedValue(mockResponse);
+      mockApiClient.api.v1EnterpriseAuditExportList.mockResolvedValue({ data: mockResponse });
 
       const result = await service.getAuditLog({});
 
-      expect(mockApiClient.get).toHaveBeenCalledWith('/v1/audit-log');
+      expect(mockApiClient.api.v1EnterpriseAuditExportList).toHaveBeenCalledWith({});
       expect(result).toEqual(mockResponse);
     });
 
     it('should fetch audit log with tokenId filter', async () => {
       const filters: AuditLogFilters = {
-        tokenId: 'token123',
+        tokenId: '123',
       };
 
       const mockResponse: AuditLogResponse = {
@@ -182,7 +183,7 @@ describe('ComplianceService', () => {
             id: 'log1',
             timestamp: '2024-01-15T10:00:00Z',
             action: 'whitelist_add' as any,
-            tokenId: 'token123',
+            tokenId: '123',
             network: 'VOI',
             actor: 'A23456723456723456723456723456723456723456723456723456723A',
             details: {},
@@ -195,19 +196,19 @@ describe('ComplianceService', () => {
         hasMore: false,
       };
 
-      mockApiClient.get.mockResolvedValue(mockResponse);
+      mockApiClient.api.v1EnterpriseAuditExportList.mockResolvedValue({ data: mockResponse });
 
       const result = await service.getAuditLog(filters);
 
-      expect(mockApiClient.get).toHaveBeenCalledWith(
-        '/v1/audit-log?tokenId=token123'
-      );
+      expect(mockApiClient.api.v1EnterpriseAuditExportList).toHaveBeenCalledWith({
+        assetId: 123,
+      });
       expect(result.entries).toHaveLength(1);
     });
 
     it('should fetch audit log with multiple filters', async () => {
       const filters: AuditLogFilters = {
-        tokenId: 'token123',
+        tokenId: '123',
         network: 'VOI',
         action: 'transfer_validation' as any,
         result: 'success',
@@ -223,13 +224,18 @@ describe('ComplianceService', () => {
         hasMore: false,
       };
 
-      mockApiClient.get.mockResolvedValue(mockResponse);
+      mockApiClient.api.v1EnterpriseAuditExportList.mockResolvedValue({ data: mockResponse });
 
       const result = await service.getAuditLog(filters);
 
-      expect(mockApiClient.get).toHaveBeenCalledWith(
-        '/v1/audit-log?tokenId=token123&network=VOI&action=transfer_validation&result=success&limit=10&offset=0'
-      );
+      expect(mockApiClient.api.v1EnterpriseAuditExportList).toHaveBeenCalledWith({
+        assetId: 123,
+        network: 'VOI',
+        actionType: 'transfer_validation',
+        success: true,
+        pageSize: 10,
+        page: 1,
+      });
       expect(result.limit).toBe(10);
     });
 
@@ -247,20 +253,21 @@ describe('ComplianceService', () => {
         hasMore: false,
       };
 
-      mockApiClient.get.mockResolvedValue(mockResponse);
+      mockApiClient.api.v1EnterpriseAuditExportList.mockResolvedValue({ data: mockResponse });
 
       await service.getAuditLog(filters);
 
-      expect(mockApiClient.get).toHaveBeenCalledWith(
-        '/v1/audit-log?startDate=2024-01-01&endDate=2024-01-31'
-      );
+      expect(mockApiClient.api.v1EnterpriseAuditExportList).toHaveBeenCalledWith({
+        fromDate: '2024-01-01',
+        toDate: '2024-01-31',
+      });
     });
   });
 
   describe('getComplianceStatus', () => {
     it('should fetch compliance status for a token', async () => {
       const mockStatus: ComplianceStatus = {
-        tokenId: 'token123',
+        tokenId: '123',
         network: 'VOI',
         whitelistEnabled: true,
         whitelistCount: 50,
@@ -269,20 +276,18 @@ describe('ComplianceService', () => {
         issues: [],
       };
 
-      mockApiClient.get.mockResolvedValue(mockStatus);
+      mockApiClient.api.v1ComplianceDetail.mockResolvedValue({ data: mockStatus });
 
-      const result = await service.getComplianceStatus('token123', 'VOI');
+      const result = await service.getComplianceStatus('123');
 
-      expect(mockApiClient.get).toHaveBeenCalledWith(
-        '/v1/compliance/status/token123?network=VOI'
-      );
+      expect(mockApiClient.api.v1ComplianceDetail).toHaveBeenCalledWith(123);
       expect(result).toEqual(mockStatus);
       expect(result.whitelistCount).toBe(50);
     });
 
     it('should fetch compliance status with issues', async () => {
       const mockStatus: ComplianceStatus = {
-        tokenId: 'token123',
+        tokenId: '123',
         network: 'Aramid',
         whitelistEnabled: true,
         whitelistCount: 10,
@@ -297,10 +302,11 @@ describe('ComplianceService', () => {
         ],
       };
 
-      mockApiClient.get.mockResolvedValue(mockStatus);
+      mockApiClient.api.v1ComplianceDetail.mockResolvedValue({ data: mockStatus });
 
-      const result = await service.getComplianceStatus('token123', 'Aramid');
+      const result = await service.getComplianceStatus('123');
 
+      expect(mockApiClient.api.v1ComplianceDetail).toHaveBeenCalledWith(123);
       expect(result.issues).toHaveLength(1);
       expect(result.issues![0].severity).toBe('high');
     });
@@ -309,19 +315,21 @@ describe('ComplianceService', () => {
   describe('exportAuditLog', () => {
     it('should export audit log as CSV', async () => {
       const filters: AuditLogFilters = {
-        tokenId: 'token123',
+        tokenId: '123',
         network: 'VOI',
       };
 
       const mockCsv = 'timestamp,action,network,actor,result\n2024-01-15T10:00:00Z,whitelist_add,VOI,A234567...,success';
+      const mockFile = { text: vi.fn().mockResolvedValue(mockCsv) };
 
-      mockApiClient.get.mockResolvedValue(mockCsv);
+      mockApiClient.api.v1EnterpriseAuditExportCsvList.mockResolvedValue({ data: mockFile });
 
       const result = await service.exportAuditLog(filters);
 
-      expect(mockApiClient.get).toHaveBeenCalledWith(
-        '/v1/audit-log/export?tokenId=token123&network=VOI&format=csv'
-      );
+      expect(mockApiClient.api.v1EnterpriseAuditExportCsvList).toHaveBeenCalledWith({
+        assetId: 123,
+        network: 'VOI'
+      });
       expect(result).toBe(mockCsv);
     });
 
@@ -332,14 +340,16 @@ describe('ComplianceService', () => {
       };
 
       const mockCsv = 'timestamp,action,network,actor,result';
+      const mockFile = { text: vi.fn().mockResolvedValue(mockCsv) };
 
-      mockApiClient.get.mockResolvedValue(mockCsv);
+      mockApiClient.api.v1EnterpriseAuditExportCsvList.mockResolvedValue({ data: mockFile });
 
       await service.exportAuditLog(filters);
 
-      expect(mockApiClient.get).toHaveBeenCalledWith(
-        '/v1/audit-log/export?startDate=2024-01-01&endDate=2024-01-31&format=csv'
-      );
+      expect(mockApiClient.api.v1EnterpriseAuditExportCsvList).toHaveBeenCalledWith({
+        fromDate: '2024-01-01',
+        toDate: '2024-01-31'
+      });
     });
   });
 
@@ -384,13 +394,15 @@ describe('ComplianceService', () => {
         lastUpdated: '2024-01-31T23:59:59Z',
       };
 
-      mockApiClient.get.mockResolvedValue(mockMetrics);
+      mockApiClient.api.v1ComplianceMonitoringMetricsList.mockResolvedValue({ data: mockMetrics });
 
       const result = await service.getMonitoringMetrics(filters);
 
-      expect(mockApiClient.get).toHaveBeenCalledWith(
-        '/v1/compliance/monitoring/metrics?network=VOI&startDate=2024-01-01&endDate=2024-01-31'
-      );
+      expect(mockApiClient.api.v1ComplianceMonitoringMetricsList).toHaveBeenCalledWith({
+        network: 'VOI',
+        fromDate: '2024-01-01',
+        toDate: '2024-01-31',
+      });
       expect(result).toEqual(mockMetrics);
       expect(result.overallComplianceScore).toBe(95);
     });
@@ -433,24 +445,22 @@ describe('ComplianceService', () => {
         lastUpdated: '2024-01-31T23:59:59Z',
       };
 
-      mockApiClient.get.mockResolvedValue(mockMetrics);
+      mockApiClient.api.v1ComplianceMonitoringMetricsList.mockResolvedValue({ data: mockMetrics });
 
       await service.getMonitoringMetrics(filters);
 
       // Should not include 'all' in the query params
-      expect(mockApiClient.get).toHaveBeenCalledWith(
-        '/v1/compliance/monitoring/metrics'
-      );
+      expect(mockApiClient.api.v1ComplianceMonitoringMetricsList).toHaveBeenCalledWith({});
     });
 
     it('should get monitoring metrics with asset ID filter', async () => {
       const filters = {
-        assetId: 'asset123',
+        assetId: '123',
       };
 
       const mockMetrics = {
         network: 'VOI' as const,
-        assetId: 'asset123',
+        assetId: '123',
         whitelistEnforcement: {
           totalAddresses: 50,
           activeAddresses: 48,
@@ -482,14 +492,14 @@ describe('ComplianceService', () => {
         lastUpdated: '2024-01-31T23:59:59Z',
       };
 
-      mockApiClient.get.mockResolvedValue(mockMetrics);
+      mockApiClient.api.v1ComplianceMonitoringMetricsList.mockResolvedValue({ data: mockMetrics });
 
       const result = await service.getMonitoringMetrics(filters);
 
-      expect(mockApiClient.get).toHaveBeenCalledWith(
-        '/v1/compliance/monitoring/metrics?assetId=asset123'
-      );
-      expect(result.assetId).toBe('asset123');
+      expect(mockApiClient.api.v1ComplianceMonitoringMetricsList).toHaveBeenCalledWith({
+        assetId: 123,
+      });
+      expect(result.assetId).toBe('123');
     });
   });
 
@@ -509,13 +519,21 @@ describe('ComplianceService', () => {
         lastUpdated: '2024-01-31T23:59:59Z',
       };
 
-      mockApiClient.get.mockResolvedValue(mockMetrics);
+      const mockFullMetrics = {
+        whitelistEnforcement: mockMetrics,
+        auditHealth: {},
+        retentionStatus: {},
+        overallComplianceScore: 95,
+        lastUpdated: '2024-01-31T23:59:59Z',
+      };
+
+      mockApiClient.api.v1ComplianceMonitoringMetricsList.mockResolvedValue({ data: mockFullMetrics });
 
       const result = await service.getWhitelistEnforcement(filters);
 
-      expect(mockApiClient.get).toHaveBeenCalledWith(
-        '/v1/compliance/monitoring/whitelist?network=Aramid'
-      );
+      expect(mockApiClient.api.v1ComplianceMonitoringMetricsList).toHaveBeenCalledWith({
+        network: 'Aramid',
+      });
       expect(result).toEqual(mockMetrics);
       expect(result.enforcementRate).toBe(93.3);
     });
@@ -538,13 +556,17 @@ describe('ComplianceService', () => {
         lastAuditTimestamp: '2024-01-31T22:00:00Z',
       };
 
-      mockApiClient.get.mockResolvedValue(mockMetrics);
+      const mockFullMetrics = {
+        auditHealth: mockMetrics,
+      };
+
+      mockApiClient.api.v1ComplianceMonitoringAuditHealthList.mockResolvedValue({ data: mockFullMetrics });
 
       const result = await service.getAuditHealth(filters);
 
-      expect(mockApiClient.get).toHaveBeenCalledWith(
-        '/v1/compliance/monitoring/audit-health?network=VOI&startDate=2024-01-01'
-      );
+      expect(mockApiClient.api.v1ComplianceMonitoringAuditHealthList).toHaveBeenCalledWith({
+        network: 'VOI',
+      });
       expect(result).toEqual(mockMetrics);
       expect(result.criticalIssues).toBe(1);
     });
@@ -566,15 +588,23 @@ describe('ComplianceService', () => {
         lastUpdated: '2024-01-31T23:59:59Z',
       };
 
-      mockApiClient.get.mockResolvedValue(mockMetrics);
+      const mockResponse = {
+        networks: [mockMetrics],
+        overallRetentionScore: 95.5,
+      };
+
+      mockApiClient.api.v1ComplianceMonitoringRetentionStatusList.mockResolvedValue({ data: mockResponse });
 
       const result = await service.getRetentionStatus(filters);
 
-      expect(mockApiClient.get).toHaveBeenCalledWith(
-        '/v1/compliance/monitoring/retention?network=VOI'
-      );
-      expect(result).toEqual(mockMetrics);
-      expect(result.retentionCompliance).toBe(100.0);
+      expect(mockApiClient.api.v1ComplianceMonitoringRetentionStatusList).toHaveBeenCalledWith({
+        network: 'VOI',
+      });
+      expect(result).toEqual({
+        networks: [mockMetrics],
+        overallRetentionScore: 95.5,
+      });
+      expect(result.networks[0].retentionCompliance).toBe(100.0);
     });
   });
 

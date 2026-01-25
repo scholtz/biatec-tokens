@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { nextTick } from 'vue';
 
-// Mock the API client module - use vi.fn() inside the factory
-vi.mock('../../services/BiatecTokensApiClient', () => ({
-  getApiClient: vi.fn(),
+// Mock the API client module
+vi.mock('../../services/apiClient', () => ({
+  healthCheck: vi.fn(),
 }));
 
 // Import after mocking
 import { useApiHealth, ApiHealthStatus } from '../useApiHealth';
-import { getApiClient } from '../../services/BiatecTokensApiClient';
+import { healthCheck } from '../../services/apiClient';
 
 describe('useApiHealth', () => {
   let mockHealthCheck: ReturnType<typeof vi.fn>;
@@ -17,10 +17,7 @@ describe('useApiHealth', () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     
-    mockHealthCheck = vi.fn();
-    (getApiClient as ReturnType<typeof vi.fn>).mockReturnValue({
-      healthCheck: mockHealthCheck,
-    });
+    mockHealthCheck = healthCheck as ReturnType<typeof vi.fn>;
   });
 
   afterEach(() => {

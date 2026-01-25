@@ -825,7 +825,7 @@ const removeAddress = async () => {
   isRemoving.value = true;
 
   try {
-    await whitelistService.removeAddress(props.tokenId, addressToRemove.value, removeReason.value);
+    await whitelistService.removeAddress(props.tokenId, addressToRemove.value);
     
     toast.success('Address removed from whitelist');
     showRemoveModal.value = false;

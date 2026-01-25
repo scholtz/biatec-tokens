@@ -219,8 +219,7 @@ const loadComplianceStatus = async () => {
 
   try {
     complianceStatus.value = await complianceService.getComplianceStatus(
-      tokenId.value,
-      selectedNetwork.value
+      tokenId.value
     );
   } catch (err) {
     console.error('Failed to load compliance status:', err);

@@ -1,5 +1,5 @@
 import { ref, computed, onUnmounted, getCurrentInstance } from 'vue';
-import { getApiClient } from '../services/BiatecTokensApiClient';
+import { healthCheck } from '../services/apiClient';
 
 /**
  * API health status enum
@@ -31,8 +31,6 @@ export enum ApiHealthStatus {
  * ```
  */
 export function useApiHealth() {
-  const apiClient = getApiClient();
-  
   // State
   const status = ref<ApiHealthStatus>(ApiHealthStatus.Healthy);
   const isChecking = ref(false);
@@ -68,7 +66,7 @@ export function useApiHealth() {
     const startTime = Date.now();
     
     try {
-      await apiClient.healthCheck();
+      await healthCheck();
       const responseTime = Date.now() - startTime;
       
       // Update status based on response time

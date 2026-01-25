@@ -1,4 +1,4 @@
-import { getApiClient } from './BiatecTokensApiClient';
+import { getApiClient } from './apiClient';
 import type {
   TransferValidationRequest,
   TransferValidationResponse,
@@ -10,7 +10,6 @@ import type {
   ComplianceMonitoringMetrics,
   WhitelistEnforcementMetrics,
   AuditHealthMetrics,
-  RetentionStatusMetrics,
 } from '../types/compliance';
 
 /**
@@ -30,10 +29,25 @@ export class ComplianceService {
   async validateTransfer(
     request: TransferValidationRequest
   ): Promise<TransferValidationResponse> {
-    return this.apiClient.post<TransferValidationResponse>(
-      '/v1/whitelist/validate-transfer',
-      request
-    );
+    const apiRequest = {
+      assetId: parseInt(request.tokenId, 10),
+      fromAddress: request.sender,
+      toAddress: request.receiver,
+      amount: request.amount ? parseInt(request.amount, 10) : undefined,
+    };
+    const response = await this.apiClient.api.v1WhitelistValidateTransferCreate(apiRequest);
+    const data = response.data;
+    return {
+      allowed: data.isAllowed || false,
+      reasons: data.denialReason ? [data.denialReason] : [],
+      senderStatus: (data.senderStatus?.status as any) || 'unknown',
+      receiverStatus: (data.receiverStatus?.status as any) || 'unknown',
+      timestamp: new Date().toISOString(),
+      details: {
+        senderCompliant: data.senderStatus?.isWhitelisted || false,
+        receiverCompliant: data.receiverStatus?.isWhitelisted || false,
+      },
+    };
   }
 
   /**
@@ -43,20 +57,25 @@ export class ComplianceService {
    * @returns Paginated audit log entries
    */
   async getAuditLog(filters: AuditLogFilters): Promise<AuditLogResponse> {
-    const params = new URLSearchParams();
+    const query: any = {};
     
-    if (filters.tokenId) params.append('tokenId', filters.tokenId);
-    if (filters.network) params.append('network', filters.network);
-    if (filters.action) params.append('action', filters.action);
-    if (filters.actor) params.append('actor', filters.actor);
-    if (filters.startDate) params.append('startDate', filters.startDate);
-    if (filters.endDate) params.append('endDate', filters.endDate);
-    if (filters.result) params.append('result', filters.result);
-    if (filters.limit !== undefined) params.append('limit', filters.limit.toString());
-    if (filters.offset !== undefined) params.append('offset', filters.offset.toString());
-
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return this.apiClient.get<AuditLogResponse>(`/v1/audit-log${query}`);
+    if (filters.tokenId) query.assetId = parseInt(filters.tokenId, 10);
+    if (filters.network) query.network = filters.network;
+    if (filters.action) query.actionType = filters.action;
+    if (filters.actor) query.performedBy = filters.actor;
+    if (filters.startDate) query.fromDate = filters.startDate;
+    if (filters.endDate) query.toDate = filters.endDate;
+    if (filters.result) query.success = filters.result === 'success';
+    if (filters.limit) query.pageSize = filters.limit;
+    if (filters.offset !== undefined) {
+      // Calculate page from offset and limit
+      if (filters.limit) {
+        query.page = Math.floor(filters.offset / filters.limit) + 1;
+      }
+    }
+    
+    const response = await this.apiClient.api.v1EnterpriseAuditExportList(query);
+    return response.data as AuditLogResponse;
   }
 
   /**
@@ -67,12 +86,10 @@ export class ComplianceService {
    * @returns Compliance status including whitelist count and issues
    */
   async getComplianceStatus(
-    tokenId: string,
-    network: string
+    tokenId: string
   ): Promise<ComplianceStatus> {
-    return this.apiClient.get<ComplianceStatus>(
-      `/v1/compliance/status/${tokenId}?network=${network}`
-    );
+    const response = await this.apiClient.api.v1ComplianceDetail(parseInt(tokenId, 10));
+    return response.data as ComplianceStatus;
   }
 
   /**
@@ -82,20 +99,19 @@ export class ComplianceService {
    * @returns CSV content as string
    */
   async exportAuditLog(filters: AuditLogFilters): Promise<string> {
-    const params = new URLSearchParams();
+    const query: any = {};
     
-    if (filters.tokenId) params.append('tokenId', filters.tokenId);
-    if (filters.network) params.append('network', filters.network);
-    if (filters.action) params.append('action', filters.action);
-    if (filters.actor) params.append('actor', filters.actor);
-    if (filters.startDate) params.append('startDate', filters.startDate);
-    if (filters.endDate) params.append('endDate', filters.endDate);
-    if (filters.result) params.append('result', filters.result);
+    if (filters.tokenId) query.assetId = parseInt(filters.tokenId);
+    if (filters.network) query.network = filters.network;
+    if (filters.action) query.actionType = filters.action;
+    if (filters.actor) query.performedBy = filters.actor;
+    if (filters.startDate) query.fromDate = filters.startDate;
+    if (filters.endDate) query.toDate = filters.endDate;
+    if (filters.result !== undefined) query.success = filters.result === 'success';
 
-    params.append('format', 'csv');
-
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return this.apiClient.get<string>(`/v1/audit-log/export${query}`);
+    const response = await this.apiClient.api.v1EnterpriseAuditExportCsvList(query);
+    // The response.data is a File/Blob, convert to text
+    return await response.data.text();
   }
 
   /**
@@ -110,9 +126,7 @@ export class ComplianceService {
     tokenId: string,
     network: string
   ): Promise<MicaComplianceMetrics> {
-    return this.apiClient.get<MicaComplianceMetrics>(
-      `/v1/compliance/mica-metrics/${tokenId}?network=${network}`
-    );
+    return (this.apiClient as any).get(`/v1/compliance/mica-metrics/${tokenId}?network=${network}`);
   }
 
   /**
@@ -124,19 +138,23 @@ export class ComplianceService {
   async getMonitoringMetrics(
     filters: ComplianceMonitoringFilters
   ): Promise<ComplianceMonitoringMetrics> {
-    const params = new URLSearchParams();
+    const query: any = {};
     
-    if (filters.network && filters.network !== 'all') {
-      params.append('network', filters.network);
-    }
-    if (filters.assetId) params.append('assetId', filters.assetId);
-    if (filters.startDate) params.append('startDate', filters.startDate);
-    if (filters.endDate) params.append('endDate', filters.endDate);
+    if (filters.network && filters.network !== 'all') query.network = filters.network;
+    if (filters.assetId) query.assetId = parseInt(filters.assetId);
+    if (filters.startDate) query.fromDate = filters.startDate;
+    if (filters.endDate) query.toDate = filters.endDate;
 
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return this.apiClient.get<ComplianceMonitoringMetrics>(
-      `/v1/compliance/monitoring/metrics${query}`
-    );
+    const response = await this.apiClient.api.v1ComplianceMonitoringMetricsList(query);
+    const data = response.data;
+    return {
+      network: (filters.network || 'all') as any,
+      whitelistEnforcement: data.whitelistEnforcement as any,
+      auditHealth: data.auditHealth as any,
+      retentionStatus: data.networkRetentionStatus?.[0] as any,
+      overallComplianceScore: data.overallHealthScore || 0,
+      lastUpdated: data.calculatedAt || new Date().toISOString(),
+    };
   }
 
   /**
@@ -148,19 +166,15 @@ export class ComplianceService {
   async getWhitelistEnforcement(
     filters: ComplianceMonitoringFilters
   ): Promise<WhitelistEnforcementMetrics> {
-    const params = new URLSearchParams();
+    const query: any = {};
     
-    if (filters.network && filters.network !== 'all') {
-      params.append('network', filters.network);
-    }
-    if (filters.assetId) params.append('assetId', filters.assetId);
-    if (filters.startDate) params.append('startDate', filters.startDate);
-    if (filters.endDate) params.append('endDate', filters.endDate);
+    if (filters.network && filters.network !== 'all') query.network = filters.network;
+    if (filters.assetId) query.assetId = parseInt(filters.assetId);
+    if (filters.startDate) query.fromDate = filters.startDate;
+    if (filters.endDate) query.toDate = filters.endDate;
 
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return this.apiClient.get<WhitelistEnforcementMetrics>(
-      `/v1/compliance/monitoring/whitelist${query}`
-    );
+    const response = await this.apiClient.api.v1ComplianceMonitoringMetricsList(query);
+    return response.data.whitelistEnforcement as any;
   }
 
   /**
@@ -172,19 +186,12 @@ export class ComplianceService {
   async getAuditHealth(
     filters: ComplianceMonitoringFilters
   ): Promise<AuditHealthMetrics> {
-    const params = new URLSearchParams();
+    const query: any = {};
     
-    if (filters.network && filters.network !== 'all') {
-      params.append('network', filters.network);
-    }
-    if (filters.assetId) params.append('assetId', filters.assetId);
-    if (filters.startDate) params.append('startDate', filters.startDate);
-    if (filters.endDate) params.append('endDate', filters.endDate);
+    if (filters.network && filters.network !== 'all') query.network = filters.network;
 
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return this.apiClient.get<AuditHealthMetrics>(
-      `/v1/compliance/monitoring/audit-health${query}`
-    );
+    const response = await this.apiClient.api.v1ComplianceMonitoringAuditHealthList(query);
+    return response.data.auditHealth as any;
   }
 
   /**
@@ -195,20 +202,16 @@ export class ComplianceService {
    */
   async getRetentionStatus(
     filters: ComplianceMonitoringFilters
-  ): Promise<RetentionStatusMetrics> {
-    const params = new URLSearchParams();
+  ): Promise<{ networks: any[], overallRetentionScore: number }> {
+    const query: any = {};
     
-    if (filters.network && filters.network !== 'all') {
-      params.append('network', filters.network);
-    }
-    if (filters.assetId) params.append('assetId', filters.assetId);
-    if (filters.startDate) params.append('startDate', filters.startDate);
-    if (filters.endDate) params.append('endDate', filters.endDate);
+    if (filters.network && filters.network !== 'all') query.network = filters.network;
 
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return this.apiClient.get<RetentionStatusMetrics>(
-      `/v1/compliance/monitoring/retention${query}`
-    );
+    const response = await this.apiClient.api.v1ComplianceMonitoringRetentionStatusList(query);
+    return {
+      networks: response.data.networks || [],
+      overallRetentionScore: response.data.overallRetentionScore || 0
+    };
   }
 
   /**
@@ -232,7 +235,7 @@ export class ComplianceService {
     params.append('format', 'csv');
 
     const query = params.toString() ? `?${params.toString()}` : '';
-    return this.apiClient.get<string>(`/v1/compliance/monitoring/export${query}`);
+    return (this.apiClient as any).get(`/v1/compliance/monitoring/export${query}`);
   }
 }
 
