@@ -2,6 +2,7 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useWallet, type WalletAccount } from "@txnlab/use-wallet-vue";
 import { useAuthStore } from "../stores/auth";
 import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from "../constants/auth";
+import { telemetryService } from "../services/TelemetryService";
 
 export interface WalletState {
   isConnected: boolean;
@@ -172,6 +173,15 @@ export function useWalletManager() {
       }
 
       updateWalletState();
+
+      // Track successful connection
+      if (walletState.value.activeAddress && walletState.value.activeWallet) {
+        telemetryService.trackWalletConnect({
+          walletId: walletState.value.activeWallet,
+          network: currentNetwork.value,
+          address: walletState.value.activeAddress,
+        });
+      }
     } catch (error) {
       console.error("Failed to connect wallet:", error);
       walletState.value.error = error instanceof Error ? error.message : "Failed to connect wallet";
@@ -214,6 +224,7 @@ export function useWalletManager() {
    * Switch to a different network
    */
   const switchNetwork = async (networkId: NetworkId) => {
+    const fromNetwork = currentNetwork.value;
     try {
       const network = NETWORKS[networkId];
       if (!network) {
@@ -231,6 +242,12 @@ export function useWalletManager() {
       // Update network
       currentNetwork.value = networkId;
       localStorage.setItem("selected_network", networkId);
+
+      // Track network switch
+      telemetryService.trackNetworkSwitch({
+        fromNetwork,
+        toNetwork: networkId,
+      });
 
       // Reconnect if was previously connected
       if (wasConnected && previousWalletId) {

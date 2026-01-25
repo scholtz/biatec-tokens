@@ -252,6 +252,9 @@ const handleConnect = async (walletId: string) => {
       throw new Error('Wallet not found')
     }
 
+    // Save selected network to localStorage before connecting
+    localStorage.setItem('selected_network', selectedNetwork.value)
+
     await walletToConnect.connect()
 
     // Get active account after connection

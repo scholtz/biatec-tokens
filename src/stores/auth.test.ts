@@ -80,4 +80,71 @@ describe('Auth Store', () => {
     expect(store.user?.name).toBe('Updated Name');
     expect(store.user?.email).toBe('test@example.com');
   });
+
+  describe('Session Persistence', () => {
+    it('should persist wallet connection state across page reloads', async () => {
+      const store = useAuthStore();
+      const walletAddress = 'ALGO123456789ABCDEF';
+      
+      // Connect wallet
+      await store.connectWallet(walletAddress);
+      
+      // Verify state is saved
+      expect(localStorage.getItem('algorand_user')).toBeTruthy();
+      
+      // Simulate page reload by creating new store instance
+      setActivePinia(createPinia());
+      const newStore = useAuthStore();
+      await newStore.initialize();
+      
+      // Verify state is restored
+      expect(newStore.user?.address).toBe(walletAddress);
+      expect(newStore.isConnected).toBe(true);
+      expect(newStore.isAuthenticated).toBe(true);
+    });
+
+    it('should persist network selection with wallet connection', async () => {
+      // Set network before connecting wallet
+      localStorage.setItem('selected_network', 'voi-mainnet');
+      
+      const store = useAuthStore();
+      await store.connectWallet('ALGO123456789ABCDEF');
+      
+      // Simulate page reload
+      setActivePinia(createPinia());
+      const newStore = useAuthStore();
+      await newStore.initialize();
+      
+      // Verify both wallet and network persisted
+      expect(newStore.isAuthenticated).toBe(true);
+      expect(localStorage.getItem('selected_network')).toBe('voi-mainnet');
+    });
+
+    it('should clear session on sign out', async () => {
+      const store = useAuthStore();
+      
+      // Set up connected state with network
+      localStorage.setItem('selected_network', 'aramidmain');
+      await store.connectWallet('ALGO123456789ABCDEF');
+      
+      // Sign out
+      await store.signOut();
+      
+      // Verify only algorand_user is cleared, not network preference
+      expect(localStorage.getItem('algorand_user')).toBeNull();
+      expect(localStorage.getItem('selected_network')).toBe('aramidmain');
+    });
+
+    it('should handle corrupted session data gracefully', async () => {
+      // Set invalid JSON in localStorage
+      localStorage.setItem('algorand_user', 'invalid-json-{');
+      
+      const store = useAuthStore();
+      await store.initialize();
+      
+      // Should not crash, should have no user
+      expect(store.user).toBeNull();
+      expect(store.isConnected).toBe(false);
+    });
+  });
 });
