@@ -75,7 +75,7 @@
                 </div>
                 <div>
                   <dt class="text-sm text-gray-400">Total Supply</dt>
-                  <dd class="text-white font-medium">{{ token.supply.toLocaleString() }}</dd>
+                  <dd class="text-white font-medium">{{ token.supply.toLocaleString('en-US') }}</dd>
                 </div>
                 <div v-if="token.decimals !== undefined">
                   <dt class="text-sm text-gray-400">Decimals</dt>

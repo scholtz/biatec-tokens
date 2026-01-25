@@ -97,7 +97,7 @@
             <div>
               <div class="text-sm text-gray-400">Total Holders</div>
               <div class="text-2xl font-bold text-white">
-                {{ micaMetrics.holderDistribution.totalHolders.toLocaleString() }}
+                {{ micaMetrics.holderDistribution.totalHolders.toLocaleString('en-US') }}
               </div>
             </div>
             <div class="flex items-center justify-between text-sm">
@@ -136,7 +136,7 @@
             <div class="flex items-center justify-between text-sm">
               <span class="text-gray-400">Whitelisted Addresses</span>
               <span class="text-white font-medium">
-                {{ micaMetrics.whitelistStatus.totalWhitelisted.toLocaleString() }}
+                {{ micaMetrics.whitelistStatus.totalWhitelisted.toLocaleString('en-US') }}
               </span>
             </div>
             <div class="flex items-center justify-between text-sm">
@@ -379,7 +379,7 @@ const formatNumber = (value: string | number): string => {
   } else if (num >= 1000) {
     return (num / 1000).toFixed(2) + 'K';
   }
-  return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return num.toLocaleString('en-US', { maximumFractionDigits: 2 });
 };
 
 const formatTimestamp = (timestamp: string) => {

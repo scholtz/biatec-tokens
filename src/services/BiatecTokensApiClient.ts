@@ -15,7 +15,7 @@ export class BiatecTokensApiClient {
    * @param baseURL - Optional base URL override (defaults to environment variable or localhost)
    */
   constructor(baseURL?: string) {
-    this.baseURL = baseURL || import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+    this.baseURL = baseURL || import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
     this.axiosInstance = axios.create({
       baseURL: this.baseURL,
