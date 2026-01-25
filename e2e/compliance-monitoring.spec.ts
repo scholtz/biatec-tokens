@@ -27,6 +27,7 @@ test.describe("Compliance Monitoring Dashboard", () => {
   test("should redirect to home when not authenticated", async ({ page }) => {
     // Navigate to a clean page first to clear any existing context
     await page.goto("/");
+    await page.waitForLoadState("networkidle");
     
     // Set up context without authentication
     await page.evaluate(() => {
@@ -40,7 +41,8 @@ test.describe("Compliance Monitoring Dashboard", () => {
 
     // Should be redirected to home page or show onboarding
     const currentUrl = page.url();
-    expect(currentUrl).toMatch(/\/(|.*showOnboarding=true.*)/);
+    // Check that we're either on root or on root with onboarding query param
+    expect(currentUrl).toMatch(/\/$|\/\?.*showOnboarding=true/);
   });
 
   test("should display filter section with all filter options", async ({ page }) => {
@@ -93,8 +95,8 @@ test.describe("Compliance Monitoring Dashboard", () => {
     const networkSelect = page.locator("select").first();
     await expect(networkSelect).toHaveValue("VOI");
 
-    // Check that asset ID is populated - simplified selector
-    const assetIdInput = page.locator('input[placeholder*="asset" i]').first();
+    // Check that asset ID is populated - use getByPlaceholder for better reliability
+    const assetIdInput = page.getByPlaceholder(/optional asset id/i);
     await expect(assetIdInput).toHaveValue("12345");
   });
 
@@ -274,11 +276,11 @@ test.describe("Compliance Monitoring Dashboard", () => {
     await page.goto("/compliance-monitoring");
     await page.waitForLoadState("networkidle");
 
-    // Wait for filters to load - use case-insensitive attribute selector
-    await page.waitForSelector('input[placeholder*="asset" i]', { timeout: 10000 });
+    // Wait for filters to load - use getByPlaceholder
+    await page.waitForSelector('input[type="text"]', { timeout: 10000 });
 
-    // Find asset ID input using case-insensitive selector
-    const assetIdInput = page.locator('input[placeholder*="asset" i]').first();
+    // Find asset ID input using getByPlaceholder for better reliability
+    const assetIdInput = page.getByPlaceholder(/optional asset id/i);
     await assetIdInput.fill("test-asset-123");
 
     // Verify the value was set
