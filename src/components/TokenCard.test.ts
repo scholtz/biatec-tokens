@@ -1,30 +1,54 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
+import { setActivePinia, createPinia } from 'pinia';
 import TokenCard from './TokenCard.vue';
 import type { Token } from '../stores/tokens';
+
+// Stub child components
+const stubs = {
+  OnChainComplianceBadge: {
+    template: '<div data-testid="onchain-badge"></div>',
+    props: ['tokenId', 'network', 'complianceScore', 'variant']
+  },
+  MicaReadinessBadge: {
+    template: '<span data-testid="mica-badge">Badge</span>',
+    props: ['tokenId', 'size']
+  },
+  TokenComplianceChecklist: {
+    template: '<div data-testid="compliance-checklist"></div>',
+    props: ['tokenId', 'showComplianceLink']
+  },
+  Modal: {
+    template: '<div v-if="show"><slot name="header"></slot><slot></slot></div>',
+    props: ['show']
+  }
+};
 
 describe('TokenCard Component', () => {
   let mockToken: Token;
 
   beforeEach(() => {
+    setActivePinia(createPinia());
+    localStorage.clear();
     mockToken = {
       id: 'token-1',
       name: 'Test Token',
       symbol: 'TST',
       description: 'A test token for unit testing',
       standard: 'ERC20',
-      type: 'Fungible',
+      type: 'FT',
       supply: 1000000,
       decimals: 18,
-      status: 'draft',
+      status: 'created',
       createdAt: new Date('2024-01-15T10:30:00'),
-      updatedAt: new Date('2024-01-15T10:30:00'),
     };
   });
 
   it('should render token name and symbol', () => {
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     expect(wrapper.text()).toContain('Test Token');
@@ -33,7 +57,9 @@ describe('TokenCard Component', () => {
 
   it('should render token description', () => {
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     expect(wrapper.text()).toContain('A test token for unit testing');
@@ -41,26 +67,32 @@ describe('TokenCard Component', () => {
 
   it('should render token standard and status', () => {
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     expect(wrapper.text()).toContain('ERC20');
-    expect(wrapper.text()).toContain('draft');
+    expect(wrapper.text()).toContain('created');
   });
 
   it('should render token type and supply', () => {
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
-    expect(wrapper.text()).toContain('Fungible');
+    expect(wrapper.text()).toContain('FT');
     expect(wrapper.text()).toContain('1.0M');
   });
 
   it('should format supply with K suffix for thousands', () => {
     mockToken.supply = 5000;
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     expect(wrapper.text()).toContain('5.0K');
@@ -69,7 +101,9 @@ describe('TokenCard Component', () => {
   it('should format supply with M suffix for millions', () => {
     mockToken.supply = 5000000;
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     expect(wrapper.text()).toContain('5.0M');
@@ -78,7 +112,9 @@ describe('TokenCard Component', () => {
   it('should format supply without suffix for small numbers', () => {
     mockToken.supply = 500;
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     expect(wrapper.text()).toContain('500');
@@ -86,7 +122,9 @@ describe('TokenCard Component', () => {
 
   it('should format date correctly', () => {
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     const formattedDate = wrapper.text();
@@ -96,10 +134,12 @@ describe('TokenCard Component', () => {
   it('should render image when imageUrl is provided', () => {
     mockToken.imageUrl = 'https://example.com/image.png';
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
-    const img = wrapper.find('img');
+    const img = wrapper.find('img[alt="Test Token"]');
     expect(img.exists()).toBe(true);
     expect(img.attributes('src')).toBe('https://example.com/image.png');
     expect(img.attributes('alt')).toBe('Test Token');
@@ -107,7 +147,9 @@ describe('TokenCard Component', () => {
 
   it('should show default icon when no imageUrl', () => {
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     expect(wrapper.find('i.pi-image').exists()).toBe(true);
@@ -115,16 +157,17 @@ describe('TokenCard Component', () => {
 
   it('should show deployed details when status is deployed', () => {
     mockToken.status = 'deployed';
-    mockToken.assetId = 'ASA123456';
+    mockToken.assetId = 123456;
     mockToken.contractAddress = '0x1234567890abcdef';
     mockToken.txId = 'TX9876543210';
     
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     expect(wrapper.text()).toContain('Asset ID:');
-    expect(wrapper.text()).toContain('ASA123456');
+    expect(wrapper.text()).toContain('123456');
     expect(wrapper.text()).toContain('Contract:');
     expect(wrapper.text()).toContain('0x12345678');
     expect(wrapper.text()).toContain('Tx ID:');
@@ -135,7 +178,9 @@ describe('TokenCard Component', () => {
     mockToken.status = 'draft';
     
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     expect(wrapper.text()).not.toContain('Asset ID:');
@@ -146,12 +191,16 @@ describe('TokenCard Component', () => {
   it('should show copy button only when deployed', () => {
     mockToken.status = 'deployed';
     const deployedWrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     mockToken.status = 'draft';
     const draftWrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     const copyButtons = deployedWrapper.findAll('button[title="Copy Details"]');
@@ -163,7 +212,9 @@ describe('TokenCard Component', () => {
 
   it('should always show delete button', () => {
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     const deleteButton = wrapper.find('button[title="Delete Token"]');
@@ -172,7 +223,9 @@ describe('TokenCard Component', () => {
 
   it('should emit delete event when delete button is clicked', async () => {
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     const deleteButton = wrapper.find('button[title="Delete Token"]');
@@ -204,7 +257,9 @@ describe('TokenCard Component', () => {
     });
     
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     const copyButton = wrapper.find('button[title="Copy Details"]');
@@ -252,7 +307,9 @@ describe('TokenCard Component', () => {
     });
     
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     const copyButton = wrapper.find('button[title="Copy Details"]');
@@ -279,7 +336,9 @@ describe('TokenCard Component', () => {
 
   it('should have hover effect class', () => {
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     const card = wrapper.find('.token-card');
@@ -289,7 +348,9 @@ describe('TokenCard Component', () => {
 
   it('should apply glass effect style', () => {
     const wrapper = mount(TokenCard, {
-      props: { token: mockToken }
+      global: { stubs },
+      props: { token: mockToken },
+      global: { stubs }
     });
     
     const card = wrapper.find('.token-card');
