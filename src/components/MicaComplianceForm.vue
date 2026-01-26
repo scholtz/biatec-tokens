@@ -306,7 +306,15 @@ const emit = defineEmits<{
   'update:valid': [value: boolean];
 }>();
 
-const enabled = ref(props.enabled || props.required);
+const enabled = ref(false);
+
+watch(
+  () => [props.enabled, props.required],
+  () => {
+    enabled.value = props.required || !!props.enabled;
+  },
+  { immediate: true }
+);
 const restrictedJurisdictionsInput = ref('');
 
 const localMetadata = ref<MicaComplianceMetadata>({
