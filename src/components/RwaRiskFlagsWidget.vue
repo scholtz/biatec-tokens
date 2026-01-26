@@ -90,7 +90,6 @@ import type { RwaRiskFlagsMetrics } from "../types/compliance";
 
 interface Props {
   network?: string;
-  tokenId?: string;
 }
 
 const props = defineProps<Props>();
@@ -126,14 +125,13 @@ const loadMetrics = async () => {
   error.value = null;
 
   try {
-    metrics.value = await complianceService.getRwaRiskFlags(props.network, props.tokenId);
+    metrics.value = await complianceService.getRwaRiskFlags(props.network);
     
     // Track analytics event
-    if (window.gtag) {
-      window.gtag("event", "compliance_widget_view", {
+    if ((window as any).gtag) {
+      (window as any).gtag("event", "compliance_widget_view", {
         widget_type: "rwa_risk_flags",
         network: props.network,
-        token_id: props.tokenId,
       });
     }
   } catch (err) {

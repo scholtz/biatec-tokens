@@ -151,8 +151,8 @@ const loadMetrics = async () => {
     metrics.value = await complianceService.getSubscriptionTierGating(currentTier);
     
     // Track analytics event
-    if (window.gtag) {
-      window.gtag("event", "compliance_widget_view", {
+    if ((window as any).gtag) {
+      (window as any).gtag("event", "compliance_widget_view", {
         widget_type: "subscription_tier_gating",
         current_tier: currentTier,
       });

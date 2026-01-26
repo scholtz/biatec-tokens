@@ -23,8 +23,8 @@
         <!-- MICA Compliance Dashboard Widgets -->
         <div v-if="tokenId" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <WhitelistCoverageWidget :token-id="tokenId" :network="selectedNetwork" @view-details="activeTab = 'whitelist'" />
-          <IssuerStatusWidget v-if="issuerAddress" :issuer-address="issuerAddress" :network="selectedNetwork" @view-details="showIssuerDetails" />
-          <RwaRiskFlagsWidget :network="selectedNetwork" :token-id="tokenId" @view-details="showRiskDetails" />
+          <IssuerStatusWidget v-if="issuerAddress" :issuer-address="issuerAddress" @view-details="showIssuerDetails" />
+          <RwaRiskFlagsWidget :network="selectedNetwork" @view-details="showRiskDetails" />
           <NetworkHealthWidget @view-details="showNetworkHealthDetails" />
           <SubscriptionTierGatingWidget @view-details="showSubscriptionDetails" @upgrade-tier="navigateToUpgrade" />
         </div>

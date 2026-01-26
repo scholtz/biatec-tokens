@@ -78,7 +78,6 @@ import type { IssuerStatus } from "../types/compliance";
 
 interface Props {
   issuerAddress: string;
-  network?: string;
 }
 
 const props = defineProps<Props>();
@@ -159,14 +158,13 @@ const loadStatus = async () => {
   error.value = null;
 
   try {
-    status.value = await complianceService.getIssuerStatus(props.issuerAddress, props.network);
+    status.value = await complianceService.getIssuerStatus(props.issuerAddress);
     
     // Track analytics event
-    if (window.gtag) {
-      window.gtag("event", "compliance_widget_view", {
+    if ((window as any).gtag) {
+      (window as any).gtag("event", "compliance_widget_view", {
         widget_type: "issuer_status",
         issuer_address: props.issuerAddress,
-        network: props.network,
       });
     }
   } catch (err) {

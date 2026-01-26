@@ -238,8 +238,8 @@ export class ComplianceService {
    */
   async getWhitelistCoverageMetrics(tokenId: string, network: string): Promise<WhitelistCoverageMetrics> {
     try {
-      const response = await this.getComplianceStatus(tokenId, network);
-      const whitelistResponse = await this.getWhitelistEnforcement({ network, assetId: tokenId });
+      await this.getComplianceStatus(tokenId, network);
+      const whitelistResponse = await this.getWhitelistEnforcement({ network: network as any, assetId: tokenId });
 
       return {
         totalAddresses: whitelistResponse.totalAddresses || 0,
@@ -269,20 +269,21 @@ export class ComplianceService {
    * Get issuer status for MICA dashboard widget
    *
    * @param issuerAddress - The issuer's Algorand address
-   * @param network - The network (VOI or Aramid)
    * @returns Issuer verification status
    */
-  async getIssuerStatus(issuerAddress: string, network?: string): Promise<IssuerStatus> {
+  async getIssuerStatus(issuerAddress: string): Promise<IssuerStatus> {
     try {
-      const response = await this.apiClient.api.v1IssuerVerificationDetail(issuerAddress, { network });
+      const response = await this.apiClient.api.v1IssuerVerificationDetail(issuerAddress);
       const data = response.data;
+
+      const isVerified = data.overallStatus === 0; // Assuming 0 means verified based on enum
 
       return {
         issuerAddress,
-        isVerified: data.isVerified || false,
-        status: data.isVerified
+        isVerified,
+        status: isVerified
           ? "verified"
-          : data.isProfileComplete
+          : data.isProfileComplete === true
             ? "pending"
             : data.missingFields && data.missingFields.length > 0
               ? "incomplete"
@@ -311,10 +312,9 @@ export class ComplianceService {
    * Get RWA risk flags for MICA dashboard widget
    *
    * @param network - The network (VOI or Aramid)
-   * @param tokenId - Optional token identifier to filter by
    * @returns RWA risk flags metrics
    */
-  async getRwaRiskFlags(network?: string, tokenId?: string): Promise<RwaRiskFlagsMetrics> {
+  async getRwaRiskFlags(network?: string): Promise<RwaRiskFlagsMetrics> {
     try {
       // In production, this would call a dedicated endpoint
       // For now, we'll derive risk flags from compliance health
@@ -324,16 +324,16 @@ export class ComplianceService {
       });
       const data = healthResponse.data;
 
-      const mockFlags = [];
+      const mockFlags: any[] = [];
       if (data.nonCompliantTokens && data.nonCompliantTokens > 0) {
         mockFlags.push({
           id: "risk-1",
-          severity: "high" as const,
-          category: "compliance" as const,
+          severity: "high",
+          category: "compliance",
           title: "Non-compliant tokens detected",
           description: `${data.nonCompliantTokens} tokens are not meeting MICA compliance requirements`,
           detectedAt: new Date().toISOString(),
-          status: "active" as const,
+          status: "active",
         });
       }
 

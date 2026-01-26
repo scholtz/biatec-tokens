@@ -101,8 +101,8 @@ const loadMetrics = async () => {
     metrics.value = await complianceService.getWhitelistCoverageMetrics(props.tokenId, props.network);
     
     // Track analytics event
-    if (window.gtag) {
-      window.gtag("event", "compliance_widget_view", {
+    if ((window as any).gtag) {
+      (window as any).gtag("event", "compliance_widget_view", {
         widget_type: "whitelist_coverage",
         token_id: props.tokenId,
         network: props.network,
