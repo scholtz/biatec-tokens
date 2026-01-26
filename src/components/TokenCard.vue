@@ -31,6 +31,21 @@
       />
     </div>
 
+    <!-- MICA Compliance Badge -->
+    <div class="mb-3 flex items-center justify-between">
+      <span class="text-xs text-gray-400">MICA Readiness:</span>
+      <div class="flex items-center gap-2">
+        <MicaReadinessBadge :token-id="token.id" size="sm" />
+        <button
+          @click="showComplianceModal = true"
+          class="p-1 rounded text-xs text-biatec-accent hover:bg-biatec-accent/10 transition-colors"
+          title="View MICA Checklist"
+        >
+          <i class="pi pi-list-check"></i>
+        </button>
+      </div>
+    </div>
+
     <p class="text-gray-300 text-sm mb-4 line-clamp-2">{{ token.description }}</p>
 
     <div class="grid grid-cols-2 gap-4 mb-4">
@@ -84,13 +99,26 @@
         </button>
       </div>
     </div>
+
+    <!-- MICA Compliance Modal -->
+    <Modal :show="showComplianceModal" @close="showComplianceModal = false">
+      <template #header>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+          MICA Compliance - {{ token.name }}
+        </h3>
+      </template>
+      <TokenComplianceChecklist :token-id="token.id" :show-compliance-link="true" />
+    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import type { Token } from "../stores/tokens";
 import OnChainComplianceBadge from './OnChainComplianceBadge.vue';
+import MicaReadinessBadge from './MicaReadinessBadge.vue';
+import TokenComplianceChecklist from './TokenComplianceChecklist.vue';
+import Modal from './ui/Modal.vue';
 import type { Network } from '../types/compliance';
 import { isAlgorandBasedToken, calculateComplianceScore, getDefaultNetwork } from '../utils/compliance';
 
@@ -101,6 +129,8 @@ const props = defineProps<{
 defineEmits<{
   delete: [id: string];
 }>();
+
+const showComplianceModal = ref(false);
 
 const isVoiOrAramidToken = computed(() => {
   return isAlgorandBasedToken(props.token.standard);
