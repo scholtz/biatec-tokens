@@ -8,6 +8,11 @@ test.describe("Wallet Connect Flow with Network Selection", () => {
       localStorage.clear();
     });
     await page.goto("/");
+    // Use more resilient waiting for Firefox
+    await Promise.race([
+      page.waitForLoadState("networkidle"),
+      page.waitForTimeout(10000) // 10 second fallback
+    ]);
     await expect(page).toHaveTitle(/Biatec Tokens/);
   });
 

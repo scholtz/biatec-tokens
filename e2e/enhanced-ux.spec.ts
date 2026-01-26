@@ -80,7 +80,11 @@ test.describe("Responsive Design", () => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    // Use more resilient waiting for Firefox
+    await Promise.race([
+      page.waitForLoadState("networkidle"),
+      page.waitForTimeout(10000) // 10 second fallback
+    ]);
     // Wait for the home page content to be rendered
     await page.waitForSelector(".container-padding", { timeout: 10000 });
 
@@ -92,7 +96,11 @@ test.describe("Responsive Design", () => {
     // Set tablet viewport
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    // Use more resilient waiting for Firefox
+    await Promise.race([
+      page.waitForLoadState("networkidle"),
+      page.waitForTimeout(10000) // 10 second fallback
+    ]);
     // Wait for the home page content to be rendered
     await page.waitForSelector(".container-padding", { timeout: 10000 });
 
@@ -120,7 +128,11 @@ test.describe("Dark Mode Support", () => {
       localStorage.setItem("wallet_connected", "true");
     });
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    // Use more resilient waiting for Firefox
+    await Promise.race([
+      page.waitForLoadState("networkidle"),
+      page.waitForTimeout(10000) // 10 second fallback
+    ]);
   });
 
   test("should have theme toggle button", async ({ page }) => {

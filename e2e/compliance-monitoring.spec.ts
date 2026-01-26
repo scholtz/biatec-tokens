@@ -180,7 +180,11 @@ test.describe("Compliance Monitoring Dashboard", () => {
 
   test("should have export CSV button", async ({ page }) => {
     await page.goto("/compliance-monitoring");
-    await page.waitForLoadState("networkidle");
+    // Use more resilient waiting for Firefox
+    await Promise.race([
+      page.waitForLoadState("networkidle"),
+      page.waitForTimeout(10000) // 10 second fallback
+    ]);
 
     // Check for export button
     const exportButton = page.getByRole("button", { name: /Export CSV/i });
@@ -257,7 +261,11 @@ test.describe("Compliance Monitoring Dashboard", () => {
 
   test("should display MICA compliance information section", async ({ page }) => {
     await page.goto("/compliance-monitoring");
-    await page.waitForLoadState("networkidle");
+    // Use more resilient waiting for Firefox
+    await Promise.race([
+      page.waitForLoadState("networkidle"),
+      page.waitForTimeout(10000) // 10 second fallback
+    ]);
 
     // Wait for content to load - either metrics or error/empty state
     await Promise.race([
@@ -297,7 +305,11 @@ test.describe("Compliance Monitoring Dashboard", () => {
     await page.setViewportSize({ width: 768, height: 1024 });
 
     await page.goto("/compliance-monitoring");
-    await page.waitForLoadState("networkidle");
+    // Use more resilient waiting for Firefox
+    await Promise.race([
+      page.waitForLoadState("networkidle"),
+      page.waitForTimeout(10000) // 10 second fallback
+    ]);
 
     // Check that main content is visible
     await expect(page.getByRole("heading", { name: /Compliance Monitoring Dashboard/i })).toBeVisible();
@@ -344,7 +356,11 @@ test.describe("Compliance Monitoring Dashboard", () => {
 
   test("should display enterprise security messaging", async ({ page }) => {
     await page.goto("/compliance-monitoring");
-    await page.waitForLoadState("networkidle");
+    // Use more resilient waiting for Firefox
+    await Promise.race([
+      page.waitForLoadState("networkidle"),
+      page.waitForTimeout(10000) // 10 second fallback
+    ]);
 
     // Wait for main heading to be visible
     await expect(page.getByRole("heading", { name: /Compliance Monitoring Dashboard/i })).toBeVisible();
