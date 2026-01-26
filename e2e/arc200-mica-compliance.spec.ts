@@ -8,7 +8,7 @@ test.describe('ARC-200 Token Creation with MICA Compliance', () => {
       localStorage.setItem("onboarding_completed", "true");
     });
     // Navigate to token creator page
-    await page.goto('/creator');
+    await page.goto('/create');
     await page.waitForLoadState('networkidle');
   });
 
@@ -24,14 +24,14 @@ test.describe('ARC-200 Token Creation with MICA Compliance', () => {
     }
 
     // Select ARC-200 standard
-    const arc200Button = page.locator('button').filter({ hasText: /ARC-200/i }).first();
+    const arc200Button = page.locator('text=Or Select Token Standard Manually').locator('..').locator('button').filter({ hasText: /ARC200/i }).first();
     await expect(arc200Button).toBeVisible({ timeout: 10000 });
     await arc200Button.click();
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(2000);
 
     // Check that MICA compliance form appears
     await expect(page.locator('text=MICA Compliance Metadata')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=Required for ARC-200')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=(Required for ARC-200)')).toBeVisible({ timeout: 5000 });
   });
 
   test('should validate required MICA compliance fields', async ({ page }) => {
@@ -43,9 +43,9 @@ test.describe('ARC-200 Token Creation with MICA Compliance', () => {
     }
 
     // Select ARC-200 standard
-    const arc200Button = page.locator('button').filter({ hasText: /ARC-200/i }).first();
+    const arc200Button = page.locator('text=Or Select Token Standard Manually').locator('..').locator('button').filter({ hasText: /ARC200/i }).first();
     await arc200Button.click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
     
     // Check for validation errors when fields are empty
     await expect(page.locator('text=Issuer legal name is required')).toBeVisible({ timeout: 10000 });
@@ -61,9 +61,9 @@ test.describe('ARC-200 Token Creation with MICA Compliance', () => {
     }
 
     // Select ARC-200 standard
-    const arc200Button = page.locator('button').filter({ hasText: /ARC-200/i }).first();
+    const arc200Button = page.locator('text=Or Select Token Standard Manually').locator('..').locator('button').filter({ hasText: /ARC200/i }).first();
     await arc200Button.click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
 
     // Fill in token basic information
     await page.fill('input[placeholder*="My Awesome Token"]', 'Test MICA Token');
