@@ -329,6 +329,35 @@ if (props.modelValue) {
   restrictedJurisdictionsInput.value = props.modelValue.restrictedJurisdictions?.join(', ') || '';
 }
 
+const syncFromProps = (value?: MicaComplianceMetadata): void => {
+  if (value) {
+    localMetadata.value = { ...value };
+    restrictedJurisdictionsInput.value = value.restrictedJurisdictions?.join(', ') || '';
+  } else {
+    // Reset to defaults when modelValue is cleared
+    localMetadata.value = {
+      issuerLegalName: '',
+      issuerRegistrationNumber: '',
+      issuerJurisdiction: '',
+      regulatoryLicense: '',
+      micaTokenClassification: 'utility',
+      tokenPurpose: '',
+      kycRequired: false,
+      restrictedJurisdictions: [],
+      complianceContactEmail: '',
+      whitepaperUrl: '',
+      termsAndConditionsUrl: '',
+    };
+    restrictedJurisdictionsInput.value = '';
+  }
+};
+
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    syncFromProps(newValue);
+  }
+);
 const validationErrors = computed(() => {
   const errors: string[] = [];
   
