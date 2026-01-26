@@ -208,6 +208,116 @@
                 </div>
               </div>
             </div>
+
+            <!-- MICA Compliance Metadata (for ARC-200 tokens) -->
+            <div v-if="token.complianceMetadata && token.standard === 'ARC200'" class="glass-effect rounded-xl p-6">
+              <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                <i class="pi pi-shield-check text-biatec-accent"></i>
+                MICA Compliance Metadata
+              </h3>
+
+              <!-- Issuer Information -->
+              <div class="mb-6">
+                <h4 class="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                  <i class="pi pi-building text-blue-400"></i>
+                  Issuer Information
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white/5 rounded-lg">
+                  <div>
+                    <dt class="text-xs text-gray-400 mb-1">Legal Name</dt>
+                    <dd class="text-white font-medium">{{ token.complianceMetadata.issuerLegalName }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-gray-400 mb-1">Registration Number</dt>
+                    <dd class="text-white font-medium">{{ token.complianceMetadata.issuerRegistrationNumber }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-gray-400 mb-1">Jurisdiction</dt>
+                    <dd class="text-white font-medium">{{ token.complianceMetadata.issuerJurisdiction }}</dd>
+                  </div>
+                  <div v-if="token.complianceMetadata.regulatoryLicense">
+                    <dt class="text-xs text-gray-400 mb-1">Regulatory License</dt>
+                    <dd class="text-white font-medium">{{ token.complianceMetadata.regulatoryLicense }}</dd>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Token Classification -->
+              <div class="mb-6">
+                <h4 class="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                  <i class="pi pi-tag text-purple-400"></i>
+                  Token Classification
+                </h4>
+                <div class="p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-lg">
+                  <div class="mb-3">
+                    <span class="text-xs text-gray-400 mr-2">MICA Classification:</span>
+                    <span class="px-3 py-1 text-sm font-medium bg-purple-500/20 text-purple-300 rounded-full">
+                      {{ getMicaClassificationLabel(token.complianceMetadata.micaTokenClassification) }}
+                    </span>
+                  </div>
+                  <div class="mb-3">
+                    <span class="text-xs text-gray-400 block mb-2">Token Purpose:</span>
+                    <p class="text-sm text-gray-300">{{ token.complianceMetadata.tokenPurpose }}</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <i :class="['pi', token.complianceMetadata.kycRequired ? 'pi-check-circle text-green-400' : 'pi-times-circle text-gray-500']"></i>
+                    <span :class="token.complianceMetadata.kycRequired ? 'text-white' : 'text-gray-400'" class="text-sm">
+                      KYC/AML Required for Holders
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Jurisdiction Restrictions -->
+              <div v-if="token.complianceMetadata.restrictedJurisdictions && token.complianceMetadata.restrictedJurisdictions.length > 0" class="mb-6">
+                <h4 class="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                  <i class="pi pi-ban text-red-400"></i>
+                  Restricted Jurisdictions
+                </h4>
+                <div class="flex flex-wrap gap-2">
+                  <span
+                    v-for="jurisdiction in token.complianceMetadata.restrictedJurisdictions"
+                    :key="jurisdiction"
+                    class="px-3 py-1 bg-red-500/20 text-red-300 rounded text-xs font-medium"
+                  >
+                    {{ jurisdiction }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Contact & Documentation -->
+              <div>
+                <h4 class="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                  <i class="pi pi-file text-green-400"></i>
+                  Contact & Documentation
+                </h4>
+                <div class="space-y-3">
+                  <div class="flex items-center gap-2 text-sm">
+                    <i class="pi pi-envelope text-gray-400"></i>
+                    <span class="text-gray-400">Compliance Contact:</span>
+                    <a :href="`mailto:${token.complianceMetadata.complianceContactEmail}`" class="text-biatec-accent hover:underline">
+                      {{ token.complianceMetadata.complianceContactEmail }}
+                    </a>
+                  </div>
+                  <div v-if="token.complianceMetadata.whitepaperUrl" class="flex items-center gap-2 text-sm">
+                    <i class="pi pi-book text-gray-400"></i>
+                    <span class="text-gray-400">Whitepaper:</span>
+                    <a :href="token.complianceMetadata.whitepaperUrl" target="_blank" rel="noopener noreferrer" class="text-biatec-accent hover:underline">
+                      View Document
+                      <i class="pi pi-external-link ml-1 text-xs"></i>
+                    </a>
+                  </div>
+                  <div v-if="token.complianceMetadata.termsAndConditionsUrl" class="flex items-center gap-2 text-sm">
+                    <i class="pi pi-file-check text-gray-400"></i>
+                    <span class="text-gray-400">Terms & Conditions:</span>
+                    <a :href="token.complianceMetadata.termsAndConditionsUrl" target="_blank" rel="noopener noreferrer" class="text-biatec-accent hover:underline">
+                      View Document
+                      <i class="pi pi-external-link ml-1 text-xs"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Whitelist Tab -->
@@ -288,6 +398,16 @@ const formatDate = (date: Date) => {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+};
+
+const getMicaClassificationLabel = (classification: string): string => {
+  const labels: Record<string, string> = {
+    'utility': 'Utility Token',
+    'e-money': 'E-Money Token',
+    'asset-referenced': 'Asset-Referenced Token',
+    'other': 'Other',
+  };
+  return labels[classification] || classification;
 };
 
 const getAttestationTypeLabelLocal = (type: AttestationType): string => {

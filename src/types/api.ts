@@ -74,6 +74,35 @@ export interface ARC3DeploymentRequest extends BaseDeploymentRequest {
 }
 
 /**
+ * MICA compliance metadata for ARC-200 tokens
+ * Supports regulatory requirements under Markets in Crypto-Assets regulation
+ */
+export interface MicaComplianceMetadata {
+  /** Legal entity name of the token issuer */
+  issuerLegalName: string;
+  /** Issuer registration number (e.g., company registration number) */
+  issuerRegistrationNumber: string;
+  /** Jurisdiction where the issuer is registered */
+  issuerJurisdiction: string;
+  /** Regulatory license number if applicable */
+  regulatoryLicense?: string;
+  /** Token classification under MICA (e-money, asset-referenced, utility, etc.) */
+  micaTokenClassification: 'utility' | 'e-money' | 'asset-referenced' | 'other';
+  /** Brief description of token purpose and rights */
+  tokenPurpose: string;
+  /** Whether whitelist/KYC is required for token holders */
+  kycRequired: boolean;
+  /** List of restricted jurisdictions (ISO 3166-1 alpha-2 codes) */
+  restrictedJurisdictions?: string[];
+  /** Contact email for compliance inquiries */
+  complianceContactEmail: string;
+  /** URL to whitepaper or prospectus */
+  whitepaperUrl?: string;
+  /** URL to terms and conditions */
+  termsAndConditionsUrl?: string;
+}
+
+/**
  * ARC200 token deployment request (Smart contract token compatible with ERC20)
  */
 export interface ARC200DeploymentRequest extends BaseDeploymentRequest {
@@ -82,6 +111,8 @@ export interface ARC200DeploymentRequest extends BaseDeploymentRequest {
   decimals: number;
   totalSupply: string;
   contractId?: number;
+  /** MICA compliance metadata (required for regulated tokens) */
+  complianceMetadata?: MicaComplianceMetadata;
 }
 
 /**

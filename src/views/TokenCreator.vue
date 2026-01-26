@@ -201,6 +201,16 @@
           />
         </div>
 
+        <!-- MICA Compliance Metadata (NEW - For ARC-200) -->
+        <div class="mb-8">
+          <MicaComplianceForm
+            v-model="tokenForm.complianceMetadata"
+            v-model:enabled="tokenForm.complianceMetadataEnabled"
+            v-model:valid="tokenForm.complianceMetadataValid"
+            :required="selectedStandard === 'ARC200'"
+          />
+        </div>
+
         <!-- Template Selection (New Step) -->
         <div class="glass-effect rounded-xl p-6 mb-8">
           <div class="flex items-center justify-between mb-6">
@@ -546,8 +556,10 @@ import MainLayout from "../layout/MainLayout.vue";
 import ComplianceChecklist from "../components/ComplianceChecklist.vue";
 import RwaPresetSelector from "../components/RwaPresetSelector.vue";
 import WalletAttestationForm from "../components/WalletAttestationForm.vue";
+import MicaComplianceForm from "../components/MicaComplianceForm.vue";
 import CompetitorParityChecklist from "../components/CompetitorParityChecklist.vue";
 import { WalletAttestation, AttestationType } from "../types/compliance";
+import type { MicaComplianceMetadata } from "../types/api";
 
 const router = useRouter();
 const tokenStore = useTokenStore();
@@ -577,6 +589,9 @@ const tokenForm = reactive({
   attributes: [] as Array<{ trait_type: string; value: string }>,
   attestationEnabled: false,
   attestations: [] as WalletAttestation[],
+  complianceMetadata: undefined as MicaComplianceMetadata | undefined,
+  complianceMetadataEnabled: false,
+  complianceMetadataValid: false,
 });
 
 // Watch for network changes and sync with compliance store
@@ -698,6 +713,12 @@ const clearTemplate = () => {
 const createToken = async () => {
   if (!selectedStandard.value) return;
 
+  // Validate MICA compliance metadata for ARC-200 tokens
+  if (selectedStandard.value === 'ARC200' && !tokenForm.complianceMetadataValid) {
+    alert('MICA compliance metadata is required for ARC-200 tokens. Please complete all required fields.');
+    return;
+  }
+
   isCreating.value = true;
   subscriptionStore.trackTokenCreationAttempt();
 
@@ -729,6 +750,7 @@ const createToken = async () => {
       imageUrl: tokenForm.imageUrl || undefined,
       attributes: tokenForm.type === "NFT" ? tokenForm.attributes.filter((attr) => attr.trait_type && attr.value) : undefined,
       attestationMetadata,
+      complianceMetadata: tokenForm.complianceMetadata,
     });
 
     // Track successful creation with details
@@ -750,6 +772,9 @@ const createToken = async () => {
       attributes: [],
       attestationEnabled: false,
       attestations: [],
+      complianceMetadata: undefined,
+      complianceMetadataEnabled: false,
+      complianceMetadataValid: false,
     });
     selectedStandard.value = "";
     selectedNetwork.value = null;
