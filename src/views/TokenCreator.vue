@@ -732,7 +732,7 @@ const createToken = async () => {
   if (selectedStandard.value === 'ARC200' && !tokenForm.complianceMetadataValid) {
     validationError.value = 'MICA compliance metadata is required for ARC-200 tokens. Please complete all required fields.';
     // Scroll to the compliance form
-    const complianceForm = document.querySelector('[class*="MicaComplianceForm"]');
+    const complianceForm = document.querySelector('[class~="MicaComplianceForm"]');
     if (complianceForm) {
       complianceForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
