@@ -432,7 +432,7 @@ test.describe("API Integration Tests", () => {
 
     // Should redirect to home and show onboarding wizard
     await page.waitForURL("/?showOnboarding=true");
-    
+
     // Check that onboarding wizard is visible by looking for the welcome title
     const onboardingTitle = page.locator('h2:has-text("Welcome to Biatec Tokens")');
     await expect(onboardingTitle).toBeVisible({ timeout: 10000 });
@@ -454,7 +454,7 @@ test.describe("API Integration Tests", () => {
 
     // Should redirect to home and show onboarding wizard
     await page.waitForURL("/?showOnboarding=true");
-    
+
     // Check that onboarding wizard is visible by looking for the welcome title
     const onboardingTitle = page.locator('h2:has-text("Welcome to Biatec Tokens")');
     await expect(onboardingTitle).toBeVisible({ timeout: 10000 });

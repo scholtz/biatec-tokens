@@ -15,23 +15,13 @@
 
             <!-- CTA Buttons -->
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-              <Button 
-                @click="handleCreateToken"
-                variant="primary" 
-                size="lg" 
-                class="text-lg px-8 py-4"
-              >
+              <Button @click="handleCreateToken" variant="primary" size="lg" class="text-lg px-8 py-4">
                 <template #icon>
                   <PlusCircleIcon class="w-6 h-6 mr-2" />
                 </template>
                 Create Your First Token
               </Button>
-              <Button 
-                @click="handleViewDashboard"
-                variant="outline" 
-                size="lg" 
-                class="text-lg px-8 py-4"
-              >
+              <Button @click="handleViewDashboard" variant="outline" size="lg" class="text-lg px-8 py-4">
                 <template #icon>
                   <ChartBarIcon class="w-6 h-6 mr-2" />
                 </template>
@@ -95,11 +85,7 @@
     </div>
 
     <!-- Wallet Onboarding Wizard -->
-    <WalletOnboardingWizard
-      :is-open="showOnboardingWizard"
-      @close="showOnboardingWizard = false"
-      @complete="handleOnboardingComplete"
-    />
+    <WalletOnboardingWizard :is-open="showOnboardingWizard" @close="showOnboardingWizard = false" @complete="handleOnboardingComplete" />
   </MainLayout>
 </template>
 
@@ -166,7 +152,7 @@ const handleViewDashboard = () => {
 
 const handleOnboardingComplete = () => {
   showOnboardingWizard.value = false;
-  
+
   // Check if there's a redirect destination
   const redirectPath = localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);
   if (redirectPath) {
@@ -179,15 +165,18 @@ const handleOnboardingComplete = () => {
 
 onMounted(() => {
   // Check if we should show onboarding
-  if (route.query.showOnboarding === 'true') {
+  if (route.query.showOnboarding === "true") {
     showOnboardingWizard.value = true;
   }
 });
 
 // Watch for route query changes to handle navigation to the same component
-watch(() => route.query.showOnboarding, (newValue) => {
-  if (newValue === 'true') {
-    showOnboardingWizard.value = true;
-  }
-});
+watch(
+  () => route.query.showOnboarding,
+  (newValue) => {
+    if (newValue === "true") {
+      showOnboardingWizard.value = true;
+    }
+  },
+);
 </script>
