@@ -30,7 +30,7 @@
         </div>
 
         <!-- Legacy Compliance Status Cards (kept for backward compatibility) -->
-        <div v-if="complianceStatus && !tokenId" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div v-if="complianceStatus" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div class="glass-effect rounded-xl p-4">
             <div class="flex items-center justify-between mb-2">
               <i class="pi pi-list text-biatec-accent text-2xl"></i>

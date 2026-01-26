@@ -12,6 +12,13 @@ vi.mock('../services/ComplianceService', () => ({
   },
 }));
 
+// Mock wallet
+vi.mock('@txnlab/use-wallet-vue', () => ({
+  useWallet: vi.fn(() => ({
+    activeAddress: { value: 'VOI123ABC' }
+  }))
+}));
+
 // Mock child components
 vi.mock('../components/MicaWhitelistManagement.vue', () => ({
   default: { name: 'MicaWhitelistManagement', template: '<div>MicaWhitelistManagement</div>' },
@@ -35,6 +42,31 @@ vi.mock('../components/ComplianceChecklist.vue', () => ({
 
 vi.mock('../components/ComplianceExports.vue', () => ({
   default: { name: 'ComplianceExports', template: '<div>ComplianceExports</div>' },
+}));
+
+vi.mock('../components/AttestationPanel.vue', () => ({
+  default: { name: 'AttestationPanel', template: '<div>AttestationPanel</div>' },
+}));
+
+// Mock new widget components
+vi.mock('../components/WhitelistCoverageWidget.vue', () => ({
+  default: { name: 'WhitelistCoverageWidget', template: '<div>WhitelistCoverageWidget</div>' },
+}));
+
+vi.mock('../components/IssuerStatusWidget.vue', () => ({
+  default: { name: 'IssuerStatusWidget', template: '<div>IssuerStatusWidget</div>' },
+}));
+
+vi.mock('../components/RwaRiskFlagsWidget.vue', () => ({
+  default: { name: 'RwaRiskFlagsWidget', template: '<div>RwaRiskFlagsWidget</div>' },
+}));
+
+vi.mock('../components/NetworkHealthWidget.vue', () => ({
+  default: { name: 'NetworkHealthWidget', template: '<div>NetworkHealthWidget</div>' },
+}));
+
+vi.mock('../components/SubscriptionTierGatingWidget.vue', () => ({
+  default: { name: 'SubscriptionTierGatingWidget', template: '<div>SubscriptionTierGatingWidget</div>' },
 }));
 
 vi.mock('../layout/MainLayout.vue', () => ({
