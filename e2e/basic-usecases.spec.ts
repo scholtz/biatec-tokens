@@ -55,7 +55,7 @@ test.describe("Basic User Flows", () => {
 
   test("should navigate to dashboard via sidebar menu", async ({ page }) => {
     // Check if sidebar is visible (on desktop)
-    const sidebarLink = page.getByRole('link', { name: 'View Dashboard', exact: true });
+    const sidebarLink = page.getByRole("link", { name: "View Dashboard", exact: true });
     const isSidebarVisible = await sidebarLink.isVisible().catch(() => false);
 
     if (isSidebarVisible) {
@@ -73,7 +73,7 @@ test.describe("Basic User Flows", () => {
 
   test("should navigate to dashboard via navbar menu", async ({ page }) => {
     // Check if we're on mobile (hamburger menu visible)
-    const hamburgerMenu = page.locator('button:has(.pi-bars)');
+    const hamburgerMenu = page.locator("button:has(.pi-bars)");
     const isMobile = await hamburgerMenu.isVisible().catch(() => false);
 
     if (isMobile) {
@@ -83,7 +83,7 @@ test.describe("Basic User Flows", () => {
     }
 
     // Now check if navbar dashboard link is visible
-    const navbarLink = page.getByRole('link', { name: 'Dashboard', exact: true });
+    const navbarLink = page.getByRole("link", { name: "Dashboard", exact: true });
     const isNavbarVisible = await navbarLink.isVisible().catch(() => false);
 
     if (isNavbarVisible) {
@@ -153,7 +153,7 @@ test.describe("Basic User Flows", () => {
 
   test("should navigate via navbar links", async ({ page }) => {
     // Check if we're on mobile (hamburger menu visible)
-    const hamburgerMenu = page.locator('button:has(.pi-bars)');
+    const hamburgerMenu = page.locator("button:has(.pi-bars)");
     const isMobile = await hamburgerMenu.isVisible().catch(() => false);
 
     if (isMobile) {
@@ -257,7 +257,7 @@ test.describe("Settings and Configuration", () => {
 
   test("should access settings page", async ({ page }) => {
     // Check if we're on mobile (hamburger menu visible)
-    const hamburgerMenu = page.locator('button:has(.pi-bars)');
+    const hamburgerMenu = page.locator("button:has(.pi-bars)");
     const isMobile = await hamburgerMenu.isVisible().catch(() => false);
 
     if (isMobile) {
@@ -267,7 +267,7 @@ test.describe("Settings and Configuration", () => {
     }
 
     // Try to find settings link/button
-    const settingsLink = page.getByRole('link', { name: 'Settings', exact: true });
+    const settingsLink = page.getByRole("link", { name: "Settings", exact: true });
     const isVisible = await settingsLink.isVisible().catch(() => false);
 
     if (isVisible) {
@@ -513,13 +513,13 @@ test.describe("API Integration Tests", () => {
 
     if (!isDesktopVisible) {
       // We're on mobile - open mobile menu first
-      const hamburgerMenu = page.locator('button.md\\:hidden');
+      const hamburgerMenu = page.locator("button.md\\:hidden");
       await hamburgerMenu.click();
       await page.waitForTimeout(500);
     }
 
     // Click on Dashboard link in navbar
-    const dashboardLink = page.getByRole('link', { name: 'Dashboard', exact: true });
+    const dashboardLink = page.getByRole("link", { name: "Dashboard", exact: true });
     await expect(dashboardLink).toBeVisible();
     await dashboardLink.click();
 
@@ -546,13 +546,13 @@ test.describe("API Integration Tests", () => {
 
     if (!isDesktopVisible) {
       // We're on mobile - open mobile menu first
-      const hamburgerMenu = page.locator('button.md\\:hidden');
+      const hamburgerMenu = page.locator("button.md\\:hidden");
       await hamburgerMenu.click();
       await page.waitForTimeout(500);
     }
 
     // Click on Settings link in navbar
-    const settingsLink = page.getByRole('link', { name: 'Settings' });
+    const settingsLink = page.getByRole("link", { name: "Settings" });
     await expect(settingsLink).toBeVisible();
     await settingsLink.click();
 
