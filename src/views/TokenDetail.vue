@@ -374,6 +374,7 @@ import OnChainComplianceBadge from "../components/OnChainComplianceBadge.vue";
 import type { AttestationType, Network } from "../types/compliance";
 import { getAttestationTypeLabel } from "../utils/attestation";
 import { isAlgorandBasedToken, calculateComplianceScore, getDefaultNetwork } from "../utils/compliance";
+import { getMicaClassificationLabel } from "../utils/mica-compliance";
 
 const route = useRoute();
 const tokenStore = useTokenStore();
@@ -398,16 +399,6 @@ const formatDate = (date: Date) => {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
-};
-
-const getMicaClassificationLabel = (classification: string): string => {
-  const labels: Record<string, string> = {
-    'utility': 'Utility Token',
-    'e-money': 'E-Money Token',
-    'asset-referenced': 'Asset-Referenced Token',
-    'other': 'Other',
-  };
-  return labels[classification] || classification;
 };
 
 const getAttestationTypeLabelLocal = (type: AttestationType): string => {

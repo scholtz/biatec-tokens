@@ -65,14 +65,14 @@ test.describe('ARC-200 Token Creation with MICA Compliance', () => {
     await page.fill('textarea[placeholder*="Describe your token"]', 'A test token with MICA compliance metadata for E2E testing purposes.');
 
     // Fill in MICA compliance fields
+    // Use more reliable label-based selectors instead of XPath
+    
     // Issuer Legal Name
-    const issuerNameInput = page.locator('input').filter({ 
-      has: page.locator('xpath=preceding-sibling::label[contains(text(), "Issuer Legal Name")]') 
-    }).first();
+    const issuerNameInput = page.locator('label').filter({ hasText: 'Issuer Legal Name' }).locator('..').locator('input').first();
     await issuerNameInput.fill('Test Company Ltd.');
 
     // Registration Number
-    const registrationInput = page.locator('label:has-text("Registration Number")').locator('..').locator('input').first();
+    const registrationInput = page.locator('label').filter({ hasText: 'Registration Number' }).locator('..').locator('input').first();
     await registrationInput.fill('12345678');
 
     // Jurisdiction

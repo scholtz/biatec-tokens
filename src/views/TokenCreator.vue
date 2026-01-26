@@ -528,6 +528,17 @@
             </div>
 
             <!-- Submit Button -->
+            <!-- Validation Error Message -->
+            <div v-if="validationError" class="p-4 bg-red-500/10 border border-red-500/20 rounded-lg mb-6">
+              <div class="flex items-start gap-3">
+                <i class="pi pi-exclamation-triangle text-red-400 mt-1"></i>
+                <div>
+                  <p class="text-sm font-semibold text-red-400 mb-1">Validation Error</p>
+                  <p class="text-sm text-gray-300">{{ validationError }}</p>
+                </div>
+              </div>
+            </div>
+
             <div class="flex justify-end">
               <button
                 type="submit"
@@ -570,6 +581,7 @@ const selectedNetwork = ref<"VOI" | "Aramid" | null>(null);
 const selectedStandard = ref("");
 const selectedTemplate = ref<string>("");
 const isCreating = ref(false);
+const validationError = ref<string | null>(null);
 const imageInput = ref<HTMLInputElement>();
 const showComplianceChecklist = ref(false);
 const showCompetitorParity = ref(false);
@@ -713,9 +725,17 @@ const clearTemplate = () => {
 const createToken = async () => {
   if (!selectedStandard.value) return;
 
+  // Clear previous validation error
+  validationError.value = null;
+
   // Validate MICA compliance metadata for ARC-200 tokens
   if (selectedStandard.value === 'ARC200' && !tokenForm.complianceMetadataValid) {
-    alert('MICA compliance metadata is required for ARC-200 tokens. Please complete all required fields.');
+    validationError.value = 'MICA compliance metadata is required for ARC-200 tokens. Please complete all required fields.';
+    // Scroll to the compliance form
+    const complianceForm = document.querySelector('[class*="MicaComplianceForm"]');
+    if (complianceForm) {
+      complianceForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
     return;
   }
 

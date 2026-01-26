@@ -145,8 +145,8 @@
           <!-- Classification guidance -->
           <div v-if="localMetadata.micaTokenClassification" class="mt-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
             <p class="text-xs text-gray-300">
-              <strong class="text-purple-400">{{ getClassificationLabel(localMetadata.micaTokenClassification) }}:</strong>
-              {{ getClassificationGuidance(localMetadata.micaTokenClassification) }}
+              <strong class="text-purple-400">{{ getMicaClassificationLabel(localMetadata.micaTokenClassification) }}:</strong>
+              {{ getMicaClassificationGuidance(localMetadata.micaTokenClassification) }}
             </p>
           </div>
         </div>
@@ -282,6 +282,12 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import type { MicaComplianceMetadata } from '../types/api';
+import { 
+  getMicaClassificationLabel, 
+  getMicaClassificationGuidance, 
+  parseRestrictedJurisdictions,
+  isValidEmail 
+} from '../utils/mica-compliance';
 
 interface Props {
   modelValue?: MicaComplianceMetadata;
@@ -369,11 +375,6 @@ watch(isValid, (newValue) => {
   emit('update:valid', newValue);
 });
 
-function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
 function toggleEnabled() {
   enabled.value = !enabled.value;
   emit('update:enabled', enabled.value);
@@ -385,11 +386,14 @@ function toggleEnabled() {
 }
 
 function updateRestrictedJurisdictions() {
-  const jurisdictions = restrictedJurisdictionsInput.value
-    .split(',')
-    .map(j => j.trim().toUpperCase())
-    .filter(j => j.length > 0);
-  localMetadata.value.restrictedJurisdictions = jurisdictions;
+  const { valid, invalid } = parseRestrictedJurisdictions(restrictedJurisdictionsInput.value);
+  
+  // Show warning if there are invalid codes (in production, this could be a toast notification)
+  if (invalid.length > 0) {
+    console.warn(`Invalid jurisdiction codes: ${invalid.join(', ')}`);
+  }
+  
+  localMetadata.value.restrictedJurisdictions = valid;
   emitUpdate();
 }
 
@@ -397,25 +401,5 @@ function emitUpdate() {
   if (enabled.value || props.required) {
     emit('update:modelValue', localMetadata.value);
   }
-}
-
-function getClassificationLabel(classification: string): string {
-  const labels: Record<string, string> = {
-    'utility': 'Utility Token',
-    'e-money': 'E-Money Token',
-    'asset-referenced': 'Asset-Referenced Token',
-    'other': 'Other',
-  };
-  return labels[classification] || classification;
-}
-
-function getClassificationGuidance(classification: string): string {
-  const guidance: Record<string, string> = {
-    'utility': 'Provides access to goods or services within a digital ecosystem. Generally subject to lighter regulatory requirements unless marketed as investments.',
-    'e-money': 'Represents fiat currency or stable value. Requires e-money authorization and reserve requirements under MICA. Must be redeemable at par value.',
-    'asset-referenced': 'Value is stabilized by reference to assets (basket of currencies, commodities, etc.). Requires prospectus approval and authorization from competent authority.',
-    'other': 'Does not fit standard classifications. May require legal review to determine applicable regulatory framework.',
-  };
-  return guidance[classification] || '';
 }
 </script>
