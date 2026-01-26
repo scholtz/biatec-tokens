@@ -4,7 +4,7 @@ let defaultApiClient: Api<unknown> | null = null;
 
 export const getApiClient = (): Api<unknown> => {
   if (!defaultApiClient) {
-    const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+    const baseURL = import.meta.env.VITE_API_BASE_URL || "https://api.tokens.biatec.io";
     const api = new Api({
       baseURL,
     });
