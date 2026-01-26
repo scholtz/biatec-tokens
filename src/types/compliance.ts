@@ -402,3 +402,116 @@ export interface ComplianceMonitoringTrend {
   dataPoints: ComplianceChartDataPoint[];
   trend: 'improving' | 'stable' | 'declining';
 }
+
+/**
+ * MICA compliance dashboard widget types
+ * For enterprise-ready compliance visibility
+ */
+
+/**
+ * Whitelist coverage metrics widget data
+ */
+export interface WhitelistCoverageMetrics {
+  totalAddresses: number;
+  activeAddresses: number;
+  pendingAddresses: number;
+  coveragePercentage: number;
+  recentlyAdded: number;
+  recentlyRemoved: number;
+  lastUpdated: string;
+}
+
+/**
+ * Issuer status for MICA compliance
+ */
+export interface IssuerStatus {
+  issuerAddress: string;
+  isVerified: boolean;
+  status: 'verified' | 'pending' | 'incomplete' | 'rejected';
+  legalName?: string;
+  registrationNumber?: string;
+  jurisdiction?: string;
+  regulatoryLicense?: string;
+  verifiedAt?: string;
+  missingFields?: string[];
+  lastUpdated: string;
+}
+
+/**
+ * RWA risk flag severity levels
+ */
+export type RiskFlagSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+/**
+ * RWA risk flag for compliance monitoring
+ */
+export interface RwaRiskFlag {
+  id: string;
+  severity: RiskFlagSeverity;
+  category: 'compliance' | 'legal' | 'technical' | 'operational';
+  title: string;
+  description: string;
+  affectedAssets?: string[];
+  detectedAt: string;
+  status: 'active' | 'resolved' | 'acknowledged';
+}
+
+/**
+ * RWA risk flags widget data
+ */
+export interface RwaRiskFlagsMetrics {
+  totalFlags: number;
+  criticalFlags: number;
+  highFlags: number;
+  mediumFlags: number;
+  lowFlags: number;
+  recentFlags: RwaRiskFlag[];
+  lastUpdated: string;
+}
+
+/**
+ * Network health status
+ */
+export interface NetworkHealthStatus {
+  network: Network;
+  isHealthy: boolean;
+  status: 'operational' | 'degraded' | 'down';
+  responseTime?: number; // milliseconds
+  lastChecked: string;
+  issues?: string[];
+}
+
+/**
+ * Network health widget data
+ */
+export interface NetworkHealthMetrics {
+  networks: NetworkHealthStatus[];
+  overallHealth: 'healthy' | 'degraded' | 'critical';
+  lastUpdated: string;
+}
+
+/**
+ * Subscription tier levels
+ */
+export type SubscriptionTier = 'free' | 'professional' | 'enterprise';
+
+/**
+ * Feature gating status
+ */
+export interface FeatureGatingStatus {
+  feature: string;
+  enabled: boolean;
+  requiredTier: SubscriptionTier;
+  currentTier: SubscriptionTier;
+  description?: string;
+}
+
+/**
+ * Subscription tier gating widget data
+ */
+export interface SubscriptionTierGatingMetrics {
+  currentTier: SubscriptionTier;
+  features: FeatureGatingStatus[];
+  upgradableFeatures: number;
+  lastUpdated: string;
+}

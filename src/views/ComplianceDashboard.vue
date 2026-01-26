@@ -20,8 +20,17 @@
           </div>
         </div>
 
-        <!-- Compliance Status Cards -->
-        <div v-if="complianceStatus" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <!-- MICA Compliance Dashboard Widgets -->
+        <div v-if="tokenId" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <WhitelistCoverageWidget :token-id="tokenId" :network="selectedNetwork" @view-details="activeTab = 'whitelist'" />
+          <IssuerStatusWidget v-if="issuerAddress" :issuer-address="issuerAddress" :network="selectedNetwork" @view-details="showIssuerDetails" />
+          <RwaRiskFlagsWidget :network="selectedNetwork" :token-id="tokenId" @view-details="showRiskDetails" />
+          <NetworkHealthWidget @view-details="showNetworkHealthDetails" />
+          <SubscriptionTierGatingWidget @view-details="showSubscriptionDetails" @upgrade-tier="navigateToUpgrade" />
+        </div>
+
+        <!-- Legacy Compliance Status Cards (kept for backward compatibility) -->
+        <div v-if="complianceStatus && !tokenId" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div class="glass-effect rounded-xl p-4">
             <div class="flex items-center justify-between mb-2">
               <i class="pi pi-list text-biatec-accent text-2xl"></i>
@@ -148,7 +157,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import MainLayout from "../layout/MainLayout.vue";
 import MicaWhitelistManagement from "../components/MicaWhitelistManagement.vue";
 import TransferValidationForm from "../components/TransferValidationForm.vue";
@@ -157,13 +166,22 @@ import ComplianceChecklist from "../components/ComplianceChecklist.vue";
 import MicaDashboardSummary from "../components/MicaDashboardSummary.vue";
 import ComplianceExports from "../components/ComplianceExports.vue";
 import AttestationPanel from "../components/AttestationPanel.vue";
+import WhitelistCoverageWidget from "../components/WhitelistCoverageWidget.vue";
+import IssuerStatusWidget from "../components/IssuerStatusWidget.vue";
+import RwaRiskFlagsWidget from "../components/RwaRiskFlagsWidget.vue";
+import NetworkHealthWidget from "../components/NetworkHealthWidget.vue";
+import SubscriptionTierGatingWidget from "../components/SubscriptionTierGatingWidget.vue";
 import { complianceService } from "../services/ComplianceService";
+import { useWallet } from "@txnlab/use-wallet-vue";
 import type { ComplianceStatus } from "../types/compliance";
 
 const route = useRoute();
+const router = useRouter();
+const { activeAddress } = useWallet();
 
 const tokenId = computed(() => (route.params.id as string) || (route.query.tokenId as string));
 const selectedNetwork = computed(() => (route.query.network as string) || "VOI");
+const issuerAddress = computed(() => activeAddress.value || "");
 
 const activeTab = ref("whitelist");
 const complianceStatus = ref<ComplianceStatus | null>(null);
@@ -222,6 +240,35 @@ const issueSeverityClass = (severity: string) => {
     default:
       return "bg-gray-500/20 text-gray-400 border border-gray-500/50";
   }
+};
+
+// Widget navigation handlers
+const showIssuerDetails = () => {
+  // Navigate to issuer profile or show details modal
+  console.log("Show issuer details");
+  // Could open a modal or navigate to issuer profile page
+};
+
+const showRiskDetails = () => {
+  // Navigate to risk management view
+  console.log("Show risk details");
+  // Could open a modal with detailed risk information
+};
+
+const showNetworkHealthDetails = () => {
+  // Navigate to network health dashboard
+  console.log("Show network health details");
+  // Could open a modal with network status details
+};
+
+const showSubscriptionDetails = () => {
+  // Navigate to subscription/pricing page
+  router.push({ path: "/subscription/pricing" });
+};
+
+const navigateToUpgrade = () => {
+  // Navigate to subscription upgrade flow
+  router.push({ path: "/subscription/pricing", query: { action: "upgrade" } });
 };
 
 onMounted(() => {
