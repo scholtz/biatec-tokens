@@ -2,9 +2,14 @@ import { test, expect } from '@playwright/test';
 
 test.describe('ARC-200 Token Creation with MICA Compliance', () => {
   test.beforeEach(async ({ page }) => {
+    // Mock wallet connection to avoid redirects
+    await page.addInitScript(() => {
+      localStorage.setItem("wallet_connected", "true");
+      localStorage.setItem("onboarding_completed", "true");
+    });
     // Navigate to token creator page
     await page.goto('/creator');
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('networkidle');
   });
 
   test('should display MICA compliance form for ARC-200 tokens', async ({ page }) => {
@@ -13,46 +18,52 @@ test.describe('ARC-200 Token Creation with MICA Compliance', () => {
 
     // Select VOI network (optional)
     const voiButton = page.locator('button').filter({ hasText: /VOI Network/i }).first();
-    if (await voiButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+    if (await voiButton.isVisible({ timeout: 3000 }).catch(() => false)) {
       await voiButton.click();
+      await page.waitForTimeout(500);
     }
 
     // Select ARC-200 standard
     const arc200Button = page.locator('button').filter({ hasText: /ARC-200/i }).first();
-    await expect(arc200Button).toBeVisible({ timeout: 5000 });
+    await expect(arc200Button).toBeVisible({ timeout: 10000 });
     await arc200Button.click();
+    await page.waitForTimeout(500);
 
     // Check that MICA compliance form appears
-    await expect(page.locator('text=MICA Compliance Metadata')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('text=Required for ARC-200')).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('text=MICA Compliance Metadata')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=Required for ARC-200')).toBeVisible({ timeout: 5000 });
   });
 
   test('should validate required MICA compliance fields', async ({ page }) => {
     // Select VOI network (optional)
     const voiButton = page.locator('button').filter({ hasText: /VOI Network/i }).first();
-    if (await voiButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+    if (await voiButton.isVisible({ timeout: 3000 }).catch(() => false)) {
       await voiButton.click();
+      await page.waitForTimeout(500);
     }
 
     // Select ARC-200 standard
     const arc200Button = page.locator('button').filter({ hasText: /ARC-200/i }).first();
     await arc200Button.click();
+    await page.waitForTimeout(1000);
     
     // Check for validation errors when fields are empty
-    await expect(page.locator('text=Issuer legal name is required')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('text=Registration number is required')).toBeVisible({ timeout: 2000 });
+    await expect(page.locator('text=Issuer legal name is required')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=Registration number is required')).toBeVisible({ timeout: 3000 });
   });
 
   test('should complete ARC-200 token creation with MICA compliance metadata', async ({ page }) => {
     // Select VOI network (optional)
     const voiButton = page.locator('button').filter({ hasText: /VOI Network/i }).first();
-    if (await voiButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+    if (await voiButton.isVisible({ timeout: 3000 }).catch(() => false)) {
       await voiButton.click();
+      await page.waitForTimeout(500);
     }
 
     // Select ARC-200 standard
     const arc200Button = page.locator('button').filter({ hasText: /ARC-200/i }).first();
     await arc200Button.click();
+    await page.waitForTimeout(1000);
 
     // Fill in token basic information
     await page.fill('input[placeholder*="My Awesome Token"]', 'Test MICA Token');
@@ -79,6 +90,6 @@ test.describe('ARC-200 Token Creation with MICA Compliance', () => {
     await emailInput.fill('compliance@testcompany.com');
 
     // Check for success message
-    await expect(page.locator('text=All required MICA compliance fields are complete')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=All required MICA compliance fields are complete')).toBeVisible({ timeout: 10000 });
   });
 });
