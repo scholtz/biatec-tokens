@@ -55,7 +55,7 @@ test.describe("Basic User Flows", () => {
 
   test("should navigate to dashboard via sidebar menu", async ({ page }) => {
     // Check if sidebar is visible (on desktop)
-    const sidebarLink = page.locator('aside a[href="/dashboard"]').first();
+    const sidebarLink = page.getByRole('link', { name: 'View Dashboard', exact: true });
     const isSidebarVisible = await sidebarLink.isVisible().catch(() => false);
 
     if (isSidebarVisible) {
@@ -72,8 +72,18 @@ test.describe("Basic User Flows", () => {
   });
 
   test("should navigate to dashboard via navbar menu", async ({ page }) => {
-    // Check if navbar dashboard link is visible
-    const navbarLink = page.locator('nav a[href="/dashboard"]').first();
+    // Check if we're on mobile (hamburger menu visible)
+    const hamburgerMenu = page.locator('button:has(.pi-bars)');
+    const isMobile = await hamburgerMenu.isVisible().catch(() => false);
+
+    if (isMobile) {
+      // Open mobile menu first
+      await hamburgerMenu.click();
+      await page.waitForTimeout(500);
+    }
+
+    // Now check if navbar dashboard link is visible
+    const navbarLink = page.getByRole('link', { name: 'Dashboard', exact: true });
     const isNavbarVisible = await navbarLink.isVisible().catch(() => false);
 
     if (isNavbarVisible) {
@@ -142,6 +152,16 @@ test.describe("Basic User Flows", () => {
   });
 
   test("should navigate via navbar links", async ({ page }) => {
+    // Check if we're on mobile (hamburger menu visible)
+    const hamburgerMenu = page.locator('button:has(.pi-bars)');
+    const isMobile = await hamburgerMenu.isVisible().catch(() => false);
+
+    if (isMobile) {
+      // Open mobile menu first
+      await hamburgerMenu.click();
+      await page.waitForTimeout(500);
+    }
+
     // Check if navbar links are present and visible
     const navLinks = page.locator("nav a[href]");
     const linkCount = await navLinks.count();
@@ -236,28 +256,30 @@ test.describe("Settings and Configuration", () => {
   });
 
   test("should access settings page", async ({ page }) => {
+    // Check if we're on mobile (hamburger menu visible)
+    const hamburgerMenu = page.locator('button:has(.pi-bars)');
+    const isMobile = await hamburgerMenu.isVisible().catch(() => false);
+
+    if (isMobile) {
+      // Open mobile menu first
+      await hamburgerMenu.click();
+      await page.waitForTimeout(500);
+    }
+
     // Try to find settings link/button
-    const settingsLinks = page.locator('a[href*="settings"], button[title*="settings"], [data-testid="settings"]');
-    const settingsCount = await settingsLinks.count();
+    const settingsLink = page.getByRole('link', { name: 'Settings', exact: true });
+    const isVisible = await settingsLink.isVisible().catch(() => false);
 
-    if (settingsCount > 0) {
-      const firstLink = settingsLinks.first();
-      const isVisible = await firstLink.isVisible();
+    if (isVisible) {
+      await settingsLink.click();
+      await page.waitForTimeout(1000);
 
-      if (isVisible) {
-        await firstLink.click();
-        await page.waitForTimeout(1000);
-
-        // Check if settings page loaded
-        const settingsContent = page.locator('[data-testid="settings"], .settings, h1:has-text("Settings")');
-        const contentCount = await settingsContent.count();
-        expect(contentCount).toBeGreaterThan(0);
-      } else {
-        // Settings link not visible - still passes
-        expect(true).toBe(true);
-      }
+      // Check if settings page loaded
+      const settingsContent = page.locator('[data-testid="settings"], .settings, h1:has-text("Settings")');
+      const contentCount = await settingsContent.count();
+      expect(contentCount).toBeGreaterThan(0);
     } else {
-      // Settings may not be accessible from home page
+      // Settings link not visible - still passes
       expect(true).toBe(true);
     }
   });
@@ -485,8 +507,19 @@ test.describe("API Integration Tests", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
+    // Check if we're on mobile by seeing if desktop nav links are hidden
+    const desktopNavLink = page.locator('nav .hidden.md\\:flex a[href="/dashboard"]').first();
+    const isDesktopVisible = await desktopNavLink.isVisible().catch(() => false);
+
+    if (!isDesktopVisible) {
+      // We're on mobile - open mobile menu first
+      const hamburgerMenu = page.locator('button.md\\:hidden');
+      await hamburgerMenu.click();
+      await page.waitForTimeout(500);
+    }
+
     // Click on Dashboard link in navbar
-    const dashboardLink = page.locator('nav a[href="/dashboard"]');
+    const dashboardLink = page.getByRole('link', { name: 'Dashboard', exact: true });
     await expect(dashboardLink).toBeVisible();
     await dashboardLink.click();
 
@@ -507,8 +540,19 @@ test.describe("API Integration Tests", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
+    // Check if we're on mobile by seeing if desktop nav links are hidden
+    const desktopNavLink = page.locator('nav .hidden.md\\:flex a[href="/settings"]').first();
+    const isDesktopVisible = await desktopNavLink.isVisible().catch(() => false);
+
+    if (!isDesktopVisible) {
+      // We're on mobile - open mobile menu first
+      const hamburgerMenu = page.locator('button.md\\:hidden');
+      await hamburgerMenu.click();
+      await page.waitForTimeout(500);
+    }
+
     // Click on Settings link in navbar
-    const settingsLink = page.locator('nav a[href="/settings"]');
+    const settingsLink = page.getByRole('link', { name: 'Settings' });
     await expect(settingsLink).toBeVisible();
     await settingsLink.click();
 
