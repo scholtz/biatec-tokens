@@ -27,15 +27,10 @@
         <div class="mt-12 space-y-6">
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Network Guidance</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card
-              v-for="network in tokenStore.networkGuidance"
-              :key="network.name"
-              variant="glass"
-              padding="lg"
-            >
+            <Card v-for="network in tokenStore.networkGuidance" :key="network.name" variant="glass" padding="lg">
               <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ network.displayName }}</h3>
               <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">{{ network.description }}</p>
-              
+
               <div class="space-y-4">
                 <!-- Fees -->
                 <div>
@@ -58,12 +53,7 @@
                   </h4>
                   <div class="text-xs text-gray-600 dark:text-gray-400 pl-6">
                     <div class="flex flex-wrap gap-2 mb-2">
-                      <Badge
-                        v-for="provider in network.metadataHosting.recommended"
-                        :key="provider"
-                        variant="info"
-                        size="sm"
-                      >
+                      <Badge v-for="provider in network.metadataHosting.recommended" :key="provider" variant="info" size="sm">
                         {{ provider }}
                       </Badge>
                     </div>
@@ -97,12 +87,7 @@
                     Best For
                   </h4>
                   <div class="flex flex-wrap gap-2 pl-6">
-                    <Badge
-                      v-for="useCase in network.bestFor"
-                      :key="useCase"
-                      variant="success"
-                      size="sm"
-                    >
+                    <Badge v-for="useCase in network.bestFor" :key="useCase" variant="success" size="sm">
                       {{ useCase }}
                     </Badge>
                   </div>
@@ -145,21 +130,13 @@
 </template>
 
 <script setup lang="ts">
-import { useTokenStore } from '../stores/tokens';
-import MainLayout from '../layout/MainLayout.vue';
-import TokenStandardsComparison from '../components/TokenStandardsComparison.vue';
-import Card from '../components/ui/Card.vue';
-import Badge from '../components/ui/Badge.vue';
-import Button from '../components/ui/Button.vue';
-import {
-  CurrencyDollarIcon,
-  ServerIcon,
-  ShieldCheckIcon,
-  CheckBadgeIcon,
-  PlusCircleIcon,
-  ChartBarIcon,
-  BuildingOfficeIcon,
-} from '@heroicons/vue/24/outline';
+import { useTokenStore } from "../stores/tokens";
+import MainLayout from "../layout/MainLayout.vue";
+import TokenStandardsComparison from "../components/TokenStandardsComparison.vue";
+import Card from "../components/ui/Card.vue";
+import Badge from "../components/ui/Badge.vue";
+import Button from "../components/ui/Button.vue";
+import { CurrencyDollarIcon, ServerIcon, ShieldCheckIcon, CheckBadgeIcon, PlusCircleIcon, ChartBarIcon, BuildingOfficeIcon } from "@heroicons/vue/24/outline";
 
 const tokenStore = useTokenStore();
 </script>

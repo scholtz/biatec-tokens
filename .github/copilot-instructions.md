@@ -185,6 +185,7 @@ src/
 ### E2E Test Writing Guidelines
 
 When writing E2E tests:
+
 - **Always wait for page load**: Use `await page.waitForLoadState("networkidle")` after navigation
 - **Use robust selectors**: Prefer `getByRole()`, `getByText()` over CSS selectors
 - **Add timeouts**: Use `{ timeout: 10000 }` for visibility checks to handle slow loads
@@ -205,19 +206,22 @@ await page.waitForLoadState("networkidle");
 await expect(page).toHaveTitle(/Expected Title/);
 
 // Find button with flexible text matching
-const button = page.locator('button').filter({ hasText: /Button Text/i }).first();
+const button = page
+  .locator("button")
+  .filter({ hasText: /Button Text/i })
+  .first();
 await expect(button).toBeVisible({ timeout: 10000 });
 
 // Test localStorage persistence
 await page.evaluate(() => {
-  localStorage.setItem('key', 'value');
+  localStorage.setItem("key", "value");
 });
 await page.reload();
-const value = await page.evaluate(() => localStorage.getItem('key'));
-expect(value).toBe('value');
+const value = await page.evaluate(() => localStorage.getItem("key"));
+expect(value).toBe("value");
 
 // Handle optional elements
-const element = page.locator('selector');
+const element = page.locator("selector");
 const isVisible = await element.isVisible().catch(() => false);
 expect(isVisible || true).toBe(true); // Pass if element not found
 ```
