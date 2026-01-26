@@ -16,7 +16,7 @@
             </router-link>
           </div>
           <p class="text-gray-600 dark:text-gray-300 text-lg">
-            Comprehensive comparison of supported token standards across Algorand-based networks (VOI, Aramid) and Ethereum
+            Comprehensive comparison of supported token standards across AVM chains (Algorand mainnet, testnet, VOI, Aramid) and EVM chains (Ethereum, Arbitrum, Base)
           </p>
         </div>
 

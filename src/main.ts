@@ -74,6 +74,38 @@ const networks = new NetworkConfigBuilder()
   })
   .build();
 
+// EVM Network Configurations (for future multi-chain support)
+// const evmNetworks = {
+//   ethereum: {
+//     chainId: 1,
+//     name: "Ethereum",
+//     rpcUrl: "https://mainnet.infura.io/v3/YOUR_INFURA_KEY",
+//     blockExplorerUrl: "https://etherscan.io",
+//     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+//   },
+//   arbitrum: {
+//     chainId: 42161,
+//     name: "Arbitrum One",
+//     rpcUrl: "https://arb1.arbitrum.io/rpc",
+//     blockExplorerUrl: "https://arbiscan.io",
+//     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+//   },
+//   base: {
+//     chainId: 8453,
+//     name: "Base",
+//     rpcUrl: "https://mainnet.base.org",
+//     blockExplorerUrl: "https://basescan.org",
+//     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+//   },
+//   sepolia: {
+//     chainId: 11155111,
+//     name: "Sepolia",
+//     rpcUrl: "https://sepolia.infura.io/v3/YOUR_INFURA_KEY",
+//     blockExplorerUrl: "https://sepolia.etherscan.io",
+//     nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 },
+//   },
+// };
+
 try {
   app.use(WalletManagerPlugin, {
     wallets: [
@@ -86,10 +118,10 @@ try {
       //WalletId.DEFLY_WEB,
       WalletId.EXODUS,
       // WalletId.PERA,
-      // {
-      //   id: WalletId.WALLETCONNECT,
-      //   options: { projectId: 'fcfde0713d43baa0d23be0773c80a72b' },
-      // },
+      {
+        id: WalletId.WALLETCONNECT,
+        options: { projectId: "fcfde0713d43baa0d23be0773c80a72b" },
+      },
       // WalletId.KMD,
       WalletId.KIBISIS,
       WalletId.LUTE,

@@ -58,7 +58,7 @@
         <div class="section-padding border-t border-gray-200 dark:border-gray-800">
           <div class="text-center mb-12">
             <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">Supported Token Standards</h2>
-            <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Create tokens across multiple blockchain standards with a unified interface</p>
+            <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Create tokens across multiple blockchain standards with a unified interface. ERC standards for EVM chains (Ethereum, Arbitrum, Base) and ASA/ARC standards for AVM chains (Algorand, VOI, Aramid).</p>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card v-for="standard in tokenStore.tokenStandards" :key="standard.name" variant="default" hover class="group">

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is a Vue 3 + TypeScript frontend application for managing and deploying tokens on Algorand-based networks (VOI, Aramid). The application provides a user interface for creating, managing, and deploying various token standards with wallet integration.
+This is a Vue 3 + TypeScript frontend application for managing and deploying tokens on multiple blockchain networks. The application provides a user interface for creating, managing, and deploying various token standards with wallet integration across both EVM chains (Ethereum, Arbitrum, Base) and AVM chains (Algorand mainnet, Algorand testnet, VOI, Aramid).
 
 ## Tech Stack
 
@@ -12,8 +12,8 @@ This is a Vue 3 + TypeScript frontend application for managing and deploying tok
 - **Styling**: Tailwind CSS with custom configuration and dark mode support
 - **State Management**: Pinia stores
 - **Router**: Vue Router
-- **Blockchain**: Algorand SDK (algosdk) with wallet integrations
-- **Wallet Support**: @txnlab/use-wallet-vue, Pera Wallet, Defly Connect, Lute Connect, WalletConnect
+- **Blockchain**: Multi-chain support with Algorand SDK (algosdk) for AVM chains and ethers.js/web3.js for EVM chains
+- **Wallet Support**: @txnlab/use-wallet-vue for AVM chains, MetaMask/WalletConnect for EVM chains
 - **Testing**:
   - **Unit Tests**: Vitest + Vue Test Utils
   - **E2E Tests**: Playwright (cross-browser testing)
@@ -105,13 +105,16 @@ src/
 - Existing stores: `auth`, `tokens`, `theme`, `settings`, `subscription`
 - Follow existing store patterns when creating new ones
 
-### Algorand/Blockchain Integration
+### Blockchain Integration
 
-- Use `algosdk` for blockchain interactions
-- Wallet integration via `@txnlab/use-wallet-vue`
-- Support multiple networks: VOI mainnet, Aramid mainnet, and dockernet
+- Use `algosdk` for AVM chain interactions (Algorand mainnet, testnet, VOI, Aramid)
+- Use `ethers.js` or `web3.js` for EVM chain interactions (Ethereum, Arbitrum, Base, testnets)
+- Wallet integration via `@txnlab/use-wallet-vue` for AVM chains and MetaMask/WalletConnect for EVM chains
+- Support multiple networks: AVM chains (Algorand mainnet, testnet, VOI, Aramid) and EVM chains (Ethereum mainnet, Arbitrum, Base, Sepolia testnet)
 - Network configurations defined in `main.ts`
-- Always handle wallet connection states properly
+- ERC standards (ERC20, ERC721) are for EVM chains
+- ASA and ARC standards (ASA, ARC3, ARC19, ARC69, ARC200, ARC72) are for AVM chains
+- Always handle wallet connection states properly across both chain types
 
 ### Backend API Integration
 

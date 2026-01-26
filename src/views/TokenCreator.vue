@@ -21,9 +21,7 @@
               @click="selectNetwork(network.name)"
               :class="[
                 'p-6 rounded-xl border-2 transition-all duration-200 text-left',
-                selectedNetwork === network.name
-                  ? 'border-biatec-accent bg-biatec-accent/10'
-                  : 'border-white/20 hover:border-white/40 hover:bg-white/5',
+                selectedNetwork === network.name ? 'border-biatec-accent bg-biatec-accent/10' : 'border-white/20 hover:border-white/40 hover:bg-white/5',
               ]"
             >
               <div class="flex items-start justify-between mb-3">
@@ -43,7 +41,7 @@
               </div>
             </button>
           </div>
-          
+
           <!-- Network-Specific Guidance -->
           <div v-if="selectedNetwork && currentNetworkGuidance" class="mt-6 p-5 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-lg">
             <div class="space-y-4">
@@ -54,7 +52,7 @@
                 </h4>
                 <p class="text-sm text-gray-300">{{ currentNetworkGuidance.fees.description }}</p>
               </div>
-              
+
               <div>
                 <h4 class="text-sm font-semibold text-purple-400 mb-2 flex items-center gap-2">
                   <i class="pi pi-cloud"></i>
@@ -62,16 +60,12 @@
                 </h4>
                 <p class="text-sm text-gray-300 mb-2">{{ currentNetworkGuidance.metadataHosting.description }}</p>
                 <div class="flex flex-wrap gap-2">
-                  <span 
-                    v-for="provider in currentNetworkGuidance.metadataHosting.recommended" 
-                    :key="provider"
-                    class="px-2 py-1 bg-purple-500/20 text-purple-300 rounded text-xs"
-                  >
+                  <span v-for="provider in currentNetworkGuidance.metadataHosting.recommended" :key="provider" class="px-2 py-1 bg-purple-500/20 text-purple-300 rounded text-xs">
                     {{ provider }}
                   </span>
                 </div>
               </div>
-              
+
               <div>
                 <h4 class="text-sm font-semibold text-green-400 mb-2 flex items-center gap-2">
                   <i class="pi pi-shield-check"></i>
@@ -79,28 +73,20 @@
                 </h4>
                 <p class="text-sm text-gray-300 mb-2">{{ currentNetworkGuidance.compliance.micaRelevance }}</p>
                 <ul class="space-y-1 ml-4">
-                  <li 
-                    v-for="(consideration, idx) in currentNetworkGuidance.compliance.considerations" 
-                    :key="idx"
-                    class="text-xs text-gray-400 flex items-start gap-2"
-                  >
+                  <li v-for="(consideration, idx) in currentNetworkGuidance.compliance.considerations" :key="idx" class="text-xs text-gray-400 flex items-start gap-2">
                     <i class="pi pi-check text-green-500 mt-0.5"></i>
                     <span>{{ consideration }}</span>
                   </li>
                 </ul>
               </div>
-              
+
               <div>
                 <h4 class="text-sm font-semibold text-yellow-400 mb-2 flex items-center gap-2">
                   <i class="pi pi-star"></i>
                   Best Use Cases
                 </h4>
                 <div class="flex flex-wrap gap-2">
-                  <span 
-                    v-for="useCase in currentNetworkGuidance.bestFor" 
-                    :key="useCase"
-                    class="px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded text-xs"
-                  >
+                  <span v-for="useCase in currentNetworkGuidance.bestFor" :key="useCase" class="px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded text-xs">
                     {{ useCase }}
                   </span>
                 </div>
@@ -120,13 +106,11 @@
               @click="showComplianceChecklist = !showComplianceChecklist"
               :class="[
                 'px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2',
-                showComplianceChecklist
-                  ? 'bg-biatec-accent text-gray-900'
-                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                showComplianceChecklist ? 'bg-biatec-accent text-gray-900' : 'bg-white/10 text-gray-300 hover:bg-white/20',
               ]"
             >
               <i :class="showComplianceChecklist ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
-              {{ showComplianceChecklist ? 'Hide' : 'Show' }} Checklist
+              {{ showComplianceChecklist ? "Hide" : "Show" }} Checklist
             </button>
           </div>
 
@@ -134,13 +118,9 @@
             <i class="pi pi-shield-check text-5xl text-biatec-accent/50 mb-4"></i>
             <p class="text-gray-300 mb-2">MICA-compliant token launch preparation</p>
             <p class="text-sm text-gray-400 mb-4">
-              Complete {{ complianceStore.metrics.completedChecks }} of {{ complianceStore.metrics.totalChecks }} compliance items
-              ({{ complianceStore.metrics.completionPercentage }}% complete)
+              Complete {{ complianceStore.metrics.completedChecks }} of {{ complianceStore.metrics.totalChecks }} compliance items ({{ complianceStore.metrics.completionPercentage }}% complete)
             </p>
-            <button
-              @click="showComplianceChecklist = true"
-              class="btn-primary px-6 py-2 rounded-lg text-gray-900 dark:text-white font-semibold inline-flex items-center gap-2"
-            >
+            <button @click="showComplianceChecklist = true" class="btn-primary px-6 py-2 rounded-lg text-gray-900 dark:text-white font-semibold inline-flex items-center gap-2">
               <i class="pi pi-check-square"></i>
               Open Compliance Checklist
             </button>
@@ -160,26 +140,19 @@
               @click="showCompetitorParity = !showCompetitorParity"
               :class="[
                 'px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2',
-                showCompetitorParity
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                showCompetitorParity ? 'bg-purple-500 text-white' : 'bg-white/10 text-gray-300 hover:bg-white/20',
               ]"
             >
               <i :class="showCompetitorParity ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
-              {{ showCompetitorParity ? 'Hide' : 'Show' }} Parity Checklist
+              {{ showCompetitorParity ? "Hide" : "Show" }} Parity Checklist
             </button>
           </div>
 
           <div v-if="!showCompetitorParity" class="text-center py-8">
             <i class="pi pi-chart-bar text-5xl text-purple-400/50 mb-4"></i>
             <p class="text-gray-300 mb-2">Track feature parity with leading Algorand tools</p>
-            <p class="text-sm text-gray-400 mb-4">
-              Ensure Biatec Tokens stays competitive with Pera Wallet, Defly, and Folks Finance
-            </p>
-            <button
-              @click="showCompetitorParity = true"
-              class="bg-purple-500 hover:bg-purple-600 px-6 py-2 rounded-lg text-white font-semibold inline-flex items-center gap-2 transition-all"
-            >
+            <p class="text-sm text-gray-400 mb-4">Ensure Biatec Tokens stays competitive with Pera Wallet, Defly, and Folks Finance</p>
+            <button @click="showCompetitorParity = true" class="bg-purple-500 hover:bg-purple-600 px-6 py-2 rounded-lg text-white font-semibold inline-flex items-center gap-2 transition-all">
               <i class="pi pi-chart-bar"></i>
               Open Parity Tracker
             </button>
@@ -195,10 +168,7 @@
 
         <!-- Wallet Attestation (NEW - Optional) -->
         <div class="mb-8">
-          <WalletAttestationForm 
-            v-model="tokenForm.attestations"
-            v-model:enabled="tokenForm.attestationEnabled"
-          />
+          <WalletAttestationForm v-model="tokenForm.attestations" v-model:enabled="tokenForm.attestationEnabled" />
         </div>
 
         <!-- MICA Compliance Metadata (NEW - For ARC-200) -->
@@ -224,18 +194,12 @@
               @click="applyTemplate(template.id)"
               :class="[
                 'p-5 rounded-xl border-2 transition-all duration-200 text-left',
-                selectedTemplate === template.id
-                  ? 'border-biatec-accent bg-biatec-accent/10'
-                  : 'border-white/20 hover:border-white/40 hover:bg-white/5',
+                selectedTemplate === template.id ? 'border-biatec-accent bg-biatec-accent/10' : 'border-white/20 hover:border-white/40 hover:bg-white/5',
               ]"
             >
               <div class="flex items-start justify-between mb-3">
                 <h3 class="font-semibold text-gray-900 dark:text-white text-base">{{ template.name }}</h3>
-                <span
-                  v-if="template.micaCompliant"
-                  class="px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded-lg flex-shrink-0 ml-2"
-                  title="MICA Compliant"
-                >
+                <span v-if="template.micaCompliant" class="px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded-lg flex-shrink-0 ml-2" title="MICA Compliant">
                   <i class="pi pi-shield-check mr-1"></i>MICA
                 </span>
               </div>
@@ -244,9 +208,7 @@
                 <span class="px-2 py-1 bg-blue-500/20 text-blue-400 rounded">{{ template.standard }}</span>
                 <span class="px-2 py-1 bg-purple-500/20 text-purple-400 rounded">{{ template.network }}</span>
               </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
-                <strong>Use cases:</strong> {{ template.useCases.slice(0, 2).join(", ") }}
-              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400"><strong>Use cases:</strong> {{ template.useCases.slice(0, 2).join(", ") }}</div>
             </button>
           </div>
           <div v-if="selectedTemplate" class="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
@@ -263,12 +225,7 @@
                 </p>
               </div>
             </div>
-            <button
-              @click="clearTemplate"
-              class="mt-3 text-xs text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              Clear template and customize manually
-            </button>
+            <button @click="clearTemplate" class="mt-3 text-xs text-blue-400 hover:text-blue-300 transition-colors">Clear template and customize manually</button>
           </div>
         </div>
 
@@ -297,7 +254,7 @@
               <p class="text-sm text-gray-300">{{ standard.description }}</p>
             </button>
           </div>
-          
+
           <!-- Standard Detailed Guidance -->
           <div v-if="selectedStandard && currentStandardDetails" class="mt-6 p-5 bg-gradient-to-r from-indigo-500/10 to-cyan-500/10 border border-indigo-500/20 rounded-lg">
             <div class="space-y-4">
@@ -305,7 +262,7 @@
                 <h4 class="text-sm font-semibold text-indigo-400 mb-2">About {{ currentStandardDetails.name }}</h4>
                 <p class="text-sm text-gray-300">{{ currentStandardDetails.detailedDescription }}</p>
               </div>
-              
+
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h5 class="text-xs font-semibold text-green-400 mb-2 flex items-center gap-1">
@@ -313,43 +270,31 @@
                     Advantages
                   </h5>
                   <ul class="space-y-1">
-                    <li 
-                      v-for="pro in currentStandardDetails.pros" 
-                      :key="pro"
-                      class="text-xs text-gray-400 flex items-start gap-2"
-                    >
+                    <li v-for="pro in currentStandardDetails.pros" :key="pro" class="text-xs text-gray-400 flex items-start gap-2">
                       <i class="pi pi-check text-green-500 mt-0.5"></i>
                       <span>{{ pro }}</span>
                     </li>
                   </ul>
                 </div>
-                
+
                 <div>
                   <h5 class="text-xs font-semibold text-orange-400 mb-2 flex items-center gap-1">
                     <i class="pi pi-exclamation-triangle"></i>
                     Considerations
                   </h5>
                   <ul class="space-y-1">
-                    <li 
-                      v-for="con in currentStandardDetails.cons" 
-                      :key="con"
-                      class="text-xs text-gray-400 flex items-start gap-2"
-                    >
+                    <li v-for="con in currentStandardDetails.cons" :key="con" class="text-xs text-gray-400 flex items-start gap-2">
                       <i class="pi pi-info-circle text-orange-500 mt-0.5"></i>
                       <span>{{ con }}</span>
                     </li>
                   </ul>
                 </div>
               </div>
-              
+
               <div>
                 <h5 class="text-xs font-semibold text-cyan-400 mb-2">Use this standard when:</h5>
                 <ul class="space-y-1">
-                  <li 
-                    v-for="when in currentStandardDetails.useWhen" 
-                    :key="when"
-                    class="text-xs text-gray-400 flex items-start gap-2"
-                  >
+                  <li v-for="when in currentStandardDetails.useWhen" :key="when" class="text-xs text-gray-400 flex items-start gap-2">
                     <i class="pi pi-arrow-right text-cyan-500 mt-0.5"></i>
                     <span>{{ when }}</span>
                   </li>
@@ -486,36 +431,23 @@
                 <i class="pi pi-shield-check text-green-400"></i>
                 Pre-Deployment Compliance Status
               </h3>
-              
+
               <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
                 <div class="flex items-center gap-2 text-sm">
-                  <i :class="[
-                    'pi pi-check-circle',
-                    tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.KYC_AML) ? 'text-green-400' : 'text-gray-500'
-                  ]"></i>
-                  <span :class="tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.KYC_AML) ? 'text-white' : 'text-gray-400'">
-                    KYC/AML Verified
-                  </span>
+                  <i :class="['pi pi-check-circle', tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.KYC_AML) ? 'text-green-400' : 'text-gray-500']"></i>
+                  <span :class="tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.KYC_AML) ? 'text-white' : 'text-gray-400'"> KYC/AML Verified </span>
                 </div>
-                
+
                 <div class="flex items-center gap-2 text-sm">
-                  <i :class="[
-                    'pi pi-check-circle',
-                    tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.ACCREDITED_INVESTOR) ? 'text-green-400' : 'text-gray-500'
-                  ]"></i>
-                  <span :class="tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.ACCREDITED_INVESTOR) ? 'text-white' : 'text-gray-400'">
-                    Accredited Investor
-                  </span>
+                  <i
+                    :class="['pi pi-check-circle', tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.ACCREDITED_INVESTOR) ? 'text-green-400' : 'text-gray-500']"
+                  ></i>
+                  <span :class="tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.ACCREDITED_INVESTOR) ? 'text-white' : 'text-gray-400'"> Accredited Investor </span>
                 </div>
-                
+
                 <div class="flex items-center gap-2 text-sm">
-                  <i :class="[
-                    'pi pi-check-circle',
-                    tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.JURISDICTION) ? 'text-green-400' : 'text-gray-500'
-                  ]"></i>
-                  <span :class="tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.JURISDICTION) ? 'text-white' : 'text-gray-400'">
-                    Jurisdiction Approved
-                  </span>
+                  <i :class="['pi pi-check-circle', tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.JURISDICTION) ? 'text-green-400' : 'text-gray-500']"></i>
+                  <span :class="tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.JURISDICTION) ? 'text-white' : 'text-gray-400'"> Jurisdiction Approved </span>
                 </div>
               </div>
 
@@ -586,9 +518,9 @@ const imageInput = ref<HTMLInputElement>();
 const showComplianceChecklist = ref(false);
 const showCompetitorParity = ref(false);
 
-const TEMPLATE_STORAGE_KEY = 'biatec_selected_template';
-const NETWORK_STORAGE_KEY = 'biatec_selected_network';
-const STANDARD_STORAGE_KEY = 'biatec_selected_standard';
+const TEMPLATE_STORAGE_KEY = "biatec_selected_template";
+const NETWORK_STORAGE_KEY = "biatec_selected_network";
+const STANDARD_STORAGE_KEY = "biatec_selected_standard";
 
 const tokenForm = reactive({
   name: "",
@@ -613,7 +545,7 @@ watch(selectedNetwork, (newNetwork) => {
     localStorage.setItem(NETWORK_STORAGE_KEY, newNetwork);
   } else {
     // Default to 'Both' when network is deselected
-    complianceStore.setNetwork('Both');
+    complianceStore.setNetwork("Both");
     localStorage.removeItem(NETWORK_STORAGE_KEY);
   }
 });
@@ -641,17 +573,17 @@ onMounted(() => {
   const savedTemplate = localStorage.getItem(TEMPLATE_STORAGE_KEY);
   const savedNetwork = localStorage.getItem(NETWORK_STORAGE_KEY);
   const savedStandard = localStorage.getItem(STANDARD_STORAGE_KEY);
-  
+
   // Validate and restore template (which also sets standard and network)
-  if (savedTemplate && tokenStore.tokenTemplates.find(t => t.id === savedTemplate)) {
+  if (savedTemplate && tokenStore.tokenTemplates.find((t) => t.id === savedTemplate)) {
     applyTemplate(savedTemplate);
   } else if (savedStandard) {
     // Validate that the saved standard exists before restoring
-    if (tokenStore.tokenStandards.find(s => s.name === savedStandard)) {
+    if (tokenStore.tokenStandards.find((s) => s.name === savedStandard)) {
       selectedStandard.value = savedStandard;
     }
   }
-  
+
   // Only restore network if no template was applied and network value is valid
   if (!savedTemplate && savedNetwork) {
     const validNetworks: Array<"VOI" | "Aramid"> = ["VOI", "Aramid"];
@@ -661,17 +593,11 @@ onMounted(() => {
   }
 });
 
-const currentTemplate = computed(() => 
-  selectedTemplate.value ? tokenStore.tokenTemplates.find((t) => t.id === selectedTemplate.value) : undefined
-);
+const currentTemplate = computed(() => (selectedTemplate.value ? tokenStore.tokenTemplates.find((t) => t.id === selectedTemplate.value) : undefined));
 
-const currentNetworkGuidance = computed(() => 
-  selectedNetwork.value ? tokenStore.networkGuidance.find((n) => n.name === selectedNetwork.value) : undefined
-);
+const currentNetworkGuidance = computed(() => (selectedNetwork.value ? tokenStore.networkGuidance.find((n) => n.name === selectedNetwork.value) : undefined));
 
-const currentStandardDetails = computed(() => 
-  selectedStandard.value ? tokenStore.tokenStandards.find((s) => s.name === selectedStandard.value) : undefined
-);
+const currentStandardDetails = computed(() => (selectedStandard.value ? tokenStore.tokenStandards.find((s) => s.name === selectedStandard.value) : undefined));
 
 const selectNetwork = (network: "VOI" | "Aramid") => {
   selectedNetwork.value = network;
@@ -708,12 +634,12 @@ const applyTemplate = (templateId: string) => {
     tokenForm.decimals = template.defaults.decimals ?? 6;
     tokenForm.description = template.defaults.description;
     tokenForm.type = template.type;
-    
+
     // Auto-select network if template specifies one
     if (template.network !== "Both") {
       selectedNetwork.value = template.network;
     }
-    
+
     subscriptionStore.trackGuidanceInteraction();
   }
 };
@@ -729,12 +655,12 @@ const createToken = async () => {
   validationError.value = null;
 
   // Validate MICA compliance metadata for ARC-200 tokens
-  if (selectedStandard.value === 'ARC200' && !tokenForm.complianceMetadataValid) {
-    validationError.value = 'MICA compliance metadata is required for ARC-200 tokens. Please complete all required fields.';
+  if (selectedStandard.value === "ARC200" && !tokenForm.complianceMetadataValid) {
+    validationError.value = "MICA compliance metadata is required for ARC-200 tokens. Please complete all required fields.";
     // Scroll to the compliance form
     const complianceForm = document.querySelector('[class~="MicaComplianceForm"]');
     if (complianceForm) {
-      complianceForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      complianceForm.scrollIntoView({ behavior: "smooth", block: "center" });
     }
     return;
   }
@@ -744,20 +670,21 @@ const createToken = async () => {
 
   try {
     // Prepare attestation metadata if enabled
-    const attestationMetadata = tokenForm.attestationEnabled && tokenForm.attestations.length > 0
-      ? {
-          enabled: true,
-          attestations: tokenForm.attestations,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          complianceSummary: {
-            kycCompliant: tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.KYC_AML),
-            accreditedInvestor: tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.ACCREDITED_INVESTOR),
-            jurisdictionApproved: tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.JURISDICTION),
-            overallStatus: tokenForm.attestations.length >= 2 ? 'compliant' : (tokenForm.attestations.length === 1 ? 'partial' : 'non_compliant') as 'compliant' | 'partial' | 'non_compliant',
-          },
-        }
-      : undefined;
+    const attestationMetadata =
+      tokenForm.attestationEnabled && tokenForm.attestations.length > 0
+        ? {
+            enabled: true,
+            attestations: tokenForm.attestations,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            complianceSummary: {
+              kycCompliant: tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.KYC_AML),
+              accreditedInvestor: tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.ACCREDITED_INVESTOR),
+              jurisdictionApproved: tokenForm.attestations.some((att: WalletAttestation) => att.type === AttestationType.JURISDICTION),
+              overallStatus: tokenForm.attestations.length >= 2 ? "compliant" : ((tokenForm.attestations.length === 1 ? "partial" : "non_compliant") as "compliant" | "partial" | "non_compliant"),
+            },
+          }
+        : undefined;
 
     await tokenStore.createToken({
       name: tokenForm.name,
@@ -774,11 +701,7 @@ const createToken = async () => {
     });
 
     // Track successful creation with details
-    subscriptionStore.trackTokenCreationSuccess(
-      selectedStandard.value,
-      selectedTemplate.value || undefined,
-      selectedNetwork.value || undefined
-    );
+    subscriptionStore.trackTokenCreationSuccess(selectedStandard.value, selectedTemplate.value || undefined, selectedNetwork.value || undefined);
 
     // Reset form
     Object.assign(tokenForm, {

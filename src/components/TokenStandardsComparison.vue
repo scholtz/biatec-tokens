@@ -181,8 +181,8 @@ const tokenStore = useTokenStore();
 
 const networkFilters = [
   { label: 'All Networks', value: 'all' },
-  { label: 'Algorand (VOI/Aramid)', value: 'Algorand' },
-  { label: 'Ethereum', value: 'Ethereum' },
+  { label: 'AVM Chains (Algorand, VOI, Aramid)', value: 'AVM' },
+  { label: 'EVM Chains (Ethereum, Arbitrum, Base)', value: 'EVM' },
 ];
 
 const selectedNetwork = ref('all');
