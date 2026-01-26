@@ -138,6 +138,7 @@ const handleCreateToken = () => {
   if (isConnected.value) {
     router.push("/create");
   } else {
+    localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, "/create");
     showOnboardingWizard.value = true;
   }
 };
@@ -146,6 +147,7 @@ const handleViewDashboard = () => {
   if (isConnected.value) {
     router.push("/dashboard");
   } else {
+    localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, "/dashboard");
     showOnboardingWizard.value = true;
   }
 };
