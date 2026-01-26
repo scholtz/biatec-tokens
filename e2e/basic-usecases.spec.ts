@@ -57,11 +57,11 @@ test.describe("Basic User Flows", () => {
     // Check if sidebar is visible (on desktop)
     const sidebarLink = page.locator('aside a[href="/dashboard"]').first();
     const isSidebarVisible = await sidebarLink.isVisible().catch(() => false);
-    
+
     if (isSidebarVisible) {
       await sidebarLink.click();
       await page.waitForTimeout(1000);
-      
+
       // Check if we're still on a functional page
       const body = page.locator("body");
       await expect(body).toBeVisible();
@@ -75,11 +75,11 @@ test.describe("Basic User Flows", () => {
     // Check if navbar dashboard link is visible
     const navbarLink = page.locator('nav a[href="/dashboard"]').first();
     const isNavbarVisible = await navbarLink.isVisible().catch(() => false);
-    
+
     if (isNavbarVisible) {
       await navbarLink.click();
       await page.waitForTimeout(1000);
-      
+
       // Check if we're still on a functional page
       const body = page.locator("body");
       await expect(body).toBeVisible();
@@ -103,7 +103,7 @@ test.describe("Basic User Flows", () => {
     // Check if dashboard loads (should show header or content)
     const dashboardHeader = page.getByRole("heading", { name: /Token Dashboard/i });
     const isDashboardVisible = await dashboardHeader.isVisible().catch(() => false);
-    
+
     if (isDashboardVisible) {
       await expect(dashboardHeader).toBeVisible({ timeout: 10000 });
     } else {

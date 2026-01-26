@@ -1,21 +1,14 @@
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div
-        v-if="isOpen"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-        @click.self="handleClose"
-      >
+      <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" @click.self="handleClose">
         <div class="glass-effect rounded-2xl p-6 max-w-2xl w-full shadow-2xl border border-white/10 max-h-[90vh] overflow-y-auto">
           <!-- Header -->
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-2xl font-bold text-white">
               {{ currentStepInfo.title }}
             </h2>
-            <button
-              @click="handleClose"
-              class="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
-            >
+            <button @click="handleClose" class="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors">
               <i class="pi pi-times text-xl"></i>
             </button>
           </div>
@@ -27,10 +20,7 @@
               <span class="text-sm text-gray-400">{{ Math.round(((currentStep + 1) / steps.length) * 100) }}%</span>
             </div>
             <div class="h-2 bg-white/10 rounded-full overflow-hidden">
-              <div
-                class="h-full bg-gradient-to-r from-biatec-accent to-biatec-teal transition-all duration-500"
-                :style="{ width: `${((currentStep + 1) / steps.length) * 100}%` }"
-              ></div>
+              <div class="h-full bg-gradient-to-r from-biatec-accent to-biatec-teal transition-all duration-500" :style="{ width: `${((currentStep + 1) / steps.length) * 100}%` }"></div>
             </div>
           </div>
 
@@ -42,9 +32,7 @@
                 <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <i class="pi pi-wallet text-4xl text-white"></i>
                 </div>
-                <p class="text-gray-300 text-lg mb-6">
-                  Welcome! Let's get you connected to create and manage tokens on Algorand-based networks.
-                </p>
+                <p class="text-gray-300 text-lg mb-6">Welcome! Let's get you connected to create and manage tokens on Algorand-based networks.</p>
               </div>
 
               <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-5">
@@ -52,9 +40,7 @@
                   <i class="pi pi-info-circle"></i>
                   Understanding Networks
                 </h3>
-                <p class="text-gray-300 text-sm mb-4">
-                  This platform supports multiple Algorand-based networks, each optimized for different use cases:
-                </p>
+                <p class="text-gray-300 text-sm mb-4">This platform supports multiple Algorand-based networks, each optimized for different use cases:</p>
                 <div class="space-y-3">
                   <div class="flex items-start gap-3">
                     <i class="pi pi-check-circle text-green-400 mt-1"></i>
@@ -76,9 +62,7 @@
 
             <!-- Step 2: Network Selection -->
             <div v-if="currentStep === 1" class="space-y-4">
-              <p class="text-gray-300 mb-4">
-                Select the network you want to connect to. You can change this later in settings.
-              </p>
+              <p class="text-gray-300 mb-4">Select the network you want to connect to. You can change this later in settings.</p>
 
               <div class="space-y-3">
                 <button
@@ -87,27 +71,15 @@
                   @click="selectedNetwork = network.id"
                   :class="[
                     'w-full p-5 rounded-xl text-left transition-all border-2',
-                    selectedNetwork === network.id
-                      ? 'border-biatec-accent bg-biatec-accent/10'
-                      : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20',
+                    selectedNetwork === network.id ? 'border-biatec-accent bg-biatec-accent/10' : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20',
                   ]"
                 >
                   <div class="flex items-start justify-between mb-3">
                     <div class="flex-1">
                       <div class="flex items-center gap-2 mb-2">
                         <h3 class="text-white font-semibold text-lg">{{ network.displayName }}</h3>
-                        <span
-                          v-if="!network.isTestnet"
-                          class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-500/20 text-green-400"
-                        >
-                          Mainnet
-                        </span>
-                        <span
-                          v-else
-                          class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-500/20 text-yellow-400"
-                        >
-                          Testnet
-                        </span>
+                        <span v-if="!network.isTestnet" class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-500/20 text-green-400"> Mainnet </span>
+                        <span v-else class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-500/20 text-yellow-400"> Testnet </span>
                       </div>
                       <p class="text-sm text-gray-400 mb-3">{{ network.genesisId }}</p>
                       <div class="text-xs text-gray-500">
@@ -127,8 +99,7 @@
                   <i class="pi pi-lightbulb text-purple-400"></i>
                   <div class="text-sm text-gray-300">
                     <strong class="text-purple-400">Recommended:</strong>
-                    Choose VOI Mainnet for general token creation and DeFi applications.
-                    Select Aramid Mainnet if you need enhanced compliance features for enterprise use.
+                    Choose VOI Mainnet for general token creation and DeFi applications. Select Aramid Mainnet if you need enhanced compliance features for enterprise use.
                   </div>
                 </div>
               </div>
@@ -136,9 +107,7 @@
 
             <!-- Step 3: Wallet Selection with Info -->
             <div v-if="currentStep === 2" class="space-y-4">
-              <p class="text-gray-300 mb-4">
-                Choose a compatible wallet to connect. Make sure you have it installed and set up.
-              </p>
+              <p class="text-gray-300 mb-4">Choose a compatible wallet to connect. Make sure you have it installed and set up.</p>
 
               <div v-if="isConnecting" class="text-center py-12">
                 <div class="relative inline-block">
@@ -167,12 +136,7 @@
                         <li>Try a different wallet if issue persists</li>
                       </ul>
                     </div>
-                    <button
-                      @click="connectionError = null"
-                      class="px-3 py-1.5 text-xs bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg transition-colors"
-                    >
-                      Try again
-                    </button>
+                    <button @click="connectionError = null" class="px-3 py-1.5 text-xs bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg transition-colors">Try again</button>
                   </div>
                 </div>
               </div>
@@ -192,11 +156,7 @@
                       <div class="text-white font-semibold mb-1">{{ wallet.name }}</div>
                       <div class="text-sm text-gray-400">{{ wallet.description }}</div>
                       <div class="flex items-center gap-2 mt-1">
-                        <span
-                          v-for="platform in wallet.platforms"
-                          :key="platform"
-                          class="text-xs px-2 py-0.5 bg-white/5 rounded text-gray-400"
-                        >
+                        <span v-for="platform in wallet.platforms" :key="platform" class="text-xs px-2 py-0.5 bg-white/5 rounded text-gray-400">
                           {{ platform }}
                         </span>
                       </div>
@@ -212,15 +172,9 @@
                   <div class="text-sm text-gray-300">
                     <strong class="text-yellow-400">Don't have a wallet?</strong>
                     <div class="mt-2 space-y-1">
-                      <a href="https://perawallet.app/" target="_blank" class="block text-blue-400 hover:text-blue-300 underline">
-                        Download Pera Wallet →
-                      </a>
-                      <a href="https://defly.app/" target="_blank" class="block text-blue-400 hover:text-blue-300 underline">
-                        Download Defly Wallet →
-                      </a>
-                      <a href="https://www.exodus.com/" target="_blank" class="block text-blue-400 hover:text-blue-300 underline">
-                        Download Exodus Wallet →
-                      </a>
+                      <a href="https://perawallet.app/" target="_blank" class="block text-blue-400 hover:text-blue-300 underline"> Download Pera Wallet → </a>
+                      <a href="https://defly.app/" target="_blank" class="block text-blue-400 hover:text-blue-300 underline"> Download Defly Wallet → </a>
+                      <a href="https://www.exodus.com/" target="_blank" class="block text-blue-400 hover:text-blue-300 underline"> Download Exodus Wallet → </a>
                     </div>
                   </div>
                 </div>
@@ -234,9 +188,7 @@
                   <i class="pi pi-shield-check text-3xl text-white"></i>
                 </div>
                 <h3 class="text-xl font-semibold text-white mb-2">Terms & Risk Disclosure</h3>
-                <p class="text-gray-400 text-sm">
-                  Please review and accept the following before proceeding
-                </p>
+                <p class="text-gray-400 text-sm">Please review and accept the following before proceeding</p>
               </div>
 
               <div class="bg-white/5 border border-white/10 rounded-xl p-5 max-h-64 overflow-y-auto">
@@ -268,25 +220,13 @@
               <!-- Consent Checkboxes -->
               <div class="space-y-3">
                 <label class="flex items-start gap-3 p-4 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10 transition-colors">
-                  <input
-                    type="checkbox"
-                    v-model="hasReadRiskNotice"
-                    class="mt-1 w-5 h-5 rounded border-gray-600 text-biatec-accent focus:ring-biatec-accent focus:ring-offset-0"
-                  />
-                  <span class="text-sm text-gray-300">
-                    I have read and understood the risk notice and acknowledge the risks associated with crypto-assets.
-                  </span>
+                  <input type="checkbox" v-model="hasReadRiskNotice" class="mt-1 w-5 h-5 rounded border-gray-600 text-biatec-accent focus:ring-biatec-accent focus:ring-offset-0" />
+                  <span class="text-sm text-gray-300"> I have read and understood the risk notice and acknowledge the risks associated with crypto-assets. </span>
                 </label>
 
                 <label class="flex items-start gap-3 p-4 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10 transition-colors">
-                  <input
-                    type="checkbox"
-                    v-model="hasAcceptedTerms"
-                    class="mt-1 w-5 h-5 rounded border-gray-600 text-biatec-accent focus:ring-biatec-accent focus:ring-offset-0"
-                  />
-                  <span class="text-sm text-gray-300">
-                    I agree to the Terms of Service and Privacy Policy, and confirm I am responsible for compliance with applicable laws.
-                  </span>
+                  <input type="checkbox" v-model="hasAcceptedTerms" class="mt-1 w-5 h-5 rounded border-gray-600 text-biatec-accent focus:ring-biatec-accent focus:ring-offset-0" />
+                  <span class="text-sm text-gray-300"> I agree to the Terms of Service and Privacy Policy, and confirm I am responsible for compliance with applicable laws. </span>
                 </label>
               </div>
 
@@ -305,9 +245,7 @@
               </div>
               <div>
                 <h3 class="text-2xl font-bold text-white mb-2">You're All Set!</h3>
-                <p class="text-gray-300 mb-4">
-                  Your wallet is connected and ready to use.
-                </p>
+                <p class="text-gray-300 mb-4">Your wallet is connected and ready to use.</p>
                 <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg">
                   <i class="pi pi-wallet text-biatec-accent"></i>
                   <span class="text-white font-mono text-sm">{{ formattedAddress }}</span>
@@ -363,14 +301,10 @@
                 :disabled="!canProceedToNextStep"
                 class="px-8 py-3 rounded-xl text-white font-medium bg-gradient-to-r from-biatec-accent to-biatec-teal hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {{ currentStep === 2 ? 'Skip for now' : 'Continue' }}
+                {{ currentStep === 2 ? "Skip for now" : "Continue" }}
                 <i class="pi pi-chevron-right ml-2"></i>
               </button>
-              <button
-                v-else
-                @click="finishOnboarding"
-                class="px-8 py-3 rounded-xl text-white font-medium bg-gradient-to-r from-green-500 to-emerald-600 hover:opacity-90 transition-opacity"
-              >
+              <button v-else @click="finishOnboarding" class="px-8 py-3 rounded-xl text-white font-medium bg-gradient-to-r from-green-500 to-emerald-600 hover:opacity-90 transition-opacity">
                 Get Started
                 <i class="pi pi-check ml-2"></i>
               </button>
@@ -383,162 +317,160 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useWallet } from '@txnlab/use-wallet-vue'
-import { NETWORKS, type NetworkId } from '../composables/useWalletManager'
-import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from '../constants/auth'
+import { ref, computed } from "vue";
+import { useWallet } from "@txnlab/use-wallet-vue";
+import { NETWORKS, type NetworkId } from "../composables/useWalletManager";
+import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from "../constants/auth";
 
 interface Props {
-  isOpen: boolean
-  skipWelcome?: boolean
+  isOpen: boolean;
+  skipWelcome?: boolean;
 }
 
 interface Emits {
-  (e: 'close'): void
-  (e: 'complete', data: { address: string; network: NetworkId }): void
+  (e: "close"): void;
+  (e: "complete", data: { address: string; network: NetworkId }): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   skipWelcome: false,
-})
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
-const wallet = useWallet()
+const wallet = useWallet();
 
 // State
-const currentStep = ref(props.skipWelcome ? 1 : 0)
-const selectedNetwork = ref<NetworkId>('voi-mainnet')
-const isConnecting = ref(false)
-const connectionError = ref<string | null>(null)
-const hasReadRiskNotice = ref(false)
-const hasAcceptedTerms = ref(false)
-const connectedAddress = ref<string | null>(null)
+const currentStep = ref(props.skipWelcome ? 1 : 0);
+const selectedNetwork = ref<NetworkId>("voi-mainnet");
+const isConnecting = ref(false);
+const connectionError = ref<string | null>(null);
+const hasReadRiskNotice = ref(false);
+const hasAcceptedTerms = ref(false);
+const connectedAddress = ref<string | null>(null);
 
 // Steps configuration
 const steps = [
-  { id: 'welcome', title: 'Welcome to Biatec Tokens' },
-  { id: 'network', title: 'Select Your Network' },
-  { id: 'wallet', title: 'Connect Your Wallet' },
-  { id: 'compliance', title: 'Terms & Risk Disclosure' },
-  { id: 'success', title: 'Successfully Connected' },
-]
+  { id: "welcome", title: "Welcome to Biatec Tokens" },
+  { id: "network", title: "Select Your Network" },
+  { id: "wallet", title: "Connect Your Wallet" },
+  { id: "compliance", title: "Terms & Risk Disclosure" },
+  { id: "success", title: "Successfully Connected" },
+];
 
-const currentStepInfo = computed(() => steps[currentStep.value])
+const currentStepInfo = computed(() => steps[currentStep.value]);
 
-const availableNetworks = computed(() => Object.values(NETWORKS))
+const availableNetworks = computed(() => Object.values(NETWORKS));
 
 const supportedWallets = computed(() => {
   const walletInfo = [
-    { id: 'pera', name: 'Pera Wallet', description: 'Most popular Algorand wallet', icon: 'pi pi-mobile', platforms: ['iOS', 'Android', 'Web'] },
-    { id: 'defly', name: 'Defly Wallet', description: 'Feature-rich DeFi wallet', icon: 'pi pi-wallet', platforms: ['iOS', 'Android', 'Web'] },
-    { id: 'exodus', name: 'Exodus Wallet', description: 'Multi-chain wallet solution', icon: 'pi pi-globe', platforms: ['Desktop', 'Mobile'] },
-    { id: 'biatec', name: 'Biatec Wallet', description: 'Enterprise wallet solution', icon: 'pi pi-building', platforms: ['Web', 'Enterprise'] },
-    { id: 'kibisis', name: 'Kibisis', description: 'Browser extension wallet', icon: 'pi pi-window-maximize', platforms: ['Browser'] },
-    { id: 'lute', name: 'Lute Wallet', description: 'Lightweight wallet', icon: 'pi pi-credit-card', platforms: ['Web'] },
-  ]
+    { id: "pera", name: "Pera Wallet", description: "Most popular Algorand wallet", icon: "pi pi-mobile", platforms: ["iOS", "Android", "Web"] },
+    { id: "defly", name: "Defly Wallet", description: "Feature-rich DeFi wallet", icon: "pi pi-wallet", platforms: ["iOS", "Android", "Web"] },
+    { id: "exodus", name: "Exodus Wallet", description: "Multi-chain wallet solution", icon: "pi pi-globe", platforms: ["Desktop", "Mobile"] },
+    { id: "biatec", name: "Biatec Wallet", description: "Enterprise wallet solution", icon: "pi pi-building", platforms: ["Web", "Enterprise"] },
+    { id: "kibisis", name: "Kibisis", description: "Browser extension wallet", icon: "pi pi-window-maximize", platforms: ["Browser"] },
+    { id: "lute", name: "Lute Wallet", description: "Lightweight wallet", icon: "pi pi-credit-card", platforms: ["Web"] },
+  ];
 
   // Filter to only show available wallets
-  const availableWalletIds = wallet.wallets.value
-    .filter(w => w.isActive)
-    .map(w => w.id as string)
+  const availableWalletIds = wallet.wallets.value.filter((w) => w.isActive).map((w) => w.id as string);
 
-  return walletInfo.filter(w => availableWalletIds.includes(w.id))
-})
+  return walletInfo.filter((w) => availableWalletIds.includes(w.id));
+});
 
 const formattedAddress = computed(() => {
-  if (!connectedAddress.value) return ''
-  return `${connectedAddress.value.slice(0, 6)}...${connectedAddress.value.slice(-4)}`
-})
+  if (!connectedAddress.value) return "";
+  return `${connectedAddress.value.slice(0, 6)}...${connectedAddress.value.slice(-4)}`;
+});
 
 const canProceedToNextStep = computed(() => {
-  if (currentStep.value === 0) return true // Welcome step
-  if (currentStep.value === 1) return !!selectedNetwork.value // Network selection
-  if (currentStep.value === 2) return true // Can skip wallet connection
-  if (currentStep.value === 3) return canProceedFromCompliance.value // Compliance
-  return true
-})
+  if (currentStep.value === 0) return true; // Welcome step
+  if (currentStep.value === 1) return !!selectedNetwork.value; // Network selection
+  if (currentStep.value === 2) return true; // Can skip wallet connection
+  if (currentStep.value === 3) return canProceedFromCompliance.value; // Compliance
+  return true;
+});
 
 const canProceedFromCompliance = computed(() => {
-  return hasReadRiskNotice.value && hasAcceptedTerms.value
-})
+  return hasReadRiskNotice.value && hasAcceptedTerms.value;
+});
 
 // Methods
 const nextStep = () => {
   if (currentStep.value < steps.length - 1 && canProceedToNextStep.value) {
-    currentStep.value++
-    
+    currentStep.value++;
+
     // If skipping wallet connection (step 2), move directly to success
     if (currentStep.value === 3 && !connectedAddress.value) {
       // Skip compliance and go to success if no wallet connected
-      currentStep.value = 4
+      currentStep.value = 4;
     }
   }
-}
+};
 
 const previousStep = () => {
   if (currentStep.value > 0) {
-    currentStep.value--
+    currentStep.value--;
   }
-}
+};
 
 const handleWalletConnect = async (walletId: string) => {
-  isConnecting.value = true
-  connectionError.value = null
+  isConnecting.value = true;
+  connectionError.value = null;
 
   try {
-    const walletToConnect = wallet.wallets.value.find(w => w.id === walletId)
-    
+    const walletToConnect = wallet.wallets.value.find((w) => w.id === walletId);
+
     if (!walletToConnect) {
-      throw new Error('Wallet not found')
+      throw new Error("Wallet not found");
     }
 
-    await walletToConnect.connect()
+    await walletToConnect.connect();
 
-    const activeAccount = wallet.activeAccount.value
+    const activeAccount = wallet.activeAccount.value;
 
     if (!activeAccount) {
-      throw new Error('No account selected after connection')
+      throw new Error("No account selected after connection");
     }
 
-    connectedAddress.value = activeAccount.address
+    connectedAddress.value = activeAccount.address;
 
     // Store network preference and wallet info
-    localStorage.setItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK, selectedNetwork.value)
-    localStorage.setItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED, WALLET_CONNECTION_STATE.CONNECTED)
-    localStorage.setItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID, walletId)
+    localStorage.setItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK, selectedNetwork.value);
+    localStorage.setItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED, WALLET_CONNECTION_STATE.CONNECTED);
+    localStorage.setItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID, walletId);
 
     // Move to next step (compliance)
-    currentStep.value = 3
+    currentStep.value = 3;
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Failed to connect wallet'
-    connectionError.value = errorMessage
-    console.error('Wallet connection error:', err)
+    const errorMessage = err instanceof Error ? err.message : "Failed to connect wallet";
+    connectionError.value = errorMessage;
+    console.error("Wallet connection error:", err);
   } finally {
-    isConnecting.value = false
+    isConnecting.value = false;
   }
-}
+};
 
 const finishOnboarding = () => {
   // Always emit complete, even if no wallet was connected
-  emit('complete', {
-    address: connectedAddress.value || '',
+  emit("complete", {
+    address: connectedAddress.value || "",
     network: selectedNetwork.value,
-  })
-  
+  });
+
   // Mark onboarding as completed
-  localStorage.setItem(AUTH_STORAGE_KEYS.ONBOARDING_COMPLETED, WALLET_CONNECTION_STATE.CONNECTED)
-  
-  emit('close')
-}
+  localStorage.setItem(AUTH_STORAGE_KEYS.ONBOARDING_COMPLETED, WALLET_CONNECTION_STATE.CONNECTED);
+
+  emit("close");
+};
 
 const handleClose = () => {
   // Don't allow closing during wallet connection
-  const isWalletStep = currentStep.value === 2
+  const isWalletStep = currentStep.value === 2;
   if (!isConnecting.value && !isWalletStep) {
-    emit('close')
+    emit("close");
   }
-}
+};
 </script>
 
 <style scoped>

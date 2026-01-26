@@ -105,33 +105,33 @@ const router = createRouter({
 
 // Navigation guard for protected routes
 router.beforeEach((to, _from, next) => {
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-  
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+
   if (requiresAuth) {
     // Allow access to dashboard even without wallet connection (shows empty state)
-    if (to.name === 'TokenDashboard') {
-      next()
-      return
+    if (to.name === "TokenDashboard") {
+      next();
+      return;
     }
-    
+
     // Check if user is authenticated by checking localStorage
-    const walletConnected = localStorage.getItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED) === WALLET_CONNECTION_STATE.CONNECTED
-    
+    const walletConnected = localStorage.getItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED) === WALLET_CONNECTION_STATE.CONNECTED;
+
     if (!walletConnected) {
       // Store the intended destination
-      localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, to.fullPath)
-      
+      localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, to.fullPath);
+
       // Redirect to home with a flag to show onboarding
-      next({ 
-        name: 'Home',
-        query: { showOnboarding: 'true' }
-      })
+      next({
+        name: "Home",
+        query: { showOnboarding: "true" },
+      });
     } else {
-      next()
+      next();
     }
   } else {
-    next()
+    next();
   }
-})
+});
 
 export default router;
