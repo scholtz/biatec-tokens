@@ -214,7 +214,7 @@ export const useTokenStore = defineStore("tokens", () => {
       description: "Payment-focused token for Aramid network - ideal for e-commerce and cross-border transactions",
       standard: "ARC3FT",
       type: "FT",
-      network: "VOI",
+      network: "Aramid",
       compliance: "E-money tokens under MICA require authorization from relevant authorities. Ensure compliance with payment service regulations.",
       guidance: "Best for: Payment systems, remittances, e-commerce. Higher decimals (8-18) recommended for precise value representation.",
       defaults: {
@@ -248,7 +248,7 @@ export const useTokenStore = defineStore("tokens", () => {
       description: "Loyalty rewards token for Aramid network - engage customers with blockchain-based rewards",
       standard: "ASA",
       type: "FT",
-      network: "VOI",
+      network: "Aramid",
       compliance: "Loyalty tokens typically exempt from MICA if non-transferable outside closed ecosystem. Review portability restrictions.",
       guidance: "Best for: Customer loyalty programs, rewards systems, membership benefits. Lower supply recommended for exclusive programs.",
       defaults: {
@@ -282,7 +282,7 @@ export const useTokenStore = defineStore("tokens", () => {
       description: "Fractional ownership NFT for Aramid network - enable shared ownership of high-value assets",
       standard: "ARC3FNFT",
       type: "NFT",
-      network: "VOI",
+      network: "Aramid",
       compliance:
         "Fractional NFTs may trigger securities regulations if representing investment rights. Not automatically MICA-compliant - requires legal review and may need prospectus approval. Consult legal counsel before deployment.",
       guidance: "Best for: Shared ownership of real estate, art, or luxury items. Use decimals to define fraction size.",
@@ -317,7 +317,7 @@ export const useTokenStore = defineStore("tokens", () => {
       description: "Lightweight NFT with on-chain metadata for Aramid network - no external storage dependencies",
       standard: "ARC69",
       type: "NFT",
-      network: "VOI",
+      network: "Aramid",
       compliance: "On-chain metadata NFTs offer transparency and permanence. Ensure metadata complies with content regulations and does not contain prohibited information.",
       guidance: "Best for: Simple collectibles, event tickets, certificates, proofs of attendance. Metadata must fit within 1024 bytes. Ideal when IPFS hosting is not desired.",
       defaults: {
@@ -351,7 +351,7 @@ export const useTokenStore = defineStore("tokens", () => {
       description: "ARC-200 payment token for Aramid with transfer controls and compliance features",
       standard: "ARC200",
       type: "FT",
-      network: "VOI",
+      network: "Aramid",
       compliance: "Payment tokens may require e-money authorization under MICA. Transfer controls enable regulatory compliance and sanctions screening.",
       guidance: "Best for: Payment systems, merchant solutions, B2B settlements. Built-in compliance controls for regulated payment use cases.",
       defaults: {
@@ -385,7 +385,7 @@ export const useTokenStore = defineStore("tokens", () => {
       description: "Programmable stablecoin with reserve management and compliance controls",
       standard: "ARC200",
       type: "FT",
-      network: "VOI",
+      network: "Aramid",
       compliance:
         "Stablecoins require e-money or asset-referenced token authorization under MICA. Must maintain reserves and provide redemption rights. Smart contract controls facilitate regulatory compliance.",
       guidance:
@@ -421,7 +421,7 @@ export const useTokenStore = defineStore("tokens", () => {
       description: "Security token with mandatory whitelisting and transfer restrictions for Aramid",
       standard: "ARC200",
       type: "FT",
-      network: "VOI",
+      network: "Aramid",
       compliance:
         "Security tokens under MICA require prospectus approval and authorization. Mandatory KYC/AML, whitelisting, and transfer restrictions. Smart contract enforces compliance rules automatically.",
       guidance:
@@ -440,7 +440,7 @@ export const useTokenStore = defineStore("tokens", () => {
       description: "Bridge token compatible with both VOI and Aramid networks",
       standard: "ARC200",
       type: "FT",
-      network: "VOI",
+      network: "Both",
       compliance: "Bridge tokens facilitating cross-chain transfers must comply with MICA across all jurisdictions. Enhanced AML/CFT controls required.",
       guidance: "Best for: Cross-chain transfers, interoperability solutions. Requires robust bridge infrastructure and security audits.",
       defaults: {
@@ -457,7 +457,7 @@ export const useTokenStore = defineStore("tokens", () => {
       description: "Algorithmic stablecoin with price stability mechanisms on VOI/Aramid",
       standard: "ARC200",
       type: "FT",
-      network: "VOI",
+      network: "Both",
       compliance:
         "Algorithmic stablecoins under MICA may require authorization as asset-referenced tokens. Must maintain adequate collateral backing and provide redemption mechanisms. Smart contract enforces algorithmic price stability through supply adjustments.",
       guidance:
@@ -477,7 +477,7 @@ export const useTokenStore = defineStore("tokens", () => {
       description: "MICA-compliant security token with mandatory KYC/AML whitelist for regulated asset tokenization",
       standard: "ARC200",
       type: "FT",
-      network: "VOI",
+      network: "Both",
       isRwaPreset: true,
       rwaFeatures: {
         whitelistEnabled: true,
@@ -511,7 +511,7 @@ export const useTokenStore = defineStore("tokens", () => {
       description: "Fractional real estate ownership with transfer restrictions and accredited investor verification",
       standard: "ARC200",
       type: "FT",
-      network: "VOI",
+      network: "Aramid",
       isRwaPreset: true,
       rwaFeatures: {
         whitelistEnabled: true,
@@ -546,7 +546,7 @@ export const useTokenStore = defineStore("tokens", () => {
       description: "MICA e-money token with reserve requirements, redemption rights, and payment controls",
       standard: "ARC200",
       type: "FT",
-      network: "VOI",
+      network: "Aramid",
       isRwaPreset: true,
       rwaFeatures: {
         whitelistEnabled: true,
@@ -617,7 +617,7 @@ export const useTokenStore = defineStore("tokens", () => {
       description: "Tokenized supply chain assets with provenance tracking and controlled transfer",
       standard: "ARC3FT",
       type: "FT",
-      network: "VOI",
+      network: "Both",
       isRwaPreset: true,
       rwaFeatures: {
         whitelistEnabled: true,
