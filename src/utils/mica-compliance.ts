@@ -39,7 +39,7 @@ const VALID_COUNTRY_CODES = [
   'FR', 'DE', 'IT', 'ES', 'NL', 'BE', 'AT', 'SE', 'DK', 'FI', 'NO',
   'PL', 'CZ', 'HU', 'RO', 'GR', 'PT', 'IE', 'SK', 'BG', 'HR', 'SI',
   'LT', 'LV', 'EE', 'CY', 'MT', 'LU', 'IS', 'LI', 'MC', 'SM', 'VA',
-  'KR', 'TW', 'TH', 'MY', 'ID', 'PH', 'VN', 'BD', 'PK', 'SA', 'AE',
+  'KR', 'TW', 'TH', 'MY', 'ID', 'PH', 'VN', 'BD', 'PK', 'SA',
   'IL', 'TR', 'UA', 'KZ', 'UZ', 'AZ', 'GE', 'AM',
 ];
 
