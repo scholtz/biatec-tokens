@@ -520,12 +520,11 @@ const handleWalletConnect = async (walletId: string) => {
 }
 
 const finishOnboarding = () => {
-  if (connectedAddress.value) {
-    emit('complete', {
-      address: connectedAddress.value,
-      network: selectedNetwork.value,
-    })
-  }
+  // Always emit complete, even if no wallet was connected
+  emit('complete', {
+    address: connectedAddress.value || '',
+    network: selectedNetwork.value,
+  })
   
   // Mark onboarding as completed
   localStorage.setItem(AUTH_STORAGE_KEYS.ONBOARDING_COMPLETED, WALLET_CONNECTION_STATE.CONNECTED)

@@ -108,6 +108,12 @@ router.beforeEach((to, _from, next) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   
   if (requiresAuth) {
+    // Allow access to dashboard even without wallet connection (shows empty state)
+    if (to.name === 'TokenDashboard') {
+      next()
+      return
+    }
+    
     // Check if user is authenticated by checking localStorage
     const walletConnected = localStorage.getItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED) === WALLET_CONNECTION_STATE.CONNECTED
     
