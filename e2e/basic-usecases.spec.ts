@@ -415,6 +415,51 @@ test.describe("API Integration Tests", () => {
     await expect(body).toBeVisible();
   });
 
+  test("should navigate to protected routes and show onboarding when not authenticated", async ({ page }) => {
+    // Clear any existing auth state by not setting it
+    // Don't use localStorage.clear() as it causes security errors
+    await page.addInitScript(() => {
+      // Don't set any auth-related localStorage items
+    });
+
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    // Click on Dashboard link in navbar
+    const dashboardLink = page.locator('nav a[href="/dashboard"]');
+    await expect(dashboardLink).toBeVisible();
+    await dashboardLink.click();
+
+    // Should redirect to home and show onboarding wizard
+    await page.waitForURL("/?showOnboarding=true");
+    
+    // Check that onboarding wizard is visible by looking for the welcome title
+    const onboardingTitle = page.locator('h2:has-text("Welcome to Biatec Tokens")');
+    await expect(onboardingTitle).toBeVisible({ timeout: 10000 });
+  });
+
+  test("should navigate to settings and show onboarding when not authenticated", async ({ page }) => {
+    // Clear any existing auth state by not setting it
+    await page.addInitScript(() => {
+      // Don't set any auth-related localStorage items
+    });
+
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    // Click on Settings link in navbar
+    const settingsLink = page.locator('nav a[href="/settings"]');
+    await expect(settingsLink).toBeVisible();
+    await settingsLink.click();
+
+    // Should redirect to home and show onboarding wizard
+    await page.waitForURL("/?showOnboarding=true");
+    
+    // Check that onboarding wizard is visible by looking for the welcome title
+    const onboardingTitle = page.locator('h2:has-text("Welcome to Biatec Tokens")');
+    await expect(onboardingTitle).toBeVisible({ timeout: 10000 });
+  });
+
   test("should test API error handling with blocked requests", async ({ page }) => {
     // Block API requests to simulate complete API unavailability
     await page.route("https://api.tokens.biatec.io/**", (route) => route.abort());

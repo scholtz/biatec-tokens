@@ -104,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useTokenStore } from "../stores/tokens";
 import { useWalletManager } from "../composables/useWalletManager";
@@ -180,6 +180,13 @@ const handleOnboardingComplete = () => {
 onMounted(() => {
   // Check if we should show onboarding
   if (route.query.showOnboarding === 'true') {
+    showOnboardingWizard.value = true;
+  }
+});
+
+// Watch for route query changes to handle navigation to the same component
+watch(() => route.query.showOnboarding, (newValue) => {
+  if (newValue === 'true') {
     showOnboardingWizard.value = true;
   }
 });
