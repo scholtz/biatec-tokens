@@ -354,7 +354,7 @@ const validationErrors = computed(() => {
 
   if (!localMetadata.value.tokenPurpose?.trim()) {
     errors.push('Token purpose is required');
-  } else if (localMetadata.value.tokenPurpose.length < 50) {
+  } else if (localMetadata.value.tokenPurpose.trim().length < 50) {
     errors.push('Token purpose must be at least 50 characters');
   }
 
