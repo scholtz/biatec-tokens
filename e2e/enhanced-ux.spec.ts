@@ -83,7 +83,7 @@ test.describe("Responsive Design", () => {
     // Use more resilient waiting for Firefox
     await Promise.race([
       page.waitForLoadState("networkidle"),
-      page.waitForTimeout(10000) // 10 second fallback
+      page.waitForTimeout(10000), // 10 second fallback
     ]);
     // Wait for the home page content to be rendered
     await page.waitForSelector(".container-padding", { timeout: 10000 });
@@ -99,7 +99,7 @@ test.describe("Responsive Design", () => {
     // Use more resilient waiting for Firefox
     await Promise.race([
       page.waitForLoadState("networkidle"),
-      page.waitForTimeout(10000) // 10 second fallback
+      page.waitForTimeout(10000), // 10 second fallback
     ]);
     // Wait for the home page content to be rendered
     await page.waitForSelector(".container-padding", { timeout: 10000 });
@@ -131,7 +131,7 @@ test.describe("Dark Mode Support", () => {
     // Use more resilient waiting for Firefox
     await Promise.race([
       page.waitForLoadState("networkidle"),
-      page.waitForTimeout(10000) // 10 second fallback
+      page.waitForTimeout(10000), // 10 second fallback
     ]);
   });
 

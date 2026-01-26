@@ -148,7 +148,7 @@ test.describe("Basic User Flows", () => {
     // Use more resilient waiting - wait for either networkidle or a reasonable timeout
     await Promise.race([
       page.waitForLoadState("networkidle"),
-      page.waitForTimeout(10000) // 10 second fallback
+      page.waitForTimeout(10000), // 10 second fallback
     ]);
 
     // Page should still load properly
@@ -218,7 +218,7 @@ test.describe("Form Interactions", () => {
     // Use more resilient waiting for Firefox
     await Promise.race([
       page.waitForLoadState("networkidle"),
-      page.waitForTimeout(10000) // 10 second fallback
+      page.waitForTimeout(10000), // 10 second fallback
     ]);
   });
 
@@ -303,7 +303,7 @@ test.describe("Data Display and Loading", () => {
     // Use more resilient waiting for Firefox
     await Promise.race([
       page.waitForLoadState("networkidle"),
-      page.waitForTimeout(10000) // 10 second fallback
+      page.waitForTimeout(10000), // 10 second fallback
     ]);
   });
 
@@ -376,7 +376,7 @@ test.describe("Token Creation Basic Interactions", () => {
     // Use more resilient waiting for Firefox
     await Promise.race([
       page.waitForLoadState("networkidle"),
-      page.waitForTimeout(10000) // 10 second fallback
+      page.waitForTimeout(10000), // 10 second fallback
     ]);
 
     // Check that the page loads without crashing

@@ -183,7 +183,7 @@ test.describe("Compliance Monitoring Dashboard", () => {
     // Use more resilient waiting for Firefox
     await Promise.race([
       page.waitForLoadState("networkidle"),
-      page.waitForTimeout(10000) // 10 second fallback
+      page.waitForTimeout(10000), // 10 second fallback
     ]);
 
     // Check for export button
@@ -264,7 +264,7 @@ test.describe("Compliance Monitoring Dashboard", () => {
     // Use more resilient waiting for Firefox
     await Promise.race([
       page.waitForLoadState("networkidle"),
-      page.waitForTimeout(10000) // 10 second fallback
+      page.waitForTimeout(10000), // 10 second fallback
     ]);
 
     // Wait for content to load - either metrics or error/empty state
@@ -308,7 +308,7 @@ test.describe("Compliance Monitoring Dashboard", () => {
     // Use more resilient waiting for Firefox
     await Promise.race([
       page.waitForLoadState("networkidle"),
-      page.waitForTimeout(10000) // 10 second fallback
+      page.waitForTimeout(10000), // 10 second fallback
     ]);
 
     // Check that main content is visible
@@ -359,7 +359,7 @@ test.describe("Compliance Monitoring Dashboard", () => {
     // Use more resilient waiting for Firefox
     await Promise.race([
       page.waitForLoadState("networkidle"),
-      page.waitForTimeout(10000) // 10 second fallback
+      page.waitForTimeout(10000), // 10 second fallback
     ]);
 
     // Wait for main heading to be visible

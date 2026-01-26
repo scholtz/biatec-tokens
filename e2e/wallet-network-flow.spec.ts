@@ -11,7 +11,7 @@ test.describe("Wallet Connect Flow with Network Selection", () => {
     // Use more resilient waiting for Firefox
     await Promise.race([
       page.waitForLoadState("networkidle"),
-      page.waitForTimeout(10000) // 10 second fallback
+      page.waitForTimeout(10000), // 10 second fallback
     ]);
     await expect(page).toHaveTitle(/Biatec Tokens/);
   });
