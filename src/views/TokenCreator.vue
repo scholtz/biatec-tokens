@@ -532,7 +532,7 @@ import CompetitorParityChecklist from "../components/CompetitorParityChecklist.v
 import WalletNetworkPanel from "../components/WalletNetworkPanel.vue";
 import { WalletAttestation, AttestationType } from "../types/compliance";
 import type { MicaComplianceMetadata } from "../types/api";
-import { validateTokenParameters, formatValidationErrors, getFieldValidationMessage, type TokenValidationResult } from "../utils/tokenValidation";
+import { validateTokenParameters, formatValidationErrors, type TokenValidationResult } from "../utils/tokenValidation";
 import { useWalletManager, type NetworkId } from "../composables/useWalletManager";
 
 const router = useRouter();
