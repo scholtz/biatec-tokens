@@ -9,7 +9,7 @@ test.describe("ARC-200 Token Creation with MICA Compliance", () => {
     });
     // Navigate to token creator page
     await page.goto("/create");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("domcontentloaded");
   });
 
   test("should display MICA compliance form for ARC-200 tokens", async ({ page }) => {
@@ -38,7 +38,7 @@ test.describe("ARC-200 Token Creation with MICA Compliance", () => {
     await page.waitForTimeout(2000);
 
     // Check that MICA compliance form appears
-    await expect(page.locator("text=MICA Compliance Metadata")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: /^MICA Compliance Metadata/ })).toBeVisible({ timeout: 10000 });
     await expect(page.locator("text=(Required for ARC-200)")).toBeVisible({ timeout: 5000 });
   });
 

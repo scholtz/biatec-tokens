@@ -269,7 +269,7 @@ test.describe("Compliance Monitoring Dashboard", () => {
     test.skip(browserName === "firefox", "Firefox has persistent networkidle timeout issues");
 
     await page.goto("/compliance-monitoring");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("domcontentloaded");
 
     // Check for back button
     const backButton = page.locator("button:has-text('Back')");
