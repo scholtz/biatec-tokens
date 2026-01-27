@@ -29,7 +29,7 @@
     "@walletconnect/sign-client": "^2.23.4",
     "algorand-authentication-component-vue": "^2.0.6",
     "algosdk": "^3.5.2",
-    "axios": "^1.13.2",
+    "axios": "^1.13.3",
     "buffer": "^6.0.3",
     "lute-connect": "^1.6.3",
     "pinia": "^3.0.4",
@@ -45,7 +45,7 @@
     "@vitest/coverage-v8": "^4.0.17",
     "@vitest/ui": "^4.0.17",
     "@vue/test-utils": "^2.4.6",
-    "happy-dom": "^20.3.4",
+    "happy-dom": "^20.3.9",
     "playwright": "^1.58.0",
     "prettier": "^3.8.0",
     "swagger-typescript-api": "^13.1.2",
@@ -53,6 +53,6 @@
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "vitest": "^4.0.18",
-    "vue-tsc": "^3.2.2"
+    "vue-tsc": "^3.2.4"
   }
 }
