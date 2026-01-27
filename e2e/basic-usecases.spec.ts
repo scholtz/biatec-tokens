@@ -534,7 +534,7 @@ test.describe("API Integration Tests", () => {
     });
 
     await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("domcontentloaded");
     await page.waitForTimeout(2000);
 
     // Page should still function

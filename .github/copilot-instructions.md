@@ -186,7 +186,7 @@ src/
 
 When writing E2E tests:
 
-- **Always wait for page load**: Use `await page.waitForLoadState("networkidle")` after navigation
+- **Always wait for page load**: Use `await page.waitForLoadState("domcontentloaded")` after navigation
 - **Use robust selectors**: Prefer `getByRole()`, `getByText()` over CSS selectors
 - **Add timeouts**: Use `{ timeout: 10000 }` for visibility checks to handle slow loads
 - **Handle missing elements gracefully**: Use `.isVisible().catch(() => false)` for optional elements
@@ -202,7 +202,7 @@ When writing E2E tests:
 ```typescript
 // Wait for page and check title
 await page.goto("/");
-await page.waitForLoadState("networkidle");
+await page.waitForLoadState("domcontentloaded");
 await expect(page).toHaveTitle(/Expected Title/);
 
 // Find button with flexible text matching

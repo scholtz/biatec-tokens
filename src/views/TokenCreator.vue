@@ -8,6 +8,15 @@
           <p class="text-gray-300 text-lg">Choose a template or token standard and deploy in seconds</p>
         </div>
 
+        <!-- Wallet & Network Panel (NEW) -->
+        <div class="mb-8">
+          <WalletNetworkPanel 
+            @connect-wallet="handleConnectWallet"
+            @disconnect-wallet="handleDisconnectWallet"
+            @network-switched="handleNetworkSwitched"
+          />
+        </div>
+
         <!-- Network Selection (New) -->
         <div class="glass-effect rounded-xl p-6 mb-8">
           <div class="flex items-center justify-between mb-6">
@@ -461,12 +470,31 @@
 
             <!-- Submit Button -->
             <!-- Validation Error Message -->
-            <div v-if="validationError" class="p-4 bg-red-500/10 border border-red-500/20 rounded-lg mb-6">
+            <div v-if="!validationResult.isValid" class="p-4 bg-red-500/10 border border-red-500/20 rounded-lg mb-6 validation-error-display">
               <div class="flex items-start gap-3">
                 <i class="pi pi-exclamation-triangle text-red-400 mt-1"></i>
-                <div>
-                  <p class="text-sm font-semibold text-red-400 mb-1">Validation Error</p>
-                  <p class="text-sm text-gray-300">{{ validationError }}</p>
+                <div class="flex-1">
+                  <p class="text-sm font-semibold text-red-400 mb-2">Validation Errors</p>
+                  <div class="space-y-1">
+                    <p v-for="error in validationResult.errors" :key="error.field" class="text-sm text-gray-300">
+                      • {{ error.message }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Validation Warnings -->
+            <div v-if="validationResult.warnings.length > 0" class="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg mb-6">
+              <div class="flex items-start gap-3">
+                <i class="pi pi-exclamation-circle text-yellow-400 mt-1"></i>
+                <div class="flex-1">
+                  <p class="text-sm font-semibold text-yellow-400 mb-2">Warnings</p>
+                  <div class="space-y-1">
+                    <p v-for="warning in validationResult.warnings" :key="warning.field" class="text-sm text-gray-300">
+                      • {{ warning.message }}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -474,7 +502,7 @@
             <div class="flex justify-end">
               <button
                 type="submit"
-                :disabled="isCreating"
+                :disabled="isCreating || !canSubmit"
                 class="btn-primary px-8 py-3 rounded-xl text-gray-900 dark:text-white font-semibold flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <i v-if="isCreating" class="pi pi-spin pi-spinner"></i>
@@ -501,13 +529,17 @@ import RwaPresetSelector from "../components/RwaPresetSelector.vue";
 import WalletAttestationForm from "../components/WalletAttestationForm.vue";
 import MicaComplianceForm from "../components/MicaComplianceForm.vue";
 import CompetitorParityChecklist from "../components/CompetitorParityChecklist.vue";
+import WalletNetworkPanel from "../components/WalletNetworkPanel.vue";
 import { WalletAttestation, AttestationType } from "../types/compliance";
 import type { MicaComplianceMetadata } from "../types/api";
+import { validateTokenParameters, formatValidationErrors, type TokenValidationResult } from "../utils/tokenValidation";
+import { useWalletManager, type NetworkId } from "../composables/useWalletManager";
 
 const router = useRouter();
 const tokenStore = useTokenStore();
 const subscriptionStore = useSubscriptionStore();
 const complianceStore = useComplianceStore();
+const { connect, disconnect } = useWalletManager();
 
 const selectedNetwork = ref<"VOI" | "Aramid" | null>(null);
 const selectedStandard = ref("");
@@ -648,19 +680,62 @@ const clearTemplate = () => {
   selectedTemplate.value = "";
 };
 
+// Computed validation result - runs validation on form changes
+const validationResult = computed<TokenValidationResult>(() => {
+  return validateTokenParameters({
+    name: tokenForm.name,
+    symbol: tokenForm.symbol,
+    description: tokenForm.description,
+    type: tokenForm.type,
+    supply: tokenForm.supply,
+    decimals: tokenForm.decimals,
+    standard: selectedStandard.value,
+    complianceMetadata: tokenForm.complianceMetadata,
+    complianceMetadataValid: tokenForm.complianceMetadataValid,
+    isRwaToken: currentTemplate.value?.isRwaPreset,
+  });
+});
+
+// Check if form is valid for submission
+const canSubmit = computed(() => {
+  return selectedStandard.value && validationResult.value.isValid;
+});
+
+// Wallet connection handlers
+const handleConnectWallet = async () => {
+  try {
+    await connect();
+  } catch (error) {
+    console.error('Failed to connect wallet:', error);
+  }
+};
+
+const handleDisconnectWallet = async () => {
+  try {
+    await disconnect();
+  } catch (error) {
+    console.error('Failed to disconnect wallet:', error);
+  }
+};
+
+const handleNetworkSwitched = (networkId: NetworkId) => {
+  console.log('Network switched to:', networkId);
+  // Network state is automatically managed by useWalletManager
+};
+
 const createToken = async () => {
   if (!selectedStandard.value) return;
 
   // Clear previous validation error
   validationError.value = null;
 
-  // Validate MICA compliance metadata for ARC-200 tokens
-  if (selectedStandard.value === "ARC200" && !tokenForm.complianceMetadataValid) {
-    validationError.value = "MICA compliance metadata is required for ARC-200 tokens. Please complete all required fields.";
-    // Scroll to the compliance form
-    const complianceForm = document.querySelector('[class~="MicaComplianceForm"]');
-    if (complianceForm) {
-      complianceForm.scrollIntoView({ behavior: "smooth", block: "center" });
+  // Run preflight validation
+  if (!validationResult.value.isValid) {
+    validationError.value = formatValidationErrors(validationResult.value);
+    // Scroll to validation error display
+    const errorElement = document.querySelector('.validation-error-display');
+    if (errorElement) {
+      errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     return;
   }
