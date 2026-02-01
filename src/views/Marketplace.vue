@@ -94,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useMarketplaceStore } from '../stores/marketplace';
 import type { MarketplaceToken, MarketplaceFilters as IMarketplaceFilters } from '../stores/marketplace';
@@ -127,6 +127,14 @@ onMounted(async () => {
 
   // Load tokens
   await marketplaceStore.loadTokens();
+
+  // Start price polling every 60 seconds
+  marketplaceStore.startPricePolling(60000);
+});
+
+// Stop price polling on unmount
+onUnmounted(() => {
+  marketplaceStore.stopPricePolling();
 });
 
 // Update URL when filters change

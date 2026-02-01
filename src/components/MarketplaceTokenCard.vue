@@ -26,17 +26,17 @@
       
       <!-- Price Info -->
       <div v-if="token.price" class="text-right">
-        <div class="text-xl font-bold text-white">${{ formatPrice(token.price) }}</div>
-        <div
-          v-if="token.priceChange24h !== undefined"
-          :class="[
-            'text-sm font-medium',
-            token.priceChange24h >= 0 ? 'text-green-400' : 'text-red-400'
-          ]"
-        >
-          <i :class="token.priceChange24h >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"></i>
-          {{ Math.abs(token.priceChange24h).toFixed(2) }}%
-        </div>
+        <PriceDisplay
+          :price="token.price"
+          :priceChange24h="token.priceChange24h"
+          :priceChange7d="token.priceChange7d"
+          :priceSource="token.priceSource"
+          :lastUpdated="token.priceLastUpdated"
+          :showChanges="true"
+          :show7dChange="false"
+          :showSource="false"
+          :showLastUpdated="false"
+        />
       </div>
     </div>
 
@@ -105,6 +105,7 @@
 
 <script setup lang="ts">
 import type { MarketplaceToken } from '../stores/marketplace';
+import PriceDisplay from './PriceDisplay.vue';
 
 defineProps<{
   token: MarketplaceToken;
@@ -114,10 +115,6 @@ defineEmits<{
   'select': [token: MarketplaceToken];
   'view-details': [token: MarketplaceToken];
 }>();
-
-const formatPrice = (price: number): string => {
-  return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-};
 
 const formatSupply = (supply: number): string => {
   if (supply >= 1000000) {
