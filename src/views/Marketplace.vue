@@ -97,7 +97,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useMarketplaceStore } from '../stores/marketplace';
-import type { MarketplaceToken, MarketplaceFilters } from '../stores/marketplace';
+import type { MarketplaceToken, MarketplaceFilters as IMarketplaceFilters } from '../stores/marketplace';
 import MainLayout from '../layout/MainLayout.vue';
 import MarketplaceFilters from '../components/MarketplaceFilters.vue';
 import MarketplaceTokenCard from '../components/MarketplaceTokenCard.vue';
@@ -148,7 +148,7 @@ watch(
   { deep: true }
 );
 
-const handleFilterUpdate = (filters: MarketplaceFilters) => {
+const handleFilterUpdate = (filters: IMarketplaceFilters) => {
   marketplaceStore.updateFilters(filters);
 };
 

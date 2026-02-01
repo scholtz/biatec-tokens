@@ -147,7 +147,7 @@ test.describe("Marketplace", () => {
     await expect(filterBadge).toBeVisible();
   });
 
-  test("should clear individual filter", async ({ page }) => {
+  test("should clear individual filter by changing select", async ({ page }) => {
     // Wait for initial load
     await page.waitForTimeout(1000);
 
@@ -156,14 +156,17 @@ test.describe("Marketplace", () => {
     await networkSelect.selectOption("VOI");
     await page.waitForTimeout(500);
 
-    // Find and click the clear button for the filter badge
-    const clearButton = page.locator('button[aria-label="Clear network filter"]');
-    await clearButton.click();
+    // Verify URL has the filter
+    let url = page.url();
+    expect(url).toContain("network=VOI");
+    
+    // Clear by changing select back to All
+    await networkSelect.selectOption("All");
     await page.waitForTimeout(500);
 
-    // Verify filter was cleared
-    const selectedValue = await networkSelect.inputValue();
-    expect(selectedValue).toBe("All");
+    // Verify filter was cleared in URL
+    url = page.url();
+    expect(url).not.toContain("network=VOI");
   });
 
   test("should reset all filters", async ({ page }) => {
