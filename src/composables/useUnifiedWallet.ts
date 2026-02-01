@@ -107,9 +107,9 @@ export function useUnifiedWallet() {
       // If switching within same chain type and wallet supports it, switch network
       if (wasConnected && fromChainType === toChainType) {
         if (toChainType === "EVM") {
-          await evmWallet.switchNetwork(networkId as any);
+          await evmWallet.switchNetwork(networkId as Extract<NetworkId, { chainType: "EVM" }>);
         } else if (toChainType === "AVM") {
-          await avmWallet.switchNetwork(networkId as any);
+          await avmWallet.switchNetwork(networkId as Extract<NetworkId, { chainType: "AVM" }>);
         }
       }
 

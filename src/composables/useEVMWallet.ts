@@ -170,7 +170,9 @@ export function useEVMWallet() {
       const chainIdNum = parseInt(chainIdHex, 16);
       walletState.value.chainId = chainIdNum;
       
-      // Reload the page as recommended by MetaMask
+      // Note: MetaMask recommends page reload on chain change
+      // to avoid any inconsistent state. This is the recommended practice.
+      console.warn("Network changed. Reloading page to ensure consistent state...");
       window.location.reload();
     });
   };

@@ -121,7 +121,7 @@
               <li>May have regulatory and compliance implications</li>
             </ul>
             <p class="text-xs text-yellow-400 font-medium mt-2">
-              💡 Consider testing on {{ networkDisplayName.includes('Algorand') ? 'Algorand Testnet' : 'Sepolia Testnet' }} first
+              💡 Consider testing on {{ getTestnetSuggestion(networkDisplayName) }} first
             </p>
           </div>
         </div>
@@ -290,6 +290,21 @@ const resetChecklist = () => {
     reviewedDetails: false,
     confirmedNetwork: false,
     understoodFees: false,
+    acceptedMainnetRisk: false,
   };
+};
+
+/**
+ * Get testnet suggestion based on network display name
+ */
+const getTestnetSuggestion = (networkDisplayName: string): string => {
+  if (networkDisplayName.toLowerCase().includes('algorand')) {
+    return 'Algorand Testnet';
+  } else if (networkDisplayName.toLowerCase().includes('ethereum')) {
+    return 'Sepolia Testnet';
+  } else if (networkDisplayName.toLowerCase().includes('base') || networkDisplayName.toLowerCase().includes('arbitrum')) {
+    return 'Sepolia Testnet';
+  }
+  return 'a testnet';
 };
 </script>

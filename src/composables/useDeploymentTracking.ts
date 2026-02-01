@@ -177,21 +177,38 @@ export function useDeploymentTracking() {
       }
     } else {
       // EVM networks
-      const baseFees = {
-        ethereum: { networkFee: "0.002", currency: "ETH" },
-        arbitrum: { networkFee: "0.0001", currency: "ETH" },
-        base: { networkFee: "0.00005", currency: "ETH" },
-        sepolia: { networkFee: "0.002", currency: "ETH" },
-      };
-
-      const fee = baseFees[networkId as keyof typeof baseFees] || { networkFee: "0.002", currency: "ETH" };
-
-      return {
-        networkFee: fee.networkFee,
-        platformFee: "0.000",
-        total: fee.networkFee,
-        currency: fee.currency,
-      };
+      if (networkId === "ethereum") {
+        return {
+          networkFee: "0.002",
+          platformFee: "0.000",
+          total: "0.002",
+          currency: "ETH",
+        };
+      } else if (networkId === "arbitrum") {
+        return {
+          networkFee: "0.0001",
+          platformFee: "0.000",
+          total: "0.0001",
+          currency: "ETH",
+        };
+      } else if (networkId === "base") {
+        return {
+          networkFee: "0.00005",
+          platformFee: "0.000",
+          total: "0.00005",
+          currency: "ETH",
+        };
+      } else if (networkId === "sepolia") {
+        return {
+          networkFee: "0.002",
+          platformFee: "0.000",
+          total: "0.002",
+          currency: "ETH",
+        };
+      }
+      
+      // Should never reach here if all EVM networks are handled
+      throw new Error(`Fee estimate not configured for network: ${networkId}`);
     }
   };
 
