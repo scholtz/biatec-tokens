@@ -507,13 +507,47 @@
               >
                 <i v-if="isCreating" class="pi pi-spin pi-spinner"></i>
                 <i v-else class="pi pi-check"></i>
-                <span>{{ isCreating ? "Creating Token..." : "Create Token" }}</span>
+                <span>{{ isCreating ? "Creating Token..." : "Review & Deploy" }}</span>
               </button>
             </div>
           </form>
         </div>
       </div>
     </div>
+
+    <!-- Deployment Confirmation Dialog -->
+    <DeploymentConfirmationDialog
+      :is-open="showConfirmationDialog"
+      :token-name="tokenForm.name"
+      :token-symbol="tokenForm.symbol"
+      :standard="selectedStandard"
+      :token-type="tokenForm.type"
+      :supply="tokenForm.supply"
+      :decimals="tokenForm.type === 'FT' ? tokenForm.decimals : undefined"
+      :network-display-name="currentNetworkGuidance?.displayName || 'Unknown'"
+      :network-genesis-id="networkInfo?.genesisId || 'Unknown'"
+      :is-testnet="networkInfo?.isTestnet || false"
+      :fees="currentNetworkGuidance?.fees || { creation: 'N/A', transaction: 'N/A' }"
+      :attestations-count="tokenForm.attestations.length"
+      :has-compliance-metadata="!!tokenForm.complianceMetadata"
+      :is-deploying="isCreating"
+      @close="showConfirmationDialog = false"
+      @confirm="executeDeployment"
+    />
+
+    <!-- Deployment Progress Dialog -->
+    <DeploymentProgressDialog
+      :is-open="showProgressDialog"
+      :current-step="deploymentStep"
+      :status="deploymentStatus"
+      :error-message="deploymentError"
+      :error-type="deploymentErrorType"
+      :transaction-id="deploymentTxId"
+      :can-cancel="deploymentStep === 'preparing'"
+      @close="handleProgressDialogClose"
+      @retry="handleRetryDeployment"
+      @cancel="handleCancelDeployment"
+    />
   </MainLayout>
 </template>
 
@@ -530,6 +564,8 @@ import WalletAttestationForm from "../components/WalletAttestationForm.vue";
 import MicaComplianceForm from "../components/MicaComplianceForm.vue";
 import CompetitorParityChecklist from "../components/CompetitorParityChecklist.vue";
 import WalletNetworkPanel from "../components/WalletNetworkPanel.vue";
+import DeploymentConfirmationDialog from "../components/DeploymentConfirmationDialog.vue";
+import DeploymentProgressDialog from "../components/DeploymentProgressDialog.vue";
 import { WalletAttestation, AttestationType } from "../types/compliance";
 import type { MicaComplianceMetadata } from "../types/api";
 import { validateTokenParameters, formatValidationErrors, type TokenValidationResult } from "../utils/tokenValidation";
@@ -539,7 +575,7 @@ const router = useRouter();
 const tokenStore = useTokenStore();
 const subscriptionStore = useSubscriptionStore();
 const complianceStore = useComplianceStore();
-const { connect, disconnect } = useWalletManager();
+const { connect, disconnect, networkInfo } = useWalletManager();
 
 const selectedNetwork = ref<"VOI" | "Aramid" | null>(null);
 const selectedStandard = ref("");
@@ -548,6 +584,15 @@ const isCreating = ref(false);
 const validationError = ref<string | null>(null);
 const imageInput = ref<HTMLInputElement>();
 const showComplianceChecklist = ref(false);
+
+// Deployment dialog states
+const showConfirmationDialog = ref(false);
+const showProgressDialog = ref(false);
+const deploymentStep = ref<'preparing' | 'signing' | 'submitting' | 'confirming'>('preparing');
+const deploymentStatus = ref<'processing' | 'success' | 'error'>('processing');
+const deploymentError = ref<string | undefined>(undefined);
+const deploymentErrorType = ref<'insufficient_funds' | 'wallet_rejected' | 'network_error' | 'timeout' | 'unknown' | undefined>(undefined);
+const deploymentTxId = ref<string | undefined>(undefined);
 const showCompetitorParity = ref(false);
 
 const TEMPLATE_STORAGE_KEY = "biatec_selected_template";
@@ -740,10 +785,30 @@ const createToken = async () => {
     return;
   }
 
+  // Show confirmation dialog instead of deploying immediately
+  showConfirmationDialog.value = true;
+};
+
+const executeDeployment = async () => {
+  // Close confirmation dialog and show progress dialog
+  showConfirmationDialog.value = false;
+  showProgressDialog.value = true;
+  
+  // Reset deployment state
+  deploymentStep.value = 'preparing';
+  deploymentStatus.value = 'processing';
+  deploymentError.value = undefined;
+  deploymentErrorType.value = undefined;
+  deploymentTxId.value = undefined;
+  
   isCreating.value = true;
   subscriptionStore.trackTokenCreationAttempt();
 
   try {
+    // Step 1: Preparing transaction
+    deploymentStep.value = 'preparing';
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate preparation time
+
     // Prepare attestation metadata if enabled
     const attestationMetadata =
       tokenForm.attestationEnabled && tokenForm.attestations.length > 0
@@ -761,6 +826,13 @@ const createToken = async () => {
           }
         : undefined;
 
+    // Step 2: Waiting for wallet signature
+    deploymentStep.value = 'signing';
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate wallet interaction time
+
+    // Step 3: Submitting to network
+    deploymentStep.value = 'submitting';
+
     await tokenStore.createToken({
       name: tokenForm.name,
       symbol: tokenForm.symbol,
@@ -775,8 +847,19 @@ const createToken = async () => {
       complianceMetadata: tokenForm.complianceMetadata,
     });
 
+    // Step 4: Confirming transaction
+    deploymentStep.value = 'confirming';
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate confirmation time
+
+    // Set success state
+    deploymentStatus.value = 'success';
+    deploymentTxId.value = 'TX-' + Math.random().toString(36).substring(2, 15); // Mock transaction ID
+
     // Track successful creation with details
     subscriptionStore.trackTokenCreationSuccess(selectedStandard.value, selectedTemplate.value || undefined, selectedNetwork.value || undefined);
+
+    // Wait a moment before auto-closing
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Reset form
     Object.assign(tokenForm, {
@@ -797,12 +880,58 @@ const createToken = async () => {
     selectedStandard.value = "";
     selectedNetwork.value = null;
 
-    // Redirect to dashboard
+    // Close progress dialog and redirect to dashboard
+    showProgressDialog.value = false;
     router.push("/dashboard");
   } catch (error) {
     console.error("Failed to create token:", error);
+    
+    // Set error state
+    deploymentStatus.value = 'error';
+    
+    // Determine error type and message
+    const errorMessage = error instanceof Error ? error.message : 'Failed to deploy token';
+    deploymentError.value = errorMessage;
+    
+    // Parse error type from message
+    if (errorMessage.toLowerCase().includes('insufficient')) {
+      deploymentErrorType.value = 'insufficient_funds';
+    } else if (errorMessage.toLowerCase().includes('reject')) {
+      deploymentErrorType.value = 'wallet_rejected';
+    } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('connection')) {
+      deploymentErrorType.value = 'network_error';
+    } else if (errorMessage.toLowerCase().includes('timeout')) {
+      deploymentErrorType.value = 'timeout';
+    } else {
+      deploymentErrorType.value = 'unknown';
+    }
   } finally {
     isCreating.value = false;
   }
+};
+
+const handleProgressDialogClose = () => {
+  showProgressDialog.value = false;
+  
+  // If deployment was successful, redirect to dashboard
+  if (deploymentStatus.value === 'success') {
+    router.push("/dashboard");
+  }
+};
+
+const handleRetryDeployment = () => {
+  // Reset progress dialog and retry
+  showProgressDialog.value = false;
+  
+  // Small delay before showing confirmation again
+  setTimeout(() => {
+    showConfirmationDialog.value = true;
+  }, 300);
+};
+
+const handleCancelDeployment = () => {
+  // Cancel deployment
+  isCreating.value = false;
+  showProgressDialog.value = false;
 };
 </script>
