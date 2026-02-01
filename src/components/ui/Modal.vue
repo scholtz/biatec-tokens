@@ -19,7 +19,7 @@
             leave-from-class="opacity-100 scale-100"
             leave-to-class="opacity-0 scale-95"
           >
-            <div v-if="show" class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-md w-full mx-4">
+            <div v-if="show" :class="modalSizeClass" class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full mx-4">
               <div v-if="$slots.header" class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex items-center justify-between">
                   <slot name="header" />
@@ -48,17 +48,37 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+
 interface Props {
-  show: boolean
+  show: boolean;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  size: 'md'
+});
 
 const emit = defineEmits<{
   close: []
-}>()
+}>();
+
+const modalSizeClass = computed(() => {
+  switch (props.size) {
+    case 'sm':
+      return 'max-w-sm';
+    case 'md':
+      return 'max-w-md';
+    case 'lg':
+      return 'max-w-lg';
+    case 'xl':
+      return 'max-w-2xl';
+    default:
+      return 'max-w-md';
+  }
+});
 
 const closeModal = () => {
-  emit('close')
-}
+  emit('close');
+};
 </script>
