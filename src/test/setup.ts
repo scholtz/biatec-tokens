@@ -1,7 +1,7 @@
-import { beforeEach, vi } from 'vitest';
+import { beforeEach, vi } from "vitest";
 
 // Mock wallet-related composables globally
-vi.mock('../src/composables/useWalletManager', () => ({
+vi.mock("../src/composables/useWalletManager", () => ({
   useWalletManager: vi.fn(() => ({
     walletManager: {
       isConnected: false,
@@ -16,7 +16,7 @@ vi.mock('../src/composables/useWalletManager', () => ({
 }));
 
 // Mock toast composable
-vi.mock('../src/composables/useToast', () => ({
+vi.mock("../src/composables/useToast", () => ({
   useToast: vi.fn(() => ({
     showToast: vi.fn(),
   })),

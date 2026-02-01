@@ -283,13 +283,7 @@ export class ComplianceService {
       return {
         issuerAddress,
         isVerified,
-        status: isVerified
-          ? "verified"
-          : data.isProfileComplete === true
-            ? "pending"
-            : data.missingFields && data.missingFields.length > 0
-              ? "incomplete"
-              : "pending",
+        status: isVerified ? "verified" : data.isProfileComplete === true ? "pending" : data.missingFields && data.missingFields.length > 0 ? "incomplete" : "pending",
         missingFields: data.missingFields || [],
         lastUpdated: new Date().toISOString(),
       };
@@ -493,7 +487,7 @@ export class ComplianceService {
 
   /**
    * Get KYC provider integration status for compliance dashboard
-   * 
+   *
    * @param network - Optional network filter
    * @returns KYC provider metrics including status, coverage, and sync times
    */
@@ -505,82 +499,80 @@ export class ComplianceService {
         network,
         issuerAddress: undefined,
       });
-      
+
       const now = Date.now();
-      
+
       // Mock KYC provider data with realistic statuses
       const providers: KycProviderStatus[] = [
         {
-          id: 'kyc-provider-1',
-          name: 'Jumio Verification',
-          status: 'connected',
+          id: "kyc-provider-1",
+          name: "Jumio Verification",
+          status: "connected",
           lastSyncTime: new Date(now - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-          jurisdiction: ['US', 'EU', 'UK', 'CA'],
+          jurisdiction: ["US", "EU", "UK", "CA"],
           coverage: 92,
           checksPerformed: 1247,
           failedChecks: 23,
           isStale: false,
         },
         {
-          id: 'kyc-provider-2',
-          name: 'Onfido Identity',
-          status: 'syncing',
+          id: "kyc-provider-2",
+          name: "Onfido Identity",
+          status: "syncing",
           lastSyncTime: new Date(now - 30 * 60 * 1000).toISOString(), // 30 minutes ago
-          jurisdiction: ['EU', 'UK', 'AU', 'NZ'],
+          jurisdiction: ["EU", "UK", "AU", "NZ"],
           coverage: 78,
           checksPerformed: 856,
           failedChecks: 12,
           isStale: false,
         },
         {
-          id: 'kyc-provider-3',
-          name: 'Sum&Substance',
-          status: 'connected',
+          id: "kyc-provider-3",
+          name: "Sum&Substance",
+          status: "connected",
           lastSyncTime: new Date(now - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-          jurisdiction: ['SG', 'HK', 'JP', 'KR'],
+          jurisdiction: ["SG", "HK", "JP", "KR"],
           coverage: 65,
           checksPerformed: 534,
           failedChecks: 8,
           isStale: false,
         },
         {
-          id: 'kyc-provider-4',
-          name: 'Trulioo GlobalGateway',
-          status: 'error',
+          id: "kyc-provider-4",
+          name: "Trulioo GlobalGateway",
+          status: "error",
           lastSyncTime: new Date(now - 26 * 60 * 60 * 1000).toISOString(), // 26 hours ago (stale)
-          jurisdiction: ['BR', 'MX', 'AR'],
+          jurisdiction: ["BR", "MX", "AR"],
           coverage: 34,
           checksPerformed: 189,
           failedChecks: 45,
           isStale: true,
-          errorMessage: 'API rate limit exceeded',
+          errorMessage: "API rate limit exceeded",
         },
         {
-          id: 'kyc-provider-5',
-          name: 'Refinitiv WorldCheck',
-          status: 'disconnected',
+          id: "kyc-provider-5",
+          name: "Refinitiv WorldCheck",
+          status: "disconnected",
           lastSyncTime: new Date(now - 72 * 60 * 60 * 1000).toISOString(), // 3 days ago (stale)
-          jurisdiction: ['Global'],
+          jurisdiction: ["Global"],
           coverage: 0,
           checksPerformed: 0,
           failedChecks: 0,
           isStale: true,
         },
       ];
-      
-      const activeProviders = providers.filter(p => p.status === 'connected' || p.status === 'syncing').length;
-      const staleProviders = providers.filter(p => p.isStale).length;
-      const failedProviders = providers.filter(p => p.status === 'error' || p.status === 'disconnected').length;
-      
+
+      const activeProviders = providers.filter((p) => p.status === "connected" || p.status === "syncing").length;
+      const staleProviders = providers.filter((p) => p.isStale).length;
+      const failedProviders = providers.filter((p) => p.status === "error" || p.status === "disconnected").length;
+
       // Calculate overall coverage (weighted by number of checks)
       const totalChecks = providers.reduce((sum, p) => sum + p.checksPerformed, 0);
-      const weightedCoverage = providers.reduce((sum, p) => 
-        sum + (p.coverage * p.checksPerformed), 0
-      ) / Math.max(totalChecks, 1);
-      
+      const weightedCoverage = providers.reduce((sum, p) => sum + p.coverage * p.checksPerformed, 0) / Math.max(totalChecks, 1);
+
       // Integration completeness based on configured providers (target: 5 providers, currently ~60% complete per issue)
       const integrationComplete = 60; // As per issue: "~60% complete in the roadmap"
-      
+
       return {
         providers,
         totalCoverage: Math.round(weightedCoverage * 10) / 10,
@@ -591,69 +583,69 @@ export class ComplianceService {
         lastUpdated: new Date().toISOString(),
       };
     } catch (error) {
-      console.error('Failed to fetch KYC provider status:', error);
-      
+      console.error("Failed to fetch KYC provider status:", error);
+
       // Return mock data with representative status for development
       const now = Date.now();
       const providers: KycProviderStatus[] = [
         {
-          id: 'kyc-provider-1',
-          name: 'Jumio Verification',
-          status: 'connected',
+          id: "kyc-provider-1",
+          name: "Jumio Verification",
+          status: "connected",
           lastSyncTime: new Date(now - 2 * 60 * 60 * 1000).toISOString(),
-          jurisdiction: ['US', 'EU', 'UK', 'CA'],
+          jurisdiction: ["US", "EU", "UK", "CA"],
           coverage: 92,
           checksPerformed: 1247,
           failedChecks: 23,
           isStale: false,
         },
         {
-          id: 'kyc-provider-2',
-          name: 'Onfido Identity',
-          status: 'syncing',
+          id: "kyc-provider-2",
+          name: "Onfido Identity",
+          status: "syncing",
           lastSyncTime: new Date(now - 30 * 60 * 1000).toISOString(),
-          jurisdiction: ['EU', 'UK', 'AU', 'NZ'],
+          jurisdiction: ["EU", "UK", "AU", "NZ"],
           coverage: 78,
           checksPerformed: 856,
           failedChecks: 12,
           isStale: false,
         },
         {
-          id: 'kyc-provider-3',
-          name: 'Sum&Substance',
-          status: 'connected',
+          id: "kyc-provider-3",
+          name: "Sum&Substance",
+          status: "connected",
           lastSyncTime: new Date(now - 5 * 60 * 60 * 1000).toISOString(),
-          jurisdiction: ['SG', 'HK', 'JP', 'KR'],
+          jurisdiction: ["SG", "HK", "JP", "KR"],
           coverage: 65,
           checksPerformed: 534,
           failedChecks: 8,
           isStale: false,
         },
         {
-          id: 'kyc-provider-4',
-          name: 'Trulioo GlobalGateway',
-          status: 'error',
+          id: "kyc-provider-4",
+          name: "Trulioo GlobalGateway",
+          status: "error",
           lastSyncTime: new Date(now - 26 * 60 * 60 * 1000).toISOString(),
-          jurisdiction: ['BR', 'MX', 'AR'],
+          jurisdiction: ["BR", "MX", "AR"],
           coverage: 34,
           checksPerformed: 189,
           failedChecks: 45,
           isStale: true,
-          errorMessage: 'API rate limit exceeded',
+          errorMessage: "API rate limit exceeded",
         },
         {
-          id: 'kyc-provider-5',
-          name: 'Refinitiv WorldCheck',
-          status: 'disconnected',
+          id: "kyc-provider-5",
+          name: "Refinitiv WorldCheck",
+          status: "disconnected",
           lastSyncTime: new Date(now - 72 * 60 * 60 * 1000).toISOString(),
-          jurisdiction: ['Global'],
+          jurisdiction: ["Global"],
           coverage: 0,
           checksPerformed: 0,
           failedChecks: 0,
           isStale: true,
         },
       ];
-      
+
       return {
         providers,
         totalCoverage: 69.4,
