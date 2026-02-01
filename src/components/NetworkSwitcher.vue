@@ -48,25 +48,34 @@
           </div>
           <div class="text-white font-semibold mb-2">{{ currentNetworkInfo.displayName }}</div>
           <div class="text-xs text-gray-400 space-y-1">
-            <div class="flex items-center gap-2">
+            <div v-if="currentNetworkInfo.chainType === 'AVM'" class="flex items-center gap-2">
               <i class="pi pi-globe text-xs"></i>
               <span class="truncate">{{ currentNetworkInfo.algodUrl }}</span>
             </div>
-            <div class="flex items-center gap-2">
+            <div v-if="currentNetworkInfo.chainType === 'AVM'" class="flex items-center gap-2">
               <i class="pi pi-tag text-xs"></i>
               <span>{{ currentNetworkInfo.genesisId }}</span>
+            </div>
+            <div v-if="currentNetworkInfo.chainType === 'EVM'" class="flex items-center gap-2">
+              <i class="pi pi-link text-xs"></i>
+              <span class="truncate">{{ currentNetworkInfo.rpcUrl }}</span>
+            </div>
+            <div v-if="currentNetworkInfo.chainType === 'EVM'" class="flex items-center gap-2">
+              <i class="pi pi-hashtag text-xs"></i>
+              <span>Chain ID: {{ currentNetworkInfo.chainId }}</span>
             </div>
           </div>
         </div>
 
         <!-- Network List -->
         <div class="space-y-1">
-          <div class="px-2 py-1 text-xs font-medium text-gray-400 uppercase tracking-wider">
-            Available Networks
+          <!-- AVM Networks Section -->
+          <div class="px-2 py-1 text-xs font-medium text-gray-400 uppercase tracking-wider border-b border-white/10">
+            AVM Chains (Algorand-based)
           </div>
           
           <button
-            v-for="network in availableNetworks"
+            v-for="network in avmNetworks"
             :key="network.id"
             @click="handleNetworkSwitch(network.id)"
             :disabled="isSwitching || network.id === currentNetwork"
@@ -88,8 +97,62 @@
                   >
                     Active
                   </span>
+                  <span
+                    v-if="!network.isTestnet"
+                    class="px-1.5 py-0.5 text-xs font-medium rounded bg-green-500/20 text-green-400"
+                  >
+                    Mainnet
+                  </span>
                 </div>
                 <div class="text-xs text-gray-400">{{ network.genesisId }}</div>
+              </div>
+              <i
+                v-if="network.id === currentNetwork"
+                class="pi pi-check text-biatec-accent"
+              ></i>
+              <i
+                v-else
+                class="pi pi-chevron-right text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
+              ></i>
+            </div>
+          </button>
+
+          <!-- EVM Networks Section -->
+          <div class="px-2 py-1 mt-3 text-xs font-medium text-gray-400 uppercase tracking-wider border-b border-white/10">
+            EVM Chains (Ethereum-based)
+          </div>
+          
+          <button
+            v-for="network in evmNetworks"
+            :key="network.id"
+            @click="handleNetworkSwitch(network.id)"
+            :disabled="isSwitching || network.id === currentNetwork"
+            class="w-full p-3 rounded-lg text-left transition-all group"
+            :class="[
+              network.id === currentNetwork
+                ? 'bg-biatec-accent/20 border border-biatec-accent/50'
+                : 'hover:bg-white/10 border border-transparent',
+              isSwitching ? 'opacity-50 cursor-not-allowed' : ''
+            ]"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-white font-medium text-sm">{{ network.displayName }}</span>
+                  <span
+                    v-if="network.id === currentNetwork"
+                    class="px-1.5 py-0.5 text-xs font-medium rounded bg-biatec-accent/30 text-biatec-accent"
+                  >
+                    Active
+                  </span>
+                  <span
+                    v-if="!network.isTestnet"
+                    class="px-1.5 py-0.5 text-xs font-medium rounded bg-green-500/20 text-green-400"
+                  >
+                    Mainnet
+                  </span>
+                </div>
+                <div class="text-xs text-gray-400">Chain ID: {{ network.chainId }}</div>
               </div>
               <i
                 v-if="network.id === currentNetwork"
@@ -127,7 +190,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useWalletManager, NETWORKS, type NetworkId } from '../composables/useWalletManager'
+import { useWalletManager, NETWORKS, AVM_NETWORKS, EVM_NETWORKS, type NetworkId } from '../composables/useWalletManager'
 
 const { currentNetwork, networkInfo: currentNetworkInfo, switchNetwork, isConnected: isWalletConnected } = useWalletManager()
 
@@ -137,6 +200,8 @@ const error = ref<string | null>(null)
 const dropdownRef = ref<HTMLElement | null>(null)
 
 const availableNetworks = computed(() => Object.values(NETWORKS))
+const avmNetworks = computed(() => Object.values(AVM_NETWORKS))
+const evmNetworks = computed(() => Object.values(EVM_NETWORKS))
 
 const networkStatus = computed(() => {
   if (isSwitching.value) return 'Switching...'

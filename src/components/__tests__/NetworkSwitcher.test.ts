@@ -12,18 +12,22 @@ const mockNetworkInfo = ref({
   algodUrl: 'https://mainnet-api.voi.nodely.dev',
   genesisId: 'voimain-v1.0',
   isTestnet: false,
+  chainType: 'AVM' as const,
 })
 const mockIsConnected = ref(false)
 const mockSwitchNetwork = vi.fn()
 
-vi.mock('../../composables/useWalletManager', () => ({
-  useWalletManager: vi.fn(() => ({
-    currentNetwork: mockCurrentNetwork,
-    networkInfo: mockNetworkInfo,
-    switchNetwork: mockSwitchNetwork,
-    isConnected: mockIsConnected,
-  })),
-  NETWORKS: {
+vi.mock('../../composables/useWalletManager', () => {
+  const mockNetworks = {
+    'algorand-mainnet': {
+      id: 'algorand-mainnet',
+      name: 'algorand-mainnet',
+      displayName: 'Algorand Mainnet',
+      algodUrl: 'https://mainnet-api.4160.nodely.dev',
+      genesisId: 'mainnet-v1.0',
+      isTestnet: false,
+      chainType: 'AVM',
+    },
     'voi-mainnet': {
       id: 'voi-mainnet',
       name: 'voi-mainnet',
@@ -31,6 +35,7 @@ vi.mock('../../composables/useWalletManager', () => ({
       algodUrl: 'https://mainnet-api.voi.nodely.dev',
       genesisId: 'voimain-v1.0',
       isTestnet: false,
+      chainType: 'AVM',
     },
     'aramidmain': {
       id: 'aramidmain',
@@ -39,6 +44,16 @@ vi.mock('../../composables/useWalletManager', () => ({
       algodUrl: 'https://algod.aramidmain.a-wallet.net',
       genesisId: 'aramidmain-v1.0',
       isTestnet: false,
+      chainType: 'AVM',
+    },
+    'algorand-testnet': {
+      id: 'algorand-testnet',
+      name: 'algorand-testnet',
+      displayName: 'Algorand Testnet',
+      algodUrl: 'https://testnet-api.4160.nodely.dev',
+      genesisId: 'testnet-v1.0',
+      isTestnet: true,
+      chainType: 'AVM',
     },
     'dockernet': {
       id: 'dockernet',
@@ -47,9 +62,81 @@ vi.mock('../../composables/useWalletManager', () => ({
       algodUrl: 'http://localhost:4001',
       genesisId: 'dockernet-v1',
       isTestnet: true,
+      chainType: 'AVM',
     },
-  },
-}))
+    'ethereum': {
+      id: 'ethereum',
+      name: 'ethereum',
+      displayName: 'Ethereum Mainnet',
+      chainId: 1,
+      rpcUrl: 'https://ethereum.publicnode.com',
+      blockExplorerUrl: 'https://etherscan.io',
+      nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+      isTestnet: false,
+      chainType: 'EVM',
+    },
+    'arbitrum': {
+      id: 'arbitrum',
+      name: 'arbitrum',
+      displayName: 'Arbitrum One',
+      chainId: 42161,
+      rpcUrl: 'https://arb1.arbitrum.io/rpc',
+      blockExplorerUrl: 'https://arbiscan.io',
+      nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+      isTestnet: false,
+      chainType: 'EVM',
+    },
+    'base': {
+      id: 'base',
+      name: 'base',
+      displayName: 'Base',
+      chainId: 8453,
+      rpcUrl: 'https://mainnet.base.org',
+      blockExplorerUrl: 'https://basescan.org',
+      nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+      isTestnet: false,
+      chainType: 'EVM',
+    },
+    'sepolia': {
+      id: 'sepolia',
+      name: 'sepolia',
+      displayName: 'Sepolia Testnet',
+      chainId: 11155111,
+      rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
+      blockExplorerUrl: 'https://sepolia.etherscan.io',
+      nativeCurrency: { name: 'Sepolia Ether', symbol: 'ETH', decimals: 18 },
+      isTestnet: true,
+      chainType: 'EVM',
+    },
+  };
+  
+  const avmNetworks = {
+    'algorand-mainnet': mockNetworks['algorand-mainnet'],
+    'voi-mainnet': mockNetworks['voi-mainnet'],
+    'aramidmain': mockNetworks['aramidmain'],
+    'algorand-testnet': mockNetworks['algorand-testnet'],
+    'dockernet': mockNetworks['dockernet'],
+  };
+  
+  const evmNetworks = {
+    'ethereum': mockNetworks['ethereum'],
+    'arbitrum': mockNetworks['arbitrum'],
+    'base': mockNetworks['base'],
+    'sepolia': mockNetworks['sepolia'],
+  };
+  
+  return {
+    useWalletManager: vi.fn(() => ({
+      currentNetwork: mockCurrentNetwork,
+      networkInfo: mockNetworkInfo,
+      switchNetwork: mockSwitchNetwork,
+      isConnected: mockIsConnected,
+    })),
+    NETWORKS: mockNetworks,
+    AVM_NETWORKS: avmNetworks,
+    EVM_NETWORKS: evmNetworks,
+  };
+})
 
 describe('NetworkSwitcher', () => {
   beforeEach(() => {
@@ -63,6 +150,7 @@ describe('NetworkSwitcher', () => {
       algodUrl: 'https://mainnet-api.voi.nodely.dev',
       genesisId: 'voimain-v1.0',
       isTestnet: false,
+      chainType: 'AVM' as const,
     }
   })
 

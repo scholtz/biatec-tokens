@@ -63,29 +63,54 @@ describe('useWalletManager', () => {
       expect(NETWORKS['dockernet'].genesisId).toBe('dockernet-v1')
     })
 
-    it('should have exactly 3 networks configured', () => {
-      expect(Object.keys(NETWORKS)).toHaveLength(3)
-      expect(Object.keys(NETWORKS)).toEqual(['voi-mainnet', 'aramidmain', 'dockernet'])
+    it('should have exactly 9 networks configured (5 AVM + 4 EVM)', () => {
+      expect(Object.keys(NETWORKS)).toHaveLength(9)
+      expect(Object.keys(NETWORKS)).toEqual([
+        'algorand-mainnet',
+        'voi-mainnet',
+        'aramidmain',
+        'algorand-testnet',
+        'dockernet',
+        'ethereum',
+        'arbitrum',
+        'base',
+        'sepolia'
+      ])
     })
   })
 
   describe('Network Configuration Validation', () => {
-    it('should have valid algod URLs for all networks', () => {
+    it('should have valid algod URLs for AVM networks or RPC URLs for EVM networks', () => {
       Object.entries(NETWORKS).forEach(([key, network]) => {
-        expect(network.algodUrl).toBeTruthy()
-        expect(typeof network.algodUrl).toBe('string')
-        
-        if (!network.isTestnet) {
-          expect(network.algodUrl).toMatch(/^https:\/\//)
+        if (network.chainType === 'AVM') {
+          expect(network.algodUrl).toBeTruthy()
+          expect(typeof network.algodUrl).toBe('string')
+          
+          if (!network.isTestnet) {
+            expect(network.algodUrl).toMatch(/^https:\/\//)
+          }
+        } else if (network.chainType === 'EVM') {
+          expect(network.rpcUrl).toBeTruthy()
+          expect(typeof network.rpcUrl).toBe('string')
+          
+          if (!network.isTestnet) {
+            expect(network.rpcUrl).toMatch(/^https:\/\//)
+          }
         }
       })
     })
 
-    it('should have valid genesis IDs for all networks', () => {
+    it('should have valid genesis IDs for AVM networks or chain IDs for EVM networks', () => {
       Object.entries(NETWORKS).forEach(([key, network]) => {
-        expect(network.genesisId).toBeTruthy()
-        expect(typeof network.genesisId).toBe('string')
-        expect(network.genesisId.length).toBeGreaterThan(0)
+        if (network.chainType === 'AVM') {
+          expect(network.genesisId).toBeTruthy()
+          expect(typeof network.genesisId).toBe('string')
+          expect(network.genesisId.length).toBeGreaterThan(0)
+        } else if (network.chainType === 'EVM') {
+          expect(network.chainId).toBeTruthy()
+          expect(typeof network.chainId).toBe('number')
+          expect(network.chainId).toBeGreaterThan(0)
+        }
       })
     })
 

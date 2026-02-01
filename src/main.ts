@@ -24,6 +24,7 @@ import "./style.css";
 const app = createApp(App);
 const pinia = createPinia();
 
+// Configure AVM networks for @txnlab/use-wallet-vue
 const networks = new NetworkConfigBuilder()
   .mainnet({
     algod: {
@@ -74,37 +75,39 @@ const networks = new NetworkConfigBuilder()
   })
   .build();
 
-// EVM Network Configurations (for future multi-chain support)
-// const evmNetworks = {
-//   ethereum: {
-//     chainId: 1,
-//     name: "Ethereum",
-//     rpcUrl: "https://mainnet.infura.io/v3/YOUR_INFURA_KEY",
-//     blockExplorerUrl: "https://etherscan.io",
-//     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-//   },
-//   arbitrum: {
-//     chainId: 42161,
-//     name: "Arbitrum One",
-//     rpcUrl: "https://arb1.arbitrum.io/rpc",
-//     blockExplorerUrl: "https://arbiscan.io",
-//     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-//   },
-//   base: {
-//     chainId: 8453,
-//     name: "Base",
-//     rpcUrl: "https://mainnet.base.org",
-//     blockExplorerUrl: "https://basescan.org",
-//     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-//   },
-//   sepolia: {
-//     chainId: 11155111,
-//     name: "Sepolia",
-//     rpcUrl: "https://sepolia.infura.io/v3/YOUR_INFURA_KEY",
-//     blockExplorerUrl: "https://sepolia.etherscan.io",
-//     nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 },
-//   },
-// };
+// EVM Network Configurations
+// Note: EVM networks are configured in useWalletManager.ts
+// They use MetaMask/WalletConnect for wallet connections
+export const evmNetworks = {
+  ethereum: {
+    chainId: 1,
+    name: "Ethereum",
+    rpcUrl: "https://ethereum.publicnode.com",
+    blockExplorerUrl: "https://etherscan.io",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  },
+  arbitrum: {
+    chainId: 42161,
+    name: "Arbitrum One",
+    rpcUrl: "https://arb1.arbitrum.io/rpc",
+    blockExplorerUrl: "https://arbiscan.io",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  },
+  base: {
+    chainId: 8453,
+    name: "Base",
+    rpcUrl: "https://mainnet.base.org",
+    blockExplorerUrl: "https://basescan.org",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  },
+  sepolia: {
+    chainId: 11155111,
+    name: "Sepolia",
+    rpcUrl: "https://ethereum-sepolia-rpc.publicnode.com",
+    blockExplorerUrl: "https://sepolia.etherscan.io",
+    nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 },
+  },
+};
 
 try {
   app.use(WalletManagerPlugin, {

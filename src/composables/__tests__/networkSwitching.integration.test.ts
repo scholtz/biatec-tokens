@@ -130,11 +130,18 @@ describe('Network Switching Integration Tests', () => {
       expect(aramidUrl).toMatch(/^https:\/\//)
     })
 
-    it('should have unique genesis IDs for all networks', () => {
-      const genesisIds = Object.values(NETWORKS).map(n => n.genesisId)
-      const uniqueGenesisIds = new Set(genesisIds)
+    it('should have unique genesis IDs for AVM networks and unique chain IDs for EVM networks', () => {
+      const avmGenesisIds = Object.values(NETWORKS)
+        .filter(n => n.chainType === 'AVM')
+        .map(n => n.genesisId)
+      const uniqueAvmGenesisIds = new Set(avmGenesisIds)
+      expect(uniqueAvmGenesisIds.size).toBe(avmGenesisIds.length)
 
-      expect(uniqueGenesisIds.size).toBe(genesisIds.length)
+      const evmChainIds = Object.values(NETWORKS)
+        .filter(n => n.chainType === 'EVM')
+        .map(n => n.chainId)
+      const uniqueEvmChainIds = new Set(evmChainIds)
+      expect(uniqueEvmChainIds.size).toBe(evmChainIds.length)
     })
 
     it('should have secure URLs for production networks', () => {
