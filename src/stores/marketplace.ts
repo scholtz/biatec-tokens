@@ -2,7 +2,6 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import type { Token } from "./tokens";
 import { priceOracleService } from "../services/PriceOracleService";
-import type { TokenPrice } from "../services/PriceOracleService";
 
 export type Network = "All" | "VOI" | "Aramid" | "Algorand Mainnet" | "Algorand Testnet" | "Ethereum" | "Arbitrum" | "Base" | "Sepolia";
 export type ComplianceBadge = "All" | "MICA Compliant" | "KYC Required" | "Whitelisted" | "None";

@@ -228,8 +228,8 @@ export class PriceOracleService {
    * Fetches price from DEX aggregators
    */
   private async fetchFromDEX(
-    tokenId: string,
-    symbol: string,
+    _tokenId: string,
+    _symbol: string,
     network: string
   ): Promise<TokenPrice | null> {
     // Simulate DEX price fetch (would integrate with actual DEX APIs)
@@ -256,7 +256,7 @@ export class PriceOracleService {
   private async fetchFromFallback(
     tokenId: string,
     symbol: string,
-    network: string
+    _network: string
   ): Promise<TokenPrice | null> {
     // Fallback to mock data for demonstration
     // In production, this could be a secondary price feed or historical average
@@ -288,7 +288,7 @@ export class PriceOracleService {
   /**
    * Maps token symbols to CoinGecko IDs
    */
-  private mapToCoinGeckoId(symbol: string, network: string): string | null {
+  private mapToCoinGeckoId(symbol: string, _network: string): string | null {
     const mapping: Record<string, string> = {
       ALGO: "algorand",
       ETH: "ethereum",
