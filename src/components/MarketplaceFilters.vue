@@ -148,20 +148,20 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import type { MarketplaceFilters } from '../stores/marketplace';
+import type { MarketplaceFilters as IMarketplaceFilters } from '../stores/marketplace';
 
 const props = defineProps<{
-  filters: MarketplaceFilters;
+  filters: IMarketplaceFilters;
   filteredCount: number;
   totalTokens: number;
 }>();
 
 const emit = defineEmits<{
-  'update:filters': [filters: MarketplaceFilters];
+  'update:filters': [filters: IMarketplaceFilters];
   'reset': [];
 }>();
 
-const localFilters = ref<MarketplaceFilters>({ ...props.filters });
+const localFilters = ref<IMarketplaceFilters>({ ...props.filters });
 
 // Watch for external filter changes (e.g., from URL)
 watch(
@@ -185,11 +185,15 @@ const emitFilters = () => {
   emit('update:filters', { ...localFilters.value });
 };
 
-const clearFilter = (filterKey: keyof MarketplaceFilters) => {
+const clearFilter = (filterKey: keyof IMarketplaceFilters) => {
   if (filterKey === 'search') {
     localFilters.value.search = '';
-  } else {
-    localFilters.value[filterKey] = 'All' as any;
+  } else if (filterKey === 'network') {
+    localFilters.value.network = 'All';
+  } else if (filterKey === 'complianceBadge') {
+    localFilters.value.complianceBadge = 'All';
+  } else if (filterKey === 'assetClass') {
+    localFilters.value.assetClass = 'All';
   }
   emitFilters();
 };

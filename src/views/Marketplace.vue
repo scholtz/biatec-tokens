@@ -77,7 +77,7 @@
             :key="token.id"
             :token="token"
             @select="handleTokenSelect"
-            @view-details="handleViewDetails"
+            @view-details="handleTokenSelect"
           />
         </div>
       </div>
@@ -157,11 +157,6 @@ const handleReset = () => {
 };
 
 const handleTokenSelect = (token: MarketplaceToken) => {
-  selectedToken.value = token;
-  showDetailDrawer.value = true;
-};
-
-const handleViewDetails = (token: MarketplaceToken) => {
   selectedToken.value = token;
   showDetailDrawer.value = true;
 };
