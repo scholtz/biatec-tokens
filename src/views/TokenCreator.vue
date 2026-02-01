@@ -5,7 +5,7 @@
         <!-- Header -->
         <div class="text-center mb-8">
           <h1 class="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-4">Create New Token</h1>
-          <p class="text-gray-300 text-lg">Choose a template or token standard and deploy in seconds</p>
+          <p class="text-gray-600 dark:text-gray-300 text-lg">Choose a template or token standard and deploy in seconds</p>
         </div>
 
         <!-- Wallet & Network Panel (NEW) -->
@@ -21,7 +21,7 @@
         <div class="glass-effect rounded-xl p-6 mb-8">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Select Network</h2>
-            <span class="text-sm text-gray-400">Choose your deployment target</span>
+            <span class="text-sm text-gray-600 dark:text-gray-400">Choose your deployment target</span>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <button
@@ -37,15 +37,15 @@
                 <h3 class="font-semibold text-gray-900 dark:text-white text-lg">{{ network.displayName }}</h3>
                 <i class="pi pi-check-circle text-biatec-accent" v-if="selectedNetwork === network.name"></i>
               </div>
-              <p class="text-sm text-gray-400 mb-4">{{ network.description }}</p>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ network.description }}</p>
               <div class="space-y-2 text-xs">
                 <div class="flex items-center gap-2">
                   <i class="pi pi-bolt text-blue-400"></i>
-                  <span class="text-gray-300">Creation: {{ network.fees.creation }}</span>
+                  <span class="text-gray-700 dark:text-gray-300">Creation: {{ network.fees.creation }}</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <i class="pi pi-send text-green-400"></i>
-                  <span class="text-gray-300">Transaction: {{ network.fees.transaction }}</span>
+                  <span class="text-gray-700 dark:text-gray-300">Transaction: {{ network.fees.transaction }}</span>
                 </div>
               </div>
             </button>
@@ -59,7 +59,7 @@
                   <i class="pi pi-info-circle"></i>
                   Fee Structure
                 </h4>
-                <p class="text-sm text-gray-300">{{ currentNetworkGuidance.fees.description }}</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300">{{ currentNetworkGuidance.fees.description }}</p>
               </div>
 
               <div>
@@ -67,7 +67,7 @@
                   <i class="pi pi-cloud"></i>
                   Metadata Hosting
                 </h4>
-                <p class="text-sm text-gray-300 mb-2">{{ currentNetworkGuidance.metadataHosting.description }}</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300 mb-2">{{ currentNetworkGuidance.metadataHosting.description }}</p>
                 <div class="flex flex-wrap gap-2">
                   <span v-for="provider in currentNetworkGuidance.metadataHosting.recommended" :key="provider" class="px-2 py-1 bg-purple-500/20 text-purple-300 rounded text-xs">
                     {{ provider }}
@@ -80,9 +80,9 @@
                   <i class="pi pi-shield-check"></i>
                   MICA Compliance
                 </h4>
-                <p class="text-sm text-gray-300 mb-2">{{ currentNetworkGuidance.compliance.micaRelevance }}</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300 mb-2">{{ currentNetworkGuidance.compliance.micaRelevance }}</p>
                 <ul class="space-y-1 ml-4">
-                  <li v-for="(consideration, idx) in currentNetworkGuidance.compliance.considerations" :key="idx" class="text-xs text-gray-400 flex items-start gap-2">
+                  <li v-for="(consideration, idx) in currentNetworkGuidance.compliance.considerations" :key="idx" class="text-xs text-gray-600 dark:text-gray-400 flex items-start gap-2">
                     <i class="pi pi-check text-green-500 mt-0.5"></i>
                     <span>{{ consideration }}</span>
                   </li>
@@ -125,8 +125,8 @@
 
           <div v-if="!showComplianceChecklist" class="text-center py-8">
             <i class="pi pi-shield-check text-5xl text-biatec-accent/50 mb-4"></i>
-            <p class="text-gray-300 mb-2">MICA-compliant token launch preparation</p>
-            <p class="text-sm text-gray-400 mb-4">
+            <p class="text-gray-700 dark:text-gray-300 mb-2">MICA-compliant token launch preparation</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
               Complete {{ complianceStore.metrics.completedChecks }} of {{ complianceStore.metrics.totalChecks }} compliance items ({{ complianceStore.metrics.completionPercentage }}% complete)
             </p>
             <button @click="showComplianceChecklist = true" class="btn-primary px-6 py-2 rounded-lg text-gray-900 dark:text-white font-semibold inline-flex items-center gap-2">
@@ -159,8 +159,8 @@
 
           <div v-if="!showCompetitorParity" class="text-center py-8">
             <i class="pi pi-chart-bar text-5xl text-purple-400/50 mb-4"></i>
-            <p class="text-gray-300 mb-2">Track feature parity with leading Algorand tools</p>
-            <p class="text-sm text-gray-400 mb-4">Ensure Biatec Tokens stays competitive with Pera Wallet, Defly, and Folks Finance</p>
+            <p class="text-gray-700 dark:text-gray-300 mb-2">Track feature parity with leading Algorand tools</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Ensure Biatec Tokens stays competitive with Pera Wallet, Defly, and Folks Finance</p>
             <button @click="showCompetitorParity = true" class="bg-purple-500 hover:bg-purple-600 px-6 py-2 rounded-lg text-white font-semibold inline-flex items-center gap-2 transition-all">
               <i class="pi pi-chart-bar"></i>
               Open Parity Tracker
@@ -194,7 +194,7 @@
         <div class="glass-effect rounded-xl p-6 mb-8">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Quick Start with Standard Templates</h2>
-            <span class="text-sm text-gray-400">General-purpose token templates</span>
+            <span class="text-sm text-gray-600 dark:text-gray-400">General-purpose token templates</span>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
             <button
@@ -212,7 +212,7 @@
                   <i class="pi pi-shield-check mr-1"></i>MICA
                 </span>
               </div>
-              <p class="text-sm text-gray-400 mb-3">{{ template.description }}</p>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{ template.description }}</p>
               <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
                 <span class="px-2 py-1 bg-blue-500/20 text-blue-400 rounded">{{ template.standard }}</span>
                 <span class="px-2 py-1 bg-purple-500/20 text-purple-400 rounded">{{ template.network }}</span>
@@ -225,10 +225,10 @@
               <i class="pi pi-info-circle text-blue-400 mt-1"></i>
               <div class="flex-1">
                 <h4 class="text-sm font-semibold text-blue-400 mb-2">Template Guidance</h4>
-                <p class="text-sm text-gray-300 mb-2">
+                <p class="text-sm text-gray-700 dark:text-gray-300 mb-2">
                   {{ currentTemplate?.guidance }}
                 </p>
-                <p class="text-xs text-gray-400 border-t border-blue-500/20 pt-2 mt-2">
+                <p class="text-xs text-gray-600 dark:text-gray-400 border-t border-blue-500/20 pt-2 mt-2">
                   <strong>Compliance Note:</strong>
                   {{ currentTemplate?.compliance }}
                 </p>
@@ -257,10 +257,10 @@
                 </div>
                 <div>
                   <h3 class="font-semibold text-gray-900 dark:text-white">{{ standard.name }}</h3>
-                  <p class="text-sm text-gray-400">{{ standard.type }}</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">{{ standard.type }}</p>
                 </div>
               </div>
-              <p class="text-sm text-gray-300">{{ standard.description }}</p>
+              <p class="text-sm text-gray-700 dark:text-gray-300">{{ standard.description }}</p>
             </button>
           </div>
 
@@ -269,7 +269,7 @@
             <div class="space-y-4">
               <div>
                 <h4 class="text-sm font-semibold text-indigo-400 mb-2">About {{ currentStandardDetails.name }}</h4>
-                <p class="text-sm text-gray-300">{{ currentStandardDetails.detailedDescription }}</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300">{{ currentStandardDetails.detailedDescription }}</p>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -279,7 +279,7 @@
                     Advantages
                   </h5>
                   <ul class="space-y-1">
-                    <li v-for="pro in currentStandardDetails.pros" :key="pro" class="text-xs text-gray-400 flex items-start gap-2">
+                    <li v-for="pro in currentStandardDetails.pros" :key="pro" class="text-xs text-gray-600 dark:text-gray-400 flex items-start gap-2">
                       <i class="pi pi-check text-green-500 mt-0.5"></i>
                       <span>{{ pro }}</span>
                     </li>
@@ -292,7 +292,7 @@
                     Considerations
                   </h5>
                   <ul class="space-y-1">
-                    <li v-for="con in currentStandardDetails.cons" :key="con" class="text-xs text-gray-400 flex items-start gap-2">
+                    <li v-for="con in currentStandardDetails.cons" :key="con" class="text-xs text-gray-600 dark:text-gray-400 flex items-start gap-2">
                       <i class="pi pi-info-circle text-orange-500 mt-0.5"></i>
                       <span>{{ con }}</span>
                     </li>
@@ -303,7 +303,7 @@
               <div>
                 <h5 class="text-xs font-semibold text-cyan-400 mb-2">Use this standard when:</h5>
                 <ul class="space-y-1">
-                  <li v-for="when in currentStandardDetails.useWhen" :key="when" class="text-xs text-gray-400 flex items-start gap-2">
+                  <li v-for="when in currentStandardDetails.useWhen" :key="when" class="text-xs text-gray-600 dark:text-gray-400 flex items-start gap-2">
                     <i class="pi pi-arrow-right text-cyan-500 mt-0.5"></i>
                     <span>{{ when }}</span>
                   </li>
@@ -320,7 +320,7 @@
             <!-- Basic Information -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Token Name</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Token Name</label>
                 <input
                   v-model="tokenForm.name"
                   type="text"
@@ -330,7 +330,7 @@
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Symbol</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Symbol</label>
                 <input
                   v-model="tokenForm.symbol"
                   type="text"
@@ -342,7 +342,7 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Description</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
               <textarea
                 v-model="tokenForm.description"
                 required
@@ -354,7 +354,7 @@
 
             <!-- Token Type -->
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Token Type</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Token Type</label>
               <div class="flex space-x-4">
                 <label class="flex items-center space-x-2">
                   <input v-model="tokenForm.type" type="radio" value="FT" class="w-4 h-4 text-biatec-accent focus:ring-biatec-accent" />
@@ -370,7 +370,7 @@
             <!-- Supply and Decimals -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Total Supply</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total Supply</label>
                 <input
                   v-model.number="tokenForm.supply"
                   type="number"
@@ -381,7 +381,7 @@
                 />
               </div>
               <div v-if="tokenForm.type === 'FT'">
-                <label class="block text-sm font-medium text-gray-300 mb-2">Decimals</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Decimals</label>
                 <input
                   v-model.number="tokenForm.decimals"
                   type="number"
@@ -395,7 +395,7 @@
 
             <!-- Image Upload -->
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Token Image</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Token Image</label>
               <div class="flex items-center space-x-4">
                 <input type="file" @change="handleImageUpload" accept="image/*" class="hidden" ref="imageInput" />
                 <button type="button" @click="imageInput?.click()" class="px-4 py-2 bg-biatec-accent/20 text-biatec-accent rounded-lg hover:bg-biatec-accent/30 transition-colors">
