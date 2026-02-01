@@ -168,12 +168,38 @@ src/
 
 **Remember:** Test failures are not just technical issues - they represent potential user-facing problems that could break the application in production.
 
+### Pre-Completion Testing Checklist
+
+**MANDATORY: Complete ALL items before marking work as done:**
+
+- [ ] Run `npm test` (Unit tests) - Ensure 0 failures
+- [ ] Run `npm run test:coverage` - Ensure coverage meets thresholds:
+  - Statements: ≥78%
+  - Branches: ≥69%
+  - Functions: ≥68.5%
+  - Lines: ≥79%
+- [ ] Run `npm run test:e2e` (E2E tests) - Ensure 0 failures
+- [ ] Run `npm run build` - Ensure TypeScript compilation passes
+- [ ] Run `npm run check-typescript-errors-tsc` - Ensure TypeScript compilation without warnings/errors
+- [ ] Run `npm run check-typescript-errors-vue` - Ensure VUE TypeScript compilation without warnings/errors
+- [ ] If adding/modifying components: Run component-specific unit tests
+- [ ] If changing UI/UX: Verify E2E tests for affected user flows pass
+- [ ] If modifying API integration: Run `npm run generate-api` and update code accordingly
+- [ ] Test wallet connectivity for blockchain-related changes
+- [ ] Verify dark mode compatibility for UI changes
+
+**FAILURE TO COMPLETE THIS CHECKLIST WILL RESULT IN REJECTED WORK.**
+
 ### Unit Tests (Vitest)
 
 - Always run `npm test` for unit tests with Vitest
 - Unit tests are located in `src/` directories alongside components (e.g., `*.test.ts`, `*.spec.ts`)
 - Test files use Vitest with Vue Test Utils for component testing
-- Run `npm run test:coverage` to check test coverage
+- Run `npm run test:coverage` to check test coverage - must meet thresholds:
+  - Statements: ≥78%
+  - Branches: ≥69%
+  - Functions: ≥68.5%
+  - Lines: ≥79%
 - Existing test patterns:
   - Component tests: Mock dependencies, test user interactions
   - Store tests: Test state management and actions
@@ -300,6 +326,11 @@ expect(isVisible || true).toBe(true); // Pass if element not found
 
 - **CRITICAL: Run all tests before finishing the work**
 - **CRITICAL: Fix all failing tests immediately - do not proceed until tests pass**
+- **CRITICAL: Ensure test coverage meets minimum thresholds**:
+  - Statements: ≥78%
+  - Branches: ≥69%
+  - Functions: ≥68.5%
+  - Lines: ≥79%
 - **With every code change, run appropriate tests**:
   - Component changes → Unit tests + E2E tests for affected flows
   - UI/UX changes → E2E tests for visual verification

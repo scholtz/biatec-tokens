@@ -736,11 +736,13 @@ const validateCsvData = async () => {
     const addressSet = new Set<string>();
     const duplicatesInCsv: string[] = [];
     
-    addresses.forEach(addr => {
-      if (addressSet.has(addr)) {
-        duplicatesInCsv.push(addr);
-      } else {
-        addressSet.add(addr);
+    validationResults.value.forEach(result => {
+      if (result.valid) {
+        if (addressSet.has(result.address)) {
+          duplicatesInCsv.push(result.address);
+        } else {
+          addressSet.add(result.address);
+        }
       }
     });
     
