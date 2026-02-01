@@ -40,6 +40,14 @@
             <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-biatec-accent transition-all duration-200 group-hover:w-full" :class="{ 'w-full': $route.name === 'TokenDashboard' }"></span>
           </router-link>
           <router-link
+            to="/marketplace"
+            class="text-white hover:text-biatec-accent transition-colors duration-200 font-medium text-lg relative group"
+            :class="{ 'text-biatec-accent': $route.name === 'Marketplace' }"
+          >
+            Marketplace
+            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-biatec-accent transition-all duration-200 group-hover:w-full" :class="{ 'w-full': $route.name === 'Marketplace' }"></span>
+          </router-link>
+          <router-link
             to="/attestations"
             class="text-white hover:text-biatec-accent transition-colors duration-200 font-medium text-lg relative group"
             :class="{ 'text-biatec-accent': $route.name === 'AttestationsDashboard' }"

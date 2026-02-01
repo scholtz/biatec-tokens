@@ -10,6 +10,7 @@ import ComplianceMonitoringDashboard from "../views/ComplianceMonitoringDashboar
 import AttestationsDashboard from "../views/AttestationsDashboard.vue";
 import TokenStandardsView from "../views/TokenStandardsView.vue";
 import EnterpriseGuideView from "../views/EnterpriseGuideView.vue";
+import Marketplace from "../views/Marketplace.vue";
 import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from "../constants/auth";
 
 // Subscription views
@@ -58,6 +59,11 @@ const router = createRouter({
       path: "/enterprise-guide",
       name: "EnterpriseGuide",
       component: EnterpriseGuideView,
+    },
+    {
+      path: "/marketplace",
+      name: "Marketplace",
+      component: Marketplace,
     },
     {
       path: "/settings",
