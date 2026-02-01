@@ -27,13 +27,9 @@
           </div>
           <span
             class="px-2 py-1 text-xs font-medium rounded-full"
-            :class="
-              isTestnet
-                ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                : 'bg-green-500/20 text-green-400 border border-green-500/30'
-            "
+            :class="isTestnet ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30'"
           >
-            {{ isTestnet ? 'Testnet' : 'Mainnet' }}
+            {{ isTestnet ? "Testnet" : "Mainnet" }}
           </span>
         </div>
 
@@ -106,9 +102,7 @@
             <i class="pi pi-check text-green-500"></i>
             <span class="text-gray-300">MICA compliance metadata attached</span>
           </div>
-          <p class="text-gray-400 mt-2">
-            This token deployment includes regulatory compliance information for audit trail purposes.
-          </p>
+          <p class="text-gray-400 mt-2">This token deployment includes regulatory compliance information for audit trail purposes.</p>
         </div>
       </div>
 
@@ -133,28 +127,22 @@
       <div class="space-y-2">
         <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Pre-Deployment Checklist</h4>
         <div class="space-y-2">
-          <label class="flex items-center gap-3 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-white/70 dark:hover:bg-gray-800/70 transition-colors">
-            <input
-              type="checkbox"
-              v-model="checklist.reviewedDetails"
-              class="w-4 h-4 text-biatec-accent border-gray-300 rounded focus:ring-biatec-accent"
-            />
+          <label
+            class="flex items-center gap-3 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-white/70 dark:hover:bg-gray-800/70 transition-colors"
+          >
+            <input type="checkbox" v-model="checklist.reviewedDetails" class="w-4 h-4 text-biatec-accent border-gray-300 rounded focus:ring-biatec-accent" />
             <span class="text-sm text-gray-700 dark:text-gray-300">I have reviewed all token details</span>
           </label>
-          <label class="flex items-center gap-3 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-white/70 dark:hover:bg-gray-800/70 transition-colors">
-            <input
-              type="checkbox"
-              v-model="checklist.confirmedNetwork"
-              class="w-4 h-4 text-biatec-accent border-gray-300 rounded focus:ring-biatec-accent"
-            />
+          <label
+            class="flex items-center gap-3 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-white/70 dark:hover:bg-gray-800/70 transition-colors"
+          >
+            <input type="checkbox" v-model="checklist.confirmedNetwork" class="w-4 h-4 text-biatec-accent border-gray-300 rounded focus:ring-biatec-accent" />
             <span class="text-sm text-gray-700 dark:text-gray-300">I confirm the target network is correct</span>
           </label>
-          <label class="flex items-center gap-3 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-white/70 dark:hover:bg-gray-800/70 transition-colors">
-            <input
-              type="checkbox"
-              v-model="checklist.understoodFees"
-              class="w-4 h-4 text-biatec-accent border-gray-300 rounded focus:ring-biatec-accent"
-            />
+          <label
+            class="flex items-center gap-3 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-white/70 dark:hover:bg-gray-800/70 transition-colors"
+          >
+            <input type="checkbox" v-model="checklist.understoodFees" class="w-4 h-4 text-biatec-accent border-gray-300 rounded focus:ring-biatec-accent" />
             <span class="text-sm text-gray-700 dark:text-gray-300">I understand the fees involved</span>
           </label>
         </div>
@@ -177,7 +165,7 @@
         >
           <i v-if="isDeploying" class="pi pi-spin pi-spinner"></i>
           <i v-else class="pi pi-check"></i>
-          <span>{{ isDeploying ? 'Deploying...' : 'Confirm & Deploy' }}</span>
+          <span>{{ isDeploying ? "Deploying..." : "Confirm & Deploy" }}</span>
         </button>
       </div>
     </template>
@@ -185,15 +173,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import Modal from './ui/Modal.vue';
+import { ref, computed } from "vue";
+import Modal from "./ui/Modal.vue";
 
 interface Props {
   isOpen: boolean;
   tokenName: string;
   tokenSymbol: string;
   standard: string;
-  tokenType: 'FT' | 'NFT';
+  tokenType: "FT" | "NFT";
   supply: number;
   decimals?: number;
   networkDisplayName: string;
@@ -227,18 +215,18 @@ const checklist = ref({
 });
 
 const formattedSupply = computed(() => {
-  return props.supply.toLocaleString();
+  return props.supply.toLocaleString("en-US");
 });
 
 const totalFee = computed(() => {
   // Extract numeric values from fee strings and calculate total
-  const creationValue = parseFloat(props.fees.creation.replace(/[^0-9.]/g, '')) || 0;
-  const transactionValue = parseFloat(props.fees.transaction.replace(/[^0-9.]/g, '')) || 0;
+  const creationValue = parseFloat(props.fees.creation.replace(/[^0-9.]/g, "")) || 0;
+  const transactionValue = parseFloat(props.fees.transaction.replace(/[^0-9.]/g, "")) || 0;
   const total = creationValue + transactionValue;
-  
+
   // Extract unit from creation fee (e.g., "VOI", "ALGO")
-  const unit = props.fees.creation.replace(/[0-9.\s]/g, '').trim() || '';
-  
+  const unit = props.fees.creation.replace(/[0-9.\s]/g, "").trim() || "";
+
   return `${total.toFixed(4)} ${unit}`;
 });
 
@@ -247,23 +235,19 @@ const hasCompliance = computed(() => {
 });
 
 const canConfirm = computed(() => {
-  return (
-    checklist.value.reviewedDetails &&
-    checklist.value.confirmedNetwork &&
-    checklist.value.understoodFees
-  );
+  return checklist.value.reviewedDetails && checklist.value.confirmedNetwork && checklist.value.understoodFees;
 });
 
 const handleClose = () => {
   if (!props.isDeploying) {
     resetChecklist();
-    emit('close');
+    emit("close");
   }
 };
 
 const handleConfirm = () => {
   if (canConfirm.value && !props.isDeploying) {
-    emit('confirm');
+    emit("confirm");
   }
 };
 
