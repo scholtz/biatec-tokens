@@ -283,10 +283,11 @@ const getBlockReason = () => {
   return reasons.join(' ');
 };
 
-const TRUNCATE_ADDRESS_THRESHOLD = 20;
+// Minimum length before address truncation (addresses <= this length shown in full)
+const TRUNCATE_ADDRESS_MIN_LENGTH = 20;
 
 const truncateAddress = (address: string) => {
-  if (address.length <= TRUNCATE_ADDRESS_THRESHOLD) return address;
+  if (address.length <= TRUNCATE_ADDRESS_MIN_LENGTH) return address;
   return `${address.slice(0, 10)}...${address.slice(-10)}`;
 };
 

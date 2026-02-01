@@ -1,5 +1,10 @@
 import { test, expect, Page } from '@playwright/test';
 
+// Standardized timeout constants for test reliability
+const ELEMENT_VISIBILITY_TIMEOUT = 3000; // Standard timeout for element visibility checks
+const API_RESPONSE_TIMEOUT = 5000; // Timeout for API responses
+const PAGE_LOAD_TIMEOUT = 10000; // Timeout for page load operations
+
 test.describe('Allowlist Verification Flow', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the compliance dashboard
@@ -16,7 +21,7 @@ test.describe('Allowlist Verification Flow', () => {
     const isVisible = await transferValidationHeading.isVisible().catch(() => false);
     
     if (isVisible) {
-      await expect(transferValidationHeading).toBeVisible({ timeout: 10000 });
+      await expect(transferValidationHeading).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
     } else {
       // Page might redirect if not authenticated or missing query params
       expect(true).toBe(true);
@@ -42,14 +47,14 @@ test.describe('Allowlist Verification Flow', () => {
     // Submit the form and wait for response
     const checkButton = page.getByRole('button', { name: /Check Allowlist Status/i });
     await Promise.race([
-      page.waitForResponse(response => response.url().includes('/validate-transfer'), { timeout: 5000 }).catch(() => null),
+      page.waitForResponse(response => response.url().includes('/validate-transfer'), { timeout: API_RESPONSE_TIMEOUT }).catch(() => null),
       checkButton.click()
     ]);
     
     // Wait for either dialog or error to appear
     await Promise.race([
-      page.waitForSelector('text=Allowlist Verification Required', { timeout: 3000 }).catch(() => null),
-      page.waitForSelector('text=Validation Error', { timeout: 3000 }).catch(() => null)
+      page.waitForSelector('text=Allowlist Verification Required', { timeout: ELEMENT_VISIBILITY_TIMEOUT }).catch(() => null),
+      page.waitForSelector('text=Validation Error', { timeout: ELEMENT_VISIBILITY_TIMEOUT }).catch(() => null)
     ]);
     
     // Check if dialog appeared or if there was an error
@@ -78,8 +83,8 @@ test.describe('Allowlist Verification Flow', () => {
 
     // Wait for MICA notice or error
     await Promise.race([
-      page.waitForSelector('text=/MiCA.*Markets in Crypto-Assets Regulation/i', { timeout: 3000 }).catch(() => null),
-      page.waitForSelector('text=Validation Error', { timeout: 3000 }).catch(() => null)
+      page.waitForSelector('text=/MiCA.*Markets in Crypto-Assets Regulation/i', { timeout: ELEMENT_VISIBILITY_TIMEOUT }).catch(() => null),
+      page.waitForSelector('text=Validation Error', { timeout: ELEMENT_VISIBILITY_TIMEOUT }).catch(() => null)
     ]);
     
     // Check if MICA compliance notice is displayed
@@ -113,9 +118,9 @@ test.describe('Allowlist Verification Flow', () => {
 
     // Wait for proceed button or understood button
     await Promise.race([
-      page.waitForSelector('button:has-text("Proceed with Transfer")', { timeout: 3000 }).catch(() => null),
-      page.waitForSelector('button:has-text("Understood")', { timeout: 3000 }).catch(() => null),
-      page.waitForSelector('text=Validation Error', { timeout: 3000 }).catch(() => null)
+      page.waitForSelector('button:has-text("Proceed with Transfer")', { timeout: ELEMENT_VISIBILITY_TIMEOUT }).catch(() => null),
+      page.waitForSelector('button:has-text("Understood")', { timeout: ELEMENT_VISIBILITY_TIMEOUT }).catch(() => null),
+      page.waitForSelector('text=Validation Error', { timeout: ELEMENT_VISIBILITY_TIMEOUT }).catch(() => null)
     ]);
     
     // Check if proceed button is disabled initially
@@ -156,8 +161,8 @@ test.describe('Allowlist Verification Flow', () => {
     await checkButton.click();
 
     await Promise.race([
-      page.waitForSelector("text=Allowlist Verification Required", { timeout: 3000 }).catch(() => null),
-      page.waitForSelector("text=Validation Error", { timeout: 3000 }).catch(() => null)
+      page.waitForSelector("text=Allowlist Verification Required", { timeout: ELEMENT_VISIBILITY_TIMEOUT }).catch(() => null),
+      page.waitForSelector("text=Validation Error", { timeout: ELEMENT_VISIBILITY_TIMEOUT }).catch(() => null)
     ]);
     
     // Check if transfer blocked message is displayed
@@ -194,8 +199,8 @@ test.describe('Allowlist Verification Flow', () => {
     await checkButton.click();
 
     await Promise.race([
-      page.waitForSelector("text=Allowlist Verification Required", { timeout: 3000 }).catch(() => null),
-      page.waitForSelector("text=Validation Error", { timeout: 3000 }).catch(() => null)
+      page.waitForSelector("text=Allowlist Verification Required", { timeout: ELEMENT_VISIBILITY_TIMEOUT }).catch(() => null),
+      page.waitForSelector("text=Validation Error", { timeout: ELEMENT_VISIBILITY_TIMEOUT }).catch(() => null)
     ]);
     
     // Check if status sections are displayed
@@ -236,8 +241,8 @@ test.describe('Allowlist Verification Flow', () => {
     await checkButton.click();
 
     await Promise.race([
-      page.waitForSelector("text=Allowlist Verification Required", { timeout: 3000 }).catch(() => null),
-      page.waitForSelector("text=Validation Error", { timeout: 3000 }).catch(() => null)
+      page.waitForSelector("text=Allowlist Verification Required", { timeout: ELEMENT_VISIBILITY_TIMEOUT }).catch(() => null),
+      page.waitForSelector("text=Validation Error", { timeout: ELEMENT_VISIBILITY_TIMEOUT }).catch(() => null)
     ]);
     
     // Click cancel button
@@ -282,8 +287,8 @@ test.describe('Allowlist Verification Flow', () => {
     await checkButton.click();
 
     await Promise.race([
-      page.waitForSelector("text=Allowlist Verification Required", { timeout: 3000 }).catch(() => null),
-      page.waitForSelector("text=Validation Error", { timeout: 3000 }).catch(() => null)
+      page.waitForSelector("text=Allowlist Verification Required", { timeout: ELEMENT_VISIBILITY_TIMEOUT }).catch(() => null),
+      page.waitForSelector("text=Validation Error", { timeout: ELEMENT_VISIBILITY_TIMEOUT }).catch(() => null)
     ]);
     
     // Check if transfer details section is displayed
