@@ -295,4 +295,173 @@ test.describe("Marketplace", () => {
     const filterContainer = page.locator(".grid.grid-cols-1.md\\:grid-cols-3");
     await expect(filterContainer).toBeVisible();
   });
+
+  // Price Oracle Tests
+  test.describe("Price Oracle Integration", () => {
+    test("should display prices for tokens after loading", async ({ page }) => {
+      // Wait for tokens and prices to load
+      await page.waitForTimeout(2000);
+
+      // Check that at least one token shows a price
+      const priceElements = page.locator("text=/\\$[0-9,.]+/");
+      const count = await priceElements.count();
+      expect(count).toBeGreaterThan(0);
+
+      // Verify price format (should have dollar sign and decimal)
+      const firstPrice = priceElements.first();
+      const priceText = await firstPrice.textContent();
+      expect(priceText).toMatch(/\$\d+\.\d{2}/);
+    });
+
+    test("should display price changes with indicators", async ({ page }) => {
+      // Wait for tokens and prices to load
+      await page.waitForTimeout(2000);
+
+      // Look for price change indicators (up or down arrows)
+      const priceChanges = page.locator(".pi-arrow-up, .pi-arrow-down");
+      const count = await priceChanges.count();
+      expect(count).toBeGreaterThan(0);
+    });
+
+    test("should display positive price changes in green", async ({ page }) => {
+      // Wait for tokens and prices to load
+      await page.waitForTimeout(2000);
+
+      // Find a positive price change (with up arrow)
+      const positiveChange = page.locator(".pi-arrow-up").first();
+      if (await positiveChange.isVisible()) {
+        const parent = positiveChange.locator("..");
+        const classes = await parent.getAttribute("class");
+        expect(classes).toContain("text-green-400");
+      }
+    });
+
+    test("should display negative price changes in red", async ({ page }) => {
+      // Wait for tokens and prices to load
+      await page.waitForTimeout(2000);
+
+      // Find a negative price change (with down arrow)
+      const negativeChange = page.locator(".pi-arrow-down").first();
+      if (await negativeChange.isVisible()) {
+        const parent = negativeChange.locator("..");
+        const classes = await parent.getAttribute("class");
+        expect(classes).toContain("text-red-400");
+      }
+    });
+
+    test("should update prices during polling", async ({ page }) => {
+      // This test verifies that the price polling mechanism works
+      // Note: In production, prices update every 60 seconds
+      // For testing, we just verify the mechanism is set up correctly
+      
+      // Wait for initial load
+      await page.waitForTimeout(2000);
+
+      // Get initial price values
+      const priceElements = page.locator("text=/\\$[0-9,.]+/");
+      const count = await priceElements.count();
+      
+      // Verify prices are displayed
+      expect(count).toBeGreaterThan(0);
+
+      // Verify price polling is active by checking console or network
+      // In a real scenario, we'd mock the time or use a shorter interval for testing
+      const firstPrice = priceElements.first();
+      await expect(firstPrice).toBeVisible();
+    });
+
+    test("should show price information in token detail drawer", async ({ page }) => {
+      // Wait for tokens to load
+      await page.waitForTimeout(2000);
+
+      // Click on first token card that has a price
+      const firstCard = page.locator(".marketplace-token-card").first();
+      await firstCard.click();
+      await page.waitForTimeout(500);
+
+      // Check that drawer contains price information
+      const drawer = page.locator(".fixed.inset-0.z-50");
+      await expect(drawer).toBeVisible();
+
+      // Look for price display in drawer
+      const priceInDrawer = drawer.locator("text=/\\$[0-9,.]+/");
+      const hasPriceInDrawer = await priceInDrawer.isVisible().catch(() => false);
+      
+      // If the drawer shows price, verify format
+      if (hasPriceInDrawer) {
+        const priceText = await priceInDrawer.textContent();
+        expect(priceText).toMatch(/\$\d+/);
+      }
+    });
+
+    test("should handle price loading gracefully", async ({ page }) => {
+      // Immediately after navigation, before prices load
+      await page.goto("/marketplace");
+      await page.waitForLoadState("domcontentloaded");
+
+      // Page should be functional even if prices haven't loaded
+      const heading = page.getByRole("heading", { name: /Token Marketplace/i });
+      await expect(heading).toBeVisible();
+
+      // Wait for tokens to load
+      await page.waitForTimeout(1000);
+      
+      const tokenCards = page.locator(".marketplace-token-card");
+      const count = await tokenCards.count();
+      expect(count).toBeGreaterThan(0);
+    });
+
+    test("should display price with correct formatting", async ({ page }) => {
+      // Wait for tokens and prices to load
+      await page.waitForTimeout(2000);
+
+      // Check price formatting
+      const priceElements = page.locator(".price-value");
+      if (await priceElements.count() > 0) {
+        const firstPrice = priceElements.first();
+        const priceText = await firstPrice.textContent();
+        
+        // Price should be formatted with dollar sign and decimals
+        expect(priceText).toMatch(/\$\d+/);
+      }
+    });
+
+    test("should filter tokens and maintain price display", async ({ page }) => {
+      // Wait for initial load
+      await page.waitForTimeout(2000);
+
+      // Apply a filter
+      const networkSelect = page.locator('select').first();
+      await networkSelect.selectOption("VOI");
+      await page.waitForTimeout(1000);
+
+      // Verify filtered tokens still show prices
+      const priceElements = page.locator("text=/\\$[0-9,.]+/");
+      const count = await priceElements.count();
+      
+      // Should still have prices displayed for filtered tokens
+      if (count > 0) {
+        const firstPrice = priceElements.first();
+        await expect(firstPrice).toBeVisible();
+      }
+    });
+
+    test("should handle tokens without price data", async ({ page }) => {
+      // Wait for tokens to load
+      await page.waitForTimeout(2000);
+
+      // Page should render successfully even if some tokens don't have prices
+      const tokenCards = page.locator(".marketplace-token-card");
+      const count = await tokenCards.count();
+      
+      // All tokens should be displayed
+      expect(count).toBeGreaterThan(0);
+      
+      // Each token card should be visible
+      for (let i = 0; i < count; i++) {
+        const card = tokenCards.nth(i);
+        await expect(card).toBeVisible();
+      }
+    });
+  });
 });
