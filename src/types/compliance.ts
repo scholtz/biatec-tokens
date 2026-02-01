@@ -43,11 +43,13 @@ export interface TransferValidationResponse {
 export interface WhitelistStatus {
   address: string;
   whitelisted: boolean;
-  status: 'active' | 'pending' | 'removed' | 'not_listed';
+  status: 'active' | 'pending' | 'removed' | 'not_listed' | 'expired' | 'denied';
   kycVerified?: boolean;
   jurisdictionAllowed?: boolean;
   sanctioned?: boolean;
   notes?: string;
+  expirationDate?: string; // ISO 8601 date for expired status
+  denialReason?: string; // Reason for denied status
 }
 
 /**

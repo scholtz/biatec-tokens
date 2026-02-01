@@ -10,7 +10,7 @@
       </p>
     </div>
 
-    <form @submit.prevent="handleValidate" class="space-y-4">
+    <form @submit.prevent="handleCheckAllowlist" class="space-y-4">
       <!-- Network Selection -->
       <div>
         <label class="block text-sm font-medium text-gray-300 mb-2">
@@ -83,9 +83,23 @@
       >
         <i v-if="isValidating" class="pi pi-spin pi-spinner"></i>
         <i v-else class="pi pi-shield-check"></i>
-        {{ isValidating ? 'Validating...' : 'Validate Transfer' }}
+        {{ isValidating ? 'Validating...' : 'Check Allowlist Status' }}
       </button>
     </form>
+
+    <!-- Allowlist Confirmation Dialog -->
+    <AllowlistConfirmationDialog
+      :is-open="showConfirmDialog"
+      :network="selectedNetwork"
+      :token-id="tokenId"
+      :sender-address="senderAddress"
+      :receiver-address="receiverAddress"
+      :sender-status="pendingSenderStatus || defaultWhitelistStatus"
+      :receiver-status="pendingReceiverStatus || defaultWhitelistStatus"
+      :amount="amount"
+      @close="handleDialogClose"
+      @proceed="handleValidate"
+    />
 
     <!-- Validation Results -->
     <div v-if="validationResult" class="mt-6 space-y-4">
@@ -263,8 +277,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { complianceService } from '../services/ComplianceService';
-import type { TransferValidationResponse, Network } from '../types/compliance';
+import type { TransferValidationResponse, Network, WhitelistStatus } from '../types/compliance';
 import { useToast } from '../composables/useToast';
+import AllowlistConfirmationDialog from './AllowlistConfirmationDialog.vue';
 
 const props = defineProps<{
   tokenId: string;
@@ -281,9 +296,54 @@ const amount = ref('');
 const isValidating = ref(false);
 const validationResult = ref<TransferValidationResponse | null>(null);
 const error = ref<string | null>(null);
+const showConfirmDialog = ref(false);
+const pendingSenderStatus = ref<WhitelistStatus | null>(null);
+const pendingReceiverStatus = ref<WhitelistStatus | null>(null);
+
+// Default whitelist status for dialog initialization
+const defaultWhitelistStatus: WhitelistStatus = {
+  address: '',
+  whitelisted: false,
+  status: 'not_listed',
+};
 
 // Methods
+const handleCheckAllowlist = async () => {
+  error.value = null;
+  validationResult.value = null;
+  isValidating.value = true;
+
+  try {
+    // First, validate to get the allowlist status
+    const result = await complianceService.validateTransfer({
+      tokenId: props.tokenId,
+      network: selectedNetwork.value,
+      sender: senderAddress.value,
+      receiver: receiverAddress.value,
+      amount: amount.value || undefined,
+    });
+
+    // Store the statuses for the dialog
+    pendingSenderStatus.value = result.senderStatus;
+    pendingReceiverStatus.value = result.receiverStatus;
+
+    // Show confirmation dialog
+    showConfirmDialog.value = true;
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to check allowlist status';
+    error.value = errorMessage;
+    toast.error('Allowlist check failed');
+  } finally {
+    isValidating.value = false;
+  }
+};
+
+const handleDialogClose = () => {
+  showConfirmDialog.value = false;
+};
+
 const handleValidate = async () => {
+  showConfirmDialog.value = false;
   error.value = null;
   validationResult.value = null;
   isValidating.value = true;
@@ -331,6 +391,10 @@ const statusBadgeClass = (status: string) => {
       return 'bg-green-500/20 text-green-400 border border-green-500/30';
     case 'pending':
       return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30';
+    case 'expired':
+      return 'bg-orange-500/20 text-orange-400 border border-orange-500/30';
+    case 'denied':
+      return 'bg-red-500/20 text-red-400 border border-red-500/30';
     case 'removed':
       return 'bg-red-500/20 text-red-400 border border-red-500/30';
     case 'not_listed':

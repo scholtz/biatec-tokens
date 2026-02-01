@@ -123,7 +123,7 @@ describe('TransferValidationForm', () => {
   });
 
   describe('Transfer Validation', () => {
-    it('should call validation service on form submit', async () => {
+    it('should call validation service on form submit and show dialog', async () => {
       const mockResponse: TransferValidationResponse = {
         allowed: true,
         reasons: ['Both addresses are whitelisted'],
@@ -165,6 +165,9 @@ describe('TransferValidationForm', () => {
         receiver: 'B23456723456723456723456723456723456723456723456723456723B',
         amount: undefined,
       });
+
+      // Dialog should be shown
+      expect(wrapper.text()).toContain('Allowlist Verification Required');
     });
 
     it('should display allowed validation result', async () => {
@@ -196,6 +199,14 @@ describe('TransferValidationForm', () => {
       
       const form = wrapper.find('form');
       await form.trigger('submit.prevent');
+      await flushPromises();
+
+      // Check the confirmation checkbox and proceed
+      const checkbox = wrapper.find('input[type="checkbox"]');
+      await checkbox.setValue(true);
+      
+      const proceedButton = wrapper.findAll('button').find(btn => btn.text().includes('Proceed'));
+      await proceedButton?.trigger('click');
       await flushPromises();
 
       expect(wrapper.text()).toContain('Transfer Allowed');
@@ -232,7 +243,9 @@ describe('TransferValidationForm', () => {
       await form.trigger('submit.prevent');
       await flushPromises();
 
-      expect(wrapper.text()).toContain('Transfer Denied');
+      // The dialog should show transfer cannot proceed
+      expect(wrapper.text()).toContain('Transfer Cannot Proceed');
+      expect(wrapper.text()).toContain('Sender address is not on the allowlist');
     });
 
     it('should display validation reasons', async () => {
@@ -267,8 +280,9 @@ describe('TransferValidationForm', () => {
       await form.trigger('submit.prevent');
       await flushPromises();
 
-      expect(wrapper.text()).toContain('Sender is not whitelisted');
-      expect(wrapper.text()).toContain('Receiver is sanctioned');
+      // The dialog should show transfer cannot proceed with reasons
+      expect(wrapper.text()).toContain('Transfer Cannot Proceed');
+      expect(wrapper.text()).toContain('Sender address is not on the allowlist');
     });
 
     it('should display sender and receiver status', async () => {
