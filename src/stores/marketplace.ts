@@ -1,6 +1,8 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import type { Token } from "./tokens";
+import { priceOracleService } from "../services/PriceOracleService";
+import type { TokenPrice } from "../services/PriceOracleService";
 
 export type Network = "All" | "VOI" | "Aramid" | "Algorand Mainnet" | "Algorand Testnet" | "Ethereum" | "Arbitrum" | "Base" | "Sepolia";
 export type ComplianceBadge = "All" | "MICA Compliant" | "KYC Required" | "Whitelisted" | "None";
@@ -16,6 +18,11 @@ export interface MarketplaceFilters {
 export interface MarketplaceToken extends Token {
   price?: number;
   priceChange24h?: number;
+  priceChange7d?: number;
+  volume24h?: number;
+  marketCap?: number;
+  priceSource?: string;
+  priceLastUpdated?: Date;
   issuer?: string;
   whitelistStatus?: "enabled" | "disabled" | "partial";
   complianceBadges?: string[];
@@ -35,6 +42,9 @@ export const useMarketplaceStore = defineStore("marketplace", () => {
   });
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const pricesLoading = ref(false);
+  const pricePollingEnabled = ref(false);
+  const pricePollingInterval = ref<number | null>(null);
 
   // Mock data for demonstration
   const mockTokens: MarketplaceToken[] = [
@@ -216,6 +226,129 @@ export const useMarketplaceStore = defineStore("marketplace", () => {
   const totalTokens = computed(() => tokens.value.length);
   const filteredCount = computed(() => filteredTokens.value.length);
 
+  /**
+   * Fetches real-time prices for all tokens
+   */
+  const fetchTokenPrices = async (): Promise<void> => {
+    if (tokens.value.length === 0) return;
+
+    pricesLoading.value = true;
+
+    try {
+      const tokenData = tokens.value.map((token) => ({
+        tokenId: token.id,
+        symbol: token.symbol,
+        network: token.network || "VOI",
+      }));
+
+      const prices = await priceOracleService.getBatchPrices(tokenData);
+
+      // Update tokens with price data
+      tokens.value = tokens.value.map((token) => {
+        const priceData = prices.get(token.id);
+        if (priceData) {
+          return {
+            ...token,
+            price: priceData.price,
+            priceChange24h: priceData.priceChange24h,
+            priceChange7d: priceData.priceChange7d,
+            volume24h: priceData.volume24h,
+            marketCap: priceData.marketCap,
+            priceSource: priceData.source,
+            priceLastUpdated: priceData.lastUpdated,
+          };
+        }
+        return token;
+      });
+    } catch (err) {
+      console.error("Failed to fetch token prices:", err);
+    } finally {
+      pricesLoading.value = false;
+    }
+  };
+
+  /**
+   * Fetches price for a single token
+   */
+  const fetchTokenPrice = async (tokenId: string): Promise<void> => {
+    const token = tokens.value.find((t) => t.id === tokenId);
+    if (!token) return;
+
+    try {
+      const priceData = await priceOracleService.getTokenPrice(
+        token.id,
+        token.symbol,
+        token.network || "VOI",
+        true // force refresh
+      );
+
+      if (priceData) {
+        // Update specific token
+        const index = tokens.value.findIndex((t) => t.id === tokenId);
+        if (index !== -1) {
+          tokens.value[index] = {
+            ...tokens.value[index],
+            price: priceData.price,
+            priceChange24h: priceData.priceChange24h,
+            priceChange7d: priceData.priceChange7d,
+            volume24h: priceData.volume24h,
+            marketCap: priceData.marketCap,
+            priceSource: priceData.source,
+            priceLastUpdated: priceData.lastUpdated,
+          };
+        }
+      }
+    } catch (err) {
+      console.error(`Failed to fetch price for token ${tokenId}:`, err);
+    }
+  };
+
+  /**
+   * Starts polling for price updates
+   */
+  const startPricePolling = (intervalMs: number = 60000): void => {
+    if (pricePollingInterval.value) {
+      stopPricePolling();
+    }
+
+    pricePollingEnabled.value = true;
+
+    // Fetch immediately
+    fetchTokenPrices();
+
+    // Set up polling
+    pricePollingInterval.value = window.setInterval(() => {
+      if (pricePollingEnabled.value) {
+        fetchTokenPrices();
+      }
+    }, intervalMs);
+  };
+
+  /**
+   * Stops price polling
+   */
+  const stopPricePolling = (): void => {
+    if (pricePollingInterval.value) {
+      clearInterval(pricePollingInterval.value);
+      pricePollingInterval.value = null;
+    }
+    pricePollingEnabled.value = false;
+  };
+
+  /**
+   * Clears price cache
+   */
+  const clearPriceCache = (): void => {
+    priceOracleService.clearCache();
+  };
+
+  /**
+   * Gets price cache statistics
+   */
+  const getPriceCacheStats = () => {
+    return priceOracleService.getCacheStats();
+  };
+
   // Actions
   const loadTokens = async () => {
     loading.value = true;
@@ -225,6 +358,9 @@ export const useMarketplaceStore = defineStore("marketplace", () => {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 500));
       tokens.value = mockTokens;
+
+      // Fetch prices after loading tokens
+      await fetchTokenPrices();
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to load tokens";
     } finally {
@@ -272,6 +408,8 @@ export const useMarketplaceStore = defineStore("marketplace", () => {
     filters,
     loading,
     error,
+    pricesLoading,
+    pricePollingEnabled,
 
     // Computed
     filteredTokens,
@@ -284,5 +422,11 @@ export const useMarketplaceStore = defineStore("marketplace", () => {
     resetFilters,
     setFiltersFromUrl,
     getUrlParams,
+    fetchTokenPrices,
+    fetchTokenPrice,
+    startPricePolling,
+    stopPricePolling,
+    clearPriceCache,
+    getPriceCacheStats,
   };
 });

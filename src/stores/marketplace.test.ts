@@ -1,7 +1,27 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useMarketplaceStore } from './marketplace';
 import type { MarketplaceFilters } from './marketplace';
+import * as PriceOracleModule from '../services/PriceOracleService';
+
+// Mock the price oracle service
+vi.mock('../services/PriceOracleService', () => {
+  const mockGetBatchPrices = vi.fn().mockResolvedValue(new Map());
+  const mockGetTokenPrice = vi.fn().mockResolvedValue(null);
+  const mockClearCache = vi.fn();
+  const mockGetCacheStats = vi.fn().mockReturnValue({ size: 0, entries: [] });
+
+  return {
+    priceOracleService: {
+      getBatchPrices: mockGetBatchPrices,
+      getTokenPrice: mockGetTokenPrice,
+      clearCache: mockClearCache,
+      getCacheStats: mockGetCacheStats,
+    },
+    PriceOracleService: vi.fn(),
+    TokenPrice: {},
+  };
+});
 
 describe('useMarketplaceStore', () => {
   beforeEach(() => {
@@ -307,6 +327,146 @@ describe('useMarketplaceStore', () => {
       const nftCount = store.filteredCount;
       
       expect(nftCount).toBeLessThan(allCount);
+    });
+  });
+
+  describe('Price Oracle Integration', () => {
+    beforeEach(async () => {
+      const store = useMarketplaceStore();
+      await store.loadTokens();
+      vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+      const store = useMarketplaceStore();
+      store.stopPricePolling();
+    });
+
+    it('should initialize with price loading state', () => {
+      const store = useMarketplaceStore();
+      expect(store.pricesLoading).toBe(false);
+      expect(store.pricePollingEnabled).toBe(false);
+    });
+
+    it('should fetch token prices', async () => {
+      const store = useMarketplaceStore();
+      const mockPrices = new Map([
+        ['marketplace-1', {
+          tokenId: 'marketplace-1',
+          symbol: 'MEUR',
+          price: 1.05,
+          priceChange24h: 0.5,
+          priceChange7d: 1.2,
+          volume24h: 1000000,
+          marketCap: 10000000,
+          lastUpdated: new Date(),
+          source: 'CoinGecko',
+        }],
+      ]);
+
+      vi.mocked(PriceOracleModule.priceOracleService.getBatchPrices).mockResolvedValueOnce(mockPrices);
+
+      await store.fetchTokenPrices();
+
+      expect(PriceOracleModule.priceOracleService.getBatchPrices).toHaveBeenCalled();
+    });
+
+    it('should fetch price for single token', async () => {
+      const store = useMarketplaceStore();
+      const mockPrice = {
+        tokenId: 'marketplace-1',
+        symbol: 'MEUR',
+        price: 1.05,
+        priceChange24h: 0.5,
+        lastUpdated: new Date(),
+        source: 'Fallback',
+      };
+
+      vi.mocked(PriceOracleModule.priceOracleService.getTokenPrice).mockResolvedValueOnce(mockPrice);
+
+      await store.fetchTokenPrice('marketplace-1');
+
+      expect(PriceOracleModule.priceOracleService.getTokenPrice).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(String),
+        expect.any(String),
+        true
+      );
+    });
+
+    it('should start price polling', () => {
+      const store = useMarketplaceStore();
+      
+      vi.useFakeTimers();
+      store.startPricePolling(1000);
+
+      expect(store.pricePollingEnabled).toBe(true);
+
+      vi.advanceTimersByTime(1000);
+      
+      vi.useRealTimers();
+      store.stopPricePolling();
+    });
+
+    it('should stop price polling', () => {
+      const store = useMarketplaceStore();
+      
+      vi.useFakeTimers();
+      store.startPricePolling(1000);
+      expect(store.pricePollingEnabled).toBe(true);
+
+      store.stopPricePolling();
+      expect(store.pricePollingEnabled).toBe(false);
+
+      vi.useRealTimers();
+    });
+
+    it('should clear price cache', () => {
+      const store = useMarketplaceStore();
+      
+      store.clearPriceCache();
+
+      expect(PriceOracleModule.priceOracleService.clearCache).toHaveBeenCalled();
+    });
+
+    it('should get price cache stats', () => {
+      const store = useMarketplaceStore();
+      
+      const stats = store.getPriceCacheStats();
+
+      expect(PriceOracleModule.priceOracleService.getCacheStats).toHaveBeenCalled();
+      expect(stats).toHaveProperty('size');
+      expect(stats).toHaveProperty('entries');
+    });
+
+    it('should handle price fetch errors gracefully', async () => {
+      const store = useMarketplaceStore();
+      
+      vi.mocked(PriceOracleModule.priceOracleService.getBatchPrices).mockRejectedValueOnce(
+        new Error('Network error')
+      );
+
+      // Should not throw
+      await expect(store.fetchTokenPrices()).resolves.not.toThrow();
+    });
+
+    it('should handle single token price fetch errors gracefully', async () => {
+      const store = useMarketplaceStore();
+      
+      vi.mocked(PriceOracleModule.priceOracleService.getTokenPrice).mockRejectedValueOnce(
+        new Error('Network error')
+      );
+
+      // Should not throw
+      await expect(store.fetchTokenPrice('marketplace-1')).resolves.not.toThrow();
+    });
+
+    it('should not fetch prices for nonexistent token', async () => {
+      const store = useMarketplaceStore();
+      
+      await store.fetchTokenPrice('nonexistent-token');
+
+      expect(PriceOracleModule.priceOracleService.getTokenPrice).not.toHaveBeenCalled();
     });
   });
 });
