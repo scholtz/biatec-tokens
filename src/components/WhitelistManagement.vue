@@ -732,11 +732,17 @@ const validateCsvData = async () => {
       csvError.value = `Network mismatch: ${invalidFormatAddresses.length} address(es) are not compatible with ${selectedNetwork.value} network. VOI/Aramid require Algorand format addresses (58 characters, A-Z2-7).`;
     }
 
-    // Check for duplicates in CSV
-    const addresses = validationResults.value
-      .filter(r => r.valid)
-      .map(r => r.address);
-    const duplicatesInCsv = addresses.filter((addr, index) => addresses.indexOf(addr) !== index);
+    // Check for duplicates in CSV using Set for O(n) performance
+    const addressSet = new Set<string>();
+    const duplicatesInCsv: string[] = [];
+    
+    addresses.forEach(addr => {
+      if (addressSet.has(addr)) {
+        duplicatesInCsv.push(addr);
+      } else {
+        addressSet.add(addr);
+      }
+    });
     
     if (duplicatesInCsv.length > 0) {
       // Mark duplicates as invalid
@@ -815,10 +821,12 @@ const closeBulkUploadModal = () => {
 };
 
 const loadSampleCsv = () => {
+  // Note: These are example addresses for demonstration purposes only
+  // Replace with actual valid addresses before importing
   csvData.value = `address,notes
-AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJKKKKLLLLMMMMNNNN,Sample Address 1
-PPPPQQQQRRRRSSSSTTTTYYYYZZZZAAAA2222333344445555666677777,Sample Address 2
-7777777777777777777777777777777777777777777777777777777A,Sample Address 3`;
+AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJKKKKLLLLMMMMNNNN,Sample Address 1 (Example - Replace with valid address)
+PPPPQQQQRRRRSSSSTTTTYYYYZZZZAAAA2222333344445555666677777,Sample Address 2 (Example - Replace with valid address)
+7777777777777777777777777777777777777777777777777777777A,Sample Address 3 (Example - Replace with valid address)`;
 };
 
 const exportWhitelist = async () => {
