@@ -517,3 +517,32 @@ export interface SubscriptionTierGatingMetrics {
   upgradableFeatures: number;
   lastUpdated: string;
 }
+
+/**
+ * KYC provider status
+ */
+export interface KycProviderStatus {
+  id: string;
+  name: string;
+  status: 'connected' | 'disconnected' | 'error' | 'syncing';
+  lastSyncTime: string;
+  jurisdiction: string[];
+  coverage: number; // Percentage of addresses covered
+  checksPerformed: number;
+  failedChecks: number;
+  isStale: boolean; // True if last sync > 24 hours
+  errorMessage?: string;
+}
+
+/**
+ * KYC provider integration metrics for dashboard widget
+ */
+export interface KycProviderMetrics {
+  providers: KycProviderStatus[];
+  totalCoverage: number; // Overall coverage percentage
+  activeProviders: number;
+  staleProviders: number;
+  failedProviders: number;
+  integrationComplete: number; // Percentage of integration completion
+  lastUpdated: string;
+}

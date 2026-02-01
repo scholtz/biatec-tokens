@@ -24,6 +24,7 @@
         <div v-if="tokenId" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <WhitelistCoverageWidget :token-id="tokenId" :network="selectedNetwork" @view-details="activeTab = 'whitelist'" />
           <IssuerStatusWidget v-if="issuerAddress" :issuer-address="issuerAddress" @view-details="showIssuerDetails" />
+          <KycProviderStatusWidget :network="selectedNetwork" @view-details="showKycProviderDetails" />
           <RwaRiskFlagsWidget :network="selectedNetwork" @view-details="showRiskDetails" />
           <NetworkHealthWidget @view-details="showNetworkHealthDetails" />
           <SubscriptionTierGatingWidget @view-details="showSubscriptionDetails" @upgrade-tier="navigateToUpgrade" />
@@ -168,6 +169,7 @@ import ComplianceExports from "../components/ComplianceExports.vue";
 import AttestationPanel from "../components/AttestationPanel.vue";
 import WhitelistCoverageWidget from "../components/WhitelistCoverageWidget.vue";
 import IssuerStatusWidget from "../components/IssuerStatusWidget.vue";
+import KycProviderStatusWidget from "../components/KycProviderStatusWidget.vue";
 import RwaRiskFlagsWidget from "../components/RwaRiskFlagsWidget.vue";
 import NetworkHealthWidget from "../components/NetworkHealthWidget.vue";
 import SubscriptionTierGatingWidget from "../components/SubscriptionTierGatingWidget.vue";
@@ -253,6 +255,12 @@ const showRiskDetails = () => {
   // Navigate to risk management view
   console.log("Show risk details");
   // Could open a modal with detailed risk information
+};
+
+const showKycProviderDetails = () => {
+  // Navigate to KYC provider configuration or show details modal
+  console.log("Show KYC provider details");
+  router.push({ path: "/settings", query: { tab: "kyc-providers" } });
 };
 
 const showNetworkHealthDetails = () => {
