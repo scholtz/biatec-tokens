@@ -143,11 +143,14 @@ describe('DeploymentConfirmationDialog', () => {
     const confirmButton = wrapper.findAll('button').find(btn => btn.text().includes('Confirm'));
     expect(confirmButton?.element.disabled).toBe(true);
 
-    // Check all boxes
+    // Check all boxes (mainnet deployments have 4 checkboxes)
     const checkboxes = wrapper.findAll('input[type="checkbox"]');
     await checkboxes[0].setValue(true);
     await checkboxes[1].setValue(true);
     await checkboxes[2].setValue(true);
+    if (checkboxes.length > 3) {
+      await checkboxes[3].setValue(true);
+    }
 
     expect(confirmButton?.element.disabled).toBe(false);
   });
@@ -162,11 +165,14 @@ describe('DeploymentConfirmationDialog', () => {
       },
     });
 
-    // Check all boxes
+    // Check all boxes (mainnet deployments have 4 checkboxes)
     const checkboxes = wrapper.findAll('input[type="checkbox"]');
     await checkboxes[0].setValue(true);
     await checkboxes[1].setValue(true);
     await checkboxes[2].setValue(true);
+    if (checkboxes.length > 3) {
+      await checkboxes[3].setValue(true);
+    }
 
     const confirmButton = wrapper.findAll('button').find(btn => btn.text().includes('Confirm'));
     await confirmButton?.trigger('click');
@@ -226,9 +232,12 @@ describe('DeploymentConfirmationDialog', () => {
     expect(wrapper.text()).toContain('Deploying...');
   });
 
-  it('displays important warnings', () => {
+  it('displays important warnings for testnet', () => {
     const wrapper = mount(DeploymentConfirmationDialog, {
-      props: defaultProps,
+      props: {
+        ...defaultProps,
+        isTestnet: true,
+      },
       global: {
         stubs: {
           Teleport: true,
@@ -254,7 +263,10 @@ describe('DeploymentConfirmationDialog', () => {
       },
     });
 
-    expect(wrapper.text()).toContain("You're deploying to mainnet - real assets will be used");
+    expect(wrapper.text()).toContain('MAINNET DEPLOYMENT WARNING');
+    expect(wrapper.text()).toContain('Cannot be reversed or undone');
+    expect(wrapper.text()).toContain('Will use real cryptocurrency for fees');
+    expect(wrapper.text()).toContain('I understand this is a MAINNET deployment with real assets');
   });
 
   it('hides mainnet warning for testnet deployments', () => {

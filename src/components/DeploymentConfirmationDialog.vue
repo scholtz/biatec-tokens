@@ -107,7 +107,27 @@
       </div>
 
       <!-- Important Warnings -->
-      <div class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+      <div v-if="!isTestnet" class="p-4 bg-red-500/10 border-2 border-red-500/30 rounded-lg">
+        <div class="flex items-start gap-3">
+          <i class="pi pi-exclamation-triangle text-red-400 text-xl mt-0.5 animate-pulse"></i>
+          <div class="flex-1 space-y-2">
+            <p class="text-sm font-bold text-red-400">⚠️ MAINNET DEPLOYMENT WARNING</p>
+            <p class="text-sm text-gray-300 font-medium">You are about to deploy to a production blockchain network. This action:</p>
+            <ul class="text-xs text-gray-300 space-y-1 ml-4 list-disc">
+              <li>Cannot be reversed or undone</li>
+              <li>Will use real cryptocurrency for fees</li>
+              <li>Will create a permanent, public record on the blockchain</li>
+              <li>Requires you to maintain custody of the deployed asset</li>
+              <li>May have regulatory and compliance implications</li>
+            </ul>
+            <p class="text-xs text-yellow-400 font-medium mt-2">
+              💡 Consider testing on {{ networkDisplayName.includes('Algorand') ? 'Algorand Testnet' : 'Sepolia Testnet' }} first
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
         <div class="flex items-start gap-3">
           <i class="pi pi-exclamation-triangle text-yellow-400 text-lg mt-0.5"></i>
           <div class="flex-1 space-y-2">
@@ -117,7 +137,6 @@
               <li>Ensure you have sufficient funds to cover fees</li>
               <li>Your wallet will prompt you to sign the transaction</li>
               <li>Network congestion may affect deployment time</li>
-              <li v-if="!isTestnet">You're deploying to mainnet - real assets will be used</li>
             </ul>
           </div>
         </div>
@@ -144,6 +163,13 @@
           >
             <input type="checkbox" v-model="checklist.understoodFees" class="w-4 h-4 text-biatec-accent border-gray-300 rounded focus:ring-biatec-accent" />
             <span class="text-sm text-gray-700 dark:text-gray-300">I understand the fees involved</span>
+          </label>
+          <label
+            v-if="!isTestnet"
+            class="flex items-center gap-3 p-3 bg-red-500/10 dark:bg-red-500/10 rounded-lg border-2 border-red-500/30 cursor-pointer hover:bg-red-500/20 dark:hover:bg-red-500/20 transition-colors"
+          >
+            <input type="checkbox" v-model="checklist.acceptedMainnetRisk" class="w-4 h-4 text-red-500 border-red-300 rounded focus:ring-red-500" />
+            <span class="text-sm font-semibold text-red-400">I understand this is a MAINNET deployment with real assets</span>
           </label>
         </div>
       </div>
@@ -212,6 +238,7 @@ const checklist = ref({
   reviewedDetails: false,
   confirmedNetwork: false,
   understoodFees: false,
+  acceptedMainnetRisk: false,
 });
 
 const formattedSupply = computed(() => {
@@ -235,7 +262,14 @@ const hasCompliance = computed(() => {
 });
 
 const canConfirm = computed(() => {
-  return checklist.value.reviewedDetails && checklist.value.confirmedNetwork && checklist.value.understoodFees;
+  const basicChecks = checklist.value.reviewedDetails && checklist.value.confirmedNetwork && checklist.value.understoodFees;
+  
+  // For mainnet deployments, also require mainnet risk acknowledgment
+  if (!props.isTestnet) {
+    return basicChecks && checklist.value.acceptedMainnetRisk;
+  }
+  
+  return basicChecks;
 });
 
 const handleClose = () => {
