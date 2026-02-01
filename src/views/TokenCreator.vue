@@ -807,7 +807,8 @@ const executeDeployment = async () => {
   try {
     // Step 1: Preparing transaction
     deploymentStep.value = 'preparing';
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate preparation time
+    // TODO: Remove this artificial delay in production - only for UX demonstration
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Prepare attestation metadata if enabled
     const attestationMetadata =
@@ -828,7 +829,8 @@ const executeDeployment = async () => {
 
     // Step 2: Waiting for wallet signature
     deploymentStep.value = 'signing';
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate wallet interaction time
+    // TODO: Replace with actual wallet signature request and response handling
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Step 3: Submitting to network
     deploymentStep.value = 'submitting';
@@ -849,16 +851,18 @@ const executeDeployment = async () => {
 
     // Step 4: Confirming transaction
     deploymentStep.value = 'confirming';
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate confirmation time
+    // TODO: Replace with actual blockchain confirmation polling
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     // Set success state
     deploymentStatus.value = 'success';
-    deploymentTxId.value = 'TX-' + Math.random().toString(36).substring(2, 15); // Mock transaction ID
+    // TODO: Replace mock transaction ID with actual blockchain transaction ID from response
+    deploymentTxId.value = 'TX-' + Math.random().toString(36).substring(2, 15);
 
     // Track successful creation with details
     subscriptionStore.trackTokenCreationSuccess(selectedStandard.value, selectedTemplate.value || undefined, selectedNetwork.value || undefined);
 
-    // Wait a moment before auto-closing
+    // Give user time to see success state before auto-navigation
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Reset form
