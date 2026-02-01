@@ -247,8 +247,8 @@ test.describe('Allowlist Verification Flow', () => {
     if (isVisible) {
       await cancelButton.click();
       
-      // Dialog should close
-      await page.waitForTimeout(500);
+      // Wait for dialog to close by checking for its absence
+      await page.waitForSelector('text=Allowlist Verification Required', { state: 'hidden', timeout: 2000 }).catch(() => null);
       const dialogVisible = await page.getByText('Allowlist Verification Required').isVisible().catch(() => false);
       expect(dialogVisible).toBe(false);
     } else {
