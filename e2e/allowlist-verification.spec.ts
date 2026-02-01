@@ -39,12 +39,18 @@ test.describe('Allowlist Verification Flow', () => {
     const receiverInput = page.getByPlaceholder('Enter receiver wallet address');
     await receiverInput.fill('RECEIVER123456789012345678901234567890123456789012345678901234');
 
-    // Submit the form
+    // Submit the form and wait for response
     const checkButton = page.getByRole('button', { name: /Check Allowlist Status/i });
-    await checkButton.click();
-
-    // Wait for the dialog to appear (or error)
-    await page.waitForTimeout(2000);
+    await Promise.race([
+      page.waitForResponse(response => response.url().includes('/validate-transfer'), { timeout: 5000 }).catch(() => null),
+      checkButton.click()
+    ]);
+    
+    // Wait for either dialog or error to appear
+    await Promise.race([
+      page.waitForSelector('text=Allowlist Verification Required', { timeout: 3000 }).catch(() => null),
+      page.waitForSelector('text=Validation Error', { timeout: 3000 }).catch(() => null)
+    ]);
     
     // Check if dialog appeared or if there was an error
     const dialogVisible = await page.getByText('Allowlist Verification Required').isVisible().catch(() => false);
@@ -70,7 +76,11 @@ test.describe('Allowlist Verification Flow', () => {
     const checkButton = page.getByRole('button', { name: /Check Allowlist Status/i });
     await checkButton.click();
 
-    await page.waitForTimeout(2000);
+    // Wait for MICA notice or error
+    await Promise.race([
+      page.waitForSelector('text=/MiCA.*Markets in Crypto-Assets Regulation/i', { timeout: 3000 }).catch(() => null),
+      page.waitForSelector('text=Validation Error', { timeout: 3000 }).catch(() => null)
+    ]);
     
     // Check if MICA compliance notice is displayed
     const micaNotice = page.getByText(/MiCA.*Markets in Crypto-Assets Regulation/i);
@@ -101,7 +111,12 @@ test.describe('Allowlist Verification Flow', () => {
     const checkButton = page.getByRole('button', { name: /Check Allowlist Status/i });
     await checkButton.click();
 
-    await page.waitForTimeout(2000);
+    // Wait for proceed button or understood button
+    await Promise.race([
+      page.waitForSelector('button:has-text("Proceed with Transfer")', { timeout: 3000 }).catch(() => null),
+      page.waitForSelector('button:has-text("Understood")', { timeout: 3000 }).catch(() => null),
+      page.waitForSelector('text=Validation Error', { timeout: 3000 }).catch(() => null)
+    ]);
     
     // Check if proceed button is disabled initially
     const proceedButton = page.getByRole('button', { name: /Proceed with Transfer/i });
@@ -140,7 +155,10 @@ test.describe('Allowlist Verification Flow', () => {
     const checkButton = page.getByRole('button', { name: /Check Allowlist Status/i });
     await checkButton.click();
 
-    await page.waitForTimeout(2000);
+    await Promise.race([
+      page.waitForSelector("text=Allowlist Verification Required", { timeout: 3000 }).catch(() => null),
+      page.waitForSelector("text=Validation Error", { timeout: 3000 }).catch(() => null)
+    ]);
     
     // Check if transfer blocked message is displayed
     const blockedMessage = page.getByText(/Transfer Cannot Proceed/i);
@@ -175,7 +193,10 @@ test.describe('Allowlist Verification Flow', () => {
     const checkButton = page.getByRole('button', { name: /Check Allowlist Status/i });
     await checkButton.click();
 
-    await page.waitForTimeout(2000);
+    await Promise.race([
+      page.waitForSelector("text=Allowlist Verification Required", { timeout: 3000 }).catch(() => null),
+      page.waitForSelector("text=Validation Error", { timeout: 3000 }).catch(() => null)
+    ]);
     
     // Check if status sections are displayed
     const senderStatus = page.getByText('Sender Status');
@@ -214,7 +235,10 @@ test.describe('Allowlist Verification Flow', () => {
     const checkButton = page.getByRole('button', { name: /Check Allowlist Status/i });
     await checkButton.click();
 
-    await page.waitForTimeout(2000);
+    await Promise.race([
+      page.waitForSelector("text=Allowlist Verification Required", { timeout: 3000 }).catch(() => null),
+      page.waitForSelector("text=Validation Error", { timeout: 3000 }).catch(() => null)
+    ]);
     
     // Click cancel button
     const cancelButton = page.getByRole('button', { name: /Cancel/i });
@@ -257,7 +281,10 @@ test.describe('Allowlist Verification Flow', () => {
     const checkButton = page.getByRole('button', { name: /Check Allowlist Status/i });
     await checkButton.click();
 
-    await page.waitForTimeout(2000);
+    await Promise.race([
+      page.waitForSelector("text=Allowlist Verification Required", { timeout: 3000 }).catch(() => null),
+      page.waitForSelector("text=Validation Error", { timeout: 3000 }).catch(() => null)
+    ]);
     
     // Check if transfer details section is displayed
     const transferDetails = page.getByText('Transfer Details');

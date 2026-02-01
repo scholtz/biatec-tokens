@@ -283,17 +283,26 @@ const getBlockReason = () => {
   return reasons.join(' ');
 };
 
+const TRUNCATE_ADDRESS_THRESHOLD = 20;
+
 const truncateAddress = (address: string) => {
-  if (address.length <= 20) return address;
+  if (address.length <= TRUNCATE_ADDRESS_THRESHOLD) return address;
   return `${address.slice(0, 10)}...${address.slice(-10)}`;
 };
 
 const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(date);
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return dateString; // Return original if invalid
+    }
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(date);
+  } catch (error) {
+    return dateString; // Return original on error
+  }
 };
 </script>
