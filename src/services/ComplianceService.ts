@@ -501,13 +501,12 @@ export class ComplianceService {
     try {
       // In production, this would call a dedicated KYC provider status endpoint
       // For now, we'll derive status from compliance data and use mock data
-      const response = await this.apiClient.api.v1ComplianceHealthList({
+      await this.apiClient.api.v1ComplianceHealthList({
         network,
         issuerAddress: undefined,
       });
       
       const now = Date.now();
-      const oneDayMs = 24 * 60 * 60 * 1000;
       
       // Mock KYC provider data with realistic statuses
       const providers: KycProviderStatus[] = [

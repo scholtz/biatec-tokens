@@ -1,16 +1,29 @@
-import { beforeEach } from 'vitest';
+import { beforeEach, vi } from 'vitest';
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: (_key: string) => null,
-  setItem: (_key: string, _value: string) => {},
-  removeItem: (_key: string) => {},
-  clear: () => {},
-};
+// Mock wallet-related composables globally
+vi.mock('../src/composables/useWalletManager', () => ({
+  useWalletManager: vi.fn(() => ({
+    walletManager: {
+      isConnected: false,
+      address: null,
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+    },
+    algodClient: {
+      getTransactionParams: vi.fn().mockResolvedValue({}),
+    },
+  })),
+}));
 
-global.localStorage = localStorageMock as Storage;
+// Mock toast composable
+vi.mock('../src/composables/useToast', () => ({
+  useToast: vi.fn(() => ({
+    showToast: vi.fn(),
+  })),
+}));
 
 // Reset mocks before each test
 beforeEach(() => {
+  // Clear localStorage before each test
   localStorage.clear();
 });

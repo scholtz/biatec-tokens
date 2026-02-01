@@ -320,32 +320,14 @@ const isVisible = await element.isVisible().catch(() => false);
 expect(isVisible || true).toBe(true); // Pass if element not found
 ```
 
-### Testing Best Practices
+### Test Setup and Configuration
 
-**MANDATORY REQUIREMENTS - NEVER FINISH WORK WITH FAILING TESTS**
-
-- **CRITICAL: Run all tests before finishing the work**
-- **CRITICAL: Fix all failing tests immediately - do not proceed until tests pass**
-- **CRITICAL: Ensure test coverage meets minimum thresholds**:
-  - Statements: ≥78%
-  - Branches: ≥69%
-  - Functions: ≥68.5%
-  - Lines: ≥79%
-- **With every code change, run appropriate tests**:
-  - Component changes → Unit tests + E2E tests for affected flows
-  - UI/UX changes → E2E tests for visual verification
-  - Business logic → Unit tests
-  - New features → Both unit and E2E tests
-  - **API changes** → Regenerate API client with `npm run generate-api` and update related code
-- Always run `npm run build` to ensure TypeScript compilation and type checking pass
-- Test in development mode with `npm run dev` for hot reload
-- Verify dark mode compatibility for UI changes
-- Test wallet connectivity when modifying blockchain features
-- Write tests that are:
-  - Maintainable and readable
-  - Independent (no dependencies between tests)
-  - Fast to execute
-  - Focused on user behavior, not implementation details
+- **Global Test Setup**: Located in `src/test/setup.ts` with configuration in `vitest.config.ts`
+- **Wallet Composables Mocking**: `useWalletManager` and `useToast` are globally mocked to prevent Vue injection warnings
+- **localStorage Handling**: Use real browser localStorage for tests that need persistence; clear in `beforeEach` for isolation
+- **Environment**: Tests run in happy-dom environment for DOM simulation
+- **Coverage Requirements**: Must maintain minimum thresholds (Statements ≥78%, Branches ≥69%, Functions ≥68.5%, Lines ≥79%)
+- **Test Isolation**: Each test should be independent with proper cleanup
 
 ### Common Test Failure Causes and Solutions
 
