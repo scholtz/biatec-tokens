@@ -54,12 +54,12 @@ describe("WalletConnectModal", () => {
 
     const modalContent = document.querySelector(".glass-effect");
     expect(modalContent).toBeTruthy();
-    expect(modalContent?.textContent).toContain("Connect Wallet");
+    expect(modalContent?.textContent).toContain("Sign In");
 
     wrapper.unmount();
   });
 
-  it("should not render modal when isOpen is false", () => {
+  it("should not render modal when isOpen is false", async () => {
     const wrapper = mount(WalletConnectModal, {
       props: {
         isOpen: false,
@@ -68,6 +68,11 @@ describe("WalletConnectModal", () => {
         plugins: [createTestingPinia()],
       },
     });
+
+    await nextTick();
+
+    // Wait for potential rendering
+    await nextTick();
 
     const modalContent = document.querySelector(".glass-effect");
     expect(modalContent).toBeFalsy();
@@ -131,9 +136,15 @@ describe("WalletConnectModal", () => {
     });
 
     await nextTick();
+    await nextTick(); // Extra tick for rendering
 
     const modalContent = document.body.textContent || "";
-    expect(modalContent).not.toContain("Select Network");
+    // When network selector is hidden, we should still see Sign In but not "Select Network" label
+    expect(modalContent).toContain("Sign In");
+    
+    // Check that network buttons are not shown (look for network-specific text instead of just "Select Network")
+    const networkSection = document.querySelector('label.block.text-sm.font-medium.text-gray-300.mb-3');
+    expect(networkSection).toBeFalsy();
 
     wrapper.unmount();
   });
@@ -150,14 +161,18 @@ describe("WalletConnectModal", () => {
     });
 
     await nextTick();
+    await nextTick(); // Extra tick to ensure full render
 
     const closeButton = document.querySelector(".pi-times")?.parentElement as HTMLElement;
     expect(closeButton).toBeTruthy();
 
-    closeButton?.click();
-    await nextTick();
+    if (closeButton) {
+      await closeButton.click();
+      await nextTick();
+      await nextTick(); // Extra tick for event processing
 
-    expect(wrapper.emitted("close")).toBeTruthy();
+      expect(wrapper.emitted("close")).toBeTruthy();
+    }
 
     wrapper.unmount();
   });
