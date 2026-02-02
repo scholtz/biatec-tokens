@@ -884,7 +884,7 @@ describe('WalletOnboardingWizard', () => {
       // Accept compliance terms
       const checkboxes = document.querySelectorAll('input[type="checkbox"]')
       checkboxes.forEach((checkbox) => {
-        ;(checkbox as HTMLInputElement).click()
+        (checkbox as HTMLInputElement).click()
       })
       await nextTick()
 
