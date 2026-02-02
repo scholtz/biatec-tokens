@@ -54,7 +54,10 @@
 
           <!-- Wallet Connection Button (when not authenticated) -->
           <div v-if="!authStore.isAuthenticated">
-            <button @click="handleWalletClick" class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white transition-colors">
+            <button
+              @click="handleWalletClick"
+              class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white transition-colors"
+            >
               <WalletIcon class="w-5 h-5" />
               <span>Connect Wallet</span>
             </button>
@@ -113,11 +116,7 @@
     </div>
 
     <!-- Wallet Connect Modal -->
-    <WalletConnectModal
-      :is-open="showWalletModal"
-      @close="showWalletModal = false"
-      @connected="handleWalletConnected"
-    />
+    <WalletConnectModal :is-open="showWalletModal" @close="showWalletModal = false" @connected="handleWalletConnected" />
 
     <!-- Mobile Menu -->
     <Transition
