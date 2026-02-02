@@ -18,7 +18,7 @@
             <i class="pi pi-exclamation-triangle text-white text-xl mt-0.5"></i>
             <div class="flex-1">
               <p class="text-sm font-semibold text-white mb-2">Please fix the following errors:</p>
-              <ul class="space-y-1 list-none">
+              <ul class="space-y-1">
                 <li v-for="error in validationResult.errors" :key="error.field" class="text-sm text-white">
                   • {{ error.message }}
                 </li>
@@ -778,7 +778,7 @@ const canSubmit = computed(() => {
   return selectedStandard.value && validationResult.value.isValid;
 });
 
-// Dismiss validation error banner
+// Dismiss validation error banner (will reappear if form is submitted with errors)
 const dismissValidationError = () => {
   validationError.value = null;
 };
