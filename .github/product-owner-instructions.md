@@ -28,6 +28,7 @@ For each repo:
 - For each PR: All checks have passed and mergeable.
 - **If ready (All checks have passed, mergeable, may be in draft status)**: Make it ready for review and merge pull request (squash, delete branch). Output the result
 - **If not ready**: Comment with TDD requirements and tag @copilot (add unit/integration tests, link to issue explaining business value/risk, fix CI). Tag @copilot. Output comment URL.
+- Example comment: "Please add unit/integration tests, link to issue explaining business value/risk, and fix CI. @copilot"
 - Output JSON for action (e.g., merge, comment).
 
 ### 4) **Handle Issues & Create Next-Step**
