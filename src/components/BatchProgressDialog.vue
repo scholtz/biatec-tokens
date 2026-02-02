@@ -1,6 +1,6 @@
 <template>
-  <Modal :isOpen="isOpen" @close="handleClose" :closeOnBackdrop="!isDeploying">
-    <template #title>
+  <Modal :show="isOpen" @close="handleClose">
+    <template #header>
       <div class="flex items-center gap-3">
         <div v-if="isDeploying" class="animate-spin">
           <i class="pi pi-spinner text-biatec-accent text-2xl"></i>
@@ -71,7 +71,7 @@
           <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Token Status</h3>
           
           <div
-            v-for="(token, index) in tokens"
+            v-for="token in tokens"
             :key="token.id"
             class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
           >
@@ -166,7 +166,7 @@
       </div>
     </template>
 
-    <template #actions>
+    <template #footer>
       <div class="flex items-center justify-between gap-3 w-full">
         <div class="flex gap-2">
           <!-- Export Button -->

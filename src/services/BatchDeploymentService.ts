@@ -9,8 +9,6 @@ import { TokenDeploymentService } from './TokenDeploymentService';
 import type {
   BatchDeploymentConfig,
   BatchTokenEntry,
-  BatchTokenStatus,
-  BatchStatus,
   BatchStatusSummary,
   CreateBatchRequest,
   CreateBatchResponse,
@@ -21,7 +19,6 @@ import type {
   BatchAuditEntry,
   BatchAuditExportFormat,
 } from '../types/batch';
-import type { TokenDeploymentRequest, TokenDeploymentResponse } from '../types/api';
 import { validateBatchDeployment } from '../utils/batchValidation';
 
 /**
@@ -52,7 +49,7 @@ export class BatchDeploymentService {
     const tokens: BatchTokenEntry[] = request.tokens.map((token, index) => ({
       id: `${batchId}-token-${index}`,
       request: token,
-      status: 'pending' as BatchTokenStatus,
+      status: 'pending' as const,
       retryCount: 0,
     }));
 

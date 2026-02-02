@@ -199,9 +199,9 @@
 import { ref, computed, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import MainLayout from '../layout/MainLayout.vue';
-import Badge from './ui/Badge.vue';
-import BatchTokenEntryForm from './BatchTokenEntryForm.vue';
-import BatchProgressDialog from './BatchProgressDialog.vue';
+import Badge from '../components/ui/Badge.vue';
+import BatchTokenEntryForm from '../components/BatchTokenEntryForm.vue';
+import BatchProgressDialog from '../components/BatchProgressDialog.vue';
 import { useBatchDeployment } from '../composables/useBatchDeployment';
 import { validateBatchDeployment, MAX_BATCH_SIZE, MIN_BATCH_SIZE } from '../utils/batchValidation';
 import type { TokenDeploymentRequest } from '../types/api';
@@ -215,9 +215,6 @@ const {
   batchSummary,
   isCreating,
   isDeploying,
-  validationResult,
-  error,
-  canStartDeployment,
   createBatch,
   startDeployment,
   retryFailedTokens,

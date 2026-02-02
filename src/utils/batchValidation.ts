@@ -73,7 +73,7 @@ export function validateBatchDeployment(
   });
 
   // Batch-level validations
-  validateUniqueSymbols(tokens, errors, warnings);
+  validateUniqueSymbols(tokens, errors);
   validateConsistentWallets(tokens, errors);
   validateNetworkCompatibility(tokens, warnings);
   validateComplianceRequirements(tokens, warnings);
@@ -90,8 +90,7 @@ export function validateBatchDeployment(
  */
 function validateUniqueSymbols(
   tokens: TokenDeploymentRequest[],
-  errors: BatchValidationError[],
-  warnings: BatchValidationWarning[]
+  errors: BatchValidationError[]
 ): void {
   const symbolMap = new Map<string, number[]>();
 

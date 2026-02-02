@@ -13,7 +13,6 @@ import type {
   BatchValidationResult,
   BatchAuditExportFormat,
 } from '../types/batch';
-import type { TokenDeploymentRequest } from '../types/api';
 
 /**
  * Composable for managing batch token deployments

@@ -180,7 +180,6 @@ const localToken = ref<Partial<TokenDeploymentRequest>>({ ...props.token });
 const isERC20 = computed(() => localToken.value.standard === TokenStandard.ERC20);
 const isARC3 = computed(() => localToken.value.standard === TokenStandard.ARC3);
 const isARC200 = computed(() => localToken.value.standard === TokenStandard.ARC200);
-const isARC1400 = computed(() => localToken.value.standard === TokenStandard.ARC1400);
 
 // Symbol or unit name (depends on standard)
 const symbolOrUnitName = computed({
