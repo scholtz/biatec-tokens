@@ -78,7 +78,7 @@
               class="btn-primary px-6 py-3 rounded-xl text-white font-medium text-sm flex items-center space-x-2 disabled:opacity-50 relative"
             >
               <i class="pi pi-wallet text-lg"></i>
-              <span>{{ walletButtonText }}</span>
+              <span>{{ authButtonText }}</span>
               <i v-if="isConnected" class="pi pi-chevron-down text-sm"></i>
             </button>
 
@@ -192,10 +192,10 @@ const hasCompletedOnboarding = computed(() => {
   return localStorage.getItem(AUTH_STORAGE_KEYS.ONBOARDING_COMPLETED) === WALLET_CONNECTION_STATE.CONNECTED
 })
 
-const walletButtonText = computed(() => {
-  if (walletState.value.isConnecting) return 'Connecting...'
+const authButtonText = computed(() => {
+  if (walletState.value.isConnecting) return 'Signing in...'
   if (isConnected.value && formattedAddress.value) return formattedAddress.value
-  return 'Connect Wallet'
+  return 'Sign In'
 })
 
 const toggleMobileMenu = () => {
@@ -204,8 +204,10 @@ const toggleMobileMenu = () => {
 
 const handleWalletClick = () => {
   if (isConnected.value) {
+    // Toggle account menu when authenticated
     showAccountMenu.value = !showAccountMenu.value
   } else {
+    // Show authentication modal when not authenticated
     // Show onboarding wizard for first-time users, otherwise simple modal
     if (hasCompletedOnboarding.value) {
       showWalletModal.value = true

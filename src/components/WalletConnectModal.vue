@@ -5,7 +5,7 @@
         <div class="glass-effect rounded-2xl p-6 max-w-md w-full shadow-2xl border border-white/10">
           <!-- Header -->
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-white">Connect Wallet</h2>
+            <h2 class="text-2xl font-bold text-white">Sign In</h2>
             <button @click="close" class="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors">
               <i class="pi pi-times text-xl"></i>
             </button>
@@ -52,7 +52,7 @@
             <div v-if="isConnecting || isReconnecting || isSwitchingNetwork" class="text-center py-8">
               <i class="pi pi-spin pi-spinner text-4xl text-biatec-accent mb-4"></i>
               <p class="text-gray-300 font-medium mb-2">{{ connectionStateMessage }}</p>
-              <p class="text-sm text-gray-400">Please check your wallet app to approve the connection</p>
+              <p class="text-sm text-gray-400">Please check your wallet app to approve authentication</p>
             </div>
 
             <!-- Error State -->
@@ -60,7 +60,7 @@
               <div class="flex items-start gap-3">
                 <i class="pi pi-exclamation-triangle text-red-400"></i>
                 <div class="flex-1">
-                  <p class="text-sm text-red-400 font-medium">Connection Failed</p>
+                  <p class="text-sm text-red-400 font-medium">Authentication Failed</p>
                   <p class="text-xs text-gray-400 mt-1">{{ error }}</p>
                   <div v-if="lastError" class="mt-2 text-xs text-gray-500">Error Code: {{ lastError.diagnosticCode }}</div>
                   <div v-if="troubleshootingSteps.length > 0" class="mt-3 space-y-2">
@@ -72,7 +72,7 @@
                   <div class="flex gap-2 mt-3">
                     <button @click="handleRetry" class="px-3 py-1.5 text-xs bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg transition-colors flex items-center gap-2">
                       <i class="pi pi-refresh"></i>
-                      Retry Connection
+                      Retry Authentication
                     </button>
                     <button @click="error = null" class="px-3 py-1.5 text-xs bg-gray-500/20 text-gray-400 hover:bg-gray-500/30 rounded-lg transition-colors">Dismiss</button>
                   </div>
@@ -107,8 +107,8 @@
               <div class="flex items-start gap-3">
                 <i class="pi pi-info-circle text-blue-400"></i>
                 <div class="text-sm text-gray-300">
-                  <p class="mb-2">By connecting your wallet, you agree to our Terms of Service and acknowledge that you've read our Privacy Policy.</p>
-                  <p class="text-xs text-gray-400"><strong class="text-blue-400">Note:</strong> We never store your private keys. All transactions require your approval.</p>
+                  <p class="mb-2">By signing in, you agree to our Terms of Service and acknowledge that you've read our Privacy Policy.</p>
+                  <p class="text-xs text-gray-400"><strong class="text-blue-400">Security:</strong> We never store your private keys. All transactions require your explicit approval.</p>
                 </div>
               </div>
             </div>
@@ -117,7 +117,7 @@
               <div class="flex items-start gap-3">
                 <i class="pi pi-exclamation-circle text-yellow-400"></i>
                 <div class="text-sm text-gray-300">
-                  <p class="font-medium text-yellow-400 mb-2">Don't have a supported wallet?</p>
+                  <p class="font-medium text-yellow-400 mb-2">New to blockchain wallets?</p>
                   <div class="space-y-1 text-xs">
                     <a href="https://perawallet.app/" target="_blank" rel="noopener noreferrer" class="block text-blue-400 hover:text-blue-300 underline"> Download Pera Wallet (Recommended) → </a>
                     <a href="https://defly.app/" target="_blank" rel="noopener noreferrer" class="block text-blue-400 hover:text-blue-300 underline"> Download Defly Wallet → </a>
@@ -195,7 +195,7 @@ const connectionStateMessage = computed(() => {
     case WalletConnectionState.FETCHING_BALANCE:
       return "Fetching balance...";
     default:
-      return "Please check your wallet app to approve the connection";
+      return "Please check your wallet app to approve authentication";
   }
 });
 

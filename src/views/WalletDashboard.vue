@@ -24,14 +24,14 @@
                 Connect Your Wallet
               </h2>
               <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-                Connect your wallet to access your token balances, view compliance status, 
-                and manage your assets across VOI and Aramid networks.
+                Sign in to access your token balances, view compliance status, 
+                and manage your assets across multiple networks.
               </p>
               <Button @click="showWalletConnect = true" variant="primary" size="lg">
                 <template #icon>
                   <i class="pi pi-wallet mr-2"></i>
                 </template>
-                Connect Wallet
+                Sign In
               </Button>
             </div>
           </Card>

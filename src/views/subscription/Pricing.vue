@@ -271,7 +271,7 @@ const formatDate = (date: Date) => {
 
 const getSubscribeButtonText = () => {
   if (!authStore.isAuthenticated) {
-    return 'Connect Wallet to Subscribe'
+    return 'Sign In to Subscribe'
   }
   if (subscriptionStore.isActive) {
     return 'Already Subscribed'
@@ -281,7 +281,7 @@ const getSubscribeButtonText = () => {
 
 const handleSubscribe = async () => {
   if (!authStore.isAuthenticated) {
-    // User needs to connect wallet first
+    // User needs to authenticate first
     return
   }
 

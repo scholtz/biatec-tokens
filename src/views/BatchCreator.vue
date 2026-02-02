@@ -17,16 +17,16 @@
           <div class="glass-effect rounded-xl p-8 text-center">
             <i class="pi pi-wallet text-6xl text-gray-400 mb-4"></i>
             <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              Connect Your Wallet
+              Authenticate Your Account
             </h2>
             <p class="text-gray-600 dark:text-gray-400 mb-6">
-              You need to connect your wallet to deploy tokens in batch mode.
+              You need to sign in to deploy tokens in batch mode.
             </p>
             <button
               @click="connectWallet"
               class="px-6 py-3 bg-biatec-accent hover:bg-biatec-accent-dark text-white rounded-lg transition-colors font-medium"
             >
-              Connect Wallet
+              Sign In
             </button>
           </div>
         </div>

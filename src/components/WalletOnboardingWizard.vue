@@ -32,7 +32,7 @@
                 <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <i class="pi pi-wallet text-4xl text-white"></i>
                 </div>
-                <p class="text-gray-300 text-lg mb-6">Welcome! Let's get you connected to create and manage tokens on Algorand-based networks.</p>
+                <p class="text-gray-300 text-lg mb-6">Welcome! Let's get you authenticated to create and manage tokens on blockchain networks.</p>
               </div>
 
               <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-5">
