@@ -176,7 +176,7 @@ function validateNetworkCompatibility(
   }
 
   // Check for EVM and AVM mix
-  const hasEVM = tokens.some(t => t.standard === 'ERC20');
+  const hasEVM = tokens.some(t => ['ERC20', 'ERC721'].includes(t.standard));
   const hasAVM = tokens.some(t => ['ARC3', 'ARC200', 'ARC1400'].includes(t.standard));
 
   if (hasEVM && hasAVM) {
