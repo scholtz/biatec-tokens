@@ -8,6 +8,31 @@
           <p class="text-gray-600 dark:text-gray-300 text-lg">Choose a template or token standard and deploy in seconds</p>
         </div>
 
+        <!-- Sticky Validation Error Banner -->
+        <div 
+          v-if="!validationResult.isValid && validationError" 
+          class="sticky top-4 z-50 mb-8 p-4 bg-red-500 dark:bg-red-600 border border-red-600 dark:border-red-700 rounded-lg shadow-lg animate-shake"
+        >
+          <div class="flex items-start gap-3">
+            <i class="pi pi-exclamation-triangle text-white text-xl mt-0.5"></i>
+            <div class="flex-1">
+              <p class="text-sm font-semibold text-white mb-2">Please fix the following errors:</p>
+              <div class="space-y-1">
+                <p v-for="error in validationResult.errors" :key="error.field" class="text-sm text-white">
+                  • {{ error.message }}
+                </p>
+              </div>
+            </div>
+            <button 
+              @click="validationError = null" 
+              class="text-white hover:text-red-200 transition-colors"
+              aria-label="Dismiss error"
+            >
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+        </div>
+
         <!-- Wallet & Network Panel (NEW) -->
         <div class="mb-8">
           <WalletNetworkPanel 
@@ -30,7 +55,7 @@
               @click="selectNetwork(network.name)"
               :class="[
                 'p-6 rounded-xl border-2 transition-all duration-200 text-left',
-                selectedNetwork === network.name ? 'border-biatec-accent bg-biatec-accent/10' : 'border-white/20 hover:border-white/40 hover:bg-white/5',
+                selectedNetwork === network.name ? 'border-biatec-accent bg-biatec-accent/10' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800',
               ]"
             >
               <div class="flex items-start justify-between mb-3">
@@ -115,7 +140,7 @@
               @click="showComplianceChecklist = !showComplianceChecklist"
               :class="[
                 'px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2',
-                showComplianceChecklist ? 'bg-biatec-accent text-gray-900' : 'bg-white/10 text-gray-300 hover:bg-white/20',
+                showComplianceChecklist ? 'bg-biatec-accent text-gray-900' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600',
               ]"
             >
               <i :class="showComplianceChecklist ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
@@ -149,7 +174,7 @@
               @click="showCompetitorParity = !showCompetitorParity"
               :class="[
                 'px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2',
-                showCompetitorParity ? 'bg-purple-500 text-white' : 'bg-white/10 text-gray-300 hover:bg-white/20',
+                showCompetitorParity ? 'bg-purple-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600',
               ]"
             >
               <i :class="showCompetitorParity ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
@@ -203,7 +228,7 @@
               @click="applyTemplate(template.id)"
               :class="[
                 'p-5 rounded-xl border-2 transition-all duration-200 text-left',
-                selectedTemplate === template.id ? 'border-biatec-accent bg-biatec-accent/10' : 'border-white/20 hover:border-white/40 hover:bg-white/5',
+                selectedTemplate === template.id ? 'border-biatec-accent bg-biatec-accent/10' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800',
               ]"
             >
               <div class="flex items-start justify-between mb-3">
@@ -248,7 +273,7 @@
               @click="selectStandard(standard.name)"
               :class="[
                 'p-6 rounded-xl border-2 transition-all duration-200 text-left',
-                selectedStandard === standard.name ? 'border-biatec-accent bg-biatec-accent/10' : 'border-white/20 hover:border-white/40 hover:bg-white/5',
+                selectedStandard === standard.name ? 'border-biatec-accent bg-biatec-accent/10' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800',
               ]"
             >
               <div class="flex items-center space-x-3 mb-3">
@@ -314,8 +339,14 @@
         </div>
 
         <!-- Token Creation Form -->
-        <div v-if="selectedStandard" class="glass-effect rounded-xl p-6">
-          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Token Details</h2>
+        <div v-if="selectedStandard" class="glass-effect rounded-xl p-6" :class="{ 'opacity-60 pointer-events-none': isCreating }">
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
+            Token Details
+            <span v-if="isCreating" class="ml-3 text-sm text-biatec-accent font-normal inline-flex items-center gap-2">
+              <i class="pi pi-spin pi-spinner"></i>
+              Creating token...
+            </span>
+          </h2>
           <form @submit.prevent="createToken" class="space-y-6">
             <!-- Basic Information -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -325,7 +356,7 @@
                   v-model="tokenForm.name"
                   type="text"
                   required
-                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
+                  class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
                   placeholder="e.g., My Awesome Token"
                 />
               </div>
@@ -335,7 +366,7 @@
                   v-model="tokenForm.symbol"
                   type="text"
                   required
-                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
+                  class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
                   placeholder="e.g., MAT"
                 />
               </div>
@@ -347,7 +378,7 @@
                 v-model="tokenForm.description"
                 required
                 rows="3"
-                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
+                class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
                 placeholder="Describe your token's purpose and features..."
               ></textarea>
             </div>
@@ -376,7 +407,7 @@
                   type="number"
                   required
                   min="1"
-                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
+                  class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
                   placeholder="1000000"
                 />
               </div>
@@ -387,7 +418,7 @@
                   type="number"
                   min="0"
                   max="18"
-                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
+                  class="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
                   placeholder="6"
                 />
               </div>
@@ -420,13 +451,13 @@
                   v-model="attr.trait_type"
                   type="text"
                   placeholder="Trait type"
-                  class="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-biatec-accent"
+                  class="flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-biatec-accent"
                 />
                 <input
                   v-model="attr.value"
                   type="text"
                   placeholder="Value"
-                  class="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-biatec-accent"
+                  class="flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-biatec-accent"
                 />
                 <button type="button" @click="removeAttribute(index)" class="px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors">
                   <i class="pi pi-trash"></i>
