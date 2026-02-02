@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Home from "../views/Home.vue";
 import TokenCreator from "../views/TokenCreator.vue";
+import BatchCreator from "../views/BatchCreator.vue";
 import TokenDashboard from "../views/TokenDashboard.vue";
 import TokenDetail from "../views/TokenDetail.vue";
 import WalletDashboard from "../views/WalletDashboard.vue";
@@ -30,6 +31,12 @@ const router = createRouter({
       path: "/create",
       name: "TokenCreator",
       component: TokenCreator,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/create/batch",
+      name: "BatchCreator",
+      component: BatchCreator,
       meta: { requiresAuth: true },
     },
     {
