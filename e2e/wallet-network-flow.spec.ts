@@ -19,18 +19,18 @@ test.describe("Wallet Connect Flow with Network Selection", () => {
     await expect(page).toHaveTitle(/Biatec Tokens/);
   });
 
-  test("should display connect wallet button when not connected", async ({ page }) => {
+  test("should display sign in button when not connected", async ({ page }) => {
     // Wait for page to load completely
     await expect(page).toHaveTitle(/Biatec Tokens/);
 
-    // Look for wallet connect button - it should say "Connect Wallet" or "Authenticate"
-    const walletButton = page
+    // Look for sign in button - it should say "Sign In" or "Authenticate"
+    const signInButton = page
       .locator("button")
-      .filter({ hasText: /Connect Wallet|Authenticate/i })
+      .filter({ hasText: /Sign In|Authenticate|Login/i })
       .first();
 
     // The button should be visible
-    await expect(walletButton).toBeVisible({ timeout: 10000 });
+    await expect(signInButton).toBeVisible({ timeout: 10000 });
   });
 
   test("should persist selected network in localStorage", async ({ page, browserName }) => {
