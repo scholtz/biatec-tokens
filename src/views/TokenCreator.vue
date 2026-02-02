@@ -11,20 +11,21 @@
         <!-- Sticky Validation Error Banner -->
         <div 
           v-if="!validationResult.isValid && validationError" 
+          role="alert"
           class="sticky top-4 z-50 mb-8 p-4 bg-red-500 dark:bg-red-600 border border-red-600 dark:border-red-700 rounded-lg shadow-lg animate-shake"
         >
           <div class="flex items-start gap-3">
             <i class="pi pi-exclamation-triangle text-white text-xl mt-0.5"></i>
             <div class="flex-1">
               <p class="text-sm font-semibold text-white mb-2">Please fix the following errors:</p>
-              <div class="space-y-1">
-                <p v-for="error in validationResult.errors" :key="error.field" class="text-sm text-white">
+              <ul class="space-y-1 list-none">
+                <li v-for="error in validationResult.errors" :key="error.field" class="text-sm text-white">
                   • {{ error.message }}
-                </p>
-              </div>
+                </li>
+              </ul>
             </div>
             <button 
-              @click="validationError = null" 
+              @click="dismissValidationError" 
               class="text-white hover:text-red-200 transition-colors"
               aria-label="Dismiss error"
             >
@@ -776,6 +777,11 @@ const validationResult = computed<TokenValidationResult>(() => {
 const canSubmit = computed(() => {
   return selectedStandard.value && validationResult.value.isValid;
 });
+
+// Dismiss validation error banner
+const dismissValidationError = () => {
+  validationError.value = null;
+};
 
 // Wallet connection handlers
 const handleConnectWallet = async () => {
