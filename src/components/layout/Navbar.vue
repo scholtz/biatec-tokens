@@ -221,7 +221,7 @@ const handleWalletClick = () => {
   showWalletModal.value = true;
 };
 
-const handleWalletConnected = (data: { address: string; walletId: string; network: string }) => {
+const handleWalletConnected = (_data: { address: string; walletId: string; network: string }) => {
   showWalletModal.value = false;
   // The Arc76 authentication component will handle the authentication
   // This just closes the modal
