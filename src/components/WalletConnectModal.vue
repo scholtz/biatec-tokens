@@ -53,7 +53,9 @@
                         Testnet
                       </span>
                     </div>
-                    <div class="text-sm text-gray-400">{{ network.genesisId }}</div>
+                    <div class="text-sm text-gray-400">
+                      {{ network.chainType === 'AVM' ? network.genesisId : `Chain ID: ${network.chainId}` }}
+                    </div>
                   </div>
                   <div v-if="selectedNetwork === network.id" class="text-biatec-accent">
                     <i class="pi pi-check-circle text-xl"></i>

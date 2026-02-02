@@ -66,6 +66,10 @@ export function useTokenMetadata() {
       throw new Error('Network information not available')
     }
 
+    if (networkInfo.value.chainType !== 'AVM') {
+      throw new Error('Token metadata is only available for AVM networks')
+    }
+
     const { algodUrl } = networkInfo.value
     const token = ''
 

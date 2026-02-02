@@ -525,7 +525,7 @@
       :supply="tokenForm.supply"
       :decimals="tokenForm.type === 'FT' ? tokenForm.decimals : undefined"
       :network-display-name="currentNetworkGuidance?.displayName || 'Unknown'"
-      :network-genesis-id="networkInfo?.genesisId || 'Unknown'"
+      :network-genesis-id="networkInfo?.chainType === 'AVM' ? (networkInfo?.genesisId || 'Unknown') : `Chain ID: ${networkInfo?.chainId || 'Unknown'}`"
       :is-testnet="networkInfo?.isTestnet || false"
       :fees="currentNetworkGuidance?.fees || { creation: 'N/A', transaction: 'N/A' }"
       :attestations-count="tokenForm.attestations.length"

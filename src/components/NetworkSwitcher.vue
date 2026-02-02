@@ -190,7 +190,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useWalletManager, NETWORKS, AVM_NETWORKS, EVM_NETWORKS, type NetworkId } from '../composables/useWalletManager'
+import { useWalletManager, AVM_NETWORKS, EVM_NETWORKS, type NetworkId } from '../composables/useWalletManager'
 
 const { currentNetwork, networkInfo: currentNetworkInfo, switchNetwork, isConnected: isWalletConnected } = useWalletManager()
 
@@ -199,7 +199,6 @@ const isSwitching = ref(false)
 const error = ref<string | null>(null)
 const dropdownRef = ref<HTMLElement | null>(null)
 
-const availableNetworks = computed(() => Object.values(NETWORKS))
 const avmNetworks = computed(() => Object.values(AVM_NETWORKS))
 const evmNetworks = computed(() => Object.values(EVM_NETWORKS))
 

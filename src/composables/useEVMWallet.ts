@@ -58,12 +58,12 @@ export function useEVMWallet() {
 
     try {
       // Request account access
-      const accounts = await window.ethereum.request({
+      const accounts = await window.ethereum!.request({
         method: "eth_requestAccounts",
       });
 
       // Get chain ID
-      const chainIdHex = await window.ethereum.request({
+      const chainIdHex = await window.ethereum!.request({
         method: "eth_chainId",
       });
       const chainIdNum = parseInt(chainIdHex, 16);
@@ -114,7 +114,7 @@ export function useEVMWallet() {
 
     try {
       // Try to switch to the network
-      await window.ethereum.request({
+      await window.ethereum!.request({
         method: "wallet_switchEthereumChain",
         params: [{ chainId: `0x${network.chainId.toString(16)}` }],
       });
@@ -124,7 +124,7 @@ export function useEVMWallet() {
       // If the network is not added to the wallet, add it
       if (error.code === 4902) {
         try {
-          await window.ethereum.request({
+          await window.ethereum!.request({
             method: "wallet_addEthereumChain",
             params: [
               {
@@ -156,7 +156,7 @@ export function useEVMWallet() {
     if (!isEthereumAvailable.value) return;
 
     // Listen for account changes
-    window.ethereum.on("accountsChanged", (accounts: string[]) => {
+    window.ethereum!.on("accountsChanged", (accounts: string[]) => {
       if (accounts.length === 0) {
         // User disconnected
         disconnect();
@@ -166,7 +166,7 @@ export function useEVMWallet() {
     });
 
     // Listen for chain changes
-    window.ethereum.on("chainChanged", (chainIdHex: string) => {
+    window.ethereum!.on("chainChanged", (chainIdHex: string) => {
       const chainIdNum = parseInt(chainIdHex, 16);
       walletState.value.chainId = chainIdNum;
       
@@ -185,12 +185,12 @@ export function useEVMWallet() {
 
     try {
       // Check if already connected
-      const accounts = await window.ethereum.request({
+      const accounts = await window.ethereum!.request({
         method: "eth_accounts",
       });
 
       if (accounts.length > 0) {
-        const chainIdHex = await window.ethereum.request({
+        const chainIdHex = await window.ethereum!.request({
           method: "eth_chainId",
         });
         const chainIdNum = parseInt(chainIdHex, 16);

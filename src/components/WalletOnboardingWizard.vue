@@ -81,10 +81,12 @@
                         <span v-if="!network.isTestnet" class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-500/20 text-green-400"> Mainnet </span>
                         <span v-else class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-500/20 text-yellow-400"> Testnet </span>
                       </div>
-                      <p class="text-sm text-gray-400 mb-3">{{ network.genesisId }}</p>
+                      <p class="text-sm text-gray-400 mb-3">
+                        {{ network.chainType === 'AVM' ? network.genesisId : `Chain ID: ${network.chainId}` }}
+                      </p>
                       <div class="text-xs text-gray-500">
                         <i class="pi pi-server text-xs mr-1"></i>
-                        {{ network.algodUrl }}
+                        {{ network.chainType === 'AVM' ? network.algodUrl : network.rpcUrl }}
                       </div>
                     </div>
                     <div v-if="selectedNetwork === network.id" class="text-biatec-accent">

@@ -62,7 +62,7 @@
                         {{ networkInfo?.displayName }}
                       </div>
                       <div class="text-xs text-gray-500 dark:text-gray-400">
-                        {{ networkInfo?.genesisId }}
+                        {{ networkInfo?.chainType === 'AVM' ? networkInfo?.genesisId : `Chain ID: ${networkInfo?.chainId}` }}
                       </div>
                     </div>
                   </div>
@@ -77,7 +77,7 @@
                   </div>
                   <div class="flex items-center justify-between py-2">
                     <span>API Endpoint:</span>
-                    <code class="text-xs">{{ formatUrl(networkInfo?.algodUrl) }}</code>
+                    <code class="text-xs">{{ formatUrl(networkInfo?.chainType === 'AVM' ? networkInfo?.algodUrl : networkInfo?.rpcUrl) }}</code>
                   </div>
                 </div>
 

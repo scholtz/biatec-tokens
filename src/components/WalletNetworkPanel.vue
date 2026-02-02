@@ -249,7 +249,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useWalletManager, NETWORKS, AVM_NETWORKS, EVM_NETWORKS, type NetworkId } from '../composables/useWalletManager';
+import { useWalletManager, AVM_NETWORKS, EVM_NETWORKS, type NetworkId } from '../composables/useWalletManager';
 
 const emit = defineEmits<{
   'connect-wallet': [];
@@ -267,7 +267,6 @@ const {
 } = useWalletManager();
 
 const showNetworkSwitcher = ref(false);
-const availableNetworks = computed(() => Object.values(NETWORKS));
 const avmNetworks = computed(() => Object.values(AVM_NETWORKS));
 const evmNetworks = computed(() => Object.values(EVM_NETWORKS));
 
