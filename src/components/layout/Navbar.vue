@@ -52,9 +52,12 @@
             <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ networkStatus }}</span>
           </div>
 
-          <!-- Algorand Authentication Component -->
+          <!-- Wallet Connection Button (when not authenticated) -->
           <div v-if="!authStore.isAuthenticated">
-            <button @click="authStore.inAuthentication = true" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Authenticate</button>
+            <button @click="handleWalletClick" class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white transition-colors">
+              <WalletIcon class="w-5 h-5" />
+              <span>Connect Wallet</span>
+            </button>
           </div>
 
           <!-- User Menu -->
@@ -109,6 +112,13 @@
       </div>
     </div>
 
+    <!-- Wallet Connect Modal -->
+    <WalletConnectModal
+      :is-open="showWalletModal"
+      @close="showWalletModal = false"
+      @connected="handleWalletConnected"
+    />
+
     <!-- Mobile Menu -->
     <Transition
       enter-active-class="duration-200 ease-out"
@@ -149,6 +159,7 @@ import { useSettingsStore } from "../../stores/settings";
 import { useSubscriptionStore } from "../../stores/subscription";
 import { useAVMAuthentication } from "algorand-authentication-component-vue";
 import { HomeIcon, PlusCircleIcon, ChartBarIcon, Cog6ToothIcon, SunIcon, MoonIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, WalletIcon } from "@heroicons/vue/24/outline";
+import WalletConnectModal from "../WalletConnectModal.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -159,6 +170,7 @@ const subscriptionStore = useSubscriptionStore();
 
 const showMobileMenu = ref(false);
 const showUserMenu = ref(false);
+const showWalletModal = ref(false);
 
 const navigationItems = [
   { name: "Home", path: "/", icon: HomeIcon },
@@ -203,6 +215,17 @@ const handleSignOut = async () => {
   showUserMenu.value = false;
   await logout();
   router.push("/");
+};
+
+const handleWalletClick = () => {
+  showWalletModal.value = true;
+};
+
+const handleWalletConnected = (data: { address: string; walletId: string; network: string }) => {
+  showWalletModal.value = false;
+  console.log("Wallet connected:", data);
+  // The Arc76 authentication component will handle the authentication
+  // This just closes the modal
 };
 
 onMounted(async () => {

@@ -109,7 +109,21 @@
 
             <!-- Step 3: Wallet Selection with Info -->
             <div v-if="currentStep === 2" class="space-y-4">
-              <p class="text-gray-300 mb-4">Choose a compatible wallet to connect. Make sure you have it installed and set up.</p>
+              <!-- Show authenticated status if Arc76 is already authenticated -->
+              <div v-if="isArc76Authenticated" class="p-5 bg-green-500/10 border border-green-500/30 rounded-xl mb-4">
+                <div class="flex items-start gap-3">
+                  <i class="pi pi-check-circle text-green-400 text-2xl"></i>
+                  <div class="flex-1">
+                    <p class="text-sm text-green-400 font-medium mb-1">Already Authenticated</p>
+                    <p class="text-xs text-gray-300 mb-2">Your wallet is already connected via Arc76 authentication.</p>
+                    <div class="text-xs text-gray-400 font-mono break-all bg-white/5 p-2 rounded">
+                      {{ authStore.account }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <p v-else class="text-gray-300 mb-4">Choose a compatible wallet to connect. Make sure you have it installed and set up.</p>
 
               <div v-if="isConnecting" class="text-center py-12">
                 <div class="relative inline-block">
@@ -143,7 +157,7 @@
                 </div>
               </div>
 
-              <div v-else class="space-y-3">
+              <div v-else-if="!isArc76Authenticated" class="space-y-3">
                 <button
                   v-for="wallet in supportedWallets"
                   :key="wallet.id"
@@ -319,8 +333,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useWallet } from "@txnlab/use-wallet-vue";
+import { useAVMAuthentication } from "algorand-authentication-component-vue";
 import { NETWORKS, type NetworkId } from "../composables/useWalletManager";
 import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from "../constants/auth";
 
@@ -341,6 +356,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>();
 
 const wallet = useWallet();
+const { authStore } = useAVMAuthentication();
 
 // State
 const currentStep = ref(props.skipWelcome ? 1 : 0);
@@ -350,6 +366,16 @@ const connectionError = ref<string | null>(null);
 const hasReadRiskNotice = ref(false);
 const hasAcceptedTerms = ref(false);
 const connectedAddress = ref<string | null>(null);
+
+// Check if user is already authenticated via Arc76
+const isArc76Authenticated = computed(() => authStore.isAuthenticated && !!authStore.account);
+
+// Initialize connectedAddress from Arc76 auth if available
+onMounted(() => {
+  if (isArc76Authenticated.value) {
+    connectedAddress.value = authStore.account;
+  }
+});
 
 // Steps configuration
 const steps = [
@@ -401,6 +427,11 @@ const canProceedFromCompliance = computed(() => {
 const nextStep = () => {
   if (currentStep.value < steps.length - 1 && canProceedToNextStep.value) {
     currentStep.value++;
+
+    // Skip wallet connection step (step 2) if already authenticated via Arc76
+    if (currentStep.value === 2 && isArc76Authenticated.value) {
+      currentStep.value = 3; // Move to compliance step
+    }
 
     // If skipping wallet connection (step 2), move directly to success
     if (currentStep.value === 3 && !connectedAddress.value) {
