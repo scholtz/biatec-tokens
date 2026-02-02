@@ -846,13 +846,16 @@ describe('WalletOnboardingWizard', () => {
 
       await nextTick()
 
-      // Navigate to wallet step
+      // Start at network selection (step 1 since we skip welcome)
+      expect(document.querySelector('.glass-effect')?.textContent).toContain('Select Your Network')
+
+      // Click continue to attempt going to wallet step
       const continueButton = Array.from(document.querySelectorAll('button')).find((btn) => btn.textContent?.includes('Continue'))
       continueButton?.click()
       await nextTick()
 
-      // The step should show but display authenticated status instead of wallet list
-      // Since we skip to compliance when Arc76 is authenticated, this test validates behavior
+      // Should have skipped wallet step and gone directly to compliance step because Arc76 is authenticated
+      expect(document.querySelector('.glass-effect')?.textContent).toContain('Terms & Risk Disclosure')
 
       wrapper.unmount()
     })
@@ -866,14 +869,35 @@ describe('WalletOnboardingWizard', () => {
       const wrapper = mount(WalletOnboardingWizard, {
         props: {
           isOpen: true,
+          skipWelcome: true,
         },
         attachTo: document.body,
       })
 
       await nextTick()
 
-      // The component should have initialized with the Arc76 account
-      // We can verify this by checking if the complete event will emit with the correct address
+      // Navigate to the final step to trigger complete
+      const continueButton = Array.from(document.querySelectorAll('button')).find((btn) => btn.textContent?.includes('Continue'))
+      continueButton?.click()
+      await nextTick()
+
+      // Accept compliance terms
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]')
+      checkboxes.forEach((checkbox) => {
+        ;(checkbox as HTMLInputElement).click()
+      })
+      await nextTick()
+
+      // Go to next step
+      const continueButton2 = Array.from(document.querySelectorAll('button')).find((btn) => btn.textContent?.includes('Continue'))
+      continueButton2?.click()
+      await nextTick()
+
+      // Should now be on success step showing the Arc76 account
+      const successContent = document.querySelector('.glass-effect')?.textContent
+      expect(successContent).toContain("You're All Set")
+      // The formatted address should be displayed
+      expect(document.querySelector('.font-mono')).toBeTruthy()
 
       wrapper.unmount()
     })
