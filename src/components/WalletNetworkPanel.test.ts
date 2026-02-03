@@ -102,7 +102,7 @@ describe('WalletNetworkPanel', () => {
       expect(wrapper.find('h3').text()).toContain('Wallet & Network');
       expect(wrapper.find('button[data-testid="connect-wallet-btn"]').text()).toContain('Sign In');
       expect(wrapper.find('.pi-wallet').exists()).toBe(true);
-      expect(wrapper.text()).toContain('Connect your wallet to deploy tokens');
+      expect(wrapper.text()).toContain('Sign in to deploy tokens');
     });
 
     it('should render connected state correctly', async () => {

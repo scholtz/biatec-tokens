@@ -401,7 +401,7 @@ describe('WalletOnboardingWizard', () => {
       }
 
       const content = document.body.textContent || ''
-      expect(content).toContain('Connect Your Wallet')
+      expect(content).toContain('Sign In with Wallet')
       expect(content).toContain('Pera Wallet')
       expect(content).toContain('Defly Wallet')
       expect(content).toContain('Exodus Wallet')

@@ -123,15 +123,15 @@
                 </div>
               </div>
 
-              <p v-else class="text-gray-300 mb-4">Choose a compatible wallet to connect. Make sure you have it installed and set up.</p>
+              <p v-else class="text-gray-300 mb-4">Choose a compatible wallet provider for authentication. Make sure you have it installed and set up.</p>
 
               <div v-if="isConnecting" class="text-center py-12">
                 <div class="relative inline-block">
                   <i class="pi pi-spin pi-spinner text-5xl text-biatec-accent mb-4"></i>
                   <div class="absolute inset-0 blur-xl bg-biatec-accent/20 animate-pulse"></div>
                 </div>
-                <p class="text-gray-300 text-lg font-medium mb-2">Connecting to wallet...</p>
-                <p class="text-sm text-gray-400 mt-2">Please check your wallet app to approve the connection</p>
+                <p class="text-gray-300 text-lg font-medium mb-2">Authenticating...</p>
+                <p class="text-sm text-gray-400 mt-2">Please check your wallet app to approve the authentication request</p>
                 <div class="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500">
                   <i class="pi pi-lock"></i>
                   <span>This connection is secure and encrypted</span>
@@ -261,7 +261,7 @@
               </div>
               <div>
                 <h3 class="text-2xl font-bold text-white mb-2">You're All Set!</h3>
-                <p class="text-gray-300 mb-4">Your wallet is connected and ready to use.</p>
+                <p class="text-gray-300 mb-4">You are authenticated and ready to use the platform.</p>
                 <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg">
                   <i class="pi pi-wallet text-biatec-accent"></i>
                   <span class="text-white font-mono text-sm">{{ formattedAddress }}</span>
@@ -381,9 +381,9 @@ onMounted(() => {
 const steps = [
   { id: "welcome", title: "Welcome to Biatec Tokens" },
   { id: "network", title: "Select Your Network" },
-  { id: "wallet", title: "Connect Your Wallet" },
+  { id: "wallet", title: "Sign In with Wallet" },
   { id: "compliance", title: "Terms & Risk Disclosure" },
-  { id: "success", title: "Successfully Connected" },
+  { id: "success", title: "Successfully Authenticated" },
 ];
 
 const currentStepInfo = computed(() => steps[currentStep.value]);
