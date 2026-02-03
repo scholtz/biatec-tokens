@@ -172,7 +172,7 @@ export function useWalletManager() {
       activeAddress: computed(() => null),
       activeWallet: computed(() => null),
       accounts: computed(() => []),
-      networkInfo: computed(() => NETWORKS["voi-mainnet"]),
+      networkInfo: computed(() => NETWORKS["algorand-mainnet"]),
       formattedAddress: computed(() => null),
       walletState: ref({
         isConnected: false,
@@ -185,7 +185,7 @@ export function useWalletManager() {
         lastError: null,
         balanceLastUpdated: null,
       }),
-      currentNetwork: ref<NetworkId>("voi-mainnet"),
+      currentNetwork: ref<NetworkId>("algorand-mainnet"),
       connect: async () => {
         throw new Error("Wallet manager not available");
       },
@@ -210,7 +210,7 @@ export function useWalletManager() {
     balanceLastUpdated: null,
   });
 
-  const currentNetwork = ref<NetworkId>("voi-mainnet");
+  const currentNetwork = ref<NetworkId>("algorand-mainnet");
   const isReconnecting = ref(false);
   const previousState = ref<WalletConnectionState>(WalletConnectionState.DISCONNECTED);
 

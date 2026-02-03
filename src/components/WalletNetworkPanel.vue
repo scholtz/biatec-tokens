@@ -3,8 +3,8 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <h3 class="text-xl font-semibold text-white flex items-center gap-2">
-        <i class="pi pi-wallet text-biatec-accent"></i>
-        Wallet & Network
+        <i class="pi pi-user text-biatec-accent"></i>
+        Account & Network
       </h3>
       <div v-if="isConnected" class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
@@ -12,9 +12,9 @@
       </div>
     </div>
 
-    <!-- Wallet Connection Status -->
+    <!-- Account Connection Status -->
     <div v-if="!isConnected" class="text-center py-8">
-      <i class="pi pi-wallet text-5xl text-gray-400 mb-4"></i>
+      <i class="pi pi-user text-5xl text-gray-400 mb-4"></i>
       <p class="text-gray-300 mb-4">Sign in to deploy tokens</p>
       <button
         @click="emit('connect-wallet')"
@@ -26,18 +26,18 @@
       </button>
     </div>
 
-    <!-- Wallet Connected View -->
+    <!-- Account Connected View -->
     <div v-else class="space-y-4">
-      <!-- Connected Wallet Info -->
+      <!-- Connected Account Info -->
       <div class="p-4 bg-gradient-to-br from-white/5 to-white/10 rounded-lg border border-white/10">
         <div class="flex items-center justify-between mb-3">
-          <span class="text-sm font-medium text-gray-300">Connected Wallet</span>
+          <span class="text-sm font-medium text-gray-300">Connected Account</span>
           <button
             @click="emit('disconnect-wallet')"
             class="text-xs text-red-400 hover:text-red-300 transition-colors"
           >
             <i class="pi pi-power-off mr-1"></i>
-            Disconnect
+            Sign Out
           </button>
         </div>
         <div class="flex items-center justify-between">
@@ -229,8 +229,8 @@
             <div class="flex items-start gap-2">
               <i class="pi pi-exclamation-triangle text-yellow-400 text-sm mt-0.5"></i>
               <p class="text-xs text-gray-300">
-                <strong class="text-yellow-400">Note:</strong> Switching networks will disconnect your wallet. 
-                You'll need to reconnect after switching to ensure compatibility.
+                <strong class="text-yellow-400">Note:</strong> Switching networks will sign you out. 
+                You'll need to sign in again after switching to ensure compatibility.
               </p>
             </div>
           </div>

@@ -6,10 +6,10 @@
         <div class="mb-8 flex items-center justify-between">
           <div>
             <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-              Wallet Dashboard
+              Account Dashboard
             </h1>
             <p class="text-gray-600 dark:text-gray-300 text-lg">
-              Manage your wallet, view balances, and track compliance
+              Manage your account, view balances, and track compliance
             </p>
           </div>
           <AccountSwitcher v-if="isConnected" />
@@ -19,9 +19,9 @@
         <div v-if="!isConnected" class="text-center py-16">
           <Card variant="glass">
             <div class="py-12">
-              <i class="pi pi-wallet text-6xl text-gray-400 mb-6"></i>
+              <i class="pi pi-user text-6xl text-gray-400 mb-6"></i>
               <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                Connect Your Wallet
+                Sign In to Your Account
               </h2>
               <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
                 Sign in to access your token balances, view compliance status, 
@@ -29,7 +29,7 @@
               </p>
               <Button @click="showWalletConnect = true" variant="primary" size="lg">
                 <template #icon>
-                  <i class="pi pi-wallet mr-2"></i>
+                  <i class="pi pi-user mr-2"></i>
                 </template>
                 Sign In
               </Button>
@@ -165,14 +165,14 @@
                 </Button>
 
                 <Button 
-                  @click="handleDisconnect" 
+                  @click="handleSignOut" 
                   variant="outline"
                   class="justify-center"
                 >
                   <template #icon>
                     <i class="pi pi-sign-out mr-2"></i>
                   </template>
-                  Disconnect
+                  Sign Out
                 </Button>
               </div>
             </div>
@@ -269,12 +269,12 @@ const formatUrl = (url?: string): string => {
   }
 }
 
-const handleDisconnect = async () => {
+const handleSignOut = async () => {
   try {
     await disconnect()
     router.push('/')
   } catch (error) {
-    console.error('Failed to disconnect wallet:', error)
+    console.error('Failed to sign out:', error)
   }
 }
 </script>

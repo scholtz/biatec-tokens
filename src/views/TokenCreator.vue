@@ -793,12 +793,12 @@ const dismissValidationError = () => {
   validationError.value = null;
 };
 
-// Wallet connection handlers
+// Authentication handlers
 const handleConnectWallet = async () => {
   try {
     await connect();
   } catch (error) {
-    console.error('Failed to connect wallet:', error);
+    console.error('Failed to sign in:', error);
   }
 };
 
@@ -806,7 +806,7 @@ const handleDisconnectWallet = async () => {
   try {
     await disconnect();
   } catch (error) {
-    console.error('Failed to disconnect wallet:', error);
+    console.error('Failed to sign out:', error);
   }
 };
 
