@@ -223,6 +223,9 @@ export class EntitlementService {
     }
 
     const now = new Date();
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const endOfMonth = new Date(nextMonth.getTime() - 1); // Last millisecond of current month
+    
     this.currentEntitlement.usage = {
       tokensThisMonth: 0,
       deploymentsToday: 0,
@@ -230,7 +233,7 @@ export class EntitlementService {
       attestationsThisMonth: 0,
       apiCallsToday: 0,
       periodStart: now,
-      periodEnd: new Date(now.getFullYear(), now.getMonth() + 1, 0),
+      periodEnd: endOfMonth,
     };
 
     telemetryService.track("usage_reset", {
@@ -262,6 +265,9 @@ export class EntitlementService {
 
   private createDefaultUsage(): CurrentUsage {
     const now = new Date();
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const endOfMonth = new Date(nextMonth.getTime() - 1); // Last millisecond of current month
+    
     return {
       tokensThisMonth: 0,
       deploymentsToday: 0,
@@ -269,7 +275,7 @@ export class EntitlementService {
       attestationsThisMonth: 0,
       apiCallsToday: 0,
       periodStart: now,
-      periodEnd: new Date(now.getFullYear(), now.getMonth() + 1, 0),
+      periodEnd: endOfMonth,
     };
   }
 
