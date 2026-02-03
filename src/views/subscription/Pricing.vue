@@ -214,6 +214,7 @@
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import { useSubscriptionStore } from '../../stores/subscription'
+import { telemetryService } from '../../services/TelemetryService'
 import { stripeProducts } from '../../stripe-config'
 import Card from '../../components/ui/Card.vue'
 import Button from '../../components/ui/Button.vue'
@@ -227,6 +228,7 @@ import {
 
 const authStore = useAuthStore()
 const subscriptionStore = useSubscriptionStore()
+const upgradeStartTime = ref<number | null>(null)
 
 const features = [
   { name: 'Token Creation', free: true },
@@ -285,8 +287,18 @@ const handleSubscribe = async () => {
     return
   }
 
+  const currentPlan = subscriptionStore.currentProduct?.name || 'free'
   const monthlyProduct = stripeProducts.find(p => p.interval === 'month')
+  
   if (monthlyProduct) {
+    // Track upgrade started
+    upgradeStartTime.value = Date.now()
+    telemetryService.trackPlanUpgradeStarted({
+      fromPlan: currentPlan,
+      toPlan: monthlyProduct.name,
+      source: 'pricing_page'
+    })
+    
     await subscriptionStore.createCheckoutSession(monthlyProduct.priceId, 'subscription')
   }
 }

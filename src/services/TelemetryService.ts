@@ -152,6 +152,90 @@ export class TelemetryService {
   }
 
   /**
+   * Track login started
+   */
+  trackLoginStarted(data?: { source?: string }): void {
+    this.track('login_started', {
+      source: data?.source || 'navbar',
+    })
+  }
+
+  /**
+   * Track login completed
+   */
+  trackLoginCompleted(data: {
+    walletId: string
+    network: string
+    durationMs?: number
+  }): void {
+    this.track('login_completed', {
+      wallet_id: data.walletId,
+      network: data.network,
+      duration_ms: data.durationMs,
+    })
+  }
+
+  /**
+   * Track token wizard started
+   */
+  trackTokenWizardStarted(data?: { 
+    source?: string 
+    network?: string
+  }): void {
+    this.track('token_wizard_started', {
+      source: data?.source || 'direct',
+      network: data?.network,
+    })
+  }
+
+  /**
+   * Track token wizard completed
+   */
+  trackTokenWizardCompleted(data: {
+    tokenStandard: string
+    tokenType: string
+    network: string
+    durationMs?: number
+  }): void {
+    this.track('token_wizard_completed', {
+      token_standard: data.tokenStandard,
+      token_type: data.tokenType,
+      network: data.network,
+      duration_ms: data.durationMs,
+    })
+  }
+
+  /**
+   * Track plan upgrade started
+   */
+  trackPlanUpgradeStarted(data: {
+    fromPlan: string
+    toPlan: string
+    source?: string
+  }): void {
+    this.track('plan_upgrade_started', {
+      from_plan: data.fromPlan,
+      to_plan: data.toPlan,
+      source: data.source || 'pricing_page',
+    })
+  }
+
+  /**
+   * Track plan upgrade completed
+   */
+  trackPlanUpgradeCompleted(data: {
+    fromPlan: string
+    toPlan: string
+    durationMs?: number
+  }): void {
+    this.track('plan_upgrade_completed', {
+      from_plan: data.fromPlan,
+      to_plan: data.toPlan,
+      duration_ms: data.durationMs,
+    })
+  }
+
+  /**
    * Get all tracked events (for debugging)
    */
   getEvents(): TelemetryEvent[] {

@@ -176,6 +176,7 @@
 import { ref, computed } from 'vue'
 import { useWalletManager } from '../composables/useWalletManager'
 import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from '../constants/auth'
+import { telemetryService } from '../services/TelemetryService'
 import WalletConnectModal from './WalletConnectModal.vue'
 import WalletOnboardingWizard from './WalletOnboardingWizard.vue'
 import NetworkSwitcher from './NetworkSwitcher.vue'
@@ -186,6 +187,7 @@ const showMobileMenu = ref(false)
 const showWalletModal = ref(false)
 const showOnboardingWizard = ref(false)
 const showAccountMenu = ref(false)
+const loginStartTime = ref<number | null>(null)
 
 // Check if user has completed onboarding before
 const hasCompletedOnboarding = computed(() => {
@@ -207,6 +209,10 @@ const handleWalletClick = () => {
     // Toggle account menu when authenticated
     showAccountMenu.value = !showAccountMenu.value
   } else {
+    // Track login started
+    loginStartTime.value = Date.now()
+    telemetryService.trackLoginStarted({ source: 'navbar' })
+    
     // Show authentication modal when not authenticated
     // Show onboarding wizard for first-time users, otherwise simple modal
     if (hasCompletedOnboarding.value) {
@@ -229,6 +235,17 @@ const handleDisconnect = async () => {
 const handleConnected = () => {
   showWalletModal.value = false
   showOnboardingWizard.value = false
+  
+  // Track login completed with duration
+  if (loginStartTime.value) {
+    const durationMs = Date.now() - loginStartTime.value
+    telemetryService.trackLoginCompleted({
+      walletId: walletState.value.activeWallet || 'unknown',
+      network: 'unknown', // Network info would come from wallet manager
+      durationMs
+    })
+    loginStartTime.value = null
+  }
 }
 </script>
 <style scoped>

@@ -581,8 +581,6 @@
       @retry="handleRetryDeployment"
       @cancel="handleCancelDeployment"
     />
-      </div>
-    </div>
   </MainLayout>
 </template>
 
@@ -592,6 +590,7 @@ import { useRouter } from "vue-router";
 import { useTokenStore } from "../stores/tokens";
 import { useSubscriptionStore } from "../stores/subscription";
 import { useComplianceStore } from "../stores/compliance";
+import { telemetryService } from "../services/TelemetryService";
 import MainLayout from "../layout/MainLayout.vue";
 import ComplianceChecklist from "../components/ComplianceChecklist.vue";
 import RwaPresetSelector from "../components/RwaPresetSelector.vue";
@@ -619,6 +618,7 @@ const isCreating = ref(false);
 const validationError = ref<string | null>(null);
 const imageInput = ref<HTMLInputElement>();
 const showComplianceChecklist = ref(false);
+const wizardStartTime = ref<number | null>(null);
 
 // Deployment dialog states
 const showConfirmationDialog = ref(false);
@@ -682,6 +682,13 @@ watch(selectedStandard, (newStandard) => {
 
 // Load saved selections from localStorage on mount
 onMounted(() => {
+  // Track wizard started
+  wizardStartTime.value = Date.now()
+  telemetryService.trackTokenWizardStarted({
+    source: router.currentRoute.value.query.source as string || 'direct',
+    network: selectedNetwork.value || undefined
+  })
+  
   const savedTemplate = localStorage.getItem(TEMPLATE_STORAGE_KEY);
   const savedNetwork = localStorage.getItem(NETWORK_STORAGE_KEY);
   const savedStandard = localStorage.getItem(STANDARD_STORAGE_KEY);
@@ -901,6 +908,18 @@ const executeDeployment = async () => {
 
     // Track successful creation with details
     subscriptionStore.trackTokenCreationSuccess(selectedStandard.value, selectedTemplate.value || undefined, selectedNetwork.value || undefined);
+    
+    // Track wizard completion with analytics
+    if (wizardStartTime.value) {
+      const durationMs = Date.now() - wizardStartTime.value
+      telemetryService.trackTokenWizardCompleted({
+        tokenStandard: selectedStandard.value,
+        tokenType: tokenForm.type,
+        network: selectedNetwork.value || 'unknown',
+        durationMs
+      })
+      wizardStartTime.value = null
+    }
 
     // Give user time to see success state before auto-navigation
     await new Promise(resolve => setTimeout(resolve, 2000));

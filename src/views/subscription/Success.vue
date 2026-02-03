@@ -39,6 +39,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useSubscriptionStore } from '../../stores/subscription'
+import { telemetryService } from '../../services/TelemetryService'
 import Card from '../../components/ui/Card.vue'
 import Button from '../../components/ui/Button.vue'
 import { CheckCircleIcon } from '@heroicons/vue/24/outline'
@@ -48,5 +49,12 @@ const subscriptionStore = useSubscriptionStore()
 onMounted(async () => {
   // Refresh subscription data after successful payment
   await subscriptionStore.fetchSubscription()
+  
+  // Track upgrade completion
+  const currentPlan = subscriptionStore.currentProduct?.name || 'premium'
+  telemetryService.trackPlanUpgradeCompleted({
+    fromPlan: 'free',
+    toPlan: currentPlan
+  })
 })
 </script>
