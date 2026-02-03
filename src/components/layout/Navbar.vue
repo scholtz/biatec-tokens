@@ -178,7 +178,7 @@ const navigationItems = [
   { name: "Home", path: "/", icon: HomeIcon },
   { name: "Create", path: "/create", icon: PlusCircleIcon },
   { name: "Dashboard", path: "/dashboard", icon: ChartBarIcon },
-  { name: "Account", path: "/wallet", icon: WalletIcon },
+  { name: "Account", path: "/account", icon: WalletIcon },
   { name: "Settings", path: "/settings", icon: Cog6ToothIcon },
 ];
 

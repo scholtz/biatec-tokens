@@ -53,7 +53,7 @@ describe('Navbar Component', () => {
         { path: '/', name: 'home' },
         { path: '/create', name: 'create' },
         { path: '/dashboard', name: 'dashboard' },
-        { path: '/wallet', name: 'wallet' },
+        { path: '/account', name: 'account' },
         { path: '/settings', name: 'settings' },
         { path: '/account/security', name: 'security' },
         { path: '/subscription/pricing', name: 'pricing' },

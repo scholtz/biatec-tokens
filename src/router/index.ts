@@ -47,10 +47,15 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: "/wallet",
-      name: "WalletDashboard",
+      path: "/account",
+      name: "AccountDashboard",
       component: WalletDashboard,
       meta: { requiresAuth: true },
+    },
+    // Backward compatibility redirect
+    {
+      path: "/wallet",
+      redirect: "/account",
     },
     {
       path: "/tokens/:id",

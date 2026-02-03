@@ -15,12 +15,12 @@
           </div>
         </div>
 
-        <!-- Wallet Recovery Panel -->
+        <!-- Account Recovery Panel -->
         <Card variant="glass" class="mb-8">
           <template #header>
             <div class="flex items-center gap-3">
               <i class="pi pi-key text-blue-500 text-xl"></i>
-              <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Wallet Recovery</h2>
+              <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Account Recovery</h2>
             </div>
           </template>
 

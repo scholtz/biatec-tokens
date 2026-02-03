@@ -67,7 +67,7 @@ describe('AccountSecurity View', () => {
 
       await flushPromises()
 
-      expect(wrapper.text()).toContain('Wallet Recovery')
+      expect(wrapper.text()).toContain('Account Recovery')
       expect(wrapper.text()).toContain('Account Activity')
       expect(wrapper.text()).toContain('Transaction History')
       expect(wrapper.text()).toContain('Audit Trail Export')
