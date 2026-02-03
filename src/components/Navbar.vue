@@ -239,9 +239,10 @@ const handleConnected = () => {
   // Track login completed with duration
   if (loginStartTime.value) {
     const durationMs = Date.now() - loginStartTime.value
+    const { currentNetwork } = useWalletManager()
     telemetryService.trackLoginCompleted({
       walletId: walletState.value.activeWallet || 'unknown',
-      network: 'unknown', // Network info would come from wallet manager
+      network: currentNetwork.value || 'unknown',
       durationMs
     })
     loginStartTime.value = null
