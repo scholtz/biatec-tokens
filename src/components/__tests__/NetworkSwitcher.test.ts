@@ -232,7 +232,7 @@ describe('NetworkSwitcher', () => {
     await nextTick()
 
     const text = wrapper.text()
-    expect(text).toContain('Switching networks will disconnect')
+    expect(text).toContain('Switching networks will sign you out')
   })
 
   it('should rotate chevron icon when dropdown is open', async () => {
