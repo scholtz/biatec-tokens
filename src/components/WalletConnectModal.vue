@@ -31,8 +31,12 @@
                   <div class="flex-1">
                     <div class="flex items-center gap-2 mb-1">
                       <div class="text-white font-semibold">{{ network.displayName }}</div>
-                      <span v-if="!network.isTestnet" class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-500/20 text-green-400"> Mainnet </span>
-                      <span v-else class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-500/20 text-yellow-400"> Testnet </span>
+                      <span v-if="!network.isTestnet" class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-500/20 text-green-400 border border-green-500/30"> 
+                        ✓ Recommended 
+                      </span>
+                      <span v-else class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"> 
+                        Testnet 
+                      </span>
                     </div>
                     <div class="text-sm text-gray-400">
                       {{ network.chainType === "AVM" ? network.genesisId : `Chain ID: ${network.chainId}` }}
@@ -43,6 +47,16 @@
                   </div>
                 </div>
               </button>
+            </div>
+            
+            <!-- Warning for testnet selection -->
+            <div v-if="selectedNetwork && NETWORKS[selectedNetwork].isTestnet" class="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+              <div class="flex items-start gap-2">
+                <i class="pi pi-exclamation-triangle text-yellow-400 text-sm mt-0.5"></i>
+                <div class="text-xs text-yellow-300">
+                  <strong>Testnet Notice:</strong> This network is for testing only. Assets have no real-world value. For production use, please select a mainnet network.
+                </div>
+              </div>
             </div>
           </div>
 
@@ -161,7 +175,36 @@ const emit = defineEmits<Emits>();
 const walletManager = useWalletManager();
 const selectedNetwork = ref<NetworkId>(props.defaultNetwork);
 
-const availableNetworks = computed(() => Object.values(NETWORKS));
+const availableNetworks = computed(() => {
+  const networks = Object.values(NETWORKS);
+  // Sort networks: mainnet first, then testnets
+  // Within each group, prioritize Algorand and Ethereum mainnets
+  return networks.sort((a, b) => {
+    // First priority: mainnet vs testnet
+    if (a.isTestnet !== b.isTestnet) {
+      return a.isTestnet ? 1 : -1;
+    }
+    
+    // Second priority: Algorand mainnet first among mainnets
+    if (!a.isTestnet && !b.isTestnet) {
+      if (a.id === 'algorand-mainnet') return -1;
+      if (b.id === 'algorand-mainnet') return 1;
+      if (a.id === 'ethereum') return -1;
+      if (b.id === 'ethereum') return 1;
+    }
+    
+    // Third priority: Algorand testnet first among testnets
+    if (a.isTestnet && b.isTestnet) {
+      if (a.id === 'algorand-testnet') return -1;
+      if (b.id === 'algorand-testnet') return 1;
+      if (a.id === 'sepolia') return -1;
+      if (b.id === 'sepolia') return 1;
+    }
+    
+    // Default: alphabetical
+    return a.displayName.localeCompare(b.displayName);
+  });
+});
 
 const availableWallets = computed(() => {
   return walletManager.walletManager?.wallets?.value?.filter((w: any) => w.isActive) || [];
