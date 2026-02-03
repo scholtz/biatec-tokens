@@ -159,7 +159,7 @@
       <div v-else class="text-center py-8">
         <i class="pi pi-wallet text-4xl text-gray-400 mb-3"></i>
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">
-          {{ isConnected ? 'No token holdings' : 'Connect your wallet to view tokens' }}
+          {{ isConnected ? 'No token holdings' : 'Sign in to view tokens' }}
         </p>
         <p v-if="isConnected" class="text-xs text-gray-500 dark:text-gray-500">
           Once you receive tokens, they will appear here

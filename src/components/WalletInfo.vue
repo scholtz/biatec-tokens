@@ -151,7 +151,7 @@
       <div v-else class="text-center py-6">
         <i class="pi pi-wallet text-4xl text-gray-400 mb-3"></i>
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Connect your wallet to view balance
+          Sign in to view balance
         </p>
       </div>
     </div>

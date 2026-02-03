@@ -15,7 +15,7 @@
     <!-- Wallet Connection Status -->
     <div v-if="!isConnected" class="text-center py-8">
       <i class="pi pi-wallet text-5xl text-gray-400 mb-4"></i>
-      <p class="text-gray-300 mb-4">Connect your wallet to deploy tokens</p>
+      <p class="text-gray-300 mb-4">Sign in to deploy tokens</p>
       <button
         @click="emit('connect-wallet')"
         class="btn-primary px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2"

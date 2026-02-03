@@ -231,7 +231,7 @@ const getWalletDescription = (walletId: string): string => {
     walletconnect: "Connect via QR code",
     kmd: "Local development",
   };
-  return descriptions[walletId] || "Connect your wallet";
+  return descriptions[walletId] || "Sign in with wallet";
 };
 
 const getWalletIcon = (walletId: string): string => {
