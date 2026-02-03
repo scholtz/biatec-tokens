@@ -121,7 +121,7 @@ export class EntitlementService {
 
     // Map limit keys to usage keys
     const usageKey = this.mapLimitToUsageKey(limitKey);
-    const currentUsage = this.currentEntitlement.usage[usageKey];
+    const currentUsage = this.currentEntitlement.usage[usageKey] as number;
     const newUsage = currentUsage + increment;
 
     if (newUsage > limit) {
@@ -159,7 +159,8 @@ export class EntitlementService {
     }
 
     const usageKey = this.mapLimitToUsageKey(limitKey);
-    this.currentEntitlement.usage[usageKey] += amount;
+    const currentValue = this.currentEntitlement.usage[usageKey] as number;
+    (this.currentEntitlement.usage[usageKey] as number) = currentValue + amount;
 
     // Track usage increment
     telemetryService.track("usage_incremented", {
@@ -201,7 +202,7 @@ export class EntitlementService {
     }
 
     const usageKey = this.mapLimitToUsageKey(limitKey);
-    const current = this.currentEntitlement.usage[usageKey];
+    const current = this.currentEntitlement.usage[usageKey] as number;
 
     return (current / limit) * 100;
   }
@@ -306,8 +307,8 @@ export class EntitlementService {
     return SubscriptionTier.ENTERPRISE;
   }
 
-  private mapLimitToUsageKey(limitKey: keyof UsageLimits): keyof CurrentUsage {
-    const mapping: Record<keyof UsageLimits, keyof CurrentUsage> = {
+  private mapLimitToUsageKey(limitKey: keyof UsageLimits): keyof Omit<CurrentUsage, 'periodStart' | 'periodEnd'> {
+    const mapping: Record<keyof UsageLimits, keyof Omit<CurrentUsage, 'periodStart' | 'periodEnd'>> = {
       tokensPerMonth: "tokensThisMonth",
       deploymentPerDay: "deploymentsToday",
       whitelistAddresses: "whitelistAddresses",

@@ -3,7 +3,6 @@
  * Handles deterministic signing for Algorand, VOI, and Aramid networks
  */
 
-import { computed } from "vue";
 import algosdk from "algosdk";
 import { useWallet } from "@txnlab/use-wallet-vue";
 import {
@@ -143,7 +142,8 @@ export function useAVMSigning(): Signer {
         const algodClient = new algosdk.Algodv2("", network.algodUrl, "");
 
         try {
-          const { txId } = await algodClient.sendRawTransaction(signedTxn).do();
+          const txResponse = await algodClient.sendRawTransaction(signedTxn).do();
+          const txId = txResponse.txid as string; // Note: algosdk uses lowercase 'txid'
 
           const confirmed = await waitForConfirmation(async () => {
             try {
@@ -251,7 +251,7 @@ export function useAVMSigning(): Signer {
       });
 
       // Return array of successful results
-      return signedTxns.map((signedTxn, index) => {
+      return signedTxns.map((signedTxn: Uint8Array, index: number) => {
         return createSuccessResult(signedTxn, {
           network: transactions[index].network,
         });

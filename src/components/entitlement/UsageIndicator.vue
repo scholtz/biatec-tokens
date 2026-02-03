@@ -34,7 +34,7 @@ const limit = computed(() => {
 
 const current = computed(() => {
   if (!entitlement.value) return 0;
-  const mapping: Record<keyof UsageLimits, keyof typeof entitlement.value.usage> = {
+  const mapping: Record<keyof UsageLimits, 'tokensThisMonth' | 'deploymentsToday' | 'whitelistAddresses' | 'attestationsThisMonth' | 'apiCallsToday'> = {
     tokensPerMonth: "tokensThisMonth",
     deploymentPerDay: "deploymentsToday",
     whitelistAddresses: "whitelistAddresses",
@@ -42,13 +42,13 @@ const current = computed(() => {
     apiCallsPerDay: "apiCallsToday",
   };
   const usageKey = mapping[props.limitKey];
-  return entitlement.value.usage[usageKey];
+  return entitlement.value.usage[usageKey] as number;
 });
 
 const percentage = computed(() => {
   if (limit.value === null) return 0; // Unlimited
   if (limit.value === 0) return 100;
-  return Math.min((current.value / limit.value) * 100, 100);
+  return Math.min(((current.value as number) / limit.value) * 100, 100);
 });
 
 const isUnlimited = computed(() => limit.value === null);
@@ -83,7 +83,7 @@ const handleUpgradeClick = () => {
       <div class="usage-indicator__value">
         <span class="usage-indicator__text">{{ displayText }}</span>
         <Badge v-if="isUnlimited" variant="success" size="sm">Unlimited</Badge>
-        <Badge v-else-if="isAtLimit" variant="danger" size="sm">Limit Reached</Badge>
+        <Badge v-else-if="isAtLimit" variant="error" size="sm">Limit Reached</Badge>
         <Badge v-else-if="isNearLimit" variant="warning" size="sm">
           {{ percentage.toFixed(0) }}%
         </Badge>

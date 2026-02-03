@@ -2,8 +2,6 @@
  * EVM Chain Signing Composable
  * Handles deterministic signing for Ethereum, Arbitrum, Base, and other EVM networks
  */
-
-import { computed } from "vue";
 import {
   SigningStatus,
   type SigningResult,

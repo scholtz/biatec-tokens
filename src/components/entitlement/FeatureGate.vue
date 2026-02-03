@@ -5,7 +5,7 @@
  * Shows upgrade prompts when feature is not accessible
  */
 
-import { computed, onMounted } from "vue";
+import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { entitlementService } from "../../services/EntitlementService";
 import { FeatureFlag } from "../../types/entitlement";
