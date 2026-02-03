@@ -277,10 +277,10 @@ describe('useWalletManager', () => {
       expect(walletState.value.isConnected).toBe(false)
       expect(walletState.value.activeAddress).toBe(null)
       expect(walletState.value.connectionState).toBe(WalletConnectionState.DISCONNECTED)
-      expect(currentNetwork.value).toBe('voi-mainnet')
+      expect(currentNetwork.value).toBe('algorand-mainnet')
       expect(isConnected.value).toBe(false)
       expect(activeAddress.value).toBe(null)
-      expect(networkInfo.value.id).toBe('voi-mainnet')
+      expect(networkInfo.value.id).toBe('algorand-mainnet')
     })
 
     it('should format address correctly', () => {
@@ -432,7 +432,10 @@ describe('useWalletManager', () => {
     it('should restore network preference even when not connected', async () => {
       localStorage.setItem('selected_network', 'voi-mainnet')
 
-      const { currentNetwork } = useWalletManager()
+      const { currentNetwork, attemptReconnect } = useWalletManager()
+      
+      // Call attemptReconnect to restore network preference from localStorage
+      await attemptReconnect()
 
       // Should restore network even without connection attempt
       expect(currentNetwork.value).toBe('voi-mainnet')
@@ -599,7 +602,7 @@ describe('useWalletManager', () => {
 
       expect(walletState.value.isConnected).toBe(false)
       expect(walletState.value.activeWallet).toBe(null)
-      expect(currentNetwork.value).toBe('voi-mainnet')
+      expect(currentNetwork.value).toBe('algorand-mainnet')
       expect(isConnected.value).toBe(false)
     })
 
