@@ -352,6 +352,7 @@ import { useWallet } from "@txnlab/use-wallet-vue";
 import { useAVMAuthentication } from "algorand-authentication-component-vue";
 import { NETWORKS, type NetworkId } from "../composables/useWalletManager";
 import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from "../constants/auth";
+import { sortNetworksByPriority } from "../utils/networkSorting";
 
 interface Props {
   isOpen: boolean;
@@ -404,33 +405,7 @@ const currentStepInfo = computed(() => steps[currentStep.value]);
 
 const availableNetworks = computed(() => {
   const networks = Object.values(NETWORKS);
-  // Sort networks: mainnet first, then testnets
-  // Within each group, prioritize Algorand and Ethereum mainnets
-  return networks.sort((a, b) => {
-    // First priority: mainnet vs testnet
-    if (a.isTestnet !== b.isTestnet) {
-      return a.isTestnet ? 1 : -1;
-    }
-    
-    // Second priority: Algorand mainnet first among mainnets
-    if (!a.isTestnet && !b.isTestnet) {
-      if (a.id === 'algorand-mainnet') return -1;
-      if (b.id === 'algorand-mainnet') return 1;
-      if (a.id === 'ethereum') return -1;
-      if (b.id === 'ethereum') return 1;
-    }
-    
-    // Third priority: Algorand testnet first among testnets
-    if (a.isTestnet && b.isTestnet) {
-      if (a.id === 'algorand-testnet') return -1;
-      if (b.id === 'algorand-testnet') return 1;
-      if (a.id === 'sepolia') return -1;
-      if (b.id === 'sepolia') return 1;
-    }
-    
-    // Default: alphabetical
-    return a.displayName.localeCompare(b.displayName);
-  });
+  return sortNetworksByPriority(networks);
 });
 
 const supportedWallets = computed(() => {
