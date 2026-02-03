@@ -5,7 +5,7 @@
         <div class="glass-effect rounded-2xl p-6 max-w-md w-full shadow-2xl border border-white/10">
           <!-- Header -->
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-white">Sign In</h2>
+            <h2 class="text-2xl font-bold text-white">Sign In to Your Account</h2>
             <button @click="close" class="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors">
               <i class="pi pi-times text-xl"></i>
             </button>
@@ -52,7 +52,7 @@
             <div v-if="isConnecting || isReconnecting || isSwitchingNetwork" class="text-center py-8">
               <i class="pi pi-spin pi-spinner text-4xl text-biatec-accent mb-4"></i>
               <p class="text-gray-300 font-medium mb-2">{{ connectionStateMessage }}</p>
-              <p class="text-sm text-gray-400">Please check your wallet app to approve authentication</p>
+              <p class="text-sm text-gray-400">Please approve the authentication request in your wallet app</p>
             </div>
 
             <!-- Error State -->
@@ -80,7 +80,7 @@
               </div>
             </div>
 
-            <!-- Wallet Buttons -->
+            <!-- Authentication Provider Buttons -->
             <button
               v-for="wallet in availableWallets"
               :key="wallet.id"
@@ -117,8 +117,9 @@
               <div class="flex items-start gap-3">
                 <i class="pi pi-exclamation-circle text-yellow-400"></i>
                 <div class="text-sm text-gray-300">
-                  <p class="font-medium text-yellow-400 mb-2">New to blockchain wallets?</p>
+                  <p class="font-medium text-yellow-400 mb-2">New to self-custody wallets?</p>
                   <div class="space-y-1 text-xs">
+                    <p class="mb-2">Download a wallet app to get started with secure, self-custody authentication:</p>
                     <a href="https://perawallet.app/" target="_blank" rel="noopener noreferrer" class="block text-blue-400 hover:text-blue-300 underline"> Download Pera Wallet (Recommended) → </a>
                     <a href="https://defly.app/" target="_blank" rel="noopener noreferrer" class="block text-blue-400 hover:text-blue-300 underline"> Download Defly Wallet → </a>
                     <a href="https://www.exodus.com/" target="_blank" rel="noopener noreferrer" class="block text-blue-400 hover:text-blue-300 underline"> Download Exodus Wallet → </a>
@@ -185,17 +186,17 @@ const connectionStateMessage = computed(() => {
   const state = walletManager.walletState.value.connectionState;
   switch (state) {
     case WalletConnectionState.DETECTING:
-      return "Detecting wallet provider...";
+      return "Detecting authentication provider...";
     case WalletConnectionState.CONNECTING:
-      return "Connecting to wallet...";
+      return "Signing in...";
     case WalletConnectionState.RECONNECTING:
-      return "Reconnecting to wallet...";
+      return "Reconnecting...";
     case WalletConnectionState.SWITCHING_NETWORK:
       return "Switching network...";
     case WalletConnectionState.FETCHING_BALANCE:
-      return "Fetching balance...";
+      return "Loading account details...";
     default:
-      return "Please check your wallet app to approve authentication";
+      return "Please approve the authentication request in your wallet app";
   }
 });
 

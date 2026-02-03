@@ -1,10 +1,11 @@
 <template>
   <MainLayout>
     <div class="min-h-screen px-4 py-8">
-      <div class="max-w-4xl mx-auto">
+      <!-- Wizard Container with Solid Background -->
+      <div class="max-w-4xl mx-auto glass-effect rounded-2xl p-8 shadow-2xl border border-white/10">
         <!-- Header -->
         <div class="text-center mb-8">
-          <h1 class="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-4">Create New Token</h1>
+          <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">Create New Token</h1>
           <p class="text-gray-600 dark:text-gray-300 text-lg">Choose a template or token standard and deploy in seconds</p>
         </div>
 
@@ -580,6 +581,8 @@
       @retry="handleRetryDeployment"
       @cancel="handleCancelDeployment"
     />
+      </div>
+    </div>
   </MainLayout>
 </template>
 

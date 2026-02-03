@@ -69,9 +69,9 @@
 
         <!-- Network List -->
         <div class="space-y-1">
-          <!-- AVM Networks Section -->
+          <!-- AVM Networks Section (Mainnet Only) -->
           <div class="px-2 py-1 text-xs font-medium text-gray-400 uppercase tracking-wider border-b border-white/10">
-            AVM Chains (Algorand-based)
+            AVM Chains (Algorand-based) - Production
           </div>
           
           <button
@@ -98,7 +98,6 @@
                     Active
                   </span>
                   <span
-                    v-if="!network.isTestnet"
                     class="px-1.5 py-0.5 text-xs font-medium rounded bg-green-500/20 text-green-400"
                   >
                     Mainnet
@@ -117,9 +116,9 @@
             </div>
           </button>
 
-          <!-- EVM Networks Section -->
+          <!-- EVM Networks Section (Mainnet Only) -->
           <div class="px-2 py-1 mt-3 text-xs font-medium text-gray-400 uppercase tracking-wider border-b border-white/10">
-            EVM Chains (Ethereum-based)
+            EVM Chains (Ethereum-based) - Production
           </div>
           
           <button
@@ -146,7 +145,6 @@
                     Active
                   </span>
                   <span
-                    v-if="!network.isTestnet"
                     class="px-1.5 py-0.5 text-xs font-medium rounded bg-green-500/20 text-green-400"
                   >
                     Mainnet
@@ -164,14 +162,118 @@
               ></i>
             </div>
           </button>
+
+          <!-- Test Networks Section -->
+          <template v-if="avmTestNetworks.length > 0 || evmTestNetworks.length > 0">
+            <div class="px-2 py-1 mt-4 text-xs font-medium text-yellow-400 uppercase tracking-wider border-b border-yellow-500/30 flex items-center gap-2">
+              <i class="pi pi-exclamation-triangle"></i>
+              Test Networks
+            </div>
+            
+            <!-- AVM Test Networks -->
+            <button
+              v-for="network in avmTestNetworks"
+              :key="network.id"
+              @click="handleNetworkSwitch(network.id)"
+              :disabled="isSwitching || network.id === currentNetwork"
+              class="w-full p-3 rounded-lg text-left transition-all group"
+              :class="[
+                network.id === currentNetwork
+                  ? 'bg-yellow-500/20 border border-yellow-500/50'
+                  : 'hover:bg-white/10 border border-transparent',
+                isSwitching ? 'opacity-50 cursor-not-allowed' : ''
+              ]"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-white font-medium text-sm">{{ network.displayName }}</span>
+                    <span
+                      v-if="network.id === currentNetwork"
+                      class="px-1.5 py-0.5 text-xs font-medium rounded bg-yellow-500/30 text-yellow-400"
+                    >
+                      Active
+                    </span>
+                    <span
+                      class="px-1.5 py-0.5 text-xs font-medium rounded bg-yellow-500/20 text-yellow-400"
+                    >
+                      Test
+                    </span>
+                  </div>
+                  <div class="text-xs text-gray-400">{{ network.genesisId }}</div>
+                </div>
+                <i
+                  v-if="network.id === currentNetwork"
+                  class="pi pi-check text-yellow-400"
+                ></i>
+                <i
+                  v-else
+                  class="pi pi-chevron-right text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                ></i>
+              </div>
+            </button>
+
+            <!-- EVM Test Networks -->
+            <button
+              v-for="network in evmTestNetworks"
+              :key="network.id"
+              @click="handleNetworkSwitch(network.id)"
+              :disabled="isSwitching || network.id === currentNetwork"
+              class="w-full p-3 rounded-lg text-left transition-all group"
+              :class="[
+                network.id === currentNetwork
+                  ? 'bg-yellow-500/20 border border-yellow-500/50'
+                  : 'hover:bg-white/10 border border-transparent',
+                isSwitching ? 'opacity-50 cursor-not-allowed' : ''
+              ]"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-white font-medium text-sm">{{ network.displayName }}</span>
+                    <span
+                      v-if="network.id === currentNetwork"
+                      class="px-1.5 py-0.5 text-xs font-medium rounded bg-yellow-500/30 text-yellow-400"
+                    >
+                      Active
+                    </span>
+                    <span
+                      class="px-1.5 py-0.5 text-xs font-medium rounded bg-yellow-500/20 text-yellow-400"
+                    >
+                      Test
+                    </span>
+                  </div>
+                  <div class="text-xs text-gray-400">Chain ID: {{ network.chainId }}</div>
+                </div>
+                <i
+                  v-if="network.id === currentNetwork"
+                  class="pi pi-check text-yellow-400"
+                ></i>
+                <i
+                  v-else
+                  class="pi pi-chevron-right text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                ></i>
+              </div>
+            </button>
+          </template>
         </div>
 
-        <!-- Warning -->
+        <!-- Testnet Warning -->
+        <div v-if="currentNetworkInfo.isTestnet" class="mt-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+          <div class="flex items-start gap-2">
+            <i class="pi pi-exclamation-triangle text-yellow-400 text-sm mt-0.5"></i>
+            <p class="text-xs text-gray-300">
+              <span class="font-semibold text-yellow-400">Test Network Active:</span> You are using a test network. Tokens deployed here are for testing only and have no real value.
+            </p>
+          </div>
+        </div>
+
+        <!-- Network Disconnect Warning -->
         <div v-if="isWalletConnected" class="mt-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
           <div class="flex items-start gap-2">
             <i class="pi pi-exclamation-triangle text-yellow-400 text-sm mt-0.5"></i>
             <p class="text-xs text-gray-300">
-              Switching networks will disconnect your current wallet. You'll need to reconnect after switching.
+              Switching networks will sign you out. You'll need to authenticate again after switching.
             </p>
           </div>
         </div>
@@ -199,8 +301,41 @@ const isSwitching = ref(false)
 const error = ref<string | null>(null)
 const dropdownRef = ref<HTMLElement | null>(null)
 
-const avmNetworks = computed(() => Object.values(AVM_NETWORKS))
-const evmNetworks = computed(() => Object.values(EVM_NETWORKS))
+const avmNetworks = computed(() => {
+  // Sort to prioritize mainnet networks
+  return Object.values(AVM_NETWORKS)
+    .filter(n => !n.isTestnet)
+    .sort((a, b) => {
+      // Prioritize Algorand mainnet first
+      if (a.id === 'algorand-mainnet') return -1;
+      if (b.id === 'algorand-mainnet') return 1;
+      return a.displayName.localeCompare(b.displayName);
+    });
+});
+
+const avmTestNetworks = computed(() => {
+  return Object.values(AVM_NETWORKS)
+    .filter(n => n.isTestnet)
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+});
+
+const evmNetworks = computed(() => {
+  // Sort to prioritize mainnet networks
+  return Object.values(EVM_NETWORKS)
+    .filter(n => !n.isTestnet)
+    .sort((a, b) => {
+      // Prioritize Ethereum mainnet first
+      if (a.id === 'ethereum') return -1;
+      if (b.id === 'ethereum') return 1;
+      return a.displayName.localeCompare(b.displayName);
+    });
+});
+
+const evmTestNetworks = computed(() => {
+  return Object.values(EVM_NETWORKS)
+    .filter(n => n.isTestnet)
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+});
 
 const networkStatus = computed(() => {
   if (isSwitching.value) return 'Switching...'

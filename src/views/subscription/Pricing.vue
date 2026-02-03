@@ -42,9 +42,9 @@
         <Card variant="glass" padding="md">
           <div class="text-center">
             <WalletIcon class="w-12 h-12 text-blue-500 mx-auto mb-4" />
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Connect Your Wallet</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Sign In Required</h3>
             <p class="text-gray-600 dark:text-gray-400 mb-4">
-              Please connect your Algorand wallet to manage your subscription
+              Please sign in to your account to manage your subscription and access premium features
             </p>
           </div>
         </Card>

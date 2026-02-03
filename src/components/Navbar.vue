@@ -65,19 +65,19 @@
           </router-link>
         </div>
 
-        <!-- Wallet Connection -->
+        <!-- Account Section -->
         <div class="flex items-center space-x-4">
           <!-- Network Switcher -->
           <NetworkSwitcher class="hidden sm:flex" />
           
-          <!-- Wallet Button -->
+          <!-- Account Button -->
           <div class="relative">
             <button
               @click="handleWalletClick"
               :disabled="walletState.isConnecting"
               class="btn-primary px-6 py-3 rounded-xl text-white font-medium text-sm flex items-center space-x-2 disabled:opacity-50 relative"
             >
-              <i class="pi pi-wallet text-lg"></i>
+              <i class="pi pi-user text-lg"></i>
               <span>{{ authButtonText }}</span>
               <i v-if="isConnected" class="pi pi-chevron-down text-sm"></i>
             </button>
@@ -98,21 +98,21 @@
                   class="w-full p-3 rounded-lg text-left hover:bg-red-500/10 transition-colors flex items-center gap-3 text-red-400"
                 >
                   <i class="pi pi-sign-out"></i>
-                  <span class="font-medium">Disconnect</span>
+                  <span class="font-medium">Sign Out</span>
                 </button>
               </div>
             </Transition>
           </div>
         </div>
 
-        <!-- Wallet Connect Modal -->
+        <!-- Login Modal -->
         <WalletConnectModal
           :is-open="showWalletModal"
           @close="showWalletModal = false"
           @connected="handleConnected"
         />
 
-        <!-- Wallet Onboarding Wizard -->
+        <!-- Onboarding Wizard -->
         <WalletOnboardingWizard
           :is-open="showOnboardingWizard"
           @close="showOnboardingWizard = false"
