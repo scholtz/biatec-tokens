@@ -21,7 +21,7 @@
         class="btn-primary px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2"
       >
         <i class="pi pi-link"></i>
-        <span>Connect Wallet</span>
+        <span>Sign In</span>
       </button>
     </div>
 
