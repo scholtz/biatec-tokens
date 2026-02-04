@@ -28,6 +28,14 @@ export interface MarketplaceToken extends Token {
   network?: Network;
   isMicaCompliant?: boolean;
   kycRequired?: boolean;
+  // Additional fields for discovery
+  complianceStatus?: 'compliant' | 'partial' | 'pending' | 'non-compliant' | 'unknown';
+  issuerType?: 'individual' | 'company' | 'enterprise' | 'dao' | 'verified';
+  liquidity?: number;
+  contractVerified?: boolean;
+  issuerIdentityVerified?: boolean;
+  auditCompleted?: boolean;
+  riskFlags?: string[];
 }
 
 export const useMarketplaceStore = defineStore("marketplace", () => {
@@ -67,6 +75,13 @@ export const useMarketplaceStore = defineStore("marketplace", () => {
       isMicaCompliant: true,
       kycRequired: true,
       assetId: 123456,
+      complianceStatus: 'compliant',
+      issuerType: 'enterprise',
+      liquidity: 5000000,
+      contractVerified: true,
+      issuerIdentityVerified: true,
+      auditCompleted: true,
+      riskFlags: [],
     },
     {
       id: "marketplace-2",
@@ -88,6 +103,13 @@ export const useMarketplaceStore = defineStore("marketplace", () => {
       isMicaCompliant: false,
       kycRequired: true,
       assetId: 234567,
+      complianceStatus: 'partial',
+      issuerType: 'company',
+      liquidity: 2500000,
+      contractVerified: true,
+      issuerIdentityVerified: true,
+      auditCompleted: false,
+      riskFlags: ['Limited liquidity'],
     },
     {
       id: "marketplace-3",
@@ -109,6 +131,13 @@ export const useMarketplaceStore = defineStore("marketplace", () => {
       isMicaCompliant: false,
       kycRequired: false,
       contractAddress: "0x1234567890abcdef",
+      complianceStatus: 'unknown',
+      issuerType: 'dao',
+      liquidity: 10000000,
+      contractVerified: true,
+      issuerIdentityVerified: false,
+      auditCompleted: true,
+      riskFlags: [],
     },
     {
       id: "marketplace-4",
@@ -129,6 +158,13 @@ export const useMarketplaceStore = defineStore("marketplace", () => {
       isMicaCompliant: true,
       kycRequired: false,
       assetId: 345678,
+      complianceStatus: 'compliant',
+      issuerType: 'dao',
+      liquidity: 500000,
+      contractVerified: true,
+      issuerIdentityVerified: false,
+      auditCompleted: false,
+      riskFlags: [],
     },
     {
       id: "marketplace-5",

@@ -12,22 +12,35 @@
             <p class="text-xl sm:text-2xl max-w-4xl mx-auto mb-12 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block mt-2 dark:text-white">
               Create, manage, and deploy tokens across multiple standards with enterprise-grade security and lightning-fast performance.
             </p>
+          </div>
 
-            <!-- CTA Buttons -->
-            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-              <Button @click="handleCreateToken" variant="primary" size="lg" class="text-lg px-8 py-4">
-                <template #icon>
-                  <PlusCircleIcon class="w-6 h-6 mr-2" />
-                </template>
-                Create Your First Token
-              </Button>
-              <Button @click="handleViewDashboard" variant="outline" size="lg" class="text-lg px-8 py-4">
-                <template #icon>
-                  <ChartBarIcon class="w-6 h-6 mr-2" />
-                </template>
-                View Dashboard
-              </Button>
-            </div>
+          <!-- Landing Entry Module (for unauthenticated users) -->
+          <LandingEntryModule
+            v-if="shouldShowLandingEntry"
+            @email-signup="handleEmailSignup"
+            @wallet-connect="handleWalletConnectFromLanding"
+          />
+
+          <!-- CTA Buttons (for authenticated users) -->
+          <div v-else class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+            <Button @click="handleCreateToken" variant="primary" size="lg" class="text-lg px-8 py-4">
+              <template #icon>
+                <PlusCircleIcon class="w-6 h-6 mr-2" />
+              </template>
+              Create Your First Token
+            </Button>
+            <Button @click="handleViewDashboard" variant="outline" size="lg" class="text-lg px-8 py-4">
+              <template #icon>
+                <ChartBarIcon class="w-6 h-6 mr-2" />
+              </template>
+              View Dashboard
+            </Button>
+            <Button @click="handleDiscoverTokens" variant="outline" size="lg" class="text-lg px-8 py-4">
+              <template #icon>
+                <i class="pi pi-compass w-6 h-6 mr-2"></i>
+              </template>
+              Discover Tokens
+            </Button>
           </div>
 
           <!-- Feature Cards -->
@@ -89,6 +102,9 @@
 
     <!-- Wallet Onboarding Wizard -->
     <WalletOnboardingWizard :is-open="showOnboardingWizard" @close="showOnboardingWizard = false" @complete="handleOnboardingComplete" />
+    
+    <!-- Onboarding Checklist (Persistent) -->
+    <OnboardingChecklist />
   </MainLayout>
 </template>
 
@@ -96,21 +112,30 @@
 import { computed, ref, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useTokenStore } from "../stores/tokens";
+import { useOnboardingStore } from "../stores/onboarding";
 import { useWalletManager } from "../composables/useWalletManager";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
+import { telemetryService } from "../services/TelemetryService";
 import Button from "../components/ui/Button.vue";
 import Card from "../components/ui/Card.vue";
 import Badge from "../components/ui/Badge.vue";
 import MainLayout from "../layout/MainLayout.vue";
 import WalletOnboardingWizard from "../components/WalletOnboardingWizard.vue";
+import LandingEntryModule from "../components/LandingEntryModule.vue";
+import OnboardingChecklist from "../components/OnboardingChecklist.vue";
 import { PlusCircleIcon, ChartBarIcon, BoltIcon, ShieldCheckIcon, GlobeAltIcon } from "@heroicons/vue/24/outline";
 
 const tokenStore = useTokenStore();
+const onboardingStore = useOnboardingStore();
 const router = useRouter();
 const route = useRoute();
 const { isConnected } = useWalletManager();
 
 const showOnboardingWizard = ref(false);
+
+const shouldShowLandingEntry = computed(() => {
+  return !isConnected.value && !onboardingStore.state.hasSeenWelcome;
+});
 
 const features = [
   {
@@ -137,6 +162,18 @@ const stats = computed(() => [
   { label: "Uptime", value: "99.9%" },
 ]);
 
+const handleEmailSignup = () => {
+  // For now, just navigate to discovery dashboard
+  // In future, implement email signup flow
+  telemetryService.trackEmailSignupStarted({ source: 'home' });
+  onboardingStore.showOnboarding();
+  router.push({ name: 'DiscoveryDashboard' });
+};
+
+const handleWalletConnectFromLanding = () => {
+  showOnboardingWizard.value = true;
+};
+
 const handleCreateToken = () => {
   if (isConnected.value) {
     router.push("/create");
@@ -155,8 +192,13 @@ const handleViewDashboard = () => {
   }
 };
 
+const handleDiscoverTokens = () => {
+  router.push({ name: 'DiscoveryDashboard' });
+};
+
 const handleOnboardingComplete = () => {
   showOnboardingWizard.value = false;
+  onboardingStore.markStepComplete('connect-wallet');
 
   // Check if there's a redirect destination
   const redirectPath = localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);
@@ -169,6 +211,9 @@ const handleOnboardingComplete = () => {
 };
 
 onMounted(() => {
+  // Initialize onboarding store
+  onboardingStore.initialize();
+  
   // Check if we should show onboarding
   if (route.query.showOnboarding === "true") {
     showOnboardingWizard.value = true;

@@ -296,6 +296,177 @@ export class TelemetryService {
     })
   }
 
+  // ========================================
+  // ONBOARDING AND DISCOVERY EVENTS
+  // ========================================
+
+  /**
+   * Track onboarding flow started
+   * Emitted when user first lands and sees the onboarding wizard
+   */
+  trackOnboardingStarted(data?: { source?: string }): void {
+    this.track('onboarding_started', {
+      source: data?.source || 'landing',
+    })
+  }
+
+  /**
+   * Track onboarding step completed
+   * Emitted when user completes each step in the onboarding checklist
+   */
+  trackOnboardingStepCompleted(data: {
+    stepId: string
+    stepTitle: string
+    stepNumber: number
+    totalSteps: number
+  }): void {
+    this.track('onboarding_step_completed', {
+      step_id: data.stepId,
+      step_title: data.stepTitle,
+      step_number: data.stepNumber,
+      total_steps: data.totalSteps,
+      progress_percentage: Math.round((data.stepNumber / data.totalSteps) * 100),
+    })
+  }
+
+  /**
+   * Track onboarding completed
+   * Emitted when user finishes all required onboarding steps
+   */
+  trackOnboardingCompleted(data?: { durationMs?: number }): void {
+    this.track('onboarding_completed', {
+      duration_ms: data?.durationMs,
+    })
+  }
+
+  /**
+   * Track discovery dashboard viewed
+   * Emitted when user navigates to the token discovery page
+   */
+  trackDiscoveryDashboardViewed(data?: { source?: string }): void {
+    this.track('discovery_dashboard_viewed', {
+      source: data?.source || 'direct',
+    })
+  }
+
+  /**
+   * Track discovery filter applied
+   * Emitted when user applies any filter in the discovery dashboard
+   */
+  trackDiscoveryFilterApplied(data: {
+    filterType: 'standard' | 'compliance' | 'liquidity' | 'chain' | 'issuer' | 'other'
+    filterValue: string
+    filterCount: number
+  }): void {
+    this.track('discovery_filter_applied', {
+      filter_type: data.filterType,
+      filter_value: data.filterValue,
+      filter_count: data.filterCount,
+    })
+  }
+
+  /**
+   * Track discovery filter saved
+   * Emitted when user saves their filter preferences
+   */
+  trackDiscoveryFilterSaved(data: {
+    filterCount: number
+    hasStandards: boolean
+    hasCompliance: boolean
+    hasChains: boolean
+  }): void {
+    this.track('discovery_filter_saved', {
+      filter_count: data.filterCount,
+      has_standards: data.hasStandards,
+      has_compliance: data.hasCompliance,
+      has_chains: data.hasChains,
+    })
+  }
+
+  /**
+   * Track token detail viewed
+   * Emitted when user opens a token detail page/drawer
+   */
+  trackTokenDetailViewed(data: {
+    tokenId: string
+    tokenStandard: string
+    tokenChain: string
+    source: 'discovery' | 'dashboard' | 'marketplace' | 'direct'
+  }): void {
+    this.track('token_detail_viewed', {
+      token_id: data.tokenId,
+      token_standard: data.tokenStandard,
+      token_chain: data.tokenChain,
+      source: data.source,
+    })
+  }
+
+  /**
+   * Track watchlist add
+   * Emitted when user adds a token to their watchlist
+   */
+  trackWatchlistAdd(data: {
+    tokenId: string
+    tokenStandard: string
+    source: 'detail' | 'card' | 'discovery'
+  }): void {
+    this.track('watchlist_add', {
+      token_id: data.tokenId,
+      token_standard: data.tokenStandard,
+      source: data.source,
+    })
+  }
+
+  /**
+   * Track watchlist remove
+   * Emitted when user removes a token from their watchlist
+   */
+  trackWatchlistRemove(data: {
+    tokenId: string
+    tokenStandard: string
+  }): void {
+    this.track('watchlist_remove', {
+      token_id: data.tokenId,
+      token_standard: data.tokenStandard,
+    })
+  }
+
+  /**
+   * Track compliance badge clicked
+   * Emitted when user clicks on a compliance badge to view details
+   */
+  trackComplianceBadgeClicked(data: {
+    tokenId: string
+    badgeType: string
+    complianceStatus: string
+  }): void {
+    this.track('compliance_badge_clicked', {
+      token_id: data.tokenId,
+      badge_type: data.badgeType,
+      compliance_status: data.complianceStatus,
+    })
+  }
+
+  /**
+   * Track email signup started
+   * Emitted when user initiates email-based signup flow
+   */
+  trackEmailSignupStarted(data?: { source?: string }): void {
+    this.track('email_signup_started', {
+      source: data?.source || 'landing',
+    })
+  }
+
+  /**
+   * Track email signup completed
+   * Emitted when user successfully completes email signup
+   */
+  trackEmailSignupCompleted(data?: { durationMs?: number }): void {
+    this.track('email_signup_completed', {
+      duration_ms: data?.durationMs,
+    })
+  }
+
   /**
    * Get all tracked events (for debugging)
    */
