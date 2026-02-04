@@ -375,7 +375,7 @@ const { authStore } = useAVMAuthentication();
 
 // State
 const currentStep = ref(props.skipWelcome ? 1 : 0);
-const selectedNetwork = ref<NetworkId>("voi-mainnet");
+const selectedNetwork = ref<NetworkId>("algorand-mainnet");
 const isConnecting = ref(false);
 const connectionError = ref<string | null>(null);
 const hasReadRiskNotice = ref(false);

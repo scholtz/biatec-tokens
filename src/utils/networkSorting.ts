@@ -1,4 +1,4 @@
-import type { NetworkInfo, NetworkId } from '../composables/useWalletManager';
+import type { NetworkInfo } from '../composables/useWalletManager';
 
 /**
  * Sorts networks with mainnet first, then testnets.
