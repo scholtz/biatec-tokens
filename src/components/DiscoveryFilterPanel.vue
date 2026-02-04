@@ -1,5 +1,5 @@
 <template>
-  <div class="glass-effect rounded-xl p-6 sticky top-4" role="search" aria-label="Token discovery filters">
+  <div class="glass-effect rounded-xl p-6 sticky top-4" role="search" aria-label="Token discovery filters" data-testid="discovery-filter-panel">
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -8,6 +8,7 @@
         <span
           v-if="activeFilterCount > 0"
           class="px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full"
+          data-testid="filter-count-badge"
         >
           {{ activeFilterCount }}
         </span>
@@ -17,6 +18,7 @@
         @click="handleReset"
         class="text-sm text-blue-600 dark:text-blue-400 hover:underline"
         aria-label="Clear all filters"
+        data-testid="clear-all-filters-button"
       >
         Clear all
       </button>
@@ -36,6 +38,7 @@
           placeholder="Token name or symbol..."
           class="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400"
           @input="handleFilterChange"
+          data-testid="token-search-input"
         />
       </div>
     </div>
@@ -57,6 +60,7 @@
             v-model="localFilters.standards"
             @change="handleFilterChange"
             class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            :data-testid="`filter-standard-${standard.value}`"
           />
           <span class="text-sm text-gray-900 dark:text-white flex-1">
             {{ standard.label }}
@@ -164,6 +168,7 @@
         class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
         :disabled="!hasActiveFilters"
         aria-label="Save filter preferences"
+        data-testid="save-filters-button"
       >
         <i class="pi pi-save"></i>
         Save Preferences
@@ -173,6 +178,7 @@
         @click="handleLoad"
         class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
         aria-label="Load saved filter preferences"
+        data-testid="load-filters-button"
       >
         <i class="pi pi-upload"></i>
         Load Saved

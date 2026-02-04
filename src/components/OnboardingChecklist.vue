@@ -6,6 +6,7 @@
         class="fixed bottom-4 right-4 z-40 w-96 max-w-[calc(100vw-2rem)]"
         role="complementary"
         aria-label="Onboarding checklist"
+        data-testid="onboarding-checklist"
       >
         <div class="glass-effect rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
           <!-- Header -->
@@ -19,6 +20,7 @@
                 @click="toggleMinimize"
                 class="p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                 :aria-label="isMinimized ? 'Expand checklist' : 'Minimize checklist'"
+                data-testid="checklist-toggle-button"
               >
                 <i :class="isMinimized ? 'pi pi-window-maximize' : 'pi pi-window-minimize'"></i>
               </button>
@@ -58,6 +60,7 @@
                   !step.completed && 'cursor-pointer'
                 ]"
                 :aria-label="`${step.title} - ${step.completed ? 'completed' : 'not completed'}`"
+                :data-testid="`checklist-step-${step.id}`"
               >
                 <div class="flex items-start gap-3">
                   <!-- Step Icon -->

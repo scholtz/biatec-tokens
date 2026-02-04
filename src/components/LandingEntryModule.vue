@@ -1,5 +1,5 @@
 <template>
-  <div class="glass-effect rounded-2xl p-8 max-w-5xl mx-auto mb-12 animate-fade-in">
+  <div class="glass-effect rounded-2xl p-8 max-w-5xl mx-auto mb-12 animate-fade-in" data-testid="landing-entry-module">
     <!-- Header -->
     <div class="text-center mb-8">
       <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-3">
@@ -17,6 +17,7 @@
         @click="handleEmailSignup"
         class="group relative overflow-hidden rounded-xl border-2 border-blue-500 dark:border-blue-400 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-8 text-left hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
         aria-label="Sign up with email - recommended for new users"
+        data-testid="email-signup-button"
       >
         <div class="absolute top-0 right-0 px-3 py-1 bg-blue-500 text-white text-xs font-semibold rounded-bl-lg">
           Recommended
@@ -68,6 +69,7 @@
         @click="handleWalletConnect"
         class="group relative overflow-hidden rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-8 text-left hover:border-purple-500 dark:hover:border-purple-400 hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
         aria-label="Connect wallet - for users ready to create tokens"
+        data-testid="wallet-connect-button"
       >
         <div class="flex items-start gap-4 mb-4">
           <div class="w-12 h-12 rounded-xl bg-purple-500 dark:bg-purple-600 flex items-center justify-center flex-shrink-0">

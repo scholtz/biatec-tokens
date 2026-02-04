@@ -7,6 +7,7 @@
     :aria-label="`View ${token.name} token details`"
     @keydown.enter="handleCardClick"
     @keydown.space.prevent="handleCardClick"
+    :data-testid="`token-card-${token.id}`"
   >
     <!-- Compliance Status Badge (Top Right) -->
     <div class="absolute top-4 right-4">
@@ -17,6 +18,7 @@
         class="px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 hover:opacity-80 transition-opacity"
         :title="complianceInfo.tooltip"
         :aria-label="`Compliance status: ${complianceInfo.label}`"
+        :data-testid="`compliance-badge-${token.id}`"
       >
         <i :class="complianceInfo.icon"></i>
         {{ complianceInfo.label }}

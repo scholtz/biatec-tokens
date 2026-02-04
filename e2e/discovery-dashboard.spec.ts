@@ -23,9 +23,9 @@ test.describe('Discovery Dashboard', () => {
     await page.goto('/discovery')
     await page.waitForLoadState('domcontentloaded')
 
-    // Check for filter panel
-    const filterHeading = page.getByRole('heading', { name: /Filters/i })
-    await expect(filterHeading).toBeVisible({ timeout: 10000 })
+    // Check for filter panel using data-testid
+    const filterPanel = page.locator('[data-testid="discovery-filter-panel"]')
+    await expect(filterPanel).toBeVisible({ timeout: 10000 })
   })
 
   test('should allow filtering by token standards', async ({ page }) => {
@@ -33,14 +33,15 @@ test.describe('Discovery Dashboard', () => {
     await page.waitForLoadState('domcontentloaded')
 
     // Wait for page to load
-    await page.waitForSelector('text=Token Discovery', { timeout: 10000 })
+    await page.waitForSelector('[data-testid="discovery-filter-panel"]', { timeout: 10000 })
 
-    // Find and click ARC200 checkbox
-    const arc200Checkbox = page.locator('input[type="checkbox"][value="ARC200"]')
+    // Find and click ARC200 checkbox using data-testid
+    const arc200Checkbox = page.locator('[data-testid="filter-standard-ARC200"]')
+    await arc200Checkbox.waitFor({ state: 'visible', timeout: 5000 })
     await arc200Checkbox.check()
 
     // Verify filter is applied (check if filter count is shown)
-    const filterBadge = page.locator('text=/Filters\\s+\\d+/')
+    const filterBadge = page.locator('[data-testid="filter-count-badge"]')
     await expect(filterBadge).toBeVisible({ timeout: 5000 })
   })
 
@@ -48,8 +49,8 @@ test.describe('Discovery Dashboard', () => {
     await page.goto('/discovery')
     await page.waitForLoadState('domcontentloaded')
 
-    // Find search input
-    const searchInput = page.locator('input[placeholder*="Token name"]')
+    // Find search input using data-testid
+    const searchInput = page.locator('[data-testid="token-search-input"]')
     await searchInput.fill('MICA')
 
     // Verify search is applied
@@ -60,19 +61,19 @@ test.describe('Discovery Dashboard', () => {
     await page.goto('/discovery')
     await page.waitForLoadState('domcontentloaded')
     
-    // Wait for the filter panel to load
-    await page.waitForSelector('text=Token Standards', { timeout: 10000 })
+    // Wait for the filter panel to load using data-testid
+    await page.waitForSelector('[data-testid="discovery-filter-panel"]', { timeout: 10000 })
 
-    // Apply a filter - use more specific selector
-    const arc200Checkbox = page.locator('label:has-text("ARC200 - Smart Contract Token") input[type="checkbox"]')
+    // Apply a filter - use data-testid selector
+    const arc200Checkbox = page.locator('[data-testid="filter-standard-ARC200"]')
     await arc200Checkbox.waitFor({ state: 'visible', timeout: 10000 })
     await arc200Checkbox.check()
     
     // Wait for filter to be applied
     await page.waitForTimeout(1000)
 
-    // Look for the save button - it should now be enabled
-    const saveButton = page.locator('button:has-text("Save Preferences")')
+    // Look for the save button using data-testid - it should now be enabled
+    const saveButton = page.locator('[data-testid="save-filters-button"]')
     
     // Wait for it to be visible and enabled
     await saveButton.waitFor({ state: 'visible', timeout: 5000 })
@@ -86,8 +87,8 @@ test.describe('Discovery Dashboard', () => {
       await page.reload()
       await page.waitForLoadState('domcontentloaded')
       
-      // Verify filter persisted
-      const arc200CheckboxAfterReload = page.locator('label:has-text("ARC200 - Smart Contract Token") input[type="checkbox"]')
+      // Verify filter persisted using data-testid
+      const arc200CheckboxAfterReload = page.locator('[data-testid="filter-standard-ARC200"]')
       await expect(arc200CheckboxAfterReload).toBeChecked()
     } else {
       // If button is still disabled, the test passes as the filter was applied
@@ -150,12 +151,12 @@ test.describe('Discovery Dashboard', () => {
     await page.goto('/discovery')
     await page.waitForLoadState('domcontentloaded')
 
-    // Apply a filter
-    const arc200Checkbox = page.locator('input[type="checkbox"][value="ARC200"]')
+    // Apply a filter using data-testid
+    const arc200Checkbox = page.locator('[data-testid="filter-standard-ARC200"]')
     await arc200Checkbox.check()
 
-    // Click clear all button
-    const clearButton = page.getByRole('button', { name: /Clear all/i })
+    // Click clear all button using data-testid
+    const clearButton = page.locator('[data-testid="clear-all-filters-button"]')
     await clearButton.click()
 
     // Verify filter is cleared

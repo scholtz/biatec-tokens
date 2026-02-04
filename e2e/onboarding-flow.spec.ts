@@ -19,14 +19,16 @@ test.describe('Onboarding Flow', () => {
     // Check for landing entry module - give it time to render
     await page.waitForTimeout(1000)
     
-    const emailButton = page.locator('button:has-text("Start with Email")').first()
-    const walletButton = page.locator('button:has-text("Connect Wallet")').first()
+    const landingModule = page.locator('[data-testid="landing-entry-module"]')
+    const emailButton = page.locator('[data-testid="email-signup-button"]')
+    const walletButton = page.locator('[data-testid="wallet-connect-button"]')
 
     // Check if buttons are visible, if not the user might already be past onboarding
-    const emailVisible = await emailButton.isVisible().catch(() => false)
-    const walletVisible = await walletButton.isVisible().catch(() => false)
+    const emailVisible = await emailButton.isVisible({ timeout: 5000 }).catch(() => false)
+    const walletVisible = await walletButton.isVisible({ timeout: 5000 }).catch(() => false)
     
     if (emailVisible && walletVisible) {
+      await expect(landingModule).toBeVisible()
       await expect(emailButton).toBeVisible()
       await expect(walletButton).toBeVisible()
     } else {
@@ -40,16 +42,16 @@ test.describe('Onboarding Flow', () => {
     await page.waitForTimeout(1000)
 
     // Click email signup button if it exists
-    const emailButton = page.locator('button:has-text("Start with Email")').first()
-    const isEmailButtonVisible = await emailButton.isVisible().catch(() => false)
+    const emailButton = page.locator('[data-testid="email-signup-button"]')
+    const isEmailButtonVisible = await emailButton.isVisible({ timeout: 5000 }).catch(() => false)
     
     if (isEmailButtonVisible) {
       await emailButton.click()
       await page.waitForTimeout(1000)
 
       // Check for onboarding checklist (it should be visible somewhere on the page)
-      const checklistHeading = page.getByRole('heading', { name: /Getting Started/i })
-      const isVisible = await checklistHeading.isVisible().catch(() => false)
+      const checklist = page.locator('[data-testid="onboarding-checklist"]')
+      const isVisible = await checklist.isVisible({ timeout: 5000 }).catch(() => false)
 
       // Test passes if we got to a valid state (either checklist or discovery)
       if (!isVisible) {
@@ -58,7 +60,7 @@ test.describe('Onboarding Flow', () => {
         const isDiscoveryVisible = await discoveryHeading.isVisible({ timeout: 5000 }).catch(() => false)
         expect(isDiscoveryVisible || true).toBe(true)
       } else {
-        await expect(checklistHeading).toBeVisible()
+        await expect(checklist).toBeVisible()
       }
     } else {
       // Email button not visible, skip this test scenario
@@ -121,13 +123,13 @@ test.describe('Onboarding Flow', () => {
     await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(1000)
 
-    // Check for checklist
-    const checklistHeading = page.locator('h3:has-text("Getting Started")').first()
-    const isChecklistVisible = await checklistHeading.isVisible({ timeout: 5000 }).catch(() => false)
+    // Check for checklist using data-testid
+    const checklist = page.locator('[data-testid="onboarding-checklist"]')
+    const isChecklistVisible = await checklist.isVisible({ timeout: 5000 }).catch(() => false)
 
     if (isChecklistVisible) {
-      // Find minimize button
-      const minimizeButton = page.locator('button[aria-label*="Minimize"]').first()
+      // Find minimize button using data-testid
+      const minimizeButton = page.locator('[data-testid="checklist-toggle-button"]')
       const isMinimizeVisible = await minimizeButton.isVisible({ timeout: 3000 }).catch(() => false)
 
       if (isMinimizeVisible) {
@@ -135,12 +137,12 @@ test.describe('Onboarding Flow', () => {
         await page.waitForTimeout(500)
 
         // Verify content is hidden (steps should not be visible)
-        const steps = page.locator('button:has-text("Welcome to Biatec")')
-        const isStepVisible = await steps.isVisible({ timeout: 2000 }).catch(() => false)
+        const welcomeStep = page.locator('[data-testid="checklist-step-welcome"]')
+        const isStepVisible = await welcomeStep.isVisible({ timeout: 2000 }).catch(() => false)
         expect(!isStepVisible).toBe(true)
 
         // Expand again
-        const expandButton = page.locator('button[aria-label*="Expand"]').first()
+        const expandButton = page.locator('[data-testid="checklist-toggle-button"]')
         const isExpandVisible = await expandButton.isVisible({ timeout: 3000 }).catch(() => false)
         
         if (isExpandVisible) {
