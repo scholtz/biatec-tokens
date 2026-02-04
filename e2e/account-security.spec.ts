@@ -36,7 +36,7 @@ test.describe("Account Security Center", () => {
     await expect(page.locator("h1").filter({ hasText: /Account Security Center/i })).toBeVisible({ timeout: 10000 });
 
     // Check for all main sections
-    await expect(page.getByText(/Wallet Recovery/i).first()).toBeVisible();
+    await expect(page.getByText(/Account Recovery/i).first()).toBeVisible();
     await expect(page.getByText(/Account Activity/i).first()).toBeVisible();
     await expect(page.getByText(/Transaction History/i).first()).toBeVisible();
     await expect(page.getByText(/Audit Trail Export/i).first()).toBeVisible();
