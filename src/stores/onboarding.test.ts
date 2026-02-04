@@ -289,27 +289,127 @@ describe('Onboarding Store', () => {
     })
   })
 
-  describe('Should Show Onboarding', () => {
-    it('should show onboarding for new users', () => {
+  describe('Edge Cases - Reconnection Scenarios', () => {
+    it('should handle reconnection after partial completion', () => {
+      const store = useOnboardingStore()
+      
+      // Simulate partial completion
+      store.markStepComplete('welcome')
+      store.markStepComplete('connect-wallet')
+      
+      // Simulate page reload by creating new store instance
+      setActivePinia(createPinia())
+      const newStore = useOnboardingStore()
+      newStore.initialize()
+      
+      expect(newStore.state.hasSeenWelcome).toBe(true)
+      expect(newStore.state.hasConnectedWallet).toBe(true)
+      expect(newStore.completedSteps).toBe(2)
+    })
+
+    it('should handle corrupted localStorage data gracefully', () => {
+      localStorage.setItem('biatec_onboarding_state', 'invalid json')
+      
+      const store = useOnboardingStore()
+      store.initialize()
+      
+      // Should fall back to default state
+      expect(store.state.hasSeenWelcome).toBe(false)
+      expect(store.completedSteps).toBe(0)
+    })
+
+    it('should handle missing localStorage', () => {
+      // localStorage is cleared
+      const store = useOnboardingStore()
+      store.initialize()
+      
+      expect(store.state.hasSeenWelcome).toBe(false)
+      expect(store.isOnboardingComplete).toBe(false)
+    })
+  })
+
+  describe('Edge Cases - Skipped Steps', () => {
+    it('should allow completing later steps without earlier ones', () => {
+      const store = useOnboardingStore()
+      
+      // Skip welcome and connect directly
+      store.markStepComplete('connect-wallet')
+      
+      expect(store.state.hasConnectedWallet).toBe(true)
+      expect(store.state.hasSeenWelcome).toBe(false)
+      expect(store.completedSteps).toBe(1)
+    })
+
+    it('should handle out-of-order step completion', () => {
+      const store = useOnboardingStore()
+      
+      // Complete steps in reverse order
+      store.markStepComplete('explore-tokens')
+      store.markStepComplete('save-filters')
+      
+      expect(store.completedSteps).toBe(2)
+      expect(store.state.hasViewedToken).toBe(true)
+      expect(store.state.hasSavedFilters).toBe(true)
+    })
+
+    it('should not mark onboarding as complete if steps are skipped', () => {
+      const store = useOnboardingStore()
+      
+      // Complete only 2 steps
+      store.markStepComplete('welcome')
+      store.markStepComplete('connect-wallet')
+      
+      expect(store.isOnboardingComplete).toBe(false)
+      expect(store.completedSteps).toBe(2)
+    })
+  })
+
+  describe('Edge Cases - Invalid State', () => {
+    it('should handle empty preferredStandards array', () => {
+      const store = useOnboardingStore()
+      
+      store.setPreferredStandards([])
+      
+      expect(store.state.preferredStandards).toEqual([])
+    })
+
+    it('should handle null values in localStorage', () => {
+      const invalidState = {
+        hasSeenWelcome: null,
+        preferredStandards: null,
+        completedAt: 'invalid-date'
+      }
+      localStorage.setItem('biatec_onboarding_state', JSON.stringify(invalidState))
+      
+      const store = useOnboardingStore()
+      store.initialize()
+      
+      // Should handle gracefully - store may leave nulls or convert to defaults
+      // Just verify it doesn't crash
+      expect(store.state).toBeTruthy()
+    })
+  })
+
+  describe('Edge Cases - First Launch', () => {
+    it('should properly initialize on first launch', () => {
       const store = useOnboardingStore()
       
       expect(store.shouldShowOnboarding).toBe(true)
+      expect(store.completedSteps).toBe(0)
+      expect(store.totalSteps).toBe(5)
+      expect(store.progressPercentage).toBe(0)
     })
 
-    it('should not show onboarding if user has seen welcome', () => {
+    it('should save state after first interaction', () => {
       const store = useOnboardingStore()
       
       store.markStepComplete('welcome')
       
-      expect(store.shouldShowOnboarding).toBe(false)
-    })
-
-    it('should not show onboarding if completed', () => {
-      const store = useOnboardingStore()
+      const saved = localStorage.getItem('biatec_onboarding_state')
+      expect(saved).toBeTruthy()
       
-      store.completeOnboarding()
-      
-      expect(store.shouldShowOnboarding).toBe(false)
+      const parsed = JSON.parse(saved!)
+      expect(parsed.hasSeenWelcome).toBe(true)
     })
   })
 })

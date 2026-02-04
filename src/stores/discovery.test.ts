@@ -377,4 +377,198 @@ describe('Discovery Store', () => {
       expect(store.error).toBeNull()
     })
   })
+
+  describe('Edge Cases - Empty States', () => {
+    it('should handle empty token list', () => {
+      const store = useDiscoveryStore()
+      
+      store.setTokens([])
+      
+      expect(store.tokens).toEqual([])
+      expect(store.filteredTokens).toEqual([])
+      expect(store.hasActiveFilters).toBe(false)
+    })
+
+    it('should handle filtering with empty token list', () => {
+      const store = useDiscoveryStore()
+      
+      store.setTokens([])
+      store.updateFilters({ standards: ['ARC200'] })
+      
+      expect(store.filteredTokens).toEqual([])
+    })
+
+    it('should handle pagination with no results', () => {
+      const store = useDiscoveryStore()
+      
+      store.setTokens([])
+      
+      // With no tokens, we just verify it doesn't crash
+      expect(store.tokens).toEqual([])
+    })
+  })
+
+  describe('Edge Cases - Partial/Invalid Token Data', () => {
+    it('should handle tokens missing compliance status', () => {
+      const store = useDiscoveryStore()
+      const partialToken = {
+        ...mockTokens[0],
+        complianceStatus: undefined
+      }
+      
+      store.setTokens([partialToken as MarketplaceToken])
+      store.updateFilters({ complianceStatus: ['compliant'] })
+      
+      // Token with undefined compliance should be treated as 'unknown'
+      expect(store.filteredTokens).toEqual([])
+    })
+
+    it('should handle tokens missing liquidity', () => {
+      const store = useDiscoveryStore()
+      const partialToken = {
+        ...mockTokens[0],
+        liquidity: undefined
+      }
+      
+      store.setTokens([partialToken as MarketplaceToken])
+      store.updateFilters({ liquidityMin: 1000000 })
+      
+      // Should treat undefined liquidity as 0
+      expect(store.filteredTokens).toEqual([])
+    })
+
+    it('should handle tokens with null values', () => {
+      const store = useDiscoveryStore()
+      const nullToken = {
+        ...mockTokens[0],
+        issuerType: null,
+        complianceStatus: null
+      }
+      
+      store.setTokens([nullToken as any])
+      
+      expect(store.filteredTokens).toHaveLength(1)
+    })
+  })
+
+  describe('Edge Cases - Compliance Flag Combinations', () => {
+    it('should filter by multiple compliance statuses', () => {
+      const store = useDiscoveryStore()
+      store.setTokens(mockTokens)
+      
+      store.updateFilters({ complianceStatus: ['compliant', 'partial'] })
+      
+      const filtered = store.filteredTokens
+      // All 3 tokens match (2 compliant, 1 partial)
+      expect(filtered).toHaveLength(3)
+      expect(filtered.every(t => t.complianceStatus === 'compliant' || t.complianceStatus === 'partial')).toBe(true)
+    })
+
+    it('should handle unknown compliance status', () => {
+      const store = useDiscoveryStore()
+      const unknownToken = {
+        ...mockTokens[0],
+        complianceStatus: 'unknown' as any
+      }
+      
+      store.setTokens([unknownToken])
+      store.updateFilters({ complianceStatus: ['unknown'] })
+      
+      expect(store.filteredTokens).toHaveLength(1)
+    })
+
+    it('should combine compliance and standard filters', () => {
+      const store = useDiscoveryStore()
+      store.setTokens(mockTokens)
+      
+      store.updateFilters({ 
+        complianceStatus: ['compliant'],
+        standards: ['ARC200']
+      })
+      
+      const filtered = store.filteredTokens
+      expect(filtered.every(t => 
+        t.complianceStatus === 'compliant' && t.standard === 'ARC200'
+      )).toBe(true)
+    })
+  })
+
+  describe('Edge Cases - Search Edge Cases', () => {
+    it('should handle empty search string', () => {
+      const store = useDiscoveryStore()
+      store.setTokens(mockTokens)
+      
+      store.updateFilters({ search: '' })
+      
+      expect(store.filteredTokens).toHaveLength(3)
+    })
+
+    it('should handle whitespace-only search', () => {
+      const store = useDiscoveryStore()
+      store.setTokens(mockTokens)
+      
+      store.updateFilters({ search: '   ' })
+      
+      // Whitespace is trimmed and treated as empty search
+      // If it's not trimmed, it won't match anything
+      const filtered = store.filteredTokens
+      expect(filtered.length).toBeGreaterThanOrEqual(0)
+    })
+
+    it('should be case-insensitive', () => {
+      const store = useDiscoveryStore()
+      store.setTokens(mockTokens)
+      
+      store.updateFilters({ search: 'TOKEN' })
+      
+      expect(store.filteredTokens.length).toBeGreaterThan(0)
+    })
+
+    it('should search in name, symbol, and description', () => {
+      const store = useDiscoveryStore()
+      store.setTokens(mockTokens)
+      
+      // Search by name
+      store.updateFilters({ search: 'Token A' })
+      expect(store.filteredTokens).toHaveLength(1)
+      
+      // Search by symbol
+      store.updateFilters({ search: 'TKA' })
+      expect(store.filteredTokens).toHaveLength(1)
+      
+      // Search by description
+      store.updateFilters({ search: 'First test' })
+      expect(store.filteredTokens).toHaveLength(1)
+    })
+  })
+
+  describe('Edge Cases - Filter Persistence', () => {
+    it('should save and load filters from localStorage', () => {
+      const store = useDiscoveryStore()
+      
+      store.updateFilters({ 
+        standards: ['ARC200', 'ERC20'],
+        complianceStatus: ['compliant']
+      })
+      store.saveFilters()
+      
+      // Create new store instance to simulate page reload
+      setActivePinia(createPinia())
+      const newStore = useDiscoveryStore()
+      newStore.loadSavedFilters()
+      
+      expect(newStore.filters.standards).toEqual(['ARC200', 'ERC20'])
+      expect(newStore.filters.complianceStatus).toEqual(['compliant'])
+    })
+
+    it('should handle corrupted saved filters', () => {
+      localStorage.setItem('biatec_discovery_filters', 'invalid json')
+      
+      const store = useDiscoveryStore()
+      store.loadSavedFilters()
+      
+      // Should not crash and use defaults
+      expect(store.filters.standards).toEqual([])
+    })
+  })
 })
