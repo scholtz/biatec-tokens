@@ -198,7 +198,7 @@ export const useTokenDraftStore = defineStore('tokenDraft', () => {
   /**
    * Validate network switch compatibility
    */
-  const validateNetworkSwitch = (fromNetwork: NetworkId, toNetwork: NetworkId): {
+  const validateNetworkSwitch = (_fromNetwork: NetworkId, toNetwork: NetworkId): {
     compatible: boolean
     warnings: string[]
   } => {

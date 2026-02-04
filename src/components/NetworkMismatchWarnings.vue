@@ -56,7 +56,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { NetworkMismatchWarning } from '../composables/useNetworkValidation'
 
 interface Props {

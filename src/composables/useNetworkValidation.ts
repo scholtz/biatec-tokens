@@ -27,7 +27,7 @@ export function useNetworkValidation() {
    */
   const validateNetworkForTokenStandard = (
     standard: string | undefined,
-    currentNetwork: NetworkId
+    _currentNetwork: NetworkId
   ): NetworkMismatchWarning | null => {
     if (!standard) return null
 

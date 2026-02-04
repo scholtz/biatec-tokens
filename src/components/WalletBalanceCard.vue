@@ -101,7 +101,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useWalletManager, type NetworkInfo } from '../composables/useWalletManager'
+import { useWalletManager } from '../composables/useWalletManager'
 import { useTokenBalance } from '../composables/useTokenBalance'
 
 interface Props {
@@ -116,15 +116,18 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const walletManager = useWalletManager()
-const { balance, isLoading, error, fetchBalance } = useTokenBalance()
+const tokenBalance = useTokenBalance()
 
 const isRefreshing = ref(false)
 const lastUpdated = ref<Date | null>(null)
 const autoRefreshTimer = ref<ReturnType<typeof setInterval> | null>(null)
 
 // Computed properties
+const balance = computed(() => tokenBalance.accountBalance.value.algoBalance / 1_000_000)
+const isLoading = computed(() => tokenBalance.isLoading.value)
+const error = computed(() => tokenBalance.accountBalance.value.error)
+
 const formattedBalance = computed(() => {
-  if (balance.value === null) return '0.00'
   return balance.value.toFixed(6)
 })
 
@@ -170,7 +173,7 @@ const refreshBalance = async () => {
   
   isRefreshing.value = true
   try {
-    await fetchBalance()
+    await tokenBalance.refresh()
     lastUpdated.value = new Date()
   } catch (err) {
     console.error('Failed to refresh balance:', err)
