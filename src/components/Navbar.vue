@@ -89,7 +89,7 @@
                 class="absolute right-0 mt-2 w-64 glass-effect rounded-xl shadow-2xl border border-white/10 p-2 z-50"
               >
                 <div class="p-3 border-b border-white/10 mb-2">
-                  <div class="text-xs text-gray-400 mb-1">Connected Address</div>
+                  <div class="text-xs text-gray-400 mb-1">{{ AUTH_UI_COPY.CONNECTED_ADDRESS }}</div>
                   <div class="text-sm text-white font-mono break-all">{{ activeAddress }}</div>
                 </div>
                 
@@ -99,7 +99,7 @@
                   class="w-full p-3 rounded-lg text-left hover:bg-blue-500/10 transition-colors flex items-center gap-3 text-white mb-1"
                 >
                   <i class="pi pi-shield"></i>
-                  <span class="font-medium">Security Center</span>
+                  <span class="font-medium">{{ AUTH_UI_COPY.SECURITY_CENTER }}</span>
                 </router-link>
                 
                 <button
@@ -107,7 +107,7 @@
                   class="w-full p-3 rounded-lg text-left hover:bg-red-500/10 transition-colors flex items-center gap-3 text-red-400"
                 >
                   <i class="pi pi-sign-out"></i>
-                  <span class="font-medium">Sign Out</span>
+                  <span class="font-medium">{{ AUTH_UI_COPY.SIGN_OUT }}</span>
                 </button>
               </div>
             </Transition>
@@ -185,6 +185,7 @@
 import { ref, computed } from 'vue'
 import { useWalletManager } from '../composables/useWalletManager'
 import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from '../constants/auth'
+import { AUTH_UI_COPY } from '../constants/uiCopy'
 import { telemetryService } from '../services/TelemetryService'
 import WalletConnectModal from './WalletConnectModal.vue'
 import WalletOnboardingWizard from './WalletOnboardingWizard.vue'
@@ -204,9 +205,9 @@ const hasCompletedOnboarding = computed(() => {
 })
 
 const authButtonText = computed(() => {
-  if (walletState.value.isConnecting) return 'Signing in...'
+  if (walletState.value.isConnecting) return AUTH_UI_COPY.SIGNING_IN
   if (isConnected.value && formattedAddress.value) return formattedAddress.value
-  return 'Sign In'
+  return AUTH_UI_COPY.SIGN_IN
 })
 
 const toggleMobileMenu = () => {

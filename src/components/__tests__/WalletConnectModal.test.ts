@@ -93,10 +93,28 @@ describe("WalletConnectModal", () => {
 
     await nextTick();
 
+    // Check for "Advanced Options" button instead of direct wallet display
     const modalContent = document.body.textContent || "";
-    expect(modalContent).toContain("Pera Wallet");
-    expect(modalContent).toContain("Defly Wallet");
-    expect(modalContent).toContain("Kibisis");
+    expect(modalContent).toContain("Advanced: Connect with Wallet Provider");
+    
+    // Wallet providers are now in collapsible section, so we need to click to expand
+    const advancedButton = Array.from(document.querySelectorAll("button")).find((btn) =>
+      btn.textContent?.includes("Advanced: Connect with Wallet Provider")
+    );
+    
+    expect(advancedButton).toBeTruthy();
+    
+    if (advancedButton) {
+      await advancedButton.click();
+      await nextTick();
+      await nextTick();
+      
+      // Now wallet names should be visible
+      const updatedContent = document.body.textContent || "";
+      expect(updatedContent).toContain("Pera Wallet");
+      expect(updatedContent).toContain("Defly Wallet");
+      expect(updatedContent).toContain("Kibisis");
+    }
 
     wrapper.unmount();
   });
@@ -139,12 +157,12 @@ describe("WalletConnectModal", () => {
     await nextTick(); // Extra tick for rendering
 
     const modalContent = document.body.textContent || "";
-    // When network selector is hidden, we should still see Sign In but not "Select Network" label
+    // When network selector is hidden, we should still see Sign In but not network-specific text
     expect(modalContent).toContain("Sign In");
     
-    // Check that network buttons are not shown (look for network-specific text instead of just "Select Network")
-    const networkSection = document.querySelector('label.block.text-sm.font-medium.text-gray-300.mb-3');
-    expect(networkSection).toBeFalsy();
+    // Check that network-specific text is not shown
+    expect(modalContent).not.toContain("VOI Mainnet");
+    expect(modalContent).not.toContain("Aramid Mainnet");
 
     wrapper.unmount();
   });
@@ -163,7 +181,8 @@ describe("WalletConnectModal", () => {
     await nextTick();
     await nextTick(); // Extra tick to ensure full render
 
-    const closeButton = document.querySelector(".pi-times")?.parentElement as HTMLElement;
+    const closeButtons = Array.from(document.querySelectorAll("button"));
+    const closeButton = closeButtons.find((btn) => btn.querySelector(".pi-times"));
     expect(closeButton).toBeTruthy();
 
     if (closeButton) {
@@ -190,9 +209,23 @@ describe("WalletConnectModal", () => {
 
     await nextTick();
 
-    const modalContent = document.body.textContent || "";
-    expect(modalContent).toContain("Mobile and web wallet");
-    expect(modalContent).toContain("Feature-rich wallet");
+    // Expand advanced options to see wallet descriptions
+    const advancedButton = Array.from(document.querySelectorAll("button")).find((btn) =>
+      btn.textContent?.includes("Advanced: Connect with Wallet Provider")
+    );
+    
+    if (advancedButton) {
+      await advancedButton.click();
+      await nextTick();
+      await nextTick();
+      
+      const modalContent = document.body.textContent || "";
+      expect(modalContent).toContain("Mobile and web wallet");
+      expect(modalContent).toContain("Feature-rich wallet");
+    } else {
+      // If advanced button not found, test should still verify structure exists
+      expect(advancedButton).toBeTruthy();
+    }
 
     wrapper.unmount();
   });
@@ -230,11 +263,24 @@ describe("WalletConnectModal", () => {
 
     await nextTick();
 
-    // Find wallet button
-    const buttons = Array.from(document.querySelectorAll("button"));
-    const peraButton = buttons.find((btn) => btn.textContent?.includes("Pera Wallet"));
+    // Expand advanced options first
+    const advancedButton = Array.from(document.querySelectorAll("button")).find((btn) =>
+      btn.textContent?.includes("Advanced: Connect with Wallet Provider")
+    );
+    
+    expect(advancedButton).toBeTruthy();
+    
+    if (advancedButton) {
+      await advancedButton.click();
+      await nextTick();
+      await nextTick();
+      
+      // Find wallet button
+      const buttons = Array.from(document.querySelectorAll("button"));
+      const peraButton = buttons.find((btn) => btn.textContent?.includes("Pera Wallet"));
 
-    expect(peraButton).toBeTruthy();
+      expect(peraButton).toBeTruthy();
+    }
 
     wrapper.unmount();
   });

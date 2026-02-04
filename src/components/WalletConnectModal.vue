@@ -5,7 +5,7 @@
         <div class="glass-effect rounded-2xl p-6 max-w-md w-full shadow-2xl border border-white/10">
           <!-- Header -->
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-white">Sign In to Your Account</h2>
+            <h2 class="text-2xl font-bold text-white">{{ AUTH_UI_COPY.SIGN_IN_HEADER }}</h2>
             <button @click="close" class="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors">
               <i class="pi pi-times text-xl"></i>
             </button>
@@ -15,7 +15,7 @@
           <div v-if="showNetworkSelector" class="mb-6">
             <label class="block text-sm font-medium text-gray-300 mb-3 flex items-center gap-2">
               <i class="pi pi-server text-biatec-accent"></i>
-              Select Network
+              {{ NETWORK_UI_COPY.SELECT_NETWORK }}
             </label>
             <div class="space-y-2">
               <button
@@ -32,10 +32,10 @@
                     <div class="flex items-center gap-2 mb-1">
                       <div class="text-white font-semibold">{{ network.displayName }}</div>
                       <span v-if="!network.isTestnet" class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-500/20 text-green-400 border border-green-500/30"> 
-                        ✓ Recommended 
+                        ✓ {{ AUTH_UI_COPY.RECOMMENDED }} 
                       </span>
                       <span v-else class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"> 
-                        Testnet 
+                        {{ AUTH_UI_COPY.TESTNET_LABEL }} 
                       </span>
                     </div>
                     <div class="text-sm text-gray-400">
@@ -54,7 +54,7 @@
               <div class="flex items-start gap-2">
                 <i class="pi pi-exclamation-triangle text-yellow-400 text-sm mt-0.5"></i>
                 <div class="text-xs text-yellow-300">
-                  <strong>Testnet Notice:</strong> This network is for testing only. Assets have no real-world value. For production use, please select a mainnet network.
+                  <strong>{{ AUTH_UI_COPY.TESTNET_WARNING }}:</strong> {{ AUTH_UI_COPY.TESTNET_WARNING_TEXT }}
                 </div>
               </div>
             </div>
@@ -66,7 +66,7 @@
             <div v-if="isConnecting || isReconnecting || isSwitchingNetwork" class="text-center py-8">
               <i class="pi pi-spin pi-spinner text-4xl text-biatec-accent mb-4"></i>
               <p class="text-gray-300 font-medium mb-2">{{ connectionStateMessage }}</p>
-              <p class="text-sm text-gray-400">Please approve the authentication request in your wallet app</p>
+              <p class="text-sm text-gray-400">{{ AUTH_UI_COPY.SECURITY_NOTE }}</p>
             </div>
 
             <!-- Error State -->
@@ -74,7 +74,7 @@
               <div class="flex items-start gap-3">
                 <i class="pi pi-exclamation-triangle text-red-400"></i>
                 <div class="flex-1">
-                  <p class="text-sm text-red-400 font-medium">Authentication Failed</p>
+                  <p class="text-sm text-red-400 font-medium">{{ AUTH_UI_COPY.AUTH_FAILED }}</p>
                   <p class="text-xs text-gray-400 mt-1">{{ error }}</p>
                   <div v-if="lastError" class="mt-2 text-xs text-gray-500">Error Code: {{ lastError.diagnosticCode }}</div>
                   <div v-if="troubleshootingSteps.length > 0" class="mt-3 space-y-2">
@@ -86,7 +86,7 @@
                   <div class="flex gap-2 mt-3">
                     <button @click="handleRetry" class="px-3 py-1.5 text-xs bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg transition-colors flex items-center gap-2">
                       <i class="pi pi-refresh"></i>
-                      Retry Authentication
+                      {{ AUTH_UI_COPY.AUTHENTICATE }}
                     </button>
                     <button @click="error = null" class="px-3 py-1.5 text-xs bg-gray-500/20 text-gray-400 hover:bg-gray-500/30 rounded-lg transition-colors">Dismiss</button>
                   </div>
@@ -94,25 +94,79 @@
               </div>
             </div>
 
-            <!-- Authentication Provider Buttons -->
-            <button
-              v-for="wallet in availableWallets"
-              :key="wallet.id"
-              @click="handleConnect(wallet.id)"
-              :disabled="isConnecting || isReconnecting || isSwitchingNetwork"
-              class="w-full p-4 rounded-xl text-left transition-all border border-white/10 bg-white/5 hover:bg-white/10 hover:border-biatec-accent/50 hover:shadow-lg hover:shadow-biatec-accent/10 disabled:opacity-50 disabled:cursor-not-allowed group"
-            >
-              <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-biatec-accent/20 transition-colors">
-                  <i :class="getWalletIcon(wallet.id)" class="text-2xl text-white"></i>
+            <!-- Primary Authentication Method: Email & Password (Arc76) -->
+            <div v-else class="space-y-4">
+              <!-- Email/Password Section (Placeholder for Arc76) -->
+              <div class="p-5 bg-gradient-to-br from-blue-500/10 to-purple-500/10 border-2 border-blue-500/30 rounded-xl">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                    <i class="pi pi-envelope text-2xl text-blue-400"></i>
+                  </div>
+                  <div class="flex-1">
+                    <div class="text-white font-semibold text-lg">{{ AUTH_UI_COPY.EMAIL_PASSWORD_PRIMARY }}</div>
+                    <div class="text-sm text-gray-300">{{ AUTH_UI_COPY.EMAIL_PASSWORD_DESCRIPTION }}</div>
+                  </div>
                 </div>
-                <div class="flex-1">
-                  <div class="text-white font-semibold">{{ getWalletName(wallet.id) }}</div>
-                  <div class="text-sm text-gray-400">{{ getWalletDescription(wallet.id) }}</div>
+                
+                <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <div class="flex items-start gap-3">
+                    <i class="pi pi-info-circle text-blue-400 mt-0.5"></i>
+                    <div class="text-sm text-gray-300">
+                      <p class="mb-2">Email/password authentication (Arc76) is currently in development and will be available soon.</p>
+                      <p class="text-xs text-gray-400">For now, please use one of the wallet provider options below to sign in securely.</p>
+                    </div>
+                  </div>
                 </div>
-                <i class="pi pi-chevron-right text-gray-400 group-hover:text-biatec-accent transition-colors"></i>
               </div>
-            </button>
+
+              <!-- Divider -->
+              <div class="relative flex items-center py-2">
+                <div class="flex-grow border-t border-white/10"></div>
+                <span class="flex-shrink mx-4 text-sm text-gray-400">or</span>
+                <div class="flex-grow border-t border-white/10"></div>
+              </div>
+
+              <!-- Advanced Options: Wallet Providers -->
+              <div>
+                <button 
+                  @click="showAdvancedOptions = !showAdvancedOptions"
+                  class="w-full flex items-center justify-between p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors mb-3"
+                >
+                  <div class="flex items-center gap-3">
+                    <i class="pi pi-cog text-gray-400"></i>
+                    <div class="text-left">
+                      <div class="text-white font-medium">{{ AUTH_UI_COPY.WALLET_PROVIDERS_ADVANCED }}</div>
+                      <div class="text-sm text-gray-400">{{ AUTH_UI_COPY.WALLET_PROVIDERS_DESCRIPTION }}</div>
+                    </div>
+                  </div>
+                  <i :class="showAdvancedOptions ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" class="text-gray-400"></i>
+                </button>
+
+                <!-- Collapsible Wallet Provider List -->
+                <Transition name="slide-down">
+                  <div v-if="showAdvancedOptions" class="space-y-2">
+                    <button
+                      v-for="wallet in availableWallets"
+                      :key="wallet.id"
+                      @click="handleConnect(wallet.id)"
+                      :disabled="isConnecting || isReconnecting || isSwitchingNetwork"
+                      class="w-full p-4 rounded-xl text-left transition-all border border-white/10 bg-white/5 hover:bg-white/10 hover:border-biatec-accent/50 hover:shadow-lg hover:shadow-biatec-accent/10 disabled:opacity-50 disabled:cursor-not-allowed group"
+                    >
+                      <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-biatec-accent/20 transition-colors">
+                          <i :class="getWalletIcon(wallet.id)" class="text-xl text-white"></i>
+                        </div>
+                        <div class="flex-1">
+                          <div class="text-white font-semibold">{{ getWalletName(wallet.id) }}</div>
+                          <div class="text-sm text-gray-400">{{ getWalletDescription(wallet.id) }}</div>
+                        </div>
+                        <i class="pi pi-chevron-right text-gray-400 group-hover:text-biatec-accent transition-colors"></i>
+                      </div>
+                    </button>
+                  </div>
+                </Transition>
+              </div>
+            </div>
           </div>
 
           <!-- Info & Links -->
@@ -121,8 +175,8 @@
               <div class="flex items-start gap-3">
                 <i class="pi pi-info-circle text-blue-400"></i>
                 <div class="text-sm text-gray-300">
-                  <p class="mb-2">By signing in, you agree to our Terms of Service and acknowledge that you've read our Privacy Policy.</p>
-                  <p class="text-xs text-gray-400"><strong class="text-blue-400">Security:</strong> We never store your private keys. All transactions require your explicit approval.</p>
+                  <p class="mb-2">{{ AUTH_UI_COPY.TERMS_AGREEMENT }}</p>
+                  <p class="text-xs text-gray-400"><strong class="text-blue-400">Security:</strong> {{ AUTH_UI_COPY.SECURITY_NOTE }}</p>
                 </div>
               </div>
             </div>
@@ -131,10 +185,10 @@
               <div class="flex items-start gap-3">
                 <i class="pi pi-exclamation-circle text-yellow-400"></i>
                 <div class="text-sm text-gray-300">
-                  <p class="font-medium text-yellow-400 mb-2">New to self-custody wallets?</p>
+                  <p class="font-medium text-yellow-400 mb-2">{{ AUTH_UI_COPY.NEW_USER_GUIDANCE }}</p>
                   <div class="space-y-1 text-xs">
-                    <p class="mb-2">Download a wallet app to get started with secure, self-custody authentication:</p>
-                    <a href="https://perawallet.app/" target="_blank" rel="noopener noreferrer" class="block text-blue-400 hover:text-blue-300 underline"> Download Pera Wallet (Recommended) → </a>
+                    <p class="mb-2">{{ AUTH_UI_COPY.NEW_USER_INFO }}</p>
+                    <a href="https://perawallet.app/" target="_blank" rel="noopener noreferrer" class="block text-blue-400 hover:text-blue-300 underline"> Download Pera Wallet ({{ AUTH_UI_COPY.RECOMMENDED }}) → </a>
                     <a href="https://defly.app/" target="_blank" rel="noopener noreferrer" class="block text-blue-400 hover:text-blue-300 underline"> Download Defly Wallet → </a>
                     <a href="https://www.exodus.com/" target="_blank" rel="noopener noreferrer" class="block text-blue-400 hover:text-blue-300 underline"> Download Exodus Wallet → </a>
                   </div>
@@ -153,6 +207,7 @@ import { ref, computed, watch } from "vue";
 import { useWalletManager, NETWORKS, type NetworkId } from "../composables/useWalletManager";
 import { WalletConnectionState } from "../composables/walletState";
 import { sortNetworksByPriority } from "../utils/networkSorting";
+import { AUTH_UI_COPY, NETWORK_UI_COPY } from "../constants/uiCopy";
 
 interface Props {
   isOpen: boolean;
@@ -175,6 +230,7 @@ const emit = defineEmits<Emits>();
 
 const walletManager = useWalletManager();
 const selectedNetwork = ref<NetworkId>(props.defaultNetwork);
+const showAdvancedOptions = ref(false);
 
 const availableNetworks = computed(() => {
   const networks = Object.values(NETWORKS);
@@ -342,5 +398,25 @@ watch(
 .modal-enter-from > div,
 .modal-leave-to > div {
   transform: scale(0.9);
+}
+
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-10px);
+}
+
+.slide-down-enter-to,
+.slide-down-leave-from {
+  opacity: 1;
+  max-height: 1000px;
+  transform: translateY(0);
 }
 </style>
