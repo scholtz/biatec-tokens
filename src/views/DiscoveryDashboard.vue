@@ -173,7 +173,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useDiscoveryStore } from '../stores/discovery'
 import { useOnboardingStore } from '../stores/onboarding'
 import { useMarketplaceStore } from '../stores/marketplace'
@@ -186,7 +185,6 @@ import OnboardingChecklist from '../components/OnboardingChecklist.vue'
 import type { MarketplaceToken } from '../stores/marketplace'
 import type { DiscoveryFilters } from '../stores/discovery'
 
-const router = useRouter()
 const discoveryStore = useDiscoveryStore()
 const onboardingStore = useOnboardingStore()
 const marketplaceStore = useMarketplaceStore()

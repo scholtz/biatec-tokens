@@ -128,7 +128,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
 import { useOnboardingStore } from '../stores/onboarding'
 import { telemetryService } from '../services/TelemetryService'
 
@@ -138,7 +137,6 @@ interface Emits {
 }
 
 const emit = defineEmits<Emits>()
-const router = useRouter()
 const onboardingStore = useOnboardingStore()
 
 const handleEmailSignup = () => {
