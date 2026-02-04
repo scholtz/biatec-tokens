@@ -2,7 +2,8 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Network Validation Flow", () => {
   test.beforeEach(async ({ page, browserName }) => {
-    // Skip Firefox due to consistent networkidle timeout issues
+    // TODO: Investigate and fix Firefox networkidle timeout issues
+    // Tracked in GitHub issue (reference needed)
     test.skip(browserName === "firefox", "Firefox has persistent networkidle timeout issues");
 
     // Mock wallet connection

@@ -237,15 +237,16 @@ export const useTokenDraftStore = defineStore('tokenDraft', () => {
 
   /**
    * Auto-save watch (debounced)
+   * Uses instance-scoped ref to prevent race conditions
    */
-  let saveTimeout: NodeJS.Timeout | null = null
+  const saveTimeout = ref<ReturnType<typeof setTimeout> | null>(null)
   watch(
     currentDraft,
     (newDraft) => {
       if (newDraft && isDraftLoaded.value) {
         // Debounce auto-save
-        if (saveTimeout) clearTimeout(saveTimeout)
-        saveTimeout = setTimeout(() => {
+        if (saveTimeout.value) clearTimeout(saveTimeout.value)
+        saveTimeout.value = setTimeout(() => {
           saveDraft(newDraft)
         }, 1000)
       }

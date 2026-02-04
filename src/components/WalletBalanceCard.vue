@@ -120,7 +120,7 @@ const { balance, isLoading, error, fetchBalance } = useTokenBalance()
 
 const isRefreshing = ref(false)
 const lastUpdated = ref<Date | null>(null)
-const autoRefreshTimer = ref<NodeJS.Timeout | null>(null)
+const autoRefreshTimer = ref<ReturnType<typeof setInterval> | null>(null)
 
 // Computed properties
 const formattedBalance = computed(() => {
