@@ -173,7 +173,7 @@
           <div class="mt-6 space-y-3">
             <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
               <div class="flex items-start gap-3">
-                <i class="pi pi-info-circle text-blue-400"></i>
+                <i class="pi pi-info-circle text-blue-400 mt-0.5"></i>
                 <div class="text-sm text-gray-300">
                   <p class="mb-2">{{ AUTH_UI_COPY.TERMS_AGREEMENT }}</p>
                   <p class="text-xs text-gray-400"><strong class="text-blue-400">Security:</strong> {{ AUTH_UI_COPY.SECURITY_NOTE }}</p>

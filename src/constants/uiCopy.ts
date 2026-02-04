@@ -45,7 +45,7 @@ export const AUTH_UI_COPY = {
   
   // Terms and security
   TERMS_AGREEMENT: 'By signing in, you agree to our Terms of Service and acknowledge that you\'ve read our Privacy Policy.',
-  SECURITY_NOTE: 'Security: We never store your private keys. All transactions require your explicit approval.',
+  SECURITY_NOTE: 'We never store your private keys. All transactions require your explicit approval.',
 } as const
 
 export const NETWORK_UI_COPY = {

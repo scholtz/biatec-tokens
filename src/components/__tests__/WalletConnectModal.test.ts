@@ -214,18 +214,15 @@ describe("WalletConnectModal", () => {
       btn.textContent?.includes("Advanced: Connect with Wallet Provider")
     );
     
-    if (advancedButton) {
-      await advancedButton.click();
-      await nextTick();
-      await nextTick();
-      
-      const modalContent = document.body.textContent || "";
-      expect(modalContent).toContain("Mobile and web wallet");
-      expect(modalContent).toContain("Feature-rich wallet");
-    } else {
-      // If advanced button not found, test should still verify structure exists
-      expect(advancedButton).toBeTruthy();
-    }
+    expect(advancedButton).toBeTruthy();
+    
+    await advancedButton!.click();
+    await nextTick();
+    await nextTick();
+    
+    const modalContent = document.body.textContent || "";
+    expect(modalContent).toContain("Mobile and web wallet");
+    expect(modalContent).toContain("Feature-rich wallet");
 
     wrapper.unmount();
   });
