@@ -63,6 +63,9 @@ export function useNetworkValidation() {
 
   /**
    * Validate network for compliance requirements
+   * Note: Currently treats all mainnet networks uniformly for compliance.
+   * Future enhancement: Add network-specific compliance rules if regulatory
+   * requirements differ across mainnet networks (e.g., jurisdiction-specific rules).
    */
   const validateComplianceRequirements = (
     networkInfo: NetworkInfo | null,

@@ -2,8 +2,10 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Network Validation Flow", () => {
   test.beforeEach(async ({ page, browserName }) => {
-    // TODO: Investigate and fix Firefox networkidle timeout issues
-    // Tracked in GitHub issue (reference needed)
+    // TODO(Firefox-E2E): Investigate and fix Firefox networkidle timeout issues.
+    // This is a known Playwright + Firefox issue affecting multiple test files.
+    // Temporary workaround: Skip Firefox E2E tests until resolved.
+    // See also: e2e/wallet-connection.spec.ts, e2e/wallet-network-flow.spec.ts
     test.skip(browserName === "firefox", "Firefox has persistent networkidle timeout issues");
 
     // Mock wallet connection

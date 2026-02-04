@@ -236,10 +236,15 @@ export const useTokenDraftStore = defineStore('tokenDraft', () => {
   }
 
   /**
-   * Auto-save watch (debounced)
-   * Uses instance-scoped ref to prevent race conditions
+   * Auto-save timeout ref (instance-scoped to prevent race conditions)
+   * Using ref instead of module-scoped variable ensures each store instance
+   * has its own debounce timer, preventing interference between instances.
    */
   const saveTimeout = ref<ReturnType<typeof setTimeout> | null>(null)
+  
+  /**
+   * Auto-save watch (debounced)
+   */
   watch(
     currentDraft,
     (newDraft) => {
