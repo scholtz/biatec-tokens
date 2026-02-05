@@ -4,6 +4,7 @@ import { useAuthStore } from "../stores/auth";
 import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from "../constants/auth";
 import { telemetryService } from "../services/TelemetryService";
 import { WalletConnectionState, WalletErrorType, type WalletError, parseWalletError, retryWithBackoff, DEFAULT_RETRY_CONFIG, getTroubleshootingSteps } from "./walletState";
+import { saveWalletSession, loadWalletSession, clearWalletSession, updateSessionActivity, logConnectionEvent } from "../services/WalletSessionService";
 
 export interface WalletState {
   isConnected: boolean;
@@ -353,6 +354,7 @@ export function useWalletManager() {
   const connect = async (walletId?: string) => {
     walletState.value.isConnecting = true;
     transitionState(WalletConnectionState.CONNECTING);
+    logConnectionEvent("connect_initiated", `Wallet: ${walletId || "auto"}`);
 
     try {
       if (walletId) {
@@ -381,8 +383,17 @@ export function useWalletManager() {
 
       updateWalletState();
 
-      // Track successful connection
+      // Save session with expiry
       if (walletState.value.activeAddress && walletState.value.activeWallet) {
+        saveWalletSession(
+          walletState.value.activeWallet,
+          currentNetwork.value,
+          walletState.value.activeAddress
+        );
+        
+        logConnectionEvent("connect_success", `Wallet: ${walletState.value.activeWallet}, Network: ${currentNetwork.value}`);
+
+        // Track successful connection
         telemetryService.trackWalletConnect({
           walletId: walletState.value.activeWallet,
           network: currentNetwork.value,
@@ -393,6 +404,8 @@ export function useWalletManager() {
       console.error("Failed to authenticate:", error);
       const walletError = parseWalletError(error, "Authentication");
       transitionState(WalletConnectionState.FAILED, walletError);
+      
+      logConnectionEvent("connect_failed", `Error: ${walletError.message}`);
 
       telemetryService.trackWalletConnectionFailure({
         walletId,
@@ -428,6 +441,10 @@ export function useWalletManager() {
       };
 
       transitionState(WalletConnectionState.DISCONNECTED);
+
+      // Clear session
+      clearWalletSession();
+      logConnectionEvent("disconnect", "Wallet disconnected");
 
       // Clear auth store
       await authStore.signOut();
@@ -515,38 +532,81 @@ export function useWalletManager() {
    * Attempt to reconnect on page load
    */
   const attemptReconnect = async () => {
-    const wasConnected = localStorage.getItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED) === WALLET_CONNECTION_STATE.CONNECTED;
-    const savedWalletId = localStorage.getItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID);
-    const savedNetwork = localStorage.getItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK) as NetworkId;
+    // Try to load session from new session service
+    const session = loadWalletSession();
+    
+    if (!session) {
+      // Fallback to old localStorage approach
+      const wasConnected = localStorage.getItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED) === WALLET_CONNECTION_STATE.CONNECTED;
+      const savedWalletId = localStorage.getItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID);
+      const savedNetwork = localStorage.getItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK) as NetworkId;
 
-    if (!wasConnected || !savedWalletId) {
-      // Still restore network preference even if not connected
-      if (savedNetwork && NETWORKS[savedNetwork]) {
-        currentNetwork.value = savedNetwork;
+      if (!wasConnected || !savedWalletId) {
+        // Still restore network preference even if not connected
+        if (savedNetwork && NETWORKS[savedNetwork]) {
+          currentNetwork.value = savedNetwork;
+        }
+        transitionState(WalletConnectionState.DISCONNECTED);
+        logConnectionEvent("reconnect_skipped", "No saved session");
+        return;
       }
-      transitionState(WalletConnectionState.DISCONNECTED);
+
+      isReconnecting.value = true;
+      transitionState(WalletConnectionState.RECONNECTING);
+      logConnectionEvent("reconnect_attempt", `Wallet: ${savedWalletId}, Network: ${savedNetwork}`);
+
+      try {
+        // Restore network
+        if (savedNetwork && NETWORKS[savedNetwork]) {
+          currentNetwork.value = savedNetwork;
+        }
+
+        // Attempt reconnection
+        await connect(savedWalletId);
+
+        console.log("Successfully reconnected session");
+        logConnectionEvent("reconnect_success", "Session restored from legacy storage");
+      } catch (error) {
+        console.warn("Failed to reconnect session:", error);
+        const walletError = parseWalletError(error, "Reconnect session");
+        transitionState(WalletConnectionState.FAILED, walletError);
+        logConnectionEvent("reconnect_failed", `Error: ${walletError.message}`);
+
+        // Clear persisted state on reconnection failure
+        localStorage.removeItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED);
+        localStorage.removeItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID);
+        clearWalletSession();
+      } finally {
+        isReconnecting.value = false;
+      }
       return;
     }
 
+    // Use session service for reconnection
     isReconnecting.value = true;
     transitionState(WalletConnectionState.RECONNECTING);
+    logConnectionEvent("reconnect_attempt", `Wallet: ${session.walletId}, Network: ${session.networkId}`);
 
     try {
       // Restore network
-      if (savedNetwork && NETWORKS[savedNetwork]) {
-        currentNetwork.value = savedNetwork;
+      if (NETWORKS[session.networkId]) {
+        currentNetwork.value = session.networkId;
       }
 
       // Attempt reconnection
-      await connect(savedWalletId);
+      await connect(session.walletId);
 
-      console.log("Successfully reconnected session");
+      console.log("Successfully reconnected session from session service");
+      logConnectionEvent("reconnect_success", "Session restored");
+      updateSessionActivity();
     } catch (error) {
       console.warn("Failed to reconnect session:", error);
       const walletError = parseWalletError(error, "Reconnect session");
       transitionState(WalletConnectionState.FAILED, walletError);
+      logConnectionEvent("reconnect_failed", `Error: ${walletError.message}`);
 
       // Clear persisted state on reconnection failure
+      clearWalletSession();
       localStorage.removeItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED);
       localStorage.removeItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID);
     } finally {
