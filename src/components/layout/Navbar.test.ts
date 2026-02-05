@@ -133,25 +133,28 @@ describe('Navbar Component', () => {
   });
 
   describe('Network Status', () => {
-    it('should display network status', () => {
+    it('should display network status in wallet badge', () => {
       const wrapper = mount(Navbar, {
         global: {
           plugins: [router, pinia],
         },
       });
 
-      expect(wrapper.text()).toContain('Testnet'); // Default network from settings store
+      // WalletStatusBadge now displays network info instead of old network status element
+      expect(wrapper.findComponent({ name: 'WalletStatusBadge' }).exists()).toBe(true);
     });
 
-    it('should show correct network status color for testnet', () => {
+    it('should show wallet status badge with network info', () => {
       const wrapper = mount(Navbar, {
         global: {
           plugins: [router, pinia],
         },
       });
 
-      const statusIndicator = wrapper.find('.w-2.h-2');
-      expect(statusIndicator.classes()).toContain('bg-yellow-500');
+      const statusBadge = wrapper.findComponent({ name: 'WalletStatusBadge' });
+      expect(statusBadge.exists()).toBe(true);
+      // Badge should have network-info prop passed to it
+      expect(statusBadge.props('networkInfo')).toBeDefined();
     });
   });
 

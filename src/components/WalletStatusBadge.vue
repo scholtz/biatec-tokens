@@ -58,10 +58,10 @@ import { WalletConnectionState } from '../composables/walletState';
 import type { NetworkInfo } from '../composables/useWalletManager';
 
 interface Props {
-  connectionState: WalletConnectionState;
-  networkInfo: NetworkInfo | null;
-  address: string | null;
-  formattedAddress: string | null;
+  connectionState?: WalletConnectionState;
+  networkInfo?: NetworkInfo | null;
+  address?: string | null;
+  formattedAddress?: string | null;
   hasError?: boolean;
   isCompact?: boolean;
   isInteractive?: boolean;
@@ -74,6 +74,10 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  connectionState: WalletConnectionState.DISCONNECTED,
+  networkInfo: null,
+  address: null,
+  formattedAddress: null,
   hasError: false,
   isCompact: false,
   isInteractive: true,

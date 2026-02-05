@@ -46,10 +46,18 @@
             <span class="text-xs font-medium text-green-700 dark:text-green-300">{{ subscriptionStore.currentProduct.name }}</span>
           </div>
 
-          <!-- Network Status -->
-          <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800">
-            <div class="w-2 h-2 rounded-full" :class="networkStatusColor"></div>
-            <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ networkStatus }}</span>
+          <!-- Wallet Status Badge -->
+          <div class="hidden sm:block">
+            <WalletStatusBadge
+              :connection-state="walletManager.walletState?.value?.connectionState"
+              :network-info="walletManager.networkInfo?.value"
+              :address="walletManager.activeAddress?.value"
+              :formatted-address="walletManager.formattedAddress?.value"
+              :has-error="!!walletManager.walletState?.value?.lastError"
+              :is-compact="false"
+              @click="handleStatusBadgeClick"
+              @error-click="handleErrorClick"
+            />
           </div>
 
           <!-- Wallet Connection Button (when not authenticated) -->
@@ -121,6 +129,51 @@
     <!-- Wallet Connect Modal -->
     <WalletConnectModal :is-open="showWalletModal" @close="showWalletModal = false" @connected="handleWalletConnected" />
 
+    <!-- Wallet Recovery Panel Modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="showRecoveryPanel" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="showRecoveryPanel = false">
+          <WalletRecoveryPanel
+            :session-info="loadWalletSession()"
+            :is-reconnecting="walletManager.isReconnecting?.value || false"
+            :recovery-error="walletManager.walletState?.value?.error || null"
+            @reconnect="handleRecoveryReconnect"
+            @start-fresh="handleStartFresh"
+            @show-guide="() => {}"
+            @show-diagnostics="() => { showRecoveryPanel = false; showDiagnosticsPanel = true; }"
+          />
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Wallet Diagnostics Panel Modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="showDiagnosticsPanel" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="showDiagnosticsPanel = false">
+          <WalletDiagnosticsPanel
+            :diagnostic-data="diagnosticData"
+            @close="showDiagnosticsPanel = false"
+            @refresh="() => { diagnosticData; }"
+            @copied="() => {}"
+          />
+        </div>
+      </Transition>
+    </Teleport>
+
     <!-- Mobile Menu -->
     <Transition
       enter-active-class="duration-200 ease-out"
@@ -162,6 +215,11 @@ import { useSubscriptionStore } from "../../stores/subscription";
 import { useAVMAuthentication } from "algorand-authentication-component-vue";
 import { HomeIcon, PlusCircleIcon, ChartBarIcon, Cog6ToothIcon, SunIcon, MoonIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, WalletIcon } from "@heroicons/vue/24/outline";
 import WalletConnectModal from "../WalletConnectModal.vue";
+import WalletStatusBadge from "../WalletStatusBadge.vue";
+import WalletRecoveryPanel from "../WalletRecoveryPanel.vue";
+import WalletDiagnosticsPanel from "../WalletDiagnosticsPanel.vue";
+import { useWalletManager } from "../../composables/useWalletManager";
+import { collectDiagnosticData, loadWalletSession } from "../../services/WalletSessionService";
 
 const route = useRoute();
 const router = useRouter();
@@ -169,10 +227,13 @@ const themeStore = useThemeStore();
 const settingsStore = useSettingsStore();
 const { authStore, logout } = useAVMAuthentication();
 const subscriptionStore = useSubscriptionStore();
+const walletManager = useWalletManager();
 
 const showMobileMenu = ref(false);
 const showUserMenu = ref(false);
 const showWalletModal = ref(false);
+const showRecoveryPanel = ref(false);
+const showDiagnosticsPanel = ref(false);
 
 const navigationItems = [
   { name: "Home", path: "/", icon: HomeIcon },
@@ -229,9 +290,60 @@ const handleWalletConnected = (_data: { address: string; walletId: string; netwo
   // This just closes the modal
 };
 
+const handleStatusBadgeClick = () => {
+  // If not connected, show wallet modal
+  if (!walletManager.isConnected?.value) {
+    showWalletModal.value = true;
+  } else {
+    // If connected, show user menu
+    showUserMenu.value = !showUserMenu.value;
+  }
+};
+
+const handleErrorClick = () => {
+  showDiagnosticsPanel.value = true;
+};
+
+const handleRecoveryReconnect = async (data: { walletId: string; networkId: any }) => {
+  try {
+    await walletManager.switchNetwork?.(data.networkId);
+    await walletManager.connect?.(data.walletId);
+    showRecoveryPanel.value = false;
+  } catch (error) {
+    console.error('Recovery reconnection failed:', error);
+  }
+};
+
+const handleStartFresh = () => {
+  showRecoveryPanel.value = false;
+  showWalletModal.value = true;
+};
+
+const diagnosticData = computed(() => {
+  return collectDiagnosticData({
+    connectionState: walletManager.walletState?.value?.connectionState,
+    currentNetwork: walletManager.currentNetwork?.value,
+    activeAddress: walletManager.activeAddress?.value,
+    activeWallet: walletManager.activeWallet?.value,
+    lastError: walletManager.walletState?.value?.lastError,
+  });
+});
+
 onMounted(async () => {
   if (authStore.isAuthenticated) {
     await subscriptionStore.fetchSubscription();
+  }
+  
+  // Check if we should show recovery panel on load
+  const session = loadWalletSession();
+  if (session && !walletManager.isConnected?.value) {
+    // Optionally show recovery panel after a delay
+    setTimeout(() => {
+      if (!walletManager.isConnected?.value) {
+        // Uncomment to auto-show recovery panel
+        // showRecoveryPanel.value = true;
+      }
+    }, 2000);
   }
 });
 </script>
