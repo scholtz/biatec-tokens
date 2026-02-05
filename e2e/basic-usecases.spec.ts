@@ -5,10 +5,21 @@ test.describe("Basic User Flows", () => {
     // Skip Firefox due to consistent networkidle timeout issues
     test.skip(browserName === "firefox", "Firefox has persistent networkidle timeout issues");
 
-    // Mock wallet connection to avoid onboarding redirects for most tests
+    // Mock wallet connection and onboarding completion to avoid landing entry module
     await page.addInitScript(() => {
       localStorage.setItem("wallet_connected", "true");
       localStorage.setItem("onboarding_completed", "true");
+      // Set onboarding state to hasSeenWelcome: true to show the normal buttons
+      localStorage.setItem("biatec_onboarding_state", JSON.stringify({
+        hasSeenWelcome: true,
+        hasConnectedWallet: true,
+        hasSelectedStandards: false,
+        hasSavedFilters: false,
+        hasViewedToken: false,
+        completedAt: null,
+        preferredStandards: [],
+        preferredChains: [],
+      }));
     });
     await page.goto("/");
     // Use Firefox-specific timeout
@@ -232,6 +243,17 @@ test.describe("Form Interactions", () => {
     await page.addInitScript(() => {
       localStorage.setItem("wallet_connected", "true");
       localStorage.setItem("onboarding_completed", "true");
+      // Set onboarding state to hasSeenWelcome: true to show the normal buttons
+      localStorage.setItem("biatec_onboarding_state", JSON.stringify({
+        hasSeenWelcome: true,
+        hasConnectedWallet: true,
+        hasSelectedStandards: false,
+        hasSavedFilters: false,
+        hasViewedToken: false,
+        completedAt: null,
+        preferredStandards: [],
+        preferredChains: [],
+      }));
     });
     await page.goto("/");
     // Use more resilient waiting for Firefox
@@ -277,6 +299,17 @@ test.describe("Settings and Configuration", () => {
     await page.addInitScript(() => {
       localStorage.setItem("wallet_connected", "true");
       localStorage.setItem("onboarding_completed", "true");
+      // Set onboarding state to hasSeenWelcome: true to show the normal buttons
+      localStorage.setItem("biatec_onboarding_state", JSON.stringify({
+        hasSeenWelcome: true,
+        hasConnectedWallet: true,
+        hasSelectedStandards: false,
+        hasSavedFilters: false,
+        hasViewedToken: false,
+        completedAt: null,
+        preferredStandards: [],
+        preferredChains: [],
+      }));
     });
     await page.goto("/");
     await page.waitForLoadState("networkidle");
@@ -317,6 +350,17 @@ test.describe("Data Display and Loading", () => {
     await page.addInitScript(() => {
       localStorage.setItem("wallet_connected", "true");
       localStorage.setItem("onboarding_completed", "true");
+      // Set onboarding state to hasSeenWelcome: true to show the normal buttons
+      localStorage.setItem("biatec_onboarding_state", JSON.stringify({
+        hasSeenWelcome: true,
+        hasConnectedWallet: true,
+        hasSelectedStandards: false,
+        hasSavedFilters: false,
+        hasViewedToken: false,
+        completedAt: null,
+        preferredStandards: [],
+        preferredChains: [],
+      }));
     });
     await page.goto("/");
     // Use more resilient waiting for Firefox
@@ -357,6 +401,17 @@ test.describe("Error Handling", () => {
 
     await page.addInitScript(() => {
       localStorage.setItem("wallet_connected", "true");
+      // Set onboarding state to hasSeenWelcome: true to show the normal buttons
+      localStorage.setItem("biatec_onboarding_state", JSON.stringify({
+        hasSeenWelcome: true,
+        hasConnectedWallet: true,
+        hasSelectedStandards: false,
+        hasSavedFilters: false,
+        hasViewedToken: false,
+        completedAt: null,
+        preferredStandards: [],
+        preferredChains: [],
+      }));
     });
     await page.goto("/");
     // Use a shorter timeout for networkidle since API calls are aborted
@@ -387,6 +442,17 @@ test.describe("Token Creation Basic Interactions", () => {
     await page.addInitScript(() => {
       localStorage.setItem("wallet_connected", "true");
       localStorage.setItem("onboarding_completed", "true");
+      // Set onboarding state to hasSeenWelcome: true to show the normal buttons
+      localStorage.setItem("biatec_onboarding_state", JSON.stringify({
+        hasSeenWelcome: true,
+        hasConnectedWallet: true,
+        hasSelectedStandards: false,
+        hasSavedFilters: false,
+        hasViewedToken: false,
+        completedAt: null,
+        preferredStandards: [],
+        preferredChains: [],
+      }));
     });
   });
 
@@ -434,6 +500,17 @@ test.describe("API Integration Tests", () => {
     await page.addInitScript(() => {
       localStorage.setItem("wallet_connected", "true");
       localStorage.setItem("onboarding_completed", "true");
+      // Set onboarding state to hasSeenWelcome: true to show the normal buttons
+      localStorage.setItem("biatec_onboarding_state", JSON.stringify({
+        hasSeenWelcome: true,
+        hasConnectedWallet: true,
+        hasSelectedStandards: false,
+        hasSavedFilters: false,
+        hasViewedToken: false,
+        completedAt: null,
+        preferredStandards: [],
+        preferredChains: [],
+      }));
     });
   });
 
