@@ -9,6 +9,17 @@ test.describe("Wallet Connection Flow", () => {
     await page.addInitScript(() => {
       localStorage.setItem("wallet_connected", "true");
       localStorage.setItem("onboarding_completed", "true");
+      // Set onboarding state to hasSeenWelcome: true to show the normal buttons
+      localStorage.setItem("biatec_onboarding_state", JSON.stringify({
+        hasSeenWelcome: true,
+        hasConnectedWallet: true,
+        hasSelectedStandards: false,
+        hasSavedFilters: false,
+        hasViewedToken: false,
+        completedAt: null,
+        preferredStandards: [],
+        preferredChains: [],
+      }));
     });
     await page.goto("/");
     // Wait for page to be fully loaded
