@@ -210,7 +210,6 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useThemeStore } from "../../stores/theme";
-import { useSettingsStore } from "../../stores/settings";
 import { useSubscriptionStore } from "../../stores/subscription";
 import { useAVMAuthentication } from "algorand-authentication-component-vue";
 import { HomeIcon, PlusCircleIcon, ChartBarIcon, Cog6ToothIcon, SunIcon, MoonIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, WalletIcon } from "@heroicons/vue/24/outline";
@@ -224,7 +223,6 @@ import { collectDiagnosticData, loadWalletSession } from "../../services/WalletS
 const route = useRoute();
 const router = useRouter();
 const themeStore = useThemeStore();
-const settingsStore = useSettingsStore();
 const { authStore, logout } = useAVMAuthentication();
 const subscriptionStore = useSubscriptionStore();
 const walletManager = useWalletManager();
@@ -242,24 +240,6 @@ const navigationItems = [
   { name: "Account", path: "/account", icon: WalletIcon },
   { name: "Settings", path: "/settings", icon: Cog6ToothIcon },
 ];
-
-const networkStatus = computed(() => {
-  const network = settingsStore.settings.network;
-  return network.charAt(0).toUpperCase() + network.slice(1);
-});
-
-const networkStatusColor = computed(() => {
-  switch (settingsStore.settings.network) {
-    case "mainnet":
-      return "bg-green-500";
-    case "testnet":
-      return "bg-yellow-500";
-    case "dockernet":
-      return "bg-blue-500";
-    default:
-      return "bg-gray-500";
-  }
-});
 
 const isActiveRoute = (path: string) => {
   return route.path === path;

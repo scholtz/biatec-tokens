@@ -151,7 +151,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import type { WalletSession } from '../services/WalletSessionService';
-import type { NetworkId, NetworkInfo } from '../composables/useWalletManager';
+import type { NetworkId } from '../composables/useWalletManager';
 import { NETWORKS } from '../composables/useWalletManager';
 
 interface Props {
