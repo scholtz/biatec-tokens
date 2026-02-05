@@ -28,6 +28,7 @@ export interface BaseNetworkInfo {
   name: string;
   displayName: string;
   isTestnet: boolean;
+  isAdvanced?: boolean; // For networks like VOI/Aramid that are mainnets but advanced
   chainType: ChainType;
 }
 
@@ -68,6 +69,7 @@ export const AVM_NETWORKS: Record<AVMNetworkId, AVMNetworkInfo> = {
     algodUrl: "https://mainnet-api.voi.nodely.dev",
     genesisId: "voimain-v1.0",
     isTestnet: false,
+    isAdvanced: true,
     chainType: "AVM",
   },
   aramidmain: {
@@ -77,6 +79,7 @@ export const AVM_NETWORKS: Record<AVMNetworkId, AVMNetworkInfo> = {
     algodUrl: "https://algod.aramidmain.a-wallet.net",
     genesisId: "aramidmain-v1.0",
     isTestnet: false,
+    isAdvanced: true,
     chainType: "AVM",
   },
   "algorand-testnet": {
