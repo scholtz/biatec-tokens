@@ -13,7 +13,7 @@ import {
   getCommonDeFiContracts,
 } from "../services/EVMAllowanceService";
 import type { EVMNetworkId } from "./useWalletManager";
-import { EVM_NETWORKS } from "./useWalletManager";
+import { AllowanceActionType } from "../types/allowances";
 
 export function useAllowances() {
   const allowancesStore = useAllowancesStore();
@@ -119,7 +119,7 @@ export function useAllowances() {
       allowancesStore.addAuditEntry({
         id: auditId,
         timestamp: new Date(),
-        actionType: "revoke",
+        actionType: AllowanceActionType.REVOKE,
         allowanceId,
         chainType: "EVM",
         networkId: allowance.networkId,
@@ -189,7 +189,7 @@ export function useAllowances() {
       allowancesStore.addAuditEntry({
         id: auditId,
         timestamp: new Date(),
-        actionType: "reduce",
+        actionType: AllowanceActionType.REDUCE,
         allowanceId,
         chainType: "EVM",
         networkId: allowance.networkId,

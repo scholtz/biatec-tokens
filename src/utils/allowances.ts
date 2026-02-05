@@ -207,10 +207,10 @@ export function isValidEthereumAddress(address: string): boolean {
  */
 export function getRiskBadgeVariant(
   riskLevel: AllowanceRiskLevel
-): "danger" | "warning" | "default" | "success" {
+): "error" | "warning" | "default" | "success" {
   switch (riskLevel) {
     case AllowanceRiskLevel.CRITICAL:
-      return "danger";
+      return "error";
     case AllowanceRiskLevel.HIGH:
       return "warning";
     case AllowanceRiskLevel.MEDIUM:

@@ -1,5 +1,5 @@
 <template>
-  <Modal :is-open="isOpen" @close="$emit('close')" size="md">
+  <Modal :show="isOpen" @close="$emit('close')" size="md">
     <template #title>
       {{ actionTitle }}
     </template>

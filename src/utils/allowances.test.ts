@@ -15,6 +15,7 @@ import {
   getActivityStatusLabel,
 } from "./allowances";
 import type { EVMTokenAllowance, AVMAssetOptIn } from "../types/allowances";
+import { AllowanceRiskLevel, AllowanceActivityStatus } from "../types/allowances";
 
 describe("allowances utilities", () => {
   describe("isUnlimitedAllowance", () => {
@@ -126,21 +127,21 @@ describe("allowances utilities", () => {
   describe("calculateActivityStatus", () => {
     it("should return active for recent interactions", () => {
       const recentDate = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000); // 15 days ago
-      expect(calculateActivityStatus(recentDate)).toBe("active");
+      expect(calculateActivityStatus(recentDate)).toBe(AllowanceActivityStatus.ACTIVE);
     });
 
     it("should return inactive for 30-90 day old interactions", () => {
       const inactiveDate = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000); // 60 days ago
-      expect(calculateActivityStatus(inactiveDate)).toBe("inactive");
+      expect(calculateActivityStatus(inactiveDate)).toBe(AllowanceActivityStatus.INACTIVE);
     });
 
     it("should return dormant for old interactions", () => {
       const dormantDate = new Date(Date.now() - 120 * 24 * 60 * 60 * 1000); // 120 days ago
-      expect(calculateActivityStatus(dormantDate)).toBe("dormant");
+      expect(calculateActivityStatus(dormantDate)).toBe(AllowanceActivityStatus.DORMANT);
     });
 
     it("should return unknown when no date provided", () => {
-      expect(calculateActivityStatus(undefined)).toBe("unknown");
+      expect(calculateActivityStatus(undefined)).toBe(AllowanceActivityStatus.UNKNOWN);
     });
   });
 
@@ -220,37 +221,37 @@ describe("allowances utilities", () => {
 
   describe("getRiskBadgeVariant", () => {
     it("should return correct variants for risk levels", () => {
-      expect(getRiskBadgeVariant("critical")).toBe("danger");
-      expect(getRiskBadgeVariant("high")).toBe("warning");
-      expect(getRiskBadgeVariant("medium")).toBe("default");
-      expect(getRiskBadgeVariant("low")).toBe("success");
+      expect(getRiskBadgeVariant(AllowanceRiskLevel.CRITICAL)).toBe("error");
+      expect(getRiskBadgeVariant(AllowanceRiskLevel.HIGH)).toBe("warning");
+      expect(getRiskBadgeVariant(AllowanceRiskLevel.MEDIUM)).toBe("default");
+      expect(getRiskBadgeVariant(AllowanceRiskLevel.LOW)).toBe("success");
     });
   });
 
   describe("getActivityBadgeVariant", () => {
     it("should return correct variants for activity statuses", () => {
-      expect(getActivityBadgeVariant("active")).toBe("success");
-      expect(getActivityBadgeVariant("inactive")).toBe("warning");
-      expect(getActivityBadgeVariant("dormant")).toBe("default");
-      expect(getActivityBadgeVariant("unknown")).toBe("default");
+      expect(getActivityBadgeVariant(AllowanceActivityStatus.ACTIVE)).toBe("success");
+      expect(getActivityBadgeVariant(AllowanceActivityStatus.INACTIVE)).toBe("warning");
+      expect(getActivityBadgeVariant(AllowanceActivityStatus.DORMANT)).toBe("default");
+      expect(getActivityBadgeVariant(AllowanceActivityStatus.UNKNOWN)).toBe("default");
     });
   });
 
   describe("getRiskLevelLabel", () => {
     it("should return correct labels for risk levels", () => {
-      expect(getRiskLevelLabel("critical")).toBe("Critical Risk");
-      expect(getRiskLevelLabel("high")).toBe("High Risk");
-      expect(getRiskLevelLabel("medium")).toBe("Medium Risk");
-      expect(getRiskLevelLabel("low")).toBe("Low Risk");
+      expect(getRiskLevelLabel(AllowanceRiskLevel.CRITICAL)).toBe("Critical Risk");
+      expect(getRiskLevelLabel(AllowanceRiskLevel.HIGH)).toBe("High Risk");
+      expect(getRiskLevelLabel(AllowanceRiskLevel.MEDIUM)).toBe("Medium Risk");
+      expect(getRiskLevelLabel(AllowanceRiskLevel.LOW)).toBe("Low Risk");
     });
   });
 
   describe("getActivityStatusLabel", () => {
     it("should return correct labels for activity statuses", () => {
-      expect(getActivityStatusLabel("active")).toBe("Recently Used");
-      expect(getActivityStatusLabel("inactive")).toBe("Inactive (30-90 days)");
-      expect(getActivityStatusLabel("dormant")).toBe("Dormant (>90 days)");
-      expect(getActivityStatusLabel("unknown")).toBe("Unknown");
+      expect(getActivityStatusLabel(AllowanceActivityStatus.ACTIVE)).toBe("Recently Used");
+      expect(getActivityStatusLabel(AllowanceActivityStatus.INACTIVE)).toBe("Inactive (30-90 days)");
+      expect(getActivityStatusLabel(AllowanceActivityStatus.DORMANT)).toBe("Dormant (>90 days)");
+      expect(getActivityStatusLabel(AllowanceActivityStatus.UNKNOWN)).toBe("Unknown");
     });
   });
 });

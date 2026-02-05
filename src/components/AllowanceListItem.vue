@@ -16,7 +16,7 @@
             </Badge>
             <Badge
               v-if="isEVMAllowance && evmAllowance.isUnlimited"
-              variant="danger"
+              variant="error"
             >
               <i class="pi pi-exclamation-triangle mr-1"></i>
               Unlimited
@@ -120,7 +120,6 @@ defineEmits<{
 
 // Computed properties
 const isEVMAllowance = computed(() => props.allowance.chainType === 'EVM');
-const isAVMAllowance = computed(() => props.allowance.chainType === 'AVM');
 
 const evmAllowance = computed(() => props.allowance as EVMTokenAllowance);
 const avmAllowance = computed(() => props.allowance as AVMAssetOptIn);

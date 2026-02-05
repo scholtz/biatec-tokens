@@ -15,7 +15,6 @@ import {
   AllowanceRiskLevel,
   AllowanceActivityStatus,
 } from "../types/allowances";
-import type { NetworkId } from "../composables/useWalletManager";
 
 const STORAGE_KEY = "biatec_allowances";
 const AUDIT_STORAGE_KEY = "biatec_allowance_audit";
@@ -217,7 +216,9 @@ export const useAllowancesStore = defineStore("allowances", () => {
   const updateAllowance = (allowanceId: string, updates: Partial<Allowance>) => {
     const index = allowances.value.findIndex((a) => a.id === allowanceId);
     if (index >= 0) {
-      allowances.value[index] = { ...allowances.value[index], ...updates };
+      const currentAllowance = allowances.value[index];
+      // Type-safe update: only merge if types are compatible
+      allowances.value[index] = { ...currentAllowance, ...updates } as Allowance;
       saveToLocalStorage();
     }
   };
