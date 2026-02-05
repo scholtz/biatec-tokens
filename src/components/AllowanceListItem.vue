@@ -30,7 +30,7 @@
 
         <!-- Spender Info -->
         <div class="flex items-center gap-2 text-sm">
-          <span class="text-gray-600 dark:text-gray-400">Approved to:</span>
+          <span class="text-gray-600 dark:text-gray-400">Granted to:</span>
           <span class="font-medium text-gray-900 dark:text-white">
             {{ spenderDisplayName }}
           </span>
@@ -45,7 +45,7 @@
 
         <!-- Allowance Amount -->
         <div class="mt-2 flex items-baseline gap-2">
-          <span class="text-xs text-gray-500 dark:text-gray-400">Allowance:</span>
+          <span class="text-xs text-gray-500 dark:text-gray-400">Access Limit:</span>
           <span class="text-sm font-semibold text-gray-900 dark:text-white">
             {{ formattedAmount }}
           </span>
@@ -170,9 +170,9 @@ const shouldShowWarning = computed(() => {
 
 const warningMessage = computed(() => {
   if (isEVMAllowance.value && evmAllowance.value.isUnlimited) {
-    return 'This unlimited approval allows the spender to access all your tokens. Consider revoking if no longer needed.';
+    return 'This unlimited access allows the application to access all your tokens. Consider revoking if no longer needed.';
   } else if (props.allowance.riskLevel === 'critical') {
-    return 'This approval poses a critical security risk. Review and revoke if not actively used.';
+    return 'This permission poses a critical security risk. Review and revoke if not actively used.';
   }
   return '';
 });

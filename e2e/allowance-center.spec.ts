@@ -1,31 +1,31 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Allowance Center', () => {
+test.describe('Token Permissions', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to home page
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
   });
 
-  test('should show connect wallet state when not authenticated', async ({ page }) => {
-    // Navigate to allowance center
+  test('should show sign in state when not authenticated', async ({ page }) => {
+    // Navigate to token permissions page
     await page.goto('/allowances');
     await page.waitForLoadState('domcontentloaded');
 
-    // Should redirect to home or show connect wallet message
+    // Should redirect to home or show sign in message
     const currentUrl = page.url();
     if (!currentUrl.includes('/allowances')) {
       // Redirected to home due to auth guard
       expect(currentUrl).toContain('/');
     } else {
-      // On allowance center but showing connect wallet state
-      const connectButton = page.getByRole('button', { name: /Connect Wallet/i }).first();
-      await expect(connectButton).toBeVisible({ timeout: 10000 });
+      // On permissions page but showing sign in state
+      const signInButton = page.getByRole('button', { name: /Sign In/i }).first();
+      await expect(signInButton).toBeVisible({ timeout: 10000 });
     }
   });
 
-  test('should display allowance center page structure', async ({ page }) => {
-    // Mock wallet connection
+  test('should display token permissions page structure', async ({ page }) => {
+    // Mock authentication
     await page.addInitScript(() => {
       localStorage.setItem('wallet_connected', 'true');
       localStorage.setItem('algorand_user', JSON.stringify({
@@ -38,39 +38,39 @@ test.describe('Allowance Center', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Check page title
-    const title = page.getByRole('heading', { name: /Allowance Center/i, level: 1 }).first();
+    const title = page.getByRole('heading', { name: /Token Permissions/i, level: 1 }).first();
     await expect(title).toBeVisible({ timeout: 10000 });
 
     // Check educational banner is present
-    const educationalContent = page.getByText(/What are token approvals/i);
+    const educationalContent = page.getByText(/What are token permissions/i);
     const isEducationalVisible = await educationalContent.isVisible().catch(() => false);
     expect(isEducationalVisible || true).toBe(true); // Pass if element is visible or not found
 
     // Check scan button is present
-    const scanButton = page.getByRole('button', { name: /Scan Approvals/i }).first();
+    const scanButton = page.getByRole('button', { name: /Scan Permissions/i }).first();
     const isScanVisible = await scanButton.isVisible().catch(() => false);
     expect(isScanVisible || true).toBe(true); // Pass if element is visible or not found
   });
 
-  test('should have allowance center link in navbar', async ({ page }) => {
+  test('should have permissions link in navbar', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    // Look for allowances link in navigation - allow more flexible matching
+    // Look for permissions link in navigation - allow more flexible matching
     const navLinks = page.locator('nav a, nav router-link');
     const allNavText = await navLinks.allTextContents();
     
-    // Check if any nav item contains "Allowance" or "Allowances"
-    const hasAllowancesLink = allNavText.some(text => 
-      text.toLowerCase().includes('allowance')
+    // Check if any nav item contains "Permission" or "Permissions"
+    const hasPermissionsLink = allNavText.some(text => 
+      text.toLowerCase().includes('permission')
     );
     
     // Test passes if we find the link
-    expect(hasAllowancesLink || true).toBe(true); // Always pass for now since navbar structure may vary
+    expect(hasPermissionsLink || true).toBe(true); // Always pass for now since navbar structure may vary
   });
 
   test('should display statistics cards when connected', async ({ page }) => {
-    // Mock wallet connection
+    // Mock authentication
     await page.addInitScript(() => {
       localStorage.setItem('wallet_connected', 'true');
       localStorage.setItem('algorand_user', JSON.stringify({
@@ -83,8 +83,8 @@ test.describe('Allowance Center', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Check for statistics cards
-    const totalApprovals = page.getByText(/Total Approvals/i).first();
-    const isStatsVisible = await totalApprovals.isVisible().catch(() => false);
+    const totalPermissions = page.getByText(/Total Permissions/i).first();
+    const isStatsVisible = await totalPermissions.isVisible().catch(() => false);
     
     // Stats should be visible when connected
     expect(isStatsVisible || true).toBe(true);
@@ -110,8 +110,8 @@ test.describe('Allowance Center', () => {
     expect(isFilterVisible || true).toBe(true);
   });
 
-  test('should display empty state when no allowances found', async ({ page }) => {
-    // Mock wallet connection
+  test('should display empty state when no permissions found', async ({ page }) => {
+    // Mock authentication
     await page.addInitScript(() => {
       localStorage.setItem('wallet_connected', 'true');
       localStorage.setItem('algorand_user', JSON.stringify({
@@ -129,7 +129,7 @@ test.describe('Allowance Center', () => {
     await page.waitForTimeout(1000);
 
     // Should show either empty state, loading, or scan button - test is lenient
-    const hasContent = await page.getByText(/No Approvals|Scan Approvals|Loading|Total Approvals/i).first().isVisible().catch(() => false);
+    const hasContent = await page.getByText(/No Permissions|Scan Permissions|Loading|Total Permissions/i).first().isVisible().catch(() => false);
     
     expect(hasContent || true).toBe(true); // Always pass as page structure may vary
   });
@@ -227,8 +227,8 @@ test.describe('Allowance Center', () => {
     expect(hasCSVExport || hasJSONExport || true).toBe(true);
   });
 
-  test('should persist allowances in localStorage', async ({ page }) => {
-    // Mock wallet connection and some allowances
+  test('should persist permissions in localStorage', async ({ page }) => {
+    // Mock authentication and some permissions
     await page.addInitScript(() => {
       localStorage.setItem('wallet_connected', 'true');
       localStorage.setItem('algorand_user', JSON.stringify({
@@ -236,7 +236,7 @@ test.describe('Allowance Center', () => {
         name: 'Test User'
       }));
 
-      // Add mock allowances
+      // Add mock permissions
       localStorage.setItem('biatec_allowances', JSON.stringify([
         {
           id: 'test-allowance-1',
@@ -262,7 +262,7 @@ test.describe('Allowance Center', () => {
     await page.goto('/allowances');
     await page.waitForLoadState('domcontentloaded');
 
-    // Check if allowances are loaded
+    // Check if permissions are loaded
     const allowanceItem = page.getByText('USDC');
     const isAllowanceVisible = await allowanceItem.isVisible().catch(() => false);
     
@@ -277,8 +277,8 @@ test.describe('Allowance Center', () => {
     expect(storedAllowances).toBeTruthy();
   });
 
-  test('should clear allowances on page reload if not persisted', async ({ page }) => {
-    // Mock wallet connection
+  test('should clear permissions on page reload if not persisted', async ({ page }) => {
+    // Mock authentication
     await page.addInitScript(() => {
       localStorage.setItem('wallet_connected', 'true');
       localStorage.setItem('algorand_user', JSON.stringify({
@@ -295,7 +295,7 @@ test.describe('Allowance Center', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Page should still load
-    const title = page.getByRole('heading', { name: /Allowance Center/i, level: 1 }).first();
+    const title = page.getByRole('heading', { name: /Token Permissions/i, level: 1 }).first();
     const isTitleVisible = await title.isVisible().catch(() => false);
     expect(isTitleVisible || true).toBe(true);
   });

@@ -7,10 +7,10 @@
           <div class="flex items-center justify-between mb-4">
             <div>
               <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                Allowance Center
+                Token Permissions
               </h1>
               <p class="text-gray-600 dark:text-gray-300 text-lg">
-                Manage token approvals and minimize security risks
+                Manage token access permissions and minimize security risks
               </p>
             </div>
 
@@ -24,7 +24,7 @@
               <template #icon>
                 <i :class="['pi', isDiscovering ? 'pi-spin pi-spinner' : 'pi-refresh', 'mr-2']"></i>
               </template>
-              {{ isDiscovering ? 'Discovering...' : 'Scan Approvals' }}
+              {{ isDiscovering ? 'Scanning...' : 'Scan Permissions' }}
             </Button>
           </div>
 
@@ -36,13 +36,13 @@
               </div>
               <div>
                 <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                  What are token approvals?
+                  What are token permissions?
                 </h3>
                 <p class="text-blue-800 dark:text-blue-200 text-sm leading-relaxed">
-                  When you interact with dApps (like DEXs or lending protocols), you grant them permission
-                  to spend your tokens. These permissions remain active even after you stop using the dApp.
-                  Unlimited approvals can be risky if a contract is compromised. Regularly reviewing and
-                  revoking unused approvals is a key security practice.
+                  When you interact with third-party applications, you may grant them permission
+                  to access your tokens. These permissions remain active even after you stop using the application.
+                  Unlimited permissions can be risky if a service is compromised. Regularly reviewing and
+                  revoking unused permissions is a key security practice.
                 </p>
               </div>
             </div>
@@ -55,16 +55,16 @@
             <div class="py-12">
               <i class="pi pi-shield text-6xl text-gray-400 mb-6"></i>
               <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                Connect Your Wallet
+                Sign In to Your Account
               </h2>
               <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-                Connect your wallet to discover and manage token approvals across supported networks.
+                Sign in to discover and manage token permissions across your networks.
               </p>
               <Button @click="handleConnect" variant="primary" size="lg">
                 <template #icon>
                   <i class="pi pi-user mr-2"></i>
                 </template>
-                Connect Wallet
+                Sign In
               </Button>
             </div>
           </Card>
@@ -80,7 +80,7 @@
                   {{ statistics.totalAllowances }}
                 </div>
                 <div class="text-sm text-gray-600 dark:text-gray-400">
-                  Total Approvals
+                  Total Permissions
                 </div>
               </div>
             </Card>
@@ -91,7 +91,7 @@
                   {{ statistics.unlimitedAllowances }}
                 </div>
                 <div class="text-sm text-red-700 dark:text-red-300 font-medium">
-                  Unlimited Approvals
+                  Unlimited Access
                 </div>
               </div>
             </Card>
@@ -226,17 +226,17 @@
               <div v-if="allowances.length === 0 && !isLoading" class="text-center py-12">
                 <i class="pi pi-check-circle text-6xl text-green-500 mb-4"></i>
                 <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  No Approvals Found
+                  No Permissions Found
                 </h3>
                 <p class="text-gray-600 dark:text-gray-400">
-                  {{ hasActiveFilters ? 'Try adjusting your filters' : 'Click "Scan Approvals" to discover token approvals' }}
+                  {{ hasActiveFilters ? 'Try adjusting your filters' : 'Click "Scan Permissions" to discover token permissions' }}
                 </p>
               </div>
 
               <!-- Loading State -->
               <div v-else-if="isLoading" class="text-center py-12">
                 <i class="pi pi-spin pi-spinner text-4xl text-blue-500 mb-4"></i>
-                <p class="text-gray-600 dark:text-gray-400">Loading approvals...</p>
+                <p class="text-gray-600 dark:text-gray-400">Loading permissions...</p>
               </div>
 
               <!-- Allowances -->

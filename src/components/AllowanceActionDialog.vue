@@ -14,13 +14,13 @@
           </span>
         </div>
         <div class="flex items-center justify-between mb-2">
-          <span class="text-sm text-gray-600 dark:text-gray-400">Spender:</span>
+          <span class="text-sm text-gray-600 dark:text-gray-400">Application:</span>
           <span class="font-medium text-gray-900 dark:text-white text-sm">
             {{ spenderDisplay }}
           </span>
         </div>
         <div class="flex items-center justify-between">
-          <span class="text-sm text-gray-600 dark:text-gray-400">Current Allowance:</span>
+          <span class="text-sm text-gray-600 dark:text-gray-400">Current Access:</span>
           <span class="font-semibold text-gray-900 dark:text-white">
             {{ currentAllowanceDisplay }}
           </span>
@@ -73,7 +73,7 @@
       <!-- Reduce Amount Input -->
       <div v-if="action === 'reduce'" class="space-y-2">
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          New Allowance Amount
+          New Access Amount
         </label>
         <input
           v-model="reduceAmount"
@@ -82,7 +82,7 @@
           class="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
         />
         <div class="text-xs text-gray-500 dark:text-gray-400">
-          Tip: Set to the exact amount you plan to use with this dApp for better security.
+          Tip: Set to the exact amount you plan to use with this application for better security.
         </div>
       </div>
 
@@ -91,7 +91,7 @@
         <div class="flex items-center gap-2 text-sm">
           <i class="pi pi-bolt text-yellow-600 dark:text-yellow-400"></i>
           <span class="text-yellow-800 dark:text-yellow-200">
-            Estimated gas fee: ~$2-5 (actual cost will be shown in your wallet)
+            Estimated network fee: ~$2-5 (actual cost will be shown in your confirmation)
           </span>
         </div>
       </div>
@@ -177,41 +177,41 @@ const currentAllowanceDisplay = computed(() => {
 });
 
 const actionTitle = computed(() => {
-  return props.action === 'revoke' ? 'Revoke Token Approval' : 'Reduce Token Approval';
+  return props.action === 'revoke' ? 'Revoke Token Access' : 'Reduce Token Access';
 });
 
 const actionWarning = computed(() => {
   return props.action === 'revoke'
-    ? 'This will completely remove the approval'
-    : 'This will reduce the approval to a specific amount';
+    ? 'This will completely remove the access permission'
+    : 'This will reduce the access permission to a specific amount';
 });
 
 const actionDescription = computed(() => {
   return props.action === 'revoke'
-    ? 'The spender will no longer be able to access your tokens. You will need to approve again to use this dApp in the future.'
-    : 'The spender will only be able to access up to the amount you specify. This is more secure than unlimited approvals.';
+    ? 'The application will no longer be able to access your tokens. You will need to grant permission again to use this application in the future.'
+    : 'The application will only be able to access up to the amount you specify. This is more secure than unlimited access.';
 });
 
 const benefit1 = computed(() => {
   return props.action === 'revoke'
-    ? 'Eliminates security risk from this approval'
-    : 'Limits potential loss if contract is compromised';
+    ? 'Eliminates security risk from this permission'
+    : 'Limits potential loss if application is compromised';
 });
 
 const benefit2 = computed(() => {
   return props.action === 'revoke'
     ? 'Prevents unauthorized token access'
-    : 'Maintains ability to use dApp with limited exposure';
+    : 'Maintains ability to use application with limited exposure';
 });
 
 const benefit3 = computed(() => {
   return props.action === 'revoke'
-    ? 'No future gas costs for this approval'
+    ? 'No future transaction costs for this permission'
     : 'Follows security best practice of least privilege';
 });
 
 const confirmButtonText = computed(() => {
-  return props.action === 'revoke' ? 'Revoke Approval' : 'Reduce Approval';
+  return props.action === 'revoke' ? 'Revoke Access' : 'Reduce Access';
 });
 
 const isValidAmount = computed(() => {

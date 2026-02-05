@@ -60,7 +60,7 @@
             class="text-white hover:text-biatec-accent transition-colors duration-200 font-medium text-lg relative group"
             :class="{ 'text-biatec-accent': $route.name === 'AllowanceCenter' }"
           >
-            Allowances
+            Permissions
             <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-biatec-accent transition-all duration-200 group-hover:w-full" :class="{ 'w-full': $route.name === 'AllowanceCenter' }"></span>
           </router-link>
           <router-link
