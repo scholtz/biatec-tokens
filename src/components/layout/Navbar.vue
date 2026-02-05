@@ -167,7 +167,7 @@
           <WalletDiagnosticsPanel
             :diagnostic-data="diagnosticData"
             @close="showDiagnosticsPanel = false"
-            @refresh="() => { diagnosticData; }"
+            @refresh="handleDiagnosticsRefresh"
             @copied="() => {}"
           />
         </div>
@@ -317,6 +317,12 @@ const handleRecoveryReconnect = async (data: { walletId: string; networkId: any 
 const handleStartFresh = () => {
   showRecoveryPanel.value = false;
   showWalletModal.value = true;
+};
+
+const handleDiagnosticsRefresh = () => {
+  // Force recollection of diagnostic data by triggering a reactive update
+  // The computed diagnosticData will automatically recalculate
+  walletManager.updateWalletState?.();
 };
 
 const diagnosticData = computed(() => {
