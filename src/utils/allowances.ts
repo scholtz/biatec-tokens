@@ -5,13 +5,15 @@
 import type {
   EVMTokenAllowance,
   AVMAssetOptIn,
+} from "../types/allowances";
+import {
   AllowanceRiskLevel,
   AllowanceActivityStatus,
 } from "../types/allowances";
 import type { NetworkId } from "../composables/useWalletManager";
 
-// Maximum safe integer that can be represented in JavaScript
-const MAX_UINT256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935";
+// Maximum safe integer that can be represented in JavaScript (unused but kept for reference)
+// const MAX_UINT256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935";
 
 // Threshold for considering an allowance "unlimited" (2^256 - 1 or close to it)
 const UNLIMITED_THRESHOLD = "100000000000000000000000000000000000000"; // 10^38
@@ -72,19 +74,19 @@ export function formatAllowanceAmount(
 export function calculateEVMRiskLevel(allowance: Partial<EVMTokenAllowance>): AllowanceRiskLevel {
   // Unlimited allowances are always critical risk
   if (allowance.isUnlimited) {
-    return "critical";
+    return AllowanceRiskLevel.CRITICAL;
   }
 
   // If we have USD value, use that for risk assessment
   if (allowance.valueUSD !== undefined) {
     if (allowance.valueUSD > 10000) {
-      return "critical";
+      return AllowanceRiskLevel.CRITICAL;
     } else if (allowance.valueUSD > 1000) {
-      return "high";
+      return AllowanceRiskLevel.HIGH;
     } else if (allowance.valueUSD > 100) {
-      return "medium";
+      return AllowanceRiskLevel.MEDIUM;
     } else {
-      return "low";
+      return AllowanceRiskLevel.LOW;
     }
   }
 
@@ -98,18 +100,18 @@ export function calculateEVMRiskLevel(allowance: Partial<EVMTokenAllowance>): Al
 
       // Rough heuristic: assume stablecoin-like value
       if (wholePart > 10000) {
-        return "high";
+        return AllowanceRiskLevel.HIGH;
       } else if (wholePart > 1000) {
-        return "medium";
+        return AllowanceRiskLevel.MEDIUM;
       } else {
-        return "low";
+        return AllowanceRiskLevel.LOW;
       }
     } catch {
-      return "medium"; // Default to medium if we can't parse
+      return AllowanceRiskLevel.MEDIUM; // Default to medium if we can't parse
     }
   }
 
-  return "medium"; // Default
+  return AllowanceRiskLevel.MEDIUM; // Default
 }
 
 /**
@@ -121,7 +123,7 @@ export function calculateAVMRiskLevel(_allowance: Partial<AVMAssetOptIn>): Allow
   // or has other concerning properties
 
   // For now, return low risk as AVM opt-ins are generally safe
-  return "low";
+  return AllowanceRiskLevel.LOW;
 }
 
 /**
@@ -131,7 +133,7 @@ export function calculateActivityStatus(
   lastInteractionTime?: Date
 ): AllowanceActivityStatus {
   if (!lastInteractionTime) {
-    return "unknown";
+    return AllowanceActivityStatus.UNKNOWN;
   }
 
   const now = new Date();
@@ -140,11 +142,11 @@ export function calculateActivityStatus(
   );
 
   if (daysSinceLastInteraction < 30) {
-    return "active";
+    return AllowanceActivityStatus.ACTIVE;
   } else if (daysSinceLastInteraction < 90) {
-    return "inactive";
+    return AllowanceActivityStatus.INACTIVE;
   } else {
-    return "dormant";
+    return AllowanceActivityStatus.DORMANT;
   }
 }
 
@@ -207,14 +209,16 @@ export function getRiskBadgeVariant(
   riskLevel: AllowanceRiskLevel
 ): "danger" | "warning" | "default" | "success" {
   switch (riskLevel) {
-    case "critical":
+    case AllowanceRiskLevel.CRITICAL:
       return "danger";
-    case "high":
+    case AllowanceRiskLevel.HIGH:
       return "warning";
-    case "medium":
+    case AllowanceRiskLevel.MEDIUM:
       return "default";
-    case "low":
+    case AllowanceRiskLevel.LOW:
       return "success";
+    default:
+      return "default";
   }
 }
 
@@ -225,13 +229,15 @@ export function getActivityBadgeVariant(
   activityStatus: AllowanceActivityStatus
 ): "success" | "warning" | "default" {
   switch (activityStatus) {
-    case "active":
+    case AllowanceActivityStatus.ACTIVE:
       return "success";
-    case "inactive":
+    case AllowanceActivityStatus.INACTIVE:
       return "warning";
-    case "dormant":
+    case AllowanceActivityStatus.DORMANT:
       return "default";
-    case "unknown":
+    case AllowanceActivityStatus.UNKNOWN:
+      return "default";
+    default:
       return "default";
   }
 }
@@ -241,14 +247,16 @@ export function getActivityBadgeVariant(
  */
 export function getRiskLevelLabel(riskLevel: AllowanceRiskLevel): string {
   switch (riskLevel) {
-    case "critical":
+    case AllowanceRiskLevel.CRITICAL:
       return "Critical Risk";
-    case "high":
+    case AllowanceRiskLevel.HIGH:
       return "High Risk";
-    case "medium":
+    case AllowanceRiskLevel.MEDIUM:
       return "Medium Risk";
-    case "low":
+    case AllowanceRiskLevel.LOW:
       return "Low Risk";
+    default:
+      return "Unknown Risk";
   }
 }
 
@@ -257,13 +265,15 @@ export function getRiskLevelLabel(riskLevel: AllowanceRiskLevel): string {
  */
 export function getActivityStatusLabel(activityStatus: AllowanceActivityStatus): string {
   switch (activityStatus) {
-    case "active":
+    case AllowanceActivityStatus.ACTIVE:
       return "Recently Used";
-    case "inactive":
+    case AllowanceActivityStatus.INACTIVE:
       return "Inactive (30-90 days)";
-    case "dormant":
+    case AllowanceActivityStatus.DORMANT:
       return "Dormant (>90 days)";
-    case "unknown":
+    case AllowanceActivityStatus.UNKNOWN:
+      return "Unknown";
+    default:
       return "Unknown";
   }
 }

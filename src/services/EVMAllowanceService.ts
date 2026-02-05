@@ -7,12 +7,12 @@ import type {
   EVMTokenAllowance,
   AllowanceDiscoveryResult,
 } from "../types/allowances";
+import { AllowanceRiskLevel, AllowanceActivityStatus } from "../types/allowances";
 import type { EVMNetworkId } from "../composables/useWalletManager";
 import {
   isUnlimitedAllowance,
   formatAllowanceAmount,
   calculateEVMRiskLevel,
-  calculateActivityStatus,
   generateAllowanceId,
   getKnownSpenderName,
 } from "../utils/allowances";
@@ -28,8 +28,7 @@ const ERC20_DECIMALS_ABI = "0x313ce567"; // decimals()
  */
 async function callContract(
   contractAddress: string,
-  data: string,
-  chainId: number
+  data: string
 ): Promise<string> {
   if (!window.ethereum) {
     throw new Error("Ethereum provider not available");
@@ -84,7 +83,6 @@ function decodeString(hex: string): string {
     
     // Parse ABI encoded string
     // First 32 bytes = offset, next 32 bytes = length, rest = data
-    const offset = parseInt(cleanHex.slice(0, 64), 16);
     const length = parseInt(cleanHex.slice(64, 128), 16);
     const dataHex = cleanHex.slice(128, 128 + length * 2);
     
@@ -104,8 +102,7 @@ function decodeString(hex: string): string {
  * Get ERC-20 token metadata
  */
 async function getTokenMetadata(
-  tokenAddress: string,
-  chainId: number
+  tokenAddress: string
 ): Promise<{
   symbol: string;
   name: string;
@@ -115,20 +112,18 @@ async function getTokenMetadata(
     // Get symbol
     const symbolData = await callContract(
       tokenAddress,
-      ERC20_SYMBOL_ABI,
-      chainId
+      ERC20_SYMBOL_ABI
     );
     const symbol = decodeString(symbolData) || "UNKNOWN";
 
     // Get name
-    const nameData = await callContract(tokenAddress, ERC20_NAME_ABI, chainId);
+    const nameData = await callContract(tokenAddress, ERC20_NAME_ABI);
     const name = decodeString(nameData) || "Unknown Token";
 
     // Get decimals
     const decimalsData = await callContract(
       tokenAddress,
-      ERC20_DECIMALS_ABI,
-      chainId
+      ERC20_DECIMALS_ABI
     );
     const decimals = parseInt(decodeUint256(decimalsData));
 
@@ -149,15 +144,14 @@ async function getTokenMetadata(
 async function getTokenAllowance(
   tokenAddress: string,
   ownerAddress: string,
-  spenderAddress: string,
-  chainId: number
+  spenderAddress: string
 ): Promise<string> {
   const data =
     ERC20_ALLOWANCE_ABI +
     encodeAddress(ownerAddress) +
     encodeAddress(spenderAddress);
 
-  const result = await callContract(tokenAddress, data, chainId);
+  const result = await callContract(tokenAddress, data);
   return decodeUint256(result);
 }
 
@@ -174,7 +168,7 @@ async function getTokenAllowance(
 export async function discoverEVMAllowances(
   ownerAddress: string,
   networkId: EVMNetworkId,
-  chainId: number,
+  _chainId: number,
   knownPairs: Array<{ tokenAddress: string; spenderAddress: string }>
 ): Promise<AllowanceDiscoveryResult> {
   const discoveredAt = new Date();
@@ -184,14 +178,13 @@ export async function discoverEVMAllowances(
   for (const pair of knownPairs) {
     try {
       // Get token metadata
-      const metadata = await getTokenMetadata(pair.tokenAddress, chainId);
+      const metadata = await getTokenMetadata(pair.tokenAddress);
 
       // Get allowance
       const allowanceAmount = await getTokenAllowance(
         pair.tokenAddress,
         ownerAddress,
-        pair.spenderAddress,
-        chainId
+        pair.spenderAddress
       );
 
       // Skip zero allowances
@@ -225,8 +218,8 @@ export async function discoverEVMAllowances(
         allowanceAmount,
         formattedAllowance,
         isUnlimited,
-        riskLevel: "medium", // Will be calculated properly when USD value is available
-        activityStatus: "unknown", // Would need transaction history to determine
+        riskLevel: AllowanceRiskLevel.MEDIUM, // Will be calculated properly when USD value is available
+        activityStatus: AllowanceActivityStatus.UNKNOWN, // Would need transaction history to determine
         discoveredAt,
       };
 

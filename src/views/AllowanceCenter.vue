@@ -141,10 +141,10 @@
                 </button>
 
                 <button
-                  @click="toggleRiskFilter('critical')"
+                  @click="toggleRiskFilter(AllowanceRiskLevel.CRITICAL)"
                   :class="[
                     'px-4 py-2 rounded-lg font-medium text-sm transition-all',
-                    filters.riskLevels.includes('critical')
+                    filters.riskLevels.includes(AllowanceRiskLevel.CRITICAL)
                       ? 'bg-red-600 text-white'
                       : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                   ]"
@@ -153,10 +153,10 @@
                 </button>
 
                 <button
-                  @click="toggleRiskFilter('high')"
+                  @click="toggleRiskFilter(AllowanceRiskLevel.HIGH)"
                   :class="[
                     'px-4 py-2 rounded-lg font-medium text-sm transition-all',
-                    filters.riskLevels.includes('high')
+                    filters.riskLevels.includes(AllowanceRiskLevel.HIGH)
                       ? 'bg-orange-600 text-white'
                       : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                   ]"
@@ -165,10 +165,10 @@
                 </button>
 
                 <button
-                  @click="toggleActivityFilter('dormant')"
+                  @click="toggleActivityFilter(AllowanceActivityStatus.DORMANT)"
                   :class="[
                     'px-4 py-2 rounded-lg font-medium text-sm transition-all',
-                    filters.activityStatuses.includes('dormant')
+                    filters.activityStatuses.includes(AllowanceActivityStatus.DORMANT)
                       ? 'bg-yellow-600 text-white'
                       : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                   ]"
@@ -311,7 +311,7 @@
                   </div>
 
                   <Badge
-                    :variant="entry.status === 'success' ? 'success' : entry.status === 'failed' ? 'danger' : 'warning'"
+                    :variant="entry.status === 'success' ? 'success' : entry.status === 'failed' ? 'error' : 'warning'"
                   >
                     {{ entry.status }}
                   </Badge>
@@ -345,8 +345,8 @@ import AllowanceListItem from '../components/AllowanceListItem.vue';
 import AllowanceActionDialog from '../components/AllowanceActionDialog.vue';
 import { useAllowances } from '../composables/useAllowances';
 import { useUnifiedWallet } from '../composables/useUnifiedWallet';
-import type { Allowance, AllowanceRiskLevel, AllowanceActivityStatus } from '../types/allowances';
-import { AllowanceSortField, SortDirection } from '../types/allowances';
+import type { Allowance } from '../types/allowances';
+import { AllowanceSortField, SortDirection, AllowanceRiskLevel, AllowanceActivityStatus } from '../types/allowances';
 
 const { isConnected, connect } = useUnifiedWallet();
 const {
