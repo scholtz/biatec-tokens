@@ -171,9 +171,19 @@ test.describe("Navigation", () => {
     // Skip Firefox due to consistent networkidle timeout issues
     test.skip(browserName === "firefox", "Firefox has persistent networkidle timeout issues");
 
-    // Mock wallet connection to avoid onboarding redirects
+    // Mock wallet connection and onboarding completion to show normal home page
     await page.addInitScript(() => {
       localStorage.setItem("wallet_connected", "true");
+      localStorage.setItem("biatec_onboarding_state", JSON.stringify({
+        hasSeenWelcome: true,
+        hasConnectedWallet: true,
+        hasSelectedStandards: false,
+        hasSavedFilters: false,
+        hasViewedToken: false,
+        completedAt: null,
+        preferredStandards: [],
+        preferredChains: [],
+      }));
     });
     await page.goto("/");
     // Use Firefox-specific timeout
