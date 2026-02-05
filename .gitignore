@@ -30,3 +30,6 @@ coverage/
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Temporary screenshot script
+take-screenshots.js
