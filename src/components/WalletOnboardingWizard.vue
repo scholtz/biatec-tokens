@@ -494,9 +494,9 @@ const handleWalletConnect = async (walletId: string) => {
     // Move to next step (compliance)
     currentStep.value = 3;
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Failed to connect wallet";
+    const errorMessage = err instanceof Error ? err.message : "Failed to authenticate";
     connectionError.value = errorMessage;
-    console.error("Wallet connection error:", err);
+    console.error("Authentication error:", err);
   } finally {
     isConnecting.value = false;
   }

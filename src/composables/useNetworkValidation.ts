@@ -112,9 +112,9 @@ export function useNetworkValidation() {
       warnings.push({
         severity: 'error',
         title: 'Network Not Detected',
-        message: 'Unable to detect current network. Please reconnect your wallet.',
+        message: 'Unable to detect current network. Please reconnect your session.',
         actionRequired: true,
-        suggestedAction: 'Reconnect wallet',
+        suggestedAction: 'Reconnect',
       })
       networkMismatchDetected.value = true
       mismatchWarnings.value = warnings

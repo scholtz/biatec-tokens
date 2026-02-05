@@ -387,8 +387,8 @@ export function useWalletManager() {
         });
       }
     } catch (error) {
-      console.error("Failed to connect wallet:", error);
-      const walletError = parseWalletError(error, "Connect wallet");
+      console.error("Failed to authenticate:", error);
+      const walletError = parseWalletError(error, "Authentication");
       transitionState(WalletConnectionState.FAILED, walletError);
 
       telemetryService.trackWalletConnectionFailure({
@@ -433,7 +433,7 @@ export function useWalletManager() {
       localStorage.removeItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED);
       localStorage.removeItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID);
     } catch (error) {
-      console.error("Failed to disconnect wallet:", error);
+      console.error("Failed to sign out:", error);
       throw error;
     }
   };
@@ -537,10 +537,10 @@ export function useWalletManager() {
       // Attempt reconnection
       await connect(savedWalletId);
 
-      console.log("Successfully reconnected to wallet");
+      console.log("Successfully reconnected session");
     } catch (error) {
-      console.warn("Failed to reconnect wallet:", error);
-      const walletError = parseWalletError(error, "Reconnect wallet");
+      console.warn("Failed to reconnect session:", error);
+      const walletError = parseWalletError(error, "Reconnect session");
       transitionState(WalletConnectionState.FAILED, walletError);
 
       // Clear persisted state on reconnection failure

@@ -43,7 +43,7 @@ export function useUnifiedWallet() {
   const error = ref<string | null>(null);
 
   /**
-   * Connect wallet (EVM or AVM based on current network)
+   * Authenticate (EVM or AVM based on current network)
    */
   const connect = async () => {
     error.value = null;
@@ -54,13 +54,13 @@ export function useUnifiedWallet() {
         await avmWallet.connect();
       }
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "Failed to connect wallet";
+      error.value = err instanceof Error ? err.message : "Failed to authenticate";
       throw err;
     }
   };
 
   /**
-   * Disconnect wallet
+   * Sign out
    */
   const disconnect = async () => {
     error.value = null;
@@ -71,7 +71,7 @@ export function useUnifiedWallet() {
         await avmWallet.disconnect();
       }
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "Failed to disconnect wallet";
+      error.value = err instanceof Error ? err.message : "Failed to sign out";
       throw err;
     }
   };
@@ -141,7 +141,7 @@ export function useUnifiedWallet() {
       }
       // AVM wallet reconnection is handled by useWalletManager internally
     } catch (err) {
-      console.warn("Failed to reconnect wallet:", err);
+      console.warn("Failed to reconnect session:", err);
     }
   };
 

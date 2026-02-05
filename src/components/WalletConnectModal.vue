@@ -332,7 +332,7 @@ const handleConnect = async (walletId: string) => {
       await walletManager.switchNetwork(selectedNetwork.value);
     }
 
-    // Connect wallet
+    // Authenticate
     await walletManager.connect(walletId);
 
     // Get active account after connection
@@ -350,9 +350,9 @@ const handleConnect = async (walletId: string) => {
 
     close();
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Failed to connect wallet";
+    const errorMessage = err instanceof Error ? err.message : "Failed to authenticate";
     emit("error", errorMessage);
-    console.error("Wallet connection error:", err);
+    console.error("Authentication error:", err);
   }
 };
 

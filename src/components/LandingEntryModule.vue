@@ -52,7 +52,7 @@
           </div>
           <div class="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
             <i class="pi pi-lock"></i>
-            <span class="italic">Connect wallet later to create tokens</span>
+            <span class="italic">Authenticate later to create tokens</span>
           </div>
         </div>
 
@@ -68,7 +68,7 @@
       <button
         @click="handleWalletConnect"
         class="group relative overflow-hidden rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-8 text-left hover:border-purple-500 dark:hover:border-purple-400 hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
-        aria-label="Connect wallet - for users ready to create tokens"
+        aria-label="Sign in with wallet - for users ready to create tokens"
         data-testid="wallet-connect-button"
       >
         <div class="flex items-start gap-4 mb-4">
@@ -77,10 +77,10 @@
           </div>
           <div class="flex-1">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">
-              Connect Wallet
+              Sign In with Wallet
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-              For users ready to create and deploy tokens. Authenticate with your preferred wallet provider.
+              For users ready to create and deploy tokens. Authenticate with your blockchain wallet provider.
             </p>
           </div>
         </div>
@@ -106,7 +106,7 @@
 
         <div class="flex items-center justify-between">
           <span class="text-purple-600 dark:text-purple-400 font-semibold group-hover:gap-2 transition-all">
-            Connect Now
+            Sign In
           </span>
           <i class="pi pi-arrow-right text-purple-600 dark:text-purple-400 group-hover:translate-x-1 transition-transform"></i>
         </div>
