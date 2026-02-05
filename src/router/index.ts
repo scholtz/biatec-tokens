@@ -14,6 +14,7 @@ import EnterpriseGuideView from "../views/EnterpriseGuideView.vue";
 import Marketplace from "../views/Marketplace.vue";
 import AccountSecurity from "../views/AccountSecurity.vue";
 import DiscoveryDashboard from "../views/DiscoveryDashboard.vue";
+import AllowanceCenter from "../views/AllowanceCenter.vue";
 import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from "../constants/auth";
 
 // Subscription views
@@ -112,6 +113,12 @@ const router = createRouter({
       path: "/account/security",
       name: "AccountSecurity",
       component: AccountSecurity,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/allowances",
+      name: "AllowanceCenter",
+      component: AllowanceCenter,
       meta: { requiresAuth: true },
     },
     // Subscription routes
