@@ -210,7 +210,8 @@
               </div>
             </div>
 
-            <div class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+            <!-- Only show wallet guidance if advanced options are expanded -->
+            <div v-if="showAdvancedOptions" class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
               <div class="flex items-start gap-3">
                 <i class="pi pi-exclamation-circle text-yellow-400"></i>
                 <div class="text-sm text-gray-300">

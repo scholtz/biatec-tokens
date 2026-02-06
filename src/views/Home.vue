@@ -100,8 +100,21 @@
       </div>
     </div>
 
-    <!-- Wallet Onboarding Wizard -->
-    <WalletOnboardingWizard :is-open="showOnboardingWizard" @close="showOnboardingWizard = false" @complete="handleOnboardingComplete" />
+    <!-- Sign-In Modal (Email/Password Authentication) -->
+    <WalletConnectModal 
+      :is-open="showAuthModal" 
+      :show-network-selector="false"
+      @close="showAuthModal = false" 
+      @connected="handleAuthComplete" 
+    />
+    
+    <!-- Wallet Onboarding Wizard (Legacy - Hidden) -->
+    <WalletOnboardingWizard 
+      v-if="false"
+      :is-open="showOnboardingWizard" 
+      @close="showOnboardingWizard = false" 
+      @complete="handleOnboardingComplete" 
+    />
     
     <!-- Onboarding Checklist (Persistent) -->
     <OnboardingChecklist />
@@ -120,6 +133,7 @@ import Button from "../components/ui/Button.vue";
 import Card from "../components/ui/Card.vue";
 import Badge from "../components/ui/Badge.vue";
 import MainLayout from "../layout/MainLayout.vue";
+import WalletConnectModal from "../components/WalletConnectModal.vue";
 import WalletOnboardingWizard from "../components/WalletOnboardingWizard.vue";
 import LandingEntryModule from "../components/LandingEntryModule.vue";
 import OnboardingChecklist from "../components/OnboardingChecklist.vue";
@@ -131,6 +145,7 @@ const router = useRouter();
 const route = useRoute();
 const { isConnected } = useWalletManager();
 
+const showAuthModal = ref(false);
 const showOnboardingWizard = ref(false);
 
 const shouldShowLandingEntry = computed(() => {
@@ -171,7 +186,7 @@ const handleEmailSignup = () => {
 };
 
 const handleWalletConnectFromLanding = () => {
-  showOnboardingWizard.value = true;
+  showAuthModal.value = true;
 };
 
 const handleCreateToken = () => {
@@ -179,7 +194,7 @@ const handleCreateToken = () => {
     router.push("/create");
   } else {
     localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, "/create");
-    showOnboardingWizard.value = true;
+    showAuthModal.value = true;
   }
 };
 
@@ -188,12 +203,26 @@ const handleViewDashboard = () => {
     router.push("/dashboard");
   } else {
     localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, "/dashboard");
-    showOnboardingWizard.value = true;
+    showAuthModal.value = true;
   }
 };
 
 const handleDiscoverTokens = () => {
   router.push({ name: 'DiscoveryDashboard' });
+};
+
+const handleAuthComplete = () => {
+  showAuthModal.value = false;
+  onboardingStore.markStepComplete('connect-wallet');
+
+  // Check if there's a redirect destination
+  const redirectPath = localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);
+  if (redirectPath) {
+    localStorage.removeItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);
+    router.push(redirectPath);
+  } else {
+    router.push("/create");
+  }
 };
 
 const handleOnboardingComplete = () => {
@@ -214,18 +243,33 @@ onMounted(() => {
   // Initialize onboarding store
   onboardingStore.initialize();
   
-  // Check if we should show onboarding
+  // Check if we should show authentication modal (email/password)
+  if (route.query.showAuth === "true") {
+    showAuthModal.value = true;
+  }
+  
+  // Legacy: Check if we should show onboarding (deprecated)
   if (route.query.showOnboarding === "true") {
-    showOnboardingWizard.value = true;
+    showAuthModal.value = true; // Redirect old onboarding to auth modal
   }
 });
 
 // Watch for route query changes to handle navigation to the same component
 watch(
+  () => route.query.showAuth,
+  (newValue) => {
+    if (newValue === "true") {
+      showAuthModal.value = true;
+    }
+  },
+);
+
+// Legacy: Watch for old showOnboarding parameter (redirect to auth modal)
+watch(
   () => route.query.showOnboarding,
   (newValue) => {
     if (newValue === "true") {
-      showOnboardingWizard.value = true;
+      showAuthModal.value = true;
     }
   },
 );

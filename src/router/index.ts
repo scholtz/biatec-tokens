@@ -159,10 +159,10 @@ router.beforeEach((to, _from, next) => {
       // Store the intended destination
       localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, to.fullPath);
 
-      // Redirect to home with a flag to show onboarding
+      // Redirect to home with a flag to show sign-in modal (email/password auth)
       next({
         name: "Home",
-        query: { showOnboarding: "true" },
+        query: { showAuth: "true" },
       });
     } else {
       next();
