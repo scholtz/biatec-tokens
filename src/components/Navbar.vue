@@ -195,12 +195,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useWalletManager } from '../composables/useWalletManager'
-import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from '../constants/auth'
+// AUTH_STORAGE_KEYS removed - no longer used in this component
 import { AUTH_UI_COPY } from '../constants/uiCopy'
 import { telemetryService } from '../services/TelemetryService'
 import WalletConnectModal from './WalletConnectModal.vue'
 import WalletOnboardingWizard from './WalletOnboardingWizard.vue'
-import NetworkSwitcher from './NetworkSwitcher.vue'
+// NetworkSwitcher removed per MVP requirements (wallet-free mode)
+// import NetworkSwitcher from './NetworkSwitcher.vue'
 
 const { isConnected, activeAddress, formattedAddress, disconnect, walletState } = useWalletManager()
 
@@ -210,10 +211,7 @@ const showOnboardingWizard = ref(false)
 const showAccountMenu = ref(false)
 const loginStartTime = ref<number | null>(null)
 
-// Check if user has completed onboarding before
-const hasCompletedOnboarding = computed(() => {
-  return localStorage.getItem(AUTH_STORAGE_KEYS.ONBOARDING_COMPLETED) === WALLET_CONNECTION_STATE.CONNECTED
-})
+// hasCompletedOnboarding removed - no longer used per wallet-free mode
 
 const authButtonText = computed(() => {
   if (walletState.value.isConnecting) return AUTH_UI_COPY.SIGNING_IN
