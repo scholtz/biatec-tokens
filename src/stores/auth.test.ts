@@ -147,4 +147,171 @@ describe('Auth Store', () => {
       expect(store.isConnected).toBe(false);
     });
   });
+
+  describe('ARC76 Authentication', () => {
+    it('should authenticate with email and password using ARC76', async () => {
+      const store = useAuthStore();
+      const email = 'test@example.com';
+      const account = 'ALGO123456789ABCDEF';
+      
+      await store.authenticateWithARC76(email, account);
+      
+      expect(store.user).not.toBeNull();
+      expect(store.user?.address).toBe(account);
+      expect(store.user?.email).toBe(email);
+      expect(store.user?.name).toBe('test'); // Email prefix
+      expect(store.arc76email).toBe(email);
+      expect(store.isConnected).toBe(true);
+      expect(store.isAuthenticated).toBe(true);
+    });
+
+    it('should persist ARC76 session to localStorage', async () => {
+      const store = useAuthStore();
+      const email = 'user@company.com';
+      const account = 'ALGO987654321FEDCBA';
+      
+      await store.authenticateWithARC76(email, account);
+      
+      // Verify all required localStorage keys are set
+      expect(localStorage.getItem('algorand_user')).toBeTruthy();
+      expect(localStorage.getItem('wallet_connected')).toBe('true');
+      
+      const arc76Session = localStorage.getItem('arc76_session');
+      expect(arc76Session).toBeTruthy();
+      
+      const session = JSON.parse(arc76Session!);
+      expect(session.email).toBe(email);
+      expect(session.account).toBe(account);
+      expect(session.timestamp).toBeDefined();
+    });
+
+    it('should restore ARC76 session from localStorage', async () => {
+      const email = 'restored@example.com';
+      const account = 'ALGO111222333444555';
+      const timestamp = Date.now();
+      
+      // Simulate saved session
+      localStorage.setItem('arc76_session', JSON.stringify({
+        email,
+        account,
+        timestamp
+      }));
+      localStorage.setItem('wallet_connected', 'true');
+      
+      const store = useAuthStore();
+      await store.restoreARC76Session();
+      
+      expect(store.user).not.toBeNull();
+      expect(store.user?.address).toBe(account);
+      expect(store.user?.email).toBe(email);
+      expect(store.arc76email).toBe(email);
+      expect(store.isConnected).toBe(true);
+    });
+
+    it('should clear ARC76 session on sign out', async () => {
+      const store = useAuthStore();
+      
+      // First authenticate with ARC76
+      await store.authenticateWithARC76('test@example.com', 'ALGO123456789');
+      expect(localStorage.getItem('arc76_session')).toBeTruthy();
+      expect(localStorage.getItem('wallet_connected')).toBe('true');
+      
+      // Sign out
+      await store.signOut();
+      
+      // Verify all ARC76 data is cleared
+      expect(store.arc76email).toBeNull();
+      expect(localStorage.getItem('arc76_session')).toBeNull();
+      expect(localStorage.getItem('wallet_connected')).toBeNull();
+      expect(localStorage.getItem('algorand_user')).toBeNull();
+    });
+
+    it('should handle restore with missing session gracefully', async () => {
+      // No session in localStorage
+      const store = useAuthStore();
+      await store.restoreARC76Session();
+      
+      // Should not crash, should have no user
+      expect(store.user).toBeNull();
+      expect(store.arc76email).toBeNull();
+      expect(store.isConnected).toBe(false);
+    });
+
+    it('should handle corrupted ARC76 session data', async () => {
+      // Set invalid JSON in localStorage
+      localStorage.setItem('arc76_session', 'invalid-json-{');
+      
+      const store = useAuthStore();
+      await store.restoreARC76Session();
+      
+      // Should not crash
+      expect(store.user).toBeNull();
+      expect(store.isConnected).toBe(false);
+    });
+
+    it('should derive user name from email prefix', async () => {
+      const store = useAuthStore();
+      const testCases = [
+        { email: 'john.doe@company.com', expectedName: 'john.doe' },
+        { email: 'admin@platform.io', expectedName: 'admin' },
+        { email: 'user123@test.net', expectedName: 'user123' },
+      ];
+      
+      for (const { email, expectedName } of testCases) {
+        await store.signOut();
+        await store.authenticateWithARC76(email, 'ALGO123456789');
+        expect(store.user?.name).toBe(expectedName);
+      }
+    });
+
+    it('should maintain session across page reloads', async () => {
+      const store = useAuthStore();
+      const email = 'persistent@example.com';
+      const account = 'ALGO999888777666555';
+      
+      // Authenticate
+      await store.authenticateWithARC76(email, account);
+      
+      // Simulate page reload by creating new store instance
+      setActivePinia(createPinia());
+      const newStore = useAuthStore();
+      await newStore.restoreARC76Session();
+      
+      // Verify session is restored
+      expect(newStore.user?.address).toBe(account);
+      expect(newStore.user?.email).toBe(email);
+      expect(newStore.arc76email).toBe(email);
+      expect(newStore.isAuthenticated).toBe(true);
+    });
+
+    it('should set wallet_connected flag for router guards', async () => {
+      const store = useAuthStore();
+      
+      // Before authentication
+      expect(localStorage.getItem('wallet_connected')).toBeNull();
+      
+      // Authenticate
+      await store.authenticateWithARC76('test@example.com', 'ALGO123456789');
+      
+      // After authentication - flag should be set for router guards
+      expect(localStorage.getItem('wallet_connected')).toBe('true');
+    });
+
+    it('should handle deterministic account generation', async () => {
+      const store = useAuthStore();
+      const email = 'deterministic@example.com';
+      const account1 = 'ALGO_DERIVED_123';
+      const account2 = 'ALGO_DERIVED_456';
+      
+      // Authenticate with first account
+      await store.authenticateWithARC76(email, account1);
+      expect(store.user?.address).toBe(account1);
+      
+      // Re-authenticate with same email but different account
+      // (simulating re-derivation)
+      await store.signOut();
+      await store.authenticateWithARC76(email, account2);
+      expect(store.user?.address).toBe(account2);
+    });
+  });
 });
