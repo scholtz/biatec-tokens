@@ -232,10 +232,14 @@ test.describe("Wallet-Free Authentication Flow", () => {
     const closeButton = page.locator('button:has(.pi-times)').first();
     await closeButton.click();
     
-    // Wait for modal to close
-    await page.waitForTimeout(500);
+    // Wait for modal close animation and verify it's hidden
+    await page.waitForTimeout(1000);
     
-    // Modal should no longer be visible
+    // Modal should no longer be visible - use waitFor with hidden state
+    await signInHeader.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {
+      // If waitFor fails, check manually
+    });
+    
     const isModalVisible = await signInHeader.isVisible().catch(() => false);
     expect(isModalVisible).toBe(false);
   });
