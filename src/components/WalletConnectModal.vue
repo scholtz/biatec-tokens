@@ -99,7 +99,7 @@
 
             <!-- Primary Authentication Method: Email & Password (Arc76) -->
             <div v-else class="space-y-4">
-              <!-- Email/Password Section (Placeholder for Arc76) -->
+              <!-- Email/Password Section -->
               <div class="p-5 bg-gradient-to-br from-blue-500/10 to-purple-500/10 border-2 border-blue-500/30 rounded-xl">
                 <div class="flex items-center gap-3 mb-4">
                   <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
@@ -111,15 +111,41 @@
                   </div>
                 </div>
                 
-                <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                  <div class="flex items-start gap-3">
-                    <i class="pi pi-info-circle text-blue-400 mt-0.5"></i>
-                    <div class="text-sm text-gray-300">
-                      <p class="mb-2">Email/password authentication (Arc76) is currently in development and will be available soon.</p>
-                      <p class="text-xs text-gray-400">For now, please use one of the wallet provider options below to sign in securely.</p>
-                    </div>
+                <!-- Email/Password Form (AC #3) -->
+                <form @submit.prevent="handleEmailPasswordSubmit" class="space-y-4">
+                  <div>
+                    <label for="email" class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                    <input
+                      id="email"
+                      v-model="emailForm.email"
+                      type="email"
+                      required
+                      placeholder="your.email@example.com"
+                      class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
                   </div>
-                </div>
+                  <div>
+                    <label for="password" class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                    <input
+                      id="password"
+                      v-model="emailForm.password"
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    :disabled="isConnecting || isReconnecting || !emailForm.email || !emailForm.password"
+                    class="w-full px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <i v-if="!isConnecting" class="pi pi-sign-in"></i>
+                    <i v-else class="pi pi-spin pi-spinner"></i>
+                    <span>{{ isConnecting ? 'Signing In...' : 'Sign In with Email' }}</span>
+                  </button>
+                </form>
               </div>
 
               <!-- Divider -->
@@ -212,6 +238,7 @@ import { WalletConnectionState } from "../composables/walletState";
 import { sortNetworksByPriority } from "../utils/networkSorting";
 import { AUTH_UI_COPY, NETWORK_UI_COPY } from "../constants/uiCopy";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
+import { useAVMAuthentication } from "algorand-authentication-component-vue";
 
 interface Props {
   isOpen: boolean;
@@ -246,8 +273,15 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>();
 
 const walletManager = useWalletManager();
+const { authStore, login } = useAVMAuthentication();
 const selectedNetwork = ref<NetworkId>(loadInitialNetwork(props.defaultNetwork));
 const showAdvancedOptions = ref(false);
+
+// Email/Password form state (AC #3)
+const emailForm = ref({
+  email: '',
+  password: ''
+});
 
 const availableNetworks = computed(() => {
   const networks = Object.values(NETWORKS);
@@ -370,6 +404,57 @@ const handleConnect = async (walletId: string) => {
     const errorMessage = err instanceof Error ? err.message : "Failed to authenticate";
     emit("error", errorMessage);
     console.error("Authentication error:", err);
+  }
+};
+
+/**
+ * Handle email/password authentication (AC #3-5)
+ * Uses Arc76 account calculation and Arc14 authorization
+ */
+const handleEmailPasswordSubmit = async () => {
+  try {
+    if (!emailForm.value.email || !emailForm.value.password) {
+      emit("error", "Email and password are required");
+      return;
+    }
+
+    // Save selected network to localStorage before authenticating
+    localStorage.setItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK, selectedNetwork.value);
+
+    // Call the Arc76 login function from the authentication library
+    // This handles:
+    // 1. Arc76 account calculation from email/password
+    // 2. Arc14 authorization transaction creation
+    // 3. Setting authenticated state
+    await login(emailForm.value.email, emailForm.value.password);
+
+    // Wait a tick for authStore to update
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Check if authentication was successful
+    if (authStore.isAuthenticated && authStore.account) {
+      // Mark as connected in localStorage (AC #4)
+      localStorage.setItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED, 'true');
+      localStorage.setItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID, 'arc76');
+
+      emit("connected", {
+        address: authStore.account,
+        walletId: 'arc76',
+        network: selectedNetwork.value,
+      });
+
+      // Clear form
+      emailForm.value.email = '';
+      emailForm.value.password = '';
+
+      close();
+    } else {
+      throw new Error("Authentication failed - account not available");
+    }
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Failed to authenticate with email/password";
+    emit("error", errorMessage);
+    console.error("Email/password authentication error:", err);
   }
 };
 

@@ -264,10 +264,17 @@ const handleWalletClick = () => {
   showWalletModal.value = true;
 };
 
-const handleWalletConnected = (_data: { address: string; walletId: string; network: string }) => {
+const handleWalletConnected = (data: { address: string; walletId: string; network: string }) => {
   showWalletModal.value = false;
+  
+  // Check if there's a redirect path stored (AC #6)
+  const redirectPath = localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);
+  if (redirectPath) {
+    localStorage.removeItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);
+    router.push(redirectPath);
+  }
+  
   // The Arc76 authentication component will handle the authentication
-  // This just closes the modal
 };
 
 const handleStatusBadgeClick = () => {
