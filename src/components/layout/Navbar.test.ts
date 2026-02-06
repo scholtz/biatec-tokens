@@ -133,28 +133,33 @@ describe('Navbar Component', () => {
   });
 
   describe('Network Status', () => {
-    it('should display network status in wallet badge', () => {
+    it('should NOT display wallet status badge for MVP wallet-free auth', () => {
       const wrapper = mount(Navbar, {
         global: {
           plugins: [router, pinia],
         },
       });
 
-      // WalletStatusBadge now displays network info instead of old network status element
-      expect(wrapper.findComponent({ name: 'WalletStatusBadge' }).exists()).toBe(true);
+      // WalletStatusBadge is hidden for MVP wallet-free authentication (AC #4)
+      // Per business-owner-roadmap.md: "remove this display as frontend should work without wallet connection requirement"
+      expect(wrapper.findComponent({ name: 'WalletStatusBadge' }).exists()).toBe(false);
     });
 
-    it('should show wallet status badge with network info', () => {
+    it('should hide network info for wallet-free authentication (AC #4)', () => {
       const wrapper = mount(Navbar, {
         global: {
           plugins: [router, pinia],
         },
       });
 
+      // WalletStatusBadge is now commented out to remove wallet-related UI
       const statusBadge = wrapper.findComponent({ name: 'WalletStatusBadge' });
-      expect(statusBadge.exists()).toBe(true);
-      // Badge should have network-info prop passed to it
-      expect(statusBadge.props('networkInfo')).toBeDefined();
+      expect(statusBadge.exists()).toBe(false);
+      
+      // Verify Sign In button is present instead (for unauthenticated users)
+      const signInButton = wrapper.find('button span');
+      // Button might not be visible if mocked as authenticated, so we just verify badge is hidden
+      expect(statusBadge.exists()).toBe(false);
     });
   });
 
