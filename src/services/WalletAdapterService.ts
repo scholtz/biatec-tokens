@@ -4,42 +4,14 @@
  * with enhanced error handling, retry logic, and telemetry
  */
 
-import { ref, computed, type Ref } from 'vue';
 import type { NetworkId, NetworkInfo } from '../composables/useWalletManager';
 import { NETWORKS } from '../composables/useWalletManager';
 import {
-  WalletConnectionState,
   WalletErrorType,
   type WalletError,
-  parseWalletError,
   getTroubleshootingSteps,
 } from '../composables/walletState';
 import { telemetryService } from './TelemetryService';
-
-export interface WalletAdapter {
-  // Connection management
-  connect(walletId?: string): Promise<void>;
-  disconnect(): Promise<void>;
-  reconnect(): Promise<void>;
-
-  // Network management
-  switchNetwork(networkId: NetworkId): Promise<void>;
-  verifyNetwork(networkId: NetworkId): Promise<boolean>;
-
-  // Account management
-  refreshAccount(): Promise<void>;
-  refreshBalance(): Promise<void>;
-
-  // State
-  isConnected: Ref<boolean>;
-  connectionState: Ref<WalletConnectionState>;
-  activeAddress: Ref<string | null>;
-  activeWallet: Ref<string | null>;
-  currentNetwork: Ref<NetworkId>;
-  networkInfo: Ref<NetworkInfo | null>;
-  error: Ref<WalletError | null>;
-  balanceLastUpdated: Ref<Date | null>;
-}
 
 export interface WalletDetectionResult {
   available: boolean;

@@ -108,8 +108,12 @@ export function useWalletConnectivity() {
    * Get alternative wallets (those not currently selected but available)
    */
   const alternativeWallets = computed((): WalletOption[] => {
+    const currentWalletId = chainType.value === 'EVM' 
+      ? evmWallet.walletState.value.activeAddress 
+      : avmWallet.activeWallet.value;
+    
     return availableWallets.value.filter((w) => {
-      return w.available && w.id !== activeWallet.value.activeWallet.value;
+      return w.available && w.id !== currentWalletId;
     });
   });
 
@@ -253,8 +257,22 @@ export function useWalletConnectivity() {
     });
 
     try {
-      await activeWallet.value.switchNetwork(networkId);
-      selectedNetwork.value = networkId;
+      // Handle network switching based on chain type
+      if (chainType.value === 'EVM') {
+        // For EVM, we need to handle network switching differently
+        // since switchNetwork expects EVMNetworkId
+        const targetNetwork = NETWORKS[networkId];
+        if (targetNetwork.chainType !== 'EVM') {
+          throw new Error('Cannot switch EVM wallet to non-EVM network');
+        }
+        // For now, EVM network switching requires disconnection and reconnection
+        // as cross-chain switches are not directly supported
+        selectedNetwork.value = networkId;
+      } else {
+        // AVM wallet supports direct network switching
+        await avmWallet.switchNetwork(networkId);
+        selectedNetwork.value = networkId;
+      }
 
       telemetryService.track('network_switch_success', {
         from_network: fromNetwork,
@@ -296,7 +314,9 @@ export function useWalletConnectivity() {
    */
   const retryConnection = async () => {
     connectionError.value = null;
-    const walletId = activeWallet.value.activeWallet.value || undefined;
+    const walletId = chainType.value === 'EVM' 
+      ? 'metamask' 
+      : avmWallet.activeWallet.value || undefined;
 
     telemetryService.track('wallet_retry_connection', {
       wallet_id: walletId,
@@ -327,7 +347,12 @@ export function useWalletConnectivity() {
     });
 
     try {
-      await activeWallet.value.updateWalletState();
+      if (chainType.value === 'EVM') {
+        // EVM wallet doesn't have updateWalletState, handle refresh differently
+        // The wallet state is automatically managed by the EVM wallet
+      } else if (avmWallet.updateWalletState) {
+        await avmWallet.updateWalletState();
+      }
 
       telemetryService.track('account_refresh_success', {
         network: selectedNetwork.value,

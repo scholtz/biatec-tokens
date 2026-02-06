@@ -43,7 +43,7 @@
           <button
             v-for="(action, index) in error.actions"
             :key="index"
-            @click="handleAction(action, index)"
+            @click="handleAction(action)"
             class="w-full p-3 text-left rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all text-gray-300 hover:text-white text-sm"
           >
             <div class="flex items-center gap-2">
@@ -199,7 +199,7 @@ const handleSelectWallet = (walletId: string) => {
   emit('select-wallet', walletId);
 };
 
-const handleAction = (action: string, index: number) => {
+const handleAction = (action: string) => {
   // Handle specific actions based on the action text
   if (action.toLowerCase().includes('retry') || action.toLowerCase().includes('try again')) {
     handleRetry();
