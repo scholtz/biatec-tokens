@@ -11,8 +11,8 @@
             </button>
           </div>
 
-          <!-- Network Selection -->
-          <div v-if="showNetworkSelector" class="mb-6">
+          <!-- Network Selection - Hidden for wallet-free authentication per MVP requirements -->
+          <div v-if="false" class="mb-6">
             <label class="block text-sm font-medium text-gray-300 mb-3 flex items-center gap-2">
               <i class="pi pi-server text-biatec-accent"></i>
               {{ NETWORK_UI_COPY.SELECT_NETWORK }}
@@ -148,15 +148,16 @@
                 </form>
               </div>
 
-              <!-- Divider -->
-              <div class="relative flex items-center py-2">
+              <!-- Wallet providers hidden for MVP wallet-free authentication per business requirements -->
+              <!-- Divider - Hidden -->
+              <div v-if="false" class="relative flex items-center py-2">
                 <div class="flex-grow border-t border-white/10"></div>
                 <span class="flex-shrink mx-4 text-sm text-gray-400">or</span>
                 <div class="flex-grow border-t border-white/10"></div>
               </div>
 
-              <!-- Advanced Options: Wallet Providers -->
-              <div>
+              <!-- Advanced Options: Wallet Providers - Hidden -->
+              <div v-if="false">
                 <button 
                   @click="showAdvancedOptions = !showAdvancedOptions"
                   class="w-full flex items-center justify-between p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors mb-3"
@@ -210,8 +211,8 @@
               </div>
             </div>
 
-            <!-- Only show wallet guidance if advanced options are expanded -->
-            <div v-if="showAdvancedOptions" class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+            <!-- Wallet guidance hidden for MVP wallet-free authentication -->
+            <div v-if="false" class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
               <div class="flex items-start gap-3">
                 <i class="pi pi-exclamation-circle text-yellow-400"></i>
                 <div class="text-sm text-gray-300">
@@ -240,6 +241,7 @@ import { sortNetworksByPriority } from "../utils/networkSorting";
 import { AUTH_UI_COPY, NETWORK_UI_COPY } from "../constants/uiCopy";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 import { useAVMAuthentication } from "algorand-authentication-component-vue";
+import { useAuthStore } from "../stores/auth";
 
 interface Props {
   isOpen: boolean;
@@ -274,7 +276,8 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>();
 
 const walletManager = useWalletManager();
-const { authStore } = useAVMAuthentication();
+const { authStore: arc76AuthStore, authenticate: arc76Authenticate } = useAVMAuthentication();
+const localAuthStore = useAuthStore(); // Our local auth store
 const selectedNetwork = ref<NetworkId>(loadInitialNetwork(props.defaultNetwork));
 const showAdvancedOptions = ref(false);
 
@@ -409,8 +412,8 @@ const handleConnect = async (walletId: string) => {
 };
 
 /**
- * Handle email/password authentication (AC #3-5)
- * Uses Arc76 account calculation and Arc14 authorization
+ * Handle email/password authentication with ARC76
+ * This integrates with algorand-authentication-component-vue for deterministic account derivation
  */
 const handleEmailPasswordSubmit = async () => {
   try {
@@ -422,29 +425,32 @@ const handleEmailPasswordSubmit = async () => {
     // Save selected network to localStorage before authenticating
     localStorage.setItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK, selectedNetwork.value);
 
-    // TODO: Integrate with Arc76 authentication backend
-    // The algorand-authentication-component-vue library handles Arc76 in the AlgorandAuthentication component
-    // For now, this is a UI placeholder demonstrating the form structure (AC #3)
-    // Full Arc76 integration requires:
-    // 1. Backend API for Arc76 account calculation from email/password
-    // 2. ARC14 authorization transaction creation
-    // 3. Session management with the backend
-    
-    // Simulate authentication for UI demonstration
-    // In production, this would call the Arc76 backend API
-    console.log('Email/password authentication attempted:', emailForm.value.email);
+    // Set email and password in the ARC76 auth store
+    arc76AuthStore.arc76email = emailForm.value.email;
+    arc76AuthStore.password = emailForm.value.password;
+    arc76AuthStore.m = emailForm.value.email; // mnemonic field used for email
 
-    // Wait a tick for authStore to update
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Trigger ARC76 authentication
+    // This will derive the account deterministically from email/password
+    arc76Authenticate();
+
+    // Wait for authentication to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Check if authentication was successful
-    if (authStore.isAuthenticated && authStore.account) {
-      // Mark as connected in localStorage (AC #4)
+    if (arc76AuthStore.isAuthenticated && arc76AuthStore.account) {
+      // Save authentication state to our local auth store
+      await localAuthStore.authenticateWithARC76(
+        emailForm.value.email,
+        arc76AuthStore.account
+      );
+
+      // Mark as connected in localStorage
       localStorage.setItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED, 'true');
       localStorage.setItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID, 'arc76');
 
       emit("connected", {
-        address: authStore.account,
+        address: arc76AuthStore.account,
         walletId: 'arc76',
         network: selectedNetwork.value,
       });
@@ -455,7 +461,7 @@ const handleEmailPasswordSubmit = async () => {
 
       close();
     } else {
-      throw new Error("Authentication failed - account not available");
+      throw new Error("Authentication failed - account not available. Please check your email and password.");
     }
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Failed to authenticate with email/password";

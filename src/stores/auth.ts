@@ -12,6 +12,8 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<AlgorandUser | null>(null)
   const loading = ref(false)
   const isConnected = ref(false)
+  // ARC76 email for email/password authentication
+  const arc76email = ref<string | null>(null)
 
   const isAuthenticated = computed(() => !!user.value && isConnected.value)
 
@@ -59,7 +61,10 @@ export const useAuthStore = defineStore('auth', () => {
   const signOut = async () => {
     user.value = null
     isConnected.value = false
+    arc76email.value = null
     localStorage.removeItem('algorand_user')
+    localStorage.removeItem('wallet_connected')
+    localStorage.removeItem('arc76_session')
   }
 
   const updateUser = (updates: Partial<AlgorandUser>) => {
@@ -69,14 +74,71 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Authenticate with email/password using ARC76
+   * This is the primary authentication method for the platform
+   */
+  const authenticateWithARC76 = async (email: string, account: string) => {
+    loading.value = true
+    try {
+      // Create user from ARC76 authentication
+      const newUser: AlgorandUser = {
+        address: account,
+        name: email.split('@')[0], // Use email prefix as name
+        email: email,
+      }
+      
+      user.value = newUser
+      isConnected.value = true
+      arc76email.value = email
+      
+      // Save to localStorage
+      localStorage.setItem('algorand_user', JSON.stringify(newUser))
+      localStorage.setItem('wallet_connected', 'true')
+      localStorage.setItem('arc76_session', JSON.stringify({
+        email,
+        account,
+        timestamp: Date.now()
+      }))
+      
+      return newUser
+    } catch (error) {
+      console.error('Error authenticating with ARC76:', error)
+      throw error
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Restore ARC76 session from localStorage
+   */
+  const restoreARC76Session = async () => {
+    try {
+      const savedSession = localStorage.getItem('arc76_session')
+      if (savedSession) {
+        const session = JSON.parse(savedSession)
+        await authenticateWithARC76(session.email, session.account)
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Error restoring ARC76 session:', error)
+      return false
+    }
+  }
+
   return {
     user,
     loading,
     isConnected,
     isAuthenticated,
+    arc76email,
     initialize,
     connectWallet,
     signOut,
-    updateUser
+    updateUser,
+    authenticateWithARC76,
+    restoreARC76Session
   }
 })
