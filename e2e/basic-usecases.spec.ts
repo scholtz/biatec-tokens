@@ -653,7 +653,7 @@ test.describe("API Integration Tests", () => {
     await expect(dashboardContent).toBeVisible();
   });
 
-  test("should navigate to settings and show onboarding when not authenticated", async ({ page }) => {
+  test("should navigate to settings and show auth modal when not authenticated", async ({ page }) => {
     // Clear any existing auth state by explicitly clearing localStorage
     await page.addInitScript(() => {
       localStorage.clear();
@@ -679,12 +679,16 @@ test.describe("API Integration Tests", () => {
     await expect(settingsLink).toBeVisible();
     await settingsLink.click();
 
-    // Should redirect to home and show onboarding wizard
-    await page.waitForURL("/?showOnboarding=true");
+    // Should redirect to home and show auth modal (email/password sign-in)
+    await page.waitForURL("/?showAuth=true");
 
-    // Check that onboarding wizard is visible by looking for the welcome title
-    const onboardingTitle = page.locator('h2:has-text("Welcome to Biatec Tokens")');
-    await expect(onboardingTitle).toBeVisible({ timeout: 10000 });
+    // Check that sign-in modal is visible by looking for the Sign In header
+    const signInHeader = page.locator('h2:has-text("Sign In")');
+    await expect(signInHeader).toBeVisible({ timeout: 10000 });
+    
+    // Verify email/password form is visible (wallet-free authentication)
+    const emailInput = page.locator('input[type="email"]');
+    await expect(emailInput).toBeVisible({ timeout: 5000 });
   });
 
   test("should test API error handling with blocked requests", async ({ page }) => {
