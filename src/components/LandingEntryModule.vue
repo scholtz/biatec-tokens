@@ -10,8 +10,8 @@
       </p>
     </div>
 
-    <!-- Two-column layout -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <!-- Two-column layout - Changed to single column for wallet-free authentication -->
+    <div class="grid grid-cols-1 gap-6 mb-8 max-w-xl mx-auto">
       <!-- Email Sign Up Path (Primary) -->
       <button
         @click="handleEmailSignup"
@@ -64,8 +64,9 @@
         </div>
       </button>
 
-      <!-- Wallet Connect Path (Advanced) -->
+      <!-- Wallet Connect Path - Hidden for MVP wallet-free authentication -->
       <button
+        v-if="false"
         @click="handleWalletConnect"
         class="group relative overflow-hidden rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-8 text-left hover:border-purple-500 dark:hover:border-purple-400 hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
         aria-label="Sign in with wallet - for users ready to create tokens"

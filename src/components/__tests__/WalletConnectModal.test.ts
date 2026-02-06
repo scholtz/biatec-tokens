@@ -80,7 +80,7 @@ describe("WalletConnectModal", () => {
     wrapper.unmount();
   });
 
-  it("should display available wallets", async () => {
+  it("should display email/password form only (wallet-free authentication)", async () => {
     const wrapper = mount(WalletConnectModal, {
       props: {
         isOpen: true,
@@ -93,28 +93,16 @@ describe("WalletConnectModal", () => {
 
     await nextTick();
 
-    // Check for "Advanced Options" button instead of direct wallet display
+    // Should display email/password form
     const modalContent = document.body.textContent || "";
-    expect(modalContent).toContain("Advanced: Connect with Wallet Provider");
+    expect(modalContent).toContain("Sign in with Email & Password");
+    expect(modalContent).toContain("Email");
+    expect(modalContent).toContain("Password");
     
-    // Wallet providers are now in collapsible section, so we need to click to expand
-    const advancedButton = Array.from(document.querySelectorAll("button")).find((btn) =>
-      btn.textContent?.includes("Advanced: Connect with Wallet Provider")
-    );
-    
-    expect(advancedButton).toBeTruthy();
-    
-    if (advancedButton) {
-      await advancedButton.click();
-      await nextTick();
-      await nextTick();
-      
-      // Now wallet names should be visible
-      const updatedContent = document.body.textContent || "";
-      expect(updatedContent).toContain("Pera Wallet");
-      expect(updatedContent).toContain("Defly Wallet");
-      expect(updatedContent).toContain("Kibisis");
-    }
+    // Wallet providers should be hidden (wallet-free MVP)
+    expect(modalContent).not.toContain("Advanced: Connect with Wallet Provider");
+    expect(modalContent).not.toContain("Pera Wallet");
+    expect(modalContent).not.toContain("Defly Wallet");
 
     wrapper.unmount();
   });
@@ -134,9 +122,10 @@ describe("WalletConnectModal", () => {
     await nextTick();
 
     const modalContent = document.body.textContent || "";
-    expect(modalContent).toContain("Select Network");
-    expect(modalContent).toContain("VOI Mainnet");
-    expect(modalContent).toContain("Aramid Mainnet");
+    // Network selector should be hidden for wallet-free authentication
+    expect(modalContent).not.toContain("Select Network");
+    expect(modalContent).not.toContain("VOI Mainnet");
+    expect(modalContent).not.toContain("Aramid Mainnet");
 
     wrapper.unmount();
   });
@@ -175,6 +164,9 @@ describe("WalletConnectModal", () => {
       attachTo: document.body,
       global: {
         plugins: [createTestingPinia()],
+        stubs: {
+          Teleport: false,
+        },
       },
     });
 
@@ -196,7 +188,7 @@ describe("WalletConnectModal", () => {
     wrapper.unmount();
   });
 
-  it("should display wallet descriptions", async () => {
+  it("should not display wallet provider UI (wallet-free authentication)", async () => {
     const wrapper = mount(WalletConnectModal, {
       props: {
         isOpen: true,
@@ -209,20 +201,17 @@ describe("WalletConnectModal", () => {
 
     await nextTick();
 
-    // Expand advanced options to see wallet descriptions
+    // Advanced options button should not be visible (hidden for MVP)
     const advancedButton = Array.from(document.querySelectorAll("button")).find((btn) =>
       btn.textContent?.includes("Advanced: Connect with Wallet Provider")
     );
     
-    expect(advancedButton).toBeTruthy();
+    expect(advancedButton).toBeFalsy();
     
-    await advancedButton!.click();
-    await nextTick();
-    await nextTick();
-    
+    // Wallet descriptions should not appear
     const modalContent = document.body.textContent || "";
-    expect(modalContent).toContain("Mobile and web wallet");
-    expect(modalContent).toContain("Feature-rich wallet");
+    expect(modalContent).not.toContain("Mobile and web wallet");
+    expect(modalContent).not.toContain("Feature-rich wallet");
 
     wrapper.unmount();
   });
@@ -247,7 +236,7 @@ describe("WalletConnectModal", () => {
     wrapper.unmount();
   });
 
-  it("should handle wallet connection", async () => {
+  it("should not handle wallet connection (wallet-free authentication)", async () => {
     const wrapper = mount(WalletConnectModal, {
       props: {
         isOpen: true,
@@ -260,24 +249,17 @@ describe("WalletConnectModal", () => {
 
     await nextTick();
 
-    // Expand advanced options first
+    // Advanced options button should not exist (hidden for MVP)
     const advancedButton = Array.from(document.querySelectorAll("button")).find((btn) =>
       btn.textContent?.includes("Advanced: Connect with Wallet Provider")
     );
     
-    expect(advancedButton).toBeTruthy();
+    expect(advancedButton).toBeFalsy();
     
-    if (advancedButton) {
-      await advancedButton.click();
-      await nextTick();
-      await nextTick();
-      
-      // Find wallet button
-      const buttons = Array.from(document.querySelectorAll("button"));
-      const peraButton = buttons.find((btn) => btn.textContent?.includes("Pera Wallet"));
-
-      expect(peraButton).toBeTruthy();
-    }
+    // Wallet buttons should not be visible
+    const buttons = Array.from(document.querySelectorAll("button"));
+    const peraButton = buttons.find((btn) => btn.textContent?.includes("Pera Wallet"));
+    expect(peraButton).toBeFalsy();
 
     wrapper.unmount();
   });
