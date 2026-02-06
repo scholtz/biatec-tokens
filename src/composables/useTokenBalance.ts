@@ -24,8 +24,21 @@ export interface AccountBalance {
 }
 
 /**
+ * Balance cache configuration
+ * TTL of 30 seconds to reduce RPC load while keeping data fresh
+ */
+const BALANCE_CACHE_TTL_MS = 30000 // 30 seconds
+
+interface BalanceCache {
+  data: AccountBalance
+  timestamp: number
+  networkId: string
+}
+
+/**
  * Composable for fetching token balances from Algorand networks
  * Uses algosdk to query account information including algo and asset balances
+ * Includes TTL-based caching to reduce RPC load
  */
 export function useTokenBalance() {
   const walletManager = useWalletManager()
@@ -39,6 +52,40 @@ export function useTokenBalance() {
     error: null,
     lastUpdated: null,
   })
+
+  // In-memory cache for balance data
+  const balanceCache = ref<Map<string, BalanceCache>>(new Map())
+
+  /**
+   * Creates cache key from address and network
+   */
+  const getCacheKey = (address: string, networkId: string): string => {
+    return `${address}_${networkId}`
+  }
+
+  /**
+   * Checks if cached data is still valid
+   */
+  const isCacheValid = (cacheEntry: BalanceCache | undefined): boolean => {
+    if (!cacheEntry) return false
+    const now = Date.now()
+    const age = now - cacheEntry.timestamp
+    return age < BALANCE_CACHE_TTL_MS
+  }
+
+  /**
+   * Invalidates cache for specific address or all
+   */
+  const invalidateCache = (address?: string) => {
+    if (address && networkInfo.value) {
+      const key = getCacheKey(address, networkInfo.value.id)
+      balanceCache.value.delete(key)
+      telemetryService.track('balance_cache_invalidated', { address, network: networkInfo.value.id })
+    } else {
+      balanceCache.value.clear()
+      telemetryService.track('balance_cache_cleared')
+    }
+  }
 
   const isLoading = computed(() => accountBalance.value.isLoading)
   const hasAssets = computed(() => accountBalance.value.assets.length > 0)
@@ -81,8 +128,9 @@ export function useTokenBalance() {
 
   /**
    * Fetches account balance and assets from the blockchain
+   * Uses cache if available and valid, otherwise fetches fresh data
    */
-  const fetchBalance = async (address?: string) => {
+  const fetchBalance = async (address?: string, forceRefresh = false) => {
     const targetAddress = address || activeAddress.value
     
     if (!targetAddress) {
@@ -95,6 +143,31 @@ export function useTokenBalance() {
         lastUpdated: null,
       }
       return
+    }
+
+    if (!networkInfo.value) {
+      accountBalance.value = {
+        ...accountBalance.value,
+        isLoading: false,
+        error: 'Network information not available',
+      }
+      return
+    }
+
+    // Check cache if not forcing refresh
+    if (!forceRefresh) {
+      const cacheKey = getCacheKey(targetAddress, networkInfo.value.id)
+      const cached = balanceCache.value.get(cacheKey)
+      
+      if (cached && isCacheValid(cached)) {
+        accountBalance.value = cached.data
+        telemetryService.track('balance_cache_hit', { 
+          address: targetAddress,
+          network: networkInfo.value.id,
+          age_ms: Date.now() - cached.timestamp
+        })
+        return
+      }
     }
 
     accountBalance.value.isLoading = true
@@ -127,7 +200,7 @@ export function useTokenBalance() {
 
       const lastUpdated = new Date()
 
-      accountBalance.value = {
+      const balanceData: AccountBalance = {
         address: targetAddress,
         algoBalance,
         assets,
@@ -135,6 +208,16 @@ export function useTokenBalance() {
         error: null,
         lastUpdated,
       }
+
+      accountBalance.value = balanceData
+
+      // Store in cache
+      const cacheKey = getCacheKey(targetAddress, networkInfo.value.id)
+      balanceCache.value.set(cacheKey, {
+        data: balanceData,
+        timestamp: Date.now(),
+        networkId: networkInfo.value.id
+      })
 
       // Update wallet state balance timestamp
       walletState.value.balanceLastUpdated = lastUpdated
@@ -145,7 +228,7 @@ export function useTokenBalance() {
         network: networkInfo.value?.id || 'unknown',
         address: targetAddress,
         success: true,
-        durationMs,
+        durationMs
       })
 
       // Return to connected state
@@ -198,16 +281,22 @@ export function useTokenBalance() {
   }
 
   /**
-   * Refreshes the balance data
+   * Refreshes the balance data, forcing a fresh fetch
    */
   const refresh = () => {
     if (activeAddress.value) {
-      fetchBalance(activeAddress.value)
+      fetchBalance(activeAddress.value, true) // Force refresh bypasses cache
     }
   }
 
   // Watch for wallet connection changes and auto-fetch balance
-  watch([activeAddress, networkInfo], ([newAddress]) => {
+  // Invalidate cache on address or network change
+  watch([activeAddress, networkInfo], ([newAddress, newNetwork], [oldAddress, oldNetwork]) => {
+    // Invalidate cache if address or network changed
+    if (newAddress !== oldAddress || newNetwork?.id !== oldNetwork?.id) {
+      invalidateCache()
+    }
+
     if (newAddress && isConnected.value) {
       fetchBalance(newAddress)
     } else {
@@ -231,6 +320,7 @@ export function useTokenBalance() {
     fetchBalance,
     getAssetBalance,
     formatAssetBalance,
-    refresh
+    refresh,
+    invalidateCache
   }
 }

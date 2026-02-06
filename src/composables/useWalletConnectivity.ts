@@ -2,9 +2,10 @@
  * Enhanced Wallet Connectivity Composable
  * Provides a high-level interface for wallet operations with improved UX
  * Integrates with WalletAdapterService for consistent error handling
+ * Includes automatic reconnection and connection stability monitoring
  */
 
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onUnmounted } from 'vue';
 import { useWalletManager, type NetworkId } from './useWalletManager';
 import { useEVMWallet } from './useEVMWallet';
 import { NETWORKS } from './useWalletManager';
@@ -17,6 +18,7 @@ import {
 } from '../services/WalletAdapterService';
 import { WalletConnectionState } from './walletState';
 import { telemetryService } from '../services/TelemetryService';
+import { walletRecoveryService } from '../services/WalletRecoveryService';
 
 export interface WalletOption {
   id: string;
@@ -366,7 +368,7 @@ export function useWalletConnectivity() {
   };
 
   /**
-   * Initialize - detect wallets on mount
+   * Initialize - detect wallets on mount and setup recovery
    */
   const initialize = async () => {
     // Restore network from localStorage
@@ -377,13 +379,65 @@ export function useWalletConnectivity() {
 
     // Detect available wallets
     await detectWallets();
+
+    // Setup auto-reconnection
+    walletRecoveryService.setReconnectCallback(async (walletId) => {
+      await connect(walletId)
+    })
+
+    // Start health checks if already connected
+    if (isConnected.value) {
+      startConnectionMonitoring()
+    }
   };
+
+  /**
+   * Start monitoring connection health
+   */
+  const startConnectionMonitoring = () => {
+    walletRecoveryService.startHealthChecks(
+      () => isConnected.value,
+      (walletId) => {
+        telemetryService.track('wallet_connection_lost', {
+          wallet_id: walletId,
+          network: selectedNetwork.value
+        })
+        // Attempt automatic recovery
+        walletRecoveryService.attemptRecovery(walletId)
+      },
+      () => {
+        const walletId = chainType.value === 'EVM' ? 'metamask' : avmWallet.activeWallet.value
+        return walletId || undefined
+      }
+    )
+  }
+
+  /**
+   * Stop monitoring connection health
+   */
+  const stopConnectionMonitoring = () => {
+    walletRecoveryService.stopHealthChecks()
+  }
 
   // Watch for network changes and re-detect wallets
   watch(selectedNetwork, async (newNetwork) => {
     localStorage.setItem('selected_network', newNetwork);
     await detectWallets();
   });
+
+  // Watch connection state to manage monitoring
+  watch(isConnected, (connected) => {
+    if (connected) {
+      startConnectionMonitoring()
+    } else {
+      stopConnectionMonitoring()
+    }
+  })
+
+  // Cleanup on unmount
+  onUnmounted(() => {
+    stopConnectionMonitoring()
+  })
 
   return {
     // State
