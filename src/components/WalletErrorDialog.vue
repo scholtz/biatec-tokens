@@ -94,6 +94,7 @@
       <div
         v-if="error?.alternativeWallets && error.alternativeWallets.length > 0"
         class="mb-6"
+        data-alternative-wallets
       >
         <h4 class="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
           <i class="pi pi-wallet text-purple-400"></i>

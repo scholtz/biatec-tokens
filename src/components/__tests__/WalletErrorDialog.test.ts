@@ -226,14 +226,16 @@ describe('WalletErrorDialog', () => {
       const troubleshootingButton = wrapper.find('button:has(.pi-question-circle)');
       expect(troubleshootingButton.exists()).toBe(true);
 
-      // Initially hidden
-      expect(wrapper.find('.expand-enter-from').exists() || true).toBe(true);
+      // Initially hidden - check for absence of troubleshooting step content
+      let troubleshootingSteps = wrapper.findAll('.flex.items-start.gap-3.p-3');
+      expect(troubleshootingSteps.length).toBe(0);
 
       // Click to show
       await troubleshootingButton.trigger('click');
 
-      // Should be visible now (component internal state changed)
-      expect(wrapper.vm.showTroubleshooting).toBe(true);
+      // Should be visible now - check for presence of troubleshooting steps
+      troubleshootingSteps = wrapper.findAll('.flex.items-start.gap-3.p-3');
+      expect(troubleshootingSteps.length).toBeGreaterThan(0);
     });
   });
 
