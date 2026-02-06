@@ -59,6 +59,7 @@ vi.mock('../../stores/tokens', () => ({
         description: 'Algorand Standard Asset',
         icon: 'pi pi-circle',
         bgClass: 'bg-blue-500',
+        network: 'VOI', // Add network property for filtering
       },
       {
         name: 'ARC200',
@@ -66,6 +67,7 @@ vi.mock('../../stores/tokens', () => ({
         description: 'ARC-200 Token Standard',
         icon: 'pi pi-star',
         bgClass: 'bg-green-500',
+        network: 'VOI', // Add network property for filtering
       },
     ],
     tokenTemplates: [

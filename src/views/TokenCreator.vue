@@ -270,7 +270,7 @@
           <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Or Select Token Standard Manually</h2>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
-              v-for="standard in tokenStore.tokenStandards"
+              v-for="standard in filteredTokenStandards"
               :key="standard.name"
               @click="selectStandard(standard.name)"
               :class="[
@@ -717,6 +717,22 @@ const currentTemplate = computed(() => (selectedTemplate.value ? tokenStore.toke
 const currentNetworkGuidance = computed(() => (selectedNetwork.value ? tokenStore.networkGuidance.find((n) => n.name === selectedNetwork.value) : undefined));
 
 const currentStandardDetails = computed(() => (selectedStandard.value ? tokenStore.tokenStandards.find((s) => s.name === selectedStandard.value) : undefined));
+
+// Filter token standards based on selected network type (AVM vs EVM)
+// AC #6: Ensure AVM standards remain visible when AVM chain selected
+const filteredTokenStandards = computed(() => {
+  if (!selectedNetwork.value) {
+    // No network selected - show all standards
+    return tokenStore.tokenStandards;
+  }
+  
+  // VOI and Aramid are AVM chains, so show standards with network "VOI"
+  // In future, if EVM chains are added, show standards with network "EVM"
+  const isAVMChain = selectedNetwork.value === "VOI" || selectedNetwork.value === "Aramid";
+  const targetNetwork = isAVMChain ? "VOI" : "EVM";
+  
+  return tokenStore.tokenStandards.filter(standard => standard.network === targetNetwork);
+});
 
 const selectNetwork = (network: "VOI" | "Aramid" | null) => {
   selectedNetwork.value = network;

@@ -75,8 +75,9 @@
 
         <!-- Account Section -->
         <div class="flex items-center space-x-4">
-          <!-- Network Switcher -->
-          <NetworkSwitcher class="hidden sm:flex" />
+          <!-- Network Switcher - Hidden per MVP requirements (email/password auth only) -->
+          <!-- Users don't need to see network status in wallet-free mode -->
+          <!-- <NetworkSwitcher class="hidden sm:flex" /> -->
           
           <!-- Account Button -->
           <div class="relative">
@@ -122,15 +123,17 @@
           </div>
         </div>
 
-        <!-- Login Modal -->
+        <!-- Sign-In Modal (Email/Password) -->
         <WalletConnectModal
           :is-open="showWalletModal"
+          :show-network-selector="false"
           @close="showWalletModal = false"
           @connected="handleConnected"
         />
 
-        <!-- Onboarding Wizard -->
+        <!-- Onboarding Wizard (Legacy - Hidden) -->
         <WalletOnboardingWizard
+          v-if="false"
           :is-open="showOnboardingWizard"
           @close="showOnboardingWizard = false"
           @complete="handleConnected"
@@ -231,13 +234,8 @@ const handleWalletClick = () => {
     loginStartTime.value = Date.now()
     telemetryService.trackLoginStarted({ source: 'navbar' })
     
-    // Show authentication modal when not authenticated
-    // Show onboarding wizard for first-time users, otherwise simple modal
-    if (hasCompletedOnboarding.value) {
-      showWalletModal.value = true
-    } else {
-      showOnboardingWizard.value = true
-    }
+    // Show authentication modal for all users (email/password)
+    showWalletModal.value = true
   }
 }
 
