@@ -212,6 +212,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useThemeStore } from "../../stores/theme";
 import { useSubscriptionStore } from "../../stores/subscription";
 import { useAVMAuthentication } from "algorand-authentication-component-vue";
+import { AUTH_STORAGE_KEYS } from "../../constants/auth";
 import { HomeIcon, PlusCircleIcon, ChartBarIcon, Cog6ToothIcon, SunIcon, MoonIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, WalletIcon } from "@heroicons/vue/24/outline";
 import WalletConnectModal from "../WalletConnectModal.vue";
 import WalletStatusBadge from "../WalletStatusBadge.vue";
@@ -264,7 +265,7 @@ const handleWalletClick = () => {
   showWalletModal.value = true;
 };
 
-const handleWalletConnected = (data: { address: string; walletId: string; network: string }) => {
+const handleWalletConnected = (_data: { address: string; walletId: string; network: string }) => {
   showWalletModal.value = false;
   
   // Check if there's a redirect path stored (AC #6)

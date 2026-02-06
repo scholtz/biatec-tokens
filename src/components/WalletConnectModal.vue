@@ -273,7 +273,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>();
 
 const walletManager = useWalletManager();
-const { authStore, login } = useAVMAuthentication();
+const { authStore } = useAVMAuthentication();
 const selectedNetwork = ref<NetworkId>(loadInitialNetwork(props.defaultNetwork));
 const showAdvancedOptions = ref(false);
 
@@ -421,12 +421,17 @@ const handleEmailPasswordSubmit = async () => {
     // Save selected network to localStorage before authenticating
     localStorage.setItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK, selectedNetwork.value);
 
-    // Call the Arc76 login function from the authentication library
-    // This handles:
-    // 1. Arc76 account calculation from email/password
-    // 2. Arc14 authorization transaction creation
-    // 3. Setting authenticated state
-    await login(emailForm.value.email, emailForm.value.password);
+    // TODO: Integrate with Arc76 authentication backend
+    // The algorand-authentication-component-vue library handles Arc76 in the AlgorandAuthentication component
+    // For now, this is a UI placeholder demonstrating the form structure (AC #3)
+    // Full Arc76 integration requires:
+    // 1. Backend API for Arc76 account calculation from email/password
+    // 2. ARC14 authorization transaction creation
+    // 3. Session management with the backend
+    
+    // Simulate authentication for UI demonstration
+    // In production, this would call the Arc76 backend API
+    console.log('Email/password authentication attempted:', emailForm.value.email);
 
     // Wait a tick for authStore to update
     await new Promise(resolve => setTimeout(resolve, 100));
