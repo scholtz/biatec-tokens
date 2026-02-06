@@ -5,7 +5,7 @@
  */
 
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import { useWallet } from '@txnlab/use-wallet-vue';
+import { useWalletManager } from './useWalletManager';
 import {
   saveWalletConnectSession,
   getWalletConnectSession,
@@ -36,7 +36,7 @@ export interface WalletConnectState {
  * Enhanced WalletConnect composable
  */
 export function useWalletConnect() {
-  const wallet = useWallet();
+  const walletManager = useWalletManager();
 
   // State
   const state = ref<WalletConnectState>({
@@ -59,7 +59,7 @@ export function useWalletConnect() {
    * Check if current wallet is WalletConnect
    */
   const isWalletConnect = computed(() => {
-    return wallet.activeWallet?.value?.id === 'walletconnect';
+    return walletManager.activeWallet?.value === 'walletconnect';
   });
 
   /**
@@ -87,10 +87,8 @@ export function useWalletConnect() {
     // Clean up expired sessions on init
     cleanupWalletConnectSessions();
 
-    telemetryService.trackEvent({
-      category: 'walletconnect',
-      action: 'initialized',
-      label: current ? 'with_session' : 'without_session',
+    telemetryService.track('walletconnect_initialized', {
+      hasSession: current ? true : false,
     });
   }
 
@@ -109,19 +107,16 @@ export function useWalletConnect() {
       state.value.isPairing = true;
       state.value.error = null;
 
-      telemetryService.trackEvent({
-        category: 'walletconnect',
-        action: 'connect_started',
-      });
+      telemetryService.track('walletconnect_connect_started');
 
-      // Connect via @txnlab/use-wallet-vue
-      await wallet.wallets.value.find((w: any) => w.id === 'walletconnect')?.connect();
+      // Connect via useWalletManager
+      await walletManager.connect('walletconnect');
 
       // After successful connection, save session
-      const activeAddress = wallet.activeAccount?.value?.address;
-      const activeNetwork = wallet.activeNetwork?.value;
+      const activeAddress = walletManager.activeAddress?.value;
+      const activeNetwork = walletManager.currentNetwork?.value;
 
-      if (activeAddress && activeNetwork && wallet.activeWallet?.value) {
+      if (activeAddress && activeNetwork && walletManager.activeWallet?.value) {
         const topic = `wc-${Date.now()}-${Math.random().toString(36).substring(7)}`;
         
         saveWalletConnectSession(
@@ -141,20 +136,16 @@ export function useWalletConnect() {
 
         updateStats();
 
-        telemetryService.trackEvent({
-          category: 'walletconnect',
-          action: 'connect_success',
-          label: activeNetwork,
+        telemetryService.track('walletconnect_connect_success', {
+          network: activeNetwork,
         });
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Connection failed';
       state.value.error = errorMessage;
 
-      telemetryService.trackEvent({
-        category: 'walletconnect',
-        action: 'connect_failed',
-        label: errorMessage,
+      telemetryService.track('walletconnect_connect_failed', {
+        error: errorMessage,
       });
 
       throw error;
@@ -168,14 +159,11 @@ export function useWalletConnect() {
    */
   async function disconnect(): Promise<void> {
     try {
-      telemetryService.trackEvent({
-        category: 'walletconnect',
-        action: 'disconnect_started',
-      });
+      telemetryService.track('walletconnect_disconnect_started');
 
-      // Disconnect via @txnlab/use-wallet-vue
-      if (wallet.activeWallet?.value) {
-        await wallet.activeWallet.value.disconnect();
+      // Disconnect via useWalletManager
+      if (walletManager.activeWallet?.value) {
+        await walletManager.disconnect();
       }
 
       // Remove session
@@ -195,18 +183,13 @@ export function useWalletConnect() {
 
       updateStats();
 
-      telemetryService.trackEvent({
-        category: 'walletconnect',
-        action: 'disconnect_success',
-      });
+      telemetryService.track('walletconnect_disconnect_success');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Disconnection failed';
       state.value.error = errorMessage;
 
-      telemetryService.trackEvent({
-        category: 'walletconnect',
-        action: 'disconnect_failed',
-        label: errorMessage,
+      telemetryService.track('walletconnect_disconnect_failed', {
+        error: errorMessage,
       });
 
       throw error;
@@ -223,16 +206,10 @@ export function useWalletConnect() {
         return false;
       }
 
-      telemetryService.trackEvent({
-        category: 'walletconnect',
-        action: 'reconnect_started',
-      });
+      telemetryService.track('walletconnect_reconnect_started');
 
-      // Attempt reconnection via @txnlab/use-wallet-vue
-      const wcWallet = wallet.wallets.value.find((w: any) => w.id === 'walletconnect');
-      if (wcWallet) {
-        await wcWallet.connect();
-        
+      // Attempt reconnection via useWalletManager
+      await walletManager.connect('walletconnect');
         // Update session activity
         updateWalletConnectActivity(current.topic);
         state.value.currentSession = getWalletConnectSession(current.topic);
@@ -242,23 +219,15 @@ export function useWalletConnect() {
         // Start activity tracking
         startActivityTracking();
 
-        telemetryService.trackEvent({
-          category: 'walletconnect',
-          action: 'reconnect_success',
-        });
+        telemetryService.track('walletconnect_reconnect_success');
 
         return true;
-      }
-
-      return false;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Reconnection failed';
       state.value.error = errorMessage;
 
-      telemetryService.trackEvent({
-        category: 'walletconnect',
-        action: 'reconnect_failed',
-        label: errorMessage,
+      telemetryService.track('walletconnect_reconnect_failed', {
+        error: errorMessage,
       });
 
       return false;
@@ -277,10 +246,7 @@ export function useWalletConnect() {
       if (current && isWalletConnectSessionValid(current.topic)) {
         updateWalletConnectActivity(current.topic);
         
-        telemetryService.trackEvent({
-          category: 'walletconnect',
-          action: 'activity_heartbeat',
-        });
+        telemetryService.track('walletconnect_activity_heartbeat');
       } else {
         // Session expired, clean up
         stopActivityTracking();
@@ -318,12 +284,12 @@ export function useWalletConnect() {
 
   // Watch for wallet connection changes
   watch(
-    () => wallet.activeWallet?.value,
+    () => walletManager.activeWallet?.value,
     (newWallet, oldWallet) => {
-      if (newWallet?.id === 'walletconnect' && oldWallet?.id !== 'walletconnect') {
+      if (newWallet === 'walletconnect' && oldWallet !== 'walletconnect') {
         // Switched to WalletConnect
-        const activeAddress = wallet.activeAccount?.value?.address;
-        const activeNetwork = wallet.activeNetwork?.value;
+        const activeAddress = walletManager.activeAddress?.value;
+        const activeNetwork = walletManager.currentNetwork?.value;
 
         if (activeAddress && activeNetwork) {
           const topic = `wc-${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -343,7 +309,7 @@ export function useWalletConnect() {
           startActivityTracking();
           updateStats();
         }
-      } else if (oldWallet?.id === 'walletconnect' && newWallet?.id !== 'walletconnect') {
+      } else if (oldWallet === 'walletconnect' && newWallet !== 'walletconnect') {
         // Switched away from WalletConnect
         stopActivityTracking();
       }

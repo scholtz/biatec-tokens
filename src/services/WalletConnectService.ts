@@ -4,7 +4,7 @@
  * Works alongside @txnlab/use-wallet-vue for comprehensive WalletConnect support
  */
 
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { telemetryService } from './TelemetryService';
 
 export interface WalletConnectSession {
@@ -63,11 +63,9 @@ export function loadWalletConnectSessions(): void {
       if (wcSession.expiresAt > now) {
         validSessions.set(topic, wcSession);
       } else {
-        telemetryService.trackEvent({
-          category: 'walletconnect',
-          action: 'session_expired',
-          label: wcSession.walletId,
-          value: now - wcSession.connectedAt,
+        telemetryService.track('walletconnect_session_expired', {
+          walletId: wcSession.walletId,
+          duration: now - wcSession.connectedAt,
         });
       }
     }
@@ -122,10 +120,8 @@ export function saveWalletConnectSession(
   currentSession.value = session;
   saveWalletConnectSessions();
 
-  telemetryService.trackEvent({
-    category: 'walletconnect',
-    action: 'session_saved',
-    label: walletId,
+  telemetryService.track('walletconnect_session_saved', {
+    walletId,
   });
 }
 
@@ -144,11 +140,9 @@ export function getWalletConnectSession(topic: string): WalletConnectSession | n
 
   // Check if inactive
   if (Date.now() - session.lastActivityAt > ACTIVITY_TIMEOUT_MS) {
-    telemetryService.trackEvent({
-      category: 'walletconnect',
-      action: 'session_inactive',
-      label: session.walletId,
-      value: Date.now() - session.lastActivityAt,
+    telemetryService.track('walletconnect_session_inactive', {
+      walletId: session.walletId,
+      inactiveTime: Date.now() - session.lastActivityAt,
     });
   }
 
@@ -173,11 +167,9 @@ export function updateWalletConnectActivity(topic: string): void {
 export function removeWalletConnectSession(topic: string): void {
   const session = sessions.value.get(topic);
   if (session) {
-    telemetryService.trackEvent({
-      category: 'walletconnect',
-      action: 'session_removed',
-      label: session.walletId,
-      value: Date.now() - session.connectedAt,
+    telemetryService.track('walletconnect_session_removed', {
+      walletId: session.walletId,
+      duration: Date.now() - session.connectedAt,
     });
   }
 
@@ -197,10 +189,8 @@ export function clearAllWalletConnectSessions(): void {
   currentSession.value = null;
   localStorage.removeItem(WALLETCONNECT_STORAGE_KEY);
 
-  telemetryService.trackEvent({
-    category: 'walletconnect',
-    action: 'all_sessions_cleared',
-    value: count,
+  telemetryService.track('walletconnect_all_sessions_cleared', {
+    count,
   });
 }
 
@@ -286,10 +276,8 @@ export function cleanupWalletConnectSessions(): number {
   toRemove.forEach(topic => removeWalletConnectSession(topic));
   
   if (toRemove.length > 0) {
-    telemetryService.trackEvent({
-      category: 'walletconnect',
-      action: 'sessions_cleaned',
-      value: toRemove.length,
+    telemetryService.track('walletconnect_sessions_cleaned', {
+      count: toRemove.length,
     });
   }
 

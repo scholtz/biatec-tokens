@@ -3,12 +3,16 @@ import { useWalletConnect } from '../useWalletConnect';
 import { ref } from 'vue';
 
 // Mock modules
-vi.mock('@txnlab/use-wallet-vue', () => ({
-  useWallet: () => ({
+vi.mock('./useWalletManager', () => ({
+  useWalletManager: () => ({
     activeWallet: ref(null),
-    activeAccount: ref(null),
-    activeNetwork: ref(null),
-    wallets: ref([]),
+    activeAddress: ref(null),
+    currentNetwork: ref(null),
+    walletManager: {
+      wallets: ref([]),
+    },
+    connect: vi.fn(),
+    disconnect: vi.fn(),
   }),
 }));
 
@@ -31,7 +35,7 @@ vi.mock('../services/WalletConnectService', () => ({
 
 vi.mock('../services/TelemetryService', () => ({
   telemetryService: {
-    trackEvent: vi.fn(),
+    track: vi.fn(),
   },
 }));
 

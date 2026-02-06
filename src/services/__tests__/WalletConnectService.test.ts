@@ -17,7 +17,7 @@ import {
 // Mock telemetry service
 vi.mock('../TelemetryService', () => ({
   telemetryService: {
-    trackEvent: vi.fn(),
+    track: vi.fn(),
   },
 }));
 
