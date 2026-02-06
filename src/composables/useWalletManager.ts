@@ -214,7 +214,20 @@ export function useWalletManager() {
     balanceLastUpdated: null,
   });
 
-  const currentNetwork = ref<NetworkId>("algorand-mainnet");
+  // Load persisted network from localStorage, default to algorand-testnet (AC #1-2)
+  const loadPersistedNetwork = (): NetworkId => {
+    try {
+      const stored = localStorage.getItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK)
+      if (stored && NETWORKS[stored as NetworkId]) {
+        return stored as NetworkId
+      }
+    } catch (error) {
+      console.warn('Failed to load persisted network:', error)
+    }
+    return 'algorand-testnet' // Default to Algorand testnet per AC #1
+  }
+
+  const currentNetwork = ref<NetworkId>(loadPersistedNetwork());
   const isReconnecting = ref(false);
   const previousState = ref<WalletConnectionState>(WalletConnectionState.DISCONNECTED);
 
@@ -481,7 +494,7 @@ export function useWalletManager() {
 
       // Update network
       currentNetwork.value = networkId;
-      localStorage.setItem("selected_network", networkId);
+      localStorage.setItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK, networkId);
 
       // Track network switch
       telemetryService.trackNetworkSwitch({

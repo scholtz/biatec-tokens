@@ -211,6 +211,7 @@ import { useWalletManager, NETWORKS, type NetworkId } from "../composables/useWa
 import { WalletConnectionState } from "../composables/walletState";
 import { sortNetworksByPriority } from "../utils/networkSorting";
 import { AUTH_UI_COPY, NETWORK_UI_COPY } from "../constants/uiCopy";
+import { AUTH_STORAGE_KEYS } from "../constants/auth";
 
 interface Props {
   isOpen: boolean;
@@ -224,15 +225,28 @@ interface Emits {
   (e: "error", error: string): void;
 }
 
+// Load persisted network from localStorage, fall back to prop default
+const loadInitialNetwork = (propDefault: NetworkId): NetworkId => {
+  try {
+    const stored = localStorage.getItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK)
+    if (stored && NETWORKS[stored as NetworkId]) {
+      return stored as NetworkId
+    }
+  } catch (error) {
+    console.warn('Failed to load persisted network:', error)
+  }
+  return propDefault
+}
+
 const props = withDefaults(defineProps<Props>(), {
   showNetworkSelector: true,
-  defaultNetwork: "algorand-mainnet" as NetworkId,
+  defaultNetwork: "algorand-testnet" as NetworkId, // Changed to testnet per AC #1
 });
 
 const emit = defineEmits<Emits>();
 
 const walletManager = useWalletManager();
-const selectedNetwork = ref<NetworkId>(props.defaultNetwork);
+const selectedNetwork = ref<NetworkId>(loadInitialNetwork(props.defaultNetwork));
 const showAdvancedOptions = ref(false);
 
 const availableNetworks = computed(() => {
@@ -327,8 +341,8 @@ const getWalletIcon = (walletId: string): string => {
 
 const handleConnect = async (walletId: string) => {
   try {
-    // Save selected network to localStorage before connecting
-    localStorage.setItem("selected_network", selectedNetwork.value);
+    // Save selected network to localStorage before connecting (AC #1)
+    localStorage.setItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK, selectedNetwork.value);
 
     // Switch network if different from current
     if (selectedNetwork.value !== walletManager.currentNetwork.value) {

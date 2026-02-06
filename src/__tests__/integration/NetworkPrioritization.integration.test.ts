@@ -321,9 +321,10 @@ describe('Network Prioritization Integration Tests', () => {
 
       await wrapper.vm.$nextTick();
 
-      // Default should be algorand-mainnet
+      // Default changed to algorand-testnet per MVP stabilization AC #1
+      // This supports safer development and testing workflow
       const vm = wrapper.vm as any;
-      expect(vm.selectedNetwork).toBe('algorand-mainnet');
+      expect(vm.selectedNetwork).toBe('algorand-testnet');
     });
   });
 

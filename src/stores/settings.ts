@@ -17,9 +17,25 @@ export interface Settings {
   demoMode: boolean
 }
 
+// Storage key for network persistence
+const NETWORK_STORAGE_KEY = 'biatec_selected_network'
+
+// Load persisted network from localStorage, default to 'testnet' (Algorand testnet)
+const loadPersistedNetwork = (): Settings['network'] => {
+  try {
+    const stored = localStorage.getItem(NETWORK_STORAGE_KEY)
+    if (stored && ['mainnet', 'testnet', 'dockernet'].includes(stored)) {
+      return stored as Settings['network']
+    }
+  } catch (error) {
+    console.warn('Failed to load persisted network:', error)
+  }
+  return 'testnet' // Default to Algorand testnet per AC #1
+}
+
 export const useSettingsStore = defineStore('settings', () => {
   const settings = ref<Settings>({
-    network: 'testnet',
+    network: loadPersistedNetwork(),
     networkConfigs: {
       mainnet: {
         algodUrl: 'https://mainnet-api.algonode.cloud',
@@ -47,6 +63,12 @@ export const useSettingsStore = defineStore('settings', () => {
 
   const updateNetwork = (network: Settings['network']) => {
     settings.value.network = network
+    // Persist network selection to localStorage (AC #1)
+    try {
+      localStorage.setItem(NETWORK_STORAGE_KEY, network)
+    } catch (error) {
+      console.warn('Failed to persist network selection:', error)
+    }
   }
 
   const updateNetworkConfig = (network: string, config: NetworkConfig) => {
