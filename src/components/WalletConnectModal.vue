@@ -42,7 +42,7 @@
                       </span>
                     </div>
                     <div class="text-sm text-gray-400">
-                      {{ network.chainType === "AVM" ? network.genesisId : `Chain ID: ${network.chainId}` }}
+                      {{ network.chainType === "AVM" ? (network as any).genesisId : `Chain ID: ${(network as any).chainId}` }}
                     </div>
                   </div>
                   <div v-if="selectedNetwork === network.id" class="text-biatec-accent">
