@@ -726,8 +726,9 @@ const filteredTokenStandards = computed(() => {
     return tokenStore.tokenStandards;
   }
   
-  // VOI and Aramid are AVM chains, so show standards with network "VOI"
-  // In future, if EVM chains are added, show standards with network "EVM"
+  // The selectedNetwork value comes from tokenStore.networkGuidance which uses simplified names
+  // "VOI" and "Aramid" are both AVM chains, so they should show AVM standards (network: "VOI")
+  // EVM chains would be "Ethereum", "Base", "Arbitrum", etc. (network: "EVM")
   const isAVMChain = selectedNetwork.value === "VOI" || selectedNetwork.value === "Aramid";
   const targetNetwork = isAVMChain ? "VOI" : "EVM";
   
