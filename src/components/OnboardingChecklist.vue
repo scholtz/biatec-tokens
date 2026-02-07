@@ -171,7 +171,7 @@ const handleStepClick = (step: OnboardingStep) => {
     case 'connect-wallet':
       // Show wallet connection wizard
       onboardingStore.markStepComplete('connect-wallet')
-      router.push({ name: 'Home', query: { showOnboarding: 'true' } })
+      router.push({ name: 'Home', query: { showAuth: 'true' } })
       break
     case 'select-standards':
       // Navigate to discovery with standard selection
