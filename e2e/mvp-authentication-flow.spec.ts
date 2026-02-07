@@ -23,9 +23,9 @@ test.describe("MVP Authentication & Network Persistence Flow", () => {
   });
 
   /**
-   * AC #1: Network defaults to Algorand testnet on first load
+   * AC #1: Network defaults to Algorand mainnet on first load
    */
-  test("should default to Algorand testnet on first load with no prior selection", async ({ page }) => {
+  test("should default to Algorand mainnet on first load with no prior selection", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
     
@@ -38,8 +38,8 @@ test.describe("MVP Authentication & Network Persistence Flow", () => {
     });
     
     // On first load, network might not be set in localStorage until user interacts
-    // But the app should default to algorand-testnet internally
-    expect(initialNetwork === null || initialNetwork === "algorand-testnet").toBe(true);
+    // But the app should default to algorand-mainnet internally per business-owner-roadmap.md
+    expect(initialNetwork === null || initialNetwork === "algorand-mainnet").toBe(true);
   });
 
   /**
