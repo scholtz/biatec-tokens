@@ -218,7 +218,7 @@ describe('Sidebar Component', () => {
   });
 
   describe('Recent Activity', () => {
-    it('should display recent activity items', () => {
+    it('should display empty state when no activity', () => {
       const wrapper = mount(Sidebar, {
         global: {
           plugins: [router, pinia],
@@ -229,11 +229,12 @@ describe('Sidebar Component', () => {
         },
       });
 
-      const activityItems = wrapper.findAll('.px-3.py-2.text-xs');
-      expect(activityItems).toHaveLength(3);
+      // Should show empty state message per AC #6: Mock data removed
+      expect(wrapper.text()).toContain('No recent activity');
+      expect(wrapper.text()).toContain('Activity will appear here as you use the platform');
     });
 
-    it('should show activity actions and times', () => {
+    it('should have Recent Activity section header', () => {
       const wrapper = mount(Sidebar, {
         global: {
           plugins: [router, pinia],
@@ -244,19 +245,8 @@ describe('Sidebar Component', () => {
         },
       });
 
-      const activityItems = wrapper.findAll('.px-3.py-2.text-xs');
-
-      // Check first activity item
-      expect(activityItems[0].text()).toContain('Token created');
-      expect(activityItems[0].text()).toContain('2 minutes ago');
-
-      // Check second activity item
-      expect(activityItems[1].text()).toContain('Deployment successful');
-      expect(activityItems[1].text()).toContain('5 minutes ago');
-
-      // Check third activity item
-      expect(activityItems[2].text()).toContain('Settings updated');
-      expect(activityItems[2].text()).toContain('1 hour ago');
+      // Verify Recent Activity section exists
+      expect(wrapper.text()).toContain('Recent Activity');
     });
   });
 

@@ -53,6 +53,10 @@
           <div>
             <h3 class="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Recent Activity</h3>
             <div class="mt-3 space-y-2">
+              <div v-if="recentActivity.length === 0" class="px-3 py-4 text-xs text-gray-500 dark:text-gray-500 text-center">
+                <div class="font-medium">No recent activity</div>
+                <div class="mt-1">Activity will appear here as you use the platform</div>
+              </div>
               <div v-for="activity in recentActivity" :key="activity.id" class="px-3 py-2 text-xs text-gray-600 dark:text-gray-400">
                 <div class="font-medium">{{ activity.action }}</div>
                 <div class="text-gray-500 dark:text-gray-500">{{ activity.time }}</div>
@@ -72,9 +76,7 @@ import { PlusCircleIcon, ChartBarIcon, CubeIcon, BuildingOfficeIcon } from "@her
 
 const tokenStore = useTokenStore();
 
-const recentActivity = [
-  { id: 1, action: "Token created", time: "2 minutes ago" },
-  { id: 2, action: "Deployment successful", time: "5 minutes ago" },
-  { id: 3, action: "Settings updated", time: "1 hour ago" },
-];
+// Mock data removed per MVP requirements (AC #6)
+// TODO: Replace with real activity data from backend API
+const recentActivity: Array<{ id: number; action: string; time: string }> = [];
 </script>
