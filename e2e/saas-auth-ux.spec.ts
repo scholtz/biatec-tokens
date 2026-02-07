@@ -17,14 +17,16 @@ test.describe("SaaS Authentication and UX", () => {
     const entryModule = page.locator('[data-testid="landing-entry-module"]');
     await expect(entryModule).toBeVisible({ timeout: 10000 });
     
-    // Verify "Sign In with Wallet" button (not "Connect Wallet")
+    // Wallet-free authentication: NO wallet buttons should be visible on landing page
+    // The landing entry module now shows only email/password authentication option
     const walletButton = page.locator('[data-testid="wallet-connect-button"]');
-    await expect(walletButton).toBeVisible();
-    await expect(walletButton).toContainText(/Sign In/i);
+    const walletButtonVisible = await walletButton.isVisible().catch(() => false);
+    expect(walletButtonVisible).toBe(false); // Button should NOT exist (wallet-free auth)
     
-    // Should not contain old "Connect Wallet" text
+    // Should not contain wallet-related text anywhere
     const pageText = await page.textContent('body');
     expect(pageText).not.toContain('Connect Wallet');
+    expect(pageText).not.toContain('Sign In with Wallet');
   });
 
   test("should display authentication button with SaaS language", async ({ page }) => {
