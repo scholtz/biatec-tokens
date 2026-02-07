@@ -277,10 +277,10 @@ describe('useWalletManager', () => {
       expect(walletState.value.isConnected).toBe(false)
       expect(walletState.value.activeAddress).toBe(null)
       expect(walletState.value.connectionState).toBe(WalletConnectionState.DISCONNECTED)
-      expect(currentNetwork.value).toBe('algorand-testnet') // Changed to testnet per AC #1
+      expect(currentNetwork.value).toBe('algorand-mainnet') // Default to mainnet per business-owner-roadmap.md
       expect(isConnected.value).toBe(false)
       expect(activeAddress.value).toBe(null)
-      expect(networkInfo.value.id).toBe('algorand-testnet') // Changed to testnet per AC #1
+      expect(networkInfo.value.id).toBe('algorand-mainnet') // Default to mainnet per business-owner-roadmap.md
     })
 
     it('should format address correctly', () => {
@@ -602,7 +602,7 @@ describe('useWalletManager', () => {
 
       expect(walletState.value.isConnected).toBe(false)
       expect(walletState.value.activeWallet).toBe(null)
-      expect(currentNetwork.value).toBe('algorand-testnet') // Changed to testnet per AC #1
+      expect(currentNetwork.value).toBe('algorand-mainnet') // Default to mainnet per business-owner-roadmap.md
       expect(isConnected.value).toBe(false)
     })
 

@@ -214,7 +214,7 @@ export function useWalletManager() {
     balanceLastUpdated: null,
   });
 
-  // Load persisted network from localStorage, default to algorand-testnet (AC #1-2)
+  // Load persisted network from localStorage, default to algorand-mainnet (AC #1-2)
   const loadPersistedNetwork = (): NetworkId => {
     try {
       const stored = localStorage.getItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK)
@@ -224,7 +224,7 @@ export function useWalletManager() {
     } catch (error) {
       console.warn('Failed to load persisted network:', error)
     }
-    return 'algorand-testnet' // Default to Algorand testnet per AC #1
+    return 'algorand-mainnet' // Default to Algorand mainnet per business-owner-roadmap.md
   }
 
   const currentNetwork = ref<NetworkId>(loadPersistedNetwork());
