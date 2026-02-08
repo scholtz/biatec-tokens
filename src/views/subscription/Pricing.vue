@@ -1,208 +1,390 @@
 <template>
-  <div class="container-padding section-padding">
-    <div class="max-w-4xl mx-auto">
-      <!-- Header -->
-      <div class="text-center mb-12">
-        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">Choose Your Plan</h1>
-        <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-          Unlock the full potential of token creation with our premium subscription
-        </p>
-      </div>
+  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div class="container-padding section-padding">
+      <div class="max-w-7xl mx-auto">
+        <!-- Header with Value Proposition -->
+        <div class="text-center mb-12">
+          <Badge variant="info" size="lg" class="mb-4">Regulated Token Issuance Without Wallets</Badge>
+          <h1 class="text-5xl font-bold text-white mb-4">
+            Simple, Predictable Pricing for Compliant Token Creation
+          </h1>
+          <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+            Choose the plan that fits your compliance needs. No hidden fees, no crypto expertise required.
+            Start with a free trial or select a plan to access advanced features.
+          </p>
+        </div>
 
-      <!-- Current Subscription Status -->
-      <div v-if="authStore.isAuthenticated && subscriptionStore.subscription" class="mb-8">
-        <Card variant="glass" padding="md">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Current Plan</h3>
-              <p class="text-gray-600 dark:text-gray-400">
-                {{ subscriptionStore.currentProduct?.name || 'Free Plan' }}
-                <Badge 
-                  v-if="subscriptionStore.isActive" 
-                  variant="success" 
-                  size="sm" 
-                  class="ml-2"
-                >
-                  Active
-                </Badge>
+        <!-- Current Subscription Status -->
+        <div v-if="authStore.isAuthenticated && subscriptionStore.subscription" class="mb-8">
+          <Card variant="glass" padding="md">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-white mb-1">Current Plan</h3>
+                <p class="text-gray-300">
+                  {{ getCurrentPlanName() }}
+                  <Badge 
+                    v-if="subscriptionStore.isActive" 
+                    variant="success" 
+                    size="sm" 
+                    class="ml-2"
+                  >
+                    Active
+                  </Badge>
+                </p>
+              </div>
+              <div v-if="subscriptionStore.currentPeriodEnd" class="text-right">
+                <p class="text-sm text-gray-400">Next billing</p>
+                <p class="font-medium text-white">
+                  {{ formatDate(subscriptionStore.currentPeriodEnd) }}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        <!-- Authentication Notice -->
+        <div v-if="!authStore.isAuthenticated" class="mb-8">
+          <Card variant="glass" padding="md">
+            <div class="text-center">
+              <ArrowRightOnRectangleIcon class="w-12 h-12 text-blue-400 mx-auto mb-4" />
+              <h3 class="text-lg font-semibold text-white mb-2">Sign In to Get Started</h3>
+              <p class="text-gray-300 mb-4">
+                Create your account to start your free trial and explore our platform
               </p>
+              <Button
+                @click="handleSignIn"
+                variant="primary"
+                size="lg"
+              >
+                Sign In or Create Account
+              </Button>
             </div>
-            <div v-if="subscriptionStore.currentPeriodEnd" class="text-right">
-              <p class="text-sm text-gray-500 dark:text-gray-400">Next billing</p>
-              <p class="font-medium text-gray-900 dark:text-white">
-                {{ formatDate(subscriptionStore.currentPeriodEnd) }}
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
 
-      <!-- Authentication Notice -->
-      <div v-if="!authStore.isAuthenticated" class="mb-8">
-        <Card variant="glass" padding="md">
-          <div class="text-center">
-            <ArrowRightOnRectangleIcon class="w-12 h-12 text-blue-500 mx-auto mb-4" />
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Sign In Required</h3>
-            <p class="text-gray-600 dark:text-gray-400 mb-4">
-              Please sign in to your account to manage your subscription and access premium features
-            </p>
-          </div>
-        </Card>
-      </div>
-
-      <!-- Pricing Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-        <!-- Free Plan -->
-        <Card variant="default" padding="lg" class="relative">
-          <div class="text-center">
-            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Free Plan</h3>
-            <div class="mb-6">
-              <span class="text-4xl font-bold text-gray-900 dark:text-white">$0</span>
-              <span class="text-gray-500 dark:text-gray-400">/month</span>
+        <!-- Pricing Cards - Three Tiers -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          <!-- Basic Plan -->
+          <Card variant="default" padding="lg" class="relative flex flex-col">
+            <div class="text-center mb-6">
+              <h3 class="text-2xl font-bold text-white mb-2">Basic</h3>
+              <div class="mb-4">
+                <span class="text-5xl font-bold text-white">$29</span>
+                <span class="text-gray-400">/month</span>
+              </div>
+              <p class="text-gray-300">Essential tools for small teams</p>
             </div>
-            <ul class="space-y-3 mb-8 text-left">
-              <li class="flex items-center">
-                <CheckIcon class="w-5 h-5 text-green-500 mr-3" />
-                <span class="text-gray-600 dark:text-gray-300">Create up to 3 tokens</span>
-              </li>
-              <li class="flex items-center">
-                <CheckIcon class="w-5 h-5 text-green-500 mr-3" />
-                <span class="text-gray-600 dark:text-gray-300">Basic token standards</span>
-              </li>
-              <li class="flex items-center">
-                <CheckIcon class="w-5 h-5 text-green-500 mr-3" />
-                <span class="text-gray-600 dark:text-gray-300">Community support</span>
-              </li>
-            </ul>
+            
+            <div class="flex-1">
+              <ul class="space-y-3 mb-8">
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">Up to 10 tokens per month</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">Basic standards (ASA, ARC3, ARC19)</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">Testnet deployment only</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">Basic MICA templates</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">Email support (48h)</span>
+                </li>
+              </ul>
+            </div>
+
             <Button
+              @click="handleSelectPlan('basic')"
               variant="outline"
               size="lg"
               full-width
-              disabled
+              :loading="loading && selectedTier === 'basic'"
+              :disabled="isCurrentPlan('basic')"
             >
-              Current Plan
+              {{ getPlanButtonText('basic') }}
             </Button>
-          </div>
-        </Card>
+          </Card>
 
-        <!-- Premium Plan -->
-        <Card variant="elevated" padding="lg" class="relative border-2 border-blue-500">
-          <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
-            <Badge variant="info" size="lg" class="px-4 py-1">Most Popular</Badge>
-          </div>
-          
-          <div class="text-center">
-            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Monthly Subscription</h3>
-            <div class="mb-6">
-              <span class="text-4xl font-bold text-gray-900 dark:text-white">$50</span>
-              <span class="text-gray-500 dark:text-gray-400">/month</span>
+          <!-- Professional Plan - Most Popular -->
+          <Card variant="elevated" padding="lg" class="relative flex flex-col border-2 border-blue-500">
+            <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+              <Badge variant="info" size="lg" class="px-6 py-2">Most Popular</Badge>
             </div>
-            <ul class="space-y-3 mb-8 text-left">
-              <li class="flex items-center">
-                <CheckIcon class="w-5 h-5 text-green-500 mr-3" />
-                <span class="text-gray-600 dark:text-gray-300">Unlimited token creation</span>
-              </li>
-              <li class="flex items-center">
-                <CheckIcon class="w-5 h-5 text-green-500 mr-3" />
-                <span class="text-gray-600 dark:text-gray-300">All token standards</span>
-              </li>
-              <li class="flex items-center">
-                <CheckIcon class="w-5 h-5 text-green-500 mr-3" />
-                <span class="text-gray-600 dark:text-gray-300">Advanced features</span>
-              </li>
-              <li class="flex items-center">
-                <CheckIcon class="w-5 h-5 text-green-500 mr-3" />
-                <span class="text-gray-600 dark:text-gray-300">Priority support</span>
-              </li>
-              <li class="flex items-center">
-                <CheckIcon class="w-5 h-5 text-green-500 mr-3" />
-                <span class="text-gray-600 dark:text-gray-300">API access</span>
-              </li>
-            </ul>
+            
+            <div class="text-center mb-6 mt-2">
+              <h3 class="text-2xl font-bold text-white mb-2">Professional</h3>
+              <div class="mb-4">
+                <span class="text-5xl font-bold text-white">$99</span>
+                <span class="text-gray-400">/month</span>
+              </div>
+              <p class="text-gray-300">Advanced features for growing businesses</p>
+            </div>
+            
+            <div class="flex-1">
+              <ul class="space-y-3 mb-8">
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">Unlimited token creation</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">All AVM + ERC20 standards</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">Mainnet & testnet deployment</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">Full MICA compliance suite</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">KYC/AML templates included</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">API access & batch deployment</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">Priority support (24h)</span>
+                </li>
+              </ul>
+            </div>
+
             <Button
-              @click="handleSubscribe"
+              @click="handleSelectPlan('professional')"
               variant="primary"
               size="lg"
-              :loading="subscriptionStore.loading"
-              :disabled="!authStore.isAuthenticated || subscriptionStore.isActive"
               full-width
+              :loading="loading && selectedTier === 'professional'"
+              :disabled="isCurrentPlan('professional')"
             >
-              {{ getSubscribeButtonText() }}
+              {{ getPlanButtonText('professional') }}
             </Button>
-          </div>
-        </Card>
-      </div>
+          </Card>
 
-      <!-- Features Comparison -->
-      <div class="mb-12">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Feature Comparison</h2>
-        <Card variant="default" padding="none">
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead class="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Feature
-                  </th>
-                  <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Free
-                  </th>
-                  <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Premium
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                <tr v-for="feature in features" :key="feature.name">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                    {{ feature.name }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-center">
-                    <component 
-                      :is="feature.free ? CheckIcon : XMarkIcon" 
-                      :class="feature.free ? 'text-green-500' : 'text-red-500'"
-                      class="w-5 h-5 mx-auto"
-                    />
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-center">
-                    <CheckIcon class="w-5 h-5 text-green-500 mx-auto" />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      </div>
-
-      <!-- FAQ Section -->
-      <div>
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Frequently Asked Questions</h2>
-        <div class="space-y-4">
-          <Card
-            v-for="faq in faqs"
-            :key="faq.question"
-            variant="default"
-            padding="md"
-            class="cursor-pointer"
-            @click="faq.open = !faq.open"
-          >
-            <div class="flex items-center justify-between">
-              <h3 class="font-medium text-gray-900 dark:text-white">{{ faq.question }}</h3>
-              <ChevronDownIcon 
-                :class="{ 'rotate-180': faq.open }"
-                class="w-5 h-5 text-gray-500 transition-transform"
-              />
+          <!-- Enterprise Plan -->
+          <Card variant="default" padding="lg" class="relative flex flex-col border border-purple-500/50">
+            <div class="text-center mb-6">
+              <h3 class="text-2xl font-bold text-white mb-2">Enterprise</h3>
+              <div class="mb-4">
+                <span class="text-5xl font-bold text-white">$299</span>
+                <span class="text-gray-400">/month</span>
+              </div>
+              <p class="text-gray-300">Complete solution for regulated issuance</p>
             </div>
-            <Transition
-              enter-active-class="transition duration-200 ease-out"
-              enter-from-class="opacity-0 -translate-y-1"
-              enter-to-class="opacity-100 translate-y-0"
-              leave-active-class="transition duration-150 ease-in"
-              leave-from-class="opacity-100 translate-y-0"
-              leave-to-class="opacity-0 -translate-y-1"
+            
+            <div class="flex-1">
+              <ul class="space-y-3 mb-8">
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">Unlimited tokens & standards</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">All networks (AVM + EVM mainnet)</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">NFT support (ARC72, ERC721)</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">Advanced compliance workflows</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">Real-time monitoring & reporting</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">Regulatory audit support</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">White-label & custom integrations</span>
+                </li>
+                <li class="flex items-start">
+                  <CheckIcon class="w-5 h-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <span class="text-gray-300">Dedicated support + account manager</span>
+                </li>
+              </ul>
+            </div>
+
+            <Button
+              @click="handleSelectPlan('enterprise')"
+              variant="primary"
+              size="lg"
+              full-width
+              :loading="loading && selectedTier === 'enterprise'"
+              :disabled="isCurrentPlan('enterprise')"
             >
-              <p v-if="faq.open" class="mt-3 text-gray-600 dark:text-gray-300">{{ faq.answer }}</p>
-            </Transition>
+              {{ getPlanButtonText('enterprise') }}
+            </Button>
+          </Card>
+        </div>
+
+        <!-- Feature Comparison Table -->
+        <div class="mb-16">
+          <h2 class="text-3xl font-bold text-white mb-8 text-center">Detailed Feature Comparison</h2>
+          <Card variant="default" padding="none">
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead class="bg-gray-800/50">
+                  <tr>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                      Feature
+                    </th>
+                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                      Basic
+                    </th>
+                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                      Professional
+                    </th>
+                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                      Enterprise
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700/50">
+                  <tr v-for="feature in comparisonFeatures" :key="feature.name" class="hover:bg-gray-800/30">
+                    <td class="px-6 py-4 text-sm font-medium text-white">
+                      {{ feature.name }}
+                    </td>
+                    <td class="px-6 py-4 text-center text-sm text-gray-300">
+                      <component 
+                        v-if="typeof feature.basic === 'boolean'"
+                        :is="feature.basic ? CheckIcon : XMarkIcon" 
+                        :class="feature.basic ? 'text-green-400' : 'text-gray-600'"
+                        class="w-5 h-5 mx-auto"
+                      />
+                      <span v-else class="text-gray-300">{{ feature.basic }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-center text-sm text-gray-300">
+                      <component 
+                        v-if="typeof feature.professional === 'boolean'"
+                        :is="feature.professional ? CheckIcon : XMarkIcon" 
+                        :class="feature.professional ? 'text-green-400' : 'text-gray-600'"
+                        class="w-5 h-5 mx-auto"
+                      />
+                      <span v-else class="text-gray-300">{{ feature.professional }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-center text-sm text-gray-300">
+                      <component 
+                        v-if="typeof feature.enterprise === 'boolean'"
+                        :is="feature.enterprise ? CheckIcon : XMarkIcon" 
+                        :class="feature.enterprise ? 'text-green-400' : 'text-gray-600'"
+                        class="w-5 h-5 mx-auto"
+                      />
+                      <span v-else class="text-gray-300">{{ feature.enterprise }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+
+        <!-- Business Value Section -->
+        <div class="mb-16">
+          <h2 class="text-3xl font-bold text-white mb-8 text-center">Why Biatec Tokens?</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card variant="glass" padding="lg">
+              <div class="text-center">
+                <ShieldCheckIcon class="w-12 h-12 text-blue-400 mx-auto mb-4" />
+                <h3 class="text-xl font-semibold text-white mb-3">MICA Compliant</h3>
+                <p class="text-gray-300">
+                  Built-in compliance templates and automated reporting ensure your tokens meet EU regulatory requirements
+                </p>
+              </div>
+            </Card>
+            <Card variant="glass" padding="lg">
+              <div class="text-center">
+                <LockClosedIcon class="w-12 h-12 text-green-400 mx-auto mb-4" />
+                <h3 class="text-xl font-semibold text-white mb-3">No Wallet Required</h3>
+                <p class="text-gray-300">
+                  Create and deploy tokens without managing crypto wallets or private keys. We handle the blockchain complexity
+                </p>
+              </div>
+            </Card>
+            <Card variant="glass" padding="lg">
+              <div class="text-center">
+                <BoltIcon class="w-12 h-12 text-purple-400 mx-auto mb-4" />
+                <h3 class="text-xl font-semibold text-white mb-3">Fast & Reliable</h3>
+                <p class="text-gray-300">
+                  Deploy your tokens in minutes with our guided wizard. Track deployment status in real-time
+                </p>
+              </div>
+            </Card>
+          </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="mb-12">
+          <h2 class="text-3xl font-bold text-white mb-8 text-center">Frequently Asked Questions</h2>
+          <div class="max-w-4xl mx-auto space-y-4">
+            <Card
+              v-for="faq in faqs"
+              :key="faq.question"
+              variant="glass"
+              padding="md"
+              class="cursor-pointer hover:border-blue-500/50 transition-colors"
+              @click="faq.open = !faq.open"
+            >
+              <div class="flex items-center justify-between">
+                <h3 class="font-semibold text-white">{{ faq.question }}</h3>
+                <ChevronDownIcon 
+                  :class="{ 'rotate-180': faq.open }"
+                  class="w-5 h-5 text-gray-400 transition-transform flex-shrink-0 ml-4"
+                />
+              </div>
+              <Transition
+                enter-active-class="transition duration-200 ease-out"
+                enter-from-class="opacity-0 -translate-y-1"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition duration-150 ease-in"
+                leave-from-class="opacity-100 translate-y-0"
+                leave-to-class="opacity-0 -translate-y-1"
+              >
+                <p v-if="faq.open" class="mt-3 text-gray-300">{{ faq.answer }}</p>
+              </Transition>
+            </Card>
+          </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div class="text-center">
+          <Card variant="glass" padding="lg">
+            <h2 class="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>
+            <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+              Join businesses around the world using Biatec Tokens for regulated token issuance
+            </p>
+            <div class="flex gap-4 justify-center">
+              <Button
+                v-if="!authStore.isAuthenticated"
+                @click="handleSignIn"
+                variant="primary"
+                size="lg"
+              >
+                Start Free Trial
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                @click="handleContactSales"
+              >
+                Contact Sales
+              </Button>
+            </div>
           </Card>
         </div>
       </div>
@@ -212,6 +394,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useSubscriptionStore } from '../../stores/subscription'
 import { telemetryService } from '../../services/TelemetryService'
@@ -223,42 +406,74 @@ import {
   CheckIcon,
   XMarkIcon,
   ChevronDownIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  ShieldCheckIcon,
+  LockClosedIcon,
+  BoltIcon
 } from '@heroicons/vue/24/outline'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const subscriptionStore = useSubscriptionStore()
-const upgradeStartTime = ref<number | null>(null)
+const loading = ref(false)
+const selectedTier = ref<string>('')
 
-const features = [
-  { name: 'Token Creation', free: true },
-  { name: 'Basic Standards (ARC3)', free: true },
-  { name: 'Advanced Standards (ARC200, ARC72, ERC20, ERC721)', free: false },
-  { name: 'Unlimited Tokens', free: false },
-  { name: 'API Access', free: false },
-  { name: 'Priority Support', free: false },
-  { name: 'Advanced Analytics', free: false }
+const comparisonFeatures = [
+  { name: 'Monthly token limit', basic: '10 tokens', professional: 'Unlimited', enterprise: 'Unlimited' },
+  { name: 'Token Standards', basic: 'ASA, ARC3, ARC19', professional: 'All AVM + ERC20', enterprise: 'All (AVM + EVM)' },
+  { name: 'Deployment Networks', basic: 'Testnet only', professional: 'Mainnet + Testnet', enterprise: 'All networks' },
+  { name: 'MICA Compliance Templates', basic: true, professional: true, enterprise: true },
+  { name: 'KYC/AML Integration', basic: false, professional: true, enterprise: true },
+  { name: 'Automated Compliance Monitoring', basic: false, professional: true, enterprise: true },
+  { name: 'Real-time Reporting', basic: false, professional: false, enterprise: true },
+  { name: 'API Access', basic: false, professional: true, enterprise: true },
+  { name: 'Batch Deployment', basic: false, professional: true, enterprise: true },
+  { name: 'NFT Support (ARC72, ERC721)', basic: false, professional: false, enterprise: true },
+  { name: 'White-label Options', basic: false, professional: false, enterprise: true },
+  { name: 'Custom Integrations', basic: false, professional: false, enterprise: true },
+  { name: 'Support Response Time', basic: '48 hours', professional: '24 hours', enterprise: '4 hours' },
+  { name: 'Dedicated Account Manager', basic: false, professional: false, enterprise: true }
 ]
 
 const faqs = ref([
   {
+    question: 'What is MICA and why does it matter?',
+    answer: 'MICA (Markets in Crypto-Assets) is EU regulation that establishes rules for crypto-asset issuance. Our platform ensures your tokens meet these requirements, reducing legal risk and enabling regulated market access.',
+    open: false
+  },
+  {
+    question: 'Do I need crypto knowledge to use Biatec Tokens?',
+    answer: 'No! Our guided wizard walks you through every step with plain language explanations. You focus on your business requirements while we handle the blockchain complexity.',
+    open: false
+  },
+  {
+    question: 'Can I start with a lower tier and upgrade later?',
+    answer: 'Absolutely. You can upgrade your plan at any time. Changes take effect immediately, and we prorate any billing differences.',
+    open: false
+  },
+  {
+    question: 'What token standards are supported?',
+    answer: 'We support AVM standards (ASA, ARC3, ARC19, ARC69, ARC200, ARC72) and EVM standards (ERC20, ERC721). Availability depends on your plan tier.',
+    open: false
+  },
+  {
+    question: 'Which blockchain networks can I deploy to?',
+    answer: 'Supported networks include Algorand (mainnet & testnet), VOI, Aramid, Ethereum, Arbitrum, Base, and their testnets. Network access depends on your subscription tier.',
+    open: false
+  },
+  {
+    question: 'How does wallet-free deployment work?',
+    answer: 'We manage the blockchain wallets and private keys securely on your behalf. You authenticate with email/password and we handle all blockchain transactions through our secure infrastructure.',
+    open: false
+  },
+  {
     question: 'Can I cancel my subscription anytime?',
-    answer: 'Yes, you can cancel your subscription at any time. Your access will continue until the end of your current billing period.',
+    answer: 'Yes, you can cancel anytime. Your access continues until the end of your current billing period, and all your data remains accessible.',
     open: false
   },
   {
     question: 'What payment methods do you accept?',
-    answer: 'We accept all major credit cards including Visa, MasterCard, and American Express through Stripe.',
-    open: false
-  },
-  {
-    question: 'Is there a free trial?',
-    answer: 'We offer a generous free plan that allows you to create up to 3 tokens. You can upgrade to premium anytime.',
-    open: false
-  },
-  {
-    question: 'Can I change my plan later?',
-    answer: 'Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle.',
+    answer: 'We accept all major credit cards (Visa, MasterCard, American Express) through Stripe. Enterprise customers can also arrange invoice billing.',
     open: false
   }
 ])
@@ -271,36 +486,68 @@ const formatDate = (date: Date) => {
   }).format(date)
 }
 
-const getSubscribeButtonText = () => {
+const getCurrentPlanName = () => {
+  const product = subscriptionStore.currentProduct
+  if (!product) return 'Free Trial'
+  return product.name
+}
+
+const isCurrentPlan = (tier: string) => {
+  const product = subscriptionStore.currentProduct
+  return product?.tier === tier
+}
+
+const getPlanButtonText = (tier: string) => {
   if (!authStore.isAuthenticated) {
     return 'Sign In to Subscribe'
   }
-  if (subscriptionStore.isActive) {
-    return 'Already Subscribed'
+  if (isCurrentPlan(tier)) {
+    return 'Current Plan'
   }
-  return 'Subscribe Now'
+  return 'Select Plan'
 }
 
-const handleSubscribe = async () => {
+const handleSignIn = () => {
+  // Redirect to home with auth modal
+  router.push({ name: 'Home', query: { showAuth: 'true' } })
+}
+
+const handleSelectPlan = async (tier: string) => {
   if (!authStore.isAuthenticated) {
-    // User needs to authenticate first
+    handleSignIn()
     return
   }
 
-  const currentPlan = subscriptionStore.currentProduct?.name || 'free'
-  const monthlyProduct = stripeProducts.find(p => p.interval === 'month')
+  const product = stripeProducts.find(p => p.tier === tier)
+  if (!product) {
+    console.error('Product not found for tier:', tier)
+    return
+  }
+
+  const currentPlan = subscriptionStore.currentProduct?.tier || 'free'
   
-  if (monthlyProduct) {
-    // Track upgrade started
-    upgradeStartTime.value = Date.now()
+  loading.value = true
+  selectedTier.value = tier
+  
+  try {
+    // Track plan selection
     telemetryService.trackPlanUpgradeStarted({
       fromPlan: currentPlan,
-      toPlan: monthlyProduct.name,
-      source: 'pricing_page'
+      toPlan: product.name,
+      source: 'pricing_page_enhanced'
     })
     
-    await subscriptionStore.createCheckoutSession(monthlyProduct.priceId, 'subscription')
+    // Create checkout session (currently mocked)
+    await subscriptionStore.createCheckoutSession(product.priceId, 'subscription')
+  } finally {
+    loading.value = false
+    selectedTier.value = ''
   }
+}
+
+const handleContactSales = () => {
+  // Open contact/sales form or email
+  window.location.href = 'mailto:sales@biatec.io?subject=Enterprise Plan Inquiry'
 }
 
 onMounted(async () => {

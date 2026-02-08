@@ -16,6 +16,7 @@ import AccountSecurity from "../views/AccountSecurity.vue";
 import DiscoveryDashboard from "../views/DiscoveryDashboard.vue";
 import AllowanceCenter from "../views/AllowanceCenter.vue";
 import TokenCreationWizard from "../views/TokenCreationWizard.vue";
+import OnboardingFlow from "../views/OnboardingFlow.vue";
 import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from "../constants/auth";
 
 // Subscription views
@@ -126,6 +127,13 @@ const router = createRouter({
       path: "/allowances",
       name: "AllowanceCenter",
       component: AllowanceCenter,
+      meta: { requiresAuth: true },
+    },
+    // Onboarding route
+    {
+      path: "/onboarding",
+      name: "OnboardingFlow",
+      component: OnboardingFlow,
       meta: { requiresAuth: true },
     },
     // Subscription routes
