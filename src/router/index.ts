@@ -15,6 +15,7 @@ import Marketplace from "../views/Marketplace.vue";
 import AccountSecurity from "../views/AccountSecurity.vue";
 import DiscoveryDashboard from "../views/DiscoveryDashboard.vue";
 import AllowanceCenter from "../views/AllowanceCenter.vue";
+import TokenCreationWizard from "../views/TokenCreationWizard.vue";
 import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from "../constants/auth";
 
 // Subscription views
@@ -34,6 +35,12 @@ const router = createRouter({
       path: "/create",
       name: "TokenCreator",
       component: TokenCreator,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/create/wizard",
+      name: "TokenCreationWizard",
+      component: TokenCreationWizard,
       meta: { requiresAuth: true },
     },
     {
