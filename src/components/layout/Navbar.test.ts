@@ -40,6 +40,7 @@ vi.mock('@heroicons/vue/24/outline', () => ({
   ChevronDownIcon: { template: '<svg>Chevron</svg>' },
   ArrowRightOnRectangleIcon: { template: '<svg>Login</svg>' },
   UserCircleIcon: { template: '<svg>User</svg>' },
+  CurrencyDollarIcon: { template: '<svg>Currency</svg>' },
 }));
 
 describe('Navbar Component', () => {

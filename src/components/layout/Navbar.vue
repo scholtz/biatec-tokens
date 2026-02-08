@@ -216,7 +216,7 @@ import { useThemeStore } from "../../stores/theme";
 import { useSubscriptionStore } from "../../stores/subscription";
 import { useAVMAuthentication } from "algorand-authentication-component-vue";
 import { AUTH_STORAGE_KEYS } from "../../constants/auth";
-import { HomeIcon, PlusCircleIcon, ChartBarIcon, Cog6ToothIcon, SunIcon, MoonIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, ArrowRightOnRectangleIcon, UserCircleIcon } from "@heroicons/vue/24/outline";
+import { HomeIcon, PlusCircleIcon, ChartBarIcon, Cog6ToothIcon, SunIcon, MoonIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, ArrowRightOnRectangleIcon, UserCircleIcon, CurrencyDollarIcon } from "@heroicons/vue/24/outline";
 import WalletConnectModal from "../WalletConnectModal.vue";
 // import WalletStatusBadge from "../WalletStatusBadge.vue"; // Hidden for MVP wallet-free auth (AC #4)
 import WalletRecoveryPanel from "../WalletRecoveryPanel.vue";
@@ -241,6 +241,7 @@ const navigationItems = [
   { name: "Home", path: "/", icon: HomeIcon },
   { name: "Create", path: "/create", icon: PlusCircleIcon },
   { name: "Dashboard", path: "/dashboard", icon: ChartBarIcon },
+  { name: "Pricing", path: "/subscription/pricing", icon: CurrencyDollarIcon },
   { name: "Account", path: "/account", icon: UserCircleIcon },
   { name: "Settings", path: "/settings", icon: Cog6ToothIcon },
 ];

@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import { useTokenDraftStore } from '../../../../stores/tokenDraft'
 import { useTokenStore } from '../../../../stores/tokens'
+import { useSubscriptionStore } from '../../../../stores/subscription'
 import TokenDetailsStep from '../TokenDetailsStep.vue'
 import WizardStep from '../../WizardStep.vue'
 import Input from '../../../ui/Input.vue'
@@ -30,6 +31,21 @@ describe('TokenDetailsStep', () => {
         bestFor: ['DeFi', 'Tokens'],
       },
     ]
+    
+    // Mock subscription store to allow all access in tests
+    const subscriptionStore = useSubscriptionStore()
+    subscriptionStore.subscription = {
+      customer_id: 'test_customer',
+      subscription_id: 'test_sub',
+      subscription_status: 'active',
+      price_id: 'price_enterprise_monthly',
+      current_period_start: Date.now() / 1000,
+      current_period_end: (Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000,
+      cancel_at_period_end: false,
+      payment_method_brand: 'visa',
+      payment_method_last4: '4242'
+    }
+    subscriptionStore.fetchSubscription = vi.fn().mockResolvedValue(undefined)
   })
 
   describe('Form Rendering', () => {

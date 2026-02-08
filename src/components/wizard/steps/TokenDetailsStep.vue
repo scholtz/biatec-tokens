@@ -246,6 +246,19 @@
         </div>
       </div>
     </div>
+
+    <!-- Upgrade Modal -->
+    <UpgradePromptModal
+      :show="showUpgradeModal"
+      :feature="upgradeFeature"
+      :required-plan="upgradeRequired || 'Professional Plan'"
+      :description="upgradeDescription"
+      :benefits="upgradeBenefits"
+      :comparison-items="upgradeComparisonItems"
+      :show-comparison="true"
+      @close="showUpgradeModal = false"
+      @upgrade="showUpgradeModal = false"
+    />
   </WizardStep>
 </template>
 
@@ -253,16 +266,27 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useTokenDraftStore } from '../../../stores/tokenDraft'
 import { useTokenStore } from '../../../stores/tokens'
+import { usePlanGating } from '../../../composables/usePlanGating'
 import WizardStep from '../WizardStep.vue'
 import Input from '../../ui/Input.vue'
+import UpgradePromptModal from '../../UpgradePromptModal.vue'
 import type { NetworkId } from '../../../composables/useWalletManager'
 
 const tokenDraftStore = useTokenDraftStore()
 const tokensStore = useTokenStore()
+const planGating = usePlanGating()
 
 const showErrors = ref(false)
 const errors = ref<string[]>([])
 const fieldErrors = ref<Record<string, string>>({})
+
+// Upgrade modal state
+const showUpgradeModal = ref(false)
+const upgradeFeature = ref('')
+const upgradeRequired = ref<'Basic Plan' | 'Professional Plan' | 'Enterprise Plan' | null>(null)
+const upgradeDescription = ref('')
+const upgradeBenefits = ref<string[]>([])
+const upgradeComparisonItems = ref<Array<{ feature: string; current: boolean }>>([])
 
 interface FormData {
   name: string
@@ -371,6 +395,20 @@ const isFormComplete = computed(() => {
 })
 
 const selectNetwork = (network: string) => {
+  // Check plan access
+  const accessCheck = planGating.checkNetworkAccess(network)
+  
+  if (!accessCheck.isAllowed && accessCheck.requiredPlan) {
+    // Show upgrade modal
+    upgradeFeature.value = `${network} Network`
+    upgradeRequired.value = accessCheck.requiredPlan
+    upgradeDescription.value = accessCheck.reason
+    upgradeBenefits.value = planGating.getUpgradeBenefits(accessCheck.requiredPlan)
+    upgradeComparisonItems.value = planGating.getComparisonItems(upgradeFeature.value)
+    showUpgradeModal.value = true
+    return
+  }
+  
   formData.value.selectedNetwork = network
   formData.value.selectedStandard = '' // Reset standard when network changes
   fieldErrors.value.selectedNetwork = ''
@@ -378,6 +416,20 @@ const selectNetwork = (network: string) => {
 }
 
 const selectStandard = (standard: string) => {
+  // Check plan access
+  const accessCheck = planGating.checkStandardAccess(standard)
+  
+  if (!accessCheck.isAllowed && accessCheck.requiredPlan) {
+    // Show upgrade modal
+    upgradeFeature.value = `${standard} Token Standard`
+    upgradeRequired.value = accessCheck.requiredPlan
+    upgradeDescription.value = accessCheck.reason
+    upgradeBenefits.value = planGating.getUpgradeBenefits(accessCheck.requiredPlan)
+    upgradeComparisonItems.value = planGating.getComparisonItems(upgradeFeature.value)
+    showUpgradeModal.value = true
+    return
+  }
+  
   formData.value.selectedStandard = standard
   fieldErrors.value.selectedStandard = ''
   
