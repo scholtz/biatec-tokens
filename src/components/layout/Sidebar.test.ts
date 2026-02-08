@@ -105,20 +105,23 @@ describe('Sidebar Component', () => {
       });
 
       const links = wrapper.findAll('a');
-      expect(links).toHaveLength(4);
+      expect(links).toHaveLength(5);
 
       // Check link texts and routes
-      expect(links[0].text()).toContain('Create Token');
-      expect(links[0].attributes('to')).toBe('/create');
+      expect(links[0].text()).toContain('Create Token (Wizard)');
+      expect(links[0].attributes('to')).toBe('/create/wizard');
 
-      expect(links[1].text()).toContain('View Dashboard');
-      expect(links[1].attributes('to')).toBe('/dashboard');
+      expect(links[1].text()).toContain('Create Token (Advanced)');
+      expect(links[1].attributes('to')).toBe('/create');
 
-      expect(links[2].text()).toContain('Token Standards');
-      expect(links[2].attributes('to')).toBe('/token-standards');
+      expect(links[2].text()).toContain('View Dashboard');
+      expect(links[2].attributes('to')).toBe('/dashboard');
 
-      expect(links[3].text()).toContain('Enterprise Guide');
-      expect(links[3].attributes('to')).toBe('/enterprise-guide');
+      expect(links[3].text()).toContain('Token Standards');
+      expect(links[3].attributes('to')).toBe('/token-standards');
+
+      expect(links[4].text()).toContain('Enterprise Guide');
+      expect(links[4].attributes('to')).toBe('/enterprise-guide');
     });
 
     it('should render icons for quick actions', () => {
@@ -133,7 +136,7 @@ describe('Sidebar Component', () => {
       });
 
       const svgs = wrapper.findAll('svg');
-      expect(svgs).toHaveLength(4); // 4 icons for quick actions
+      expect(svgs).toHaveLength(5); // 5 icons for quick actions
     });
   });
 

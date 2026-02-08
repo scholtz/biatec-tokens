@@ -191,9 +191,9 @@ const handleWalletConnectFromLanding = () => {
 
 const handleCreateToken = () => {
   if (isConnected.value) {
-    router.push("/create");
+    router.push("/create/wizard");
   } else {
-    localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, "/create");
+    localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, "/create/wizard");
     showAuthModal.value = true;
   }
 };
@@ -221,7 +221,7 @@ const handleAuthComplete = () => {
     localStorage.removeItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);
     router.push(redirectPath);
   } else {
-    router.push("/create");
+    router.push("/create/wizard");
   }
 };
 
@@ -235,7 +235,7 @@ const handleOnboardingComplete = () => {
     localStorage.removeItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);
     router.push(redirectPath);
   } else {
-    router.push("/create");
+    router.push("/create/wizard");
   }
 };
 
