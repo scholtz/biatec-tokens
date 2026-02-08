@@ -153,7 +153,7 @@ const handleSaveDraft = () => {
     console.log('[Wizard] Draft saved successfully')
     
     // Show success notification (would use toast in production)
-    alert('Draft saved successfully!')
+    console.log('[User Notification] Draft saved successfully!')
   }
 }
 
@@ -188,7 +188,7 @@ const handleComplete = async () => {
   tokenDraftStore.clearDraft()
   
   // Show success message
-  alert('Congratulations! Your token has been created successfully.')
+  console.log('[User Notification] Congratulations! Your token has been created successfully.')
   
   // Redirect to token dashboard
   await router.push('/dashboard')
