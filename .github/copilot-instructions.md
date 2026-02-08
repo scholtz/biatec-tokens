@@ -387,6 +387,30 @@ expect(isVisible || true).toBe(true); // Pass if element not found
 - **Problem**: Tests don't properly isolate state between runs
 - **Solution**: Clear localStorage in `beforeEach` hooks and mock required state
 
+**Pinia Store Testing Issues (CRITICAL):**
+
+- **Problem**: Store computed properties aren't reactive in tests. Setting `store.isActive = true` doesn't work when `isActive` is a computed property.
+- **Solution**: Set the **underlying data** that the computed depends on, not the computed itself. Mock any lifecycle methods that might override test data.
+- **Example**:
+  ```typescript
+  // ❌ WRONG - setting computed property directly
+  subscriptionStore.isActive = true
+  
+  // ✅ CORRECT - set underlying data
+  subscriptionStore.subscription = { subscription_status: 'active' } as any
+  subscriptionStore.fetchSubscription = vi.fn().mockResolvedValue(undefined) // Mock to prevent override
+  ```
+- **Common patterns**:
+  - `authStore.isAuthenticated` depends on `authStore.isConnected` AND `authStore.user` - set both
+  - `subscriptionStore.isActive` depends on `subscriptionStore.subscription.subscription_status`
+  - `complianceStore.metrics` depends on `complianceStore.checklistItems` array
+  - Always mock `onMounted` lifecycle hooks that call store methods (like `fetchSubscription`)
+
+**State Persistence Issues:**
+
+- **Problem**: Tests don't properly isolate state between runs
+- **Solution**: Clear localStorage in `beforeEach` hooks and mock required state
+
 ## Additional Notes
 
 - The application uses Vue Router for navigation
