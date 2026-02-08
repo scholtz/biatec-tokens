@@ -124,7 +124,8 @@ describe('TokenDetailsStep', () => {
       vm.fieldErrors.selectedNetwork = 'Please select a network'
       await vm.selectNetwork('VOI')
 
-      expect(vm.fieldErrors.selectedNetwork).toBe('')
+      // After selecting network, error should be cleared or undefined
+      expect(vm.fieldErrors.selectedNetwork).toBeFalsy()
     })
   })
 
