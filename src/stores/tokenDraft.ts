@@ -20,10 +20,28 @@ export interface TokenDraftForm {
   micaMetadata?: MicaComplianceMetadata
   attestationMetadata?: TokenAttestationMetadata
   
+  // Project setup (for wizard)
+  projectSetup?: {
+    projectName?: string
+    projectDescription?: string
+    tokenPurpose?: string
+    organizationName?: string
+    organizationType?: string
+    registrationNumber?: string
+    jurisdiction?: string
+    complianceContactName?: string
+    complianceContactEmail?: string
+    complianceContactPhone?: string
+  }
+  
   // Selections
   selectedTemplate?: string
   selectedNetwork?: NetworkId
   selectedStandard?: string
+  
+  // Token configuration
+  totalSupply?: string | number
+  url?: string
   
   // Timestamps
   lastModified?: Date

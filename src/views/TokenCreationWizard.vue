@@ -13,7 +13,7 @@
       @step-validated="handleStepValidated"
     >
       <template #default="{ stepIndex }">
-        <!-- Step 1: Authentication Confirmation -->
+        <!-- Step 1: Authentication & Welcome -->
         <AuthenticationConfirmationStep
           v-if="stepIndex === 0"
           ref="step1Ref"
@@ -26,22 +26,34 @@
           @plan-selected="handlePlanSelected"
         />
 
-        <!-- Step 3: Token Details -->
-        <TokenDetailsStep
+        <!-- Step 3: Project Setup (NEW) -->
+        <ProjectSetupStep
           v-if="stepIndex === 2"
           ref="step3Ref"
         />
 
-        <!-- Step 4: Compliance Review -->
-        <ComplianceReviewStep
+        <!-- Step 4: Token Details -->
+        <TokenDetailsStep
           v-if="stepIndex === 3"
           ref="step4Ref"
         />
 
-        <!-- Step 5: Deployment Status -->
-        <DeploymentStatusStep
+        <!-- Step 5: Compliance Review -->
+        <ComplianceReviewStep
           v-if="stepIndex === 4"
           ref="step5Ref"
+        />
+
+        <!-- Step 6: Deployment Review (NEW) -->
+        <DeploymentReviewStep
+          v-if="stepIndex === 5"
+          ref="step6Ref"
+        />
+
+        <!-- Step 7: Deployment Status -->
+        <DeploymentStatusStep
+          v-if="stepIndex === 6"
+          ref="step7Ref"
         />
       </template>
     </WizardContainer>
@@ -58,8 +70,10 @@ import { useComplianceStore } from '../stores/compliance'
 import WizardContainer from '../components/wizard/WizardContainer.vue'
 import AuthenticationConfirmationStep from '../components/wizard/steps/AuthenticationConfirmationStep.vue'
 import SubscriptionSelectionStep from '../components/wizard/steps/SubscriptionSelectionStep.vue'
+import ProjectSetupStep from '../components/wizard/steps/ProjectSetupStep.vue'
 import TokenDetailsStep from '../components/wizard/steps/TokenDetailsStep.vue'
 import ComplianceReviewStep from '../components/wizard/steps/ComplianceReviewStep.vue'
+import DeploymentReviewStep from '../components/wizard/steps/DeploymentReviewStep.vue'
 import DeploymentStatusStep from '../components/wizard/steps/DeploymentStatusStep.vue'
 import type { WizardStep } from '../components/wizard/WizardContainer.vue'
 
@@ -71,17 +85,19 @@ const complianceStore = useComplianceStore()
 
 const step1Ref = ref<InstanceType<typeof AuthenticationConfirmationStep>>()
 const step2Ref = ref<InstanceType<typeof SubscriptionSelectionStep>>()
-const step3Ref = ref<InstanceType<typeof TokenDetailsStep>>()
-const step4Ref = ref<InstanceType<typeof ComplianceReviewStep>>()
-const step5Ref = ref<InstanceType<typeof DeploymentStatusStep>>()
+const step3Ref = ref<InstanceType<typeof ProjectSetupStep>>()
+const step4Ref = ref<InstanceType<typeof TokenDetailsStep>>()
+const step5Ref = ref<InstanceType<typeof ComplianceReviewStep>>()
+const step6Ref = ref<InstanceType<typeof DeploymentReviewStep>>()
+const step7Ref = ref<InstanceType<typeof DeploymentStatusStep>>()
 
 const currentStepIndex = ref(0)
 const selectedPlan = ref<string>('')
 
 const wizardSteps = computed<WizardStep[]>(() => [
   {
-    id: 'authentication',
-    title: 'Authentication',
+    id: 'welcome',
+    title: 'Welcome',
     isValid: () => {
       return step1Ref.value?.isValid ?? true
     },
@@ -94,8 +110,8 @@ const wizardSteps = computed<WizardStep[]>(() => [
     },
   },
   {
-    id: 'token-details',
-    title: 'Token Details',
+    id: 'project-setup',
+    title: 'Project Setup',
     isValid: () => {
       const step3 = step3Ref.value
       if (!step3) return false
@@ -109,17 +125,47 @@ const wizardSteps = computed<WizardStep[]>(() => [
     },
   },
   {
+    id: 'token-details',
+    title: 'Token Details',
+    isValid: () => {
+      const step4 = step4Ref.value
+      if (!step4) return false
+      
+      // Validate the step before checking isValid
+      if (step4.validateAll) {
+        step4.validateAll()
+      }
+      
+      return step4.isValid ?? false
+    },
+  },
+  {
     id: 'compliance',
     title: 'Compliance',
     isValid: () => {
-      return step4Ref.value?.isValid ?? false
+      return step5Ref.value?.isValid ?? false
+    },
+  },
+  {
+    id: 'review',
+    title: 'Review',
+    isValid: () => {
+      const step6 = step6Ref.value
+      if (!step6) return false
+      
+      // Validate the step before checking isValid
+      if (step6.validateAll) {
+        step6.validateAll()
+      }
+      
+      return step6.isValid ?? false
     },
   },
   {
     id: 'deployment',
     title: 'Deployment',
     isValid: () => {
-      return step5Ref.value?.isValid ?? false
+      return step7Ref.value?.isValid ?? false
     },
   },
 ])

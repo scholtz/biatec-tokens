@@ -78,6 +78,78 @@
         </div>
       </div>
 
+      <!-- Prerequisites Checklist -->
+      <div class="glass-effect rounded-xl p-6 border border-white/10">
+        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <i class="pi pi-clipboard-list text-biatec-accent"></i>
+          Before You Begin
+        </h4>
+        <p class="text-sm text-gray-400 mb-4">
+          To ensure a smooth token creation process, please have the following information ready:
+        </p>
+        <div class="space-y-3">
+          <div class="flex items-start gap-3">
+            <i class="pi pi-circle text-biatec-accent text-xs mt-1.5"></i>
+            <div>
+              <p class="text-sm font-medium text-gray-900 dark:text-white">Basic Token Information</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Name, symbol, and description of your token</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <i class="pi pi-circle text-biatec-accent text-xs mt-1.5"></i>
+            <div>
+              <p class="text-sm font-medium text-gray-900 dark:text-white">Issuer Details</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Your organization name and contact information</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <i class="pi pi-circle text-biatec-accent text-xs mt-1.5"></i>
+            <div>
+              <p class="text-sm font-medium text-gray-900 dark:text-white">Token Purpose</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">What your token represents (utility, asset, etc.)</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <i class="pi pi-circle text-biatec-accent text-xs mt-1.5"></i>
+            <div>
+              <p class="text-sm font-medium text-gray-900 dark:text-white">Compliance Documentation</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Any relevant legal or regulatory documents</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Your Responsibilities -->
+      <div class="p-5 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+        <div class="flex items-start gap-3">
+          <i class="pi pi-exclamation-triangle text-yellow-400 text-lg mt-0.5"></i>
+          <div>
+            <h5 class="text-sm font-semibold text-yellow-400 mb-2">Your Compliance Responsibilities</h5>
+            <p class="text-sm text-gray-300 mb-3">
+              While we provide tools to help you create compliant tokens, you are responsible for:
+            </p>
+            <ul class="text-sm text-gray-400 space-y-2">
+              <li class="flex items-start gap-2">
+                <span class="text-yellow-400">•</span>
+                <span>Ensuring your token complies with laws in your jurisdiction</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-yellow-400">•</span>
+                <span>Providing accurate information about your token and organization</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-yellow-400">•</span>
+                <span>Understanding how your token will be used and distributed</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-yellow-400">•</span>
+                <span>Maintaining proper records and documentation for regulatory purposes</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
       <!-- What's Next -->
       <div class="glass-effect rounded-xl p-6 border border-white/10">
         <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
