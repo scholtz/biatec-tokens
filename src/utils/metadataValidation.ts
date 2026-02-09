@@ -274,7 +274,7 @@ export function validateARC19Metadata(assetUrl: string | undefined): ValidationI
 /**
  * Determines the token standard based on URL and metadata
  */
-export function determineTokenStandard(assetUrl: string | undefined, hasMetadata: boolean): MetadataStandard {
+export function determineTokenStandard(assetUrl: string | undefined, _hasMetadata: boolean): MetadataStandard {
   if (!assetUrl) return 'ASA'
   
   // ARC19: template-ipfs:// URL
@@ -424,7 +424,8 @@ export async function validateImageUrl(url: string | null, timeout: number = 500
     clearTimeout(timeoutId)
     
     // Check if response is successful and is an image
-    return response.ok && response.headers.get('content-type')?.startsWith('image/')
+    const contentType = response.headers.get('content-type')
+    return response.ok && (contentType?.startsWith('image/') ?? false)
   } catch (error) {
     console.warn('Image validation failed:', error)
     return false

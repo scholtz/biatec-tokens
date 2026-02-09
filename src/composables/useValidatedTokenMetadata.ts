@@ -3,7 +3,7 @@
  * Provides validated and normalized metadata for token display
  */
 
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import type { AssetMetadata } from './useTokenMetadata'
 import {
   validateTokenMetadata,
