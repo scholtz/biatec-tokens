@@ -17,6 +17,7 @@ import DiscoveryDashboard from "../views/DiscoveryDashboard.vue";
 import AllowanceCenter from "../views/AllowanceCenter.vue";
 import TokenCreationWizard from "../views/TokenCreationWizard.vue";
 import OnboardingFlow from "../views/OnboardingFlow.vue";
+import EnterpriseOnboardingCommandCenter from "../views/EnterpriseOnboardingCommandCenter.vue";
 import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from "../constants/auth";
 
 // Subscription views
@@ -134,6 +135,13 @@ const router = createRouter({
       path: "/onboarding",
       name: "OnboardingFlow",
       component: OnboardingFlow,
+      meta: { requiresAuth: true },
+    },
+    // Enterprise Onboarding Command Center
+    {
+      path: "/enterprise/onboarding",
+      name: "EnterpriseOnboardingCommandCenter",
+      component: EnterpriseOnboardingCommandCenter,
       meta: { requiresAuth: true },
     },
     // Subscription routes

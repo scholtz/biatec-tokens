@@ -41,6 +41,13 @@
                 <BuildingOfficeIcon class="mr-3 h-5 w-5" />
                 Enterprise Guide
               </router-link>
+              <router-link
+                to="/enterprise/onboarding"
+                class="group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border-l-2 border-blue-500"
+              >
+                <BuildingOfficeIcon class="mr-3 h-5 w-5" />
+                Onboarding Center
+              </router-link>
             </div>
           </div>
 

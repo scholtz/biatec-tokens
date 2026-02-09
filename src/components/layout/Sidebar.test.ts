@@ -105,7 +105,7 @@ describe('Sidebar Component', () => {
       });
 
       const links = wrapper.findAll('a');
-      expect(links).toHaveLength(5);
+      expect(links).toHaveLength(6); // Now includes Enterprise Onboarding Center
 
       // Check link texts and routes
       expect(links[0].text()).toContain('Create Token (Wizard)');
@@ -136,7 +136,7 @@ describe('Sidebar Component', () => {
       });
 
       const svgs = wrapper.findAll('svg');
-      expect(svgs).toHaveLength(5); // 5 icons for quick actions
+      expect(svgs).toHaveLength(6); // 6 icons for quick actions (including Onboarding Center)
     });
   });
 
