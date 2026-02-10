@@ -95,7 +95,7 @@
               >
                 <div class="p-3 border-b border-white/10 mb-2">
                   <div class="text-xs text-gray-400 mb-1">{{ AUTH_UI_COPY.CONNECTED_ADDRESS }}</div>
-                  <div class="text-sm text-white font-mono break-all" :title="activeAddress">{{ formattedAddress }}</div>
+                  <div class="text-sm text-white font-mono break-all" :title="activeAddress || undefined">{{ formattedAddress }}</div>
                 </div>
                 
                 <router-link

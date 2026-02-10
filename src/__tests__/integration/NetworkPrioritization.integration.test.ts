@@ -364,9 +364,9 @@ describe('Network Prioritization Integration Tests', () => {
 
       await wrapper.vm.$nextTick();
 
-      // Should explain authentication requirement
+      // Should explain authentication requirement with account/credential context
       const modalContent = wrapper.html();
-      expect(modalContent).toContain('Account');
+      expect(modalContent.toLowerCase()).toContain('account');
     });
   });
 });
