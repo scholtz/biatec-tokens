@@ -4,9 +4,15 @@ on:
   pull_request:
     branches:
       - main
+      - develop
+      - 'dependabot/**'
+      - 'copilot/**'
   push:
     branches:
       - main
+      - develop
+      - 'dependabot/**'
+      - 'copilot/**'
 
 jobs:
   test:
