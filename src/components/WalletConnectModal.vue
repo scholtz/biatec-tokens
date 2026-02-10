@@ -11,57 +11,7 @@
             </button>
           </div>
 
-          <!-- Network Selection - Hidden for wallet-free authentication per MVP requirements -->
-          <div v-if="false" class="mb-6">
-            <label class="block text-sm font-medium text-gray-300 mb-3 flex items-center gap-2">
-              <i class="pi pi-server text-biatec-accent"></i>
-              {{ NETWORK_UI_COPY.SELECT_NETWORK }}
-            </label>
-            <div class="space-y-2">
-              <button
-                v-for="network in availableNetworks"
-                :key="network.id"
-                @click="selectedNetwork = network.id"
-                :class="[
-                  'w-full p-4 rounded-xl text-left transition-all border-2',
-                  selectedNetwork === network.id ? 'border-biatec-accent bg-biatec-accent/10 shadow-lg shadow-biatec-accent/20' : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20',
-                ]"
-              >
-                <div class="flex items-center justify-between">
-                  <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-1">
-                      <div class="text-white font-semibold">{{ network.displayName }}</div>
-                      <span v-if="!network.isTestnet && !network.isAdvanced" class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-500/20 text-green-400 border border-green-500/30"> 
-                        ✓ {{ AUTH_UI_COPY.RECOMMENDED }} 
-                      </span>
-                      <span v-else-if="network.isAdvanced" class="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30"> 
-                        Advanced
-                      </span>
-                      <span v-else class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"> 
-                        {{ AUTH_UI_COPY.TESTNET_LABEL }} 
-                      </span>
-                    </div>
-                    <div class="text-sm text-gray-400">
-                      {{ network.chainType === "AVM" ? (network as any).genesisId : `Chain ID: ${(network as any).chainId}` }}
-                    </div>
-                  </div>
-                  <div v-if="selectedNetwork === network.id" class="text-biatec-accent">
-                    <i class="pi pi-check-circle text-xl"></i>
-                  </div>
-                </div>
-              </button>
-            </div>
-            
-            <!-- Warning for testnet selection -->
-            <div v-if="selectedNetwork && NETWORKS[selectedNetwork].isTestnet" class="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-              <div class="flex items-start gap-2">
-                <i class="pi pi-exclamation-triangle text-yellow-400 text-sm mt-0.5"></i>
-                <div class="text-xs text-yellow-300">
-                  <strong>{{ AUTH_UI_COPY.TESTNET_WARNING }}:</strong> {{ AUTH_UI_COPY.TESTNET_WARNING_TEXT }}
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Network Selection removed for MVP wallet-free authentication per business requirements -->
 
           <!-- Wallet List -->
           <div class="space-y-3">
@@ -162,54 +112,7 @@
                 </form>
               </div>
 
-              <!-- Wallet providers hidden for MVP wallet-free authentication per business requirements -->
-              <!-- Divider - Hidden -->
-              <div v-if="false" class="relative flex items-center py-2">
-                <div class="flex-grow border-t border-white/10"></div>
-                <span class="flex-shrink mx-4 text-sm text-gray-400">or</span>
-                <div class="flex-grow border-t border-white/10"></div>
-              </div>
-
-              <!-- Advanced Options: Wallet Providers - Hidden -->
-              <div v-if="false">
-                <button 
-                  @click="showAdvancedOptions = !showAdvancedOptions"
-                  class="w-full flex items-center justify-between p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors mb-3"
-                >
-                  <div class="flex items-center gap-3">
-                    <i class="pi pi-cog text-gray-400"></i>
-                    <div class="text-left">
-                      <div class="text-white font-medium">{{ AUTH_UI_COPY.WALLET_PROVIDERS_ADVANCED }}</div>
-                      <div class="text-sm text-gray-400">{{ AUTH_UI_COPY.WALLET_PROVIDERS_DESCRIPTION }}</div>
-                    </div>
-                  </div>
-                  <i :class="showAdvancedOptions ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" class="text-gray-400"></i>
-                </button>
-
-                <!-- Collapsible Wallet Provider List -->
-                <Transition name="slide-down">
-                  <div v-if="showAdvancedOptions" class="space-y-2">
-                    <button
-                      v-for="wallet in availableWallets"
-                      :key="wallet.id"
-                      @click="handleConnect(wallet.id)"
-                      :disabled="isConnecting || isReconnecting || isSwitchingNetwork"
-                      class="w-full p-4 rounded-xl text-left transition-all border border-white/10 bg-white/5 hover:bg-white/10 hover:border-biatec-accent/50 hover:shadow-lg hover:shadow-biatec-accent/10 disabled:opacity-50 disabled:cursor-not-allowed group"
-                    >
-                      <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-biatec-accent/20 transition-colors">
-                          <i :class="getWalletIcon(wallet.id)" class="text-xl text-white"></i>
-                        </div>
-                        <div class="flex-1">
-                          <div class="text-white font-semibold">{{ getWalletName(wallet.id) }}</div>
-                          <div class="text-sm text-gray-400">{{ getWalletDescription(wallet.id) }}</div>
-                        </div>
-                        <i class="pi pi-chevron-right text-gray-400 group-hover:text-biatec-accent transition-colors"></i>
-                      </div>
-                    </button>
-                  </div>
-                </Transition>
-              </div>
+              <!-- Wallet providers removed for MVP wallet-free authentication per business requirements -->
             </div>
           </div>
 
@@ -225,21 +128,7 @@
               </div>
             </div>
 
-            <!-- Wallet guidance hidden for MVP wallet-free authentication -->
-            <div v-if="false" class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
-              <div class="flex items-start gap-3">
-                <i class="pi pi-exclamation-circle text-yellow-400"></i>
-                <div class="text-sm text-gray-300">
-                  <p class="font-medium text-yellow-400 mb-2">{{ AUTH_UI_COPY.NEW_USER_GUIDANCE }}</p>
-                  <div class="space-y-1 text-xs">
-                    <p class="mb-2">{{ AUTH_UI_COPY.NEW_USER_INFO }}</p>
-                    <a href="https://perawallet.app/" target="_blank" rel="noopener noreferrer" class="block text-blue-400 hover:text-blue-300 underline"> Download Pera Wallet ({{ AUTH_UI_COPY.RECOMMENDED }}) → </a>
-                    <a href="https://defly.app/" target="_blank" rel="noopener noreferrer" class="block text-blue-400 hover:text-blue-300 underline"> Download Defly Wallet → </a>
-                    <a href="https://www.exodus.com/" target="_blank" rel="noopener noreferrer" class="block text-blue-400 hover:text-blue-300 underline"> Download Exodus Wallet → </a>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <!-- Wallet guidance removed for MVP wallet-free authentication -->
           </div>
         </div>
       </div>
