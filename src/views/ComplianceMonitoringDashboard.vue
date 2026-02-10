@@ -472,10 +472,7 @@ const loadData = async () => {
       error.value = err.message || 'An unexpected error occurred while loading compliance data.';
     }
     
-    // Set mock data for development/demo purposes when API fails
-    if (process.env.NODE_ENV === 'development') {
-      metrics.value = getMockMetrics();
-    }
+    // Show error state - no mock data per MVP requirements
   } finally {
     isLoading.value = false;
   }
@@ -564,46 +561,6 @@ const getScoreGrade = (score: number): string => {
   if (score >= 70) return 'C';
   if (score >= 60) return 'D';
   return 'F';
-};
-
-// Mock data for development
-const getMockMetrics = (): ComplianceMonitoringMetrics => {
-  const networkValue = filters.value.network;
-  const network: Network = (networkValue === 'all' || !networkValue || !isNetwork(networkValue)) ? 'VOI' : networkValue;
-  
-  return {
-    network,
-    assetId: filters.value.assetId,
-    whitelistEnforcement: {
-      totalAddresses: 1247,
-      activeAddresses: 1182,
-      pendingAddresses: 43,
-      removedAddresses: 22,
-      enforcementRate: 94.8,
-      recentViolations: 3,
-      lastUpdated: new Date().toISOString(),
-    },
-    auditHealth: {
-      totalAuditEntries: 8924,
-      successfulActions: 8756,
-      failedActions: 168,
-      criticalIssues: 2,
-      warningIssues: 15,
-      auditCoverage: 98.1,
-      lastAuditTimestamp: new Date(Date.now() - 3600000).toISOString(),
-    },
-    retentionStatus: {
-      totalRecords: 15832,
-      activeRecords: 12456,
-      archivedRecords: 3376,
-      retentionCompliance: 99.2,
-      oldestRecord: new Date(Date.now() - 365 * 24 * 3600000).toISOString(),
-      retentionPolicyDays: 730,
-      lastUpdated: new Date().toISOString(),
-    },
-    overallComplianceScore: 92,
-    lastUpdated: new Date().toISOString(),
-  };
 };
 
 // Lifecycle

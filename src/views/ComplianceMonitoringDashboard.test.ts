@@ -629,58 +629,6 @@ describe('ComplianceMonitoringDashboard', () => {
     });
   });
 
-  describe('Mock Data Generation', () => {
-    it('should generate mock metrics for development', async () => {
-      vi.mocked(complianceService.getMonitoringMetrics).mockResolvedValue(mockMetrics);
-
-      await router.push('/compliance-monitoring');
-      const wrapper = mount(ComplianceMonitoringDashboard, {
-        global: {
-          plugins: [router],
-        },
-      });
-
-      await flushPromises();
-
-      const vm = wrapper.vm as any;
-
-      // Set filters to test mock data generation
-      vm.filters.network = 'Aramid';
-      vm.filters.assetId = 'test-asset';
-
-      const mockData = vm.getMockMetrics();
-
-      expect(mockData.network).toBe('Aramid');
-      expect(mockData.assetId).toBe('test-asset');
-      expect(mockData.overallComplianceScore).toBe(92);
-      expect(mockData.whitelistEnforcement.totalAddresses).toBe(1247);
-      expect(mockData.auditHealth.totalAuditEntries).toBe(8924);
-      expect(mockData.retentionStatus.totalRecords).toBe(15832);
-    });
-
-    it('should default to VOI network when filter is invalid', async () => {
-      vi.mocked(complianceService.getMonitoringMetrics).mockResolvedValue(mockMetrics);
-
-      await router.push('/compliance-monitoring');
-      const wrapper = mount(ComplianceMonitoringDashboard, {
-        global: {
-          plugins: [router],
-        },
-      });
-
-      await flushPromises();
-
-      const vm = wrapper.vm as any;
-
-      // Set invalid network filter
-      vm.filters.network = 'invalid';
-
-      const mockData = vm.getMockMetrics();
-
-      expect(mockData.network).toBe('VOI');
-    });
-  });
-
   describe('Route Watching', () => {
     it.skip('should update filters when route query changes', async () => {
       vi.mocked(complianceService.getMonitoringMetrics).mockResolvedValue(mockMetrics);
