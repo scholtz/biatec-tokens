@@ -411,6 +411,189 @@ expect(isVisible || true).toBe(true); // Pass if element not found
 - **Problem**: Tests don't properly isolate state between runs
 - **Solution**: Clear localStorage in `beforeEach` hooks and mock required state
 
+## Dependency Updates and CI Workflows
+
+### Dependency Update Protocol
+
+**🚨 CRITICAL: All dependency updates MUST follow this complete protocol. Incomplete work is unacceptable.**
+
+When handling dependency updates (including Dependabot PRs), ALWAYS complete ALL of these steps:
+
+#### 1. Local Verification (MANDATORY)
+```bash
+# Install dependencies
+npm install
+
+# Run ALL tests - MUST PASS
+npm test                      # Expect: 2779+ passing
+npm run test:coverage         # Expect: >80% all metrics
+npm run test:e2e              # Expect: 271+ passing
+npm run build                 # Expect: SUCCESS
+
+# Check TypeScript compilation
+npm run check-typescript-errors-tsc
+npm run check-typescript-errors-vue
+```
+
+**ZERO TOLERANCE:** If ANY test fails, fix it immediately. Do NOT proceed until all tests pass.
+
+#### 2. CI Workflow Configuration (MANDATORY)
+
+**Known Issue:** GitHub Actions workflows only run on `main` and `develop` branches by default, causing "No status checks" for Dependabot and Copilot PRs.
+
+**Required Fix:** Ensure ALL workflows include these branch patterns:
+```yaml
+on:
+  pull_request:
+    branches: [main, develop, 'dependabot/**', 'copilot/**']
+  push:
+    branches: [main, develop, 'dependabot/**', 'copilot/**']
+```
+
+**Affected Files:**
+- `.github/workflows/playwright.yml`
+- `.github/workflows/test.yml`
+- `.github/workflows/build-fe.yml` (if exists)
+
+**Dependabot Permission Fix:** Add actor check to prevent 403 errors:
+```yaml
+- name: Comment PR with Test Results
+  if: always() && github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
+```
+
+#### 3. Business Value Documentation (MANDATORY)
+
+Create `DEPENDENCY_UPDATE_<NAME>_<VERSION>_<DATE>.md` with:
+- **Executive Summary** (ROI, business impact)
+- **Updated Packages Table** (from → to, impact)
+- **Business Value Alignment** (link to product roadmap goals)
+- **Security Impact Analysis** (CVEs, risks mitigated)
+- **Stability & Performance Improvements** (specific fixes)
+- **Test Verification Results** (exact counts: unit, E2E, coverage)
+- **CI Workflow Fixes** (if applicable)
+- **Risk Assessment** (Low/Medium/High with rationale)
+- **Cost-Benefit Analysis** (investment vs. return, ROI calculation)
+- **Product Roadmap Impact** (% contribution to phases)
+- **Manual Verification Steps** (browser, OS, test results)
+- **Migration & Configuration** (breaking changes, config updates)
+- **Monitoring & Validation** (post-deployment metrics)
+- **Success Criteria** (technical, business, compliance)
+- **Rollback Plan** (commands, timeline, verification)
+
+**Example:** See `DEPENDENCY_UPDATE_PATCH_6_PACKAGES_FEB10_2026.md`
+
+#### 4. Issue Documentation (MANDATORY)
+
+Create `ISSUE_DEPENDENCY_UPDATE_<NAME>_<VERSION>_<DATE>.md` with:
+- **Customer-Facing Business Value** (what users get)
+- **How This Aligns with Business Goals** (enterprise vs. SMB)
+- **What Changed** (non-technical summary)
+- **Impact on Workflows** (what stays same, what improves)
+- **Why This Matters for MICA Compliance** (regulatory readiness)
+- **Timeline & Rollout** (deployment schedule)
+- **Monitoring & Support** (metrics, contact info)
+- **Questions & Answers** (FAQ for users)
+
+**Example:** See `ISSUE_DEPENDENCY_UPDATE_6_PACKAGES_FEB10_2026.md`
+
+#### 5. Copilot Instructions Update (MANDATORY)
+
+**If this is the first time encountering an issue:**
+- Document the root cause in this section
+- Add prevention steps
+- Update testing checklist if needed
+- Store the fix pattern for future reference
+
+#### 6. PR Description Update (MANDATORY)
+
+Update PR description with:
+- Link to business value document
+- Link to issue document
+- Complete test results with exact counts
+- CI status (passing/failing with explanation)
+- Risk assessment (Low/Medium/High)
+- Rollback plan summary
+- Monitoring plan summary
+
+#### 7. Code Review Request (MANDATORY)
+
+Use `code_review` tool to request automated review BEFORE marking work complete.
+
+#### 8. Final Verification (MANDATORY)
+
+**Before marking complete:**
+- [ ] All tests passing locally (unit + E2E + build)
+- [ ] CI workflows running on correct branches
+- [ ] Business value document created (15+ sections)
+- [ ] Issue document created (customer-facing)
+- [ ] Copilot instructions updated (if new issue found)
+- [ ] PR description updated with links and results
+- [ ] Code review completed and issues addressed
+- [ ] No failing tests (checked multiple times)
+
+### Common Dependency Update Mistakes
+
+**❌ WRONG:**
+- Finishing work with failing tests
+- Skipping business value documentation
+- Not fixing CI workflow branch patterns
+- Not checking if tests actually run in CI
+- Assuming "no CI status checks" means tests passed
+- Creating only technical documentation without business value
+- Not linking to product roadmap goals
+- Not calculating ROI or business impact
+
+**✅ CORRECT:**
+- Run ALL tests locally before proceeding
+- Create comprehensive business value documentation
+- Fix CI workflows to run on all branch patterns
+- Verify tests actually execute in CI (check logs)
+- Investigate "no CI status checks" (usually workflow config issue)
+- Document both technical AND business value
+- Link all changes to product roadmap phases
+- Calculate ROI and business impact with dollar values
+
+### Reading CI Logs
+
+**When Product Owner mentions "CI is failing":**
+
+1. **Check workflow run logs** using GitHub MCP tools:
+   ```
+   github-mcp-server-actions_list(method: "list_workflow_runs", ...)
+   github-mcp-server-get_job_logs(...)
+   ```
+
+2. **Look for actual test results** in logs:
+   - "X passed (Y.Ym)" = tests passed, check for other issues
+   - "X failed" = tests failed, fix immediately
+   - "Resource not accessible" = permission error, not test failure
+
+3. **Distinguish between:**
+   - Test failures (must fix code/tests)
+   - Workflow infrastructure issues (must fix workflow config)
+   - Permission errors (must add actor checks)
+
+4. **Common False Positives:**
+   - Comment action 403 error on Dependabot PRs (not a test failure)
+   - Artifact upload failures (not a test failure)
+   - No workflow runs at all (branch pattern issue, not a test failure)
+
+### Why This Protocol Exists
+
+**Historical Context:**
+- **Feb 10, 2026:** Copilot finished dependency update work with failing CI, no business value documentation, and incomplete testing verification. Product Owner rejected and requested proper completion.
+- **Repeated Pattern:** This has happened multiple times, indicating a systemic issue in how dependency updates are handled.
+- **Business Impact:** Incomplete dependency updates risk introducing bugs, security vulnerabilities, and compliance issues to production.
+
+**Root Causes:**
+1. **Insufficient testing verification** - Not running tests locally before completion
+2. **CI blind spot** - Not checking if CI actually runs on the branch
+3. **Missing business context** - Not documenting business value and ROI
+4. **Incomplete work definition** - Not understanding that "complete" means production-ready
+
+**Prevention:**
+This protocol ensures ALL aspects of a dependency update are complete before marking work as done. Dependency updates are NOT just code changes - they require business justification, risk assessment, and comprehensive verification.
+
 ## Additional Notes
 
 - The application uses Vue Router for navigation
