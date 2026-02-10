@@ -165,8 +165,8 @@ test.describe("ARC76 Authentication - No Wallet UI Verification", () => {
     const passwordInput = page.locator('input[type="password"]');
     await expect(passwordInput).toBeVisible({ timeout: 5000 });
     
-    // Sign in button should be visible
-    const signInButton = page.locator('button:has-text("Sign In with Email")');
+    // Sign in button should be visible - target the submit button within the form
+    const signInButton = page.locator('form button[type="submit"]:has-text("Sign In with Email")').first();
     await expect(signInButton).toBeVisible({ timeout: 5000 });
     
     // Verify NO wallet provider buttons/links are visible

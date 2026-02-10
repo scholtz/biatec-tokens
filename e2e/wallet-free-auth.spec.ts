@@ -191,8 +191,8 @@ test.describe("Wallet-Free Authentication Flow", () => {
     await page.waitForLoadState("domcontentloaded");
     await page.waitForTimeout(1000);
     
-    // Find the sign-in button
-    const signInButton = page.locator('button:has-text("Sign In with Email")');
+    // Find the sign-in button - target the submit button within the form
+    const signInButton = page.locator('form button[type="submit"]:has-text("Sign In with Email")').first();
     await expect(signInButton).toBeVisible({ timeout: 10000 });
     
     // Button should be disabled initially (no inputs)

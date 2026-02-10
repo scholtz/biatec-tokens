@@ -130,8 +130,8 @@ test.describe("MVP Authentication & Network Persistence Flow", () => {
         // Verify the email input has proper placeholder
         await expect(emailInput).toHaveAttribute("placeholder", /email/i);
         
-        // Verify submit button exists
-        const submitButton = page.locator('button:has-text("Sign In with Email")');
+        // Verify submit button exists - target the submit button within the form
+        const submitButton = page.locator('form button[type="submit"]:has-text("Sign In with Email")').first();
         await expect(submitButton).toBeVisible();
       }
     }
@@ -158,7 +158,7 @@ test.describe("MVP Authentication & Network Persistence Flow", () => {
       // Try to find the email and password inputs
       const emailInput = page.locator('input[type="email"]');
       const passwordInput = page.locator('input[type="password"]');
-      const submitButton = page.locator('button:has-text("Sign In with Email")');
+      const submitButton = page.locator('form button[type="submit"]:has-text("Sign In with Email")').first();
       
       const formVisible = await emailInput.isVisible().catch(() => false);
       
