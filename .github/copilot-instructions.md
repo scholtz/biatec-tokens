@@ -411,6 +411,70 @@ expect(isVisible || true).toBe(true); // Pass if element not found
 - **Problem**: Tests don't properly isolate state between runs
 - **Solution**: Clear localStorage in `beforeEach` hooks and mock required state
 
+## Dependency Updates and CI Workflows
+
+### Dependency Update Protocol
+
+When handling dependency updates (especially Dependabot PRs):
+
+1. **ALWAYS run full test suite** before claiming work is complete:
+   - `npm test` (unit tests) - must pass 2779+ tests
+   - `npm run test:e2e` (E2E tests) - must pass 271+ tests
+   - `npm run build` - must succeed
+
+2. **Create business value documentation:**
+   - Document what changed in the dependency
+   - Explain business value and risk assessment
+   - Include manual verification checklist
+   - Link to release notes and changelog
+   - Save as `DEPENDENCY_UPDATE_<NAME>_<VERSION>.md`
+
+3. **Check CI workflows for Dependabot compatibility:**
+   - Workflows that post PR comments MUST skip Dependabot PRs
+   - Use condition: `if: always() && github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'`
+   - Dependabot PRs have restricted permissions and will fail with "Resource not accessible by integration" error
+
+4. **Verify tests pass in CI:**
+   - Check GitHub Actions workflow runs
+   - Distinguish between test failures and workflow permission errors
+   - If Playwright workflow fails but tests passed, check for comment posting errors
+
+5. **Security review:**
+   - Run `npm audit` to check for vulnerabilities
+   - Review release notes for security fixes
+   - Document security posture in business value doc
+
+### Common CI Workflow Issues
+
+**Dependabot PR Comment Failure:**
+```yaml
+# ❌ WRONG - Will fail on Dependabot PRs
+- name: Comment PR
+  if: always() && github.event_name == 'pull_request'
+  uses: actions/github-script@v8
+
+# ✅ CORRECT - Skips Dependabot PRs
+- name: Comment PR
+  if: always() && github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
+  uses: actions/github-script@v8
+```
+
+**Reading CI Logs:**
+- Test passing but workflow failing = Usually a permissions issue, not a test issue
+- Look for "Resource not accessible by integration" = Dependabot permissions error
+- Search logs for actual test results: "X passed (Y.Ym)"
+
+### Why This Matters
+
+**Past Incident:** February 10, 2026 - Dependency update happy-dom 20.5.0→20.6.0:
+- All tests passed (2779 unit, 271 E2E)
+- Playwright workflow failed with "Resource not accessible by integration"
+- Product Owner incorrectly assumed tests failed
+- Required investigation to discover tests actually passed, only workflow permissions issue
+- Wasted 2+ hours of Product Owner and Engineer time
+
+**Prevention:** Always check ACTUAL test results in CI logs, not just workflow status. Distinguish between test failures and workflow infrastructure issues.
+
 ## Additional Notes
 
 - The application uses Vue Router for navigation

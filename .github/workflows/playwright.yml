@@ -49,7 +49,7 @@ jobs:
           retention-days: 30
       
       - name: Comment PR with Test Results
-        if: always() && github.event_name == 'pull_request'
+        if: always() && github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
         uses: actions/github-script@v8
         with:
           script: |
