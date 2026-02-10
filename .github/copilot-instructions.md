@@ -211,6 +211,168 @@ src/
 
 **FINAL VERIFICATION:** Before marking any task complete, run the full test suite one final time and document the results.
 
+### Dependency Updates: Special Requirements
+
+**🚨 CRITICAL: Dependency updates require COMPLETE verification before approval 🚨**
+
+When handling dependency update PRs (especially automated Dependabot PRs):
+
+#### Pre-Approval Requirements (MANDATORY)
+
+1. **Run ALL Tests** ✅
+   - [ ] Run `npm test` - All unit tests must pass
+   - [ ] Run `npm run test:e2e` - All E2E tests must pass
+   - [ ] Run `npm run build` - Build must succeed without errors
+   - [ ] Document test results with specific counts (e.g., "2779/2798 passing")
+
+2. **Review Release Notes** 📋
+   - [ ] Fetch and review official release notes from package repository
+   - [ ] Identify ALL changes: features, fixes, breaking changes, security updates
+   - [ ] Document what changed between versions
+   - [ ] Verify semver classification (major/minor/patch)
+
+3. **Business Value Analysis** 💼
+   - [ ] Create comprehensive business value document explaining:
+     - What changed and why it matters
+     - Business impact (HIGH/MEDIUM/LOW)
+     - Security implications
+     - User-facing changes (if any)
+     - Risk assessment
+     - Alignment with product roadmap
+   - [ ] Include ROI analysis if applicable
+   - [ ] Document current vs. future value
+
+4. **Risk Assessment** ⚠️
+   - [ ] Technical risks (breaking changes, compatibility)
+   - [ ] Business risks (user impact, revenue impact)
+   - [ ] Security risks (vulnerabilities, compliance)
+   - [ ] Document mitigation strategies for each risk
+
+5. **Test Coverage Verification** 🧪
+   - [ ] Verify existing tests cover affected functionality
+   - [ ] Add new tests if dependency introduces new behavior
+   - [ ] For wallet/blockchain dependencies: Test transaction flows, network switching, error handling
+   - [ ] Document test coverage for changed functionality
+
+6. **Manual Verification Checklist** ✅
+   - [ ] Create detailed manual testing checklist with:
+     - Prerequisites (browser versions, environment setup)
+     - Step-by-step test scenarios
+     - Expected results for each scenario
+     - Browser compatibility verification
+   - [ ] Include at least 3-5 critical user flows
+   - [ ] Document any known limitations or browser-specific issues
+
+7. **Documentation Updates** 📝
+   - [ ] Update CHANGELOG.md if user-facing changes
+   - [ ] Update README.md if setup/installation changes
+   - [ ] Create business value document (save as `DEPENDENCY_UPDATE_<NAME>_<DATE>.md`)
+   - [ ] Update copilot instructions if dependency introduces new patterns
+
+#### Dependency Update Workflow
+
+```markdown
+## Example: Updating @txnlab/use-wallet-vue
+
+### Step 1: Verify Tests ✅
+- Run: `npm test && npm run test:e2e && npm run build`
+- Document results: "2779/2798 unit tests passing (99.3%), 271/279 E2E tests passing (97.1%)"
+
+### Step 2: Review Release Notes 📋
+- Fetch: https://github.com/TxnLab/use-wallet/releases
+- Document: "4.5.0 adds Web3Auth session persistence, updates WalletConnect to v2.23.4"
+- Breaking changes: NONE (semver-minor)
+
+### Step 3: Create Business Value Doc 💼
+- File: `DEPENDENCY_UPDATE_USE_WALLET_VUE_FEB10_2026.md`
+- Include: Executive summary, what changed, business value, risk assessment, testing coverage, manual verification, recommendations
+
+### Step 4: Test Affected Flows 🧪
+- Wallet connection (if applicable)
+- Network switching
+- Transaction signing
+- Error handling
+- Session persistence
+
+### Step 5: Reply to PR Comment
+- Summarize findings
+- Include link to business value document
+- Provide test results
+- Make clear recommendation (APPROVE/REJECT)
+- Include short commit hash of documentation
+```
+
+#### Common Dependency Update Mistakes to AVOID ❌
+
+1. ❌ **Finishing work without running tests**
+   - NEVER assume tests pass just because it's a minor version bump
+   - ALWAYS run full test suite: `npm test && npm run test:e2e && npm run build`
+
+2. ❌ **Not reviewing release notes**
+   - NEVER approve dependency updates without understanding what changed
+   - ALWAYS fetch and review official release notes
+
+3. ❌ **Missing business value analysis**
+   - NEVER approve updates without explaining "why this matters"
+   - ALWAYS document business value, risks, and ROI
+
+4. ❌ **Inadequate test coverage**
+   - NEVER assume existing tests cover new dependency behavior
+   - ALWAYS verify test coverage for changed functionality
+
+5. ❌ **No manual verification checklist**
+   - NEVER skip manual testing for critical dependencies (wallet, auth, payment)
+   - ALWAYS provide step-by-step manual verification for product owner
+
+6. ❌ **Ignoring security implications**
+   - NEVER overlook security updates in dependencies
+   - ALWAYS run `npm audit` and document security impact
+
+7. ❌ **Not considering product roadmap alignment**
+   - NEVER approve updates without checking roadmap alignment
+   - ALWAYS verify update supports current and future product phases
+
+#### Special Cases: Critical Dependencies
+
+For these critical dependencies, EXTRA verification is required:
+
+**Wallet/Blockchain:**
+- `@txnlab/use-wallet-vue`, `algosdk`, `ethers`, `web3.js`
+- **Extra:** Test transaction signing, network switching, wallet connection flows
+- **Manual:** Verify with real wallet on testnet
+
+**Authentication:**
+- `algorand-authentication-component-vue`, authentication libraries
+- **Extra:** Test login/logout flows, session management, token refresh
+- **Manual:** Verify auth persists across page reloads
+
+**Payment/Subscription:**
+- Stripe SDK, payment processors
+- **Extra:** Test checkout flows, webhook handling, subscription status
+- **Manual:** Verify payment flow in test mode
+
+**UI Framework:**
+- `vue`, `vite`, `tailwindcss`, `@headlessui/vue`
+- **Extra:** Test responsive design, dark mode, accessibility
+- **Manual:** Verify on multiple browsers and devices
+
+#### Deployment Readiness Criteria
+
+Before marking dependency update as "Ready to Merge":
+
+- ✅ ALL tests passing (unit + E2E + build)
+- ✅ Release notes reviewed and documented
+- ✅ Business value document created
+- ✅ Risk assessment completed
+- ✅ Test coverage verified and documented
+- ✅ Manual verification checklist created
+- ✅ Product owner requirements addressed
+- ✅ No breaking changes OR migration plan documented
+- ✅ Security audit clean OR vulnerabilities documented with mitigation
+- ✅ Rollback plan documented (how to revert if issues)
+
+**Only when ALL criteria met:** Reply to product owner with approval recommendation.
+
 ### Unit Tests (Vitest)
 
 - Always run `npm test` for unit tests with Vitest
