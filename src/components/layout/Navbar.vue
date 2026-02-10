@@ -112,53 +112,8 @@
       </div>
     </div>
 
-    <!-- Wallet Connect Modal -->
+    <!-- Authentication Modal (Email/Password only) -->
     <WalletConnectModal :is-open="showWalletModal" @close="showWalletModal = false" @connected="handleWalletConnected" />
-
-    <!-- Wallet Recovery Panel Modal -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="duration-200 ease-out"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="duration-150 ease-in"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div v-if="showRecoveryPanel" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="showRecoveryPanel = false">
-          <WalletRecoveryPanel
-            :session-info="loadWalletSession()"
-            :is-reconnecting="walletManager.isReconnecting?.value || false"
-            :recovery-error="walletManager.walletState?.value?.error || null"
-            @reconnect="handleRecoveryReconnect"
-            @start-fresh="handleStartFresh"
-            @show-guide="() => {}"
-            @show-diagnostics="() => { showRecoveryPanel = false; showDiagnosticsPanel = true; }"
-          />
-        </div>
-      </Transition>
-    </Teleport>
-
-    <!-- Wallet Diagnostics Panel Modal -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="duration-200 ease-out"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="duration-150 ease-in"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div v-if="showDiagnosticsPanel" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @click.self="showDiagnosticsPanel = false">
-          <WalletDiagnosticsPanel
-            :diagnostic-data="diagnosticData"
-            @close="showDiagnosticsPanel = false"
-            @refresh="handleDiagnosticsRefresh"
-            @copied="() => {}"
-          />
-        </div>
-      </Transition>
-    </Teleport>
 
     <!-- Mobile Menu -->
     <Transition
@@ -201,23 +156,16 @@ import { useAVMAuthentication } from "algorand-authentication-component-vue";
 import { AUTH_STORAGE_KEYS } from "../../constants/auth";
 import { HomeIcon, PlusCircleIcon, ChartBarIcon, Cog6ToothIcon, SunIcon, MoonIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, ArrowRightOnRectangleIcon, UserCircleIcon, CurrencyDollarIcon } from "@heroicons/vue/24/outline";
 import WalletConnectModal from "../WalletConnectModal.vue";
-import WalletRecoveryPanel from "../WalletRecoveryPanel.vue";
-import WalletDiagnosticsPanel from "../WalletDiagnosticsPanel.vue";
-import { useWalletManager } from "../../composables/useWalletManager";
-import { collectDiagnosticData, loadWalletSession } from "../../services/WalletSessionService";
 
 const route = useRoute();
 const router = useRouter();
 const themeStore = useThemeStore();
 const { authStore, logout } = useAVMAuthentication();
 const subscriptionStore = useSubscriptionStore();
-const walletManager = useWalletManager();
 
 const showMobileMenu = ref(false);
 const showUserMenu = ref(false);
 const showWalletModal = ref(false);
-const showRecoveryPanel = ref(false);
-const showDiagnosticsPanel = ref(false);
 
 const navigationItems = [
   { name: "Home", path: "/", icon: HomeIcon },
@@ -264,52 +212,9 @@ const handleWalletConnected = (_data: { address: string; walletId: string; netwo
   // The Arc76 authentication component will handle the authentication
 };
 
-const handleRecoveryReconnect = async (data: { walletId: string; networkId: any }) => {
-  try {
-    await walletManager.switchNetwork?.(data.networkId);
-    await walletManager.connect?.(data.walletId);
-    showRecoveryPanel.value = false;
-  } catch (error) {
-    console.error('Recovery reconnection failed:', error);
-  }
-};
-
-const handleStartFresh = () => {
-  showRecoveryPanel.value = false;
-  showWalletModal.value = true;
-};
-
-const handleDiagnosticsRefresh = () => {
-  // Force recollection of diagnostic data by triggering a reactive update
-  // The computed diagnosticData will automatically recalculate
-  walletManager.updateWalletState?.();
-};
-
-const diagnosticData = computed(() => {
-  return collectDiagnosticData({
-    connectionState: walletManager.walletState?.value?.connectionState,
-    currentNetwork: walletManager.currentNetwork?.value,
-    activeAddress: walletManager.activeAddress?.value,
-    activeWallet: walletManager.activeWallet?.value,
-    lastError: walletManager.walletState?.value?.lastError,
-  });
-});
-
 onMounted(async () => {
   if (authStore.isAuthenticated) {
     await subscriptionStore.fetchSubscription();
-  }
-  
-  // Check if we should show recovery panel on load
-  const session = loadWalletSession();
-  if (session && !walletManager.isConnected?.value) {
-    // Optionally show recovery panel after a delay
-    setTimeout(() => {
-      if (!walletManager.isConnected?.value) {
-        // Uncomment to auto-show recovery panel
-        // showRecoveryPanel.value = true;
-      }
-    }, 2000);
   }
 });
 </script>
