@@ -181,7 +181,6 @@ const walletManager = useWalletManager();
 const { authStore: arc76AuthStore, authenticate: arc76Authenticate } = useAVMAuthentication();
 const localAuthStore = useAuthStore(); // Our local auth store
 const selectedNetwork = ref<NetworkId>(loadInitialNetwork(props.defaultNetwork));
-// Removed: showAdvancedOptions - not used in MVP wallet-free auth
 
 // Email/Password form state (AC #3)
 const emailForm = ref({
@@ -195,8 +194,6 @@ const derivedAccount = ref<string | null>(null);
 
 // Constants for UX timing
 const SUCCESS_DISPLAY_DURATION_MS = 1500; // Time to show success message before redirect
-
-// Removed: availableNetworks, availableWallets - not used in MVP wallet-free auth
 
 // Computed state flags
 const isConnecting = computed(
@@ -236,8 +233,6 @@ const troubleshootingSteps = computed(() => {
   if (!lastError.value) return [];
   return walletManager.getTroubleshootingSteps!(lastError.value.type);
 });
-
-// Removed: getWalletName, getWalletDescription, getWalletIcon, handleConnect - not used in MVP wallet-free auth
 
 /**
  * Handle email/password authentication with ARC76

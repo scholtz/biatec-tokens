@@ -174,8 +174,6 @@ const handleEmailSignup = () => {
   router.push({ name: 'DiscoveryDashboard' });
 };
 
-// Removed: handleWalletConnectFromLanding - no longer needed for MVP wallet-free auth
-
 const handleCreateToken = () => {
   if (isConnected.value) {
     router.push("/create");
@@ -212,8 +210,6 @@ const handleAuthComplete = () => {
     router.push("/create");
   }
 };
-
-// Removed: handleOnboardingComplete - no longer needed for MVP wallet-free auth
 
 onMounted(() => {
   // Initialize onboarding store
