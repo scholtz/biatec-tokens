@@ -11,25 +11,25 @@ export const AUTH_UI_COPY = {
   AUTHENTICATE: 'Authenticate',
   
   // Modal headers
-  SIGN_IN_HEADER: 'Sign In to Your Account',
+  SIGN_IN_HEADER: 'Sign In to Biatec Tokens',
   AUTHENTICATION_HEADER: 'Account Authentication',
   
   // Authentication methods
   EMAIL_PASSWORD_PRIMARY: 'Sign in with Email & Password',
-  EMAIL_PASSWORD_DESCRIPTION: 'Use email and password to create a self-custody account',
+  EMAIL_PASSWORD_DESCRIPTION: 'Your secure, self-custody account with automatic blockchain identity',
   WALLET_PROVIDERS_ADVANCED: 'Advanced: Connect with Wallet Provider',
   WALLET_PROVIDERS_DESCRIPTION: 'Connect using a blockchain wallet application',
   
   // Status messages
-  SIGNED_IN: 'Signed in',
-  NOT_SIGNED_IN: 'Not signed in',
-  PENDING_AUTH: 'Authentication pending',
+  SIGNED_IN: 'Authenticated',
+  NOT_SIGNED_IN: 'Sign In',
+  PENDING_AUTH: 'Authenticating',
   AUTH_FAILED: 'Authentication failed',
   
   // Account menu
   ACCOUNT: 'Account',
   ACCOUNT_STATUS: 'Account Status',
-  CONNECTED_ADDRESS: 'Connected Address',
+  CONNECTED_ADDRESS: 'ARC76 Account',
   SECURITY_CENTER: 'Security Center',
   
   // Guidance messages
@@ -45,7 +45,7 @@ export const AUTH_UI_COPY = {
   
   // Terms and security
   TERMS_AGREEMENT: 'By signing in, you agree to our Terms of Service and acknowledge that you\'ve read our Privacy Policy.',
-  SECURITY_NOTE: 'We never store your private keys. All transactions require your explicit approval.',
+  SECURITY_NOTE: 'We never store your private keys or passwords. Your ARC76 account is derived securely from your credentials.',
 } as const
 
 export const NETWORK_UI_COPY = {

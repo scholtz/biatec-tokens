@@ -191,9 +191,9 @@ const handleWalletConnectFromLanding = () => {
 
 const handleCreateToken = () => {
   if (isConnected.value) {
-    router.push("/create/wizard");
+    router.push("/create");
   } else {
-    localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, "/create/wizard");
+    localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, "/create");
     showAuthModal.value = true;
   }
 };
@@ -221,7 +221,8 @@ const handleAuthComplete = () => {
     localStorage.removeItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);
     router.push(redirectPath);
   } else {
-    router.push("/create/wizard");
+    // Default to create token page after authentication
+    router.push("/create");
   }
 };
 
@@ -235,7 +236,8 @@ const handleOnboardingComplete = () => {
     localStorage.removeItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);
     router.push(redirectPath);
   } else {
-    router.push("/create/wizard");
+    // Default to create token page after authentication
+    router.push("/create");
   }
 };
 
@@ -244,31 +246,16 @@ onMounted(() => {
   onboardingStore.initialize();
   
   // Check if we should show authentication modal (email/password)
-  if (route.query.showAuth === "true") {
+  if (route.query.showAuth === "true" || route.query.showOnboarding === "true") {
     showAuthModal.value = true;
-  }
-  
-  // Legacy: Check if we should show onboarding (deprecated)
-  if (route.query.showOnboarding === "true") {
-    showAuthModal.value = true; // Redirect old onboarding to auth modal
   }
 });
 
 // Watch for route query changes to handle navigation to the same component
 watch(
-  () => route.query.showAuth,
-  (newValue) => {
-    if (newValue === "true") {
-      showAuthModal.value = true;
-    }
-  },
-);
-
-// Legacy: Watch for old showOnboarding parameter (redirect to auth modal)
-watch(
-  () => route.query.showOnboarding,
-  (newValue) => {
-    if (newValue === "true") {
+  () => route.query,
+  (newQuery) => {
+    if (newQuery.showAuth === "true" || newQuery.showOnboarding === "true") {
       showAuthModal.value = true;
     }
   },

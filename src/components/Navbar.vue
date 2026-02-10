@@ -75,10 +75,6 @@
 
         <!-- Account Section -->
         <div class="flex items-center space-x-4">
-          <!-- Network Switcher - Hidden per MVP requirements (email/password auth only) -->
-          <!-- Users don't need to see network status in wallet-free mode -->
-          <!-- <NetworkSwitcher class="hidden sm:flex" /> -->
-          
           <!-- Account Button -->
           <div class="relative">
             <button
@@ -99,7 +95,7 @@
               >
                 <div class="p-3 border-b border-white/10 mb-2">
                   <div class="text-xs text-gray-400 mb-1">{{ AUTH_UI_COPY.CONNECTED_ADDRESS }}</div>
-                  <div class="text-sm text-white font-mono break-all">{{ activeAddress }}</div>
+                  <div class="text-sm text-white font-mono break-all" :title="activeAddress">{{ formattedAddress }}</div>
                 </div>
                 
                 <router-link

@@ -65,8 +65,22 @@
 
           <!-- Wallet List -->
           <div class="space-y-3">
+            <!-- Success State: Show derived account before closing -->
+            <div v-if="authenticationSuccess && derivedAccount" class="text-center py-6">
+              <div class="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="pi pi-check-circle text-4xl text-green-400"></i>
+              </div>
+              <p class="text-white font-semibold text-lg mb-2">Successfully Authenticated!</p>
+              <p class="text-sm text-gray-300 mb-4">Your ARC76 account has been derived from your credentials.</p>
+              <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl mb-4">
+                <div class="text-xs text-gray-400 mb-1">{{ AUTH_UI_COPY.CONNECTED_ADDRESS }}</div>
+                <div class="text-sm text-white font-mono break-all">{{ derivedAccount }}</div>
+              </div>
+              <p class="text-xs text-gray-400">Redirecting...</p>
+            </div>
+
             <!-- Loading State -->
-            <div v-if="isConnecting || isReconnecting || isSwitchingNetwork" class="text-center py-8">
+            <div v-else-if="isConnecting || isReconnecting || isSwitchingNetwork" class="text-center py-8">
               <i class="pi pi-spin pi-spinner text-4xl text-biatec-accent mb-4"></i>
               <p class="text-gray-300 font-medium mb-2">{{ connectionStateMessage }}</p>
               <p class="text-sm text-gray-400">{{ AUTH_UI_COPY.SECURITY_NOTE }}</p>
@@ -287,6 +301,10 @@ const emailForm = ref({
   password: ''
 });
 
+// Success state for showing derived account
+const authenticationSuccess = ref(false);
+const derivedAccount = ref<string | null>(null);
+
 const availableNetworks = computed(() => {
   const networks = Object.values(NETWORKS);
   return sortNetworksByPriority(networks);
@@ -422,6 +440,10 @@ const handleEmailPasswordSubmit = async () => {
       return;
     }
 
+    // Reset states
+    authenticationSuccess.value = false;
+    derivedAccount.value = null;
+
     // Save selected network to localStorage before authenticating
     localStorage.setItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK, selectedNetwork.value);
 
@@ -449,6 +471,13 @@ const handleEmailPasswordSubmit = async () => {
       localStorage.setItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED, 'true');
       localStorage.setItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID, 'arc76');
 
+      // Show success state with derived account
+      authenticationSuccess.value = true;
+      derivedAccount.value = arc76AuthStore.account;
+
+      // Wait a moment to show success message
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
       emit("connected", {
         address: arc76AuthStore.account,
         walletId: 'arc76',
@@ -467,6 +496,10 @@ const handleEmailPasswordSubmit = async () => {
     const errorMessage = err instanceof Error ? err.message : "Failed to authenticate with email/password";
     emit("error", errorMessage);
     console.error("Email/password authentication error:", err);
+    
+    // Reset success state on error
+    authenticationSuccess.value = false;
+    derivedAccount.value = null;
   }
 };
 
