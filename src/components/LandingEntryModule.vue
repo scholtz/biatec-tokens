@@ -78,10 +78,10 @@
           </div>
           <div class="flex-1">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">
-              Sign In with Wallet
+              Sign In with Email
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-              For users ready to create and deploy tokens. Authenticate with your blockchain wallet provider.
+              For users ready to create and deploy tokens. Authenticate with your email and password.
             </p>
           </div>
         </div>

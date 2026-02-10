@@ -137,7 +137,7 @@
                 </div>
               </div>
 
-              <p v-else class="text-gray-300 mb-4">Choose a compatible wallet provider for authentication. Make sure you have it installed and set up.</p>
+              <p v-else class="text-gray-300 mb-4">Sign in with your email and password to authenticate. Your account credentials will securely derive your blockchain address.</p>
 
               <div v-if="isConnecting" class="text-center py-12">
                 <div class="relative inline-block">

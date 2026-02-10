@@ -216,6 +216,7 @@ onMounted(() => {
   onboardingStore.initialize();
   
   // Check if we should show authentication modal (email/password)
+  // Support both showAuth and showOnboarding (legacy) parameters for backward compatibility
   if (route.query.showAuth === "true" || route.query.showOnboarding === "true") {
     showAuthModal.value = true;
   }
@@ -225,6 +226,7 @@ onMounted(() => {
 watch(
   () => route.query,
   (newQuery) => {
+    // Support both showAuth and showOnboarding (legacy) parameters for backward compatibility
     if (newQuery.showAuth === "true" || newQuery.showOnboarding === "true") {
       showAuthModal.value = true;
     }

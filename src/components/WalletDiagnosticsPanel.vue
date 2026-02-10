@@ -39,7 +39,7 @@
           </div>
           <div class="info-item">
             <span class="info-label">Wallet:</span>
-            <span class="info-value">{{ diagnosticData.walletId || 'Not connected' }}</span>
+            <span class="info-value">{{ diagnosticData.walletId || 'ARC76 Auth' }}</span>
           </div>
           <div class="info-item">
             <span class="info-label">Address:</span>
