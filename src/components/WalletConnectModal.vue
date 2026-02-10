@@ -140,8 +140,7 @@
 import { ref, computed, watch } from "vue";
 import { useWalletManager, NETWORKS, type NetworkId } from "../composables/useWalletManager";
 import { WalletConnectionState } from "../composables/walletState";
-import { sortNetworksByPriority } from "../utils/networkSorting";
-import { AUTH_UI_COPY, NETWORK_UI_COPY } from "../constants/uiCopy";
+import { AUTH_UI_COPY } from "../constants/uiCopy";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 import { useAVMAuthentication } from "algorand-authentication-component-vue";
 import { useAuthStore } from "../stores/auth";
@@ -182,7 +181,7 @@ const walletManager = useWalletManager();
 const { authStore: arc76AuthStore, authenticate: arc76Authenticate } = useAVMAuthentication();
 const localAuthStore = useAuthStore(); // Our local auth store
 const selectedNetwork = ref<NetworkId>(loadInitialNetwork(props.defaultNetwork));
-const showAdvancedOptions = ref(false);
+// Removed: showAdvancedOptions - not used in MVP wallet-free auth
 
 // Email/Password form state (AC #3)
 const emailForm = ref({
@@ -197,14 +196,7 @@ const derivedAccount = ref<string | null>(null);
 // Constants for UX timing
 const SUCCESS_DISPLAY_DURATION_MS = 1500; // Time to show success message before redirect
 
-const availableNetworks = computed(() => {
-  const networks = Object.values(NETWORKS);
-  return sortNetworksByPriority(networks);
-});
-
-const availableWallets = computed(() => {
-  return walletManager.walletManager?.wallets?.value?.filter((w: any) => w.isActive) || [];
-});
+// Removed: availableNetworks, availableWallets - not used in MVP wallet-free auth
 
 // Computed state flags
 const isConnecting = computed(
@@ -245,81 +237,7 @@ const troubleshootingSteps = computed(() => {
   return walletManager.getTroubleshootingSteps!(lastError.value.type);
 });
 
-const getWalletName = (walletId: string): string => {
-  const names: Record<string, string> = {
-    pera: "Pera Wallet",
-    defly: "Defly Wallet",
-    exodus: "Exodus Wallet",
-    biatec: "Biatec Wallet",
-    kibisis: "Kibisis",
-    lute: "Lute Wallet",
-    walletconnect: "WalletConnect",
-    kmd: "KMD",
-  };
-  return names[walletId] || walletId;
-};
-
-const getWalletDescription = (walletId: string): string => {
-  const descriptions: Record<string, string> = {
-    pera: "Mobile and web wallet",
-    defly: "Feature-rich wallet",
-    exodus: "Multi-chain wallet",
-    biatec: "Enterprise wallet solution",
-    kibisis: "Browser extension",
-    lute: "Lightweight wallet",
-    walletconnect: "Connect via QR code",
-    kmd: "Local development",
-  };
-  return descriptions[walletId] || "Sign in with wallet";
-};
-
-const getWalletIcon = (walletId: string): string => {
-  const icons: Record<string, string> = {
-    pera: "pi pi-mobile",
-    defly: "pi pi-wallet",
-    exodus: "pi pi-globe",
-    biatec: "pi pi-building",
-    kibisis: "pi pi-window-maximize",
-    lute: "pi pi-credit-card",
-    walletconnect: "pi pi-qrcode",
-    kmd: "pi pi-server",
-  };
-  return icons[walletId] || "pi pi-wallet";
-};
-
-const handleConnect = async (walletId: string) => {
-  try {
-    // Save selected network to localStorage before connecting (AC #1)
-    localStorage.setItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK, selectedNetwork.value);
-
-    // Switch network if different from current
-    if (selectedNetwork.value !== walletManager.currentNetwork.value) {
-      await walletManager.switchNetwork(selectedNetwork.value);
-    }
-
-    // Authenticate
-    await walletManager.connect(walletId);
-
-    // Get active account after connection
-    const activeAddress = walletManager.activeAddress.value;
-
-    if (!activeAddress) {
-      throw new Error("No account selected");
-    }
-
-    emit("connected", {
-      address: activeAddress,
-      walletId: walletId,
-      network: selectedNetwork.value,
-    });
-
-    close();
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Failed to authenticate";
-    emit("error", errorMessage);
-    console.error("Authentication error:", err);
-  }
-};
+// Removed: getWalletName, getWalletDescription, getWalletIcon, handleConnect - not used in MVP wallet-free auth
 
 /**
  * Handle email/password authentication with ARC76
