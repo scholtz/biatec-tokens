@@ -67,6 +67,7 @@ src/
 - **Strict Mode**: Always enabled - use proper typing, never use `as any` or `any` type
 - **Compiler Options**: Target ES2020, use ESNext modules
 - **Type Checking**: The build command includes `vue-tsc -b` for type checking
+- **Unused Imports**: TypeScript strict mode will fail the build if imports are declared but never used (TS6133). Always remove unused imports before committing.
 - Follow existing patterns in `tsconfig.app.json`:
   - `noUnusedLocals: true`
   - `noUnusedParameters: true`
