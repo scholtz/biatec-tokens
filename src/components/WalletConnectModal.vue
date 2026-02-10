@@ -305,6 +305,9 @@ const emailForm = ref({
 const authenticationSuccess = ref(false);
 const derivedAccount = ref<string | null>(null);
 
+// Constants for UX timing
+const SUCCESS_DISPLAY_DURATION_MS = 1500; // Time to show success message before redirect
+
 const availableNetworks = computed(() => {
   const networks = Object.values(NETWORKS);
   return sortNetworksByPriority(networks);
@@ -476,7 +479,7 @@ const handleEmailPasswordSubmit = async () => {
       derivedAccount.value = arc76AuthStore.account;
 
       // Wait a moment to show success message
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, SUCCESS_DISPLAY_DURATION_MS));
 
       emit("connected", {
         address: arc76AuthStore.account,
