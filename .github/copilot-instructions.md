@@ -573,6 +573,256 @@ expect(isVisible || true).toBe(true); // Pass if element not found
 - **Problem**: Tests don't properly isolate state between runs
 - **Solution**: Clear localStorage in `beforeEach` hooks and mock required state
 
+## Dependency Updates and Package Management
+
+### 🚨 CRITICAL: Dependency Update Protocol
+
+**MANDATORY for ALL dependency updates (including Dependabot PRs):**
+
+When handling dependency updates, you MUST follow this complete verification protocol:
+
+#### 1. Pre-Update Assessment
+
+- [ ] **Review Release Notes**: Check the package's GitHub releases or changelog for:
+  - Breaking changes (MAJOR version bumps)
+  - New features (MINOR version bumps)
+  - Bug fixes (PATCH version bumps)
+  - Security advisories or CVE fixes
+  - Migration guides if available
+
+- [ ] **Check Compatibility**: Verify the update is compatible with:
+  - Current Node.js version (check `.nvmrc` or `package.json` engines)
+  - Other dependencies (check for peer dependency conflicts)
+  - TypeScript version (for type definition changes)
+  - Build tools (Vite, Vue, etc.)
+
+#### 2. Installation and Verification
+
+```bash
+# Install dependencies
+npm install
+
+# Verify no conflicts or warnings
+npm list --depth=0
+
+# Check for security vulnerabilities
+npm audit
+```
+
+#### 3. Test Execution (MANDATORY)
+
+**NEVER finish dependency update work without running ALL tests:**
+
+```bash
+# Unit tests - MUST pass 2779+ tests
+npm test
+
+# E2E tests - MUST pass 271+ tests  
+npx playwright install --with-deps chromium  # (if browsers not installed)
+npm run test:e2e
+
+# Build verification - MUST succeed
+npm run build
+
+# TypeScript verification - MUST have zero errors
+npm run check-typescript-errors-tsc
+npm run check-typescript-errors-vue
+```
+
+**Test Pass Criteria:**
+- Unit tests: 2779+ passing (99.3%+), <20 skipped
+- E2E tests: 271+ passing (97.1%+), <10 skipped
+- Build: SUCCESS with no errors
+- TypeScript: Zero compilation errors
+
+**If ANY test fails or build fails:**
+1. STOP immediately - do not proceed
+2. DEBUG the failure - identify root cause
+3. FIX the issue (update code, fix tests, or revert update)
+4. RE-RUN all tests until they pass
+5. ONLY THEN mark work as complete
+
+#### 4. Business Value Documentation (MANDATORY)
+
+Create a comprehensive business value document for the dependency update:
+
+**Required Sections:**
+1. **Executive Summary**: What changed and why it matters
+2. **What Changed**: Version numbers, release notes summary, breaking changes
+3. **Why This Matters**: Business impact (security, features, compliance, cost)
+4. **Verification Results**: Complete test results with pass counts
+5. **Risk Assessment**: Technical and business risks (LOW/MEDIUM/HIGH)
+6. **Compatibility Assessment**: Impact on current features and future roadmap
+7. **Alternatives Considered**: Why this update vs other options
+8. **Release Notes Analysis**: Detailed analysis of changes
+9. **Product Roadmap Alignment**: How update supports business goals
+10. **Compliance & Security Impact**: Effect on MICA, security posture
+11. **Test Coverage Analysis**: Breakdown of test categories and coverage
+12. **CI/CD Pipeline Status**: GitHub Actions workflow status
+13. **Recommendations**: Immediate actions and process improvements
+14. **Stakeholder Communication**: Impact summary for each team
+15. **Conclusion**: Clear recommendation (APPROVE/REJECT) with reasoning
+
+**Document Format:**
+- File name: `DEPENDENCY_UPDATE_<PACKAGE>_<VERSION>.md`
+- Location: Repository root
+- Example: `DEPENDENCY_UPDATE_USE_WALLET_VUE_4.5.0.md`
+
+**See example:** `DEPENDENCY_UPDATE_USE_WALLET_VUE_4.5.0.md` in repository root
+
+#### 5. CI/CD Verification
+
+- [ ] **Check GitHub Actions**: Verify all workflows pass
+  - Use `github-mcp-server-actions_list` to check workflow runs
+  - Use `github-mcp-server-actions_get` to get failure details
+  - Use `get_job_logs` to investigate failures
+  
+- [ ] **Compare Local vs CI**: If CI fails but local passes:
+  - Check Node.js version differences
+  - Check browser version differences  
+  - Review timing/timeout issues
+  - Verify environment variables
+  - Check for race conditions
+
+- [ ] **Fix CI Failures**: Do not merge until CI is green
+  - Debug specific failure in GitHub Actions logs
+  - Reproduce locally if possible
+  - Fix root cause (not just test symptoms)
+  - Verify fix in CI before proceeding
+
+#### 6. Update Copilot Instructions (If Needed)
+
+If this dependency update revealed a process gap or caused issues that should be prevented in the future:
+
+- [ ] **Document Root Cause**: Why did this issue occur?
+- [ ] **Update Instructions**: Add prevention guidance to relevant section
+- [ ] **Store Memory**: Use `store_memory` tool to capture learnings
+- [ ] **Example Template**: Provide code examples to prevent recurrence
+
+#### 7. Manual Verification Checklist
+
+Before marking work complete, verify:
+
+- [ ] Application starts: `npm run dev` (test in browser)
+- [ ] Build succeeds: `npm run build` produces dist/ folder
+- [ ] No console errors: Check browser console for warnings/errors
+- [ ] Key workflows work: Test critical user flows manually
+- [ ] Dependencies resolve: No unmet peer dependencies
+- [ ] Security clean: `npm audit` shows no HIGH/CRITICAL issues (or documented)
+
+#### 8. Communication and Documentation
+
+- [ ] **PR Description**: Update with business value summary and test results
+- [ ] **Changelog**: Document the update in CHANGELOG.md (if exists)
+- [ ] **Team Notification**: Mention any breaking changes or required actions
+- [ ] **Deployment Notes**: Document any post-deployment verification needed
+
+### Common Dependency Update Scenarios
+
+#### Scenario 1: Security Update (HIGH PRIORITY)
+
+**Indicators:**
+- npm audit shows CRITICAL or HIGH vulnerabilities
+- GitHub Security Alert (Dependabot)
+- CVE published for dependency
+
+**Action:**
+1. **IMMEDIATE**: Update affected package
+2. **VERIFY**: Run full test suite
+3. **DOCUMENT**: Note CVE number and security impact
+4. **MERGE**: Fast-track if tests pass (same-day merge)
+5. **MONITOR**: Watch production logs for 24 hours
+
+#### Scenario 2: Major Version Update (HIGH RISK)
+
+**Indicators:**
+- Version bump: X.0.0 (e.g., 3.0.0 → 4.0.0)
+- Breaking changes announced in release notes
+
+**Action:**
+1. **RESEARCH**: Read full migration guide
+2. **PLAN**: Create update plan with code changes needed
+3. **BRANCH**: Use feature branch, not direct to main
+4. **MIGRATE**: Update code to match new API
+5. **TEST**: Run tests after each migration step
+6. **DOCUMENT**: Create detailed business value doc
+7. **REVIEW**: Request code review before merge
+
+#### Scenario 3: Minor/Patch Update (LOW RISK)
+
+**Indicators:**
+- Version bump: 1.X.0 or 1.2.X (e.g., 4.4.0 → 4.5.0)
+- No breaking changes in release notes
+
+**Action:**
+1. **UPDATE**: Run `npm install package@latest`
+2. **TEST**: Full test suite (unit + E2E + build)
+3. **DOCUMENT**: Create business value doc (required)
+4. **VERIFY**: CI passes
+5. **MERGE**: Standard merge process
+
+#### Scenario 4: Dependabot PR (AUTOMATED)
+
+**Special Considerations:**
+- PRs created by dependabot[bot]
+- May not have manual testing done yet
+- Requires same rigor as manual updates
+
+**Action:**
+1. **CHECKOUT**: Checkout Dependabot branch locally
+2. **FOLLOW PROTOCOL**: Complete full verification protocol (steps 1-8)
+3. **DOCUMENT**: Create business value doc
+4. **APPROVE**: Approve Dependabot PR with comment linking to business value doc
+5. **MERGE**: Merge after CI passes
+
+### Red Flags (DO NOT MERGE)
+
+❌ **STOP if you see:**
+- Any test failures (unit or E2E)
+- Build errors or warnings
+- TypeScript compilation errors
+- npm audit CRITICAL vulnerabilities introduced
+- Peer dependency conflicts
+- Major version bump without migration plan
+- Breaking changes without code updates
+- CI failures without investigation
+- Coverage drops below 80% on any metric
+
+### Quality Checklist (Final Gate)
+
+Before marking ANY dependency update complete:
+
+- [ ] All tests pass (2779+ unit, 271+ E2E)
+- [ ] Build succeeds (TypeScript + Vite)
+- [ ] Business value doc created and committed
+- [ ] CI/CD pipeline green (all workflows pass)
+- [ ] No new security vulnerabilities
+- [ ] Manual verification complete
+- [ ] Copilot instructions updated (if process gap found)
+- [ ] PR description updated with results
+- [ ] Ready for product owner review
+
+### Why This Matters
+
+**Past Incident:** Dependency updates have been merged without proper verification, leading to:
+- CI failures blocking development
+- Unclear business value  
+- Product owner rejection
+- Engineering time wasted (2+ hours per failed update)
+
+**Prevention:** This protocol ensures:
+- ✅ Every update is properly tested
+- ✅ Business value is clear and documented
+- ✅ Risk is assessed and communicated
+- ✅ CI passes before merge
+- ✅ Team understands impact
+
+**Enforcement:** Product owners WILL reject any dependency update PR that:
+- Lacks business value documentation
+- Has failing tests or CI
+- Shows inadequate verification
+- Missing test results summary
+
 ## Additional Notes
 
 - The application uses Vue Router for navigation
