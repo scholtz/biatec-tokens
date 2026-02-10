@@ -11,7 +11,7 @@ export interface OnboardingStep {
 
 export interface OnboardingState {
   hasSeenWelcome: boolean
-  hasConnectedWallet: boolean
+  hasAuthenticated: boolean
   hasSelectedStandards: boolean
   hasSavedFilters: boolean
   hasViewedToken: boolean
@@ -26,7 +26,7 @@ export const useOnboardingStore = defineStore('onboarding', () => {
   // State
   const state = ref<OnboardingState>({
     hasSeenWelcome: false,
-    hasConnectedWallet: false,
+    hasAuthenticated: false,
     hasSelectedStandards: false,
     hasSavedFilters: false,
     hasViewedToken: false,
@@ -47,10 +47,10 @@ export const useOnboardingStore = defineStore('onboarding', () => {
       optional: false,
     },
     {
-      id: 'connect-wallet',
-      title: 'Connect Your Wallet',
-      description: 'Authenticate with your preferred wallet provider',
-      completed: state.value.hasConnectedWallet,
+      id: 'authenticate',
+      title: 'Sign In with Email',
+      description: 'Authenticate with your email and password',
+      completed: state.value.hasAuthenticated,
       optional: true,
     },
     {
@@ -108,8 +108,9 @@ export const useOnboardingStore = defineStore('onboarding', () => {
       case 'welcome':
         state.value.hasSeenWelcome = true
         break
-      case 'connect-wallet':
-        state.value.hasConnectedWallet = true
+      case 'authenticate':
+      case 'connect-wallet': // Legacy support for backward compatibility
+        state.value.hasAuthenticated = true
         break
       case 'select-standards':
         state.value.hasSelectedStandards = true
@@ -144,7 +145,7 @@ export const useOnboardingStore = defineStore('onboarding', () => {
   const resetOnboarding = () => {
     state.value = {
       hasSeenWelcome: false,
-      hasConnectedWallet: false,
+      hasAuthenticated: false,
       hasSelectedStandards: false,
       hasSavedFilters: false,
       hasViewedToken: false,

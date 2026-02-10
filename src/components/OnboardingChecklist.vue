@@ -3,7 +3,7 @@
     <Transition name="checklist">
       <div
         v-if="visible && !onboardingStore.isOnboardingComplete"
-        class="fixed bottom-4 right-4 z-40 w-96 max-w-[calc(100vw-2rem)]"
+        class="fixed bottom-4 right-4 z-30 w-96 max-w-[calc(100vw-2rem)] pointer-events-auto"
         role="complementary"
         aria-label="Onboarding checklist"
         data-testid="onboarding-checklist"
@@ -168,9 +168,9 @@ const handleStepClick = (step: OnboardingStep) => {
       // Already seen if they can click this
       onboardingStore.markStepComplete('welcome')
       break
-    case 'connect-wallet':
-      // Show wallet connection wizard
-      onboardingStore.markStepComplete('connect-wallet')
+    case 'authenticate':
+      // Show email/password authentication
+      onboardingStore.markStepComplete('authenticate')
       router.push({ name: 'Home', query: { showAuth: 'true' } })
       break
     case 'select-standards':

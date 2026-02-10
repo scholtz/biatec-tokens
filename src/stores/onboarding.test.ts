@@ -17,7 +17,7 @@ describe('Onboarding Store', () => {
       const store = useOnboardingStore()
       
       expect(store.state.hasSeenWelcome).toBe(false)
-      expect(store.state.hasConnectedWallet).toBe(false)
+      expect(store.state.hasAuthenticated).toBe(false)
       expect(store.state.hasSelectedStandards).toBe(false)
       expect(store.state.hasSavedFilters).toBe(false)
       expect(store.state.hasViewedToken).toBe(false)
@@ -29,7 +29,7 @@ describe('Onboarding Store', () => {
     it('should load state from localStorage', () => {
       const savedState = {
         hasSeenWelcome: true,
-        hasConnectedWallet: false,
+        hasAuthenticated: false,
         hasSelectedStandards: true,
         hasSavedFilters: false,
         hasViewedToken: false,
@@ -65,7 +65,7 @@ describe('Onboarding Store', () => {
       
       expect(store.steps).toHaveLength(5)
       expect(store.steps[0].id).toBe('welcome')
-      expect(store.steps[1].id).toBe('connect-wallet')
+      expect(store.steps[1].id).toBe('authenticate')
       expect(store.steps[2].id).toBe('select-standards')
       expect(store.steps[3].id).toBe('save-filters')
       expect(store.steps[4].id).toBe('explore-tokens')
@@ -121,12 +121,20 @@ describe('Onboarding Store', () => {
       expect(store.state.hasSeenWelcome).toBe(true)
     })
 
-    it('should mark wallet connect step as complete', () => {
+    it('should mark authentication step as complete', () => {
       const store = useOnboardingStore()
       
+      store.markStepComplete('authenticate')
+      
+      expect(store.state.hasAuthenticated).toBe(true)
+    })
+
+    // Legacy backward compatibility test
+    it('should support legacy connect-wallet step ID', () => {
+      const store = useOnboardingStore()
       store.markStepComplete('connect-wallet')
       
-      expect(store.state.hasConnectedWallet).toBe(true)
+      expect(store.state.hasAuthenticated).toBe(true)
     })
 
     it('should mark standards selection step as complete', () => {
@@ -253,7 +261,7 @@ describe('Onboarding Store', () => {
       store.resetOnboarding()
       
       expect(store.state.hasSeenWelcome).toBe(false)
-      expect(store.state.hasConnectedWallet).toBe(false)
+      expect(store.state.hasAuthenticated).toBe(false)
       expect(store.state.preferredStandards).toEqual([])
       expect(store.state.completedAt).toBeNull()
     })
@@ -295,7 +303,7 @@ describe('Onboarding Store', () => {
       
       // Simulate partial completion
       store.markStepComplete('welcome')
-      store.markStepComplete('connect-wallet')
+      store.markStepComplete('authenticate')
       
       // Simulate page reload by creating new store instance
       setActivePinia(createPinia())
@@ -303,7 +311,7 @@ describe('Onboarding Store', () => {
       newStore.initialize()
       
       expect(newStore.state.hasSeenWelcome).toBe(true)
-      expect(newStore.state.hasConnectedWallet).toBe(true)
+      expect(newStore.state.hasAuthenticated).toBe(true)
       expect(newStore.completedSteps).toBe(2)
     })
 
@@ -332,10 +340,10 @@ describe('Onboarding Store', () => {
     it('should allow completing later steps without earlier ones', () => {
       const store = useOnboardingStore()
       
-      // Skip welcome and connect directly
-      store.markStepComplete('connect-wallet')
+      // Skip welcome and authenticate directly
+      store.markStepComplete('authenticate')
       
-      expect(store.state.hasConnectedWallet).toBe(true)
+      expect(store.state.hasAuthenticated).toBe(true)
       expect(store.state.hasSeenWelcome).toBe(false)
       expect(store.completedSteps).toBe(1)
     })

@@ -127,14 +127,6 @@
           @connected="handleConnected"
         />
 
-        <!-- Onboarding Wizard (Legacy - Hidden) -->
-        <WalletOnboardingWizard
-          v-if="false"
-          :is-open="showOnboardingWizard"
-          @close="showOnboardingWizard = false"
-          @complete="handleConnected"
-        />
-
         <!-- Mobile Menu Button -->
         <button
           @click="toggleMobileMenu"
@@ -195,15 +187,13 @@ import { useWalletManager } from '../composables/useWalletManager'
 import { AUTH_UI_COPY } from '../constants/uiCopy'
 import { telemetryService } from '../services/TelemetryService'
 import WalletConnectModal from './WalletConnectModal.vue'
-import WalletOnboardingWizard from './WalletOnboardingWizard.vue'
+// WalletOnboardingWizard removed per MVP requirements (wallet-free mode)
 // NetworkSwitcher removed per MVP requirements (wallet-free mode)
-// import NetworkSwitcher from './NetworkSwitcher.vue'
 
 const { isConnected, activeAddress, formattedAddress, disconnect, walletState } = useWalletManager()
 
 const showMobileMenu = ref(false)
 const showWalletModal = ref(false)
-const showOnboardingWizard = ref(false)
 const showAccountMenu = ref(false)
 const loginStartTime = ref<number | null>(null)
 
@@ -244,7 +234,6 @@ const handleDisconnect = async () => {
 
 const handleConnected = () => {
   showWalletModal.value = false
-  showOnboardingWizard.value = false
   
   // Track login completed with duration
   if (loginStartTime.value) {
