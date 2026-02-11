@@ -18,7 +18,7 @@ import AllowanceCenter from "../views/AllowanceCenter.vue";
 import TokenCreationWizard from "../views/TokenCreationWizard.vue";
 import OnboardingFlow from "../views/OnboardingFlow.vue";
 import EnterpriseOnboardingCommandCenter from "../views/EnterpriseOnboardingCommandCenter.vue";
-import { AUTH_STORAGE_KEYS, WALLET_CONNECTION_STATE } from "../constants/auth";
+import { AUTH_STORAGE_KEYS } from "../constants/auth";
 
 // Subscription views
 import Pricing from "../views/subscription/Pricing.vue";
@@ -175,10 +175,12 @@ router.beforeEach((to, _from, next) => {
       return;
     }
 
-    // Check if user is authenticated by checking localStorage
-    const walletConnected = localStorage.getItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED) === WALLET_CONNECTION_STATE.CONNECTED;
+    // Check if user is authenticated using wallet-free architecture (email/password ARC76)
+    // Per business-owner-roadmap.md: "no wallet connectors anywhere"
+    const algorandUser = localStorage.getItem('algorand_user');
+    const isAuthenticated = !!algorandUser;
 
-    if (!walletConnected) {
+    if (!isAuthenticated) {
       // Store the intended destination
       localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, to.fullPath);
 
