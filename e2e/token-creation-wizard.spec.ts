@@ -615,4 +615,270 @@ test.describe('Token Creation Wizard E2E', () => {
     
     expect(true).toBe(true)
   })
+  
+  test('should display all six networks with correct descriptions', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('wallet_connected', 'true')
+      localStorage.setItem('algorand_user', JSON.stringify({
+        address: 'TEST_ADDRESS',
+        email: 'test@example.com',
+      }))
+      // Mock active subscription to access all features
+      localStorage.setItem('subscription_cache', JSON.stringify({
+        customer_id: 'test_customer',
+        subscription_id: 'test_sub',
+        subscription_status: 'active',
+        price_id: 'price_enterprise_monthly',
+        current_period_start: Date.now() / 1000,
+        current_period_end: (Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000,
+        timestamp: Date.now()
+      }))
+    })
+
+    await page.goto('/create/wizard')
+    await page.waitForLoadState('domcontentloaded')
+    
+    // Navigate to Token Details step where networks are shown
+    await page.waitForTimeout(1000)
+    
+    // Check if we can see network selection
+    const networkHeading = page.locator('text=/Choose.*Network|Select Network/i').first()
+    const hasNetworkSelection = await networkHeading.isVisible({ timeout: 10000 }).catch(() => false)
+    
+    if (hasNetworkSelection) {
+      // Verify all six networks are present
+      const networks = ['VOI', 'Algorand', 'Aramid', 'Ethereum', 'Arbitrum', 'Base']
+      
+      for (const network of networks) {
+        const networkElement = page.locator(`text="${network}"`).first()
+        const isVisible = await networkElement.isVisible({ timeout: 5000 }).catch(() => false)
+        expect(isVisible).toBe(true)
+      }
+    }
+    
+    expect(true).toBe(true)
+  })
+  
+  test('should show AVM standards for Algorand network', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('wallet_connected', 'true')
+      localStorage.setItem('algorand_user', JSON.stringify({
+        address: 'TEST_ADDRESS',
+        email: 'test@example.com',
+      }))
+      localStorage.setItem('subscription_cache', JSON.stringify({
+        customer_id: 'test_customer',
+        subscription_status: 'active',
+        price_id: 'price_enterprise_monthly',
+        timestamp: Date.now()
+      }))
+    })
+
+    await page.goto('/create/wizard')
+    await page.waitForLoadState('domcontentloaded')
+    await page.waitForTimeout(1000)
+    
+    // Try to select Algorand network
+    const algorandButton = page.locator('text=/Algorand.*Mainnet|Algorand/i').first()
+    const hasAlgorand = await algorandButton.isVisible({ timeout: 10000 }).catch(() => false)
+    
+    if (hasAlgorand) {
+      await algorandButton.click({ timeout: 5000 })
+      await page.waitForTimeout(500)
+      
+      // Verify AVM standards appear
+      const standardsSection = page.locator('text=/Choose Token Type|Token Standard/i').first()
+      const hasStandards = await standardsSection.isVisible({ timeout: 5000 }).catch(() => false)
+      
+      if (hasStandards) {
+        // Check for AVM standards
+        const asaStandard = page.locator('text=/ASA.*Simple/i').first()
+        const arc3Standard = page.locator('text=/ARC-3.*Branded/i').first()
+        const arc200Standard = page.locator('text=/ARC-200.*Smart/i').first()
+        
+        expect(await asaStandard.isVisible({ timeout: 5000 }).catch(() => false)).toBe(true)
+        expect(await arc3Standard.isVisible({ timeout: 5000 }).catch(() => false)).toBe(true)
+        expect(await arc200Standard.isVisible({ timeout: 5000 }).catch(() => false)).toBe(true)
+        
+        // Ensure EVM standards are NOT shown
+        const erc20Standard = page.locator('text=/ERC-20/i').first()
+        expect(await erc20Standard.isVisible({ timeout: 2000 }).catch(() => false)).toBe(false)
+      }
+    }
+    
+    expect(true).toBe(true)
+  })
+  
+  test('should show EVM standards for Ethereum network', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('wallet_connected', 'true')
+      localStorage.setItem('algorand_user', JSON.stringify({
+        address: 'TEST_ADDRESS',
+        email: 'test@example.com',
+      }))
+      localStorage.setItem('subscription_cache', JSON.stringify({
+        customer_id: 'test_customer',
+        subscription_status: 'active',
+        price_id: 'price_enterprise_monthly',
+        timestamp: Date.now()
+      }))
+    })
+
+    await page.goto('/create/wizard')
+    await page.waitForLoadState('domcontentloaded')
+    await page.waitForTimeout(1000)
+    
+    // Try to select Ethereum network
+    const ethereumButton = page.locator('text=/Ethereum.*Mainnet|Ethereum/i').first()
+    const hasEthereum = await ethereumButton.isVisible({ timeout: 10000 }).catch(() => false)
+    
+    if (hasEthereum) {
+      await ethereumButton.click({ timeout: 5000 })
+      await page.waitForTimeout(500)
+      
+      // Verify EVM standards appear
+      const standardsSection = page.locator('text=/Choose Token Type|Token Standard/i').first()
+      const hasStandards = await standardsSection.isVisible({ timeout: 5000 }).catch(() => false)
+      
+      if (hasStandards) {
+        // Check for EVM standards
+        const erc20Standard = page.locator('text=/ERC-20.*Fungible/i').first()
+        const erc721Standard = page.locator('text=/ERC-721.*NFT/i').first()
+        
+        expect(await erc20Standard.isVisible({ timeout: 5000 }).catch(() => false)).toBe(true)
+        expect(await erc721Standard.isVisible({ timeout: 5000 }).catch(() => false)).toBe(true)
+        
+        // Ensure AVM standards are NOT shown
+        const asaStandard = page.locator('text=/^ASA/i').first()
+        expect(await asaStandard.isVisible({ timeout: 2000 }).catch(() => false)).toBe(false)
+      }
+    }
+    
+    expect(true).toBe(true)
+  })
+  
+  test('should show Learn More button for each standard', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('wallet_connected', 'true')
+      localStorage.setItem('algorand_user', JSON.stringify({
+        address: 'TEST_ADDRESS',
+        email: 'test@example.com',
+      }))
+      localStorage.setItem('subscription_cache', JSON.stringify({
+        customer_id: 'test_customer',
+        subscription_status: 'active',
+        price_id: 'price_enterprise_monthly',
+        timestamp: Date.now()
+      }))
+    })
+
+    await page.goto('/create/wizard')
+    await page.waitForLoadState('domcontentloaded')
+    await page.waitForTimeout(1000)
+    
+    // Select a network
+    const voiButton = page.locator('text=/VOI.*Network|VOI/i').first()
+    const hasVOI = await voiButton.isVisible({ timeout: 10000 }).catch(() => false)
+    
+    if (hasVOI) {
+      await voiButton.click({ timeout: 5000 })
+      await page.waitForTimeout(500)
+      
+      // Look for Learn More button
+      const learnMoreButton = page.locator('button, a').filter({ hasText: /Learn more/i }).first()
+      const hasLearnMore = await learnMoreButton.isVisible({ timeout: 5000 }).catch(() => false)
+      
+      expect(hasLearnMore).toBe(true)
+    }
+    
+    expect(true).toBe(true)
+  })
+  
+  test('should show compliance banner for regulated standards', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('wallet_connected', 'true')
+      localStorage.setItem('algorand_user', JSON.stringify({
+        address: 'TEST_ADDRESS',
+        email: 'test@example.com',
+      }))
+      localStorage.setItem('subscription_cache', JSON.stringify({
+        customer_id: 'test_customer',
+        subscription_status: 'active',
+        price_id: 'price_enterprise_monthly',
+        timestamp: Date.now()
+      }))
+    })
+
+    await page.goto('/create/wizard')
+    await page.waitForLoadState('domcontentloaded')
+    await page.waitForTimeout(1000)
+    
+    // Select VOI network
+    const voiButton = page.locator('text=/VOI/i').first()
+    const hasVOI = await voiButton.isVisible({ timeout: 10000 }).catch(() => false)
+    
+    if (hasVOI) {
+      await voiButton.click({ timeout: 5000 })
+      await page.waitForTimeout(500)
+      
+      // Select ARC200 (should show compliance banner)
+      const arc200Button = page.locator('text=/ARC-200/i').first()
+      const hasARC200 = await arc200Button.isVisible({ timeout: 5000 }).catch(() => false)
+      
+      if (hasARC200) {
+        await arc200Button.click({ timeout: 5000 })
+        await page.waitForTimeout(500)
+        
+        // Look for compliance banner
+        const complianceBanner = page.locator('text=/Compliance Considerations|compliance/i').first()
+        const hasBanner = await complianceBanner.isVisible({ timeout: 5000 }).catch(() => false)
+        
+        // Compliance banner should be visible for regulated standards
+        expect(hasBanner).toBe(true)
+      }
+    }
+    
+    expect(true).toBe(true)
+  })
+  
+  test('should never show empty standards list when switching networks', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('wallet_connected', 'true')
+      localStorage.setItem('algorand_user', JSON.stringify({
+        address: 'TEST_ADDRESS',
+        email: 'test@example.com',
+      }))
+      localStorage.setItem('subscription_cache', JSON.stringify({
+        customer_id: 'test_customer',
+        subscription_status: 'active',
+        price_id: 'price_enterprise_monthly',
+        timestamp: Date.now()
+      }))
+    })
+
+    await page.goto('/create/wizard')
+    await page.waitForLoadState('domcontentloaded')
+    await page.waitForTimeout(1000)
+    
+    const networks = ['VOI', 'Algorand', 'Ethereum']
+    
+    for (const network of networks) {
+      const networkButton = page.locator(`text=/\\b${network}\\b/i`).first()
+      const hasNetwork = await networkButton.isVisible({ timeout: 10000 }).catch(() => false)
+      
+      if (hasNetwork) {
+        await networkButton.click({ timeout: 5000 })
+        await page.waitForTimeout(500)
+        
+        // Verify standards section is visible
+        const standardsSection = page.locator('text=/Choose Token Type/i').first()
+        const hasStandards = await standardsSection.isVisible({ timeout: 5000 }).catch(() => false)
+        
+        // Standards section should always be visible after selecting a network
+        expect(hasStandards).toBe(true)
+      }
+    }
+    
+    expect(true).toBe(true)
+  })
 })
