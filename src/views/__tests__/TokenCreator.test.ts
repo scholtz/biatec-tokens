@@ -335,8 +335,6 @@ describe("TokenCreator", () => {
       expect(wrapper!.text()).toContain("Choose a template or token standard");
     });
 
-
-
     it("should render compliance checklist component", () => {
       // Initially hidden, so check for the toggle button
       expect(wrapper!.text()).toContain("Compliance Checklist");
@@ -931,20 +929,6 @@ describe("TokenCreator", () => {
         complianceMetadataValid: false,
       });
     });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     it("should reset form after successful deployment", async () => {
       // Setup valid form data first
