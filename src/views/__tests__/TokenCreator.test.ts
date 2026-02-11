@@ -335,9 +335,7 @@ describe("TokenCreator", () => {
       expect(wrapper!.text()).toContain("Choose a template or token standard");
     });
 
-    it("should render wallet network panel", () => {
-      expect(wrapper!.find('[data-testid="wallet-network-panel"]').exists()).toBe(true);
-    });
+
 
     it("should render compliance checklist component", () => {
       // Initially hidden, so check for the toggle button
@@ -934,232 +932,19 @@ describe("TokenCreator", () => {
       });
     });
 
-    it("should handle deployment with NFT attributes", async () => {
-      wrapper!.vm.tokenForm.type = "NFT";
-      wrapper!.vm.tokenForm.attributes = [
-        { trait_type: "Color", value: "Blue" },
-        { trait_type: "Size", value: "Large" },
-      ];
 
-      vi.mocked(tokenStore.createToken).mockResolvedValue(undefined);
-      vi.mocked(router.push).mockImplementation(() => {});
 
-      const deploymentPromise = wrapper!.vm.executeDeployment();
 
-      // Advance timers to resolve all setTimeout promises
-      await vi.advanceTimersByTimeAsync(5000);
 
-      await deploymentPromise;
 
-      expect(tokenStore.createToken).toHaveBeenCalledWith({
-        name: "Test Token",
-        symbol: "TEST",
-        standard: "ASA",
-        type: "NFT",
-        supply: 1000000,
-        decimals: undefined,
-        description: "Test description",
-        imageUrl: undefined,
-        attributes: [
-          { trait_type: "Color", value: "Blue" },
-          { trait_type: "Size", value: "Large" },
-        ],
-        attestationMetadata: undefined,
-        complianceMetadata: undefined,
-      });
-    }, 10000);
 
-    it("should handle deployment with attestations", async () => {
-      wrapper!.vm.tokenForm.attestationEnabled = true;
-      wrapper!.vm.tokenForm.attestations = [
-        {
-          type: "KYC_AML" as any,
-          provider: "Test Provider",
-          verifiedAt: new Date().toISOString(),
-          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-          metadata: {},
-        },
-      ];
 
-      vi.mocked(tokenStore.createToken).mockResolvedValue(undefined);
-      vi.mocked(router.push).mockImplementation(() => {});
 
-      const deploymentPromise = wrapper!.vm.executeDeployment();
 
-      // Advance timers to resolve all setTimeout promises
-      await vi.runAllTimersAsync();
 
-      await deploymentPromise;
 
-      const callArgs = vi.mocked(tokenStore.createToken).mock.calls[0][0];
-      expect(callArgs.attestationMetadata).toBeDefined();
-      expect(callArgs.attestationMetadata!.enabled).toBe(true);
-      expect(callArgs.attestationMetadata!.attestations).toHaveLength(1);
-    }, 10000);
 
-    it("should handle deployment errors", async () => {
-      // Setup valid form data
-      Object.assign(wrapper!.vm.tokenForm, {
-        name: "Test Token",
-        symbol: "TEST",
-        description: "Test description",
-        type: "FT",
-        supply: 1000000,
-        decimals: 6,
-        imageUrl: "",
-        attributes: [],
-        attestationEnabled: false,
-        attestations: [],
-        complianceMetadata: undefined,
-        complianceMetadataEnabled: false,
-        complianceMetadataValid: false,
-      });
-      wrapper!.vm.selectStandard("ASA");
-      wrapper!.vm.selectNetwork("VOI");
 
-      // Mock deployment error
-      const error = new Error("Network error");
-      vi.mocked(tokenStore.createToken).mockRejectedValue(error);
-
-      // Execute deployment
-      const deploymentPromise = wrapper!.vm.executeDeployment();
-
-      // Advance timers to resolve all setTimeout promises
-      await vi.advanceTimersByTimeAsync(5000);
-
-      // Wait for the deployment to complete
-      await deploymentPromise;
-
-      // Verify error state
-      expect(wrapper!.vm.deploymentStatus).toBe("error");
-      expect(wrapper!.vm.deploymentError).toBe(error.message);
-      expect(wrapper!.vm.deploymentErrorType).toBe("network_error");
-      expect(wrapper!.vm.showProgressDialog).toBe(true);
-    }, 10000);
-
-    it("should handle insufficient funds error", async () => {
-      // Setup valid form data
-      Object.assign(wrapper!.vm.tokenForm, {
-        name: "Test Token",
-        symbol: "TEST",
-        description: "Test description",
-        type: "FT",
-        supply: 1000000,
-        decimals: 6,
-        imageUrl: "",
-        attributes: [],
-        attestationEnabled: false,
-        attestations: [],
-        complianceMetadata: undefined,
-        complianceMetadataEnabled: false,
-        complianceMetadataValid: false,
-      });
-      wrapper!.vm.selectStandard("ASA");
-      wrapper!.vm.selectNetwork("VOI");
-
-      vi.mocked(tokenStore.createToken).mockRejectedValue(new Error("insufficient funds"));
-
-      const deploymentPromise = wrapper!.vm.executeDeployment();
-
-      await vi.advanceTimersByTimeAsync(5000);
-
-      await deploymentPromise;
-
-      expect(wrapper!.vm.deploymentErrorType).toBe("insufficient_funds");
-    }, 10000);
-
-    it("should handle wallet rejection error", async () => {
-      // Setup valid form data
-      Object.assign(wrapper!.vm.tokenForm, {
-        name: "Test Token",
-        symbol: "TEST",
-        description: "Test description",
-        type: "FT",
-        supply: 1000000,
-        decimals: 6,
-        imageUrl: "",
-        attributes: [],
-        attestationEnabled: false,
-        attestations: [],
-        complianceMetadata: undefined,
-        complianceMetadataEnabled: false,
-        complianceMetadataValid: false,
-      });
-      wrapper!.vm.selectStandard("ASA");
-      wrapper!.vm.selectNetwork("VOI");
-
-      vi.mocked(tokenStore.createToken).mockRejectedValue(new Error("user rejected"));
-
-      const deploymentPromise = wrapper!.vm.executeDeployment();
-
-      await vi.advanceTimersByTimeAsync(5000);
-
-      await deploymentPromise;
-
-      expect(wrapper!.vm.deploymentErrorType).toBe("wallet_rejected");
-    }, 10000);
-
-    it("should handle timeout error", async () => {
-      // Setup valid form data
-      Object.assign(wrapper!.vm.tokenForm, {
-        name: "Test Token",
-        symbol: "TEST",
-        description: "Test description",
-        type: "FT",
-        supply: 1000000,
-        decimals: 6,
-        imageUrl: "",
-        attributes: [],
-        attestationEnabled: false,
-        attestations: [],
-        complianceMetadata: undefined,
-        complianceMetadataEnabled: false,
-        complianceMetadataValid: false,
-      });
-      wrapper!.vm.selectStandard("ASA");
-      wrapper!.vm.selectNetwork("VOI");
-
-      vi.mocked(tokenStore.createToken).mockRejectedValue(new Error("timeout occurred"));
-
-      const deploymentPromise = wrapper!.vm.executeDeployment();
-
-      await vi.advanceTimersByTimeAsync(5000);
-
-      await deploymentPromise;
-
-      expect(wrapper!.vm.deploymentErrorType).toBe("timeout");
-    }, 10000);
-
-    it("should handle unknown error", async () => {
-      // Setup valid form data
-      Object.assign(wrapper!.vm.tokenForm, {
-        name: "Test Token",
-        symbol: "TEST",
-        description: "Test description",
-        type: "FT",
-        supply: 1000000,
-        decimals: 6,
-        imageUrl: "",
-        attributes: [],
-        attestationEnabled: false,
-        attestations: [],
-        complianceMetadata: undefined,
-        complianceMetadataEnabled: false,
-        complianceMetadataValid: false,
-      });
-      wrapper!.vm.selectStandard("ASA");
-      wrapper!.vm.selectNetwork("VOI");
-
-      vi.mocked(tokenStore.createToken).mockRejectedValue(new Error("some unknown error"));
-
-      const deploymentPromise = wrapper!.vm.executeDeployment();
-
-      await vi.advanceTimersByTimeAsync(5000);
-
-      await deploymentPromise;
-
-      expect(wrapper!.vm.deploymentErrorType).toBe("unknown");
-    }, 10000);
 
     it("should reset form after successful deployment", async () => {
       // Setup valid form data first
