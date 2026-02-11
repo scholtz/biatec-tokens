@@ -649,7 +649,7 @@ export const useTokenStore = defineStore("tokens", () => {
 
   const networkGuidance: NetworkGuidance[] = [
     {
-      name: "Algorand" as "VOI" | "Aramid",
+      name: "Algorand",
       displayName: "Algorand Mainnet",
       description: "Secure, scalable, and sustainable Layer-1 blockchain with instant finality and low fees",
       fees: {
@@ -722,7 +722,7 @@ export const useTokenStore = defineStore("tokens", () => {
       bestFor: ["Payment systems", "Stablecoins", "Security tokens", "Cross-border transfers", "Regulated assets"],
     },
     {
-      name: "Ethereum" as "VOI" | "Aramid",
+      name: "Ethereum",
       displayName: "Ethereum Mainnet",
       description: "Leading smart contract platform with the largest DeFi ecosystem and maximum compatibility",
       fees: {
@@ -746,7 +746,7 @@ export const useTokenStore = defineStore("tokens", () => {
       bestFor: ["DeFi protocols", "NFT marketplaces", "DAO governance", "Cross-chain bridges", "Maximum ecosystem reach"],
     },
     {
-      name: "Arbitrum" as "VOI" | "Aramid",
+      name: "Arbitrum",
       displayName: "Arbitrum One",
       description: "Ethereum Layer-2 with 10x lower fees while maintaining full EVM compatibility",
       fees: {
@@ -769,7 +769,7 @@ export const useTokenStore = defineStore("tokens", () => {
       bestFor: ["Cost-efficient DeFi", "High-frequency applications", "Gaming tokens", "Ethereum compatibility with lower fees"],
     },
     {
-      name: "Base" as "VOI" | "Aramid",
+      name: "Base",
       displayName: "Base Network",
       description: "Coinbase Layer-2 optimized for consumer applications with seamless fiat onboarding",
       fees: {

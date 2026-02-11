@@ -654,11 +654,11 @@ const tokenForm = reactive({
 watch(selectedNetwork, (newNetwork) => {
   if (newNetwork) {
     // Map new network names to compliance store network types
-    let complianceNetwork: 'VOI' | 'Aramid' | 'Both' = 'VOI'
-    if (newNetwork === 'VOI') complianceNetwork = 'VOI'
-    else if (newNetwork === 'Aramid') complianceNetwork = 'Aramid'
-    else if (newNetwork === 'Algorand') complianceNetwork = 'VOI' // Algorand is AVM like VOI
-    else complianceNetwork = 'Both' // EVM networks (Ethereum, Arbitrum, Base) treated as "Both"
+    let complianceNetwork: 'VOI' | 'Aramid' | 'Both' = 'VOI';
+    if (newNetwork === 'VOI') complianceNetwork = 'VOI';
+    else if (newNetwork === 'Aramid') complianceNetwork = 'Aramid';
+    else if (newNetwork === 'Algorand') complianceNetwork = 'VOI'; // Algorand is AVM like VOI
+    else complianceNetwork = 'Both'; // EVM networks (Ethereum, Arbitrum, Base) treated as "Both"
     
     complianceStore.setNetwork(complianceNetwork);
     localStorage.setItem(NETWORK_STORAGE_KEY, newNetwork);
