@@ -67,12 +67,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useTokenDraftStore } from '../stores/tokenDraft'
 import { useSubscriptionStore } from '../stores/subscription'
 import { useComplianceStore } from '../stores/compliance'
+import { analyticsService } from '../services/analytics'
 import WizardContainer from '../components/wizard/WizardContainer.vue'
 import AuthenticationConfirmationStep from '../components/wizard/steps/AuthenticationConfirmationStep.vue'
 import SubscriptionSelectionStep from '../components/wizard/steps/SubscriptionSelectionStep.vue'
@@ -195,7 +196,9 @@ const wizardSteps = computed<WizardStep[]>(() => [
 
 const handleStepChange = (stepIndex: number, step: WizardStep) => {
   currentStepIndex.value = stepIndex
-  emitAnalyticsEvent('wizard_step_viewed', {
+  
+  // Track with analytics service
+  analyticsService.trackWizardStepViewed({
     stepIndex,
     stepId: step.id,
     stepTitle: step.title,
@@ -206,7 +209,10 @@ const handleStepChange = (stepIndex: number, step: WizardStep) => {
 
 const handlePlanSelected = (plan: string) => {
   selectedPlan.value = plan
-  emitAnalyticsEvent('subscription_plan_selected', { plan })
+  
+  // Track with analytics service
+  analyticsService.trackPlanSelected(plan)
+  
   console.log(`[Wizard] Plan selected: ${plan}`)
 }
 
@@ -214,11 +220,13 @@ const handleSaveDraft = () => {
   const draft = tokenDraftStore.currentDraft
   if (draft) {
     tokenDraftStore.saveDraft(draft)
-    emitAnalyticsEvent('wizard_draft_saved', {
-      currentStep: currentStepIndex.value,
+    
+    // Track with analytics service
+    analyticsService.trackDraftSaved({
+      stepIndex: currentStepIndex.value,
       tokenName: draft.name,
-      standard: draft.selectedStandard,
     })
+    
     console.log('[Wizard] Draft saved successfully')
     
     // Show success notification (would use toast in production)
@@ -228,12 +236,23 @@ const handleSaveDraft = () => {
 
 const handleStepValidated = (stepIndex: number, isValid: boolean) => {
   console.log(`[Wizard] Step ${stepIndex} validation: ${isValid ? 'valid' : 'invalid'}`)
+  
+  // Track validation errors
+  if (!isValid && stepIndex < wizardSteps.value.length) {
+    analyticsService.trackWizardValidationError({
+      stepIndex,
+      stepId: wizardSteps.value[stepIndex].id,
+      stepTitle: wizardSteps.value[stepIndex].title,
+      errors: ['Validation failed'], // Could be more specific
+    })
+  }
 }
 
 const handleComplete = async () => {
   const draft = tokenDraftStore.currentDraft
   
-  emitAnalyticsEvent('wizard_completed', {
+  // Track with analytics service
+  analyticsService.trackWizardCompleted({
     tokenName: draft?.name,
     tokenSymbol: draft?.symbol,
     standard: draft?.selectedStandard,
@@ -263,11 +282,6 @@ const handleComplete = async () => {
   await router.push('/dashboard')
 }
 
-const emitAnalyticsEvent = (eventName: string, payload: any) => {
-  console.log(`[Analytics] ${eventName}`, payload)
-  // In production, this would integrate with analytics provider (Google Analytics, Mixpanel, etc.)
-}
-
 onMounted(async () => {
   // Check authentication
   if (!authStore.isAuthenticated) {
@@ -285,16 +299,27 @@ onMounted(async () => {
   // Fetch subscription status
   await subscriptionStore.fetchSubscription()
   
-  // Track wizard start
-  emitAnalyticsEvent('wizard_started', {
-    userEmail: authStore.user?.email || authStore.arc76email,
-    timestamp: new Date().toISOString(),
-  })
+  // Track wizard start with analytics service
+  analyticsService.trackWizardStarted(
+    authStore.user?.email || authStore.arc76email || undefined
+  )
   
   // Track conversion metrics
   subscriptionStore.trackTokenCreationAttempt()
   
   console.log('[Wizard] Token Creation Wizard initialized')
+})
+
+// Track abandonment on unmount
+onBeforeUnmount(() => {
+  // If wizard wasn't completed, track abandonment
+  const draft = tokenDraftStore.currentDraft
+  if (draft && !draft.createdAt) {
+    analyticsService.trackWizardAbandoned(
+      currentStepIndex.value,
+      wizardSteps.value.length
+    )
+  }
 })
 </script>
 
