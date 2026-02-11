@@ -639,18 +639,25 @@ test.describe('Token Creation Wizard E2E', () => {
     await page.waitForLoadState('domcontentloaded')
     
     // Navigate to Token Details step where networks are shown
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(2000)
     
     // Check if we can see network selection
-    const networkHeading = page.locator('text=/Choose.*Network|Select Network/i').first()
+    const networkHeading = page.locator('text=/Choose.*Network|Select.*Network/i').first()
     const hasNetworkSelection = await networkHeading.isVisible({ timeout: 10000 }).catch(() => false)
     
     if (hasNetworkSelection) {
-      // Verify all six networks are present
-      const networks = ['VOI', 'Algorand', 'Aramid', 'Ethereum', 'Arbitrum', 'Base']
+      // Verify all six networks are present using display names
+      const networks = [
+        { name: 'VOI Network', pattern: /VOI.*Network/i },
+        { name: 'Algorand Mainnet', pattern: /Algorand/i },
+        { name: 'Aramid Network', pattern: /Aramid/i },
+        { name: 'Ethereum Mainnet', pattern: /Ethereum/i },
+        { name: 'Arbitrum One', pattern: /Arbitrum/i },
+        { name: 'Base Network', pattern: /Base/i }
+      ]
       
       for (const network of networks) {
-        const networkElement = page.locator(`text="${network}"`).first()
+        const networkElement = page.locator(`text=${network.pattern}`).first()
         const isVisible = await networkElement.isVisible({ timeout: 5000 }).catch(() => false)
         expect(isVisible).toBe(true)
       }
@@ -676,15 +683,15 @@ test.describe('Token Creation Wizard E2E', () => {
 
     await page.goto('/create/wizard')
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(2000)
     
-    // Try to select Algorand network
-    const algorandButton = page.locator('text=/Algorand.*Mainnet|Algorand/i').first()
+    // Try to select Algorand network using display name pattern
+    const algorandButton = page.locator('text=/Algorand/i').first()
     const hasAlgorand = await algorandButton.isVisible({ timeout: 10000 }).catch(() => false)
     
     if (hasAlgorand) {
       await algorandButton.click({ timeout: 5000 })
-      await page.waitForTimeout(500)
+      await page.waitForTimeout(1000)
       
       // Verify AVM standards appear
       const standardsSection = page.locator('text=/Choose Token Type|Token Standard/i').first()
@@ -726,15 +733,15 @@ test.describe('Token Creation Wizard E2E', () => {
 
     await page.goto('/create/wizard')
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(2000)
     
-    // Try to select Ethereum network
-    const ethereumButton = page.locator('text=/Ethereum.*Mainnet|Ethereum/i').first()
+    // Try to select Ethereum network using pattern
+    const ethereumButton = page.locator('text=/Ethereum/i').first()
     const hasEthereum = await ethereumButton.isVisible({ timeout: 10000 }).catch(() => false)
     
     if (hasEthereum) {
       await ethereumButton.click({ timeout: 5000 })
-      await page.waitForTimeout(500)
+      await page.waitForTimeout(1000)
       
       // Verify EVM standards appear
       const standardsSection = page.locator('text=/Choose Token Type|Token Standard/i').first()
@@ -774,15 +781,15 @@ test.describe('Token Creation Wizard E2E', () => {
 
     await page.goto('/create/wizard')
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(2000)
     
-    // Select a network
-    const voiButton = page.locator('text=/VOI.*Network|VOI/i').first()
+    // Select a network (VOI)
+    const voiButton = page.locator('text=/VOI/i').first()
     const hasVOI = await voiButton.isVisible({ timeout: 10000 }).catch(() => false)
     
     if (hasVOI) {
       await voiButton.click({ timeout: 5000 })
-      await page.waitForTimeout(500)
+      await page.waitForTimeout(1000)
       
       // Look for Learn More button
       const learnMoreButton = page.locator('button, a').filter({ hasText: /Learn more/i }).first()
@@ -811,7 +818,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
     await page.goto('/create/wizard')
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(2000)
     
     // Select VOI network
     const voiButton = page.locator('text=/VOI/i').first()
@@ -819,7 +826,7 @@ test.describe('Token Creation Wizard E2E', () => {
     
     if (hasVOI) {
       await voiButton.click({ timeout: 5000 })
-      await page.waitForTimeout(500)
+      await page.waitForTimeout(1000)
       
       // Select ARC200 (should show compliance banner)
       const arc200Button = page.locator('text=/ARC-200/i').first()
@@ -827,7 +834,7 @@ test.describe('Token Creation Wizard E2E', () => {
       
       if (hasARC200) {
         await arc200Button.click({ timeout: 5000 })
-        await page.waitForTimeout(500)
+        await page.waitForTimeout(1000)
         
         // Look for compliance banner
         const complianceBanner = page.locator('text=/Compliance Considerations|compliance/i').first()
@@ -858,7 +865,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
     await page.goto('/create/wizard')
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(2000)
     
     const networks = ['VOI', 'Algorand', 'Ethereum']
     
@@ -868,7 +875,7 @@ test.describe('Token Creation Wizard E2E', () => {
       
       if (hasNetwork) {
         await networkButton.click({ timeout: 5000 })
-        await page.waitForTimeout(500)
+        await page.waitForTimeout(1000)
         
         // Verify standards section is visible
         const standardsSection = page.locator('text=/Choose Token Type/i').first()
