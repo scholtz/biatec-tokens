@@ -13,22 +13,62 @@ describe('TokenDetailsStep', () => {
     setActivePinia(createPinia())
     localStorage.clear()
     
-    // Initialize token store with mock data
+    // Initialize token store with mock data for all networks
     const tokenStore = useTokenStore()
     tokenStore.networkGuidance = [
       {
         name: 'VOI',
         displayName: 'VOI Network',
         description: 'Fast and eco-friendly blockchain',
-        fees: { creation: '$0.01' },
+        fees: { creation: '$0.01', transaction: '$0.001', description: 'Low fees' },
+        metadataHosting: { recommended: ['IPFS'], description: 'Decentralized storage' },
+        compliance: { considerations: ['KYC'], micaRelevance: 'Compliant' },
         bestFor: ['NFTs', 'Tokens'],
+      },
+      {
+        name: 'Aramid',
+        displayName: 'Aramid Network',
+        description: 'Enterprise blockchain',
+        fees: { creation: '$0.02', transaction: '$0.002', description: 'Predictable fees' },
+        metadataHosting: { recommended: ['IPFS'], description: 'Enterprise storage' },
+        compliance: { considerations: ['KYC', 'AML'], micaRelevance: 'Compliant' },
+        bestFor: ['Payments', 'Securities'],
+      },
+      {
+        name: 'Algorand',
+        displayName: 'Algorand Mainnet',
+        description: 'Secure and scalable Layer-1',
+        fees: { creation: '$0.1', transaction: '$0.001', description: 'Low fees' },
+        metadataHosting: { recommended: ['IPFS', 'Arweave'], description: 'Decentralized' },
+        compliance: { considerations: ['KYC'], micaRelevance: 'MICA compliant' },
+        bestFor: ['Enterprise', 'DeFi'],
       },
       {
         name: 'Ethereum',
         displayName: 'Ethereum',
         description: 'Leading smart contract platform',
-        fees: { creation: '$50-200' },
+        fees: { creation: '$50-200', transaction: '$10-50', description: 'Variable fees' },
+        metadataHosting: { recommended: ['IPFS'], description: 'Standard storage' },
+        compliance: { considerations: ['Securities'], micaRelevance: 'MICA applies' },
         bestFor: ['DeFi', 'Tokens'],
+      },
+      {
+        name: 'Arbitrum',
+        displayName: 'Arbitrum One',
+        description: 'Ethereum Layer-2',
+        fees: { creation: '$5-20', transaction: '$0.50-2', description: '10x cheaper' },
+        metadataHosting: { recommended: ['IPFS'], description: 'Same as Ethereum' },
+        compliance: { considerations: ['Securities'], micaRelevance: 'MICA applies' },
+        bestFor: ['DeFi', 'Gaming'],
+      },
+      {
+        name: 'Base',
+        displayName: 'Base Network',
+        description: 'Coinbase Layer-2',
+        fees: { creation: '$3-15', transaction: '$0.25-1', description: 'Competitive fees' },
+        metadataHosting: { recommended: ['IPFS'], description: 'Coinbase infrastructure' },
+        compliance: { considerations: ['KYC'], micaRelevance: 'MICA applies' },
+        bestFor: ['Consumer apps', 'Social'],
       },
     ]
     
@@ -418,6 +458,283 @@ describe('TokenDetailsStep', () => {
       await wrapper.vm.$nextTick()
 
       expect(wrapper.text()).toContain('1,000,000')
+    })
+  })
+  
+  describe('Enhanced Network Support', () => {
+    it('should support all six networks (VOI, Aramid, Algorand, Ethereum, Arbitrum, Base)', async () => {
+      const tokenStore = useTokenStore()
+      const networkNames = tokenStore.networkGuidance.map(n => n.name)
+      
+      expect(networkNames).toContain('VOI')
+      expect(networkNames).toContain('Aramid')
+      expect(networkNames).toContain('Algorand')
+      expect(networkNames).toContain('Ethereum')
+      expect(networkNames).toContain('Arbitrum')
+      expect(networkNames).toContain('Base')
+      expect(networkNames.length).toBe(6)
+    })
+
+    it('should show AVM standards for Algorand network', async () => {
+      const wrapper = mount(TokenDetailsStep, {
+        global: {
+          components: { WizardStep, Input },
+        },
+      })
+
+      const vm = wrapper.vm as any
+      await vm.selectNetwork('Algorand')
+      await wrapper.vm.$nextTick()
+
+      const standards = vm.availableStandards
+      const standardNames = standards.map((s: any) => s.value)
+      expect(standardNames).toContain('ASA')
+      expect(standardNames).toContain('ARC3FT')
+      expect(standardNames).toContain('ARC200')
+      expect(standardNames).not.toContain('ERC20')
+    })
+
+    it('should show EVM standards for Arbitrum network', async () => {
+      const wrapper = mount(TokenDetailsStep, {
+        global: {
+          components: { WizardStep, Input },
+        },
+      })
+
+      const vm = wrapper.vm as any
+      await vm.selectNetwork('Arbitrum')
+      await wrapper.vm.$nextTick()
+
+      const standards = vm.availableStandards
+      const standardNames = standards.map((s: any) => s.value)
+      expect(standardNames).toContain('ERC20')
+      expect(standardNames).toContain('ERC721')
+      expect(standardNames).not.toContain('ASA')
+    })
+
+    it('should show EVM standards for Base network', async () => {
+      const wrapper = mount(TokenDetailsStep, {
+        global: {
+          components: { WizardStep, Input },
+        },
+      })
+
+      const vm = wrapper.vm as any
+      await vm.selectNetwork('Base')
+      await wrapper.vm.$nextTick()
+
+      const standards = vm.availableStandards
+      const standardNames = standards.map((s: any) => s.value)
+      expect(standardNames).toContain('ERC20')
+      expect(standardNames).toContain('ERC721')
+      expect(standardNames).not.toContain('ARC200')
+    })
+
+    it('should never show empty standards list for any network', async () => {
+      const wrapper = mount(TokenDetailsStep, {
+        global: {
+          components: { WizardStep, Input },
+        },
+      })
+
+      const vm = wrapper.vm as any
+      const networks = ['VOI', 'Aramid', 'Algorand', 'Ethereum', 'Arbitrum', 'Base']
+
+      for (const network of networks) {
+        await vm.selectNetwork(network)
+        await wrapper.vm.$nextTick()
+        expect(vm.availableStandards.length).toBeGreaterThan(0)
+      }
+    })
+  })
+
+  describe('Enhanced Token Standard Descriptions', () => {
+    it('should include business context for each standard', async () => {
+      const wrapper = mount(TokenDetailsStep, {
+        global: {
+          components: { WizardStep, Input },
+        },
+      })
+
+      const vm = wrapper.vm as any
+      await vm.selectNetwork('VOI')
+      await wrapper.vm.$nextTick()
+
+      const standards = vm.availableStandards
+      standards.forEach((standard: any) => {
+        expect(standard).toHaveProperty('businessContext')
+        expect(standard.businessContext).toBeTruthy()
+        expect(standard.businessContext.length).toBeGreaterThan(20)
+      })
+    })
+
+    it('should include compliance notes for each standard', async () => {
+      const wrapper = mount(TokenDetailsStep, {
+        global: {
+          components: { WizardStep, Input },
+        },
+      })
+
+      const vm = wrapper.vm as any
+      await vm.selectNetwork('Ethereum')
+      await wrapper.vm.$nextTick()
+
+      const standards = vm.availableStandards
+      standards.forEach((standard: any) => {
+        expect(standard).toHaveProperty('complianceNote')
+        expect(standard.complianceNote).toBeTruthy()
+      })
+    })
+
+    it('should include multiple use cases for each standard', async () => {
+      const wrapper = mount(TokenDetailsStep, {
+        global: {
+          components: { WizardStep, Input },
+        },
+      })
+
+      const vm = wrapper.vm as any
+      await vm.selectNetwork('VOI')
+      await wrapper.vm.$nextTick()
+
+      const standards = vm.availableStandards
+      standards.forEach((standard: any) => {
+        expect(standard.useWhen).toBeInstanceOf(Array)
+        expect(standard.useWhen.length).toBeGreaterThanOrEqual(3)
+      })
+    })
+  })
+
+  describe('Learn More Modal', () => {
+    it('should open learn more modal when button clicked', async () => {
+      const wrapper = mount(TokenDetailsStep, {
+        global: {
+          components: { WizardStep, Input },
+        },
+      })
+
+      const vm = wrapper.vm as any
+      await vm.selectNetwork('VOI')
+      await wrapper.vm.$nextTick()
+
+      const standard = vm.availableStandards[0]
+      await vm.openLearnMore(standard)
+
+      expect(vm.showLearnMoreModal).toBe(true)
+      expect(vm.selectedStandardForModal).toEqual(standard)
+    })
+
+    it('should close learn more modal', async () => {
+      const wrapper = mount(TokenDetailsStep, {
+        global: {
+          components: { WizardStep, Input },
+        },
+      })
+
+      const vm = wrapper.vm as any
+      await vm.selectNetwork('VOI')
+      const standard = vm.availableStandards[0]
+      await vm.openLearnMore(standard)
+
+      expect(vm.showLearnMoreModal).toBe(true)
+
+      await vm.closeLearnMore()
+
+      expect(vm.showLearnMoreModal).toBe(false)
+      expect(vm.selectedStandardForModal).toBeNull()
+    })
+
+    it('should select standard from modal', async () => {
+      const wrapper = mount(TokenDetailsStep, {
+        global: {
+          components: { WizardStep, Input },
+        },
+      })
+
+      const vm = wrapper.vm as any
+      await vm.selectNetwork('VOI')
+      const standard = vm.availableStandards[1] // ARC3FT
+      await vm.openLearnMore(standard)
+
+      expect(vm.formData.selectedStandard).toBe('')
+
+      await vm.selectStandardFromModal()
+
+      expect(vm.formData.selectedStandard).toBe(standard.value)
+      expect(vm.showLearnMoreModal).toBe(false)
+    })
+  })
+
+  describe('Compliance Banner', () => {
+    it('should show compliance banner for ARC200', async () => {
+      const wrapper = mount(TokenDetailsStep, {
+        global: {
+          components: { WizardStep, Input },
+        },
+      })
+
+      const vm = wrapper.vm as any
+      await vm.selectNetwork('VOI')
+      await vm.selectStandard('ARC200')
+
+      expect(vm.shouldShowComplianceBanner).toBe(true)
+    })
+
+    it('should show compliance banner for ERC20', async () => {
+      const wrapper = mount(TokenDetailsStep, {
+        global: {
+          components: { WizardStep, Input },
+        },
+      })
+
+      const vm = wrapper.vm as any
+      await vm.selectNetwork('Ethereum')
+      await vm.selectStandard('ERC20')
+
+      expect(vm.shouldShowComplianceBanner).toBe(true)
+    })
+
+    it('should show compliance banner for NFT standards', async () => {
+      const wrapper = mount(TokenDetailsStep, {
+        global: {
+          components: { WizardStep, Input },
+        },
+      })
+
+      const vm = wrapper.vm as any
+      await vm.selectNetwork('VOI')
+      await vm.selectStandard('ARC3NFT')
+
+      expect(vm.shouldShowComplianceBanner).toBe(true)
+    })
+
+    it('should show compliance banner for ERC721', async () => {
+      const wrapper = mount(TokenDetailsStep, {
+        global: {
+          components: { WizardStep, Input },
+        },
+      })
+
+      const vm = wrapper.vm as any
+      await vm.selectNetwork('Ethereum')
+      await vm.selectStandard('ERC721')
+
+      expect(vm.shouldShowComplianceBanner).toBe(true)
+    })
+
+    it('should provide appropriate compliance note for selected standard', async () => {
+      const wrapper = mount(TokenDetailsStep, {
+        global: {
+          components: { WizardStep, Input },
+        },
+      })
+
+      const vm = wrapper.vm as any
+      await vm.selectNetwork('VOI')
+      await vm.selectStandard('ARC200')
+
+      expect(vm.currentStandardComplianceNote).toBeTruthy()
+      expect(vm.currentStandardComplianceNote.length).toBeGreaterThan(20)
     })
   })
 })
