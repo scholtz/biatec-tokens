@@ -719,6 +719,56 @@ grep -r "wallet_connected" e2e/
 
 If ANY check fails, STOP and fix immediately. Do not mark work complete until ALL checks pass.
 
+## App Initialization Requirements
+
+### 🚨 CRITICAL: Auth Store Must Initialize Before App Mounting
+
+**MANDATORY**: In `src/main.ts`, the auth store MUST be initialized and awaited before mounting the app.
+
+**Why This Matters**:
+- Router auth guard checks `localStorage.getItem('algorand_user')` directly
+- Components check `authStore.isAuthenticated` (computed: `user.value && isConnected.value`)
+- If app mounts before auth store initializes, components see `isAuthenticated = false` even though localStorage has user data
+- This causes UI elements to not render, breaking E2E tests and user experience
+
+**Correct Pattern** (src/main.ts):
+```typescript
+app.use(pinia);
+app.use(router);
+
+// Wrap in async IIFE to await auth initialization before mounting
+(async () => {
+  const authStore = useAuthStore();
+  await authStore.initialize(); // MUST await - reads localStorage and sets auth state
+  app.mount("#app"); // Only mount after auth is ready
+})();
+```
+
+**Incorrect Pattern** (causes race condition):
+```typescript
+// ❌ WRONG - Don't do this!
+const authStore = useAuthStore();
+authStore.initialize(); // Fire and forget - app mounts before this completes
+app.mount("#app"); // Components render with uninitialized auth state
+```
+
+**Symptoms of Missing await**:
+- E2E tests fail with "element not visible" timeouts on auth-required pages
+- Tests pass router guards (checks localStorage) but UI doesn't render (checks auth store)
+- Users see loading state or redirects even when authenticated
+- 46+ E2E tests failing with network cards not visible
+
+**When to Update This**:
+- Adding new stores that need pre-initialization
+- Modifying auth store initialization logic
+- Changing app startup sequence
+- Debugging E2E test failures on auth-required pages
+
+**Testing**:
+- E2E tests MUST set localStorage via `page.addInitScript()` before navigation
+- Verify `authStore.isAuthenticated` becomes true after initialization
+- Check components render correctly on first page load
+
 ## Dependency Updates and Package Management
 
 ### 🚨 CRITICAL: Dependency Update Protocol
