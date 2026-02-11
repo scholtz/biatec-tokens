@@ -20,10 +20,10 @@ describe('TokenCreationWizard', () => {
       expect(wrapper.text()).toContain('Create Your Token')
     })
 
-    it('should initialize with 7 steps', () => {
+    it('should initialize with 8 steps', () => {
       const wrapper = mount(TokenCreationWizard)
       const vm = wrapper.vm as any
-      expect(vm.wizardSteps.length).toBe(7)
+      expect(vm.wizardSteps.length).toBe(8)
     })
 
     it('should start at first step', () => {
@@ -42,6 +42,7 @@ describe('TokenCreationWizard', () => {
         'project-setup',
         'token-details',
         'compliance',
+        'metadata',
         'review',
         'deployment',
       ])
@@ -227,7 +228,7 @@ describe('TokenCreationWizard', () => {
       expect(vm.step4Ref.validateAll).toHaveBeenCalled()
     })
 
-    it('should call validateAll on deployment review step', () => {
+    it('should call validateAll on metadata step', () => {
       const wrapper = mount(TokenCreationWizard)
       const vm = wrapper.vm as any
       
@@ -237,10 +238,26 @@ describe('TokenCreationWizard', () => {
         validateAll: vi.fn(),
       }
       
-      const reviewStep = vm.wizardSteps[5]
-      reviewStep.isValid()
+      const metadataStep = vm.wizardSteps[5]
+      metadataStep.isValid()
       
       expect(vm.step6Ref.validateAll).toHaveBeenCalled()
+    })
+
+    it('should call validateAll on deployment review step', () => {
+      const wrapper = mount(TokenCreationWizard)
+      const vm = wrapper.vm as any
+      
+      // Create mock ref with validateAll
+      vm.step7Ref = {
+        isValid: true,
+        validateAll: vi.fn(),
+      }
+      
+      const reviewStep = vm.wizardSteps[6]
+      reviewStep.isValid()
+      
+      expect(vm.step7Ref.validateAll).toHaveBeenCalled()
     })
   })
 })
