@@ -51,7 +51,7 @@ export interface TokenTemplate {
 }
 
 export interface NetworkGuidance {
-  name: "VOI" | "Aramid";
+  name: "VOI" | "Aramid" | "Algorand" | "Ethereum" | "Arbitrum" | "Base";
   displayName: string;
   description: string;
   fees: {
@@ -649,6 +649,30 @@ export const useTokenStore = defineStore("tokens", () => {
 
   const networkGuidance: NetworkGuidance[] = [
     {
+      name: "Algorand" as "VOI" | "Aramid",
+      displayName: "Algorand Mainnet",
+      description: "Secure, scalable, and sustainable Layer-1 blockchain with instant finality and low fees",
+      fees: {
+        creation: "~0.1 ALGO",
+        transaction: "~0.001 ALGO",
+        description: "Algorand offers predictable, low-cost transactions perfect for enterprise applications",
+      },
+      metadataHosting: {
+        recommended: ["IPFS", "Arweave", "Algorand native storage"],
+        description: "Store token metadata on decentralized networks for permanence and censorship resistance.",
+      },
+      compliance: {
+        considerations: [
+          "Ensure KYC/AML procedures for security tokens",
+          "Maintain transparent token documentation",
+          "Implement proper disclosure of token rights and limitations",
+          "Consider data protection requirements (GDPR)",
+        ],
+        micaRelevance: "Algorand tokens must comply with MICA regulations when operating in EU markets. Utility tokens require proper disclosure of purpose and limitations.",
+      },
+      bestFor: ["Enterprise applications", "DeFi protocols", "Stablecoins", "Real-world assets", "Payment systems"],
+    },
+    {
       name: "VOI",
       displayName: "VOI Network",
       description: "High-performance blockchain optimized for DeFi and utility tokens with fast finality",
@@ -696,6 +720,76 @@ export const useTokenStore = defineStore("tokens", () => {
         micaRelevance: "Aramid is optimized for MICA-compliant tokens. E-money tokens and asset-referenced tokens require authorization and reserve management.",
       },
       bestFor: ["Payment systems", "Stablecoins", "Security tokens", "Cross-border transfers", "Regulated assets"],
+    },
+    {
+      name: "Ethereum" as "VOI" | "Aramid",
+      displayName: "Ethereum Mainnet",
+      description: "Leading smart contract platform with the largest DeFi ecosystem and maximum compatibility",
+      fees: {
+        creation: "~$50-200 USD in gas",
+        transaction: "~$10-50 USD in gas",
+        description: "Ethereum gas fees vary with network congestion. Consider Layer-2 solutions for cost optimization",
+      },
+      metadataHosting: {
+        recommended: ["IPFS", "Arweave", "Centralized storage with IPFS backup"],
+        description: "Standard ERC metadata typically stored on IPFS for decentralization and permanence.",
+      },
+      compliance: {
+        considerations: [
+          "Securities regulations apply to many ERC20 tokens",
+          "Enhanced KYC/AML for DeFi and exchange integrations",
+          "Smart contract audits strongly recommended",
+          "Consider Ethereum's energy consumption in ESG reporting",
+        ],
+        micaRelevance: "Ethereum tokens must comply with MICA when offered in EU. Security tokens require prospectus and authorization.",
+      },
+      bestFor: ["DeFi protocols", "NFT marketplaces", "DAO governance", "Cross-chain bridges", "Maximum ecosystem reach"],
+    },
+    {
+      name: "Arbitrum" as "VOI" | "Aramid",
+      displayName: "Arbitrum One",
+      description: "Ethereum Layer-2 with 10x lower fees while maintaining full EVM compatibility",
+      fees: {
+        creation: "~$5-20 USD in gas",
+        transaction: "~$0.50-2 USD in gas",
+        description: "Arbitrum significantly reduces costs while inheriting Ethereum's security",
+      },
+      metadataHosting: {
+        recommended: ["IPFS", "Arweave"],
+        description: "Same metadata standards as Ethereum with lower deployment costs.",
+      },
+      compliance: {
+        considerations: [
+          "Same regulatory requirements as Ethereum mainnet",
+          "Layer-2 bridge security considerations",
+          "Maintain compliance across both L1 and L2",
+        ],
+        micaRelevance: "Arbitrum tokens follow same MICA requirements as Ethereum tokens.",
+      },
+      bestFor: ["Cost-efficient DeFi", "High-frequency applications", "Gaming tokens", "Ethereum compatibility with lower fees"],
+    },
+    {
+      name: "Base" as "VOI" | "Aramid",
+      displayName: "Base Network",
+      description: "Coinbase Layer-2 optimized for consumer applications with seamless fiat onboarding",
+      fees: {
+        creation: "~$3-15 USD in gas",
+        transaction: "~$0.25-1 USD in gas",
+        description: "Base offers competitive fees with strong integration to Coinbase ecosystem",
+      },
+      metadataHosting: {
+        recommended: ["IPFS", "Arweave"],
+        description: "Standard EVM metadata storage with Coinbase infrastructure support.",
+      },
+      compliance: {
+        considerations: [
+          "Leverage Coinbase's compliance infrastructure",
+          "Strong KYC/AML integration available",
+          "Consumer protection regulations apply",
+        ],
+        micaRelevance: "Base tokens must comply with MICA when targeting EU users. Benefits from Coinbase's regulatory expertise.",
+      },
+      bestFor: ["Consumer applications", "Fiat-to-crypto onboarding", "Social tokens", "Creator economy", "Mainstream adoption"],
     },
   ];
 
