@@ -14,7 +14,7 @@ test.describe('Token Creation Wizard E2E', () => {
   test('should complete happy path flow through all steps', async ({ page }) => {
     // Set up authenticated state
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -61,7 +61,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
   test('should handle validation errors on token details step', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -98,7 +98,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
   test('should enforce subscription gating when no active plan', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -128,7 +128,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
   test('should persist draft across page reloads', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -164,7 +164,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
   test('should support keyboard navigation through wizard', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -190,7 +190,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
   test('should display step progress indicator with active step', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -219,7 +219,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
   test('should show validation errors when required fields are missing', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -273,7 +273,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
   test('should allow navigation back to previous steps', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -311,7 +311,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
   test('should disable Continue button when step validation fails', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -346,7 +346,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
   test('should display compliance score and MICA readiness on compliance step', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -394,7 +394,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
   test('should show network selection with plain language descriptions', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -450,7 +450,7 @@ test.describe('Token Creation Wizard E2E', () => {
     })
     
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -471,7 +471,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
   test('should display deployment status timeline after wizard completion', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -527,7 +527,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
   test('should show error recovery options on deployment failure', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -556,7 +556,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
   test('should save draft automatically during wizard', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -618,7 +618,7 @@ test.describe('Token Creation Wizard E2E', () => {
   
   test('should display all six networks with correct descriptions', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -671,7 +671,7 @@ test.describe('Token Creation Wizard E2E', () => {
   
   test('should show AVM standards for Algorand network', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -721,7 +721,7 @@ test.describe('Token Creation Wizard E2E', () => {
   
   test('should show EVM standards for Ethereum network', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -769,7 +769,7 @@ test.describe('Token Creation Wizard E2E', () => {
   
   test('should show Learn More button for each standard', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -806,7 +806,7 @@ test.describe('Token Creation Wizard E2E', () => {
   
   test('should show compliance banner for regulated standards', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -853,7 +853,7 @@ test.describe('Token Creation Wizard E2E', () => {
   
   test('should never show empty standards list when switching networks', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -894,7 +894,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
   test('should maintain network selection when switching between standards', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -937,7 +937,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
   test('should persist network and standard selection across page navigation', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
@@ -986,7 +986,7 @@ test.describe('Token Creation Wizard E2E', () => {
 
   test('should show consistent guidance panel when toggling between networks', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('wallet_connected', 'true')
+      // Wallet-free auth: No wallet_connected needed
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS',
         email: 'test@example.com',
