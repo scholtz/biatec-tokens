@@ -145,11 +145,20 @@ try {
 app.use(pinia);
 app.use(router);
 
-// Initialize auth store and wait for it to complete before mounting
-// This ensures components have access to auth state immediately on render
+// Initialize critical stores and wait for them to complete before mounting
+// This ensures components have access to auth and subscription state immediately on render
 // Wrapped in async IIFE to use await at top level
+// CRITICAL: Without awaiting initialization, components check store state before it loads,
+// causing E2E tests to fail with "element not visible" timeouts (see PR #364 root cause analysis)
 (async () => {
   const authStore = useAuthStore();
   await authStore.initialize();
+  
+  // Also initialize subscription store to ensure subscription status is available
+  // This prevents race conditions where components check subscription before store loads
+  const { useSubscriptionStore } = await import('./stores/subscription');
+  const subscriptionStore = useSubscriptionStore();
+  await subscriptionStore.fetchSubscription();
+  
   app.mount("#app");
 })();
