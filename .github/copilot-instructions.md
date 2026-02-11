@@ -601,6 +601,124 @@ expect(isVisible || true).toBe(true); // Pass if element not found
 - **Problem**: Tests don't properly isolate state between runs
 - **Solution**: Clear localStorage in `beforeEach` hooks and mock required state
 
+## CI Configuration Requirements
+
+### 🚨 CRITICAL: Vitest Configuration in vite.config.ts
+
+**MANDATORY**: `vite.config.ts` MUST include complete vitest configuration. Without this, tests will fail in CI with "localStorage is not defined" errors even if they pass locally.
+
+**Required Configuration**:
+
+```typescript
+export default defineConfig({
+  // ... other vite config ...
+  test: {
+    environment: 'happy-dom',  // Provides browser APIs (localStorage, DOM)
+    setupFiles: ['src/test/setup.ts'],  // Global test setup
+    globals: true,  // Makes test functions globally available
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      statements: 78,
+      branches: 69,
+      functions: 68.5,
+      lines: 79
+    }
+  }
+});
+```
+
+**Why This Matters**:
+- CI environment doesn't provide browser APIs by default
+- Tests using `localStorage`, DOM methods, or browser globals will fail without happy-dom
+- Setup file must run before tests to configure global mocks
+- Coverage thresholds enforce quality standards
+
+**Common Error Without This**:
+```
+ReferenceError: localStorage is not defined
+```
+
+### 🚨 CRITICAL: Wallet-Free E2E Test Requirements
+
+**MANDATORY**: E2E tests must NEVER use `localStorage.setItem('wallet_connected', 'true')`.
+
+**Why**: The platform uses email/password authentication only (wallet-free architecture per business-owner-roadmap.md). Using `wallet_connected` causes tests to fail because:
+1. Auth store doesn't recognize `wallet_connected` localStorage key
+2. Router auth guard redirects to home page
+3. Tests timeout waiting for elements that never render
+
+**Correct Pattern**:
+```typescript
+// ❌ WRONG - Will cause test failures
+await page.evaluate(() => {
+  localStorage.setItem('wallet_connected', 'true');
+});
+
+// ✅ CORRECT - Wallet-free auth pattern
+await page.evaluate(() => {
+  localStorage.setItem('algorand_user', JSON.stringify({
+    email: 'test@example.com',
+    address: 'TESTADDRESS123',
+    arc76email: 'test@example.com'
+  }));
+  localStorage.setItem('subscription_cache', JSON.stringify({
+    subscription_status: 'active'
+  }));
+});
+```
+
+**Reference**: See `e2e/wallet-free-auth.spec.ts` for correct patterns (37 passing MVP tests).
+
+### Pre-Commit CI Verification Checklist
+
+Before finishing ANY work, ALWAYS verify:
+
+- [ ] **vite.config.ts** has complete vitest configuration with happy-dom environment
+- [ ] **E2E tests** don't use `wallet_connected` localStorage anywhere
+- [ ] **Unit tests** pass: `npm test` shows 2794+ passing (99.3%+)
+- [ ] **Build** succeeds: `npm run build` completes without errors
+- [ ] **TypeScript** compiles: 0 compilation errors
+- [ ] **No wallet UI**: grep "Not connected" returns 0 matches in src/
+
+**Common CI Failure Patterns**:
+
+1. **Display Name Mismatches**: E2E tests search for "Algorand" but UI shows "Algorand Mainnet"
+   - Fix: Use regex patterns `/Algorand/i` instead of exact text
+   
+2. **Timing Issues**: Tests timeout waiting for elements
+   - Fix: Use `page.waitForLoadState('networkidle')`, increase timeouts to 3000ms
+   
+3. **Wallet-Connected Usage**: Tests use incompatible auth pattern
+   - Fix: Remove `wallet_connected`, use `algorand_user` + `subscription_cache`
+   
+4. **Missing Vitest Config**: localStorage undefined errors
+   - Fix: Add test configuration to vite.config.ts
+
+### Quality Gate: Before Marking Work Complete
+
+Run this verification sequence:
+
+```bash
+# 1. Unit tests
+npm test
+# Expect: 2794+ passing, <20 skipped, 0 failures
+
+# 2. Build
+npm run build
+# Expect: SUCCESS, 0 errors
+
+# 3. E2E tests (if modified)
+npm run test:e2e
+# Expect: All tests passing, 0 failures
+
+# 4. Verify no wallet references
+grep -r "wallet_connected" e2e/
+# Expect: 0 matches (or only in comments explaining removal)
+```
+
+If ANY check fails, STOP and fix immediately. Do not mark work complete until ALL checks pass.
+
 ## Dependency Updates and Package Management
 
 ### 🚨 CRITICAL: Dependency Update Protocol
