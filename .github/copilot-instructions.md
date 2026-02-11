@@ -12,7 +12,7 @@
 
 ## Project Overview
 
-This is a Vue 3 + TypeScript frontend application for managing and deploying tokens on multiple blockchain networks. The application provides a user interface for creating, managing, and deploying various token standards with wallet integration across both EVM chains (Ethereum, Arbitrum, Base) and AVM chains (Algorand mainnet, Algorand testnet, VOI, Aramid).
+This is a Vue 3 + TypeScript frontend application for managing and deploying tokens on multiple blockchain networks. The application provides a user interface for creating, managing, and deploying various token standards across both EVM chains (Ethereum, Arbitrum, Base) and AVM chains (Algorand mainnet, Algorand testnet, VOI, Aramid).
 
 ## Tech Stack
 
@@ -23,7 +23,6 @@ This is a Vue 3 + TypeScript frontend application for managing and deploying tok
 - **State Management**: Pinia stores
 - **Router**: Vue Router
 - **Blockchain**: Multi-chain support with Algorand SDK (algosdk) for AVM chains and ethers.js/web3.js for EVM chains
-- **Wallet Support**: @txnlab/use-wallet-vue for AVM chains, MetaMask/WalletConnect for EVM chains
 - **Testing**:
   - **Unit Tests**: Vitest + Vue Test Utils
   - **E2E Tests**: Playwright (cross-browser testing)
@@ -51,7 +50,6 @@ docs/
 ├── issues/          # Issue tracking and verification documentation
 ├── implementations/ # Implementation summaries and MVP documentation
 ├── testing/         # Test results and coverage documentation
-├── wallet/          # Wallet integration documentation
 ├── deployment/      # Deployment and UX improvement documentation
 ├── pr/              # Pull request and analysis documentation
 ├── attestations/    # Attestation dashboard documentation
@@ -136,12 +134,10 @@ docs/
 
 - Use `algosdk` for AVM chain interactions (Algorand mainnet, testnet, VOI, Aramid)
 - Use `ethers.js` or `web3.js` for EVM chain interactions (Ethereum, Arbitrum, Base, testnets)
-- Wallet integration via `@txnlab/use-wallet-vue` for AVM chains and MetaMask/WalletConnect for EVM chains
 - Support multiple networks: AVM chains (Algorand mainnet, testnet, VOI, Aramid) and EVM chains (Ethereum mainnet, Arbitrum, Base, Sepolia testnet)
 - Network configurations defined in `main.ts`
 - ERC standards (ERC20, ERC721) are for EVM chains
 - ASA and ARC standards (ASA, ARC3, ARC19, ARC69, ARC200, ARC72) are for AVM chains
-- Always handle wallet connection states properly across both chain types
 
 ### Backend API Integration
 
@@ -163,11 +159,11 @@ docs/
 
 - Modify `.github/workflows/` files unless specifically requested
 - Change network configurations in `main.ts` without explicit instruction
-- Remove or modify security-related code (wallet connections, authentication)
+- Remove or modify security-related code (authentication)
 - Modify deployment scripts or SSH configurations
 - Change TypeScript strict mode settings
 - Add `any` types - always use proper typing
-- Modify the Buffer/global polyfills in `main.ts` (required for wallet libraries)
+- Modify the Buffer/global polyfills in `main.ts`
 - Place documentation files in the root directory - use appropriate `docs/` subfolders
 
 ### DO:
@@ -176,7 +172,6 @@ docs/
 - Follow Tailwind CSS utility-first approach
 - Use Composition API with `<script setup>`
 - Ensure proper TypeScript typing
-- Test wallet integrations when modifying blockchain-related code
 - Keep dark mode support in mind for UI changes
 - Use existing UI components from `src/components/ui/` before creating new ones
 
@@ -223,7 +218,6 @@ docs/
 - [ ] If adding/modifying components: Run component-specific unit tests
 - [ ] If changing UI/UX: Verify E2E tests for affected user flows pass
 - [ ] If modifying API integration: Run `npm run generate-api` and update code accordingly
-- [ ] Test wallet connectivity for blockchain-related changes
 - [ ] Verify dark mode compatibility for UI changes
 
 **FINAL VERIFICATION:** Before marking any task complete, run the full test suite one final time and document the results.
@@ -268,7 +262,6 @@ When handling dependency update PRs (especially automated Dependabot PRs):
 5. **Test Coverage Verification** 🧪
    - [ ] Verify existing tests cover affected functionality
    - [ ] Add new tests if dependency introduces new behavior
-   - [ ] For wallet/blockchain dependencies: Test transaction flows, network switching, error handling
    - [ ] Document test coverage for changed functionality
 
 6. **Manual Verification Checklist** ✅
@@ -285,44 +278,6 @@ When handling dependency update PRs (especially automated Dependabot PRs):
    - [ ] Update README.md if setup/installation changes
    - [ ] Create business value document (save as `DEPENDENCY_UPDATE_<NAME>_<DATE>.md`)
    - [ ] Update copilot instructions if dependency introduces new patterns
-
-#### Dependency Update Workflow
-
-```markdown
-## Example: Updating @txnlab/use-wallet-vue
-
-### Step 1: Verify Tests ✅
-
-- Run: `npm test && npm run test:e2e && npm run build`
-- Document results: "2779/2798 unit tests passing (99.3%), 271/279 E2E tests passing (97.1%)"
-
-### Step 2: Review Release Notes 📋
-
-- Fetch: https://github.com/TxnLab/use-wallet/releases
-- Document: "4.5.0 adds Web3Auth session persistence, updates WalletConnect to v2.23.4"
-- Breaking changes: NONE (semver-minor)
-
-### Step 3: Create Business Value Doc 💼
-
-- File: `DEPENDENCY_UPDATE_USE_WALLET_VUE_FEB10_2026.md`
-- Include: Executive summary, what changed, business value, risk assessment, testing coverage, manual verification, recommendations
-
-### Step 4: Test Affected Flows 🧪
-
-- Wallet connection (if applicable)
-- Network switching
-- Transaction signing
-- Error handling
-- Session persistence
-
-### Step 5: Reply to PR Comment
-
-- Summarize findings
-- Include link to business value document
-- Provide test results
-- Make clear recommendation (APPROVE/REJECT)
-- Include short commit hash of documentation
-```
 
 #### Common Dependency Update Mistakes to AVOID ❌
 
@@ -343,7 +298,7 @@ When handling dependency update PRs (especially automated Dependabot PRs):
    - ALWAYS verify test coverage for changed functionality
 
 5. ❌ **No manual verification checklist**
-   - NEVER skip manual testing for critical dependencies (wallet, auth, payment)
+   - NEVER skip manual testing for critical dependencies (auth, payment)
    - ALWAYS provide step-by-step manual verification for product owner
 
 6. ❌ **Ignoring security implications**
@@ -357,12 +312,6 @@ When handling dependency update PRs (especially automated Dependabot PRs):
 #### Special Cases: Critical Dependencies
 
 For these critical dependencies, EXTRA verification is required:
-
-**Wallet/Blockchain:**
-
-- `@txnlab/use-wallet-vue`, `algosdk`, `ethers`, `web3.js`
-- **Extra:** Test transaction signing, network switching, wallet connection flows
-- **Manual:** Verify with real wallet on testnet
 
 **Authentication:**
 
@@ -424,12 +373,10 @@ Before marking dependency update as "Ready to Merge":
 - Run `npm run test:e2e:headed` to see browser during tests
 - Run `npm run test:e2e:debug` for debugging tests
 - Playwright tests cover:
-  - User flows (wallet connection, token creation)
-  - Navigation between pages
-  - Form interactions and validations
+  - End to end User flows
   - Responsive design across devices
-  - Dark mode functionality
-  - Error handling and edge cases
+
+Purpose of playwright tests is to do end-to-end testing of user flows and critical paths. They are not meant to test implementation details or internal state. Focus on what the user sees and does, not how it's implemented. Output of full journey playwright tests is used for video education and documentation, so they must be robust and reliable with mouse pointer visible and animated between mouse movements, and when run in video context must perform delays between user actions.
 
 ### E2E Test Writing Guidelines
 
@@ -441,8 +388,7 @@ When writing E2E tests:
 - **Handle missing elements gracefully**: Use `.isVisible().catch(() => false)` for optional elements
 - **Test localStorage persistence**: Verify state persists across page reloads
 - **Clear state in beforeEach**: Use `localStorage.clear()` to ensure test isolation
-- **Mock wallet connections**: Set localStorage keys for wallet state without real wallet interactions
-- **Test button text variations**: Use regex patterns like `/Connect Wallet|Authenticate/i` to match different button texts
+- **Test button text variations**: Use regex patterns like `/Sign in|Authenticate/i` to match different button texts
 - **Verify page loads successfully**: Always check page title or main heading as baseline
 - **Focus on user behavior**: Test what users see and do, not implementation details
 
@@ -531,7 +477,6 @@ expect(isVisible || true).toBe(true); // Pass if element not found
 ### Test Setup and Configuration
 
 - **Global Test Setup**: Located in `src/test/setup.ts` with configuration in `vitest.config.ts`
-- **Wallet Composables Mocking**: `useWalletManager` and `useToast` are globally mocked to prevent Vue injection warnings
 - **localStorage Handling**: Use real browser localStorage for tests that need persistence; clear in `beforeEach` for isolation
 - **Environment**: Tests run in happy-dom environment for DOM simulation
 - **Coverage Requirements**: Must maintain minimum thresholds (Statements ≥78%, Branches ≥69%, Functions ≥68.5%, Lines ≥79%)
@@ -548,11 +493,6 @@ expect(isVisible || true).toBe(true); // Pass if element not found
 
 - **Problem**: Tests use generic selectors that don't match actual DOM elements
 - **Solution**: Inspect actual HTML to find correct placeholders, classes, and element structures
-
-**Authentication Issues:**
-
-- **Problem**: Tests try to access protected routes without proper auth setup
-- **Solution**: Mock `localStorage.setItem("wallet_connected", "true")` and handle auth redirects gracefully
 
 **Browser Compatibility Issues:**
 
@@ -640,55 +580,15 @@ export default defineConfig({
 ReferenceError: localStorage is not defined
 ```
 
-### 🚨 CRITICAL: Wallet-Free E2E Test Requirements
-
-**MANDATORY**: E2E tests must NEVER use `localStorage.setItem('wallet_connected', 'true')`.
-
-**Why**: The platform uses email/password authentication only (wallet-free architecture per business-owner-roadmap.md). Using `wallet_connected` causes tests to fail because:
-
-1. Auth store doesn't recognize `wallet_connected` localStorage key
-2. Router auth guard redirects to home page
-3. Tests timeout waiting for elements that never render
-
-**Correct Pattern**:
-
-```typescript
-// ❌ WRONG - Will cause test failures
-await page.evaluate(() => {
-  localStorage.setItem("wallet_connected", "true");
-});
-
-// ✅ CORRECT - Wallet-free auth pattern
-await page.evaluate(() => {
-  localStorage.setItem(
-    "algorand_user",
-    JSON.stringify({
-      email: "test@example.com",
-      address: "TESTADDRESS123",
-      arc76email: "test@example.com",
-    }),
-  );
-  localStorage.setItem(
-    "subscription_cache",
-    JSON.stringify({
-      subscription_status: "active",
-    }),
-  );
-});
-```
-
-**Reference**: See `e2e/wallet-free-auth.spec.ts` for correct patterns (37 passing MVP tests).
-
 ### Pre-Commit CI Verification Checklist
 
 Before finishing ANY work, ALWAYS verify:
 
 - [ ] **vite.config.ts** has complete vitest configuration with happy-dom environment
-- [ ] **E2E tests** don't use `wallet_connected` localStorage anywhere
+- [ ] **E2E tests** Main worklow end to end tests are implemented and passing
 - [ ] **Unit tests** pass: `npm test` shows 2794+ passing (99.3%+)
 - [ ] **Build** succeeds: `npm run build` completes without errors
 - [ ] **TypeScript** compiles: 0 compilation errors
-- [ ] **No wallet UI**: grep "Not connected" returns 0 matches in src/
 
 **Common CI Failure Patterns**:
 
@@ -696,9 +596,7 @@ Before finishing ANY work, ALWAYS verify:
    - Fix: Use regex patterns `/Algorand/i` instead of exact text
 2. **Timing Issues**: Tests timeout waiting for elements
    - Fix: Use `page.waitForLoadState('networkidle')`, increase timeouts to 3000ms
-3. **Wallet-Connected Usage**: Tests use incompatible auth pattern
-   - Fix: Remove `wallet_connected`, use `algorand_user` + `subscription_cache`
-4. **Missing Vitest Config**: localStorage undefined errors
+3. **Missing Vitest Config**: localStorage undefined errors
    - Fix: Add test configuration to vite.config.ts
 
 ### Quality Gate: Before Marking Work Complete
@@ -717,10 +615,6 @@ npm run build
 # 3. E2E tests (if modified)
 npm run test:e2e
 # Expect: All tests passing, 0 failures
-
-# 4. Verify no wallet references
-grep -r "wallet_connected" e2e/
-# Expect: 0 matches (or only in comments explaining removal)
 ```
 
 If ANY check fails, STOP and fix immediately. Do not mark work complete until ALL checks pass.
@@ -1049,7 +943,7 @@ Before marking ANY dependency update complete:
 ## Additional Notes
 
 - The application uses Vue Router for navigation
-- Authentication and wallet state managed through Pinia stores
+- Authentication and auth state managed through Pinia stores
 - Subscription/payment features integrated with Stripe (see `stripe-config.ts`)
 - The project deploys to a staging environment via SSH (configured in GitHub Actions)
 - Uses Vite for fast development and optimized production builds

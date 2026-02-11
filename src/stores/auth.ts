@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import arc76, { generateAlgorandAccount } from "arc76";
+import { generateAlgorandAccount } from "arc76";
 import algosdk from "algosdk";
 import { makeArc14AuthHeader, makeArc14TxWithSuggestedParams } from "arc14";
 
