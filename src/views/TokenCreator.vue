@@ -611,7 +611,7 @@ const subscriptionStore = useSubscriptionStore();
 const complianceStore = useComplianceStore();
 const { connect, disconnect, networkInfo } = useWalletManager();
 
-const selectedNetwork = ref<"VOI" | "Aramid" | null>(null);
+const selectedNetwork = ref<"VOI" | "Aramid" | "Algorand" | "Ethereum" | "Arbitrum" | "Base" | null>(null);
 const selectedStandard = ref("");
 const selectedTemplate = ref<string>("");
 const isCreating = ref(false);
@@ -653,7 +653,14 @@ const tokenForm = reactive({
 // Watch for network changes and sync with compliance store
 watch(selectedNetwork, (newNetwork) => {
   if (newNetwork) {
-    complianceStore.setNetwork(newNetwork);
+    // Map new network names to compliance store network types
+    let complianceNetwork: 'VOI' | 'Aramid' | 'Both' = 'VOI'
+    if (newNetwork === 'VOI') complianceNetwork = 'VOI'
+    else if (newNetwork === 'Aramid') complianceNetwork = 'Aramid'
+    else if (newNetwork === 'Algorand') complianceNetwork = 'VOI' // Algorand is AVM like VOI
+    else complianceNetwork = 'Both' // EVM networks (Ethereum, Arbitrum, Base) treated as "Both"
+    
+    complianceStore.setNetwork(complianceNetwork);
     localStorage.setItem(NETWORK_STORAGE_KEY, newNetwork);
   } else {
     // Default to 'Both' when network is deselected
@@ -735,7 +742,7 @@ const filteredTokenStandards = computed(() => {
   return tokenStore.tokenStandards.filter(standard => standard.network === targetNetwork);
 });
 
-const selectNetwork = (network: "VOI" | "Aramid" | null) => {
+const selectNetwork = (network: "VOI" | "Aramid" | "Algorand" | "Ethereum" | "Arbitrum" | "Base" | null) => {
   selectedNetwork.value = network;
   subscriptionStore.trackGuidanceInteraction();
 };

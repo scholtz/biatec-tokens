@@ -99,10 +99,35 @@
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
                   {{ standard.description }}
                 </p>
-                <p class="text-xs text-gray-500 dark:text-gray-500">
-                  <strong>Best for:</strong> {{ standard.useWhen[0] }}
-                </p>
+                <div class="space-y-1 text-xs text-gray-500 dark:text-gray-500">
+                  <p><strong>Best for:</strong> {{ standard.useWhen[0] }}</p>
+                  <button
+                    @click.stop="openLearnMore(standard)"
+                    class="text-biatec-accent hover:text-biatec-accent/80 underline font-medium"
+                  >
+                    Learn more about this standard →
+                  </button>
+                </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compliance Guidance Banner -->
+        <div v-if="formData.selectedStandard && shouldShowComplianceBanner" class="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+          <div class="flex items-start gap-3">
+            <i class="pi pi-info-circle text-yellow-500 text-xl mt-0.5"></i>
+            <div class="flex-1">
+              <h5 class="text-sm font-semibold text-yellow-500 mb-1">Compliance Considerations</h5>
+              <p class="text-xs text-gray-300 mb-2">
+                {{ currentStandardComplianceNote }}
+              </p>
+              <p class="text-xs text-gray-400">
+                For regulated assets, ensure issuer documentation, legal opinions, and transfer restrictions are aligned with applicable regulations.
+                <a href="https://raw.githubusercontent.com/scholtz/biatec-tokens/refs/heads/main/business-owner-roadmap.md" target="_blank" class="text-biatec-accent hover:text-biatec-accent/80 underline">
+                  View compliance roadmap
+                </a>
+              </p>
             </div>
           </div>
         </div>
@@ -247,6 +272,84 @@
       </div>
     </div>
 
+    <!-- Learn More Modal -->
+    <div
+      v-if="showLearnMoreModal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      @click.self="closeLearnMore"
+    >
+      <div class="bg-gray-900 border border-white/10 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl">
+        <div class="p-6">
+          <!-- Header -->
+          <div class="flex items-start justify-between mb-4">
+            <div class="flex-1">
+              <h3 class="text-2xl font-bold text-white mb-2">
+                {{ selectedStandardForModal?.name }}
+              </h3>
+              <span :class="[
+                'inline-block px-3 py-1 rounded text-sm font-medium',
+                selectedStandardForModal?.type === 'Fungible' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'
+              ]">
+                {{ selectedStandardForModal?.type }}
+              </span>
+            </div>
+            <button
+              @click="closeLearnMore"
+              class="text-gray-400 hover:text-white transition-colors"
+              aria-label="Close modal"
+            >
+              <i class="pi pi-times text-2xl"></i>
+            </button>
+          </div>
+
+          <!-- Description -->
+          <div class="space-y-4 text-gray-300">
+            <p class="text-base">{{ selectedStandardForModal?.description }}</p>
+            
+            <!-- Business Context -->
+            <div class="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <h4 class="text-sm font-semibold text-blue-400 mb-2">Business Context</h4>
+              <p class="text-sm text-gray-300">{{ selectedStandardForModal?.businessContext }}</p>
+            </div>
+
+            <!-- Use Cases -->
+            <div>
+              <h4 class="text-sm font-semibold text-white mb-3">Common Use Cases</h4>
+              <ul class="space-y-2">
+                <li
+                  v-for="(useCase, index) in selectedStandardForModal?.useWhen"
+                  :key="index"
+                  class="flex items-start gap-3"
+                >
+                  <i class="pi pi-check-circle text-green-400 text-lg mt-0.5"></i>
+                  <span class="text-sm text-gray-300">{{ useCase }}</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Compliance Note -->
+            <div v-if="selectedStandardForModal?.complianceNote" class="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <h4 class="text-sm font-semibold text-yellow-500 mb-2 flex items-center gap-2">
+                <i class="pi pi-info-circle"></i>
+                Compliance Considerations
+              </h4>
+              <p class="text-xs text-gray-300">{{ selectedStandardForModal?.complianceNote }}</p>
+            </div>
+
+            <!-- Action Button -->
+            <div class="pt-4 border-t border-white/10">
+              <button
+                @click="selectStandardFromModal"
+                class="w-full py-3 bg-biatec-accent hover:bg-biatec-accent/80 text-white font-semibold rounded-lg transition-colors"
+              >
+                Select {{ selectedStandardForModal?.name }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Upgrade Modal -->
     <UpgradePromptModal
       :show="showUpgradeModal"
@@ -280,6 +383,10 @@ const showErrors = ref(false)
 const errors = ref<string[]>([])
 const fieldErrors = ref<Record<string, string>>({})
 
+// Learn More modal state
+const showLearnMoreModal = ref(false)
+const selectedStandardForModal = ref<any>(null)
+
 // Upgrade modal state
 const showUpgradeModal = ref(false)
 const upgradeFeature = ref('')
@@ -288,6 +395,17 @@ const upgradeDescription = ref('')
 const upgradeBenefits = ref<string[]>([])
 const upgradeComparisonItems = ref<Array<{ feature: string; current: boolean }>>([])
 
+// Compliance banner logic
+const shouldShowComplianceBanner = computed(() => {
+  const standard = formData.value.selectedStandard
+  // Show for ARC200 (smart tokens with compliance features) and ERC20 (may be securities)
+  return standard === 'ARC200' || standard === 'ERC20' || standard === 'ERC721' || standard.includes('NFT')
+})
+
+const currentStandardComplianceNote = computed(() => {
+  const selected = availableStandards.value.find(s => s.value === formData.value.selectedStandard)
+  return selected?.complianceNote || ''
+})
 interface FormData {
   name: string
   symbol: string
@@ -321,17 +439,31 @@ const availableStandards = computed(() => {
     return [
       {
         value: 'ERC20',
-        name: 'ERC-20 (Standard Token)',
+        name: 'ERC-20 (Fungible Token)',
         type: 'Fungible',
-        description: 'The most common token standard on Ethereum networks. Perfect for currencies, points, and rewards.',
-        useWhen: ['You want a standard cryptocurrency or utility token that works with all Ethereum wallets']
+        description: 'Standard fungible token for currencies, points, and rewards. Works with all Ethereum wallets and DeFi protocols.',
+        useWhen: [
+          'Creating a utility token or cryptocurrency',
+          'Building a payment or rewards system',
+          'Integrating with Ethereum DeFi ecosystem',
+          'Need maximum wallet and exchange compatibility'
+        ],
+        businessContext: 'Perfect for company shares, loyalty points, platform currencies, or any asset where each unit is identical and interchangeable.',
+        complianceNote: 'May require securities registration depending on token rights and distribution. Consult legal counsel for security token considerations.'
       },
       {
         value: 'ERC721',
         name: 'ERC-721 (NFT)',
         type: 'NFT',
-        description: 'Non-fungible tokens for unique digital items like art, collectibles, or certificates.',
-        useWhen: ['You want to create unique digital items that are one-of-a-kind or limited edition']
+        description: 'Non-fungible tokens for unique digital items like art, collectibles, or certificates. Each token is one-of-a-kind.',
+        useWhen: [
+          'Creating unique digital art or collectibles',
+          'Issuing certificates or credentials',
+          'Building gaming assets with unique properties',
+          'Tokenizing real-world unique assets'
+        ],
+        businessContext: 'Best for digital art, event tickets, membership cards, real estate deeds, or any asset where uniqueness and provenance matter.',
+        complianceNote: 'Generally outside core securities regulations unless representing ownership rights. Ensure intellectual property rights are clear.'
       }
     ]
   }
@@ -342,36 +474,71 @@ const availableStandards = computed(() => {
       value: 'ASA',
       name: 'ASA (Simple Token)',
       type: 'Fungible',
-      description: 'Basic token without extra features. Fast, cheap, and simple.',
-      useWhen: ['You need a basic token without images or detailed information']
+      description: 'Basic fungible token without metadata. Fast, cheap, and simple. Native Layer-1 asset.',
+      useWhen: [
+        'Need a basic token without images or branding',
+        'Cost efficiency is the top priority',
+        'Building internal accounting or tracking systems',
+        'Metadata and visual identity not required'
+      ],
+      businessContext: 'Ideal for internal company tokens, simple point systems, or backend accounting where visual presentation is not important.',
+      complianceNote: 'Utility tokens generally have lighter regulatory requirements. Ensure clear disclosure of token purpose and limitations.'
     },
     {
       value: 'ARC3FT',
-      name: 'ARC-3 (Token with Info)',
+      name: 'ARC-3 (Branded Token)',
       type: 'Fungible',
-      description: 'Token with logo, description, and detailed information. Best for consumer-facing tokens.',
-      useWhen: ['You want your token to have a logo and show up nicely in wallets']
+      description: 'Fungible token with logo, description, and rich metadata. Best for consumer-facing tokens that need visual identity.',
+      useWhen: [
+        'Your token needs a logo and branding',
+        'Building consumer-facing applications',
+        'Want tokens to display properly in wallets',
+        'Marketing and visual identity are important'
+      ],
+      businessContext: 'Perfect for customer loyalty programs, branded currencies, membership tokens, or any consumer-facing asset requiring visual recognition.',
+      complianceNote: 'Same as ASA for regulatory purposes. Metadata does not change compliance obligations but improves user experience.'
     },
     {
       value: 'ARC200',
       name: 'ARC-200 (Smart Token)',
       type: 'Fungible',
-      description: 'Advanced token with programmable features and custom logic.',
-      useWhen: ['You need advanced features like custom rules or programmable behavior']
+      description: 'Advanced programmable token with custom logic. Similar to ERC-20 with smart contract features like access control and custom rules.',
+      useWhen: [
+        'Need programmable features or custom rules',
+        'Require access control or whitelisting',
+        'Building complex tokenomics or vesting',
+        'Need compatibility with ERC-20 patterns'
+      ],
+      businessContext: 'Best for regulated securities, governance tokens with voting logic, tokens with transfer restrictions, or any asset requiring programmable behavior.',
+      complianceNote: 'Programmable controls enable compliance features like whitelisting and transfer restrictions. Useful for security tokens requiring regulatory controls.'
     },
     {
       value: 'ARC3NFT',
       name: 'ARC-3 NFT (Collectible)',
       type: 'NFT',
-      description: 'Non-fungible token for unique digital items with metadata.',
-      useWhen: ['You want to create unique digital collectibles or art']
+      description: 'Non-fungible token for unique digital items with full metadata support. Each token is unique with supply of 1.',
+      useWhen: [
+        'Creating unique digital collectibles or art',
+        'Issuing certificates or credentials',
+        'Building limited-edition items',
+        'Each asset is one-of-a-kind'
+      ],
+      businessContext: 'Ideal for digital art, event tickets, certificates of authenticity, membership cards, or any unique asset requiring proof of ownership.',
+      complianceNote: 'NFTs generally outside core securities regulations. Ensure intellectual property rights and consumer protection compliance.'
     },
     {
       value: 'ARC72',
-      name: 'ARC-72 NFT (Advanced)',
+      name: 'ARC-72 NFT (Programmable)',
       type: 'NFT',
-      description: 'Advanced NFT standard with smart contract features.',
-      useWhen: ['You need programmable NFTs with custom behavior']
+      description: 'Advanced NFT with smart contract features, mutable metadata, and royalty support. Similar to ERC-721 with additional capabilities.',
+      useWhen: [
+        'Need NFTs with dynamic or updatable content',
+        'Building gaming assets that evolve',
+        'Require royalty mechanisms for secondary sales',
+        'Need programmable NFT behavior'
+      ],
+      businessContext: 'Perfect for gaming items that level up, evolving art, NFTs with royalty requirements, or collectibles needing programmable features.',
+      complianceNote: 'Smart contract features enable compliance controls. Consider securities implications if NFT represents fractional ownership or investment rights.'
     }
   ]
 })
@@ -441,6 +608,23 @@ const selectStandard = (standard: string) => {
   }
   
   validateField('selectedStandard')
+}
+
+const openLearnMore = (standard: any) => {
+  selectedStandardForModal.value = standard
+  showLearnMoreModal.value = true
+}
+
+const closeLearnMore = () => {
+  showLearnMoreModal.value = false
+  selectedStandardForModal.value = null
+}
+
+const selectStandardFromModal = () => {
+  if (selectedStandardForModal.value) {
+    selectStandard(selectedStandardForModal.value.value)
+    closeLearnMore()
+  }
 }
 
 const validateField = (field: keyof FormData) => {
