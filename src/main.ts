@@ -145,8 +145,11 @@ try {
 app.use(pinia);
 app.use(router);
 
-// Initialize auth store
-const authStore = useAuthStore();
-authStore.initialize();
-
-app.mount("#app");
+// Initialize auth store and wait for it to complete before mounting
+// This ensures components have access to auth state immediately on render
+// Wrapped in async IIFE to use await at top level
+(async () => {
+  const authStore = useAuthStore();
+  await authStore.initialize();
+  app.mount("#app");
+})();
