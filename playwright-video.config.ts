@@ -20,15 +20,11 @@ export default defineConfig({
     screenshot: "only-on-failure",
     /* Record video for this specific run */
     video: {
-      mode: 'on',
-      size: { width: 1920, height: 1080 }
+      mode: "on",
+      size: { width: 1920, height: 1080 },
     },
     /* Full HD viewport for video recording */
     viewport: { width: 1920, height: 1080 },
-    /* Show mouse cursor in video and traces (Playwright docs) */
-    showMouse: true,
-    /* Show blinking caret for better click visualization */
-    caret: 'on',
     /* Slow down actions for video clarity */
     actionTimeout: 1000,
     navigationTimeout: 10000,
@@ -36,26 +32,22 @@ export default defineConfig({
     // Note: mouse-helper will be loaded manually in tests for proper timing
     launchOptions: {
       args: [
-        '--window-size=1920,1080',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor',
-        '--force-gpu-rasterization',
-        '--enable-hardware-overlays=single-fullscreen,single-on-top,underlay',
-        '--use-gl=desktop',
-        '--disable-background-timer-throttling',
-        '--disable-renderer-backgrounding',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-ipc-flooding-protection',
+        "--window-size=1920,1080",
+        "--disable-web-security",
+        "--disable-features=VizDisplayCompositor",
+        "--force-gpu-rasterization",
+        "--enable-hardware-overlays=single-fullscreen,single-on-top,underlay",
+        "--use-gl=desktop",
+        "--disable-background-timer-throttling",
+        "--disable-renderer-backgrounding",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-ipc-flooding-protection",
         // Additional flags for mouse cursor visibility in recordings
-        '--force-show-cursor',
-        '--enable-mouse-cursor-recording',
-        '--disable-cursor-hiding',
-        '--cursor-visibility=always'
-      ]
-    },
-    env: {
-      ...process.env,
-      VITE_API_BASE_URL: "https://api.tokens.biatec.io/",
+        "--force-show-cursor",
+        "--enable-mouse-cursor-recording",
+        "--disable-cursor-hiding",
+        "--cursor-visibility=always",
+      ],
     },
   },
 
@@ -65,7 +57,6 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1920, height: 1080 },
-        screen: { width: 1920, height: 1080 },
         /* Run in headed mode for mouse cursor visibility (Playwright docs) */
         headless: true,
       },

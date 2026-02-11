@@ -152,15 +152,27 @@ import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useThemeStore } from "../../stores/theme";
 import { useSubscriptionStore } from "../../stores/subscription";
-import { useAVMAuthentication } from "algorand-authentication-component-vue";
 import { AUTH_STORAGE_KEYS } from "../../constants/auth";
-import { HomeIcon, PlusCircleIcon, ChartBarIcon, Cog6ToothIcon, SunIcon, MoonIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, ArrowRightOnRectangleIcon, UserCircleIcon, CurrencyDollarIcon } from "@heroicons/vue/24/outline";
+import {
+  HomeIcon,
+  PlusCircleIcon,
+  ChartBarIcon,
+  Cog6ToothIcon,
+  SunIcon,
+  MoonIcon,
+  Bars3Icon,
+  XMarkIcon,
+  ChevronDownIcon,
+  ArrowRightOnRectangleIcon,
+  CurrencyDollarIcon,
+} from "@heroicons/vue/24/outline";
 import WalletConnectModal from "../WalletConnectModal.vue";
+import { useAuthStore } from "../../stores/auth";
 
 const route = useRoute();
 const router = useRouter();
 const themeStore = useThemeStore();
-const { authStore, logout } = useAVMAuthentication();
+const authStore = useAuthStore();
 const subscriptionStore = useSubscriptionStore();
 
 const showMobileMenu = ref(false);
@@ -172,7 +184,6 @@ const navigationItems = [
   { name: "Create", path: "/create", icon: PlusCircleIcon },
   { name: "Dashboard", path: "/dashboard", icon: ChartBarIcon },
   { name: "Pricing", path: "/subscription/pricing", icon: CurrencyDollarIcon },
-  { name: "Account", path: "/account", icon: UserCircleIcon },
   { name: "Settings", path: "/settings", icon: Cog6ToothIcon },
 ];
 
@@ -191,7 +202,7 @@ const formatAddress = (address?: string) => {
 
 const handleSignOut = async () => {
   showUserMenu.value = false;
-  await logout();
+  await authStore.signOut();
   router.push("/");
 };
 
@@ -201,14 +212,14 @@ const handleWalletClick = () => {
 
 const handleWalletConnected = (_data: { address: string; walletId: string; network: string }) => {
   showWalletModal.value = false;
-  
+
   // Check if there's a redirect path stored (AC #6)
   const redirectPath = localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);
   if (redirectPath) {
     localStorage.removeItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);
     router.push(redirectPath);
   }
-  
+
   // The Arc76 authentication component will handle the authentication
 };
 

@@ -10,8 +10,8 @@
         </div>
 
         <!-- Sticky Validation Error Banner -->
-        <div 
-          v-if="!validationResult.isValid && validationError" 
+        <div
+          v-if="!validationResult.isValid && validationError"
           role="alert"
           class="sticky top-4 z-50 mb-8 p-4 bg-red-500 dark:bg-red-600 border border-red-600 dark:border-red-700 rounded-lg shadow-lg animate-shake"
         >
@@ -20,28 +20,13 @@
             <div class="flex-1">
               <p class="text-sm font-semibold text-white mb-2">Please fix the following errors:</p>
               <ul class="space-y-1">
-                <li v-for="error in validationResult.errors" :key="error.field" class="text-sm text-white">
-                  • {{ error.message }}
-                </li>
+                <li v-for="error in validationResult.errors" :key="error.field" class="text-sm text-white">• {{ error.message }}</li>
               </ul>
             </div>
-            <button 
-              @click="dismissValidationError" 
-              class="text-white hover:text-red-200 transition-colors"
-              aria-label="Dismiss error"
-            >
+            <button @click="dismissValidationError" class="text-white hover:text-red-200 transition-colors" aria-label="Dismiss error">
               <i class="pi pi-times"></i>
             </button>
           </div>
-        </div>
-
-        <!-- Wallet & Network Panel (NEW) -->
-        <div class="mb-8">
-          <WalletNetworkPanel 
-            @connect-wallet="handleConnectWallet"
-            @disconnect-wallet="handleDisconnectWallet"
-            @network-switched="handleNetworkSwitched"
-          />
         </div>
 
         <!-- Network Selection (New) -->
@@ -57,7 +42,9 @@
               @click="selectNetwork(network.name)"
               :class="[
                 'p-6 rounded-xl border-2 transition-all duration-200 text-left',
-                selectedNetwork === network.name ? 'border-biatec-accent bg-biatec-accent/10' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800',
+                selectedNetwork === network.name
+                  ? 'border-biatec-accent bg-biatec-accent/10'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800',
               ]"
             >
               <div class="flex items-start justify-between mb-3">
@@ -230,7 +217,9 @@
               @click="applyTemplate(template.id)"
               :class="[
                 'p-5 rounded-xl border-2 transition-all duration-200 text-left',
-                selectedTemplate === template.id ? 'border-biatec-accent bg-biatec-accent/10' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800',
+                selectedTemplate === template.id
+                  ? 'border-biatec-accent bg-biatec-accent/10'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800',
               ]"
             >
               <div class="flex items-start justify-between mb-3">
@@ -275,7 +264,9 @@
               @click="selectStandard(standard.name)"
               :class="[
                 'p-6 rounded-xl border-2 transition-all duration-200 text-left',
-                selectedStandard === standard.name ? 'border-biatec-accent bg-biatec-accent/10' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800',
+                selectedStandard === standard.name
+                  ? 'border-biatec-accent bg-biatec-accent/10'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800',
               ]"
             >
               <div class="flex items-center space-x-3 mb-3">
@@ -509,9 +500,7 @@
                 <div class="flex-1">
                   <p class="text-sm font-semibold text-red-400 mb-2">Validation Errors</p>
                   <div class="space-y-1">
-                    <p v-for="error in validationResult.errors" :key="error.field" class="text-sm text-gray-300">
-                      • {{ error.message }}
-                    </p>
+                    <p v-for="error in validationResult.errors" :key="error.field" class="text-sm text-gray-300">• {{ error.message }}</p>
                   </div>
                 </div>
               </div>
@@ -524,9 +513,7 @@
                 <div class="flex-1">
                   <p class="text-sm font-semibold text-yellow-400 mb-2">Warnings</p>
                   <div class="space-y-1">
-                    <p v-for="warning in validationResult.warnings" :key="warning.field" class="text-sm text-gray-300">
-                      • {{ warning.message }}
-                    </p>
+                    <p v-for="warning in validationResult.warnings" :key="warning.field" class="text-sm text-gray-300">• {{ warning.message }}</p>
                   </div>
                 </div>
               </div>
@@ -558,8 +545,8 @@
       :supply="tokenForm.supply"
       :decimals="tokenForm.type === 'FT' ? tokenForm.decimals : undefined"
       :network-display-name="currentNetworkGuidance?.displayName || 'Unknown'"
-      :network-genesis-id="networkInfo?.chainType === 'AVM' ? (networkInfo?.genesisId || 'Unknown') : `Chain ID: ${networkInfo?.chainId || 'Unknown'}`"
-      :is-testnet="networkInfo?.isTestnet || false"
+      :network-genesis-id="netowrkStore.networkInfo?.chainType === 'AVM' ? netowrkStore.networkInfo?.genesisId || 'Unknown' : `Chain ID: ${netowrkStore.networkInfo?.chainId || 'Unknown'}`"
+      :is-testnet="netowrkStore.networkInfo?.isTestnet || false"
       :fees="currentNetworkGuidance?.fees || { creation: 'N/A', transaction: 'N/A' }"
       :attestations-count="tokenForm.attestations.length"
       :has-compliance-metadata="!!tokenForm.complianceMetadata"
@@ -594,22 +581,20 @@ import { telemetryService } from "../services/TelemetryService";
 import MainLayout from "../layout/MainLayout.vue";
 import ComplianceChecklist from "../components/ComplianceChecklist.vue";
 import RwaPresetSelector from "../components/RwaPresetSelector.vue";
-import WalletAttestationForm from "../components/WalletAttestationForm.vue";
 import MicaComplianceForm from "../components/MicaComplianceForm.vue";
 import CompetitorParityChecklist from "../components/CompetitorParityChecklist.vue";
-import WalletNetworkPanel from "../components/WalletNetworkPanel.vue";
 import DeploymentConfirmationDialog from "../components/DeploymentConfirmationDialog.vue";
 import DeploymentProgressDialog from "../components/DeploymentProgressDialog.vue";
 import { WalletAttestation, AttestationType } from "../types/compliance";
 import type { MicaComplianceMetadata } from "../types/api";
 import { validateTokenParameters, formatValidationErrors, type TokenValidationResult } from "../utils/tokenValidation";
-import { useWalletManager, type NetworkId } from "../composables/useWalletManager";
+import { useNetworkStore } from "../stores/network";
 
+const netowrkStore = useNetworkStore();
 const router = useRouter();
 const tokenStore = useTokenStore();
 const subscriptionStore = useSubscriptionStore();
 const complianceStore = useComplianceStore();
-const { connect, disconnect, networkInfo } = useWalletManager();
 
 const selectedNetwork = ref<"VOI" | "Aramid" | "Algorand" | "Ethereum" | "Arbitrum" | "Base" | null>(null);
 const selectedStandard = ref("");
@@ -623,10 +608,10 @@ const wizardStartTime = ref<number | null>(null);
 // Deployment dialog states
 const showConfirmationDialog = ref(false);
 const showProgressDialog = ref(false);
-const deploymentStep = ref<'preparing' | 'signing' | 'submitting' | 'confirming'>('preparing');
-const deploymentStatus = ref<'processing' | 'success' | 'error'>('processing');
+const deploymentStep = ref<"preparing" | "signing" | "submitting" | "confirming">("preparing");
+const deploymentStatus = ref<"processing" | "success" | "error">("processing");
 const deploymentError = ref<string | undefined>(undefined);
-const deploymentErrorType = ref<'insufficient_funds' | 'wallet_rejected' | 'network_error' | 'timeout' | 'unknown' | undefined>(undefined);
+const deploymentErrorType = ref<"insufficient_funds" | "wallet_rejected" | "network_error" | "timeout" | "unknown" | undefined>(undefined);
 const deploymentTxId = ref<string | undefined>(undefined);
 const showCompetitorParity = ref(false);
 
@@ -654,12 +639,13 @@ const tokenForm = reactive({
 watch(selectedNetwork, (newNetwork) => {
   if (newNetwork) {
     // Map new network names to compliance store network types
-    let complianceNetwork: 'VOI' | 'Aramid' | 'Both' = 'VOI';
-    if (newNetwork === 'VOI') complianceNetwork = 'VOI';
-    else if (newNetwork === 'Aramid') complianceNetwork = 'Aramid';
-    else if (newNetwork === 'Algorand') complianceNetwork = 'VOI'; // Algorand is AVM like VOI
-    else complianceNetwork = 'Both'; // EVM networks (Ethereum, Arbitrum, Base) treated as "Both"
-    
+    let complianceNetwork: "VOI" | "Aramid" | "Both" = "VOI";
+    if (newNetwork === "VOI") complianceNetwork = "VOI";
+    else if (newNetwork === "Aramid") complianceNetwork = "Aramid";
+    else if (newNetwork === "Algorand")
+      complianceNetwork = "VOI"; // Algorand is AVM like VOI
+    else complianceNetwork = "Both"; // EVM networks (Ethereum, Arbitrum, Base) treated as "Both"
+
     complianceStore.setNetwork(complianceNetwork);
     localStorage.setItem(NETWORK_STORAGE_KEY, newNetwork);
   } else {
@@ -690,12 +676,12 @@ watch(selectedStandard, (newStandard) => {
 // Load saved selections from localStorage on mount
 onMounted(() => {
   // Track wizard started
-  wizardStartTime.value = Date.now()
+  wizardStartTime.value = Date.now();
   telemetryService.trackTokenWizardStarted({
-    source: router.currentRoute.value.query.source as string || 'direct',
-    network: selectedNetwork.value || undefined
-  })
-  
+    source: (router.currentRoute.value.query.source as string) || "direct",
+    network: selectedNetwork.value || undefined,
+  });
+
   const savedTemplate = localStorage.getItem(TEMPLATE_STORAGE_KEY);
   const savedNetwork = localStorage.getItem(NETWORK_STORAGE_KEY);
   const savedStandard = localStorage.getItem(STANDARD_STORAGE_KEY);
@@ -732,14 +718,14 @@ const filteredTokenStandards = computed(() => {
     // No network selected - show all standards
     return tokenStore.tokenStandards;
   }
-  
+
   // The selectedNetwork value comes from tokenStore.networkGuidance which uses simplified names
   // "VOI" and "Aramid" are both AVM chains, so they should show AVM standards (network: "VOI")
   // EVM chains would be "Ethereum", "Base", "Arbitrum", etc. (network: "EVM")
   const isAVMChain = selectedNetwork.value === "VOI" || selectedNetwork.value === "Aramid";
   const targetNetwork = isAVMChain ? "VOI" : "EVM";
-  
-  return tokenStore.tokenStandards.filter(standard => standard.network === targetNetwork);
+
+  return tokenStore.tokenStandards.filter((standard) => standard.network === targetNetwork);
 });
 
 const selectNetwork = (network: "VOI" | "Aramid" | "Algorand" | "Ethereum" | "Arbitrum" | "Base" | null) => {
@@ -817,28 +803,6 @@ const dismissValidationError = () => {
   validationError.value = null;
 };
 
-// Authentication handlers
-const handleConnectWallet = async () => {
-  try {
-    await connect();
-  } catch (error) {
-    console.error('Failed to sign in:', error);
-  }
-};
-
-const handleDisconnectWallet = async () => {
-  try {
-    await disconnect();
-  } catch (error) {
-    console.error('Failed to sign out:', error);
-  }
-};
-
-const handleNetworkSwitched = (networkId: NetworkId) => {
-  console.log('Network switched to:', networkId);
-  // Network state is automatically managed by useWalletManager
-};
-
 const createToken = async () => {
   if (!selectedStandard.value) return;
 
@@ -849,9 +813,9 @@ const createToken = async () => {
   if (!validationResult.value.isValid) {
     validationError.value = formatValidationErrors(validationResult.value);
     // Scroll to validation error display
-    const errorElement = document.querySelector('.validation-error-display');
+    const errorElement = document.querySelector(".validation-error-display");
     if (errorElement) {
-      errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
     }
     return;
   }
@@ -864,22 +828,22 @@ const executeDeployment = async () => {
   // Close confirmation dialog and show progress dialog
   showConfirmationDialog.value = false;
   showProgressDialog.value = true;
-  
+
   // Reset deployment state
-  deploymentStep.value = 'preparing';
-  deploymentStatus.value = 'processing';
+  deploymentStep.value = "preparing";
+  deploymentStatus.value = "processing";
   deploymentError.value = undefined;
   deploymentErrorType.value = undefined;
   deploymentTxId.value = undefined;
-  
+
   isCreating.value = true;
   subscriptionStore.trackTokenCreationAttempt();
 
   try {
     // Step 1: Preparing transaction
-    deploymentStep.value = 'preparing';
+    deploymentStep.value = "preparing";
     // TODO: Remove this artificial delay in production - only for UX demonstration
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     // Prepare attestation metadata if enabled
     const attestationMetadata =
@@ -899,12 +863,12 @@ const executeDeployment = async () => {
         : undefined;
 
     // Step 2: Waiting for wallet signature
-    deploymentStep.value = 'signing';
+    deploymentStep.value = "signing";
     // TODO: Replace with actual wallet signature request and response handling
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Step 3: Submitting to network
-    deploymentStep.value = 'submitting';
+    deploymentStep.value = "submitting";
 
     await tokenStore.createToken({
       name: tokenForm.name,
@@ -921,32 +885,32 @@ const executeDeployment = async () => {
     });
 
     // Step 4: Confirming transaction
-    deploymentStep.value = 'confirming';
+    deploymentStep.value = "confirming";
     // TODO: Replace with actual blockchain confirmation polling
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
     // Set success state
-    deploymentStatus.value = 'success';
+    deploymentStatus.value = "success";
     // TODO: Replace mock transaction ID with actual blockchain transaction ID from response
-    deploymentTxId.value = 'TX-' + Math.random().toString(36).substring(2, 15);
+    deploymentTxId.value = "TX-" + Math.random().toString(36).substring(2, 15);
 
     // Track successful creation with details
     subscriptionStore.trackTokenCreationSuccess(selectedStandard.value, selectedTemplate.value || undefined, selectedNetwork.value || undefined);
-    
+
     // Track wizard completion with analytics
     if (wizardStartTime.value) {
-      const durationMs = Date.now() - wizardStartTime.value
+      const durationMs = Date.now() - wizardStartTime.value;
       telemetryService.trackTokenWizardCompleted({
         tokenStandard: selectedStandard.value,
         tokenType: tokenForm.type,
-        network: selectedNetwork.value || 'unknown',
-        durationMs
-      })
-      wizardStartTime.value = null
+        network: selectedNetwork.value || "unknown",
+        durationMs,
+      });
+      wizardStartTime.value = null;
     }
 
     // Give user time to see success state before auto-navigation
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Reset form
     Object.assign(tokenForm, {
@@ -972,25 +936,25 @@ const executeDeployment = async () => {
     router.push("/dashboard");
   } catch (error) {
     console.error("Failed to create token:", error);
-    
+
     // Set error state
-    deploymentStatus.value = 'error';
-    
+    deploymentStatus.value = "error";
+
     // Determine error type and message
-    const errorMessage = error instanceof Error ? error.message : 'Failed to deploy token';
+    const errorMessage = error instanceof Error ? error.message : "Failed to deploy token";
     deploymentError.value = errorMessage;
-    
+
     // Parse error type from message
-    if (errorMessage.toLowerCase().includes('insufficient')) {
-      deploymentErrorType.value = 'insufficient_funds';
-    } else if (errorMessage.toLowerCase().includes('reject')) {
-      deploymentErrorType.value = 'wallet_rejected';
-    } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('connection')) {
-      deploymentErrorType.value = 'network_error';
-    } else if (errorMessage.toLowerCase().includes('timeout')) {
-      deploymentErrorType.value = 'timeout';
+    if (errorMessage.toLowerCase().includes("insufficient")) {
+      deploymentErrorType.value = "insufficient_funds";
+    } else if (errorMessage.toLowerCase().includes("reject")) {
+      deploymentErrorType.value = "wallet_rejected";
+    } else if (errorMessage.toLowerCase().includes("network") || errorMessage.toLowerCase().includes("connection")) {
+      deploymentErrorType.value = "network_error";
+    } else if (errorMessage.toLowerCase().includes("timeout")) {
+      deploymentErrorType.value = "timeout";
     } else {
-      deploymentErrorType.value = 'unknown';
+      deploymentErrorType.value = "unknown";
     }
   } finally {
     isCreating.value = false;
@@ -999,9 +963,9 @@ const executeDeployment = async () => {
 
 const handleProgressDialogClose = () => {
   showProgressDialog.value = false;
-  
+
   // If deployment was successful, redirect to dashboard
-  if (deploymentStatus.value === 'success') {
+  if (deploymentStatus.value === "success") {
     router.push("/dashboard");
   }
 };
@@ -1009,7 +973,7 @@ const handleProgressDialogClose = () => {
 const handleRetryDeployment = () => {
   // Reset progress dialog and retry
   showProgressDialog.value = false;
-  
+
   // Small delay before showing confirmation again
   setTimeout(() => {
     showConfirmationDialog.value = true;

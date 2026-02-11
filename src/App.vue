@@ -9,6 +9,7 @@ import { onMounted } from "vue";
 import { useThemeStore } from "./stores/theme";
 import { Gradient } from "whatamesh";
 import Toast from "./components/Toast.vue";
+import { useAuthStore } from "./stores/auth";
 
 let gradient = new Gradient();
 
@@ -29,12 +30,14 @@ const callback = (isLight: boolean) => {
   gradient = new Gradient();
   gradient.initGradient("#gradient-canvas");
 };
+const authStore = useAuthStore();
 
 onMounted(() => {
   themeStore.initTheme(callback);
   console.log("gradient init");
-  // gradient.initGradient("#gradient-canvas");
+  gradient.initGradient("#gradient-canvas");
   console.log("gradient done");
+  authStore.restoreARC76Session();
 });
 </script>
 

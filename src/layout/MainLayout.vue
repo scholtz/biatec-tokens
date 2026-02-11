@@ -2,28 +2,22 @@
 import Navbar from "../components/layout/Navbar.vue";
 import Sidebar from "../components/layout/Sidebar.vue";
 import ApiHealthBanner from "../components/ApiHealthBanner.vue";
-import { AlgorandAuthentication, type INotification } from "algorand-authentication-component-vue";
-const onNotification = (notification: INotification) => {
-  console.log("Notification received:", notification);
-};
 </script>
 
 <template>
-  <AlgorandAuthentication @notification="onNotification" arc14Realm="BiatecTokens#ARC14">
-    <div class="min-h-screen transition-colors duration-200">
-      <Navbar />
+  <div class="min-h-screen transition-colors duration-200">
+    <Navbar />
 
-      <!-- API Health Banner -->
-      <ApiHealthBanner />
+    <!-- API Health Banner -->
+    <ApiHealthBanner />
 
-      <div class="flex">
-        <Sidebar />
-        <main class="flex-1 lg:pl-64">
-          <div class="py-6">
-            <slot />
-          </div>
-        </main>
-      </div>
+    <div class="flex">
+      <Sidebar />
+      <main class="flex-1 lg:pl-64">
+        <div class="py-6">
+          <slot />
+        </div>
+      </main>
     </div>
-  </AlgorandAuthentication>
+  </div>
 </template>

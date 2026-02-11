@@ -4,7 +4,7 @@ import { createCursor } from "ghost-cursor-playwright";
 /**
  * Animates cursor movement to a target position over 2 seconds
  */
-async function animateCursorTo(page: any, targetX: number, targetY: number, currentMousePos: any, duration = 2000) {
+async function animateCursorTo(page: any, targetX: number, targetY: number, currentMousePos: any, duration = 100) {
   const steps = 20;
   const stepDuration = duration / steps;
   const dx = (targetX - currentMousePos.x) / steps;

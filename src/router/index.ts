@@ -4,7 +4,6 @@ import TokenCreator from "../views/TokenCreator.vue";
 import BatchCreator from "../views/BatchCreator.vue";
 import TokenDashboard from "../views/TokenDashboard.vue";
 import TokenDetail from "../views/TokenDetail.vue";
-import WalletDashboard from "../views/WalletDashboard.vue";
 import Settings from "../views/Settings.vue";
 import ComplianceDashboard from "../views/ComplianceDashboard.vue";
 import ComplianceMonitoringDashboard from "../views/ComplianceMonitoringDashboard.vue";
@@ -14,7 +13,6 @@ import EnterpriseGuideView from "../views/EnterpriseGuideView.vue";
 import Marketplace from "../views/Marketplace.vue";
 import AccountSecurity from "../views/AccountSecurity.vue";
 import DiscoveryDashboard from "../views/DiscoveryDashboard.vue";
-import AllowanceCenter from "../views/AllowanceCenter.vue";
 import TokenCreationWizard from "../views/TokenCreationWizard.vue";
 import OnboardingFlow from "../views/OnboardingFlow.vue";
 import EnterpriseOnboardingCommandCenter from "../views/EnterpriseOnboardingCommandCenter.vue";
@@ -56,17 +54,6 @@ const router = createRouter({
       name: "TokenDashboard",
       component: TokenDashboard,
       meta: { requiresAuth: true },
-    },
-    {
-      path: "/account",
-      name: "AccountDashboard",
-      component: WalletDashboard,
-      meta: { requiresAuth: true },
-    },
-    // Backward compatibility redirect
-    {
-      path: "/wallet",
-      redirect: "/account",
     },
     {
       path: "/tokens/:id",
@@ -124,12 +111,6 @@ const router = createRouter({
       component: AccountSecurity,
       meta: { requiresAuth: true },
     },
-    {
-      path: "/allowances",
-      name: "AllowanceCenter",
-      component: AllowanceCenter,
-      meta: { requiresAuth: true },
-    },
     // Onboarding route
     {
       path: "/onboarding",
@@ -177,7 +158,7 @@ router.beforeEach((to, _from, next) => {
 
     // Check if user is authenticated using wallet-free architecture (email/password ARC76)
     // Per business-owner-roadmap.md: "no wallet connectors anywhere"
-    const algorandUser = localStorage.getItem('algorand_user');
+    const algorandUser = localStorage.getItem("algorand_user");
     const isAuthenticated = !!algorandUser;
 
     if (!isAuthenticated) {

@@ -1,6 +1,5 @@
 import { ref, computed } from "vue";
-import type { NetworkId } from "./useWalletManager";
-import { NETWORKS } from "./useWalletManager";
+import { NetworkId, NETWORKS } from "../stores/network";
 
 export type DeploymentStatus = "idle" | "preparing" | "signing" | "submitting" | "confirming" | "success" | "error";
 
@@ -78,7 +77,7 @@ export function useDeploymentTracking() {
    */
   const getDeploymentSteps = (networkId: NetworkId): DeploymentStep[] => {
     const network = NETWORKS[networkId];
-    
+
     if (network.chainType === "AVM") {
       return [
         {
@@ -142,7 +141,7 @@ export function useDeploymentTracking() {
    */
   const getFeeEstimate = (networkId: NetworkId): DeploymentFeeEstimate => {
     const network = NETWORKS[networkId];
-    
+
     if (network.chainType === "AVM") {
       // AVM networks (Algorand-based)
       if (networkId === "algorand-mainnet") {
@@ -206,7 +205,7 @@ export function useDeploymentTracking() {
           currency: "ETH",
         };
       }
-      
+
       // Should never reach here if all EVM networks are handled
       throw new Error(`Fee estimate not configured for network: ${networkId}`);
     }
@@ -251,7 +250,7 @@ export function useDeploymentTracking() {
       // Move to next step
       if (currentIndex + 1 < steps.length) {
         steps[currentIndex + 1].status = "active";
-        
+
         // Update status based on step
         const nextStepId = steps[currentIndex + 1].id;
         if (nextStepId === "sign") {

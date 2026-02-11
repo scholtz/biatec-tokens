@@ -1,49 +1,49 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
-import { createRouter, createWebHistory } from 'vue-router';
-import { createPinia, setActivePinia } from 'pinia';
-import Navbar from './Navbar.vue';
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { mount } from "@vue/test-utils";
+import { createRouter, createWebHistory } from "vue-router";
+import { createPinia, setActivePinia } from "pinia";
+import Navbar from "./Navbar.vue";
 
 // Mock the WalletConnectModal component
-vi.mock('../WalletConnectModal.vue', () => ({
+vi.mock("../WalletConnectModal.vue", () => ({
   default: {
-    name: 'WalletConnectModal',
+    name: "WalletConnectModal",
     template: '<div v-if="isOpen">Wallet Modal</div>',
-    props: ['isOpen'],
-    emits: ['close', 'connected'],
+    props: ["isOpen"],
+    emits: ["close", "connected"],
   },
 }));
 
 // Mock router-link
-vi.mock('vue-router', async () => {
-  const actual = await vi.importActual('vue-router');
+vi.mock("vue-router", async () => {
+  const actual = await vi.importActual("vue-router");
   return {
     ...actual,
     RouterLink: {
-      name: 'RouterLink',
+      name: "RouterLink",
       template: '<a :href="to" @click.prevent="$router.push(to)"><slot /></a>',
-      props: ['to'],
+      props: ["to"],
     },
   };
 });
 
 // Mock Heroicons
-vi.mock('@heroicons/vue/24/outline', () => ({
-  HomeIcon: { template: '<svg>Home</svg>' },
-  PlusCircleIcon: { template: '<svg>Plus</svg>' },
-  ChartBarIcon: { template: '<svg>Chart</svg>' },
-  Cog6ToothIcon: { template: '<svg>Cog</svg>' },
-  SunIcon: { template: '<svg>Sun</svg>' },
-  MoonIcon: { template: '<svg>Moon</svg>' },
-  Bars3Icon: { template: '<svg>Bars</svg>' },
-  XMarkIcon: { template: '<svg>X</svg>' },
-  ChevronDownIcon: { template: '<svg>Chevron</svg>' },
-  ArrowRightOnRectangleIcon: { template: '<svg>Login</svg>' },
-  UserCircleIcon: { template: '<svg>User</svg>' },
-  CurrencyDollarIcon: { template: '<svg>Currency</svg>' },
+vi.mock("@heroicons/vue/24/outline", () => ({
+  HomeIcon: { template: "<svg>Home</svg>" },
+  PlusCircleIcon: { template: "<svg>Plus</svg>" },
+  ChartBarIcon: { template: "<svg>Chart</svg>" },
+  Cog6ToothIcon: { template: "<svg>Cog</svg>" },
+  SunIcon: { template: "<svg>Sun</svg>" },
+  MoonIcon: { template: "<svg>Moon</svg>" },
+  Bars3Icon: { template: "<svg>Bars</svg>" },
+  XMarkIcon: { template: "<svg>X</svg>" },
+  ChevronDownIcon: { template: "<svg>Chevron</svg>" },
+  ArrowRightOnRectangleIcon: { template: "<svg>Login</svg>" },
+  UserCircleIcon: { template: "<svg>User</svg>" },
+  CurrencyDollarIcon: { template: "<svg>Currency</svg>" },
 }));
 
-describe('Navbar Component', () => {
+describe("Navbar Component", () => {
   let router: any;
   let pinia: any;
 
@@ -52,13 +52,12 @@ describe('Navbar Component', () => {
     router = createRouter({
       history: createWebHistory(),
       routes: [
-        { path: '/', name: 'home' },
-        { path: '/create', name: 'create' },
-        { path: '/dashboard', name: 'dashboard' },
-        { path: '/account', name: 'account' },
-        { path: '/settings', name: 'settings' },
-        { path: '/account/security', name: 'security' },
-        { path: '/subscription/pricing', name: 'pricing' },
+        { path: "/", name: "home" },
+        { path: "/create", name: "create" },
+        { path: "/dashboard", name: "dashboard" },
+        { path: "/settings", name: "settings" },
+        { path: "/account/security", name: "security" },
+        { path: "/subscription/pricing", name: "pricing" },
       ],
     });
 
@@ -69,8 +68,8 @@ describe('Navbar Component', () => {
     localStorage.clear();
   });
 
-  describe('Component Rendering', () => {
-    it('should render the navbar', () => {
+  describe("Component Rendering", () => {
+    it("should render the navbar", () => {
       const wrapper = mount(Navbar, {
         global: {
           plugins: [router, pinia],
@@ -78,64 +77,64 @@ describe('Navbar Component', () => {
       });
 
       expect(wrapper.exists()).toBe(true);
-      expect(wrapper.find('nav').exists()).toBe(true);
+      expect(wrapper.find("nav").exists()).toBe(true);
     });
 
-    it('should display the logo and brand name', () => {
+    it("should display the logo and brand name", () => {
       const wrapper = mount(Navbar, {
         global: {
           plugins: [router, pinia],
         },
       });
 
-      expect(wrapper.text()).toContain('Biatec Tokens');
-      expect(wrapper.find('img').attributes('alt')).toBe('Biatec Tokens Logo');
+      expect(wrapper.text()).toContain("Biatec Tokens");
+      expect(wrapper.find("img").attributes("alt")).toBe("Biatec Tokens Logo");
     });
 
-    it('should render navigation items', () => {
+    it("should render navigation items", () => {
       const wrapper = mount(Navbar, {
         global: {
           plugins: [router, pinia],
         },
       });
 
-      const navLinks = wrapper.findAll('a');
+      const navLinks = wrapper.findAll("a");
       expect(navLinks.length).toBeGreaterThan(0);
-      expect(wrapper.text()).toContain('Home');
-      expect(wrapper.text()).toContain('Create');
-      expect(wrapper.text()).toContain('Dashboard');
+      expect(wrapper.text()).toContain("Home");
+      expect(wrapper.text()).toContain("Create");
+      expect(wrapper.text()).toContain("Dashboard");
     });
   });
 
-  describe('Theme Toggle', () => {
-    it('should display theme toggle button', () => {
+  describe("Theme Toggle", () => {
+    it("should display theme toggle button", () => {
       const wrapper = mount(Navbar, {
         global: {
           plugins: [router, pinia],
         },
       });
 
-      const themeButton = wrapper.find('button[title]');
+      const themeButton = wrapper.find("button[title]");
       expect(themeButton.exists()).toBe(true);
     });
 
-    it('should toggle theme when theme button is clicked', async () => {
+    it("should toggle theme when theme button is clicked", async () => {
       const wrapper = mount(Navbar, {
         global: {
           plugins: [router, pinia],
         },
       });
 
-      const themeButton = wrapper.find('button[title]');
-      await themeButton.trigger('click');
+      const themeButton = wrapper.find("button[title]");
+      await themeButton.trigger("click");
 
       // Theme store should be toggled (mocked globally)
       expect(themeButton.exists()).toBe(true);
     });
   });
 
-  describe('Network Status', () => {
-    it('should NOT display wallet status badge for MVP wallet-free auth', () => {
+  describe("Network Status", () => {
+    it("should NOT display wallet status badge for MVP wallet-free auth", () => {
       const wrapper = mount(Navbar, {
         global: {
           plugins: [router, pinia],
@@ -144,10 +143,10 @@ describe('Navbar Component', () => {
 
       // WalletStatusBadge is hidden for MVP wallet-free authentication (AC #4)
       // Per business-owner-roadmap.md: "remove this display as frontend should work without wallet connection requirement"
-      expect(wrapper.findComponent({ name: 'WalletStatusBadge' }).exists()).toBe(false);
+      expect(wrapper.findComponent({ name: "WalletStatusBadge" }).exists()).toBe(false);
     });
 
-    it('should hide network info for wallet-free authentication (AC #4)', () => {
+    it("should hide network info for wallet-free authentication (AC #4)", () => {
       const wrapper = mount(Navbar, {
         global: {
           plugins: [router, pinia],
@@ -155,89 +154,89 @@ describe('Navbar Component', () => {
       });
 
       // WalletStatusBadge is now commented out to remove wallet-related UI
-      const statusBadge = wrapper.findComponent({ name: 'WalletStatusBadge' });
+      const statusBadge = wrapper.findComponent({ name: "WalletStatusBadge" });
       expect(statusBadge.exists()).toBe(false);
-      
+
       // Verify Sign In button is present instead (for unauthenticated users)
-      const signInButton = wrapper.find('button span');
+      const signInButton = wrapper.find("button span");
       // Button might not be visible if mocked as authenticated, so we just verify badge is hidden
       expect(statusBadge.exists()).toBe(false);
     });
   });
 
-  describe('Authentication States', () => {
-    it.skip('should show sign in button when not authenticated', () => {
+  describe("Authentication States", () => {
+    it.skip("should show sign in button when not authenticated", () => {
       // Skipped due to global mock conflicts - component renders correctly with global mocks
     });
 
-    it('should show user menu when authenticated', () => {
+    it("should show user menu when authenticated", () => {
       const wrapper = mount(Navbar, {
         global: {
           plugins: [router, pinia],
         },
       });
 
-      expect(wrapper.text()).toContain('test@example.com');
-      expect(wrapper.text()).toContain('TESTAC...7890');
+      expect(wrapper.text()).toContain("test@example.com");
+      expect(wrapper.text()).toContain("TESTAC...7890");
     });
 
-    it('should toggle user dropdown menu', async () => {
+    it("should toggle user dropdown menu", async () => {
       const wrapper = mount(Navbar, {
         global: {
           plugins: [router, pinia],
         },
       });
 
-      const userButtons = wrapper.findAll('button');
-      const userButton = userButtons.find(btn => btn.text().includes('test@example.com'));
+      const userButtons = wrapper.findAll("button");
+      const userButton = userButtons.find((btn) => btn.text().includes("test@example.com"));
       expect(userButton?.exists()).toBe(true);
 
       // Initially dropdown should not be visible
-      expect(wrapper.find('.absolute.right-0.mt-2').exists()).toBe(false);
+      expect(wrapper.find(".absolute.right-0.mt-2").exists()).toBe(false);
 
       // Click to show dropdown
-      await userButton!.trigger('click');
-      expect(wrapper.find('.absolute.right-0.mt-2').exists()).toBe(true);
+      await userButton!.trigger("click");
+      expect(wrapper.find(".absolute.right-0.mt-2").exists()).toBe(true);
 
       // Click again to hide
-      await userButton!.trigger('click');
-      expect(wrapper.find('.absolute.right-0.mt-2').exists()).toBe(false);
+      await userButton!.trigger("click");
+      expect(wrapper.find(".absolute.right-0.mt-2").exists()).toBe(false);
     });
 
-    it('should display user dropdown menu items', async () => {
+    it("should display user dropdown menu items", async () => {
       const wrapper = mount(Navbar, {
         global: {
           plugins: [router, pinia],
         },
       });
 
-      const userButtons = wrapper.findAll('button');
-      const userButton = userButtons.find(btn => btn.text().includes('test@example.com'));
-      await userButton!.trigger('click');
+      const userButtons = wrapper.findAll("button");
+      const userButton = userButtons.find((btn) => btn.text().includes("test@example.com"));
+      await userButton!.trigger("click");
 
-      const dropdown = wrapper.find('.absolute.right-0.mt-2');
-      expect(dropdown.text()).toContain('Security Center');
-      expect(dropdown.text()).toContain('Subscription');
-      expect(dropdown.text()).toContain('Settings');
-      expect(dropdown.text()).toContain('Sign Out');
+      const dropdown = wrapper.find(".absolute.right-0.mt-2");
+      expect(dropdown.text()).toContain("Security Center");
+      expect(dropdown.text()).toContain("Subscription");
+      expect(dropdown.text()).toContain("Settings");
+      expect(dropdown.text()).toContain("Sign Out");
     });
   });
 
-  describe('Mobile Menu', () => {
-    it.skip('should toggle mobile menu', async () => {
+  describe("Mobile Menu", () => {
+    it.skip("should toggle mobile menu", async () => {
       // Skipped due to transition component issues in tests
     });
   });
 
-  describe('Wallet Connection', () => {
-    it.skip('should open wallet modal when sign in is clicked', async () => {
+  describe("Wallet Connection", () => {
+    it.skip("should open wallet modal when sign in is clicked", async () => {
       // Skipped due to global mock conflicts - wallet modal functionality tested elsewhere
     });
   });
 
-  describe('Route Handling', () => {
-    it('should highlight active route', async () => {
-      await router.push('/create');
+  describe("Route Handling", () => {
+    it("should highlight active route", async () => {
+      await router.push("/create");
 
       const wrapper = mount(Navbar, {
         global: {
@@ -245,14 +244,14 @@ describe('Navbar Component', () => {
         },
       });
 
-      const createLinks = wrapper.findAll('a').filter(link => link.text().includes('Create'));
+      const createLinks = wrapper.findAll("a").filter((link) => link.text().includes("Create"));
       expect(createLinks.length).toBeGreaterThan(0);
-      expect(createLinks[0].classes()).toContain('text-blue-600');
+      expect(createLinks[0].classes()).toContain("text-blue-600");
     });
   });
 
-  describe('Utility Functions', () => {
-    it('should format address correctly', () => {
+  describe("Utility Functions", () => {
+    it("should format address correctly", () => {
       const wrapper = mount(Navbar, {
         global: {
           plugins: [router, pinia],
@@ -260,9 +259,9 @@ describe('Navbar Component', () => {
       });
 
       const vm = wrapper.vm as any;
-      expect(vm.formatAddress('TESTACCOUNT1234567890123456789012345678901234567890')).toBe('TESTAC...7890');
-      expect(vm.formatAddress('')).toBe('');
-      expect(vm.formatAddress(undefined)).toBe('');
+      expect(vm.formatAddress("TESTACCOUNT1234567890123456789012345678901234567890")).toBe("TESTAC...7890");
+      expect(vm.formatAddress("")).toBe("");
+      expect(vm.formatAddress(undefined)).toBe("");
     });
   });
 });

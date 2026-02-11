@@ -6,20 +6,11 @@
       class="flex items-center space-x-3 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-biatec-accent/30 transition-all"
       :class="{ 'ring-2 ring-biatec-accent border-biatec-accent': isOpen }"
     >
-      <span
-        class="w-2 h-2 rounded-full"
-        :class="networkStatusColor"
-        :title="networkStatus"
-      ></span>
+      <span class="w-2 h-2 rounded-full" :class="networkStatusColor" :title="networkStatus"></span>
       <div class="text-left">
         <div class="text-sm font-medium text-white flex items-center gap-2">
           {{ currentNetworkInfo.displayName }}
-          <span
-            v-if="!currentNetworkInfo.isTestnet"
-            class="px-1.5 py-0.5 text-xs font-medium rounded bg-green-500/20 text-green-400"
-          >
-            Mainnet
-          </span>
+          <span v-if="!currentNetworkInfo.isTestnet" class="px-1.5 py-0.5 text-xs font-medium rounded bg-green-500/20 text-green-400"> Mainnet </span>
         </div>
         <div class="text-xs text-gray-400">{{ networkStatus }}</div>
       </div>
@@ -28,10 +19,7 @@
 
     <!-- Dropdown -->
     <Transition name="dropdown">
-      <div
-        v-if="isOpen"
-        class="absolute right-0 mt-2 w-80 glass-effect rounded-xl shadow-2xl border border-white/10 p-2 z-50"
-      >
+      <div v-if="isOpen" class="absolute right-0 mt-2 w-80 glass-effect rounded-xl shadow-2xl border border-white/10 p-2 z-50">
         <!-- Current Network Info -->
         <div class="p-4 mb-2 bg-gradient-to-br from-white/5 to-white/10 rounded-lg border border-white/10">
           <div class="flex items-center justify-between mb-2">
@@ -43,7 +31,7 @@
               class="px-2 py-1 text-xs font-medium rounded-full"
               :class="currentNetworkInfo.isTestnet ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30'"
             >
-              {{ currentNetworkInfo.isTestnet ? 'Testnet' : 'Mainnet' }}
+              {{ currentNetworkInfo.isTestnet ? "Testnet" : "Mainnet" }}
             </span>
           </div>
           <div class="text-white font-semibold mb-2">{{ currentNetworkInfo.displayName }}</div>
@@ -70,10 +58,8 @@
         <!-- Network List -->
         <div class="space-y-1">
           <!-- AVM Networks Section (Mainnet Only) -->
-          <div class="px-2 py-1 text-xs font-medium text-gray-400 uppercase tracking-wider border-b border-white/10">
-            AVM Chains (Algorand-based) - Production
-          </div>
-          
+          <div class="px-2 py-1 text-xs font-medium text-gray-400 uppercase tracking-wider border-b border-white/10">AVM Chains (Algorand-based) - Production</div>
+
           <button
             v-for="network in avmNetworks"
             :key="network.id"
@@ -81,46 +67,27 @@
             :disabled="isSwitching || network.id === currentNetwork"
             class="w-full p-3 rounded-lg text-left transition-all group"
             :class="[
-              network.id === currentNetwork
-                ? 'bg-biatec-accent/20 border border-biatec-accent/50'
-                : 'hover:bg-white/10 border border-transparent',
-              isSwitching ? 'opacity-50 cursor-not-allowed' : ''
+              network.id === currentNetwork ? 'bg-biatec-accent/20 border border-biatec-accent/50' : 'hover:bg-white/10 border border-transparent',
+              isSwitching ? 'opacity-50 cursor-not-allowed' : '',
             ]"
           >
             <div class="flex items-center justify-between">
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-1">
                   <span class="text-white font-medium text-sm">{{ network.displayName }}</span>
-                  <span
-                    v-if="network.id === currentNetwork"
-                    class="px-1.5 py-0.5 text-xs font-medium rounded bg-biatec-accent/30 text-biatec-accent"
-                  >
-                    Active
-                  </span>
-                  <span
-                    class="px-1.5 py-0.5 text-xs font-medium rounded bg-green-500/20 text-green-400"
-                  >
-                    Mainnet
-                  </span>
+                  <span v-if="network.id === currentNetwork" class="px-1.5 py-0.5 text-xs font-medium rounded bg-biatec-accent/30 text-biatec-accent"> Active </span>
+                  <span class="px-1.5 py-0.5 text-xs font-medium rounded bg-green-500/20 text-green-400"> Mainnet </span>
                 </div>
                 <div class="text-xs text-gray-400">{{ network.genesisId }}</div>
               </div>
-              <i
-                v-if="network.id === currentNetwork"
-                class="pi pi-check text-biatec-accent"
-              ></i>
-              <i
-                v-else
-                class="pi pi-chevron-right text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
-              ></i>
+              <i v-if="network.id === currentNetwork" class="pi pi-check text-biatec-accent"></i>
+              <i v-else class="pi pi-chevron-right text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
             </div>
           </button>
 
           <!-- EVM Networks Section (Mainnet Only) -->
-          <div class="px-2 py-1 mt-3 text-xs font-medium text-gray-400 uppercase tracking-wider border-b border-white/10">
-            EVM Chains (Ethereum-based) - Production
-          </div>
-          
+          <div class="px-2 py-1 mt-3 text-xs font-medium text-gray-400 uppercase tracking-wider border-b border-white/10">EVM Chains (Ethereum-based) - Production</div>
+
           <button
             v-for="network in evmNetworks"
             :key="network.id"
@@ -128,38 +95,21 @@
             :disabled="isSwitching || network.id === currentNetwork"
             class="w-full p-3 rounded-lg text-left transition-all group"
             :class="[
-              network.id === currentNetwork
-                ? 'bg-biatec-accent/20 border border-biatec-accent/50'
-                : 'hover:bg-white/10 border border-transparent',
-              isSwitching ? 'opacity-50 cursor-not-allowed' : ''
+              network.id === currentNetwork ? 'bg-biatec-accent/20 border border-biatec-accent/50' : 'hover:bg-white/10 border border-transparent',
+              isSwitching ? 'opacity-50 cursor-not-allowed' : '',
             ]"
           >
             <div class="flex items-center justify-between">
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-1">
                   <span class="text-white font-medium text-sm">{{ network.displayName }}</span>
-                  <span
-                    v-if="network.id === currentNetwork"
-                    class="px-1.5 py-0.5 text-xs font-medium rounded bg-biatec-accent/30 text-biatec-accent"
-                  >
-                    Active
-                  </span>
-                  <span
-                    class="px-1.5 py-0.5 text-xs font-medium rounded bg-green-500/20 text-green-400"
-                  >
-                    Mainnet
-                  </span>
+                  <span v-if="network.id === currentNetwork" class="px-1.5 py-0.5 text-xs font-medium rounded bg-biatec-accent/30 text-biatec-accent"> Active </span>
+                  <span class="px-1.5 py-0.5 text-xs font-medium rounded bg-green-500/20 text-green-400"> Mainnet </span>
                 </div>
                 <div class="text-xs text-gray-400">Chain ID: {{ network.chainId }}</div>
               </div>
-              <i
-                v-if="network.id === currentNetwork"
-                class="pi pi-check text-biatec-accent"
-              ></i>
-              <i
-                v-else
-                class="pi pi-chevron-right text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
-              ></i>
+              <i v-if="network.id === currentNetwork" class="pi pi-check text-biatec-accent"></i>
+              <i v-else class="pi pi-chevron-right text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
             </div>
           </button>
 
@@ -169,7 +119,7 @@
               <i class="pi pi-exclamation-triangle"></i>
               Test Networks
             </div>
-            
+
             <!-- AVM Test Networks -->
             <button
               v-for="network in avmTestNetworks"
@@ -178,38 +128,21 @@
               :disabled="isSwitching || network.id === currentNetwork"
               class="w-full p-3 rounded-lg text-left transition-all group"
               :class="[
-                network.id === currentNetwork
-                  ? 'bg-yellow-500/20 border border-yellow-500/50'
-                  : 'hover:bg-white/10 border border-transparent',
-                isSwitching ? 'opacity-50 cursor-not-allowed' : ''
+                network.id === currentNetwork ? 'bg-yellow-500/20 border border-yellow-500/50' : 'hover:bg-white/10 border border-transparent',
+                isSwitching ? 'opacity-50 cursor-not-allowed' : '',
               ]"
             >
               <div class="flex items-center justify-between">
                 <div class="flex-1">
                   <div class="flex items-center gap-2 mb-1">
                     <span class="text-white font-medium text-sm">{{ network.displayName }}</span>
-                    <span
-                      v-if="network.id === currentNetwork"
-                      class="px-1.5 py-0.5 text-xs font-medium rounded bg-yellow-500/30 text-yellow-400"
-                    >
-                      Active
-                    </span>
-                    <span
-                      class="px-1.5 py-0.5 text-xs font-medium rounded bg-yellow-500/20 text-yellow-400"
-                    >
-                      Test
-                    </span>
+                    <span v-if="network.id === currentNetwork" class="px-1.5 py-0.5 text-xs font-medium rounded bg-yellow-500/30 text-yellow-400"> Active </span>
+                    <span class="px-1.5 py-0.5 text-xs font-medium rounded bg-yellow-500/20 text-yellow-400"> Test </span>
                   </div>
                   <div class="text-xs text-gray-400">{{ network.genesisId }}</div>
                 </div>
-                <i
-                  v-if="network.id === currentNetwork"
-                  class="pi pi-check text-yellow-400"
-                ></i>
-                <i
-                  v-else
-                  class="pi pi-chevron-right text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                ></i>
+                <i v-if="network.id === currentNetwork" class="pi pi-check text-yellow-400"></i>
+                <i v-else class="pi pi-chevron-right text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
               </div>
             </button>
 
@@ -221,38 +154,21 @@
               :disabled="isSwitching || network.id === currentNetwork"
               class="w-full p-3 rounded-lg text-left transition-all group"
               :class="[
-                network.id === currentNetwork
-                  ? 'bg-yellow-500/20 border border-yellow-500/50'
-                  : 'hover:bg-white/10 border border-transparent',
-                isSwitching ? 'opacity-50 cursor-not-allowed' : ''
+                network.id === currentNetwork ? 'bg-yellow-500/20 border border-yellow-500/50' : 'hover:bg-white/10 border border-transparent',
+                isSwitching ? 'opacity-50 cursor-not-allowed' : '',
               ]"
             >
               <div class="flex items-center justify-between">
                 <div class="flex-1">
                   <div class="flex items-center gap-2 mb-1">
                     <span class="text-white font-medium text-sm">{{ network.displayName }}</span>
-                    <span
-                      v-if="network.id === currentNetwork"
-                      class="px-1.5 py-0.5 text-xs font-medium rounded bg-yellow-500/30 text-yellow-400"
-                    >
-                      Active
-                    </span>
-                    <span
-                      class="px-1.5 py-0.5 text-xs font-medium rounded bg-yellow-500/20 text-yellow-400"
-                    >
-                      Test
-                    </span>
+                    <span v-if="network.id === currentNetwork" class="px-1.5 py-0.5 text-xs font-medium rounded bg-yellow-500/30 text-yellow-400"> Active </span>
+                    <span class="px-1.5 py-0.5 text-xs font-medium rounded bg-yellow-500/20 text-yellow-400"> Test </span>
                   </div>
                   <div class="text-xs text-gray-400">Chain ID: {{ network.chainId }}</div>
                 </div>
-                <i
-                  v-if="network.id === currentNetwork"
-                  class="pi pi-check text-yellow-400"
-                ></i>
-                <i
-                  v-else
-                  class="pi pi-chevron-right text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                ></i>
+                <i v-if="network.id === currentNetwork" class="pi pi-check text-yellow-400"></i>
+                <i v-else class="pi pi-chevron-right text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
               </div>
             </button>
           </template>
@@ -264,16 +180,6 @@
             <i class="pi pi-exclamation-triangle text-yellow-400 text-sm mt-0.5"></i>
             <p class="text-xs text-gray-300">
               <span class="font-semibold text-yellow-400">Test Network Active:</span> You are using a test network. Tokens deployed here are for testing only and have no real value.
-            </p>
-          </div>
-        </div>
-
-        <!-- Network Disconnect Warning -->
-        <div v-if="isWalletConnected" class="mt-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-          <div class="flex items-start gap-2">
-            <i class="pi pi-exclamation-triangle text-yellow-400 text-sm mt-0.5"></i>
-            <p class="text-xs text-gray-300">
-              Switching networks will sign you out. You'll need to authenticate again after switching.
             </p>
           </div>
         </div>
@@ -291,100 +197,101 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useWalletManager, AVM_NETWORKS, EVM_NETWORKS, type NetworkId } from '../composables/useWalletManager'
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import { AVM_NETWORKS, EVM_NETWORKS, NetworkId, useNetworkStore } from "../stores/network";
+const networkStore = useNetworkStore();
 
-const { currentNetwork, networkInfo: currentNetworkInfo, switchNetwork, isConnected: isWalletConnected } = useWalletManager()
-
-const isOpen = ref(false)
-const isSwitching = ref(false)
-const error = ref<string | null>(null)
-const dropdownRef = ref<HTMLElement | null>(null)
+const isOpen = ref(false);
+const isSwitching = ref(false);
+const error = ref<string | null>(null);
+const dropdownRef = ref<HTMLElement | null>(null);
+const currentNetworkInfo = computed(() => networkStore.networkInfo);
+const currentNetwork = computed(() => networkStore.networkInfo?.id || "");
 
 const avmNetworks = computed(() => {
   // Sort to prioritize mainnet networks
   return Object.values(AVM_NETWORKS)
-    .filter(n => !n.isTestnet)
+    .filter((n) => !n.isTestnet)
     .sort((a, b) => {
       // Prioritize Algorand mainnet first
-      if (a.id === 'algorand-mainnet') return -1;
-      if (b.id === 'algorand-mainnet') return 1;
+      if (a.id === "algorand-mainnet") return -1;
+      if (b.id === "algorand-mainnet") return 1;
       return a.displayName.localeCompare(b.displayName);
     });
 });
 
 const avmTestNetworks = computed(() => {
   return Object.values(AVM_NETWORKS)
-    .filter(n => n.isTestnet)
+    .filter((n) => n.isTestnet)
     .sort((a, b) => a.displayName.localeCompare(b.displayName));
 });
 
 const evmNetworks = computed(() => {
   // Sort to prioritize mainnet networks
   return Object.values(EVM_NETWORKS)
-    .filter(n => !n.isTestnet)
+    .filter((n) => !n.isTestnet)
     .sort((a, b) => {
       // Prioritize Ethereum mainnet first
-      if (a.id === 'ethereum') return -1;
-      if (b.id === 'ethereum') return 1;
+      if (a.id === "ethereum") return -1;
+      if (b.id === "ethereum") return 1;
       return a.displayName.localeCompare(b.displayName);
     });
 });
 
 const evmTestNetworks = computed(() => {
   return Object.values(EVM_NETWORKS)
-    .filter(n => n.isTestnet)
+    .filter((n) => n.isTestnet)
     .sort((a, b) => a.displayName.localeCompare(b.displayName));
 });
 
 const networkStatus = computed(() => {
-  if (isSwitching.value) return 'Switching...'
-  return 'Online'
-})
+  if (isSwitching.value) return "Switching...";
+  return "Online";
+});
 
 const networkStatusColor = computed(() => {
-  if (isSwitching.value) return 'bg-yellow-400 animate-pulse'
-  return 'bg-green-400'
-})
+  if (isSwitching.value) return "bg-yellow-400 animate-pulse";
+  return "bg-green-400";
+});
 
 const toggleDropdown = () => {
-  isOpen.value = !isOpen.value
-  error.value = null
-}
+  isOpen.value = !isOpen.value;
+  error.value = null;
+};
 
 const handleNetworkSwitch = async (networkId: NetworkId) => {
   if (networkId === currentNetwork.value || isSwitching.value) {
-    return
+    return;
   }
 
-  isSwitching.value = true
-  error.value = null
+  isSwitching.value = true;
+  error.value = null;
 
   try {
-    await switchNetwork(networkId)
-    isOpen.value = false
+    await networkStore.switchNetwork(networkId);
+    isOpen.value = false;
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to switch network'
-    console.error('Network switch error:', err)
+    error.value = err instanceof Error ? err.message : "Failed to switch network";
+    console.error("Network switch error:", err);
   } finally {
-    isSwitching.value = false
+    isSwitching.value = false;
   }
-}
+};
 
 // Close dropdown when clicking outside
 const handleClickOutside = (event: MouseEvent) => {
   if (dropdownRef.value && event.target && !dropdownRef.value.contains(event.target as Node)) {
-    isOpen.value = false
+    isOpen.value = false;
   }
-}
+};
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
+  document.addEventListener("click", handleClickOutside);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
+  document.removeEventListener("click", handleClickOutside);
+});
 </script>
 
 <style scoped>

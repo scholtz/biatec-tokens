@@ -174,17 +174,16 @@ import RwaRiskFlagsWidget from "../components/RwaRiskFlagsWidget.vue";
 import NetworkHealthWidget from "../components/NetworkHealthWidget.vue";
 import SubscriptionTierGatingWidget from "../components/SubscriptionTierGatingWidget.vue";
 import { complianceService } from "../services/ComplianceService";
-import { useWallet } from "@txnlab/use-wallet-vue";
 import type { ComplianceStatus } from "../types/compliance";
+import { useAuthStore } from "../stores/auth";
 
 const route = useRoute();
 const router = useRouter();
-const { activeAddress } = useWallet();
+const { account } = useAuthStore();
 
 const tokenId = computed(() => (route.params.id as string) || (route.query.tokenId as string));
 const selectedNetwork = computed(() => (route.query.network as string) || "VOI");
-const issuerAddress = computed(() => activeAddress.value || "");
-
+const issuerAddress = computed(() => account || "");
 const activeTab = ref("whitelist");
 const complianceStatus = ref<ComplianceStatus | null>(null);
 const isLoadingStatus = ref(false);

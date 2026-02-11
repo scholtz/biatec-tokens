@@ -29,38 +29,6 @@
               <p class="text-xs text-gray-400">Redirecting...</p>
             </div>
 
-            <!-- Loading State -->
-            <div v-else-if="isConnecting || isReconnecting || isSwitchingNetwork" class="text-center py-8">
-              <i class="pi pi-spin pi-spinner text-4xl text-biatec-accent mb-4"></i>
-              <p class="text-gray-300 font-medium mb-2">{{ connectionStateMessage }}</p>
-              <p class="text-sm text-gray-400">{{ AUTH_UI_COPY.SECURITY_NOTE }}</p>
-            </div>
-
-            <!-- Error State -->
-            <div v-else-if="hasFailed && error" class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl mb-4">
-              <div class="flex items-start gap-3">
-                <i class="pi pi-exclamation-triangle text-red-400"></i>
-                <div class="flex-1">
-                  <p class="text-sm text-red-400 font-medium">{{ AUTH_UI_COPY.AUTH_FAILED }}</p>
-                  <p class="text-xs text-gray-400 mt-1">{{ error }}</p>
-                  <div v-if="lastError" class="mt-2 text-xs text-gray-500">Error Code: {{ lastError.diagnosticCode }}</div>
-                  <div v-if="troubleshootingSteps.length > 0" class="mt-3 space-y-2">
-                    <p class="text-xs text-gray-300 font-medium">Troubleshooting:</p>
-                    <ul class="text-xs text-gray-400 space-y-1 ml-4 list-disc">
-                      <li v-for="(step, index) in troubleshootingSteps" :key="index">{{ step }}</li>
-                    </ul>
-                  </div>
-                  <div class="flex gap-2 mt-3">
-                    <button @click="handleRetry" class="px-3 py-1.5 text-xs bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg transition-colors flex items-center gap-2">
-                      <i class="pi pi-refresh"></i>
-                      {{ AUTH_UI_COPY.AUTHENTICATE }}
-                    </button>
-                    <button @click="error = null" class="px-3 py-1.5 text-xs bg-gray-500/20 text-gray-400 hover:bg-gray-500/30 rounded-lg transition-colors">Dismiss</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <!-- Primary Authentication Method: Email & Password (Arc76) -->
             <div v-else class="space-y-4">
               <!-- Email/Password Section -->
@@ -74,7 +42,7 @@
                     <div class="text-sm text-gray-300">{{ AUTH_UI_COPY.EMAIL_PASSWORD_DESCRIPTION }}</div>
                   </div>
                 </div>
-                
+
                 <!-- Email/Password Form (AC #3) -->
                 <form @submit.prevent="handleEmailPasswordSubmit" class="space-y-4">
                   <div>
@@ -99,15 +67,14 @@
                       class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
-                  
+
                   <button
                     type="submit"
-                    :disabled="isConnecting || isReconnecting || !emailForm.email || !emailForm.password"
+                    :disabled="!emailForm.email || !emailForm.password"
                     class="w-full px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold transition-colors flex items-center justify-center gap-2"
                   >
-                    <i v-if="!isConnecting" class="pi pi-sign-in"></i>
-                    <i v-else class="pi pi-spin pi-spinner"></i>
-                    <span>{{ isConnecting ? 'Signing In...' : 'Sign In with Email' }}</span>
+                    <i class="pi pi-sign-in"></i>
+                    <span>Sign In with Email</span>
                   </button>
                 </form>
               </div>
@@ -137,13 +104,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
-import { useWalletManager, NETWORKS, type NetworkId } from "../composables/useWalletManager";
-import { WalletConnectionState } from "../composables/walletState";
+import { ref, watch } from "vue";
 import { AUTH_UI_COPY } from "../constants/uiCopy";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
-import { useAVMAuthentication } from "algorand-authentication-component-vue";
 import { useAuthStore } from "../stores/auth";
+import { NetworkId, NETWORKS } from "../stores/network";
 
 interface Props {
   isOpen: boolean;
@@ -160,15 +125,15 @@ interface Emits {
 // Load persisted network from localStorage, fall back to prop default
 const loadInitialNetwork = (propDefault: NetworkId): NetworkId => {
   try {
-    const stored = localStorage.getItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK)
+    const stored = localStorage.getItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK);
     if (stored && NETWORKS[stored as NetworkId]) {
-      return stored as NetworkId
+      return stored as NetworkId;
     }
   } catch (error) {
-    console.warn('Failed to load persisted network:', error)
+    console.warn("Failed to load persisted network:", error);
   }
-  return propDefault
-}
+  return propDefault;
+};
 
 const props = withDefaults(defineProps<Props>(), {
   showNetworkSelector: true,
@@ -177,15 +142,13 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>();
 
-const walletManager = useWalletManager();
-const { authStore: arc76AuthStore, authenticate: arc76Authenticate } = useAVMAuthentication();
-const localAuthStore = useAuthStore(); // Our local auth store
+const authStore = useAuthStore(); // Our local auth store
 const selectedNetwork = ref<NetworkId>(loadInitialNetwork(props.defaultNetwork));
 
 // Email/Password form state (AC #3)
 const emailForm = ref({
-  email: '',
-  password: ''
+  email: "",
+  password: "",
 });
 
 // Success state for showing derived account
@@ -194,45 +157,6 @@ const derivedAccount = ref<string | null>(null);
 
 // Constants for UX timing
 const SUCCESS_DISPLAY_DURATION_MS = 1500; // Time to show success message before redirect
-
-// Computed state flags
-const isConnecting = computed(
-  () => walletManager.walletState.value.connectionState === WalletConnectionState.CONNECTING || walletManager.walletState.value.connectionState === WalletConnectionState.DETECTING,
-);
-
-const isReconnecting = computed(() => walletManager.walletState.value.connectionState === WalletConnectionState.RECONNECTING);
-
-const isSwitchingNetwork = computed(() => walletManager.walletState.value.connectionState === WalletConnectionState.SWITCHING_NETWORK);
-
-const hasFailed = computed(() => walletManager.walletState.value.connectionState === WalletConnectionState.FAILED);
-
-const error = computed(() => walletManager.walletState.value.error);
-const lastError = computed(() => walletManager.walletState.value.lastError);
-
-// Connection state message
-const connectionStateMessage = computed(() => {
-  const state = walletManager.walletState.value.connectionState;
-  switch (state) {
-    case WalletConnectionState.DETECTING:
-      return "Detecting authentication provider...";
-    case WalletConnectionState.CONNECTING:
-      return "Signing in...";
-    case WalletConnectionState.RECONNECTING:
-      return "Reconnecting...";
-    case WalletConnectionState.SWITCHING_NETWORK:
-      return "Switching network...";
-    case WalletConnectionState.FETCHING_BALANCE:
-      return "Loading account details...";
-    default:
-      return "Please approve the authentication request in your wallet app";
-  }
-});
-
-// Get troubleshooting steps if there's an error
-const troubleshootingSteps = computed(() => {
-  if (!lastError.value) return [];
-  return walletManager.getTroubleshootingSteps!(lastError.value.type);
-});
 
 /**
  * Handle email/password authentication with ARC76
@@ -253,45 +177,26 @@ const handleEmailPasswordSubmit = async () => {
     localStorage.setItem(AUTH_STORAGE_KEYS.SELECTED_NETWORK, selectedNetwork.value);
 
     // Set email and password in the ARC76 auth store
-    arc76AuthStore.arc76email = emailForm.value.email;
-    arc76AuthStore.password = emailForm.value.password;
-    arc76AuthStore.m = emailForm.value.email; // mnemonic field used for email
-
-    // Trigger ARC76 authentication
-    // This will derive the account deterministically from email/password
-    arc76Authenticate();
-
-    // Wait for authentication to complete
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await authStore.authenticateWithARC76(emailForm.value.email, emailForm.value.password);
 
     // Check if authentication was successful
-    if (arc76AuthStore.isAuthenticated && arc76AuthStore.account) {
-      // Save authentication state to our local auth store
-      await localAuthStore.authenticateWithARC76(
-        emailForm.value.email,
-        arc76AuthStore.account
-      );
-
-      // Mark as connected in localStorage
-      localStorage.setItem(AUTH_STORAGE_KEYS.WALLET_CONNECTED, 'true');
-      localStorage.setItem(AUTH_STORAGE_KEYS.ACTIVE_WALLET_ID, 'arc76');
-
+    if (authStore.isAuthenticated && authStore.account) {
       // Show success state with derived account
       authenticationSuccess.value = true;
-      derivedAccount.value = arc76AuthStore.account;
+      derivedAccount.value = authStore.account;
 
       // Wait a moment to show success message
-      await new Promise(resolve => setTimeout(resolve, SUCCESS_DISPLAY_DURATION_MS));
+      await new Promise((resolve) => setTimeout(resolve, SUCCESS_DISPLAY_DURATION_MS));
 
       emit("connected", {
-        address: arc76AuthStore.account,
-        walletId: 'arc76',
+        address: authStore.account,
+        walletId: "arc76",
         network: selectedNetwork.value,
       });
 
       // Clear form
-      emailForm.value.email = '';
-      emailForm.value.password = '';
+      emailForm.value.email = "";
+      emailForm.value.password = "";
 
       close();
     } else {
@@ -301,23 +206,15 @@ const handleEmailPasswordSubmit = async () => {
     const errorMessage = err instanceof Error ? err.message : "Failed to authenticate with email/password";
     emit("error", errorMessage);
     console.error("Email/password authentication error:", err);
-    
+
     // Reset success state on error
     authenticationSuccess.value = false;
     derivedAccount.value = null;
   }
 };
 
-const handleRetry = async () => {
-  if (walletManager.walletState.value.activeWallet) {
-    await walletManager.retryConnection(walletManager.walletState.value.activeWallet);
-  }
-};
-
 const close = () => {
-  if (!isConnecting.value) {
-    emit("close");
-  }
+  emit("close");
 };
 
 // Watch for network changes

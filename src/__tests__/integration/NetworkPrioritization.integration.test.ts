@@ -3,17 +3,17 @@
  * Tests the integration between WalletConnectModal, WalletOnboardingWizard, and networkSorting utility
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
-import { createPinia, setActivePinia } from 'pinia';
-import WalletConnectModal from '../../components/WalletConnectModal.vue';
-import WalletOnboardingWizard from '../../components/WalletOnboardingWizard.vue';
-import { NETWORKS } from '../../composables/useWalletManager';
-import { sortNetworksByPriority } from '../../utils/networkSorting';
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { mount } from "@vue/test-utils";
+import { createPinia, setActivePinia } from "pinia";
+import WalletConnectModal from "../../components/WalletConnectModal.vue";
+import WalletOnboardingWizard from "../../components/WalletOnboardingWizard.vue";
+import { NETWORKS } from "../../composables/useWalletManager";
+import { sortNetworksByPriority } from "../../utils/networkSorting";
 
 // Mock the wallet manager
-vi.mock('../../composables/useWalletManager', async () => {
-  const actual = await vi.importActual('../../composables/useWalletManager');
+vi.mock("../../composables/useWalletManager", async () => {
+  const actual = await vi.importActual("../../composables/useWalletManager");
   return {
     ...actual,
     useWalletManager: vi.fn(() => ({
@@ -29,12 +29,12 @@ vi.mock('../../composables/useWalletManager', async () => {
           accounts: [],
           isConnecting: false,
           error: null,
-          connectionState: 'disconnected',
+          connectionState: "disconnected",
           lastError: null,
           balanceLastUpdated: null,
         },
       },
-      currentNetwork: { value: 'algorand-mainnet' },
+      currentNetwork: { value: "algorand-mainnet" },
       connect: vi.fn(),
       disconnect: vi.fn(),
       switchNetwork: vi.fn(),
@@ -43,8 +43,8 @@ vi.mock('../../composables/useWalletManager', async () => {
       walletManager: {
         wallets: {
           value: [
-            { id: 'pera', isActive: true, metadata: { name: 'Pera Wallet' } },
-            { id: 'defly', isActive: true, metadata: { name: 'Defly Wallet' } },
+            { id: "pera", isActive: true, metadata: { name: "Pera Wallet" } },
+            { id: "defly", isActive: true, metadata: { name: "Defly Wallet" } },
           ],
         },
       },
@@ -53,41 +53,28 @@ vi.mock('../../composables/useWalletManager', async () => {
   };
 });
 
-// Mock Arc76 authentication
-vi.mock('algorand-authentication-component-vue', () => ({
-  useAVMAuthentication: vi.fn(() => ({
-    authStore: {
-      isAuthenticated: false,
-      account: null,
-      arc76email: null,
-    },
-    login: vi.fn(),
-    logout: vi.fn(),
-  })),
-}));
-
 // Mock @txnlab/use-wallet-vue
-vi.mock('@txnlab/use-wallet-vue', () => ({
+vi.mock("@txnlab/use-wallet-vue", () => ({
   useWallet: vi.fn(() => ({
     activeAccount: { value: null },
     wallets: { value: [] },
   })),
 }));
 
-describe('Network Prioritization Integration Tests', () => {
+describe("Network Prioritization Integration Tests", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
   });
 
-  describe('Network Sorting Logic', () => {
-    it('should sort networks with mainnets first', () => {
+  describe("Network Sorting Logic", () => {
+    it("should sort networks with mainnets first", () => {
       const networks = Object.values(NETWORKS);
       const sorted = sortNetworksByPriority(networks);
 
       // Find the first testnet
-      const firstTestnetIndex = sorted.findIndex(n => n.isTestnet);
-      
+      const firstTestnetIndex = sorted.findIndex((n) => n.isTestnet);
+
       // All networks before first testnet should be mainnets
       for (let i = 0; i < firstTestnetIndex; i++) {
         expect(sorted[i].isTestnet).toBe(false);
@@ -99,40 +86,40 @@ describe('Network Prioritization Integration Tests', () => {
       }
     });
 
-    it('should prioritize Algorand mainnet at the top', () => {
+    it("should prioritize Algorand mainnet at the top", () => {
       const networks = Object.values(NETWORKS);
       const sorted = sortNetworksByPriority(networks);
 
-      expect(sorted[0].id).toBe('algorand-mainnet');
-      expect(sorted[0].displayName).toBe('Algorand Mainnet');
+      expect(sorted[0].id).toBe("algorand-mainnet");
+      expect(sorted[0].displayName).toBe("Algorand Mainnet");
     });
 
-    it('should prioritize Ethereum second among mainnets', () => {
+    it("should prioritize Ethereum second among mainnets", () => {
       const networks = Object.values(NETWORKS);
       const sorted = sortNetworksByPriority(networks);
 
       // Find Ethereum in the sorted list
-      const ethereumIndex = sorted.findIndex(n => n.id === 'ethereum');
-      
+      const ethereumIndex = sorted.findIndex((n) => n.id === "ethereum");
+
       // Ethereum should be second (index 1)
       expect(ethereumIndex).toBe(1);
-      expect(sorted[1].displayName).toBe('Ethereum Mainnet');
+      expect(sorted[1].displayName).toBe("Ethereum Mainnet");
     });
 
-    it('should prioritize Algorand testnet first among testnets', () => {
+    it("should prioritize Algorand testnet first among testnets", () => {
       const networks = Object.values(NETWORKS);
       const sorted = sortNetworksByPriority(networks);
 
       // Find the first testnet
-      const firstTestnetIndex = sorted.findIndex(n => n.isTestnet);
-      
-      expect(sorted[firstTestnetIndex].id).toBe('algorand-testnet');
-      expect(sorted[firstTestnetIndex].displayName).toBe('Algorand Testnet');
+      const firstTestnetIndex = sorted.findIndex((n) => n.isTestnet);
+
+      expect(sorted[firstTestnetIndex].id).toBe("algorand-testnet");
+      expect(sorted[firstTestnetIndex].displayName).toBe("Algorand Testnet");
     });
   });
 
-  describe('WalletConnectModal Network Display', () => {
-    it.skip('should render networks in prioritized order', async () => {
+  describe("WalletConnectModal Network Display", () => {
+    it.skip("should render networks in prioritized order", async () => {
       const wrapper = mount(WalletConnectModal, {
         props: {
           isOpen: true,
@@ -149,9 +136,7 @@ describe('Network Prioritization Integration Tests', () => {
       await wrapper.vm.$nextTick();
 
       // Check that network buttons exist
-      const networkButtons = wrapper.findAll('button').filter(btn => 
-        btn.text().includes('Mainnet') || btn.text().includes('Testnet')
-      );
+      const networkButtons = wrapper.findAll("button").filter((btn) => btn.text().includes("Mainnet") || btn.text().includes("Testnet"));
 
       expect(networkButtons.length).toBeGreaterThan(0);
     });
@@ -174,15 +159,15 @@ describe('Network Prioritization Integration Tests', () => {
 
       // Look for "Recommended" badge text
       const modalContent = wrapper.html();
-      expect(modalContent).toContain('Recommended');
+      expect(modalContent).toContain("Recommended");
     });
 
-    it.skip('should display testnet warning when testnet is selected', async () => {
+    it.skip("should display testnet warning when testnet is selected", async () => {
       const wrapper = mount(WalletConnectModal, {
         props: {
           isOpen: true,
           showNetworkSelector: true,
-          defaultNetwork: 'algorand-testnet',
+          defaultNetwork: "algorand-testnet",
         },
         global: {
           plugins: [createPinia()],
@@ -196,13 +181,13 @@ describe('Network Prioritization Integration Tests', () => {
 
       // Look for testnet warning text
       const modalContent = wrapper.html();
-      expect(modalContent).toContain('Testnet Notice');
-      expect(modalContent).toContain('testing only');
+      expect(modalContent).toContain("Testnet Notice");
+      expect(modalContent).toContain("testing only");
     });
   });
 
-  describe('WalletOnboardingWizard Network Display', () => {
-    it.skip('should render networks in prioritized order', async () => {
+  describe("WalletOnboardingWizard Network Display", () => {
+    it.skip("should render networks in prioritized order", async () => {
       const wrapper = mount(WalletOnboardingWizard, {
         props: {
           isOpen: true,
@@ -237,20 +222,20 @@ describe('Network Prioritization Integration Tests', () => {
       await wrapper.vm.$nextTick();
 
       // Step through to network selection
-      const buttons = wrapper.findAll('button');
-      const continueButton = buttons.find(btn => btn.text().includes('Continue'));
-      
+      const buttons = wrapper.findAll("button");
+      const continueButton = buttons.find((btn) => btn.text().includes("Continue"));
+
       if (continueButton) {
-        await continueButton.trigger('click');
+        await continueButton.trigger("click");
         await wrapper.vm.$nextTick();
 
         // Look for "Recommended" badge
         const wizardContent = wrapper.html();
-        expect(wizardContent).toContain('Recommended');
+        expect(wizardContent).toContain("Recommended");
       }
     });
 
-    it('should default to Algorand mainnet', async () => {
+    it("should default to Algorand mainnet", async () => {
       const wrapper = mount(WalletOnboardingWizard, {
         props: {
           isOpen: true,
@@ -267,28 +252,28 @@ describe('Network Prioritization Integration Tests', () => {
 
       // Check the default selected network in component data
       const vm = wrapper.vm as any;
-      expect(vm.selectedNetwork).toBe('algorand-mainnet');
+      expect(vm.selectedNetwork).toBe("algorand-mainnet");
     });
   });
 
-  describe('Business Value - Mainnet First Prioritization', () => {
-    it('should ensure production networks are immediately visible', () => {
+  describe("Business Value - Mainnet First Prioritization", () => {
+    it("should ensure production networks are immediately visible", () => {
       const networks = Object.values(NETWORKS);
       const sorted = sortNetworksByPriority(networks);
 
       // First 4 networks should be mainnets
       const firstFour = sorted.slice(0, 4);
-      const allMainnet = firstFour.every(n => !n.isTestnet);
-      
+      const allMainnet = firstFour.every((n) => !n.isTestnet);
+
       expect(allMainnet).toBe(true);
     });
 
-    it.skip('should minimize support burden by clearly labeling testnets', async () => {
+    it.skip("should minimize support burden by clearly labeling testnets", async () => {
       const wrapper = mount(WalletConnectModal, {
         props: {
           isOpen: true,
           showNetworkSelector: true,
-          defaultNetwork: 'algorand-testnet',
+          defaultNetwork: "algorand-testnet",
         },
         global: {
           plugins: [createPinia()],
@@ -302,10 +287,10 @@ describe('Network Prioritization Integration Tests', () => {
 
       // Should show warning about production use
       const modalContent = wrapper.html();
-      expect(modalContent).toContain('production use');
+      expect(modalContent).toContain("production use");
     });
 
-    it('should signal enterprise readiness with mainnet defaults', async () => {
+    it("should signal enterprise readiness with mainnet defaults", async () => {
       const wrapper = mount(WalletConnectModal, {
         props: {
           isOpen: true,
@@ -324,11 +309,11 @@ describe('Network Prioritization Integration Tests', () => {
       // Default changed to algorand-testnet per MVP stabilization AC #1
       // This supports safer development and testing workflow
       const vm = wrapper.vm as any;
-      expect(vm.selectedNetwork).toBe('algorand-testnet');
+      expect(vm.selectedNetwork).toBe("algorand-testnet");
     });
   });
 
-  describe('UX Consistency - Account Terminology', () => {
+  describe("UX Consistency - Account Terminology", () => {
     it('should use "Sign In" terminology in modal title', async () => {
       const wrapper = mount(WalletConnectModal, {
         props: {
@@ -346,10 +331,10 @@ describe('Network Prioritization Integration Tests', () => {
 
       // Should use "Sign In" not "Connect Wallet"
       const modalContent = wrapper.html();
-      expect(modalContent).toContain('Sign In');
+      expect(modalContent).toContain("Sign In");
     });
 
-    it('should provide clear authentication context', async () => {
+    it("should provide clear authentication context", async () => {
       const wrapper = mount(WalletConnectModal, {
         props: {
           isOpen: true,
@@ -366,7 +351,7 @@ describe('Network Prioritization Integration Tests', () => {
 
       // Should explain authentication requirement with account/credential context
       const modalContent = wrapper.html();
-      expect(modalContent.toLowerCase()).toContain('account');
+      expect(modalContent.toLowerCase()).toContain("account");
     });
   });
 });

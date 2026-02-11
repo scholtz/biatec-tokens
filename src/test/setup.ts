@@ -10,7 +10,7 @@ vi.mock("../src/composables/useWalletManager", () => ({
       accounts: [],
       isConnecting: false,
       error: null,
-      connectionState: 'disconnected',
+      connectionState: "disconnected",
       lastError: null,
       balanceLastUpdated: null,
     },
@@ -18,17 +18,17 @@ vi.mock("../src/composables/useWalletManager", () => ({
     activeAddress: null,
     activeWallet: null,
     accounts: [],
-    formattedAddress: '',
+    formattedAddress: "",
     isReconnecting: false,
-    currentNetwork: 'voi-mainnet',
+    currentNetwork: "voi-mainnet",
     networkInfo: {
-      id: 'voi-mainnet',
-      name: 'voi-mainnet',
-      displayName: 'VOI Mainnet',
+      id: "voi-mainnet",
+      name: "voi-mainnet",
+      displayName: "VOI Mainnet",
       isTestnet: false,
-      chainType: 'AVM',
-      algodUrl: 'https://mainnet-api.voi.network',
-      genesisId: 'voi-mainnet-v1.0',
+      chainType: "AVM",
+      algodUrl: "https://mainnet-api.voi.network",
+      genesisId: "voi-mainnet-v1.0",
     },
     availableNetworks: [],
     connect: vi.fn(),
@@ -55,63 +55,51 @@ vi.mock("../src/composables/useToast", () => ({
   })),
 }));
 
-// Mock algorand authentication
-vi.mock("algorand-authentication-component-vue", () => ({
-  useAVMAuthentication: vi.fn(() => ({
-    authStore: {
-      isAuthenticated: true,
-      account: "TESTACCOUNT1234567890123456789012345678901234567890",
-      arc76email: "test@example.com",
-    },
-    logout: vi.fn(),
-  })),
-}));
-
 // Stub router-link component
 vi.mock("vue-router", () => {
   const currentRoute = { value: { params: {}, query: {}, path: "/", name: "home" } };
-  
+
   const createRouterMock = () => ({
     push: vi.fn((pathOrObject: string | { path?: string; query?: Record<string, any> }) => {
-      let routePath = '/';
+      let routePath = "/";
       let query: Record<string, string> = {};
-      
-      if (typeof pathOrObject === 'string') {
+
+      if (typeof pathOrObject === "string") {
         // Parse string path like '/compliance/token123?network=VOI'
-        const [pathPart, queryString] = pathOrObject.split('?');
+        const [pathPart, queryString] = pathOrObject.split("?");
         routePath = pathPart;
-        
+
         if (queryString) {
-          queryString.split('&').forEach(pair => {
-            const [key, value] = pair.split('=');
+          queryString.split("&").forEach((pair) => {
+            const [key, value] = pair.split("=");
             if (key && value) {
               query[key] = decodeURIComponent(value);
             }
           });
         }
-      } else if (typeof pathOrObject === 'object') {
+      } else if (typeof pathOrObject === "object") {
         // Handle route object like { path: '/compliance/token123', query: { network: 'VOI' } }
-        routePath = pathOrObject.path || '/';
+        routePath = pathOrObject.path || "/";
         query = pathOrObject.query || {};
       }
-      
+
       // Parse route params from path
       const params: Record<string, string> = {};
-      const pathParts = routePath.split('/').filter(Boolean);
+      const pathParts = routePath.split("/").filter(Boolean);
       if (pathParts.length >= 2) {
-        if (pathParts[0] === 'compliance' || pathParts[0] === 'token' || pathParts[0] === 'tokens') {
+        if (pathParts[0] === "compliance" || pathParts[0] === "token" || pathParts[0] === "tokens") {
           params.id = pathParts[1];
         }
       }
-      
+
       // Update currentRoute
       currentRoute.value = {
         params,
         query,
         path: routePath,
-        name: pathParts[0] || 'home'
+        name: pathParts[0] || "home",
       };
-      
+
       return Promise.resolve();
     }),
     replace: vi.fn(),

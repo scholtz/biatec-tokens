@@ -2,15 +2,9 @@
  * Utility functions for token allowance management
  */
 
-import type {
-  EVMTokenAllowance,
-  AVMAssetOptIn,
-} from "../types/allowances";
-import {
-  AllowanceRiskLevel,
-  AllowanceActivityStatus,
-} from "../types/allowances";
-import type { NetworkId } from "../composables/useWalletManager";
+import { NetworkId } from "../stores/network";
+import type { EVMTokenAllowance, AVMAssetOptIn } from "../types/allowances";
+import { AllowanceRiskLevel, AllowanceActivityStatus } from "../types/allowances";
 
 // Maximum safe integer that can be represented in JavaScript (unused but kept for reference)
 // const MAX_UINT256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935";
@@ -34,11 +28,7 @@ export function isUnlimitedAllowance(amount: string): boolean {
 /**
  * Format allowance amount to human-readable string
  */
-export function formatAllowanceAmount(
-  amount: string,
-  decimals: number,
-  symbol: string
-): string {
+export function formatAllowanceAmount(amount: string, decimals: number, symbol: string): string {
   if (isUnlimitedAllowance(amount)) {
     return "Unlimited";
   }
@@ -129,17 +119,13 @@ export function calculateAVMRiskLevel(_allowance: Partial<AVMAssetOptIn>): Allow
 /**
  * Determine activity status based on last interaction time
  */
-export function calculateActivityStatus(
-  lastInteractionTime?: Date
-): AllowanceActivityStatus {
+export function calculateActivityStatus(lastInteractionTime?: Date): AllowanceActivityStatus {
   if (!lastInteractionTime) {
     return AllowanceActivityStatus.UNKNOWN;
   }
 
   const now = new Date();
-  const daysSinceLastInteraction = Math.floor(
-    (now.getTime() - lastInteractionTime.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const daysSinceLastInteraction = Math.floor((now.getTime() - lastInteractionTime.getTime()) / (1000 * 60 * 60 * 24));
 
   if (daysSinceLastInteraction < 30) {
     return AllowanceActivityStatus.ACTIVE;
@@ -157,7 +143,7 @@ export function generateAllowanceId(
   networkId: NetworkId,
   ownerAddress: string,
   spenderAddress: string,
-  tokenIdentifier: string // Token address for EVM, asset ID for AVM
+  tokenIdentifier: string, // Token address for EVM, asset ID for AVM
 ): string {
   return `${networkId}-${ownerAddress}-${spenderAddress}-${tokenIdentifier}`.toLowerCase();
 }
@@ -205,9 +191,7 @@ export function isValidEthereumAddress(address: string): boolean {
 /**
  * Get risk badge color
  */
-export function getRiskBadgeVariant(
-  riskLevel: AllowanceRiskLevel
-): "error" | "warning" | "default" | "success" {
+export function getRiskBadgeVariant(riskLevel: AllowanceRiskLevel): "error" | "warning" | "default" | "success" {
   switch (riskLevel) {
     case AllowanceRiskLevel.CRITICAL:
       return "error";
@@ -225,9 +209,7 @@ export function getRiskBadgeVariant(
 /**
  * Get activity badge color
  */
-export function getActivityBadgeVariant(
-  activityStatus: AllowanceActivityStatus
-): "success" | "warning" | "default" {
+export function getActivityBadgeVariant(activityStatus: AllowanceActivityStatus): "success" | "warning" | "default" {
   switch (activityStatus) {
     case AllowanceActivityStatus.ACTIVE:
       return "success";

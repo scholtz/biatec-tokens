@@ -366,7 +366,6 @@ For these critical dependencies, EXTRA verification is required:
 
 **Authentication:**
 
-- `algorand-authentication-component-vue`, authentication libraries
 - **Extra:** Test login/logout flows, session management, token refresh
 - **Manual:** Verify auth persists across page reloads
 
@@ -613,28 +612,30 @@ expect(isVisible || true).toBe(true); // Pass if element not found
 export default defineConfig({
   // ... other vite config ...
   test: {
-    environment: 'happy-dom',  // Provides browser APIs (localStorage, DOM)
-    setupFiles: ['src/test/setup.ts'],  // Global test setup
-    globals: true,  // Makes test functions globally available
+    environment: "happy-dom", // Provides browser APIs (localStorage, DOM)
+    setupFiles: ["src/test/setup.ts"], // Global test setup
+    globals: true, // Makes test functions globally available
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      provider: "v8",
+      reporter: ["text", "json", "html"],
       statements: 78,
       branches: 69,
       functions: 68.5,
-      lines: 79
-    }
-  }
+      lines: 79,
+    },
+  },
 });
 ```
 
 **Why This Matters**:
+
 - CI environment doesn't provide browser APIs by default
 - Tests using `localStorage`, DOM methods, or browser globals will fail without happy-dom
 - Setup file must run before tests to configure global mocks
 - Coverage thresholds enforce quality standards
 
 **Common Error Without This**:
+
 ```
 ReferenceError: localStorage is not defined
 ```
@@ -644,27 +645,35 @@ ReferenceError: localStorage is not defined
 **MANDATORY**: E2E tests must NEVER use `localStorage.setItem('wallet_connected', 'true')`.
 
 **Why**: The platform uses email/password authentication only (wallet-free architecture per business-owner-roadmap.md). Using `wallet_connected` causes tests to fail because:
+
 1. Auth store doesn't recognize `wallet_connected` localStorage key
 2. Router auth guard redirects to home page
 3. Tests timeout waiting for elements that never render
 
 **Correct Pattern**:
+
 ```typescript
 // ❌ WRONG - Will cause test failures
 await page.evaluate(() => {
-  localStorage.setItem('wallet_connected', 'true');
+  localStorage.setItem("wallet_connected", "true");
 });
 
 // ✅ CORRECT - Wallet-free auth pattern
 await page.evaluate(() => {
-  localStorage.setItem('algorand_user', JSON.stringify({
-    email: 'test@example.com',
-    address: 'TESTADDRESS123',
-    arc76email: 'test@example.com'
-  }));
-  localStorage.setItem('subscription_cache', JSON.stringify({
-    subscription_status: 'active'
-  }));
+  localStorage.setItem(
+    "algorand_user",
+    JSON.stringify({
+      email: "test@example.com",
+      address: "TESTADDRESS123",
+      arc76email: "test@example.com",
+    }),
+  );
+  localStorage.setItem(
+    "subscription_cache",
+    JSON.stringify({
+      subscription_status: "active",
+    }),
+  );
 });
 ```
 
@@ -685,13 +694,10 @@ Before finishing ANY work, ALWAYS verify:
 
 1. **Display Name Mismatches**: E2E tests search for "Algorand" but UI shows "Algorand Mainnet"
    - Fix: Use regex patterns `/Algorand/i` instead of exact text
-   
 2. **Timing Issues**: Tests timeout waiting for elements
    - Fix: Use `page.waitForLoadState('networkidle')`, increase timeouts to 3000ms
-   
 3. **Wallet-Connected Usage**: Tests use incompatible auth pattern
    - Fix: Remove `wallet_connected`, use `algorand_user` + `subscription_cache`
-   
 4. **Missing Vitest Config**: localStorage undefined errors
    - Fix: Add test configuration to vite.config.ts
 
@@ -726,12 +732,14 @@ If ANY check fails, STOP and fix immediately. Do not mark work complete until AL
 **MANDATORY**: In `src/main.ts`, the auth store MUST be initialized and awaited before mounting the app.
 
 **Why This Matters**:
+
 - Router auth guard checks `localStorage.getItem('algorand_user')` directly
 - Components check `authStore.isAuthenticated` (computed: `user.value && isConnected.value`)
 - If app mounts before auth store initializes, components see `isAuthenticated = false` even though localStorage has user data
 - This causes UI elements to not render, breaking E2E tests and user experience
 
 **Correct Pattern** (src/main.ts):
+
 ```typescript
 app.use(pinia);
 app.use(router);
@@ -745,6 +753,7 @@ app.use(router);
 ```
 
 **Incorrect Pattern** (causes race condition):
+
 ```typescript
 // ❌ WRONG - Don't do this!
 const authStore = useAuthStore();
@@ -753,18 +762,21 @@ app.mount("#app"); // Components render with uninitialized auth state
 ```
 
 **Symptoms of Missing await**:
+
 - E2E tests fail with "element not visible" timeouts on auth-required pages
 - Tests pass router guards (checks localStorage) but UI doesn't render (checks auth store)
 - Users see loading state or redirects even when authenticated
 - 46+ E2E tests failing with network cards not visible
 
 **When to Update This**:
+
 - Adding new stores that need pre-initialization
 - Modifying auth store initialization logic
 - Changing app startup sequence
 - Debugging E2E test failures on auth-required pages
 
 **Testing**:
+
 - E2E tests MUST set localStorage via `page.addInitScript()` before navigation
 - Verify `authStore.isAuthenticated` becomes true after initialization
 - Check components render correctly on first page load

@@ -1,8 +1,4 @@
-/**
- * Types for token allowance management across EVM and AVM chains
- */
-
-import type { ChainType, NetworkId } from "../composables/useWalletManager";
+import { ChainType, NetworkId } from "../stores/network";
 
 /**
  * Risk level for allowances

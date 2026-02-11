@@ -15,10 +15,7 @@
           </div>
 
           <!-- Landing Entry Module (for unauthenticated users) -->
-          <LandingEntryModule
-            v-if="shouldShowLandingEntry"
-            @email-signup="handleEmailSignup"
-          />
+          <LandingEntryModule v-if="shouldShowLandingEntry" @email-signup="handleEmailSignup" />
 
           <!-- CTA Buttons (for authenticated users) -->
           <div v-else class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
@@ -100,13 +97,8 @@
     </div>
 
     <!-- Sign-In Modal (Email/Password Authentication) -->
-    <WalletConnectModal 
-      :is-open="showAuthModal" 
-      :show-network-selector="false"
-      @close="showAuthModal = false" 
-      @connected="handleAuthComplete" 
-    />
-    
+    <WalletConnectModal :is-open="showAuthModal" :show-network-selector="false" @close="showAuthModal = false" @connected="handleAuthComplete" />
+
     <!-- Onboarding Checklist (Persistent) -->
     <OnboardingChecklist />
   </MainLayout>
@@ -117,7 +109,6 @@ import { computed, ref, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useTokenStore } from "../stores/tokens";
 import { useOnboardingStore } from "../stores/onboarding";
-import { useWalletManager } from "../composables/useWalletManager";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 import { telemetryService } from "../services/TelemetryService";
 import Button from "../components/ui/Button.vue";
@@ -128,17 +119,18 @@ import WalletConnectModal from "../components/WalletConnectModal.vue";
 import LandingEntryModule from "../components/LandingEntryModule.vue";
 import OnboardingChecklist from "../components/OnboardingChecklist.vue";
 import { PlusCircleIcon, ChartBarIcon, BoltIcon, ShieldCheckIcon, GlobeAltIcon } from "@heroicons/vue/24/outline";
+import { useAuthStore } from "../stores/auth";
 
 const tokenStore = useTokenStore();
 const onboardingStore = useOnboardingStore();
 const router = useRouter();
 const route = useRoute();
-const { isConnected } = useWalletManager();
+const authStore = useAuthStore();
 
 const showAuthModal = ref(false);
 
 const shouldShowLandingEntry = computed(() => {
-  return !isConnected.value && !onboardingStore.state.hasSeenWelcome;
+  return !authStore.isAuthenticated && !onboardingStore.state.hasSeenWelcome;
 });
 
 const features = [
@@ -169,13 +161,13 @@ const stats = computed(() => [
 const handleEmailSignup = () => {
   // For now, just navigate to discovery dashboard
   // In future, implement email signup flow
-  telemetryService.trackEmailSignupStarted({ source: 'home' });
+  telemetryService.trackEmailSignupStarted({ source: "home" });
   onboardingStore.showOnboarding();
-  router.push({ name: 'DiscoveryDashboard' });
+  router.push({ name: "DiscoveryDashboard" });
 };
 
 const handleCreateToken = () => {
-  if (isConnected.value) {
+  if (authStore.isAuthenticated) {
     router.push("/create");
   } else {
     localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, "/create");
@@ -184,7 +176,7 @@ const handleCreateToken = () => {
 };
 
 const handleViewDashboard = () => {
-  if (isConnected.value) {
+  if (authStore.isAuthenticated) {
     router.push("/dashboard");
   } else {
     localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, "/dashboard");
@@ -193,12 +185,12 @@ const handleViewDashboard = () => {
 };
 
 const handleDiscoverTokens = () => {
-  router.push({ name: 'DiscoveryDashboard' });
+  router.push({ name: "DiscoveryDashboard" });
 };
 
 const handleAuthComplete = () => {
   showAuthModal.value = false;
-  onboardingStore.markStepComplete('connect-wallet');
+  onboardingStore.markStepComplete("connect-wallet");
 
   // Check if there's a redirect destination
   const redirectPath = localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);
@@ -214,7 +206,7 @@ const handleAuthComplete = () => {
 onMounted(() => {
   // Initialize onboarding store
   onboardingStore.initialize();
-  
+
   // Check if we should show authentication modal (email/password)
   // Support both showAuth and showOnboarding (legacy) parameters for backward compatibility
   if (route.query.showAuth === "true" || route.query.showOnboarding === "true") {

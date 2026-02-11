@@ -15,11 +15,7 @@
 
         <!-- Navigation Links -->
         <div class="hidden md:flex items-center space-x-8">
-          <router-link
-            to="/"
-            class="text-white hover:text-biatec-accent transition-colors duration-200 font-medium text-lg relative group"
-            :class="{ 'text-biatec-accent': $route.name === 'Home' }"
-          >
+          <router-link to="/" class="text-white hover:text-biatec-accent transition-colors duration-200 font-medium text-lg relative group" :class="{ 'text-biatec-accent': $route.name === 'Home' }">
             Home
             <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-biatec-accent transition-all duration-200 group-hover:w-full" :class="{ 'w-full': $route.name === 'Home' }"></span>
           </router-link>
@@ -79,25 +75,22 @@
           <div class="relative">
             <button
               @click="handleWalletClick"
-              :disabled="walletState.isConnecting"
+              :disabled="authStore.isAuthenticated"
               class="btn-primary px-6 py-3 rounded-xl text-white font-medium text-sm flex items-center space-x-2 disabled:opacity-50 relative"
             >
               <i class="pi pi-user text-lg"></i>
               <span>{{ authButtonText }}</span>
-              <i v-if="isConnected" class="pi pi-chevron-down text-sm"></i>
+              <i v-if="authStore.isAuthenticated" class="pi pi-chevron-down text-sm"></i>
             </button>
 
             <!-- Account Menu Dropdown -->
             <Transition name="dropdown">
-              <div
-                v-if="showAccountMenu && isConnected"
-                class="absolute right-0 mt-2 w-64 glass-effect rounded-xl shadow-2xl border border-white/10 p-2 z-50"
-              >
+              <div v-if="showAccountMenu && authStore.isAuthenticated" class="absolute right-0 mt-2 w-64 glass-effect rounded-xl shadow-2xl border border-white/10 p-2 z-50">
                 <div class="p-3 border-b border-white/10 mb-2">
                   <div class="text-xs text-gray-400 mb-1">{{ AUTH_UI_COPY.CONNECTED_ADDRESS }}</div>
-                  <div class="text-sm text-white font-mono break-all" :title="activeAddress ?? undefined">{{ formattedAddress }}</div>
+                  <div class="text-sm text-white font-mono break-all" :title="authStore.account ?? undefined">{{ authStore.formattedAddress }}</div>
                 </div>
-                
+
                 <router-link
                   to="/account/security"
                   @click="showAccountMenu = false"
@@ -106,11 +99,8 @@
                   <i class="pi pi-shield"></i>
                   <span class="font-medium">{{ AUTH_UI_COPY.SECURITY_CENTER }}</span>
                 </router-link>
-                
-                <button
-                  @click="handleDisconnect"
-                  class="w-full p-3 rounded-lg text-left hover:bg-red-500/10 transition-colors flex items-center gap-3 text-red-400"
-                >
+
+                <button @click="handleDisconnect" class="w-full p-3 rounded-lg text-left hover:bg-red-500/10 transition-colors flex items-center gap-3 text-red-400">
                   <i class="pi pi-sign-out"></i>
                   <span class="font-medium">{{ AUTH_UI_COPY.SIGN_OUT }}</span>
                 </button>
@@ -120,18 +110,10 @@
         </div>
 
         <!-- Sign-In Modal (Email/Password) -->
-        <WalletConnectModal
-          :is-open="showWalletModal"
-          :show-network-selector="false"
-          @close="showWalletModal = false"
-          @connected="handleConnected"
-        />
+        <WalletConnectModal :is-open="showWalletModal" :show-network-selector="false" @close="showWalletModal = false" @connected="handleConnected" />
 
         <!-- Mobile Menu Button -->
-        <button
-          @click="toggleMobileMenu"
-          class="md:hidden p-3 rounded-xl text-white hover:bg-white/10 transition-colors"
-        >
+        <button @click="toggleMobileMenu" class="md:hidden p-3 rounded-xl text-white hover:bg-white/10 transition-colors">
           <i class="pi pi-bars text-xl"></i>
         </button>
       </div>
@@ -140,113 +122,80 @@
     <!-- Mobile Menu -->
     <div v-if="showMobileMenu" class="md:hidden glass-effect border-t border-white/10">
       <div class="px-4 py-4 space-y-2">
-        <router-link
-          to="/"
-          @click="toggleMobileMenu"
-          class="block px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors font-medium"
-        >
-          Home
-        </router-link>
-        <router-link
-          to="/create"
-          @click="toggleMobileMenu"
-          class="block px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors font-medium"
-        >
-          Create Token
-        </router-link>
-        <router-link
-          to="/dashboard"
-          @click="toggleMobileMenu"
-          class="block px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors font-medium"
-        >
-          Dashboard
-        </router-link>
-        <router-link
-          to="/attestations"
-          @click="toggleMobileMenu"
-          class="block px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors font-medium"
-        >
-          Attestations
-        </router-link>
-        <router-link
-          to="/settings"
-          @click="toggleMobileMenu"
-          class="block px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors font-medium"
-        >
-          Settings
-        </router-link>
+        <router-link to="/" @click="toggleMobileMenu" class="block px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors font-medium"> Home </router-link>
+        <router-link to="/create" @click="toggleMobileMenu" class="block px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors font-medium"> Create Token </router-link>
+        <router-link to="/dashboard" @click="toggleMobileMenu" class="block px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors font-medium"> Dashboard </router-link>
+        <router-link to="/attestations" @click="toggleMobileMenu" class="block px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors font-medium"> Attestations </router-link>
+        <router-link to="/settings" @click="toggleMobileMenu" class="block px-4 py-3 text-white hover:bg-white/10 rounded-xl transition-colors font-medium"> Settings </router-link>
       </div>
     </div>
   </nav>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useWalletManager } from '../composables/useWalletManager'
+import { ref, computed } from "vue";
 // AUTH_STORAGE_KEYS removed - no longer used in this component
-import { AUTH_UI_COPY } from '../constants/uiCopy'
-import { telemetryService } from '../services/TelemetryService'
-import WalletConnectModal from './WalletConnectModal.vue'
+import { AUTH_UI_COPY } from "../constants/uiCopy";
+import { telemetryService } from "../services/TelemetryService";
+import WalletConnectModal from "./WalletConnectModal.vue";
+import { useAuthStore } from "../stores/auth";
 // WalletOnboardingWizard removed per MVP requirements (wallet-free mode)
 // NetworkSwitcher removed per MVP requirements (wallet-free mode)
 
-const { isConnected, activeAddress, formattedAddress, disconnect, walletState } = useWalletManager()
-
-const showMobileMenu = ref(false)
-const showWalletModal = ref(false)
-const showAccountMenu = ref(false)
-const loginStartTime = ref<number | null>(null)
+const authStore = useAuthStore();
+const showMobileMenu = ref(false);
+const showWalletModal = ref(false);
+const showAccountMenu = ref(false);
+const loginStartTime = ref<number | null>(null);
 
 // hasCompletedOnboarding removed - no longer used per wallet-free mode
 
 const authButtonText = computed(() => {
-  if (walletState.value.isConnecting) return AUTH_UI_COPY.SIGNING_IN
-  if (isConnected.value && formattedAddress.value) return formattedAddress.value
-  return AUTH_UI_COPY.SIGN_IN
-})
+  if (authStore.isAuthenticated) return authStore.formattedAddress;
+  return AUTH_UI_COPY.SIGN_IN;
+});
 
 const toggleMobileMenu = () => {
-  showMobileMenu.value = !showMobileMenu.value
-}
+  showMobileMenu.value = !showMobileMenu.value;
+};
 
 const handleWalletClick = () => {
-  if (isConnected.value) {
+  if (authStore.isAuthenticated) {
     // Toggle account menu when authenticated
-    showAccountMenu.value = !showAccountMenu.value
+    showAccountMenu.value = !showAccountMenu.value;
   } else {
     // Track login started
-    loginStartTime.value = Date.now()
-    telemetryService.trackLoginStarted({ source: 'navbar' })
-    
+    loginStartTime.value = Date.now();
+    telemetryService.trackLoginStarted({ source: "navbar" });
+
     // Show authentication modal for all users (email/password)
-    showWalletModal.value = true
+    showWalletModal.value = true;
   }
-}
+};
 
 const handleDisconnect = async () => {
   try {
-    await disconnect()
-    showAccountMenu.value = false
+    await authStore.signOut();
+    showAccountMenu.value = false;
   } catch (error) {
-    console.error('Failed to disconnect:', error)
+    console.error("Failed to disconnect:", error);
   }
-}
+};
 
 const handleConnected = () => {
-  showWalletModal.value = false
-  
+  showWalletModal.value = false;
+
   // Track login completed with duration
   if (loginStartTime.value) {
-    const durationMs = Date.now() - loginStartTime.value
-    const { currentNetwork } = useWalletManager()
+    const durationMs = Date.now() - loginStartTime.value;
     telemetryService.trackLoginCompleted({
-      walletId: walletState.value.activeWallet || 'unknown',
-      network: currentNetwork.value || 'unknown',
-      durationMs
-    })
-    loginStartTime.value = null
+      walletId: authStore.account || "unknown",
+      network: "unknown",
+      durationMs,
+    });
+    loginStartTime.value = null;
   }
-}
+};
 </script>
 <style scoped>
 .dropdown-enter-active,
