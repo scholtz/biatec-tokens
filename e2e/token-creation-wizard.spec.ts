@@ -639,6 +639,23 @@ test.describe('Token Creation Wizard E2E', () => {
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(3000)
     
+    // DEBUG: Log current URL and localStorage to understand redirects
+    const currentUrl = page.url()
+    const localStorageData = await page.evaluate(() => {
+      return {
+        algorand_user: localStorage.getItem('algorand_user'),
+        subscription_cache: localStorage.getItem('subscription_cache'),
+        url: window.location.href
+      }
+    })
+    console.log('DEBUG - Current URL:', currentUrl)
+    console.log('DEBUG - localStorage:', localStorageData)
+    
+    // If redirected, fail with clear message
+    if (!currentUrl.includes('/create/wizard')) {
+      throw new Error(`Test was redirected from /create/wizard to ${currentUrl}. This indicates auth guard is blocking access.`)
+    }
+    
     // Wait for the "Choose Your Network" heading to be visible
     const networkHeading = page.locator('h4:has-text("Choose Your Network")').first()
     await networkHeading.waitFor({ state: 'visible', timeout: 15000 })
