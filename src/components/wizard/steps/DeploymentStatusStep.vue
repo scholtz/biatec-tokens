@@ -128,13 +128,36 @@
       >
         <div class="flex items-start gap-3 mb-4">
           <i class="pi pi-times-circle text-red-400 text-2xl"></i>
-          <div>
+          <div class="flex-1">
             <h4 class="text-md font-semibold text-red-400 mb-1">
               Deployment Failed
             </h4>
-            <p class="text-sm text-gray-300">
+            <p class="text-sm text-gray-300 mb-3">
               Something went wrong during deployment. Here are your options:
             </p>
+            
+            <!-- Error Details -->
+            <div v-if="deploymentError" class="mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
+              <div class="flex items-start gap-2 mb-2">
+                <i class="pi pi-exclamation-triangle text-red-400 text-sm mt-0.5"></i>
+                <div class="flex-1">
+                  <p class="text-sm font-semibold text-red-300 mb-1">
+                    {{ deploymentError.message }}
+                  </p>
+                  <p v-if="deploymentError.code" class="text-xs text-gray-400 mb-2">
+                    Error Code: {{ deploymentError.code }}
+                  </p>
+                </div>
+              </div>
+              
+              <!-- Remediation Steps -->
+              <div class="mt-3 pt-3 border-t border-red-500/20">
+                <p class="text-xs font-semibold text-gray-300 mb-1">How to resolve:</p>
+                <p class="text-xs text-gray-400">
+                  {{ deploymentError.remediation }}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -301,6 +324,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useTokenDraftStore } from '../../../stores/tokenDraft'
+import { useAuthStore } from '../../../stores/auth'
+import { analyticsService } from '../../../services/analytics'
+import { DeploymentStatusService } from '../../../services/DeploymentStatusService'
+import type { TokenDeploymentRequest } from '../../../types/api'
+import { TokenStandard } from '../../../types/api'
 import WizardStep from '../WizardStep.vue'
 
 interface DeploymentStage {
@@ -321,14 +349,19 @@ interface DeploymentResult {
   standard: string
   assetId: string
   txId: string
+  contractAddress?: string
+  explorerUrl?: string
 }
 
 const tokenDraftStore = useTokenDraftStore()
+const authStore = useAuthStore()
+const deploymentService = new DeploymentStatusService()
 
 const showErrors = ref(false)
 const errors = ref<string[]>([])
-const deploymentStatus = ref<'pending' | 'in-progress' | 'completed' | 'failed'>('pending')
+const deploymentStatus = ref<'idle' | 'pending' | 'in-progress' | 'completed' | 'failed'>('pending')
 const pollingInterval = ref<ReturnType<typeof setInterval> | null>(null)
+const useRealApi = ref(true) // Toggle to enable/disable real API integration
 
 const deploymentStages = ref<DeploymentStage[]>([
   {
@@ -380,14 +413,165 @@ const deploymentResult = ref<DeploymentResult>({
   standard: '',
   assetId: '',
   txId: '',
+  contractAddress: '',
+  explorerUrl: '',
 })
 
-const startDeployment = () => {
+const deploymentError = ref<{
+  message: string
+  code?: string
+  recoverable: boolean
+  remediation: string
+} | null>(null)
+
+const startDeployment = async () => {
   deploymentStatus.value = 'in-progress'
-  console.log('[Analytics] Token deployment started')
+  deploymentError.value = null
   
-  // Mock deployment process with stages
-  mockDeploymentProcess()
+  // Track analytics
+  analyticsService.trackEvent({
+    event: 'token_deployment_started',
+    category: 'deployment',
+    label: tokenDraftStore.currentDraft?.selectedStandard || 'unknown',
+  })
+  
+  const draft = tokenDraftStore.currentDraft
+  if (!draft) {
+    console.error('No draft found for deployment')
+    deploymentStatus.value = 'failed'
+    deploymentError.value = {
+      message: 'No token configuration found',
+      code: 'NO_DRAFT',
+      recoverable: false,
+      remediation: 'Please complete the token configuration steps before deploying.',
+    }
+    return
+  }
+
+  // Check if we should use real API or mock
+  if (useRealApi.value) {
+    await startRealDeployment(draft)
+  } else {
+    // Fall back to mock deployment for testing
+    mockDeploymentProcess()
+  }
+}
+
+const startRealDeployment = async (draft: any) => {
+  try {
+    // Build deployment request from draft
+    const request = buildDeploymentRequest(draft)
+    
+    // Start deployment with real-time updates
+    await deploymentService.startDeployment(request, (state) => {
+      // Update local state from service state
+      deploymentStages.value = state.stages
+      deploymentStatus.value = state.status
+      
+      if (state.result) {
+        deploymentResult.value = state.result
+      }
+      
+      if (state.error) {
+        deploymentError.value = state.error
+        
+        // Track failure analytics
+        analyticsService.trackEvent({
+          event: 'token_deployment_failed',
+          category: 'deployment',
+          label: state.error.code || 'unknown',
+        })
+      }
+      
+      if (state.status === 'completed') {
+        // Track success analytics
+        analyticsService.trackEvent({
+          event: 'token_deployment_completed',
+          category: 'deployment',
+          label: draft.selectedStandard || 'unknown',
+        })
+      }
+    })
+  } catch (error: any) {
+    console.error('Real deployment failed:', error)
+    deploymentStatus.value = 'failed'
+    deploymentError.value = {
+      message: error.message || 'Deployment failed',
+      code: 'DEPLOYMENT_ERROR',
+      recoverable: true,
+      remediation: 'Please try again. If the problem persists, contact support.',
+    }
+  }
+}
+
+const buildDeploymentRequest = (draft: any): TokenDeploymentRequest => {
+  const walletAddress = authStore.user?.address || authStore.account || ''
+  
+  // Map standard string to TokenStandard enum
+  const standardMap: Record<string, TokenStandard> = {
+    'ERC20': TokenStandard.ERC20,
+    'ARC3': TokenStandard.ARC3,
+    'ARC200': TokenStandard.ARC200,
+    'ARC1400': TokenStandard.ARC1400,
+  }
+  
+  const standard = standardMap[draft.selectedStandard || ''] || TokenStandard.ARC3
+  
+  // Build base request
+  const baseRequest = {
+    standard,
+    name: draft.name,
+    walletAddress,
+    description: draft.description,
+    icon: draft.imageUrl,
+  }
+  
+  // Build standard-specific request
+  if (standard === TokenStandard.ERC20) {
+    return {
+      ...baseRequest,
+      standard: TokenStandard.ERC20,
+      symbol: draft.symbol,
+      decimals: Number(draft.decimals) || 18,
+      totalSupply: (draft.totalSupply || draft.supply || '1000000').toString(),
+    }
+  } else if (standard === TokenStandard.ARC3) {
+    return {
+      ...baseRequest,
+      standard: TokenStandard.ARC3,
+      unitName: draft.symbol,
+      total: Number(draft.supply) || 1,
+      decimals: Number(draft.decimals) || 0,
+      url: draft.url,
+      metadata: draft.attributes ? {
+        name: draft.name,
+        description: draft.description,
+        image: draft.imageUrl,
+        properties: draft.attributes.reduce((acc: any, attr: any) => {
+          acc[attr.trait_type] = attr.value
+          return acc
+        }, {}),
+      } : undefined,
+    }
+  } else if (standard === TokenStandard.ARC200) {
+    return {
+      ...baseRequest,
+      standard: TokenStandard.ARC200,
+      symbol: draft.symbol,
+      decimals: Number(draft.decimals) || 0,
+      totalSupply: (draft.totalSupply || draft.supply || '1000000').toString(),
+      complianceMetadata: draft.micaMetadata,
+    }
+  }
+  
+  // Default to ARC3
+  return {
+    ...baseRequest,
+    standard: TokenStandard.ARC3,
+    unitName: draft.symbol,
+    total: Number(draft.supply) || 1,
+    decimals: Number(draft.decimals) || 0,
+  }
 }
 
 const mockDeploymentProcess = () => {
@@ -444,6 +628,9 @@ const mockDeploymentProcess = () => {
 }
 
 const retryDeployment = () => {
+  // Reset error state
+  deploymentError.value = null
+  
   // Reset all stages
   deploymentStages.value.forEach(stage => {
     stage.status = 'pending'
@@ -452,22 +639,41 @@ const retryDeployment = () => {
     stage.error = undefined
   })
   
+  // Track retry analytics
+  analyticsService.trackEvent({
+    event: 'token_deployment_retry',
+    category: 'deployment',
+    label: tokenDraftStore.currentDraft?.selectedStandard || 'unknown',
+  })
+  
   startDeployment()
 }
 
 const saveDraftAndExit = () => {
-  console.log('[Analytics] User saved draft and exited after deployment failure')
+  analyticsService.trackEvent({
+    event: 'deployment_draft_saved',
+    category: 'deployment',
+    label: 'after_failure',
+  })
   // Emit event to parent to handle navigation
 }
 
 const contactSupport = () => {
-  console.log('[Analytics] User contacted support for deployment issue')
+  analyticsService.trackEvent({
+    event: 'deployment_support_contacted',
+    category: 'deployment',
+    label: deploymentError.value?.code || 'unknown',
+  })
   // Open support dialog or redirect to support page
 }
 
 const copyToClipboard = (text: string) => {
   navigator.clipboard.writeText(text)
-  console.log('Copied to clipboard:', text)
+  analyticsService.trackEvent({
+    event: 'deployment_info_copied',
+    category: 'deployment',
+    label: 'clipboard',
+  })
   // Show toast notification
 }
 
@@ -478,6 +684,12 @@ const downloadSummary = () => {
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
+  })
+  
+  analyticsService.trackEvent({
+    event: 'deployment_audit_downloaded',
+    category: 'deployment',
+    label: deploymentResult.value.tokenSymbol,
   })
   
   // Create comprehensive audit summary
@@ -649,20 +861,35 @@ infrastructure but does not provide legal or regulatory advice.
   textLink.click()
   URL.revokeObjectURL(textUrl)
   
-  console.log('[Analytics] Comprehensive audit summary downloaded (JSON + TXT)')
+  analyticsService.trackEvent({
+    event: 'audit_summary_downloaded',
+    category: 'compliance',
+    label: 'comprehensive',
+  })
 }
 
 const viewOnExplorer = () => {
-  const explorerUrls: Record<string, string> = {
-    VOI: `https://voi.observer/asset/${deploymentResult.value.assetId}`,
-    Aramid: `https://aramid.observer/asset/${deploymentResult.value.assetId}`,
-    Ethereum: `https://etherscan.io/token/${deploymentResult.value.assetId}`,
+  const url = deploymentResult.value.explorerUrl
+  if (url) {
+    window.open(url, '_blank')
+  } else {
+    // Fallback to building URL from asset ID and network
+    const explorerUrls: Record<string, string> = {
+      VOI: `https://voi.observer/asset/${deploymentResult.value.assetId}`,
+      Aramid: `https://aramid.observer/asset/${deploymentResult.value.assetId}`,
+      Ethereum: `https://etherscan.io/token/${deploymentResult.value.assetId}`,
+      Algorand: `https://algoexplorer.io/asset/${deploymentResult.value.assetId}`,
+    }
+    
+    const fallbackUrl = explorerUrls[deploymentResult.value.network] || '#'
+    window.open(fallbackUrl, '_blank')
   }
   
-  const url = explorerUrls[deploymentResult.value.network] || '#'
-  window.open(url, '_blank')
-  
-  console.log('[Analytics] Viewed token on explorer')
+  analyticsService.trackEvent({
+    event: 'token_viewed_on_explorer',
+    category: 'deployment',
+    label: deploymentResult.value.network,
+  })
 }
 
 const isValid = computed(() => {
@@ -680,6 +907,9 @@ onUnmounted(() => {
   if (pollingInterval.value) {
     clearInterval(pollingInterval.value)
   }
+  // Clean up deployment service
+  deploymentService.stopPolling()
+  deploymentService.reset()
 })
 
 defineExpose({
