@@ -91,7 +91,89 @@ await expect(element).toHaveAttribute('aria-expanded', 'true');
    - Local: 5000-10000ms may work
    - CI: 15000ms recommended (slower environments)
 
+5. **Playwright Strict Mode**: Avoid ambiguous selectors
+   - ❌ BAD: `page.getByText('Jurisdiction')` when word appears multiple times
+   - ✅ GOOD: `page.getByText('Jurisdiction').first()` or use count() to check existence
+   - ✅ BETTER: Use role-based selectors with specific names
+
 **Product Owner Requirement**: E2E tests must pass in CI. If tests are flaky due to timing, fix the waits - never skip or disable tests.
+
+### E2E Test Coverage Requirements for New Features
+
+**MANDATORY**: When implementing new user-facing features, E2E tests are REQUIRED before marking work complete.
+
+**Minimum E2E Coverage**:
+- New views/pages: At least 10 tests covering:
+  - Page navigation and title
+  - Main UI elements visibility
+  - Empty states
+  - Action buttons functionality
+  - Error states
+  - Keyboard navigation
+  - Loading states with proper async handling
+  
+- New wizard steps: At least 5 tests covering:
+  - Step display and validation
+  - Required field warnings
+  - Modal/dialog interactions
+  - Navigation between steps
+  - Integration with wizard state
+
+**Example Structure**:
+```typescript
+test.describe('New Feature Name', () => {
+  test.beforeEach(async ({ page }) => {
+    // Auth setup
+    // Navigate to feature
+    // Wait for load
+  });
+
+  test('should display page correctly', async ({ page }) => {
+    // Test rendering
+  });
+
+  test('should handle user actions', async ({ page }) => {
+    // Test interactions
+  });
+  
+  // ... more tests
+});
+```
+
+**Quality Gate**: PR cannot be marked complete without:
+- ✅ E2E test file created (e2e/feature-name.spec.ts)
+- ✅ Minimum coverage met (10+ tests for views, 5+ for wizard steps)
+- ✅ All E2E tests passing locally AND in CI
+- ✅ Tests use proper async patterns (networkidle, timeouts, visibility checks)
+
+### Wizard Step Validation Testing
+
+**CRITICAL**: When adding new validation requirements to wizard steps, ALL existing tests MUST be updated to reflect the new validation logic.
+
+**Common Pattern**: Wizard steps with `isValid` computed property
+```typescript
+// If you add new validation requirements like this:
+const isValid = computed(() => {
+  const complianceValid = allRequiredComplete.value || riskAcknowledged.value
+  const whitelistValid = !whitelistRequired.value || selectedWhitelistId.value !== null
+  return complianceValid && whitelistValid // BOTH conditions required
+})
+
+// Then ALL existing tests that check `isValid` MUST be updated:
+it('should be valid when conditions met', async () => {
+  const vm = wrapper.vm as any
+  vm.riskAcknowledged = true
+  vm.selectedWhitelistId = 'test-id' // NEW: Must set all required fields
+  await wrapper.vm.$nextTick()
+  expect(vm.isValid).toBe(true)
+})
+```
+
+**Before Committing Changes**:
+1. Run ALL tests for the modified component
+2. Check for tests that verify `isValid` state
+3. Update tests to satisfy ALL validation conditions
+4. Never assume tests will pass without verification
 
 ## Project Overview
 
