@@ -16,6 +16,7 @@ import DiscoveryDashboard from "../views/DiscoveryDashboard.vue";
 import TokenCreationWizard from "../views/TokenCreationWizard.vue";
 import OnboardingFlow from "../views/OnboardingFlow.vue";
 import EnterpriseOnboardingCommandCenter from "../views/EnterpriseOnboardingCommandCenter.vue";
+import WhitelistsView from "../views/WhitelistsView.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 
 // Subscription views
@@ -97,6 +98,12 @@ const router = createRouter({
       path: "/compliance-monitoring",
       name: "ComplianceMonitoringDashboard",
       component: ComplianceMonitoringDashboard,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/compliance/whitelists",
+      name: "WhitelistManagement",
+      component: WhitelistsView,
       meta: { requiresAuth: true },
     },
     {
