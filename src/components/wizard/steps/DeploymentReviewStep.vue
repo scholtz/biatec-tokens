@@ -167,6 +167,41 @@
         </p>
       </div>
 
+      <!-- Backend-Only Deployment Notice (ARC76) -->
+      <div class="p-5 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+        <div class="flex items-start gap-3">
+          <i class="pi pi-server text-purple-400 text-xl mt-0.5"></i>
+          <div>
+            <h5 class="text-sm font-semibold text-purple-400 mb-2">Backend-Managed Deployment (ARC76)</h5>
+            <p class="text-sm text-gray-300 mb-3">
+              Your token will be deployed by our secure backend infrastructure using <strong class="text-purple-400">ARC76-derived accounts</strong>. 
+              This means:
+            </p>
+            <ul class="text-sm text-gray-400 space-y-2 mb-3">
+              <li class="flex items-start gap-2">
+                <i class="pi pi-check text-green-400 text-xs mt-1"></i>
+                <span><strong>No wallet required</strong> - We handle all blockchain operations for you</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <i class="pi pi-check text-green-400 text-xs mt-1"></i>
+                <span><strong>Secure key management</strong> - Your signing keys are derived from your account and stored securely</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <i class="pi pi-check text-green-400 text-xs mt-1"></i>
+                <span><strong>No gas fees</strong> - All transaction costs are included in your subscription</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <i class="pi pi-check text-green-400 text-xs mt-1"></i>
+                <span><strong>Enterprise-grade security</strong> - Bank-level encryption protects your assets</span>
+              </li>
+            </ul>
+            <p class="text-xs text-gray-500">
+              ARC76 is an Algorand standard for deterministic account derivation, allowing us to securely manage blockchain accounts on your behalf without requiring external wallets.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <!-- Network Confirmation -->
       <div class="p-5 bg-blue-500/10 border border-blue-500/30 rounded-lg">
         <div class="flex items-start gap-3">
@@ -212,6 +247,18 @@
 
           <div class="flex items-start gap-3">
             <input
+              id="confirm-backend-signing"
+              v-model="confirmations.understandBackendSigning"
+              type="checkbox"
+              class="mt-1 w-5 h-5 rounded border-gray-700 bg-gray-800 text-biatec-accent focus:ring-biatec-accent focus:ring-offset-0"
+            />
+            <label for="confirm-backend-signing" class="flex-1 text-sm text-gray-300 cursor-pointer">
+              <strong>I understand and consent to backend-only deployment:</strong> I acknowledge that Biatec will deploy this token using secure, backend-managed ARC76 accounts. All blockchain transactions will be signed by Biatec's infrastructure on my behalf, and I will not need to provide my own wallet or signing keys.
+            </label>
+          </div>
+
+          <div class="flex items-start gap-3">
+            <input
               id="confirm-deployment"
               v-model="confirmations.readyToDeploy"
               type="checkbox"
@@ -245,6 +292,7 @@ const errors = ref<string[]>([])
 const confirmations = ref({
   informationCorrect: false,
   understandCompliance: false,
+  understandBackendSigning: false,
   readyToDeploy: false,
 })
 
@@ -334,6 +382,7 @@ const showCosts = computed(() => true)
 const isValid = computed(() => {
   return confirmations.value.informationCorrect &&
          confirmations.value.understandCompliance &&
+         confirmations.value.understandBackendSigning &&
          confirmations.value.readyToDeploy
 })
 
