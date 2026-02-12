@@ -183,7 +183,7 @@ describe('AccountProvisioningService', () => {
       try {
         await service.provisionAccount({
           email: 'test@example.com',
-          derivedAddress: 'TEST123',
+          derivedAddress: 'VALIDADDRESS1234567890',  // Valid address to pass validation
         });
       } catch (error) {
         expect(error).toBe(customError); // Should be the same instance
@@ -201,7 +201,7 @@ describe('AccountProvisioningService', () => {
       try {
         await service.provisionAccount({
           email: 'test@example.com',
-          derivedAddress: 'TEST456',
+          derivedAddress: 'VALIDADDRESS1234567890',  // Valid address to pass validation
         });
       } catch (error) {
         expect(error).toBeInstanceOf(AccountProvisioningError);
@@ -210,6 +210,129 @@ describe('AccountProvisioningService', () => {
       }
 
       mockFn.mockRestore();
+    });
+  });
+
+  describe('input validation', () => {
+    it('should reject provisioning with invalid email', async () => {
+      const invalidEmails = [
+        '',
+        ' ',
+        'not-an-email',
+        'missing@',
+        '@missing.com',
+        'spaces in@email.com',
+      ];
+
+      for (const invalidEmail of invalidEmails) {
+        try {
+          await service.provisionAccount({
+            email: invalidEmail,
+            derivedAddress: 'VALIDADDRESS123',
+            derivationIndex: 1,
+          });
+          // Should not reach here
+          expect(true).toBe(false);
+        } catch (error) {
+          expect(error).toBeInstanceOf(AccountProvisioningError);
+          expect((error as AccountProvisioningError).code).toBe('INVALID_INPUT');
+          expect((error as AccountProvisioningError).message).toMatch(/email/i);
+        }
+      }
+    });
+
+    it('should reject provisioning with invalid address', async () => {
+      const invalidAddresses = [
+        '',
+        ' ',
+        'TOO_SHORT',
+        'a'.repeat(100), // Too long
+      ];
+
+      for (const invalidAddress of invalidAddresses) {
+        try {
+          await service.provisionAccount({
+            email: 'valid@example.com',
+            derivedAddress: invalidAddress,
+            derivationIndex: 1,
+          });
+          // Should not reach here
+          expect(true).toBe(false);
+        } catch (error) {
+          expect(error).toBeInstanceOf(AccountProvisioningError);
+          expect((error as AccountProvisioningError).code).toBe('INVALID_INPUT');
+          expect((error as AccountProvisioningError).message).toMatch(/address/i);
+        }
+      }
+    });
+
+    it('should reject provisioning with invalid derivation index', async () => {
+      const invalidIndexes = [-1, 0, 1000000]; // Negative, zero, too large
+
+      for (const invalidIndex of invalidIndexes) {
+        try {
+          await service.provisionAccount({
+            email: 'valid@example.com',
+            derivedAddress: 'VALIDADDRESS123',
+            derivationIndex: invalidIndex,
+          });
+          // Should not reach here
+          expect(true).toBe(false);
+        } catch (error) {
+          expect(error).toBeInstanceOf(AccountProvisioningError);
+          expect((error as AccountProvisioningError).code).toBe('INVALID_INPUT');
+          expect((error as AccountProvisioningError).message).toMatch(/derivation/i);
+        }
+      }
+    });
+
+    it('should reject provisioning with missing required fields', async () => {
+      // Test missing email
+      try {
+        await service.provisionAccount({
+          email: undefined as any,
+          derivedAddress: 'VALIDADDRESS123',
+          derivationIndex: 1,
+        });
+        expect(true).toBe(false);
+      } catch (error) {
+        expect(error).toBeInstanceOf(AccountProvisioningError);
+        expect((error as AccountProvisioningError).code).toBe('INVALID_INPUT');
+      }
+
+      // Test missing address
+      try {
+        await service.provisionAccount({
+          email: 'valid@example.com',
+          derivedAddress: undefined as any,
+          derivationIndex: 1,
+        });
+        expect(true).toBe(false);
+      } catch (error) {
+        expect(error).toBeInstanceOf(AccountProvisioningError);
+        expect((error as AccountProvisioningError).code).toBe('INVALID_INPUT');
+      }
+    });
+
+    it('should accept valid inputs', async () => {
+      const validInputs = [
+        {
+          email: 'user@example.com',
+          derivedAddress: 'VALIDADDRESS1234567890',
+          derivationIndex: 1,
+        },
+        {
+          email: 'another.user+tag@example.co.uk',
+          derivedAddress: 'ANOTHERVALIDADDRESS123',
+          derivationIndex: 42,
+        },
+      ];
+
+      for (const input of validInputs) {
+        const response = await service.provisionAccount(input);
+        expect(response.status).toBe('active');
+        expect(response.account.address).toBe(input.derivedAddress);
+      }
     });
   });
 });

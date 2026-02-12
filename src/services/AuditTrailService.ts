@@ -207,8 +207,9 @@ export class AuditTrailService {
     const end = start + pageSize;
     const paginatedEntries = deploymentEntries.slice(start, end);
 
+    // Return deep copies to ensure immutability
     return {
-      entries: paginatedEntries,
+      entries: JSON.parse(JSON.stringify(paginatedEntries)),
       total: deploymentEntries.length,
       page,
       pageSize,

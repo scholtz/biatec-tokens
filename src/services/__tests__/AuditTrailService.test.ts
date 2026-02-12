@@ -351,4 +351,152 @@ describe('AuditTrailService', () => {
       consoleErrorSpy.mockRestore();
     });
   });
+
+  describe('audit trail immutability', () => {
+    it('should not allow modification of logged entries', async () => {
+      const deploymentId = 'immutable-test-123';
+      
+      // Log initial event
+      await service.logEvent(
+        'deployment_initiated',
+        'info',
+        { address: 'TEST123' },
+        { type: 'token', id: deploymentId },
+        'Initial deployment'
+      );
+      
+      // Get the trail
+      const trail1 = await service.getDeploymentAuditTrail(deploymentId);
+      const originalEntry = trail1.entries[0];
+      const originalAction = originalEntry.action;
+      const originalTimestamp = originalEntry.timestamp;
+      
+      // Attempt to modify the returned entry (should not affect stored data)
+      originalEntry.action = 'MODIFIED ACTION';
+      originalEntry.timestamp = '2000-01-01T00:00:00.000Z';
+      
+      // Retrieve again and verify no changes
+      const trail2 = await service.getDeploymentAuditTrail(deploymentId);
+      const retrievedEntry = trail2.entries[0];
+      
+      expect(retrievedEntry.action).toBe(originalAction);
+      expect(retrievedEntry.timestamp).toBe(originalTimestamp);
+      expect(retrievedEntry.action).not.toBe('MODIFIED ACTION');
+    });
+
+    it('should maintain separate copies for each retrieval', async () => {
+      const deploymentId = 'copy-test-456';
+      
+      await service.logEvent(
+        'deployment_completed',
+        'info',
+        { address: 'TEST456' },
+        { type: 'token', id: deploymentId },
+        'Deployment completed'
+      );
+      
+      const trail1 = await service.getDeploymentAuditTrail(deploymentId);
+      const trail2 = await service.getDeploymentAuditTrail(deploymentId);
+      
+      // Modify one copy
+      trail1.entries[0].action = 'MODIFIED';
+      
+      // Other copy should be unchanged
+      expect(trail2.entries[0].action).not.toBe('MODIFIED');
+      expect(trail2.entries[0].action).toBe('Deployment completed');
+    });
+  });
+
+  describe('chronological ordering', () => {
+    it('should maintain chronological order of events', async () => {
+      const deploymentId = 'ordering-test-789';
+      
+      // Log events with small delays to ensure different timestamps
+      await service.logEvent(
+        'deployment_initiated',
+        'info',
+        { address: 'TEST789' },
+        { type: 'token', id: deploymentId },
+        'Event 1: Initiated'
+      );
+      
+      // Small delay to ensure different timestamp
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      await service.logEvent(
+        'deployment_submitted',
+        'info',
+        { address: 'TEST789' },
+        { type: 'token', id: deploymentId },
+        'Event 2: Submitted'
+      );
+      
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      await service.logEvent(
+        'deployment_completed',
+        'info',
+        { address: 'TEST789' },
+        { type: 'token', id: deploymentId },
+        'Event 3: Completed'
+      );
+      
+      // Retrieve and verify order
+      const trail = await service.getDeploymentAuditTrail(deploymentId);
+      
+      expect(trail.entries.length).toBe(3);
+      expect(trail.entries[0].action).toBe('Event 1: Initiated');
+      expect(trail.entries[1].action).toBe('Event 2: Submitted');
+      expect(trail.entries[2].action).toBe('Event 3: Completed');
+      
+      // Verify timestamps are in ascending order
+      const timestamp1 = new Date(trail.entries[0].timestamp).getTime();
+      const timestamp2 = new Date(trail.entries[1].timestamp).getTime();
+      const timestamp3 = new Date(trail.entries[2].timestamp).getTime();
+      
+      expect(timestamp2).toBeGreaterThan(timestamp1);
+      expect(timestamp3).toBeGreaterThan(timestamp2);
+    });
+
+    it('should preserve order even with concurrent logging', async () => {
+      const deploymentId = 'concurrent-test-101';
+      
+      // Log events concurrently
+      await Promise.all([
+        service.logEvent(
+          'deployment_initiated',
+          'info',
+          { address: 'TEST101' },
+          { type: 'token', id: deploymentId },
+          'Concurrent Event A'
+        ),
+        service.logEvent(
+          'deployment_initiated',
+          'info',
+          { address: 'TEST101' },
+          { type: 'token', id: deploymentId },
+          'Concurrent Event B'
+        ),
+        service.logEvent(
+          'deployment_initiated',
+          'info',
+          { address: 'TEST101' },
+          { type: 'token', id: deploymentId },
+          'Concurrent Event C'
+        ),
+      ]);
+      
+      const trail = await service.getDeploymentAuditTrail(deploymentId);
+      
+      // Should have all 3 events
+      expect(trail.entries.length).toBe(3);
+      
+      // Timestamps should still be in ascending or equal order
+      for (let i = 1; i < trail.entries.length; i++) {
+        const prevTime = new Date(trail.entries[i - 1].timestamp).getTime();
+        const currTime = new Date(trail.entries[i].timestamp).getTime();
+        expect(currTime).toBeGreaterThanOrEqual(prevTime);
+      }
+    });
+  });
 });

@@ -34,6 +34,9 @@ export class AccountProvisioningService {
     request: AccountProvisioningRequest
   ): Promise<AccountProvisioningResponse> {
     try {
+      // Validate inputs
+      this.validateProvisioningRequest(request);
+      
       // For MVP, use mock implementation
       // In production, this would call the backend API
       const response = await this.mockProvisionAccount(request);
@@ -114,6 +117,57 @@ export class AccountProvisioningService {
       return status.status === 'active' && status.canDeploy;
     } catch {
       return false;
+    }
+  }
+
+  /**
+   * Validate provisioning request inputs
+   */
+  private validateProvisioningRequest(request: AccountProvisioningRequest): void {
+    // Validate email
+    if (!request.email || typeof request.email !== 'string' || request.email.trim() === '') {
+      throw new AccountProvisioningError(
+        'Valid email address is required',
+        'INVALID_INPUT'
+      );
+    }
+
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(request.email.trim())) {
+      throw new AccountProvisioningError(
+        'Invalid email format',
+        'INVALID_INPUT'
+      );
+    }
+
+    // Validate derived address
+    if (!request.derivedAddress || typeof request.derivedAddress !== 'string' || request.derivedAddress.trim() === '') {
+      throw new AccountProvisioningError(
+        'Valid derived address is required',
+        'INVALID_INPUT'
+      );
+    }
+
+    // Address should be reasonable length (Algorand addresses are 58 chars, Ethereum are 42)
+    const addressLength = request.derivedAddress.trim().length;
+    if (addressLength < 10 || addressLength > 90) {
+      throw new AccountProvisioningError(
+        'Derived address length is invalid',
+        'INVALID_INPUT'
+      );
+    }
+
+    // Validate derivation index if provided
+    if (request.derivationIndex !== undefined) {
+      if (typeof request.derivationIndex !== 'number' || 
+          request.derivationIndex < 1 || 
+          request.derivationIndex > 999999) {
+        throw new AccountProvisioningError(
+          'Derivation index must be between 1 and 999999',
+          'INVALID_INPUT'
+        );
+      }
     }
   }
 
