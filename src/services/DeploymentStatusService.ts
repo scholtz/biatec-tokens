@@ -1,10 +1,13 @@
 /**
  * Service for managing token deployment status and real-time updates
  * Handles backend API integration, polling, and status tracking
+ * Now includes audit trail logging for compliance
  */
 
 import { TokenDeploymentService } from './TokenDeploymentService';
+import { auditTrailService } from './AuditTrailService';
 import type { TokenDeploymentRequest, TokenDeploymentResponse } from '../types/api';
+import type { AuditEventType } from '../types/auditTrail';
 
 /**
  * Deployment stage identifiers
@@ -85,9 +88,50 @@ export class DeploymentStatusService {
   private pollingIntervalMs = 2000; // Poll every 2 seconds
   private maxPollingAttempts = 150; // Max 5 minutes (150 * 2s)
   private pollingAttempts = 0;
+  private deploymentId?: string;
 
   constructor(deploymentService?: TokenDeploymentService) {
     this.deploymentService = deploymentService || new TokenDeploymentService();
+  }
+
+  /**
+   * Log audit event for deployment stage
+   */
+  private async logDeploymentAudit(
+    eventType: AuditEventType,
+    request: TokenDeploymentRequest,
+    status: string,
+    details?: Record<string, unknown>
+  ): Promise<void> {
+    try {
+      // Get user info from localStorage
+      const savedUser = localStorage.getItem('algorand_user');
+      const user = savedUser ? JSON.parse(savedUser) : null;
+
+      await auditTrailService.logEvent(
+        eventType,
+        eventType.includes('failed') ? 'error' : 'info',
+        {
+          address: user?.address || 'unknown',
+          email: user?.email,
+          name: user?.name,
+        },
+        {
+          type: 'token',
+          id: this.deploymentId || `deployment-${Date.now()}`,
+          network: request.network || 'unknown',
+          standard: request.standard || 'unknown',
+        },
+        `Token deployment ${status}`,
+        {
+          status,
+          ...details,
+        }
+      );
+    } catch (error) {
+      console.error('Failed to log audit event:', error);
+      // Don't fail deployment if audit logging fails
+    }
   }
 
   /**
@@ -151,8 +195,14 @@ export class DeploymentStatusService {
       stages,
     };
 
+    // Generate deployment ID for audit trail
+    this.deploymentId = `deployment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
     // Update state with initial stages
     onStateChange(state);
+
+    // Log deployment initiation
+    await this.logDeploymentAudit('deployment_initiated', request, 'initiated');
 
     try {
       // Stage 1: Preparing - validation
@@ -189,12 +239,31 @@ export class DeploymentStatusService {
       let response: TokenDeploymentResponse;
       try {
         response = await this.deploymentService.deployToken(request);
+        
+        // Log successful submission
+        await this.logDeploymentAudit(
+          'deployment_submitted',
+          request,
+          'submitted',
+          { transactionId: response.transactionId }
+        );
       } catch (error: any) {
         // Handle deployment API error
         this.updateStage(stages, 'deploying', 'failed', 0);
         stages[2].error = error.message || 'Failed to deploy token';
         state.status = 'failed';
         state.error = this.mapErrorToUserMessage(error);
+        
+        // Log deployment failure
+        await this.logDeploymentAudit(
+          'deployment_failed',
+          request,
+          'failed',
+          { 
+            errorCode: error.code,
+            errorMessage: error.message 
+          }
+        );
         onStateChange(state);
         return;
       }
@@ -323,6 +392,18 @@ export class DeploymentStatusService {
             };
 
             onStateChange(state);
+            
+            // Log successful deployment completion
+            await this.logDeploymentAudit(
+              'deployment_completed',
+              request,
+              'completed',
+              {
+                transactionId,
+                assetId: statusResponse.assetId,
+                contractAddress: statusResponse.contractAddress,
+              }
+            );
             resolve();
           } else if (statusResponse.status === 'failed') {
             clearInterval(this.pollingInterval!);

@@ -134,9 +134,10 @@ describe('AccountProvisioningService', () => {
 
   describe('error handling', () => {
     it('should throw AccountProvisioningError on failure', async () => {
-      // Mock random to always fail
-      const originalRandom = Math.random;
-      Math.random = () => 0.01; // Will trigger failure in mock
+      // Create a new service instance and spy on the mock method
+      const service = new AccountProvisioningService();
+      const mockFn = vi.spyOn(service as any, 'mockProvisionAccount');
+      mockFn.mockRejectedValueOnce(new Error('Provisioning failed'));
 
       const request: AccountProvisioningRequest = {
         email: 'test@example.com',
@@ -147,12 +148,13 @@ describe('AccountProvisioningService', () => {
         AccountProvisioningError
       );
 
-      Math.random = originalRandom;
+      mockFn.mockRestore();
     });
 
     it('should include error code and recoverable flag', async () => {
-      const originalRandom = Math.random;
-      Math.random = () => 0.01;
+      const service = new AccountProvisioningService();
+      const mockFn = vi.spyOn(service as any, 'mockProvisionAccount');
+      mockFn.mockRejectedValueOnce(new Error('Provisioning failed'));
 
       const request: AccountProvisioningRequest = {
         email: 'test@example.com',
@@ -169,7 +171,7 @@ describe('AccountProvisioningService', () => {
         expect(provError.recoverable).toBeDefined();
       }
 
-      Math.random = originalRandom;
+      mockFn.mockRestore();
     });
   });
 });
