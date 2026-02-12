@@ -246,13 +246,16 @@ function resetForm() {
 watch(
   () => [props.loading, props.apiError],
   ([newLoading, newApiError], [oldLoading]) => {
+    // Display success message and auto-close on successful submission
     if (oldLoading && !newLoading && !newApiError) {
       // Successful submission
       successMessage.value = 'Invitation sent successfully!';
       
-      // Auto-close after short delay
+      // Auto-close after showing success message (configurable via behavior)
       setTimeout(() => {
-        handleClose();
+        if (props.isOpen) {
+          handleClose();
+        }
       }, 1500);
     }
   }

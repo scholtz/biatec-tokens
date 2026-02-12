@@ -274,10 +274,13 @@ watch(
 watch(
   () => [props.loading, props.apiError],
   ([newLoading, newApiError], [oldLoading]) => {
-    if (oldLoading && !newLoading && !newApiError) {
-      // Successful submission - close modal
+    // Only auto-close if successful and parent hasn't closed modal yet
+    if (oldLoading && !newLoading && !newApiError && props.isOpen) {
+      // Small delay to show success message before closing
       setTimeout(() => {
-        handleClose();
+        if (props.isOpen) {
+          handleClose();
+        }
       }, 500);
     }
   }
