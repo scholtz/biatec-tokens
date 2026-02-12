@@ -51,6 +51,48 @@ it('should show loading state', async () => {
 
 **Product Owner Requirement**: Zero failing tests allowed. If tests are flaky or timing-dependent, fix them or remove them. Never commit code with known test failures.
 
+### E2E Test Quality Requirements (Playwright)
+
+**ALL E2E tests must be robust and pass consistently in CI.** When writing E2E tests:
+
+1. **Async Data Loading**: Components with async mock data need proper wait patterns
+   - ❌ BAD: Checking elements immediately after page load (mock data hasn't loaded)
+   - ✅ GOOD: Wait for networkidle + explicit timeout + long visibility checks
+   
+2. **E2E Test Pattern**:
+```typescript
+// Good: Wait for async data properly
+test('should display element', async ({ page }) => {
+  await page.goto('/route');
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(1500); // Let mock data load (500-800ms typical)
+  
+  const element = page.getByRole('button', { name: /Action/i });
+  await expect(element).toBeVisible({ timeout: 15000 }); // Long timeout for CI
+});
+
+// Bad: Check immediately (flaky in CI)
+test('should display element', async ({ page }) => {
+  await page.goto('/route');
+  await page.waitForLoadState('networkidle');
+  const element = page.getByRole('button', { name: /Action/i });
+  await expect(element).toBeVisible(); // May fail if data still loading!
+});
+```
+
+3. **Click Actions**: Add small waits after animations
+```typescript
+await button.click();
+await page.waitForTimeout(300); // Wait for animation/transition
+await expect(element).toHaveAttribute('aria-expanded', 'true');
+```
+
+4. **Visibility Timeouts**: Use generous timeouts for CI environments
+   - Local: 5000-10000ms may work
+   - CI: 15000ms recommended (slower environments)
+
+**Product Owner Requirement**: E2E tests must pass in CI. If tests are flaky due to timing, fix the waits - never skip or disable tests.
+
 ## Project Overview
 
 This is a Vue 3 + TypeScript frontend application for managing and deploying tokens on multiple blockchain networks. The application provides a user interface for creating, managing, and deploying various token standards across both EVM chains (Ethereum, Arbitrum, Base) and AVM chains (Algorand mainnet, Algorand testnet, VOI, Aramid).
