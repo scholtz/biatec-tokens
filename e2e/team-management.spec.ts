@@ -30,8 +30,8 @@ test.describe('Team Management - Compliance Dashboard', () => {
     await page.goto('/compliance/test-token-123?network=VOI');
     await page.waitForLoadState('domcontentloaded');
 
-    // Wait for page to load
-    await expect(page.locator('h1')).toContainText('Compliance Dashboard', { timeout: 10000 });
+    // Wait for page to load - use more specific selector for main content heading
+    await expect(page.getByRole('heading', { name: 'Compliance Dashboard' })).toBeVisible({ timeout: 10000 });
 
     // Find and click Team & Access tab
     const teamTab = page.locator('button').filter({ hasText: /Team & Access/i }).first();
@@ -39,7 +39,7 @@ test.describe('Team Management - Compliance Dashboard', () => {
     await teamTab.click();
 
     // Verify Team & Access content is displayed
-    await expect(page.locator('h2')).toContainText('Team & Access', { timeout: 5000 });
+    await expect(page.getByRole('heading', { name: 'Team & Access', level: 2 })).toBeVisible({ timeout: 5000 });
   });
 
   test('should display team members list', async ({ page }) => {
@@ -151,14 +151,14 @@ test.describe('Team Management - Compliance Dashboard', () => {
     // Wait for content
     await page.waitForTimeout(800);
 
-    // Check for either members list or empty state
-    const hasMembers = await page.locator('text=/Team Members/i').isVisible();
+    // Check for either members list or empty state - use more specific selector
+    const hasMembersHeading = await page.getByRole('heading', { name: 'Team Members', level: 3 }).isVisible().catch(() => false);
     const hasEmptyState = await page
       .locator('text=/No Team Members Yet|No activity recorded yet/i')
       .isVisible()
       .catch(() => false);
 
-    expect(hasMembers || hasEmptyState).toBe(true);
+    expect(hasMembersHeading || hasEmptyState).toBe(true);
   });
 
   test('should be responsive and accessible', async ({ page }) => {
