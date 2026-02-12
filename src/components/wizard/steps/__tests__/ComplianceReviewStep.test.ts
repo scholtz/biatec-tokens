@@ -200,7 +200,7 @@ describe('ComplianceReviewStep', () => {
       expect(wrapper.exists()).toBe(true)
     })
 
-    it('should be valid when risk acknowledged', async () => {
+    it('should be valid when risk acknowledged and whitelist selected', async () => {
       const complianceStore = useComplianceStore()
       complianceStore.requiredItemsComplete = false
 
@@ -212,6 +212,7 @@ describe('ComplianceReviewStep', () => {
 
       const vm = wrapper.vm as any
       vm.riskAcknowledged = true
+      vm.selectedWhitelistId = 'test-whitelist-id' // Whitelist is now required for compliance
       await wrapper.vm.$nextTick()
 
       expect(vm.isValid).toBe(true)
