@@ -171,6 +171,87 @@
         </div>
       </div>
 
+      <!-- Whitelist Selection -->
+      <div class="glass-effect rounded-xl p-6 border border-white/10">
+        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <i class="pi pi-users text-biatec-accent"></i>
+          Investor Whitelist (Required for Compliance)
+        </h4>
+        
+        <p class="text-sm text-gray-400 mb-4">
+          Select or create a whitelist to control who can hold or transact with your token. 
+          Whitelists are essential for MICA compliance and regulated issuance.
+        </p>
+
+        <div class="space-y-4">
+          <!-- Whitelist Summary (if loaded) -->
+          <div v-if="whitelistSummary && selectedWhitelistId" class="p-4 bg-gray-800/50 border border-gray-700 rounded-lg">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <i class="pi pi-check-circle text-green-400"></i>
+                <span class="text-sm font-semibold text-white">Whitelist Selected</span>
+              </div>
+              <button
+                @click="clearWhitelistSelection"
+                class="text-xs text-gray-400 hover:text-white"
+              >
+                Change
+              </button>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+              <div>
+                <div class="text-xl font-bold text-white">{{ whitelistSummary.approvedCount }}</div>
+                <div class="text-xs text-gray-400">Approved</div>
+              </div>
+              <div>
+                <div class="text-xl font-bold text-yellow-400">{{ whitelistSummary.pendingCount }}</div>
+                <div class="text-xs text-gray-400">Pending</div>
+              </div>
+              <div>
+                <div class="text-xl font-bold text-white">{{ whitelistSummary.jurisdictionsCovered }}</div>
+                <div class="text-xs text-gray-400">Jurisdictions</div>
+              </div>
+              <div>
+                <div class="text-xl font-bold text-red-400">{{ whitelistSummary.highRiskCount }}</div>
+                <div class="text-xs text-gray-400">High Risk</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Whitelist Selection Buttons -->
+          <div v-else class="flex flex-col sm:flex-row gap-3">
+            <button
+              @click="showWhitelistModal = true"
+              class="flex-1 px-6 py-4 bg-biatec-accent text-gray-900 rounded-lg hover:bg-biatec-accent/80 transition-colors flex items-center justify-center gap-2 font-medium"
+            >
+              <i class="pi pi-list"></i>
+              <span>Select Existing Whitelist</span>
+            </button>
+            <button
+              @click="navigateToCreateWhitelist"
+              class="flex-1 px-6 py-4 bg-gray-800 border border-gray-700 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 font-medium"
+            >
+              <i class="pi pi-plus"></i>
+              <span>Create New Whitelist</span>
+            </button>
+          </div>
+
+          <!-- Whitelist Requirement Warning -->
+          <div v-if="!selectedWhitelistId" class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+            <div class="flex items-start gap-2">
+              <i class="pi pi-exclamation-triangle text-yellow-400 mt-0.5"></i>
+              <div class="flex-1">
+                <p class="text-sm font-medium text-yellow-400 mb-1">Whitelist Required</p>
+                <p class="text-xs text-gray-400">
+                  For MICA-compliant token issuance, you must select or create a whitelist before deployment. 
+                  This ensures proper investor verification and jurisdiction compliance.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Risk Acknowledgment (if not all required items complete) -->
       <div v-if="!allRequiredComplete" class="glass-effect rounded-xl p-6 border border-yellow-500/30 bg-yellow-500/5">
         <div class="flex items-start gap-3">
@@ -238,21 +319,104 @@
         </div>
       </div>
     </div>
+
+    <!-- Whitelist Selection Modal -->
+    <div
+      v-if="showWhitelistModal"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      @click.self="showWhitelistModal = false"
+    >
+      <div class="bg-gray-900 rounded-xl border border-gray-700 p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-bold text-white">Select Whitelist</h3>
+          <button
+            @click="showWhitelistModal = false"
+            class="text-gray-400 hover:text-white"
+          >
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+
+        <p class="text-sm text-gray-400 mb-6">
+          Choose an existing whitelist to use for this token. You can manage whitelists in the Compliance section.
+        </p>
+
+        <!-- Whitelist Entries List -->
+        <div v-if="whitelistStore.entries.length > 0" class="space-y-3">
+          <button
+            v-for="entry in whitelistStore.entries.slice(0, 5)"
+            :key="entry.id"
+            @click="selectWhitelist(entry.id)"
+            class="w-full p-4 bg-gray-800 border border-gray-700 rounded-lg hover:border-biatec-accent transition-colors text-left"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="font-medium text-white">{{ entry.name }}</div>
+                <div class="text-sm text-gray-400">{{ entry.jurisdictionName }} • {{ entry.entityType }}</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span
+                  :class="[
+                    'px-2 py-1 text-xs rounded-full',
+                    entry.status === 'approved' ? 'bg-green-500/20 text-green-400' :
+                    entry.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                    'bg-red-500/20 text-red-400'
+                  ]"
+                >
+                  {{ entry.status }}
+                </span>
+                <i class="pi pi-chevron-right text-gray-400"></i>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        <div v-else class="text-center py-8">
+          <i class="pi pi-inbox text-4xl text-gray-600 mb-2"></i>
+          <p class="text-gray-400 mb-4">No whitelists available</p>
+          <button
+            @click="navigateToCreateWhitelist"
+            class="px-4 py-2 bg-biatec-accent text-gray-900 rounded-lg hover:bg-biatec-accent/80 transition-colors"
+          >
+            Create New Whitelist
+          </button>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-gray-700 flex gap-3">
+          <button
+            @click="showWhitelistModal = false"
+            class="flex-1 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            @click="navigateToCreateWhitelist"
+            class="flex-1 px-4 py-2 bg-biatec-accent text-gray-900 rounded-lg hover:bg-biatec-accent/80 transition-colors"
+          >
+            Create New Whitelist
+          </button>
+        </div>
+      </div>
+    </div>
   </WizardStep>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useComplianceStore } from '../../../stores/compliance'
+import { useWhitelistStore } from '../../../stores/whitelist'
 import WizardStep from '../WizardStep.vue'
 
 const complianceStore = useComplianceStore()
+const whitelistStore = useWhitelistStore()
 
 const showErrors = ref(false)
 const errors = ref<string[]>([])
 const selectedCategory = ref<string>('kyc-aml')
 const riskAcknowledged = ref(false)
 const expandedGlossary = ref<Record<string, boolean>>({})
+const selectedWhitelistId = ref<string | null>(null)
+const showWhitelistModal = ref(false)
 
 const categories = ['kyc-aml', 'jurisdiction', 'disclosure', 'network-specific']
 
@@ -272,6 +436,13 @@ const filteredChecklistItems = computed(() => {
 
 const allRequiredComplete = computed(() => {
   return complianceStore.requiredItemsComplete
+})
+
+const whitelistSummary = computed(() => whitelistStore.summary)
+
+const whitelistRequired = computed(() => {
+  // Whitelist is required for MICA compliance
+  return true
 })
 
 const toggleCheckItem = (itemId: string) => {
@@ -330,20 +501,55 @@ const validateCompliance = () => {
     errors.value.push('Please complete all required compliance checks or acknowledge the risks')
   }
   
+  if (whitelistRequired.value && !selectedWhitelistId.value) {
+    errors.value.push('Please select or create a whitelist for MICA compliance')
+  }
+  
   showErrors.value = errors.value.length > 0
 }
 
+const selectWhitelist = (whitelistId: string) => {
+  selectedWhitelistId.value = whitelistId
+  showWhitelistModal.value = false
+  // Fetch whitelist summary
+  whitelistStore.fetchWhitelistSummary()
+  validateCompliance()
+}
+
+const clearWhitelistSelection = () => {
+  selectedWhitelistId.value = null
+  validateCompliance()
+}
+
+const navigateToCreateWhitelist = () => {
+  // Open create whitelist in new tab or navigate
+  window.open('/compliance/whitelists?action=create', '_blank')
+}
+
 const isValid = computed(() => {
-  // Step is valid if all required items are complete OR user has acknowledged risks
-  return allRequiredComplete.value || riskAcknowledged.value
+  // Step is valid if:
+  // 1. All required items are complete OR user has acknowledged risks
+  // 2. Whitelist is selected (if required)
+  const complianceValid = allRequiredComplete.value || riskAcknowledged.value
+  const whitelistValid = !whitelistRequired.value || selectedWhitelistId.value !== null
+  return complianceValid && whitelistValid
 })
 
-onMounted(() => {
+onMounted(async () => {
   // Emit analytics event
   console.log('[Analytics] Compliance review step viewed')
+  
+  // Load whitelists for selection
+  await whitelistStore.fetchWhitelistEntries()
+  
+  // Load whitelist summary if needed
+  if (selectedWhitelistId.value) {
+    await whitelistStore.fetchWhitelistSummary()
+  }
 })
 
 defineExpose({
   isValid,
+  selectedWhitelistId,
 })
 </script>
