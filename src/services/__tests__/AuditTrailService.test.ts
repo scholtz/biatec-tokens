@@ -56,6 +56,44 @@ describe('AuditTrailService', () => {
       expect(entry.timestamp).toBeDefined();
       expect(entry.userAgent).toBeDefined();
     });
+
+    it('should log event with all optional details', async () => {
+      await service.logEvent(
+        'deployment_failed',
+        'error',
+        { address: 'TEST123', email: 'test@example.com', name: 'Test' },
+        { type: 'token', id: 'token-456', network: 'ethereum', standard: 'ERC20' },
+        'Deployment failed',
+        {
+          status: 'failed',
+          transactionId: 'tx-123',
+          errorCode: 'NETWORK_ERROR',
+          errorMessage: 'Network timeout',
+          metadata: { attempt: 1 }
+        }
+      );
+
+      const trail = await service.getDeploymentAuditTrail('token-456');
+      const entry = trail.entries[0];
+
+      expect(entry.details.status).toBe('failed');
+      expect(entry.details.transactionId).toBe('tx-123');
+      expect(entry.details.errorCode).toBe('NETWORK_ERROR');
+      expect(entry.details.errorMessage).toBe('Network timeout');
+    });
+
+    it('should log event without optional details', async () => {
+      await service.logEvent(
+        'account_updated',
+        'info',
+        { address: 'TEST789' },
+        { type: 'account', id: 'acc-789' },
+        'Account updated'
+      );
+
+      const trail = await service.getDeploymentAuditTrail('acc-789');
+      expect(trail.entries.length).toBeGreaterThan(0);
+    });
   });
 
   describe('getDeploymentAuditTrail', () => {
@@ -121,6 +159,31 @@ describe('AuditTrailService', () => {
       expect(report.summary.network).toBeDefined();
       expect(report.summary.standard).toBeDefined();
     });
+
+    it('should handle empty entries with fallback values', async () => {
+      // Create a service with no logged entries
+      const newService = new AuditTrailService();
+      const deploymentId = 'empty-deployment-123';
+      
+      const report = await newService.generateAuditReport({
+        deploymentId,
+        format: 'json',
+      });
+
+      // Should have sample entries generated
+      expect(report.summary.totalEvents).toBeGreaterThan(0);
+      expect(report.summary.startTime).toBeDefined();
+      expect(report.summary.endTime).toBeDefined();
+    });
+
+    it('should default format to json when not specified', async () => {
+      const report = await service.generateAuditReport({
+        deploymentId: 'test-default-format',
+        includeMetadata: false,
+      });
+
+      expect(report.format).toBe('json');
+    });
   });
 
   describe('getDeploymentMetadata', () => {
@@ -146,16 +209,64 @@ describe('AuditTrailService', () => {
       expect(transition.timestamp).toBeDefined();
       expect(transition.to).toBeDefined();
     });
+
+    it('should handle entries without standard/network', async () => {
+      // Log an event without standard/network
+      await service.logEvent(
+        'account_created',
+        'info',
+        { address: 'TEST999' },
+        { type: 'account', id: 'test-no-standard' },
+        'Account created'
+      );
+
+      const metadata = await service.getDeploymentMetadata('test-no-standard');
+      
+      expect(metadata.tokenStandard).toBeDefined();
+      expect(metadata.network).toBeDefined();
+    });
+
+    it('should handle entries without email', async () => {
+      // Log an event with only address (no email)
+      await service.logEvent(
+        'deployment_initiated',
+        'info',
+        { address: 'ADDRESSONLY123' },
+        { type: 'token', id: 'test-no-email', network: 'algorand', standard: 'ARC3' },
+        'Deployment initiated'
+      );
+
+      const metadata = await service.getDeploymentMetadata('test-no-email');
+      
+      expect(metadata.initiatedBy).toBe('ADDRESSONLY123');
+    });
   });
 
   describe('downloadAuditReport', () => {
-    it('should create download link', async () => {
+    it('should create download link for JSON', async () => {
       // Mock document methods
       const createElementSpy = vi.spyOn(document, 'createElement');
       const appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(() => null as any);
       const removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation(() => null as any);
       
       await service.downloadAuditReport('test-download-123', 'json');
+
+      expect(createElementSpy).toHaveBeenCalledWith('a');
+      expect(appendChildSpy).toHaveBeenCalled();
+      expect(removeChildSpy).toHaveBeenCalled();
+
+      createElementSpy.mockRestore();
+      appendChildSpy.mockRestore();
+      removeChildSpy.mockRestore();
+    });
+
+    it('should create download link for CSV', async () => {
+      // Mock document methods
+      const createElementSpy = vi.spyOn(document, 'createElement');
+      const appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(() => null as any);
+      const removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation(() => null as any);
+      
+      await service.downloadAuditReport('test-download-csv', 'csv');
 
       expect(createElementSpy).toHaveBeenCalledWith('a');
       expect(appendChildSpy).toHaveBeenCalled();
@@ -177,6 +288,52 @@ describe('AuditTrailService', () => {
 
       expect(report.format).toBe('csv');
       expect(report.data).toBeInstanceOf(Array);
+    });
+
+    it('should handle entries with missing optional fields in CSV', async () => {
+      // Log entry with minimal fields
+      await service.logEvent(
+        'account_created',
+        'info',
+        { address: 'MINIMALADDRESS' },
+        { type: 'account', id: 'test-minimal-csv' },
+        'Minimal account created'
+      );
+
+      const report = await service.generateAuditReport({
+        deploymentId: 'test-minimal-csv',
+        format: 'csv',
+      });
+
+      expect(report.format).toBe('csv');
+      expect(report.data.length).toBeGreaterThan(0);
+    });
+
+    it('should include all fields in CSV for complete entries', async () => {
+      // Log entry with all fields
+      await service.logEvent(
+        'deployment_completed',
+        'info',
+        { address: 'FULLADDRESS', email: 'full@example.com', name: 'Full User' },
+        { type: 'token', id: 'test-full-csv', network: 'algorand', standard: 'ARC3' },
+        'Complete deployment',
+        {
+          status: 'completed',
+          transactionId: 'tx-full-123',
+          errorCode: 'NONE',
+          errorMessage: 'No error',
+          metadata: { complete: true }
+        }
+      );
+
+      const report = await service.generateAuditReport({
+        deploymentId: 'test-full-csv',
+        format: 'csv',
+      });
+
+      expect(report.data.length).toBeGreaterThan(0);
+      const entry = report.data[0];
+      expect(entry.details.transactionId).toBe('tx-full-123');
     });
   });
 

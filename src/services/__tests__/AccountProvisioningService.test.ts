@@ -173,5 +173,43 @@ describe('AccountProvisioningService', () => {
 
       mockFn.mockRestore();
     });
+
+    it('should handle AccountProvisioningError pass-through', async () => {
+      const service = new AccountProvisioningService();
+      const mockFn = vi.spyOn(service as any, 'mockProvisionAccount');
+      const customError = new AccountProvisioningError('Custom error', 'CUSTOM_CODE', 400, false);
+      mockFn.mockRejectedValueOnce(customError);
+
+      try {
+        await service.provisionAccount({
+          email: 'test@example.com',
+          derivedAddress: 'TEST123',
+        });
+      } catch (error) {
+        expect(error).toBe(customError); // Should be the same instance
+        expect((error as AccountProvisioningError).code).toBe('CUSTOM_CODE');
+      }
+
+      mockFn.mockRestore();
+    });
+
+    it('should handle non-Error objects', async () => {
+      const service = new AccountProvisioningService();
+      const mockFn = vi.spyOn(service as any, 'mockProvisionAccount');
+      mockFn.mockRejectedValueOnce('string error');
+
+      try {
+        await service.provisionAccount({
+          email: 'test@example.com',
+          derivedAddress: 'TEST456',
+        });
+      } catch (error) {
+        expect(error).toBeInstanceOf(AccountProvisioningError);
+        expect((error as AccountProvisioningError).message).toContain('unknown error');
+        expect((error as AccountProvisioningError).code).toBe('UNKNOWN_ERROR');
+      }
+
+      mockFn.mockRestore();
+    });
   });
 });

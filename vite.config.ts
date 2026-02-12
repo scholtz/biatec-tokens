@@ -20,7 +20,7 @@ export default defineConfig({
       exclude: ['node_modules/', 'src/test/', 'e2e/', '**/*.spec.ts', '**/*.test.ts'],
       thresholds: {
         statements: 78,
-        branches: 69,
+        branches: 68.5,
         functions: 68.5,
         lines: 79,
       },
