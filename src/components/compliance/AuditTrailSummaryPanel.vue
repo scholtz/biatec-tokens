@@ -120,7 +120,7 @@
         <div class="flex flex-wrap gap-3">
           <button
             @click="exportAudit('csv')"
-            :disabled="exporting"
+            :disabled="!!exporting"
             class="flex-1 min-w-[120px] px-4 py-3 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
             aria-label="Export audit trail as CSV"
           >
@@ -130,7 +130,7 @@
 
           <button
             @click="exportAudit('json')"
-            :disabled="exporting"
+            :disabled="!!exporting"
             class="flex-1 min-w-[120px] px-4 py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
             aria-label="Export audit trail as JSON"
           >
