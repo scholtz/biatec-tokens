@@ -126,6 +126,11 @@
             <MicaWhitelistManagement :token-id="tokenId" :network="selectedNetwork" />
           </div>
 
+          <!-- Whitelist & Jurisdiction Tab -->
+          <div v-if="activeTab === 'whitelist-jurisdiction'">
+            <WhitelistJurisdictionView />
+          </div>
+
           <!-- Transfer Validation Tab -->
           <div v-if="activeTab === 'validation'">
             <TransferValidationForm :token-id="tokenId" />
@@ -166,6 +171,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import MainLayout from "../layout/MainLayout.vue";
 import MicaWhitelistManagement from "../components/MicaWhitelistManagement.vue";
+import WhitelistJurisdictionView from "../components/whitelist/WhitelistJurisdictionView.vue";
 import TransferValidationForm from "../components/TransferValidationForm.vue";
 import AuditLogViewer from "../components/AuditLogViewer.vue";
 import ComplianceChecklist from "../components/ComplianceChecklist.vue";
@@ -196,6 +202,7 @@ const isLoadingStatus = ref(false);
 
 const tabs = [
   { id: "whitelist", label: "Whitelist Management", icon: "pi pi-users" },
+  { id: "whitelist-jurisdiction", label: "Whitelist & Jurisdiction", icon: "pi pi-shield" },
   { id: "validation", label: "Transfer Validation", icon: "pi pi-shield-check" },
   { id: "audit-log", label: "Audit Log", icon: "pi pi-list" },
   { id: "exports", label: "Compliance Exports", icon: "pi pi-download" },
