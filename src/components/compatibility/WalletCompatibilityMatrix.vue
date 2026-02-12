@@ -175,7 +175,6 @@ import Button from '../ui/Button.vue';
 import Modal from '../ui/Modal.vue';
 import { 
   WALLET_COMPATIBILITY, 
-  WALLET_STANDARD_SUPPORT,
   getWalletSupport 
 } from '../../types/walletCompatibility';
 import type { AlgorandStandard } from '../../types/standardsValidation';

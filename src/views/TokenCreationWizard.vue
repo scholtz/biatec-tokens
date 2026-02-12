@@ -50,16 +50,22 @@
           ref="step6Ref"
         />
 
-        <!-- Step 7: Deployment Review -->
-        <DeploymentReviewStep
+        <!-- Step 7: Standards & Compatibility (NEW) -->
+        <StandardsCompatibilityStep
           v-if="stepIndex === 6"
           ref="step7Ref"
         />
 
-        <!-- Step 8: Deployment Status -->
-        <DeploymentStatusStep
+        <!-- Step 8: Deployment Review -->
+        <DeploymentReviewStep
           v-if="stepIndex === 7"
           ref="step8Ref"
+        />
+
+        <!-- Step 9: Deployment Status -->
+        <DeploymentStatusStep
+          v-if="stepIndex === 8"
+          ref="step9Ref"
         />
       </template>
     </WizardContainer>
@@ -81,6 +87,7 @@ import ProjectSetupStep from '../components/wizard/steps/ProjectSetupStep.vue'
 import TokenDetailsStep from '../components/wizard/steps/TokenDetailsStep.vue'
 import ComplianceReviewStep from '../components/wizard/steps/ComplianceReviewStep.vue'
 import MetadataStep from '../components/wizard/steps/MetadataStep.vue'
+import StandardsCompatibilityStep from '../components/wizard/steps/StandardsCompatibilityStep.vue'
 import DeploymentReviewStep from '../components/wizard/steps/DeploymentReviewStep.vue'
 import DeploymentStatusStep from '../components/wizard/steps/DeploymentStatusStep.vue'
 import type { WizardStep } from '../components/wizard/WizardContainer.vue'
@@ -97,8 +104,9 @@ const step3Ref = ref<InstanceType<typeof ProjectSetupStep>>()
 const step4Ref = ref<InstanceType<typeof TokenDetailsStep>>()
 const step5Ref = ref<InstanceType<typeof ComplianceReviewStep>>()
 const step6Ref = ref<InstanceType<typeof MetadataStep>>()
-const step7Ref = ref<InstanceType<typeof DeploymentReviewStep>>()
-const step8Ref = ref<InstanceType<typeof DeploymentStatusStep>>()
+const step7Ref = ref<InstanceType<typeof StandardsCompatibilityStep>>()
+const step8Ref = ref<InstanceType<typeof DeploymentReviewStep>>()
+const step9Ref = ref<InstanceType<typeof DeploymentStatusStep>>()
 
 const currentStepIndex = ref(0)
 const selectedPlan = ref<string>('')
@@ -171,8 +179,8 @@ const wizardSteps = computed<WizardStep[]>(() => [
     },
   },
   {
-    id: 'review',
-    title: 'Review',
+    id: 'standards',
+    title: 'Standards',
     isValid: () => {
       const step7 = step7Ref.value
       if (!step7) return false
@@ -186,10 +194,25 @@ const wizardSteps = computed<WizardStep[]>(() => [
     },
   },
   {
+    id: 'review',
+    title: 'Review',
+    isValid: () => {
+      const step8 = step8Ref.value
+      if (!step8) return false
+      
+      // Validate the step before checking isValid
+      if (step8.validateAll) {
+        step8.validateAll()
+      }
+      
+      return step8.isValid ?? false
+    },
+  },
+  {
     id: 'deployment',
     title: 'Deployment',
     isValid: () => {
-      return step8Ref.value?.isValid ?? false
+      return step9Ref.value?.isValid ?? false
     },
   },
 ])

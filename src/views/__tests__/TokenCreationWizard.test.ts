@@ -20,10 +20,10 @@ describe('TokenCreationWizard', () => {
       expect(wrapper.text()).toContain('Create Your Token')
     })
 
-    it('should initialize with 8 steps', () => {
+    it('should initialize with 9 steps', () => {
       const wrapper = mount(TokenCreationWizard)
       const vm = wrapper.vm as any
-      expect(vm.wizardSteps.length).toBe(8)
+      expect(vm.wizardSteps.length).toBe(9)
     })
 
     it('should start at first step', () => {
@@ -43,6 +43,7 @@ describe('TokenCreationWizard', () => {
         'token-details',
         'compliance',
         'metadata',
+        'standards',
         'review',
         'deployment',
       ])

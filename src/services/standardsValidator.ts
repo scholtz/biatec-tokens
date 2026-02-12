@@ -19,7 +19,7 @@ import type {
  */
 export function validateARC3(request: MetadataValidationRequest): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
-  const { tokenConfig, metadataUrl, metadataHash } = request;
+  const { tokenConfig, metadataHash } = request;
 
   // Blocker: URL must end with #arc3
   if (tokenConfig.url && !tokenConfig.url.endsWith('#arc3')) {
