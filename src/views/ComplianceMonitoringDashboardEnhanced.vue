@@ -703,8 +703,8 @@ const allComplianceGaps = computed((): ComplianceGap[] => {
 const loadTokenData = async () => {
   isLoadingTokens.value = true;
   try {
-    // Load tokens from store
-    await tokenStore.loadTokens?.();
+    // Tokens are already available from tokenStore
+    // In production, you might want to refresh them here
     
     // Load compliance data for each token
     for (const token of tokens.value) {
@@ -806,10 +806,11 @@ const handleViewTokenDetails = (tokenId: string) => {
   router.push(`/tokens/${tokenId}`);
 };
 
-const handleExportTokenEvidence = (tokenId: string) => {
+const handleExportTokenEvidence = (_tokenId: string) => {
   // Switch to export view with token pre-selected
   activeView.value = 'export';
   // The export component will handle the actual export
+  // TODO: Pre-select token in export view
 };
 
 const handleAuditExport = async (format: 'csv' | 'json', exportFilters: any) => {
