@@ -36,7 +36,7 @@ interface PaginatedResponse<T> {
  * TODO: Replace with actual API calls when backend endpoints are available
  */
 class WhitelistService {
-  private baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+  // private baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
   private mockData: WhitelistEntry[] = [];
   private mockJurisdictions: JurisdictionRule[] = [];
 
@@ -494,7 +494,7 @@ class WhitelistService {
   /**
    * Validate CSV file
    */
-  async validateCsv(file: File): Promise<CsvValidationResult> {
+  async validateCsv(_file: File): Promise<CsvValidationResult> {
     await this.simulateDelay();
 
     // Mock validation - in real implementation, parse and validate CSV
@@ -704,7 +704,7 @@ class WhitelistService {
   /**
    * Check for jurisdiction conflicts
    */
-  async checkJurisdictionConflicts(tokenProgramId?: string): Promise<JurisdictionConflict[]> {
+  async checkJurisdictionConflicts(_tokenProgramId?: string): Promise<JurisdictionConflict[]> {
     await this.simulateDelay(300);
 
     const conflicts: JurisdictionConflict[] = [];
