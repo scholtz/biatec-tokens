@@ -23,7 +23,7 @@ test.describe('Token Creation Wizard - Complete Flow', () => {
         body: JSON.stringify({
           subscription_status: 'active',
           subscription_tier: 'pro',
-          price_id: 'price_professional',
+          price_id: 'price_professional_monthly',
           tokens_created: 0,
           tokens_limit: 100,
           current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
@@ -56,7 +56,7 @@ test.describe('Token Creation Wizard - Complete Flow', () => {
       const mockSubscription = {
         subscription_status: 'active',
         subscription_tier: 'pro',
-        price_id: 'price_professional',
+        price_id: 'price_professional_monthly',
         tokens_created: 0,
         tokens_limit: 100,
         current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
@@ -419,7 +419,7 @@ test.describe('Token Creation Wizard - Accessibility', () => {
         body: JSON.stringify({
           subscription_status: 'active',
           subscription_tier: 'pro',
-          price_id: 'price_professional',
+          price_id: 'price_professional_monthly',
           tokens_created: 0,
           tokens_limit: 100
         })
@@ -441,7 +441,7 @@ test.describe('Token Creation Wizard - Accessibility', () => {
       const mockSub = { 
         subscription_status: 'active', 
         subscription_tier: 'pro',
-        price_id: 'price_professional',
+        price_id: 'price_professional_monthly',
         tokens_created: 0,
         tokens_limit: 100
       };
