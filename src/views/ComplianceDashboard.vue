@@ -150,6 +150,11 @@
           <div v-if="activeTab === 'checklist'">
             <ComplianceChecklist />
           </div>
+
+          <!-- Team & Access Tab -->
+          <div v-if="activeTab === 'team-access'">
+            <TeamAccessView />
+          </div>
         </div>
       </div>
     </div>
@@ -167,6 +172,7 @@ import ComplianceChecklist from "../components/ComplianceChecklist.vue";
 import MicaDashboardSummary from "../components/MicaDashboardSummary.vue";
 import ComplianceExports from "../components/ComplianceExports.vue";
 import AttestationPanel from "../components/AttestationPanel.vue";
+import TeamAccessView from "../components/team/TeamAccessView.vue";
 import WhitelistCoverageWidget from "../components/WhitelistCoverageWidget.vue";
 import IssuerStatusWidget from "../components/IssuerStatusWidget.vue";
 import KycProviderStatusWidget from "../components/KycProviderStatusWidget.vue";
@@ -195,6 +201,7 @@ const tabs = [
   { id: "exports", label: "Compliance Exports", icon: "pi pi-download" },
   { id: "attestation", label: "Attestation", icon: "pi pi-file-check" },
   { id: "checklist", label: "Compliance Checklist", icon: "pi pi-check-square" },
+  { id: "team-access", label: "Team & Access", icon: "pi pi-id-card" },
 ];
 
 const loadComplianceStatus = async () => {
