@@ -201,7 +201,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import MainLayout from '../layout/MainLayout.vue';
 import WhitelistTable from '../components/whitelist/WhitelistTable.vue';
 import WhitelistDetailPanel from '../components/whitelist/WhitelistDetailPanel.vue';
@@ -211,7 +210,6 @@ import Modal from '../components/ui/Modal.vue';
 import { useWhitelistStore } from '../stores/whitelist';
 import type { WhitelistEntry, CreateWhitelistEntryRequest } from '../types/whitelist';
 
-const router = useRouter();
 const whitelistStore = useWhitelistStore();
 
 const showDetailModal = ref(false);

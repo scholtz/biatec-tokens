@@ -108,7 +108,7 @@ describe('Sidebar Component', () => {
       });
 
       const links = wrapper.findAll('a');
-      expect(links).toHaveLength(7); // Now includes Compliance Monitoring
+      expect(links).toHaveLength(8); // Now includes Compliance Monitoring and Whitelist Management
 
       // Check link texts and routes
       expect(links[0].text()).toContain('Create Token (Wizard)');
@@ -131,6 +131,9 @@ describe('Sidebar Component', () => {
       
       expect(links[6].text()).toContain('Compliance Monitoring');
       expect(links[6].attributes('to')).toBe('/compliance-monitoring');
+      
+      expect(links[7].text()).toContain('Whitelist Management');
+      expect(links[7].attributes('to')).toBe('/compliance/whitelists');
     });
 
     it('should render icons for quick actions', () => {
