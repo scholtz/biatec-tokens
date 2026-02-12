@@ -100,6 +100,14 @@ export interface MicaComplianceMetadata {
   whitepaperUrl?: string;
   /** URL to terms and conditions */
   termsAndConditionsUrl?: string;
+  /** Whether the token is MICA ready (compliance dashboard) */
+  micaReady?: boolean;
+  /** Whether whitelist is required (compliance dashboard) */
+  whitelistRequired?: boolean;
+  /** List of jurisdiction restrictions (compliance dashboard) */
+  jurisdictionRestrictions?: string[];
+  /** Whether issuer is verified (compliance dashboard) */
+  issuerVerified?: boolean;
 }
 
 /**

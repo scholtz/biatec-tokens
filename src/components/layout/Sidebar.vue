@@ -48,6 +48,13 @@
                 <BuildingOfficeIcon class="mr-3 h-5 w-5" />
                 Onboarding Center
               </router-link>
+              <router-link
+                to="/compliance-monitoring"
+                class="group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <ShieldCheckIcon class="mr-3 h-5 w-5" />
+                Compliance Monitoring
+              </router-link>
             </div>
           </div>
 
@@ -86,7 +93,7 @@
 <script setup lang="ts">
 import { useTokenStore } from "../../stores/tokens";
 import Badge from "../ui/Badge.vue";
-import { PlusCircleIcon, ChartBarIcon, CubeIcon, BuildingOfficeIcon } from "@heroicons/vue/24/outline";
+import { PlusCircleIcon, ChartBarIcon, CubeIcon, BuildingOfficeIcon, ShieldCheckIcon } from "@heroicons/vue/24/outline";
 
 const tokenStore = useTokenStore();
 
