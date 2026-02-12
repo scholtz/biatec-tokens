@@ -16,9 +16,7 @@ export const AUTH_UI_COPY = {
   
   // Authentication methods
   EMAIL_PASSWORD_PRIMARY: 'Sign in with Email & Password',
-  EMAIL_PASSWORD_DESCRIPTION: 'Your secure, self-custody account with automatic blockchain identity',
-  WALLET_PROVIDERS_ADVANCED: 'Advanced: Connect with Wallet Provider',
-  WALLET_PROVIDERS_DESCRIPTION: 'Connect using a blockchain wallet application',
+  EMAIL_PASSWORD_DESCRIPTION: 'Your secure account with automatic blockchain identity',
   
   // Status messages
   SIGNED_IN: 'Authenticated',
@@ -33,8 +31,8 @@ export const AUTH_UI_COPY = {
   SECURITY_CENTER: 'Security Center',
   
   // Guidance messages
-  NEW_USER_GUIDANCE: 'New to self-custody authentication?',
-  NEW_USER_INFO: 'Download a wallet app to get started with secure, self-custody authentication:',
+  NEW_USER_GUIDANCE: 'New to tokenization?',
+  NEW_USER_INFO: 'Sign up with email to get started with secure, compliant token creation:',
   RECOMMENDED: 'Recommended',
   
   // Network labels
@@ -45,7 +43,7 @@ export const AUTH_UI_COPY = {
   
   // Terms and security
   TERMS_AGREEMENT: 'By signing in, you agree to our Terms of Service and acknowledge that you\'ve read our Privacy Policy.',
-  SECURITY_NOTE: 'We never store your private keys or passwords. Your ARC76 account is derived securely from your credentials.',
+  SECURITY_NOTE: 'Your password is never stored in plain text. Your ARC76 account is derived securely from your credentials using enterprise-grade encryption.',
 } as const
 
 export const NETWORK_UI_COPY = {

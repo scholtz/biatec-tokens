@@ -121,8 +121,8 @@
         <div class="text-sm text-gray-700 dark:text-gray-300">
           <strong class="text-blue-600 dark:text-blue-400">New to blockchain tokens?</strong>
           <p class="mt-1">
-            Start with email to explore without any commitments. You can always connect a wallet later when you're ready to create tokens. 
-            No prior wallet experience required to browse the platform.
+            Start with email to explore the platform and create compliant tokens without any blockchain knowledge. 
+            No prior experience or technical setup required to get started.
           </p>
         </div>
       </div>
