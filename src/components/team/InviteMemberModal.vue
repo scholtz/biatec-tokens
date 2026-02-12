@@ -1,10 +1,14 @@
 <template>
   <Modal
-    :isOpen="isOpen"
+    :show="isOpen"
     @close="handleClose"
-    :title="'Invite Team Member'"
-    :closeOnBackdropClick="!loading"
+    size="lg"
   >
+    <template #header>
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+        Invite Team Member
+      </h3>
+    </template>
     <template #default>
       <div class="space-y-6">
         <!-- Email Input -->
@@ -121,7 +125,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import type { TeamRole, InviteMemberRequest } from '../../types/team';
+import type { InviteMemberRequest } from '../../types/team';
 import { ROLE_DEFINITIONS, getRoleDefinition } from '../../services/teamManagement';
 import Modal from '../ui/Modal.vue';
 import Input from '../ui/Input.vue';

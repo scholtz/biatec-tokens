@@ -86,7 +86,7 @@
                 </Badge>
                 <Badge
                   v-else-if="member.role === 'admin'"
-                  variant="primary"
+                  variant="info"
                   size="sm"
                 >
                   Admin
@@ -164,7 +164,7 @@
                   <Badge variant="warning" size="sm">Invited</Badge>
                   <Badge
                     v-if="invitation.role === 'admin'"
-                    variant="primary"
+                    variant="info"
                     size="sm"
                   >
                     Admin

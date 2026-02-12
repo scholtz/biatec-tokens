@@ -74,11 +74,15 @@
 
     <!-- Confirmation Modal for Remove Member -->
     <Modal
-      :isOpen="showRemoveConfirmation"
+      :show="showRemoveConfirmation"
       @close="closeRemoveConfirmation"
-      title="Remove Team Member"
-      :closeOnBackdropClick="!removeLoading"
+      size="md"
     >
+      <template #header>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+          Remove Team Member
+        </h3>
+      </template>
       <template #default>
         <div class="space-y-4">
           <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start">

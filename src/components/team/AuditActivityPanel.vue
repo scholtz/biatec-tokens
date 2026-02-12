@@ -149,10 +149,10 @@ function getActionIconClass(action: TeamAuditAction): string {
 /**
  * Get badge variant for action type
  */
-function getActionBadgeVariant(action: TeamAuditAction): 'success' | 'warning' | 'danger' | 'info' | 'default' {
+function getActionBadgeVariant(action: TeamAuditAction): 'success' | 'warning' | 'error' | 'info' | 'default' {
   if (['member_joined', 'member_reactivated'].includes(action)) return 'success';
   if (['role_changed', 'member_suspended'].includes(action)) return 'warning';
-  if (['member_removed'].includes(action)) return 'danger';
+  if (['member_removed'].includes(action)) return 'error';
   if (['member_invited', 'invitation_resent'].includes(action)) return 'info';
   return 'default';
 }

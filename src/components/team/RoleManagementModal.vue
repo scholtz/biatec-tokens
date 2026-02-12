@@ -1,10 +1,14 @@
 <template>
   <Modal
-    :isOpen="isOpen"
+    :show="isOpen"
     @close="handleClose"
-    :title="'Change Team Member Role'"
-    :closeOnBackdropClick="!loading"
+    size="lg"
   >
+    <template #header>
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+        Change Team Member Role
+      </h3>
+    </template>
     <template #default>
       <div class="space-y-6">
         <!-- Member Info -->
@@ -35,7 +39,7 @@
             </Badge>
             <Badge
               v-else-if="member?.role === 'admin'"
-              variant="primary"
+              variant="info"
               size="md"
             >
               Administrator
