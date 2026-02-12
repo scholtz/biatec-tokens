@@ -121,6 +121,36 @@
 
         <!-- Tab Content -->
         <div>
+          <!-- Overview Tab - Five Key Panels -->
+          <div v-if="activeTab === 'overview'">
+            <div class="space-y-6">
+              <!-- MICA Readiness Panel -->
+              <MicaReadinessPanel :token-id="tokenId" :network="selectedNetwork" />
+
+              <!-- Grid: Audit + Whitelist -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <AuditTrailSummaryPanel 
+                  :token-id="tokenId" 
+                  :network="selectedNetwork"
+                  @view-full-audit="activeTab = 'audit-log'"
+                />
+                <WhitelistStatusPanel
+                  :token-id="tokenId"
+                  :network="selectedNetwork"
+                  @navigate-to-whitelist="activeTab = 'whitelist'"
+                  @navigate-to-jurisdiction="activeTab = 'whitelist-jurisdiction'"
+                  @navigate-to-bulk-import="activeTab = 'whitelist'"
+                />
+              </div>
+
+              <!-- Grid: Reports + Alerts -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ComplianceReportsPanel :token-id="tokenId" :network="selectedNetwork" />
+                <ComplianceAlertsPanel />
+              </div>
+            </div>
+          </div>
+
           <!-- Whitelist Management Tab -->
           <div v-if="activeTab === 'whitelist'">
             <MicaWhitelistManagement :token-id="tokenId" :network="selectedNetwork" />
@@ -185,6 +215,11 @@ import KycProviderStatusWidget from "../components/KycProviderStatusWidget.vue";
 import RwaRiskFlagsWidget from "../components/RwaRiskFlagsWidget.vue";
 import NetworkHealthWidget from "../components/NetworkHealthWidget.vue";
 import SubscriptionTierGatingWidget from "../components/SubscriptionTierGatingWidget.vue";
+import MicaReadinessPanel from "../components/compliance/MicaReadinessPanel.vue";
+import AuditTrailSummaryPanel from "../components/compliance/AuditTrailSummaryPanel.vue";
+import WhitelistStatusPanel from "../components/compliance/WhitelistStatusPanel.vue";
+import ComplianceReportsPanel from "../components/compliance/ComplianceReportsPanel.vue";
+import ComplianceAlertsPanel from "../components/compliance/ComplianceAlertsPanel.vue";
 import { complianceService } from "../services/ComplianceService";
 import type { ComplianceStatus } from "../types/compliance";
 import { useAuthStore } from "../stores/auth";
@@ -196,11 +231,12 @@ const { account } = useAuthStore();
 const tokenId = computed(() => (route.params.id as string) || (route.query.tokenId as string));
 const selectedNetwork = computed(() => (route.query.network as string) || "VOI");
 const issuerAddress = computed(() => account || "");
-const activeTab = ref("whitelist");
+const activeTab = ref("overview");
 const complianceStatus = ref<ComplianceStatus | null>(null);
 const isLoadingStatus = ref(false);
 
 const tabs = [
+  { id: "overview", label: "Overview", icon: "pi pi-th-large" },
   { id: "whitelist", label: "Whitelist Management", icon: "pi pi-users" },
   { id: "whitelist-jurisdiction", label: "Whitelist & Jurisdiction", icon: "pi pi-shield" },
   { id: "validation", label: "Transfer Validation", icon: "pi pi-shield-check" },

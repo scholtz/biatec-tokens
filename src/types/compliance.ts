@@ -546,3 +546,59 @@ export interface KycProviderMetrics {
   integrationComplete: number; // Percentage of integration completion
   lastUpdated: string;
 }
+
+/**
+ * MICA Article compliance status
+ */
+export interface MicaArticleStatus {
+  articleNumber: string;
+  articleTitle: string;
+  description: string;
+  status: 'compliant' | 'partial' | 'non_compliant' | 'not_applicable';
+  lastChecked: string;
+  notes?: string;
+}
+
+/**
+ * MICA Readiness Panel data
+ */
+export interface MicaReadinessData {
+  overallScore: number; // 0-100
+  status: 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
+  articles: MicaArticleStatus[];
+  lastUpdated: string;
+  nextReviewDate?: string;
+}
+
+/**
+ * Compliance Report metadata
+ */
+export interface ComplianceReport {
+  id: string;
+  title: string;
+  type: 'monthly' | 'quarterly' | 'annual' | 'on_demand';
+  generatedAt: string;
+  period: {
+    startDate: string;
+    endDate: string;
+  };
+  status: 'available' | 'generating' | 'failed';
+  format: 'pdf' | 'json' | 'csv';
+  size?: string;
+  downloadUrl?: string;
+  errorMessage?: string;
+}
+
+/**
+ * Compliance Alert for future monitoring
+ */
+export interface ComplianceAlert {
+  id: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  category: 'whitelist' | 'kyc' | 'audit' | 'regulatory' | 'system';
+  title: string;
+  description: string;
+  createdAt: string;
+  status: 'active' | 'acknowledged' | 'resolved';
+  actionRequired?: string;
+}
