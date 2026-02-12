@@ -152,6 +152,27 @@ docs/
 - Vue components: PascalCase (e.g., `TokenCard.vue`, `Button.vue`)
 - TypeScript files: kebab-case or camelCase (e.g., `auth.ts`, `stripe-config.ts`)
 - Store files: lowercase (e.g., `tokens.ts`, `settings.ts`)
+- **Service files**: Use descriptive names and avoid file name casing conflicts on case-sensitive filesystems
+
+### Pre-Existing Code Compatibility
+
+**CRITICAL: Always preserve backward compatibility with existing code**
+
+Before creating new services, stores, or APIs:
+1. **Check for existing implementations**: Search for similar files or functionality
+2. **Verify API contracts**: If modifying existing services, check all consumers
+3. **Avoid breaking changes**: If creating a new API, don't modify existing components that use old APIs
+4. **File naming conflicts**: On case-sensitive filesystems, `WhitelistService.ts` and `whitelistService.ts` are different files. Be careful with:
+   - Renaming files that change casing
+   - Creating new files with similar names but different casing
+   - Importing from files with case-sensitive names
+5. **Test all affected code**: After any service changes, run full test suite to catch breaking changes
+6. **Update all consumers together**: If you must break an API, update all consuming components in the same commit
+
+**Example**: When creating `whitelistService.ts`, existing components using `WhitelistService.ts` with a different API must continue to work. Either:
+- Keep both services separate with distinct names
+- Create a migration plan and update all consumers
+- Never partially migrate - either all or none
 
 ## Important Boundaries
 

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { complianceService } from '../../services/ComplianceService';
-import { whitelistService } from '../../services/WhitelistService';
+import { whitelistService } from '../../services/legacyWhitelistService';
 import type { ComplianceStatus, TransferValidationResponse } from '../../types/compliance';
-import type { WhitelistEntry } from '../../services/WhitelistService';
+import type { WhitelistEntry } from '../../services/legacyWhitelistService';
 
 // Mock services
 vi.mock('../../services/ComplianceService', () => ({
@@ -14,14 +14,14 @@ vi.mock('../../services/ComplianceService', () => ({
   },
 }));
 
-vi.mock('../../services/WhitelistService', () => ({
+vi.mock('../../services/legacyWhitelistService', () => ({
   whitelistService: {
     getWhitelist: vi.fn(),
     addAddress: vi.fn(),
     removeAddress: vi.fn(),
     bulkUpload: vi.fn(),
   },
-  WhitelistService: vi.fn(),
+  legacyWhitelistService: vi.fn(),
 }));
 
 describe('Compliance Dashboard Integration Tests', () => {

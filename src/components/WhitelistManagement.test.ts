@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import WhitelistManagement from './WhitelistManagement.vue';
-import { whitelistService } from '../services/WhitelistService';
-import type { WhitelistEntry } from '../services/WhitelistService';
+import { whitelistService } from '../services/legacyWhitelistService';
+import type { WhitelistEntry } from '../services/legacyWhitelistService';
 
 // Mock the whitelist service
-vi.mock('../services/WhitelistService', () => ({
+vi.mock('../services/legacyWhitelistService', () => ({
   whitelistService: {
     getWhitelist: vi.fn(),
     addAddress: vi.fn(),
@@ -14,7 +14,7 @@ vi.mock('../services/WhitelistService', () => ({
     bulkUpload: vi.fn(),
     exportComplianceReport: vi.fn(),
   },
-  WhitelistService: vi.fn(),
+  legacyWhitelistService: vi.fn(),
 }));
 
 // Mock useToast composable

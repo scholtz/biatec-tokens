@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import MicaWhitelistManagement from '../MicaWhitelistManagement.vue';
-import { whitelistService } from '../../services/WhitelistService';
+import { whitelistService } from '../../services/legacyWhitelistService';
 import { useSubscriptionStore } from '../../stores/subscription';
 
 // Mock the services
-vi.mock('../../services/WhitelistService', () => ({
+vi.mock('../../services/legacyWhitelistService', () => ({
   whitelistService: {
     getWhitelist: vi.fn(),
     addAddress: vi.fn(),

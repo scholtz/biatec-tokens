@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { WhitelistService, type WhitelistEntry } from "../WhitelistService";
+import { WhitelistService, type WhitelistEntry } from "../legacyWhitelistService";
 import { Api } from "../../generated/ApiClient";
 
 // Mock the API client

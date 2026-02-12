@@ -425,8 +425,7 @@
 import { ref, computed, onMounted } from "vue";
 import Modal from "./ui/Modal.vue";
 import Input from "./ui/Input.vue";
-import { whitelistService } from "../services/whitelistService";
-import type { WhitelistEntry, CsvValidationResult } from "../types/whitelist";
+import { whitelistService, type WhitelistEntry, type CsvValidationResult } from "../services/legacyWhitelistService";
 import { useToast } from "../composables/useToast";
 import type { Network } from "../types/compliance";
 
