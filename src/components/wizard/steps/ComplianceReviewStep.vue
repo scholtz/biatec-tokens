@@ -522,8 +522,10 @@ const clearWhitelistSelection = () => {
 }
 
 const navigateToCreateWhitelist = () => {
-  // Open create whitelist in new tab or navigate
-  window.open('/compliance/whitelists?action=create', '_blank')
+  // Open create whitelist page - could be enhanced to use router navigation
+  // For now, opens in new tab to allow user to create whitelist without losing wizard state
+  const url = window.location.origin + '/compliance/whitelists?action=create'
+  window.open(url, '_blank')
 }
 
 const isValid = computed(() => {
