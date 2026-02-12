@@ -20,6 +20,9 @@ vi.mock('@heroicons/vue/24/outline', () => ({
   BuildingOfficeIcon: {
     template: '<svg class="h-5 w-5"></svg>',
   },
+  ShieldCheckIcon: {
+    template: '<svg class="h-5 w-5"></svg>',
+  },
   CurrencyDollarIcon: {
     template: '<svg class="h-5 w-5"></svg>',
   },
@@ -105,7 +108,7 @@ describe('Sidebar Component', () => {
       });
 
       const links = wrapper.findAll('a');
-      expect(links).toHaveLength(6); // Now includes Enterprise Onboarding Center
+      expect(links).toHaveLength(7); // Now includes Compliance Monitoring
 
       // Check link texts and routes
       expect(links[0].text()).toContain('Create Token (Wizard)');
@@ -122,6 +125,12 @@ describe('Sidebar Component', () => {
 
       expect(links[4].text()).toContain('Enterprise Guide');
       expect(links[4].attributes('to')).toBe('/enterprise-guide');
+      
+      expect(links[5].text()).toContain('Onboarding Center');
+      expect(links[5].attributes('to')).toBe('/enterprise/onboarding');
+      
+      expect(links[6].text()).toContain('Compliance Monitoring');
+      expect(links[6].attributes('to')).toBe('/compliance-monitoring');
     });
 
     it('should render icons for quick actions', () => {
@@ -136,7 +145,7 @@ describe('Sidebar Component', () => {
       });
 
       const svgs = wrapper.findAll('svg');
-      expect(svgs).toHaveLength(6); // 6 icons for quick actions (including Onboarding Center)
+      expect(svgs).toHaveLength(7); // 7 icons for quick actions (including Onboarding Center and Compliance Monitoring)
     });
   });
 
