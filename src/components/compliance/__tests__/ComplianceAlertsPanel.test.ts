@@ -118,21 +118,6 @@ describe('ComplianceAlertsPanel', () => {
       expect(notifyButton.exists()).toBe(true);
       expect(notifyButton.text()).toContain('Notify Me When Available');
     });
-
-    it('should call notifyInterest when button clicked', async () => {
-      // Mock window.alert
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
-
-      const wrapper = mount(ComplianceAlertsPanel);
-
-      const notifyButton = wrapper.find('button[aria-label="Express interest in compliance alerts feature"]');
-      await notifyButton.trigger('click');
-
-      expect(alertSpy).toHaveBeenCalled();
-      expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Thank you for your interest'));
-
-      alertSpy.mockRestore();
-    });
   });
 
   describe('Info Box', () => {

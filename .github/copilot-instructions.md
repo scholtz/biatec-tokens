@@ -11,6 +11,46 @@
 
 **PAST VIOLATIONS:** Copilot has previously finished work with failing tests and reduced coverage, violating these instructions. This has introduced bugs and reduced quality. This MUST NOT happen again.
 
+### Test Quality Requirements
+
+**ALL tests must pass before marking work complete.** When writing tests:
+
+1. **Async Testing**: Components with async data loading need proper async test patterns
+   - ❌ BAD: Checking loading state immediately after mount (mock data loads too fast)
+   - ✅ GOOD: Either test functional behavior after data loads, OR mock delays properly
+   
+2. **Loading State Tests**: If testing loading states:
+   - Use `vi.useFakeTimers()` to control timing
+   - Mock async functions to control when they resolve
+   - OR skip loading state tests if not critical (focus on functional tests)
+
+3. **Error State Tests**: Test error states by:
+   - Mocking functions to throw errors
+   - Not just checking if error template exists in HTML
+
+4. **Example Pattern**:
+```typescript
+// Good: Test functional behavior after load
+it('should display data after loading', async () => {
+  const wrapper = mount(Component);
+  await wrapper.vm.$nextTick();
+  await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for mock data
+  expect(wrapper.text()).toContain('Expected Data');
+});
+
+// Good: Test with controlled timing
+it('should show loading state', async () => {
+  vi.useFakeTimers();
+  const wrapper = mount(Component);
+  expect(wrapper.find('.loading').exists()).toBe(true);
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(wrapper.find('.loading').exists()).toBe(false);
+  vi.useRealTimers();
+});
+```
+
+**Product Owner Requirement**: Zero failing tests allowed. If tests are flaky or timing-dependent, fix them or remove them. Never commit code with known test failures.
+
 ## Project Overview
 
 This is a Vue 3 + TypeScript frontend application for managing and deploying tokens on multiple blockchain networks. The application provides a user interface for creating, managing, and deploying various token standards across both EVM chains (Ethereum, Arbitrum, Base) and AVM chains (Algorand mainnet, Algorand testnet, VOI, Aramid).
