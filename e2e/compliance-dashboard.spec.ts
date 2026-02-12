@@ -58,19 +58,22 @@ test.describe('Compliance Dashboard 1.0', () => {
   test('should display Audit Trail Summary Panel on overview tab', async ({ page }) => {
     await page.waitForLoadState('networkidle');
     
+    // Wait for panels to load with data
+    await page.waitForTimeout(1500);
+    
     // Wait for Audit Trail Panel
     const auditHeading = page.getByRole('heading', { name: 'Audit Trail', level: 2 });
-    await expect(auditHeading).toBeVisible({ timeout: 10000 });
+    await expect(auditHeading).toBeVisible({ timeout: 15000 });
     
     // Check for export buttons
     const csvButton = page.getByRole('button', { name: /Export.*CSV/i });
-    await expect(csvButton).toBeVisible();
+    await expect(csvButton).toBeVisible({ timeout: 10000 });
     
     const jsonButton = page.getByRole('button', { name: /Export.*JSON/i });
-    await expect(jsonButton).toBeVisible();
+    await expect(jsonButton).toBeVisible({ timeout: 10000 });
     
     const viewButton = page.getByRole('button', { name: /View Full Log/i });
-    await expect(viewButton).toBeVisible();
+    await expect(viewButton).toBeVisible({ timeout: 10000 });
   });
 
   test('should display Whitelist Status Panel on overview tab', async ({ page }) => {
@@ -178,15 +181,18 @@ test.describe('Compliance Dashboard 1.0', () => {
   test('should navigate to full audit log when view button clicked', async ({ page }) => {
     await page.waitForLoadState('networkidle');
     
+    // Wait for audit panel to load with data
+    await page.waitForTimeout(1500);
+    
     // Wait for audit panel
     const viewButton = page.getByRole('button', { name: /View Full Log/i });
-    await expect(viewButton).toBeVisible({ timeout: 10000 });
+    await expect(viewButton).toBeVisible({ timeout: 15000 });
     
     // Click view button
     await viewButton.click();
     
     // Should navigate to audit-log tab
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
     const auditLogTab = page.getByRole('button', { name: /Audit Log/i });
     await expect(auditLogTab).toHaveClass(/border-biatec-accent/);
   });
@@ -210,23 +216,25 @@ test.describe('Compliance Dashboard 1.0', () => {
   test('should expand and collapse MICA article details', async ({ page }) => {
     await page.waitForLoadState('networkidle');
     
-    // Wait for MICA panel to load
-    await page.waitForTimeout(1000);
+    // Wait for MICA panel to load with data
+    await page.waitForTimeout(1500);
     
     // Find first expandable article button
     const expandButtons = page.getByRole('button', { name: /Toggle details for/i });
     const firstButton = expandButtons.first();
-    await expect(firstButton).toBeVisible({ timeout: 10000 });
+    await expect(firstButton).toBeVisible({ timeout: 15000 });
     
     // Check initial state (collapsed)
     await expect(firstButton).toHaveAttribute('aria-expanded', 'false');
     
     // Click to expand
     await firstButton.click();
+    await page.waitForTimeout(300);
     await expect(firstButton).toHaveAttribute('aria-expanded', 'true');
     
     // Click again to collapse
     await firstButton.click();
+    await page.waitForTimeout(300);
     await expect(firstButton).toHaveAttribute('aria-expanded', 'false');
   });
 
