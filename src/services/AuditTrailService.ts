@@ -13,8 +13,6 @@ import type {
   DeploymentAuditMetadata,
 } from '../types/auditTrail';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-
 export class AuditTrailError extends Error {
   constructor(
     message: string,
@@ -301,7 +299,7 @@ export class AuditTrailService {
    */
   private generateSummary(
     entries: AuditTrailEntry[],
-    deploymentId: string
+    _deploymentId: string
   ): AuditReportResponse['summary'] {
     const firstEntry = entries[0];
     const lastEntry = entries[entries.length - 1];

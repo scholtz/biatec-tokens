@@ -167,10 +167,13 @@ export const useAuthStore = defineStore("auth", () => {
           { status: provisioningResponse.status }
         );
 
-      } catch (provisioningError) {
-        console.error("Account provisioning failed:", provisioningError);
+      } catch (provisioningErr: unknown) {
+        console.error("Account provisioning failed:", provisioningErr);
         provisioningStatus.value = "failed";
-        provisioningError.value = "Account provisioning failed. Please try again.";
+        const errorMessage = provisioningErr instanceof Error ? 
+          provisioningErr.message : 
+          "Account provisioning failed. Please try again.";
+        provisioningError.value = errorMessage;
         
         // Still allow user to continue, but mark as not ready for deployment
         user.value = {

@@ -10,8 +10,6 @@ import type {
   AccountProvisioningStatus,
 } from '../types/accountProvisioning';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-
 export class AccountProvisioningError extends Error {
   constructor(
     message: string,

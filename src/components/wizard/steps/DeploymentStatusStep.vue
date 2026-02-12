@@ -254,6 +254,62 @@
             </div>
           </div>
 
+          <!-- Compliance & Audit Trail -->
+          <div class="glass-effect rounded-xl p-6 mb-6 text-left">
+            <div class="flex items-center gap-2 mb-4">
+              <i class="pi pi-shield text-green-400 text-xl"></i>
+              <h4 class="text-md font-semibold text-gray-900 dark:text-white">
+                Compliance & Audit Trail
+              </h4>
+            </div>
+            <p class="text-sm text-gray-400 mb-4">
+              Your token deployment has been logged for compliance and regulatory reporting.
+            </p>
+            <div class="flex gap-3">
+              <button
+                @click="downloadAuditReport"
+                class="px-4 py-2 bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 text-green-400 rounded-lg font-medium transition-colors flex items-center gap-2 text-sm"
+              >
+                <i class="pi pi-file-export"></i>
+                Download Audit Report
+              </button>
+              <button
+                v-if="showViewAuditTrail"
+                @click="toggleAuditTrail"
+                class="px-4 py-2 bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600 text-gray-300 rounded-lg font-medium transition-colors flex items-center gap-2 text-sm"
+              >
+                <i :class="showAuditTrail ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i>
+                {{ showAuditTrail ? 'Hide' : 'View' }} Audit Trail
+              </button>
+            </div>
+            
+            <!-- Expandable Audit Trail -->
+            <div v-if="showAuditTrail" class="mt-4 p-4 bg-gray-800/50 border border-gray-700 rounded-lg">
+              <h5 class="text-sm font-semibold text-gray-300 mb-3">Deployment Audit Trail</h5>
+              <div class="space-y-2 max-h-48 overflow-y-auto">
+                <div
+                  v-for="entry in auditTrailEntries"
+                  :key="entry.id"
+                  class="flex items-start gap-3 text-xs"
+                >
+                  <div class="flex-shrink-0 w-20 text-gray-500">
+                    {{ formatAuditTime(entry.timestamp) }}
+                  </div>
+                  <div class="flex-1">
+                    <span :class="[
+                      'font-medium',
+                      entry.severity === 'error' ? 'text-red-400' :
+                      entry.severity === 'warning' ? 'text-yellow-400' :
+                      'text-green-400'
+                    ]">
+                      {{ entry.action }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Action Buttons -->
           <div class="flex gap-3 justify-center">
             <button
@@ -327,7 +383,9 @@ import { useTokenDraftStore } from '../../../stores/tokenDraft'
 import { useAuthStore } from '../../../stores/auth'
 import { analyticsService } from '../../../services/analytics'
 import { DeploymentStatusService } from '../../../services/DeploymentStatusService'
+import { auditTrailService } from '../../../services/AuditTrailService'
 import type { TokenDeploymentRequest } from '../../../types/api'
+import type { AuditTrailEntry } from '../../../types/auditTrail'
 import { TokenStandard } from '../../../types/api'
 import WizardStep from '../WizardStep.vue'
 
@@ -423,6 +481,12 @@ const deploymentError = ref<{
   recoverable: boolean
   remediation: string
 } | null>(null)
+
+// Audit trail state
+const showAuditTrail = ref(false)
+const showViewAuditTrail = ref(true)
+const auditTrailEntries = ref<AuditTrailEntry[]>([])
+const loadingAuditTrail = ref(false)
 
 const startDeployment = async () => {
   deploymentStatus.value = 'in-progress'
@@ -866,6 +930,51 @@ infrastructure but does not provide legal or regulatory advice.
     category: 'compliance',
     label: 'comprehensive',
   })
+}
+
+// Audit trail methods
+const toggleAuditTrail = async () => {
+  showAuditTrail.value = !showAuditTrail.value
+  
+  if (showAuditTrail.value && auditTrailEntries.value.length === 0) {
+    await loadAuditTrail()
+  }
+}
+
+const loadAuditTrail = async () => {
+  if (!deploymentResult.value.assetId) return
+  
+  loadingAuditTrail.value = true
+  try {
+    // Use the deployment result's asset ID or transaction ID as the deployment ID
+    const deploymentId = deploymentResult.value.assetId || deploymentResult.value.txId
+    const auditTrail = await auditTrailService.getDeploymentAuditTrail(deploymentId, 1, 20)
+    auditTrailEntries.value = auditTrail.entries
+  } catch (error) {
+    console.error('Failed to load audit trail:', error)
+  } finally {
+    loadingAuditTrail.value = false
+  }
+}
+
+const downloadAuditReport = async () => {
+  try {
+    const deploymentId = deploymentResult.value.assetId || deploymentResult.value.txId
+    await auditTrailService.downloadAuditReport(deploymentId, 'json')
+    
+    analyticsService.trackEvent({
+      event: 'audit_report_downloaded',
+      category: 'compliance',
+      label: deploymentResult.value.tokenSymbol,
+    })
+  } catch (error) {
+    console.error('Failed to download audit report:', error)
+  }
+}
+
+const formatAuditTime = (timestamp: string): string => {
+  const date = new Date(timestamp)
+  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
 const viewOnExplorer = () => {

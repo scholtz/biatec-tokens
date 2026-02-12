@@ -108,6 +108,16 @@ export class DeploymentStatusService {
       const savedUser = localStorage.getItem('algorand_user');
       const user = savedUser ? JSON.parse(savedUser) : null;
 
+      // Extract network from request - handle different request types
+      let network: string = 'unknown';
+      if ('network' in request && typeof request.network === 'string') {
+        network = request.network;
+      } else if ('standard' in request && typeof request.standard === 'string' && request.standard.includes('ERC')) {
+        network = 'ethereum';
+      } else {
+        network = 'algorand';
+      }
+
       await auditTrailService.logEvent(
         eventType,
         eventType.includes('failed') ? 'error' : 'info',
@@ -119,7 +129,7 @@ export class DeploymentStatusService {
         {
           type: 'token',
           id: this.deploymentId || `deployment-${Date.now()}`,
-          network: request.network || 'unknown',
+          network: network || 'unknown',
           standard: request.standard || 'unknown',
         },
         `Token deployment ${status}`,
