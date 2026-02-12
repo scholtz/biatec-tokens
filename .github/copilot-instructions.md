@@ -384,6 +384,7 @@ When writing E2E tests:
 
 - **Always wait for page load**: Use `await page.waitForLoadState("domcontentloaded")` after navigation
 - **Use robust selectors**: Prefer `getByRole()`, `getByText()` over CSS selectors
+- **AVOID STRICT MODE VIOLATIONS**: Never use generic selectors like `page.locator('h1')` that can match multiple elements. Always use specific role-based selectors with names and levels.
 - **Add timeouts**: Use `{ timeout: 10000 }` for visibility checks to handle slow loads
 - **Handle missing elements gracefully**: Use `.isVisible().catch(() => false)` for optional elements
 - **Test localStorage persistence**: Verify state persists across page reloads
@@ -391,6 +392,34 @@ When writing E2E tests:
 - **Test button text variations**: Use regex patterns like `/Sign in|Authenticate/i` to match different button texts
 - **Verify page loads successfully**: Always check page title or main heading as baseline
 - **Focus on user behavior**: Test what users see and do, not implementation details
+
+### Avoiding Playwright Strict Mode Violations
+
+**CRITICAL:** Playwright's strict mode requires selectors to match exactly one element. Generic selectors often cause "strict mode violation" errors.
+
+**❌ BAD - Will fail with multiple h1 elements:**
+```typescript
+await expect(page.locator('h1')).toContainText('Compliance Dashboard');
+const hasMembers = await page.locator('text=/Team Members/i').isVisible();
+```
+
+**✅ GOOD - Use specific role-based selectors:**
+```typescript
+// Use getByRole with specific name
+await expect(page.getByRole('heading', { name: 'Compliance Dashboard' })).toBeVisible();
+
+// Use getByRole with specific level for uniqueness
+const hasMembers = await page.getByRole('heading', { name: 'Team Members', level: 3 }).isVisible().catch(() => false);
+
+// For buttons, filter by text then use first() if multiple matches expected
+const button = page.locator('button').filter({ hasText: /Submit/i }).first();
+```
+
+**Common Patterns to Avoid Strict Mode Violations:**
+- Instead of `page.locator('h1')` → use `page.getByRole('heading', { name: 'Expected Text' })`
+- Instead of `page.locator('h2')` → use `page.getByRole('heading', { name: 'Expected Text', level: 2 })`
+- Instead of `page.locator('text=/Some Text/i')` → use `page.getByRole('heading', { name: 'Some Text', level: 3 })` or `page.getByText('Some Text', { exact: false })`
+- For multiple matches, use `.first()`, `.last()`, or `.nth(index)` only when semantically correct
 
 ### Critical E2E Testing Requirements
 
