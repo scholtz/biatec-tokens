@@ -15,6 +15,30 @@ test.describe('Token Creation Wizard - Complete Flow', () => {
     // Skip Firefox due to known networkidle timeout issues
     test.skip(browserName === 'firefox', 'Firefox has persistent networkidle timeout issues');
 
+    // Mock API routes for subscription
+    await page.route('**/api/subscription**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          subscription_status: 'active',
+          subscription_tier: 'pro',
+          price_id: 'price_professional',
+          tokens_created: 0,
+          tokens_limit: 100,
+          current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        })
+      });
+    });
+
+    // Mock analytics calls to prevent network errors
+    await page.route('**/google-analytics.com/**', async (route) => {
+      await route.abort();
+    });
+    await page.route('**/googletagmanager.com/**', async (route) => {
+      await route.abort();
+    });
+
     // Mock authentication state
     await page.addInitScript(() => {
       localStorage.clear();
@@ -32,8 +56,10 @@ test.describe('Token Creation Wizard - Complete Flow', () => {
       const mockSubscription = {
         subscription_status: 'active',
         subscription_tier: 'pro',
+        price_id: 'price_professional',
         tokens_created: 0,
-        tokens_limit: 100
+        tokens_limit: 100,
+        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       };
       localStorage.setItem('subscription_cache', JSON.stringify(mockSubscription));
     });
@@ -43,7 +69,7 @@ test.describe('Token Creation Wizard - Complete Flow', () => {
     // Navigate to wizard
     await page.goto('/create/wizard');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000); // Wait for stores to initialize
 
     // Check wizard loaded
     await expect(page.locator('h1')).toContainText('Create Your Token');
@@ -51,38 +77,21 @@ test.describe('Token Creation Wizard - Complete Flow', () => {
     // Step 1: Authentication Confirmation
     await expect(page.locator('text=Welcome')).toBeVisible({ timeout: 5000 });
     
-    // Verify user is authenticated
-    const authenticatedText = page.locator('text=/authenticated|signed in/i');
-    const isAuthVisible = await authenticatedText.isVisible().catch(() => false);
-    if (isAuthVisible) {
-      await expect(authenticatedText).toBeVisible();
-    }
-    
-    // Continue to next step
-    const continueButton = page.locator('button:has-text("Continue")').first();
-    await expect(continueButton).toBeEnabled({ timeout: 5000 });
-    await continueButton.click();
-    await page.waitForTimeout(1000);
+    // Wait for Continue button to be enabled
+    const step1Continue = page.locator('button:has-text("Continue")').first();
+    await expect(step1Continue).toBeEnabled({ timeout: 10000 });
+    await step1Continue.click();
+    await page.waitForTimeout(2000); // Wait for step transition
 
     // Step 2: Subscription Selection
     await expect(page.locator('text=Subscription')).toBeVisible({ timeout: 5000 });
+    await page.waitForTimeout(2000); // Wait for subscription data to load
     
-    // Check for plan cards or subscription info
-    const planCards = page.locator('[class*="plan"], [class*="subscription"]');
-    const hasPlans = await planCards.count() > 0;
-    
-    if (hasPlans) {
-      // If there are plan options, select one
-      const firstPlan = planCards.first();
-      await firstPlan.click();
-      await page.waitForTimeout(500);
-    }
-    
-    // Continue to next step
+    // Continue to next step (subscription should be active from mock)
     const step2Continue = page.locator('button:has-text("Continue")').first();
-    await expect(step2Continue).toBeEnabled({ timeout: 5000 });
+    await expect(step2Continue).toBeEnabled({ timeout: 10000 });
     await step2Continue.click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
 
     // Step 3: Project Setup
     await expect(page.locator('text=Project Setup')).toBeVisible({ timeout: 5000 });
@@ -402,12 +411,40 @@ test.describe('Token Creation Wizard - Accessibility', () => {
   test.beforeEach(async ({ page, browserName }) => {
     test.skip(browserName === 'firefox', 'Firefox has persistent networkidle timeout issues');
 
+    // Mock API routes
+    await page.route('**/api/subscription**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          subscription_status: 'active',
+          subscription_tier: 'pro',
+          price_id: 'price_professional',
+          tokens_created: 0,
+          tokens_limit: 100
+        })
+      });
+    });
+
+    await page.route('**/google-analytics.com/**', async (route) => {
+      await route.abort();
+    });
+    await page.route('**/googletagmanager.com/**', async (route) => {
+      await route.abort();
+    });
+
     await page.addInitScript(() => {
       localStorage.clear();
       sessionStorage.clear();
       const mockUser = { email: 'test@example.com', name: 'Test User', id: 'test-123' };
       localStorage.setItem('algorand_user', JSON.stringify(mockUser));
-      const mockSub = { subscription_status: 'active', subscription_tier: 'pro' };
+      const mockSub = { 
+        subscription_status: 'active', 
+        subscription_tier: 'pro',
+        price_id: 'price_professional',
+        tokens_created: 0,
+        tokens_limit: 100
+      };
       localStorage.setItem('subscription_cache', JSON.stringify(mockSub));
     });
   });

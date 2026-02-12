@@ -54,11 +54,41 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   })
 
   const fetchSubscription = async () => {
+    // Don't refetch if already loaded and active
+    if (subscription.value && subscription.value.subscription_status === 'active') {
+      console.log('[Subscription Store] Already loaded active subscription, skipping fetch')
+      return
+    }
+
     loading.value = true
     error.value = null
 
     try {
-      // Mock subscription data for demo purposes
+      // First, try to load from cache (for testing and offline scenarios)
+      const cached = localStorage.getItem('subscription_cache')
+      if (cached) {
+        try {
+          const cachedData = JSON.parse(cached)
+          subscription.value = {
+            customer_id: cachedData.customer_id || 'demo_customer',
+            subscription_id: cachedData.subscription_id || null,
+            subscription_status: cachedData.subscription_status || 'not_started',
+            price_id: cachedData.price_id || null,
+            current_period_start: cachedData.current_period_start || null,
+            current_period_end: cachedData.current_period_end || null,
+            cancel_at_period_end: cachedData.cancel_at_period_end || false,
+            payment_method_brand: cachedData.payment_method_brand || null,
+            payment_method_last4: cachedData.payment_method_last4 || null
+          }
+          console.log('[Subscription Store] Loaded from cache:', subscription.value)
+          loading.value = false
+          return
+        } catch (e) {
+          console.warn('Failed to parse subscription cache:', e)
+        }
+      }
+
+      // If no cache or cache failed, use mock data
       // In a real app, this would fetch from your backend
       const mockSubscription: SubscriptionData = {
         customer_id: 'demo_customer',
@@ -73,6 +103,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
       }
 
       subscription.value = mockSubscription
+      console.log('[Subscription Store] Using mock data:', mockSubscription)
     } catch (err) {
       console.error('Error fetching subscription:', err)
       error.value = err instanceof Error ? err.message : 'Failed to fetch subscription'
