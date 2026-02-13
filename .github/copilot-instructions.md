@@ -698,6 +698,45 @@ const button = page.locator('button').filter({ hasText: /Submit/i }).first();
 1. **Run tests before PR creation**: Execute `npm run test:e2e` and ensure all tests pass
 2. **Fix failing tests immediately**: If tests fail, debug and fix them before proceeding
 3. **Verify selectors are correct**: Check that CSS selectors and placeholders match actual DOM elements
+4. **IMPORTANT**: If encountering CI failures in tests unrelated to your changes:
+   - Document which tests are failing and confirm they were already failing before your changes
+   - Run `npm test` and `npm run test:e2e` locally to verify your tests pass
+   - Create a testing matrix document showing your tests pass locally with exact counts
+   - Note pre-existing failures in PR description with links to previous failing workflows
+   - Do NOT spend time fixing unrelated test failures unless specifically requested
+   - Product Owner will assess if pre-existing failures block merge
+
+### Pre-Existing CI Failures - How to Handle
+
+**Pattern Recognition:** Sometimes CI workflows fail due to pre-existing issues in other test files, not your changes.
+
+**When You Encounter Pre-Existing Failures:**
+
+1. **Verify Local Tests**: Run `npm test && npm run test:e2e && npm run build` locally
+2. **Document Results**: Record exact test counts and pass rates (e.g., "2783/2808 passing locally")
+3. **Identify Unrelated Failures**: Check if failing tests are in files you didn't modify
+4. **Check Previous Runs**: Use GitHub Actions history to see if tests were already failing
+5. **Report in PR**: Clearly state "Pre-existing CI failures detected in [file.spec.ts], not related to this PR"
+6. **Provide Evidence**: Link to previous workflow runs showing same failures
+7. **Focus on Your Tests**: Ensure YOUR new tests pass 100% locally and document this
+
+**Example Documentation in PR:**
+```markdown
+## CI Status
+
+**Unit Tests**: ✅ PASSING (2783/2808 locally)
+**E2E Tests**: ⚠️ PARTIAL (Our tests: 10/10 passing)
+
+**Pre-existing Failures** (not related to this PR):
+- compliance-orchestration.spec.ts: 12 tests failing
+- These failures existed before this PR (see workflow #21992064212)
+- Our new tests in token-utility-recommendations.spec.ts: 100% passing
+```
+
+**Product Owner Decision Point:**
+- Product Owner will decide if pre-existing failures block merge
+- Your responsibility: Ensure YOUR changes don't break anything
+- Your tests must pass 100% locally with documentation
 4. **Test authentication flows**: Ensure protected routes are handled properly in tests
 5. **Handle browser compatibility**: Add appropriate skips for browsers with known issues (e.g., Firefox networkidle timeouts)
 6. **Test responsive design**: Make tests robust against different screen sizes and responsive layouts

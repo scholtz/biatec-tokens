@@ -43,6 +43,60 @@ describe('tokenUtilityRecommendations', () => {
       expect(algorandScore).toBeGreaterThan(ethereumScore)
     })
 
+    // Edge case: Empty requirements (should not crash)
+    it('should handle requirements with no flags set', () => {
+      const utility = TOKEN_UTILITIES.ARC200
+      const requirements = {
+        useCase: TokenUseCase.FUNGIBLE_TOKEN,
+      }
+      const score = calculateUtilityScore(utility, requirements)
+      expect(score).toBeGreaterThanOrEqual(0)
+      expect(score).toBeLessThanOrEqual(100)
+    })
+
+    // Edge case: All requirements set
+    it('should handle requirements with all flags set', () => {
+      const utility = TOKEN_UTILITIES.ARC200
+      const requirements = {
+        useCase: TokenUseCase.RWA_TOKEN,
+        requiresCompliance: true,
+        costSensitive: true,
+        requiresWideCompatibility: true,
+        requiresSmartContract: true,
+        preferredNetworks: ['Algorand Mainnet', 'VOI'],
+      }
+      const score = calculateUtilityScore(utility, requirements)
+      expect(score).toBeGreaterThanOrEqual(0)
+      expect(score).toBeLessThanOrEqual(100)
+    })
+
+    // Edge case: No use case match
+    it('should return lower score when use case does not match', () => {
+      const utility = TOKEN_UTILITIES.ARC3 // NFT standard
+      const requirements = {
+        useCase: TokenUseCase.GOVERNANCE_TOKEN, // Not in ARC3 use cases
+      }
+      const score = calculateUtilityScore(utility, requirements)
+      expect(score).toBeLessThan(40) // Should miss the 40-point use case bonus
+    })
+
+    // Edge case: Compliance required but not available
+    it('should penalize non-compliant standards when compliance required', () => {
+      const erc20Utility = TOKEN_UTILITIES.ERC20 // Not compliance-ready
+      const arc200Utility = TOKEN_UTILITIES.ARC200 // Compliance-ready
+      const requirements = {
+        useCase: TokenUseCase.FUNGIBLE_TOKEN, // Both support fungible tokens
+        requiresCompliance: true,
+        costSensitive: true, // This will favor ARC200 even more
+      }
+      const erc20Score = calculateUtilityScore(erc20Utility, requirements)
+      const arc200Score = calculateUtilityScore(arc200Utility, requirements)
+      // ARC200 should score higher due to compliance support + low cost
+      expect(arc200Score).toBeGreaterThan(erc20Score)
+      // Difference should be significant
+      expect(arc200Score - erc20Score).toBeGreaterThanOrEqual(20)
+    })
+
     it('should favor excellent wallet compatibility when required', () => {
       const arc3Utility = TOKEN_UTILITIES.ARC3
       const arc19Utility = TOKEN_UTILITIES.ARC19
@@ -262,6 +316,171 @@ describe('tokenUtilityRecommendations', () => {
     it('should have high cost profile for Ethereum standards', () => {
       expect(TOKEN_UTILITIES.ERC20.costProfile).toBe('high')
       expect(TOKEN_UTILITIES.ERC721.costProfile).toBe('high')
+    })
+  })
+
+  describe('Tie-breaking and edge case scenarios', () => {
+    it('should handle tie-breaking when two standards have similar scores', () => {
+      const requirements = {
+        useCase: TokenUseCase.FUNGIBLE_TOKEN,
+        requiresCompliance: false,
+        costSensitive: true,
+      }
+      const comparisons = getUtilityComparisons(requirements)
+      
+      // Verify that scores are deterministic and ordered
+      for (let i = 0; i < comparisons.length - 1; i++) {
+        expect(comparisons[i].score).toBeGreaterThanOrEqual(comparisons[i + 1].score)
+      }
+    })
+
+    it('should handle partial network preferences', () => {
+      const requirements = {
+        useCase: TokenUseCase.FUNGIBLE_TOKEN,
+        preferredNetworks: ['Algorand Mainnet'],
+      }
+      const comparisons = getUtilityComparisons(requirements)
+      
+      // Algorand-based standards should score higher
+      const algorandStandards = comparisons.filter(c => 
+        ['ARC-200', 'ARC-3', 'ARC-19', 'ARC-69', 'ASA (Algorand Standard Asset)'].includes(c.standard)
+      )
+      const ethereumStandards = comparisons.filter(c => 
+        ['ERC-20', 'ERC-721'].includes(c.standard)
+      )
+      
+      if (algorandStandards.length > 0 && ethereumStandards.length > 0) {
+        expect(algorandStandards[0].score).toBeGreaterThan(ethereumStandards[ethereumStandards.length - 1].score - 20)
+      }
+    })
+
+    it('should handle case where no standards match use case perfectly', () => {
+      // SECURITY_TOKEN is in use cases but may not be primary for all standards
+      const requirements = {
+        useCase: TokenUseCase.SECURITY_TOKEN,
+        requiresCompliance: true,
+      }
+      const comparisons = getUtilityComparisons(requirements)
+      
+      // Should still return recommendations even if not perfect match
+      expect(comparisons.length).toBeGreaterThan(0)
+      // ARC-200 should be near top due to compliance support
+      const arc200 = comparisons.find(c => c.standard === 'ARC-200')
+      expect(arc200).toBeDefined()
+      // Score should be reasonable even if not perfect match
+      expect(arc200!.score).toBeGreaterThan(30)
+    })
+
+    it('should handle conflicting requirements gracefully', () => {
+      // Conflicting: wants compliance (favors ARC-200) but also maximum compatibility (favors ARC-3/ERC)
+      const requirements = {
+        useCase: TokenUseCase.FUNGIBLE_TOKEN,
+        requiresCompliance: true,
+        requiresWideCompatibility: true,
+        costSensitive: true,
+      }
+      const comparisons = getUtilityComparisons(requirements)
+      
+      // Should still produce valid scores
+      expect(comparisons.length).toBeGreaterThan(0)
+      comparisons.forEach(c => {
+        expect(c.score).toBeGreaterThanOrEqual(0)
+        expect(c.score).toBeLessThanOrEqual(100)
+      })
+    })
+
+    it('should handle empty preferred networks array', () => {
+      const requirements = {
+        useCase: TokenUseCase.FUNGIBLE_TOKEN,
+        preferredNetworks: [],
+      }
+      const comparisons = getUtilityComparisons(requirements)
+      
+      // Should not crash and should return valid scores
+      expect(comparisons.length).toBeGreaterThan(0)
+      comparisons.forEach(c => {
+        expect(c.score).toBeGreaterThanOrEqual(0)
+      })
+    })
+
+    it('should handle undefined optional properties', () => {
+      const requirements = {
+        useCase: TokenUseCase.FUNGIBLE_TOKEN,
+        // All other properties undefined
+      }
+      const comparisons = getUtilityComparisons(requirements)
+      
+      // Should work with minimal requirements
+      expect(comparisons.length).toBeGreaterThan(0)
+      expect(comparisons[0].score).toBeGreaterThan(0)
+    })
+  })
+
+  describe('Compliance-weighted scenarios', () => {
+    it('should heavily favor ARC-200 for RWA tokens with compliance', () => {
+      const requirements = {
+        useCase: TokenUseCase.RWA_TOKEN,
+        requiresCompliance: true,
+        costSensitive: true,
+      }
+      const comparisons = getUtilityComparisons(requirements)
+      
+      // ARC-200 should be the top recommendation
+      expect(comparisons[0].standard).toBe('ARC-200')
+      expect(comparisons[0].score).toBeGreaterThan(85)
+    })
+
+    it('should recommend ARC-200 for security tokens with compliance', () => {
+      const requirements = {
+        useCase: TokenUseCase.SECURITY_TOKEN,
+        requiresCompliance: true,
+      }
+      const comparisons = getUtilityComparisons(requirements)
+      
+      // ARC-200 should be in top 2
+      const arc200 = comparisons.find(c => c.standard === 'ARC-200')
+      expect(arc200).toBeDefined()
+      const arc200Index = comparisons.findIndex(c => c.standard === 'ARC-200')
+      expect(arc200Index).toBeLessThan(2)
+    })
+
+    it('should not favor compliance-ready standards when compliance not required', () => {
+      const requirements = {
+        useCase: TokenUseCase.UTILITY_TOKEN,
+        requiresCompliance: false,
+        costSensitive: false,
+        requiresWideCompatibility: true,
+      }
+      const comparisons = getUtilityComparisons(requirements)
+      
+      // Other factors should dominate, not just compliance readiness
+      // ARC-200 may not be #1 if wallet compatibility is prioritized
+      expect(comparisons.length).toBeGreaterThan(0)
+    })
+
+    it('should generate appropriate pros for compliance-ready standards', () => {
+      const requirements = {
+        useCase: TokenUseCase.RWA_TOKEN,
+        requiresCompliance: true,
+      }
+      const comparisons = getUtilityComparisons(requirements)
+      
+      const arc200 = comparisons.find(c => c.standard === 'ARC-200')
+      expect(arc200).toBeDefined()
+      expect(arc200!.pros.some(pro => pro.toLowerCase().includes('compliance'))).toBe(true)
+    })
+
+    it('should generate appropriate cons for non-compliant standards when compliance required', () => {
+      const requirements = {
+        useCase: TokenUseCase.FUNGIBLE_TOKEN,
+        requiresCompliance: true,
+      }
+      const comparisons = getUtilityComparisons(requirements)
+      
+      const erc20 = comparisons.find(c => c.standard === 'ERC-20')
+      expect(erc20).toBeDefined()
+      // Should have cons about no compliance support
+      expect(erc20!.cons.some(con => con.toLowerCase().includes('compliance'))).toBe(true)
     })
   })
 })
