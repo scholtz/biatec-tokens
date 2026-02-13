@@ -85,7 +85,7 @@ export function calculateUtilityScore(
 export function getUtilityComparisons(requirements: TokenRequirements): UtilityComparison[] {
   const comparisons: UtilityComparison[] = [];
 
-  for (const [key, utility] of Object.entries(TOKEN_UTILITIES)) {
+  for (const utility of Object.values(TOKEN_UTILITIES)) {
     const score = calculateUtilityScore(utility, requirements);
     const matchedUseCases = utility.useCases.filter(uc => uc === requirements.useCase);
 

@@ -143,7 +143,7 @@
           <Badge
             v-for="network in utility.networks"
             :key="network"
-            variant="secondary"
+            variant="default"
             size="sm"
           >
             {{ network }}

@@ -109,7 +109,7 @@
             >
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-3">
-                  <Badge v-if="index === 0" variant="primary" size="sm">
+                  <Badge v-if="index === 0" variant="info" size="sm">
                     Best Match
                   </Badge>
                   <span class="font-semibold text-gray-900 dark:text-white">
@@ -200,7 +200,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import Card from './ui/Card.vue'
 import Badge from './ui/Badge.vue'
 import Button from './ui/Button.vue'
