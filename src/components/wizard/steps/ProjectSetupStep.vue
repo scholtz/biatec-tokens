@@ -71,6 +71,73 @@
         </div>
       </div>
 
+      <!-- Token Standard Recommendations (shown after purpose selected) -->
+      <div v-if="formData.tokenPurpose && recommendedStandards.length > 0" class="glass-effect rounded-xl p-6 border border-blue-500/30 bg-blue-500/5">
+        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+          <i class="pi pi-lightbulb text-yellow-400"></i>
+          Recommended Token Standards
+        </h4>
+        <p class="text-sm text-gray-400 mb-4">
+          Based on your {{ getPurposeLabel(formData.tokenPurpose) }}, we recommend these token standards:
+        </p>
+        
+        <div class="space-y-3">
+          <div
+            v-for="(comparison, index) in recommendedStandards.slice(0, 3)"
+            :key="comparison.standard"
+            class="p-4 rounded-lg border"
+            :class="[
+              index === 0
+                ? 'border-blue-400 bg-blue-500/10'
+                : 'border-gray-600 bg-gray-800/30',
+            ]"
+          >
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span v-if="index === 0" class="text-xs font-semibold text-blue-400 bg-blue-500/20 px-2 py-1 rounded">
+                  BEST MATCH
+                </span>
+                <span class="font-semibold text-gray-900 dark:text-white">
+                  {{ comparison.standard }}
+                </span>
+              </div>
+              <span class="text-sm text-gray-400">
+                Score: <span class="font-bold text-blue-400">{{ comparison.score }}%</span>
+              </span>
+            </div>
+
+            <!-- Pros -->
+            <div v-if="comparison.pros.length > 0" class="mb-2">
+              <ul class="space-y-1">
+                <li
+                  v-for="(pro, pIndex) in comparison.pros.slice(0, 2)"
+                  :key="pIndex"
+                  class="text-xs text-green-400 flex items-start gap-1"
+                >
+                  <span class="mt-0.5">✓</span>
+                  <span>{{ pro }}</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Info button -->
+            <button
+              @click="showStandardDetails(comparison.standard)"
+              class="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              Learn more about {{ comparison.standard }} →
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-4 p-3 bg-gray-800/50 rounded-lg">
+          <p class="text-xs text-gray-400">
+            💡 <strong class="text-gray-300">Tip:</strong> You'll be able to review and select your token standard in the next steps. 
+            These recommendations are based on your project's purpose and requirements.
+          </p>
+        </div>
+      </div>
+
       <!-- Issuer Details -->
       <div class="glass-effect rounded-xl p-6 border border-white/10">
         <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -208,6 +275,9 @@ import { ref, computed, watch } from 'vue'
 import { useTokenDraftStore } from '../../../stores/tokenDraft'
 import WizardStep from '../WizardStep.vue'
 import Input from '../../ui/Input.vue'
+import { TokenUseCase } from '../../../types/tokenUtility'
+import type { UtilityComparison } from '../../../types/tokenUtility'
+import { getUtilityComparisons } from '../../../utils/tokenUtilityRecommendations'
 
 const tokenDraftStore = useTokenDraftStore()
 
@@ -228,6 +298,56 @@ const formData = ref({
   complianceContactEmail: '',
   complianceContactPhone: '',
 })
+
+// Map form token purpose to TokenUseCase enum
+const mapPurposeToUseCase = (purpose: string): TokenUseCase | null => {
+  const mapping: Record<string, TokenUseCase> = {
+    'utility': TokenUseCase.UTILITY_TOKEN,
+    'asset': TokenUseCase.RWA_TOKEN,
+    'security': TokenUseCase.SECURITY_TOKEN,
+    'governance': TokenUseCase.GOVERNANCE_TOKEN,
+    'reward': TokenUseCase.REWARD_TOKEN,
+  }
+  return mapping[purpose] || null
+}
+
+// Get purpose label for display
+const getPurposeLabel = (purpose: string): string => {
+  const labels: Record<string, string> = {
+    'utility': 'utility token',
+    'asset': 'asset token',
+    'security': 'security token',
+    'governance': 'governance token',
+    'reward': 'reward token',
+    'other': 'other purpose',
+  }
+  return labels[purpose] || 'selected purpose'
+}
+
+// Compute recommended standards based on token purpose
+const recommendedStandards = computed<UtilityComparison[]>(() => {
+  if (!formData.value.tokenPurpose) {
+    return []
+  }
+
+  const useCase = mapPurposeToUseCase(formData.value.tokenPurpose)
+  if (!useCase) {
+    return []
+  }
+
+  // Get recommendations with appropriate flags
+  return getUtilityComparisons({
+    useCase,
+    requiresCompliance: formData.value.tokenPurpose === 'asset' || formData.value.tokenPurpose === 'security',
+    costSensitive: true, // Default to preferring low-cost options
+  })
+})
+
+// Show standard details (placeholder for future modal)
+const showStandardDetails = (standard: string) => {
+  // TODO: Could open a modal with full TokenUtilityCard details
+  console.log('Show details for standard:', standard)
+}
 
 // Load from draft store if available
 if (tokenDraftStore.currentDraft?.projectSetup) {
