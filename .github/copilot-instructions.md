@@ -46,7 +46,22 @@
 - [ ] **Test Coverage**: New code ≥70% branch coverage
 - [ ] **E2E Tests Pass**: All critical user flows validated
 - [ ] **No Regressions**: All existing tests still pass
+- [ ] **ALL CI Checks Green**: Every required check must pass, including pre-existing test suites
 - [ ] **Accessibility Check**: WCAG 2.1 AA baseline (labels, contrast, keyboard)
+
+**🚨 CRITICAL: CI FAILURE POLICY 🚨**
+
+**ZERO TOLERANCE FOR CI FAILURES** - Product owner requires ALL CI checks to be green before merge, including tests unrelated to your changes.
+
+**If CI fails with pre-existing test failures:**
+1. **DO NOT** claim "pre-existing failures" as excuse to merge
+2. **DO NOT** finish work with any failing tests in CI
+3. **MUST** either:
+   - Fix ALL failing tests (including pre-existing ones)
+   - OR get explicit Product Owner approval with documented list of known failures
+   - OR work with Product Owner to disable/skip flaky tests
+
+**Past Violations:** Previous work was rejected multiple times for pre-existing CI failures. Product owner expects "every required check is green" - no exceptions.
 
 ### 4. Issue Linkage and Acceptance Criteria (MANDATORY)
 - [ ] **Link to Issue Number**: PR description must reference issue (e.g., "Closes #389")
