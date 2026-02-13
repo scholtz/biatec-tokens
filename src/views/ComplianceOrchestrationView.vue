@@ -522,4 +522,18 @@ const formatTimestamp = (timestamp: string): string => {
     minute: '2-digit',
   })
 }
+
+// Initialize compliance state on component mount
+onMounted(async () => {
+  try {
+    if (authStore.user) {
+      await complianceStore.initializeComplianceState(
+        authStore.user.address,
+        authStore.user.email || ''
+      )
+    }
+  } catch (err) {
+    console.error('[ComplianceOrchestrationView] Failed to initialize compliance state:', err)
+  }
+})
 </script>

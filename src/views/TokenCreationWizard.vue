@@ -14,7 +14,7 @@
     <WizardContainer
       v-if="isEligibleForIssuance || loading"
       title="Create Your Token"
-      subtitle="A guided, wallet-free experience for compliant token creation"
+      subtitle="A guided experience for compliant token creation"
       :steps="wizardSteps"
       :initial-step="0"
       :show-save-draft="true"
