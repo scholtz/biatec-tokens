@@ -1,383 +1,417 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { setActivePinia, createPinia } from 'pinia'
-import DeploymentStatusStep from '../DeploymentStatusStep.vue'
-import WizardStep from '../../WizardStep.vue'
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { mount } from "@vue/test-utils";
+import { setActivePinia, createPinia } from "pinia";
+import DeploymentStatusStep from "../DeploymentStatusStep.vue";
+import { useTokenDraftStore } from "../../../../stores/tokenDraft";
 
-describe('DeploymentStatusStep', () => {
+// Mock the service
+const mockStartDeployment = vi.fn();
+const mockStopPolling = vi.fn();
+const mockReset = vi.fn();
+
+vi.mock("../../../../services/DeploymentStatusService", () => {
+  return {
+    DeploymentStatusService: class {
+      startDeployment = mockStartDeployment;
+      stopPolling = mockStopPolling;
+      reset = mockReset;
+    },
+  };
+});
+
+vi.mock("../../../../services/analytics", () => ({
+  analyticsService: {
+    trackEvent: vi.fn(),
+  },
+}));
+
+vi.mock("../../../../services/AuditTrailService", () => ({
+  auditTrailService: {
+    getDeploymentAuditTrail: vi.fn(),
+    downloadAuditReport: vi.fn(),
+  },
+}));
+
+// Stub the WizardStep component
+const stubs = {
+  WizardStep: {
+    template: '<div><slot name="header"></slot><slot></slot></div>',
+    props: ["title", "description", "helpText", "showErrors", "validationErrors"],
+  },
+};
+
+describe("DeploymentStatusStep", () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
-    localStorage.clear()
-  })
+    setActivePinia(createPinia());
+    localStorage.clear();
+  });
 
-  describe('Timeline Rendering', () => {
-    it('should render deployment timeline', () => {
+  describe("Timeline Rendering", () => {
+    it("should render deployment timeline", () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      expect(wrapper.text()).toContain('Deployment Progress')
-    })
+      expect(wrapper.text()).toContain("Deployment Progress");
+    });
 
-    it('should display all deployment stages', () => {
+    it("should display all deployment stages", () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      expect(wrapper.text()).toContain('Preparing Token')
-      expect(wrapper.text()).toContain('Uploading Metadata')
-      expect(wrapper.text()).toContain('Deploying to Blockchain')
-      expect(wrapper.text()).toContain('Confirming Transaction')
-      expect(wrapper.text()).toContain('Indexing Token')
-    })
+      expect(wrapper.text()).toContain("Preparing Token");
+      expect(wrapper.text()).toContain("Uploading Metadata");
+      expect(wrapper.text()).toContain("Deploying to Blockchain");
+      expect(wrapper.text()).toContain("Confirming Transaction");
+      expect(wrapper.text()).toContain("Indexing Token");
+    });
 
-    it('should show stage descriptions', () => {
+    it("should show stage descriptions", () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      expect(wrapper.text()).toContain('Validating token parameters')
-      expect(wrapper.text()).toContain('Storing token metadata')
-      expect(wrapper.text()).toContain('Submitting transaction')
-    })
-  })
+      expect(wrapper.text()).toContain("Validating token parameters");
+      expect(wrapper.text()).toContain("Storing token metadata");
+      expect(wrapper.text()).toContain("Submitting transaction");
+    });
+  });
 
-  describe('Status Progression', () => {
-    it('should start with pending status', () => {
+  describe("Status Progression", () => {
+    it("should start with pending status", () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      expect(vm.deploymentStatus).toBe('pending')
-    })
+      const vm = wrapper.vm as any;
+      expect(vm.deploymentStatus).toBe("pending");
+    });
 
-    it.skip('should show in-progress status during deployment - FIXME: needs auth+draft mock', async () => {
+    it("should show in-progress status during deployment", async () => {
+      // Set up token draft
+      const tokenDraftStore = useTokenDraftStore();
+      tokenDraftStore.initializeDraft();
+      tokenDraftStore.updateDraft({ name: "Test Token", symbol: "TST" });
+
+      // Mock the startDeployment to call the callback with in-progress status
+      mockStartDeployment.mockImplementation((request: any, callback: any) => {
+        callback({
+          status: "in-progress",
+          stages: [
+            { id: "preparing", title: "Preparing Token", status: "in-progress", progress: 50 },
+            { id: "uploading", title: "Uploading Metadata", status: "pending" },
+            { id: "deploying", title: "Deploying to Blockchain", status: "pending" },
+            { id: "confirming", title: "Confirming Transaction", status: "pending" },
+            { id: "indexing", title: "Indexing Token", status: "pending" },
+          ],
+        });
+      });
+
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      await vm.startDeployment()
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any;
+      await vm.startDeployment();
+      await wrapper.vm.$nextTick();
 
-      expect(vm.deploymentStatus).toBe('in-progress')
-    })
+      expect(vm.deploymentStatus).toBe("in-progress");
+      expect(vm.deploymentStages[0].status).toBe("in-progress");
+      expect(vm.deploymentStages[0].progress).toBe(50);
+    });
 
-    it('should display progress bar for in-progress stage', async () => {
+    it("should display progress bar for in-progress stage", async () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      vm.deploymentStages[0].status = 'in-progress'
-      vm.deploymentStages[0].progress = 50
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any;
+      vm.deploymentStages[0].status = "in-progress";
+      vm.deploymentStages[0].progress = 50;
+      await wrapper.vm.$nextTick();
 
-      expect(wrapper.text()).toContain('50%')
-    })
+      expect(wrapper.text()).toContain("50%");
+    });
 
-    it('should show check icon for completed stages', async () => {
+    it("should show check icon for completed stages", async () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      vm.deploymentStages[0].status = 'completed'
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any;
+      vm.deploymentStages[0].status = "completed";
+      await wrapper.vm.$nextTick();
 
-      const checkIcon = wrapper.find('.pi-check')
-      expect(checkIcon.exists()).toBe(true)
-    })
+      const checkIcon = wrapper.find(".pi-check");
+      expect(checkIcon.exists()).toBe(true);
+    });
 
-    it('should show spinner for in-progress stages', async () => {
+    it("should show spinner for in-progress stages", async () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      vm.deploymentStages[0].status = 'in-progress'
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any;
+      vm.deploymentStages[0].status = "in-progress";
+      await wrapper.vm.$nextTick();
 
-      const spinner = wrapper.find('.pi-spinner')
-      expect(spinner.exists()).toBe(true)
-    })
-  })
+      const spinner = wrapper.find(".pi-spinner");
+      expect(spinner.exists()).toBe(true);
+    });
+  });
 
-  describe('Success State', () => {
-    it('should display success message when completed', async () => {
+  describe("Success State", () => {
+    it("should display success message when completed", async () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      vm.deploymentStatus = 'completed'
+      const vm = wrapper.vm as any;
+      vm.deploymentStatus = "completed";
       vm.deploymentResult = {
-        tokenName: 'Test Token',
-        tokenSymbol: 'TEST',
-        network: 'VOI',
-        standard: 'ASA',
-        assetId: '123456',
-        txId: 'ABC123XYZ',
-      }
-      await wrapper.vm.$nextTick()
+        tokenName: "Test Token",
+        tokenSymbol: "TEST",
+        network: "VOI",
+        standard: "ASA",
+        assetId: "123456",
+        txId: "ABC123XYZ",
+      };
+      await wrapper.vm.$nextTick();
 
-      expect(wrapper.text()).toContain('Token Deployed Successfully!')
-    })
+      expect(wrapper.text()).toContain("Token Deployed Successfully!");
+    });
 
-    it('should display deployment result details', async () => {
+    it("should display deployment result details", async () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      vm.deploymentStatus = 'completed'
+      const vm = wrapper.vm as any;
+      vm.deploymentStatus = "completed";
       vm.deploymentResult = {
-        tokenName: 'Test Token',
-        tokenSymbol: 'TEST',
-        network: 'VOI',
-        standard: 'ASA',
-        assetId: '123456',
-        txId: 'ABC123',
-      }
-      await wrapper.vm.$nextTick()
+        tokenName: "Test Token",
+        tokenSymbol: "TEST",
+        network: "VOI",
+        standard: "ASA",
+        assetId: "123456",
+        txId: "ABC123",
+      };
+      await wrapper.vm.$nextTick();
 
-      expect(wrapper.text()).toContain('Test Token')
-      expect(wrapper.text()).toContain('TEST')
-      expect(wrapper.text()).toContain('VOI')
-      expect(wrapper.text()).toContain('123456')
-    })
+      expect(wrapper.text()).toContain("Test Token");
+      expect(wrapper.text()).toContain("TEST");
+      expect(wrapper.text()).toContain("VOI");
+      expect(wrapper.text()).toContain("123456");
+    });
 
-    it('should show Download Summary button', async () => {
+    it("should show Download Summary button", async () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      vm.deploymentStatus = 'completed'
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any;
+      vm.deploymentStatus = "completed";
+      await wrapper.vm.$nextTick();
 
-      expect(wrapper.text()).toContain('Download Summary')
-    })
+      expect(wrapper.text()).toContain("Download Summary");
+    });
 
-    it('should show View on Explorer button', async () => {
+    it("should show View on Explorer button", async () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      vm.deploymentStatus = 'completed'
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any;
+      vm.deploymentStatus = "completed";
+      await wrapper.vm.$nextTick();
 
-      expect(wrapper.text()).toContain('View on Explorer')
-    })
-  })
+      expect(wrapper.text()).toContain("View on Explorer");
+    });
+  });
 
-  describe('Error State and Recovery', () => {
-    it('should display error message when deployment fails', async () => {
+  describe("Error State and Recovery", () => {
+    it("should display error message when deployment fails", async () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      vm.deploymentStatus = 'failed'
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any;
+      vm.deploymentStatus = "failed";
+      await wrapper.vm.$nextTick();
 
-      expect(wrapper.text()).toContain('Deployment Failed')
-    })
+      expect(wrapper.text()).toContain("Deployment Failed");
+    });
 
-    it('should show retry button on failure', async () => {
+    it("should show retry button on failure", async () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      vm.deploymentStatus = 'failed'
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any;
+      vm.deploymentStatus = "failed";
+      await wrapper.vm.$nextTick();
 
-      expect(wrapper.text()).toContain('Retry Deployment')
-    })
+      expect(wrapper.text()).toContain("Retry Deployment");
+    });
 
-    it('should show save draft button on failure', async () => {
+    it("should show save draft button on failure", async () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      vm.deploymentStatus = 'failed'
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any;
+      vm.deploymentStatus = "failed";
+      await wrapper.vm.$nextTick();
 
-      expect(wrapper.text()).toContain('Save Draft and Exit')
-    })
+      expect(wrapper.text()).toContain("Save Draft and Exit");
+    });
 
-    it('should show contact support button on failure', async () => {
+    it("should show contact support button on failure", async () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      vm.deploymentStatus = 'failed'
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any;
+      vm.deploymentStatus = "failed";
+      await wrapper.vm.$nextTick();
 
-      expect(wrapper.text()).toContain('Contact Support')
-    })
+      expect(wrapper.text()).toContain("Contact Support");
+    });
 
-    it('should display error details for failed stage', async () => {
+    it("should display error details for failed stage", async () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      vm.deploymentStages[0].status = 'failed'
-      vm.deploymentStages[0].error = 'Connection timeout'
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any;
+      vm.deploymentStages[0].status = "failed";
+      vm.deploymentStages[0].error = "Connection timeout";
+      await wrapper.vm.$nextTick();
 
-      expect(wrapper.text()).toContain('Connection timeout')
-    })
+      expect(wrapper.text()).toContain("Connection timeout");
+    });
 
-    it('should show X icon for failed stages', async () => {
+    it("should show X icon for failed stages", async () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      vm.deploymentStages[0].status = 'failed'
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any;
+      vm.deploymentStages[0].status = "failed";
+      await wrapper.vm.$nextTick();
 
-      const failIcon = wrapper.find('.pi-times')
-      expect(failIcon.exists()).toBe(true)
-    })
-  })
+      const failIcon = wrapper.find(".pi-times");
+      expect(failIcon.exists()).toBe(true);
+    });
+  });
 
-  describe('In Progress State', () => {
-    it('should show in-progress notice', async () => {
+  describe("In Progress State", () => {
+    it("should show in-progress notice", async () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      vm.deploymentStatus = 'in-progress'
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any;
+      vm.deploymentStatus = "in-progress";
+      await wrapper.vm.$nextTick();
 
-      expect(wrapper.text()).toContain('Deployment in Progress')
-    })
+      expect(wrapper.text()).toContain("Deployment in Progress");
+    });
 
-    it('should display estimated time', async () => {
+    it("should display estimated time", async () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      vm.deploymentStatus = 'in-progress'
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any;
+      vm.deploymentStatus = "in-progress";
+      await wrapper.vm.$nextTick();
 
-      expect(wrapper.text()).toContain('30-60 seconds')
-    })
-  })
+      expect(wrapper.text()).toContain("30-60 seconds");
+    });
+  });
 
-  describe('Helpful Information', () => {
-    it('should display what happens next section', () => {
+  describe("Helpful Information", () => {
+    it("should display what happens next section", () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      expect(wrapper.text()).toContain('What Happens Next?')
-    })
+      expect(wrapper.text()).toContain("What Happens Next?");
+    });
 
-    it('should list post-deployment benefits', () => {
+    it("should list post-deployment benefits", () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      expect(wrapper.text()).toContain('recorded on the blockchain')
-      expect(wrapper.text()).toContain('view and manage your token')
-      expect(wrapper.text()).toContain('email confirmation')
-    })
-  })
+      expect(wrapper.text()).toContain("recorded on the blockchain");
+      expect(wrapper.text()).toContain("view and manage your token");
+      expect(wrapper.text()).toContain("email confirmation");
+    });
+  });
 
-  describe('Interactive Features', () => {
-    it.skip('should call retryDeployment when retry button clicked - FIXME: needs auth+draft mock', async () => {
+  describe("Interactive Features", () => {
+    it("should provide copy functionality for asset ID", async () => {
       const wrapper = mount(DeploymentStatusStep, {
         global: {
-          components: { WizardStep },
+          stubs,
         },
-      })
+      });
 
-      const vm = wrapper.vm as any
-      vm.deploymentStatus = 'failed'
-      await wrapper.vm.$nextTick()
+      const vm = wrapper.vm as any;
+      vm.deploymentStatus = "completed";
+      vm.deploymentResult.assetId = "123456";
+      await wrapper.vm.$nextTick();
 
-      const retryButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Retry Deployment')
-      )
-      
-      if (retryButton) {
-        await retryButton.trigger('click')
-        expect(vm.deploymentStatus).toBe('in-progress')
-      }
-    })
+      const copyButtons = wrapper.findAll("button").filter((btn) => btn.find(".pi-copy").exists());
 
-    it('should provide copy functionality for asset ID', async () => {
-      const wrapper = mount(DeploymentStatusStep, {
-        global: {
-          components: { WizardStep },
-        },
-      })
-
-      const vm = wrapper.vm as any
-      vm.deploymentStatus = 'completed'
-      vm.deploymentResult.assetId = '123456'
-      await wrapper.vm.$nextTick()
-
-      const copyButtons = wrapper.findAll('button').filter(btn => 
-        btn.find('.pi-copy').exists()
-      )
-      
-      expect(copyButtons.length).toBeGreaterThan(0)
-    })
-  })
-})
+      expect(copyButtons.length).toBeGreaterThan(0);
+    });
+  });
+});

@@ -142,7 +142,7 @@ export const useWhitelistStore = defineStore("whitelist", () => {
 
       // Update in entries array
       const index = entries.value.findIndex((e) => e.id === id);
-      if (index !== -1) {
+      if (index !== -1 && updatedEntry) {
         entries.value[index] = updatedEntry;
       }
 
@@ -170,7 +170,7 @@ export const useWhitelistStore = defineStore("whitelist", () => {
 
       // Update in entries array
       const index = entries.value.findIndex((e) => e.id === request.id);
-      if (index !== -1) {
+      if (index !== -1 && updatedEntry) {
         entries.value[index] = updatedEntry;
       }
 
@@ -201,7 +201,7 @@ export const useWhitelistStore = defineStore("whitelist", () => {
 
       // Update in entries array
       const index = entries.value.findIndex((e) => e.id === request.id);
-      if (index !== -1) {
+      if (index !== -1 && updatedEntry) {
         entries.value[index] = updatedEntry;
       }
 
