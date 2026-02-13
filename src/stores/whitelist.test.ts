@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { setActivePinia, createPinia } from 'pinia';
-import { useWhitelistStore } from './whitelist';
-import { whitelistService } from '../services/whitelistService';
-import type { CreateWhitelistEntryRequest, ApproveWhitelistEntryRequest, RejectWhitelistEntryRequest } from '../types/whitelist';
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { setActivePinia, createPinia } from "pinia";
+import { useWhitelistStore } from "./whitelist";
+import { whitelistService } from "../services/whitelistService";
+import type { CreateWhitelistEntryRequest, ApproveWhitelistEntryRequest, RejectWhitelistEntryRequest } from "../types/whitelist";
 
 // Mock the whitelist service
-vi.mock('../services/whitelistService', () => ({
+vi.mock("../services/whitelistService", () => ({
   whitelistService: {
     getWhitelistEntries: vi.fn(),
     getWhitelistSummary: vi.fn(),
@@ -26,32 +26,32 @@ vi.mock('../services/whitelistService', () => ({
   },
 }));
 
-describe('useWhitelistStore', () => {
+describe("useWhitelistStore", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
   });
 
-  describe('fetchWhitelistEntries', () => {
-    it('should fetch and store whitelist entries', async () => {
+  describe("fetchWhitelistEntries", () => {
+    it("should fetch and store whitelist entries", async () => {
       const mockResponse = {
         data: [
           {
-            id: '1',
-            name: 'Test User',
-            email: 'test@example.com',
-            entityType: 'individual' as const,
-            status: 'approved' as const,
-            jurisdictionCode: 'US',
-            jurisdictionName: 'United States',
-            riskLevel: 'low' as const,
-            kycStatus: 'verified' as const,
-            accreditationStatus: 'not_required' as const,
+            id: "1",
+            name: "Test User",
+            email: "test@example.com",
+            entityType: "individual" as const,
+            status: "approved" as const,
+            jurisdictionCode: "US",
+            jurisdictionName: "United States",
+            riskLevel: "low" as const,
+            kycStatus: "verified" as const,
+            accreditationStatus: "not_required" as const,
             documentationComplete: true,
             documentsUploaded: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            createdBy: 'admin',
+            createdBy: "admin",
             auditTrail: [],
           },
         ],
@@ -72,20 +72,20 @@ describe('useWhitelistStore', () => {
       expect(store.isLoading).toBe(false);
     });
 
-    it('should handle errors when fetching entries', async () => {
-      vi.mocked(whitelistService.getWhitelistEntries).mockRejectedValue(new Error('Network error'));
+    it("should handle errors when fetching entries", async () => {
+      vi.mocked(whitelistService.getWhitelistEntries).mockRejectedValue(new Error("Network error"));
 
       const store = useWhitelistStore();
       await store.fetchWhitelistEntries();
 
-      expect(store.error).toBe('Network error');
+      expect(store.error).toBe("Network error");
       expect(store.entries).toEqual([]);
       expect(store.isLoading).toBe(false);
     });
   });
 
-  describe('fetchWhitelistSummary', () => {
-    it('should fetch and store whitelist summary', async () => {
+  describe("fetchWhitelistSummary", () => {
+    it("should fetch and store whitelist summary", async () => {
       const mockSummary = {
         totalEntries: 10,
         approvedCount: 5,
@@ -109,28 +109,28 @@ describe('useWhitelistStore', () => {
     });
   });
 
-  describe('createWhitelistEntry', () => {
-    it('should create a new whitelist entry', async () => {
+  describe("createWhitelistEntry", () => {
+    it("should create a new whitelist entry", async () => {
       const request: CreateWhitelistEntryRequest = {
-        name: 'New User',
-        email: 'new@example.com',
-        entityType: 'individual',
-        jurisdictionCode: 'US',
+        name: "New User",
+        email: "new@example.com",
+        entityType: "individual",
+        jurisdictionCode: "US",
       };
 
       const mockCreatedEntry = {
-        id: '2',
+        id: "2",
         ...request,
-        status: 'pending' as const,
-        jurisdictionName: 'United States',
-        riskLevel: 'low' as const,
-        kycStatus: 'not_started' as const,
-        accreditationStatus: 'not_required' as const,
+        status: "pending" as const,
+        jurisdictionName: "United States",
+        riskLevel: "low" as const,
+        kycStatus: "not_started" as const,
+        accreditationStatus: "not_required" as const,
         documentationComplete: false,
         documentsUploaded: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        createdBy: 'admin',
+        createdBy: "admin",
         auditTrail: [],
       };
 
@@ -157,31 +157,31 @@ describe('useWhitelistStore', () => {
     });
   });
 
-  describe('approveWhitelistEntry', () => {
-    it('should approve a whitelist entry', async () => {
+  describe("approveWhitelistEntry", () => {
+    it("should approve a whitelist entry", async () => {
       const mockEntry = {
-        id: '1',
-        name: 'Test User',
-        email: 'test@example.com',
-        entityType: 'individual' as const,
-        status: 'pending' as const,
-        jurisdictionCode: 'US',
-        jurisdictionName: 'United States',
-        riskLevel: 'low' as const,
-        kycStatus: 'verified' as const,
-        accreditationStatus: 'not_required' as const,
+        id: "1",
+        name: "Test User",
+        email: "test@example.com",
+        entityType: "individual" as const,
+        status: "pending" as const,
+        jurisdictionCode: "US",
+        jurisdictionName: "United States",
+        riskLevel: "low" as const,
+        kycStatus: "verified" as const,
+        accreditationStatus: "not_required" as const,
         documentationComplete: true,
         documentsUploaded: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        createdBy: 'admin',
+        createdBy: "admin",
         auditTrail: [],
       };
 
       const mockApprovedEntry = {
         ...mockEntry,
-        status: 'approved' as const,
-        reviewedBy: 'admin',
+        status: "approved" as const,
+        reviewedBy: "admin",
         reviewedAt: new Date().toISOString(),
       };
 
@@ -202,44 +202,44 @@ describe('useWhitelistStore', () => {
       store.entries = [mockEntry];
 
       const request: ApproveWhitelistEntryRequest = {
-        id: '1',
-        notes: 'Approved after verification',
+        id: "1",
+        notes: "Approved after verification",
       };
 
       const result = await store.approveWhitelistEntry(request);
 
       expect(whitelistService.approveWhitelistEntry).toHaveBeenCalledWith(request);
       expect(result).toBe(true);
-      expect(store.entries[0].status).toBe('approved');
+      expect(store.entries[0].status).toBe("approved");
     });
   });
 
-  describe('rejectWhitelistEntry', () => {
-    it('should reject a whitelist entry', async () => {
+  describe("rejectWhitelistEntry", () => {
+    it("should reject a whitelist entry", async () => {
       const mockEntry = {
-        id: '1',
-        name: 'Test User',
-        email: 'test@example.com',
-        entityType: 'individual' as const,
-        status: 'pending' as const,
-        jurisdictionCode: 'US',
-        jurisdictionName: 'United States',
-        riskLevel: 'low' as const,
-        kycStatus: 'pending' as const,
-        accreditationStatus: 'not_required' as const,
+        id: "1",
+        name: "Test User",
+        email: "test@example.com",
+        entityType: "individual" as const,
+        status: "pending" as const,
+        jurisdictionCode: "US",
+        jurisdictionName: "United States",
+        riskLevel: "low" as const,
+        kycStatus: "pending" as const,
+        accreditationStatus: "not_required" as const,
         documentationComplete: false,
         documentsUploaded: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        createdBy: 'admin',
+        createdBy: "admin",
         auditTrail: [],
       };
 
       const mockRejectedEntry = {
         ...mockEntry,
-        status: 'rejected' as const,
-        rejectionReason: 'Incomplete documentation',
-        reviewedBy: 'admin',
+        status: "rejected" as const,
+        rejectionReason: "Incomplete documentation",
+        reviewedBy: "admin",
         reviewedAt: new Date().toISOString(),
       };
 
@@ -260,39 +260,39 @@ describe('useWhitelistStore', () => {
       store.entries = [mockEntry];
 
       const request: RejectWhitelistEntryRequest = {
-        id: '1',
-        reason: 'Incomplete documentation',
+        id: "1",
+        reason: "Incomplete documentation",
       };
 
       const result = await store.rejectWhitelistEntry(request);
 
       expect(whitelistService.rejectWhitelistEntry).toHaveBeenCalledWith(request);
       expect(result).toBe(true);
-      expect(store.entries[0].status).toBe('rejected');
+      expect(store.entries[0].status).toBe("rejected");
     });
   });
 
-  describe('setFilters', () => {
-    it('should update filters', () => {
+  describe("setFilters", () => {
+    it("should update filters", () => {
       const store = useWhitelistStore();
-      
+
       store.setFilters({
-        status: ['approved'],
-        searchQuery: 'test',
+        status: ["approved"],
+        searchQuery: "test",
       });
 
-      expect(store.filters.status).toEqual(['approved']);
-      expect(store.filters.searchQuery).toBe('test');
+      expect(store.filters.status).toEqual(["approved"]);
+      expect(store.filters.searchQuery).toBe("test");
     });
   });
 
-  describe('resetFilters', () => {
-    it('should reset filters to default values', () => {
+  describe("resetFilters", () => {
+    it("should reset filters to default values", () => {
       const store = useWhitelistStore();
-      
+
       store.setFilters({
-        status: ['approved'],
-        searchQuery: 'test',
+        status: ["approved"],
+        searchQuery: "test",
         page: 5,
       });
 
@@ -301,299 +301,281 @@ describe('useWhitelistStore', () => {
       expect(store.filters).toEqual({
         page: 1,
         perPage: 10,
-        sortBy: 'createdAt',
-        sortOrder: 'desc',
+        sortBy: "createdAt",
+        sortOrder: "desc",
       });
     });
   });
 
-  describe('computed properties', () => {
-    it('should compute hasEntries correctly', () => {
+  describe("computed properties", () => {
+    it("should compute hasEntries correctly", () => {
       const store = useWhitelistStore();
-      
+
       expect(store.hasEntries).toBe(false);
 
-      store.entries = [{
-        id: '1',
-        name: 'Test',
-        email: 'test@example.com',
-        entityType: 'individual',
-        status: 'approved',
-        jurisdictionCode: 'US',
-        jurisdictionName: 'United States',
-        riskLevel: 'low',
-        kycStatus: 'verified',
-        accreditationStatus: 'not_required',
-        documentationComplete: true,
-        documentsUploaded: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        createdBy: 'admin',
-        auditTrail: [],
-      }];
+      store.entries = [
+        {
+          id: "1",
+          name: "Test",
+          email: "test@example.com",
+          entityType: "individual",
+          status: "approved",
+          jurisdictionCode: "US",
+          jurisdictionName: "United States",
+          riskLevel: "low",
+          kycStatus: "verified",
+          accreditationStatus: "not_required",
+          documentationComplete: true,
+          documentsUploaded: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          createdBy: "admin",
+          auditTrail: [],
+        },
+      ];
 
       expect(store.hasEntries).toBe(true);
     });
 
-    it('should compute criticalConflicts correctly', () => {
+    it("should compute criticalConflicts correctly", () => {
       const store = useWhitelistStore();
-      
+
       store.conflicts = [
         {
-          entryId: '1',
-          entryName: 'Test User',
-          jurisdictionCode: 'CN',
-          conflictType: 'blocked',
-          severity: 'error',
-          message: 'Blocked jurisdiction',
+          entryId: "1",
+          entryName: "Test User",
+          jurisdictionCode: "CN",
+          conflictType: "blocked",
+          severity: "error",
+          message: "Blocked jurisdiction",
           affectedTokenPrograms: [],
         },
         {
-          entryId: '2',
-          entryName: 'Another User',
-          jurisdictionCode: 'RU',
-          conflictType: 'restricted',
-          severity: 'warning',
-          message: 'Restricted jurisdiction',
+          entryId: "2",
+          entryName: "Another User",
+          jurisdictionCode: "RU",
+          conflictType: "restricted",
+          severity: "warning",
+          message: "Restricted jurisdiction",
           affectedTokenPrograms: [],
         },
       ];
 
       expect(store.criticalConflicts).toHaveLength(1);
-      expect(store.criticalConflicts[0].severity).toBe('error');
+      expect(store.criticalConflicts[0].severity).toBe("error");
     });
   });
 
-  describe('Edge Cases - MICA Compliance', () => {
-    describe('Duplicate Address Validation', () => {
-      it('should handle duplicate email addresses with error', async () => {
+  describe("Edge Cases - MICA Compliance", () => {
+    describe("Duplicate Address Validation", () => {
+      it("should handle duplicate email addresses with error", async () => {
         const existingEntry = {
-          id: '1',
-          name: 'Existing User',
-          email: 'duplicate@example.com',
-          entityType: 'individual' as const,
-          status: 'approved' as const,
-          jurisdictionCode: 'US',
-          jurisdictionName: 'United States',
-          riskLevel: 'low' as const,
-          kycStatus: 'verified' as const,
-          accreditationStatus: 'not_required' as const,
+          id: "1",
+          name: "Existing User",
+          email: "duplicate@example.com",
+          entityType: "individual" as const,
+          status: "approved" as const,
+          jurisdictionCode: "US",
+          jurisdictionName: "United States",
+          riskLevel: "low" as const,
+          kycStatus: "verified" as const,
+          accreditationStatus: "not_required" as const,
           documentationComplete: true,
           documentsUploaded: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          createdBy: 'admin',
+          createdBy: "admin",
           auditTrail: [],
         };
 
         const duplicateRequest: CreateWhitelistEntryRequest = {
-          name: 'Duplicate User',
-          email: 'duplicate@example.com',
-          entityType: 'individual',
-          jurisdictionCode: 'US',
+          name: "Duplicate User",
+          email: "duplicate@example.com",
+          entityType: "individual",
+          jurisdictionCode: "US",
         };
 
-        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(
-          new Error('Duplicate email address already exists in whitelist')
-        );
+        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(new Error("Duplicate email address already exists in whitelist"));
 
         const store = useWhitelistStore();
         store.entries = [existingEntry];
 
         const result = await store.createWhitelistEntry(duplicateRequest);
-        
+
         expect(result).toBeNull();
         expect(store.entries).toHaveLength(1);
-        expect(store.error).toContain('Duplicate email');
+        expect(store.error).toContain("Duplicate email");
       });
 
-      it('should handle case-insensitive duplicate detection', async () => {
+      it("should handle case-insensitive duplicate detection", async () => {
         const request: CreateWhitelistEntryRequest = {
-          name: 'Test User',
-          email: 'TEST@EXAMPLE.COM',
-          entityType: 'individual',
-          jurisdictionCode: 'US',
+          name: "Test User",
+          email: "TEST@EXAMPLE.COM",
+          entityType: "individual",
+          jurisdictionCode: "US",
         };
 
-        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(
-          new Error('Email already exists (case-insensitive match)')
-        );
+        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(new Error("Email already exists (case-insensitive match)"));
 
         const store = useWhitelistStore();
-        
+
         const result = await store.createWhitelistEntry(request);
         expect(result).toBeNull();
-        expect(store.error).toContain('Email already exists');
+        expect(store.error).toContain("Email already exists");
       });
     });
 
-    describe('Invalid Jurisdiction Handling', () => {
-      it('should reject entries with invalid jurisdiction codes', async () => {
+    describe("Invalid Jurisdiction Handling", () => {
+      it("should reject entries with invalid jurisdiction codes", async () => {
         const invalidRequest: CreateWhitelistEntryRequest = {
-          name: 'Test User',
-          email: 'test@example.com',
-          entityType: 'individual',
-          jurisdictionCode: 'INVALID',
+          name: "Test User",
+          email: "test@example.com",
+          entityType: "individual",
+          jurisdictionCode: "INVALID",
         };
 
-        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(
-          new Error('Invalid jurisdiction code: INVALID')
-        );
+        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(new Error("Invalid jurisdiction code: INVALID"));
 
         const store = useWhitelistStore();
-        
+
         const result = await store.createWhitelistEntry(invalidRequest);
         expect(result).toBeNull();
-        expect(store.error).toContain('Invalid jurisdiction');
+        expect(store.error).toContain("Invalid jurisdiction");
       });
 
-      it('should handle blocked jurisdictions with clear error messages', async () => {
+      it("should handle blocked jurisdictions with clear error messages", async () => {
         const blockedRequest: CreateWhitelistEntryRequest = {
-          name: 'Test User',
-          email: 'test@example.com',
-          entityType: 'individual',
-          jurisdictionCode: 'CN',
+          name: "Test User",
+          email: "test@example.com",
+          entityType: "individual",
+          jurisdictionCode: "CN",
         };
 
-        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(
-          new Error('Jurisdiction CN is blocked for token issuance under MICA regulations')
-        );
+        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(new Error("Jurisdiction CN is blocked for token issuance under MICA regulations"));
 
         const store = useWhitelistStore();
-        
+
         const result = await store.createWhitelistEntry(blockedRequest);
         expect(result).toBeNull();
-        expect(store.error).toContain('blocked');
+        expect(store.error).toContain("blocked");
       });
     });
 
-    describe('Empty Whitelist Submission', () => {
-      it('should handle submission with no entries gracefully', async () => {
-        vi.mocked(whitelistService.bulkImport).mockRejectedValue(
-          new Error('Cannot import empty whitelist - at least one entry required')
-        );
+    describe("Empty Whitelist Submission", () => {
+      it("should handle submission with no entries gracefully", async () => {
+        vi.mocked(whitelistService.bulkImport).mockRejectedValue(new Error("Cannot import empty whitelist - at least one entry required"));
 
         const store = useWhitelistStore();
         const emptyRequest = { entries: [], validateOnly: false };
 
         const result = await store.bulkImport(emptyRequest);
         expect(result).toBeNull();
-        expect(store.error).toContain('empty whitelist');
+        expect(store.error).toContain("empty whitelist");
       });
 
-      it('should validate minimum requirements before submission', async () => {
+      it("should validate minimum requirements before submission", async () => {
         const invalidEntry = {
-          name: '',
-          email: '',
-          entityType: 'individual',
-          jurisdictionCode: '',
+          name: "",
+          email: "",
+          entityType: "individual",
+          jurisdictionCode: "",
         };
 
-        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(
-          new Error('Required fields missing: name, email, jurisdictionCode')
-        );
+        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(new Error("Required fields missing: name, email, jurisdictionCode"));
 
         const store = useWhitelistStore();
-        
+
         const result = await store.createWhitelistEntry(invalidEntry as any);
         expect(result).toBeNull();
-        expect(store.error).toContain('Required fields missing');
+        expect(store.error).toContain("Required fields missing");
       });
     });
 
-    describe('Backend Rejection Scenarios', () => {
-      it('should handle network errors with retry capability', async () => {
-        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(
-          new Error('Network error: Unable to reach compliance server')
-        );
+    describe("Backend Rejection Scenarios", () => {
+      it("should handle network errors with retry capability", async () => {
+        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(new Error("Network error: Unable to reach compliance server"));
 
         const store = useWhitelistStore();
         const request: CreateWhitelistEntryRequest = {
-          name: 'Test User',
-          email: 'test@example.com',
-          entityType: 'individual',
-          jurisdictionCode: 'US',
+          name: "Test User",
+          email: "test@example.com",
+          entityType: "individual",
+          jurisdictionCode: "US",
         };
 
         const result = await store.createWhitelistEntry(request);
         expect(result).toBeNull();
-        expect(store.error).toContain('Network error');
+        expect(store.error).toContain("Network error");
         expect(store.isLoading).toBe(false);
       });
 
-      it('should handle backend validation failures', async () => {
-        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(
-          new Error('Backend validation failed: KYC verification incomplete')
-        );
+      it("should handle backend validation failures", async () => {
+        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(new Error("Backend validation failed: KYC verification incomplete"));
 
         const store = useWhitelistStore();
         const request: CreateWhitelistEntryRequest = {
-          name: 'Test User',
-          email: 'test@example.com',
-          entityType: 'individual',
-          jurisdictionCode: 'US',
+          name: "Test User",
+          email: "test@example.com",
+          entityType: "individual",
+          jurisdictionCode: "US",
         };
 
         const result = await store.createWhitelistEntry(request);
         expect(result).toBeNull();
-        expect(store.error).toContain('Backend validation failed');
+        expect(store.error).toContain("Backend validation failed");
       });
 
-      it('should handle permission denied errors', async () => {
-        vi.mocked(whitelistService.approveWhitelistEntry).mockRejectedValue(
-          new Error('Permission denied: User does not have approval authority')
-        );
+      it("should handle permission denied errors", async () => {
+        vi.mocked(whitelistService.approveWhitelistEntry).mockRejectedValue(new Error("Permission denied: User does not have approval authority"));
 
         const store = useWhitelistStore();
         const request: ApproveWhitelistEntryRequest = {
-          id: '1',
-          notes: 'Approved',
+          id: "1",
+          notes: "Approved",
         };
 
         const result = await store.approveWhitelistEntry(request);
-        
+
         expect(result).toBe(false);
-        expect(store.error).toContain('Permission denied');
+        expect(store.error).toContain("Permission denied");
       });
 
-      it('should handle concurrent modification errors', async () => {
-        vi.mocked(whitelistService.updateWhitelistEntry).mockRejectedValue(
-          new Error('Conflict: Entry was modified by another user')
-        );
+      it("should handle concurrent modification errors", async () => {
+        vi.mocked(whitelistService.updateWhitelistEntry).mockRejectedValue(new Error("Conflict: Entry was modified by another user"));
 
         const store = useWhitelistStore();
-        
-        const result = await store.updateWhitelistEntry('1', { name: 'Updated' });
+
+        const result = await store.updateWhitelistEntry("1", { name: "Updated" });
         expect(result).toBeNull();
-        expect(store.error).toContain('modified by another user');
+        expect(store.error).toContain("modified by another user");
       });
     });
 
-    describe('Revoked Entries', () => {
-      it('should handle revocation of approved entries', async () => {
+    describe("Revoked Entries", () => {
+      it("should handle revocation of approved entries", async () => {
         const approvedEntry = {
-          id: '1',
-          name: 'Test User',
-          email: 'test@example.com',
-          entityType: 'individual' as const,
-          status: 'approved' as const,
-          jurisdictionCode: 'US',
-          jurisdictionName: 'United States',
-          riskLevel: 'low' as const,
-          kycStatus: 'verified' as const,
-          accreditationStatus: 'verified' as const,
+          id: "1",
+          name: "Test User",
+          email: "test@example.com",
+          entityType: "individual" as const,
+          status: "approved" as const,
+          jurisdictionCode: "US",
+          jurisdictionName: "United States",
+          riskLevel: "low" as const,
+          kycStatus: "verified" as const,
+          accreditationStatus: "verified" as const,
           documentationComplete: true,
           documentsUploaded: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          createdBy: 'admin',
+          createdBy: "admin",
           auditTrail: [],
         };
 
         const revokedEntry = {
           ...approvedEntry,
-          status: 'rejected' as const,
-          rejectionReason: 'Revoked due to compliance violation',
+          status: "rejected" as const,
+          rejectionReason: "Revoked due to compliance violation",
         };
 
         vi.mocked(whitelistService.rejectWhitelistEntry).mockResolvedValue(revokedEntry);
@@ -613,66 +595,62 @@ describe('useWhitelistStore', () => {
         store.entries = [approvedEntry];
 
         const result = await store.rejectWhitelistEntry({
-          id: '1',
-          reason: 'Revoked due to compliance violation',
+          id: "1",
+          reason: "Revoked due to compliance violation",
         });
 
         expect(result).toBe(true);
-        expect(store.entries[0].status).toBe('rejected');
-        expect(store.entries[0].rejectionReason).toContain('compliance violation');
+        expect(store.entries[0].status).toBe("rejected");
+        expect(store.entries[0].rejectionReason).toContain("compliance violation");
       });
     });
 
-    describe('Invalid Identifiers', () => {
-      it('should reject entries with invalid email format', async () => {
-        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(
-          new Error('Invalid email format')
-        );
+    describe("Invalid Identifiers", () => {
+      it("should reject entries with invalid email format", async () => {
+        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(new Error("Invalid email format"));
 
         const store = useWhitelistStore();
         const request: CreateWhitelistEntryRequest = {
-          name: 'Test User',
-          email: 'not-an-email',
-          entityType: 'individual',
-          jurisdictionCode: 'US',
+          name: "Test User",
+          email: "not-an-email",
+          entityType: "individual",
+          jurisdictionCode: "US",
         };
 
         const result = await store.createWhitelistEntry(request);
         expect(result).toBeNull();
-        expect(store.error).toContain('Invalid email format');
+        expect(store.error).toContain("Invalid email format");
       });
 
-      it('should reject entries with special characters in names', async () => {
-        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(
-          new Error('Name contains invalid characters')
-        );
+      it("should reject entries with special characters in names", async () => {
+        vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue(new Error("Name contains invalid characters"));
 
         const store = useWhitelistStore();
         const request: CreateWhitelistEntryRequest = {
-          name: 'Test<script>alert(1)</script>',
-          email: 'test@example.com',
-          entityType: 'individual',
-          jurisdictionCode: 'US',
+          name: "Test<script>alert(1)</script>",
+          email: "test@example.com",
+          entityType: "individual",
+          jurisdictionCode: "US",
         };
 
         const result = await store.createWhitelistEntry(request);
         expect(result).toBeNull();
-        expect(store.error).toContain('invalid characters');
+        expect(store.error).toContain("invalid characters");
       });
     });
   });
 
-  describe('fetchWhitelistEntry', () => {
-    it('should fetch a single whitelist entry', async () => {
+  describe("fetchWhitelistEntry", () => {
+    it("should fetch a single whitelist entry", async () => {
       const mockEntry = {
-        id: 'test-entry-1',
-        address: 'BL5G4DPK6V4N36NYAKE2TBURZQGKDDVVMKLNOSOAGGPK5FU6CJ2ZE4W5YY',
-        entityName: 'Test Entity',
-        entityType: 'individual' as const,
-        jurisdictionCode: 'US',
-        riskLevel: 'low' as const,
-        kycStatus: 'verified' as const,
-        status: 'approved' as const,
+        id: "test-entry-1",
+        address: "BL5G4DPK6V4N36NYAKE2TBURZQGKDDVVMKLNOSOAGGPK5FU6CJ2ZE4W5YY",
+        entityName: "Test Entity",
+        entityType: "individual" as const,
+        jurisdictionCode: "US",
+        riskLevel: "low" as const,
+        kycStatus: "verified" as const,
+        status: "approved" as const,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -680,47 +658,47 @@ describe('useWhitelistStore', () => {
       vi.mocked(whitelistService.getWhitelistEntry).mockResolvedValue(mockEntry);
 
       const store = useWhitelistStore();
-      const result = await store.fetchWhitelistEntry('test-entry-1');
+      const result = await store.fetchWhitelistEntry("test-entry-1");
 
-      expect(whitelistService.getWhitelistEntry).toHaveBeenCalledWith('test-entry-1');
+      expect(whitelistService.getWhitelistEntry).toHaveBeenCalledWith("test-entry-1");
       expect(store.selectedEntry).toEqual(mockEntry);
       expect(result).toEqual(mockEntry);
     });
 
-    it('should handle null result when entry not found', async () => {
+    it("should handle null result when entry not found", async () => {
       vi.mocked(whitelistService.getWhitelistEntry).mockResolvedValue(null);
 
       const store = useWhitelistStore();
-      const result = await store.fetchWhitelistEntry('non-existent-id');
+      const result = await store.fetchWhitelistEntry("non-existent-id");
 
-      expect(whitelistService.getWhitelistEntry).toHaveBeenCalledWith('non-existent-id');
+      expect(whitelistService.getWhitelistEntry).toHaveBeenCalledWith("non-existent-id");
       expect(store.selectedEntry).toBeNull();
       expect(result).toBeNull();
     });
 
-    it('should handle errors when fetching entry', async () => {
-      vi.mocked(whitelistService.getWhitelistEntry).mockRejectedValue(new Error('Network error'));
+    it("should handle errors when fetching entry", async () => {
+      vi.mocked(whitelistService.getWhitelistEntry).mockRejectedValue(new Error("Network error"));
 
       const store = useWhitelistStore();
-      const result = await store.fetchWhitelistEntry('test-id');
+      const result = await store.fetchWhitelistEntry("test-id");
 
-      expect(whitelistService.getWhitelistEntry).toHaveBeenCalledWith('test-id');
-      expect(store.error).toContain('Network error');
+      expect(whitelistService.getWhitelistEntry).toHaveBeenCalledWith("test-id");
+      expect(store.error).toContain("Network error");
       expect(result).toBeNull();
     });
   });
 
-  describe('updateWhitelistEntry', () => {
-    it('should update a whitelist entry', async () => {
+  describe("updateWhitelistEntry", () => {
+    it("should update a whitelist entry", async () => {
       const mockUpdatedEntry = {
-        id: 'test-entry-1',
-        address: 'BL5G4DPK6V4N36NYAKE2TBURZQGKDDVVMKLNOSOAGGPK5FU6CJ2ZE4W5YY',
-        entityName: 'Updated Entity',
-        entityType: 'individual' as const,
-        jurisdictionCode: 'US',
-        riskLevel: 'medium' as const,
-        kycStatus: 'verified' as const,
-        status: 'approved' as const,
+        id: "test-entry-1",
+        address: "BL5G4DPK6V4N36NYAKE2TBURZQGKDDVVMKLNOSOAGGPK5FU6CJ2ZE4W5YY",
+        entityName: "Updated Entity",
+        entityType: "individual" as const,
+        jurisdictionCode: "US",
+        riskLevel: "medium" as const,
+        kycStatus: "verified" as const,
+        status: "approved" as const,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -729,57 +707,57 @@ describe('useWhitelistStore', () => {
 
       const store = useWhitelistStore();
       const updateRequest = {
-        entityName: 'Updated Entity',
-        riskLevel: 'medium' as const,
+        entityName: "Updated Entity",
+        riskLevel: "medium" as const,
       };
 
-      const result = await store.updateWhitelistEntry('test-entry-1', updateRequest);
+      const result = await store.updateWhitelistEntry("test-entry-1", updateRequest);
 
-      expect(whitelistService.updateWhitelistEntry).toHaveBeenCalledWith('test-entry-1', updateRequest);
+      expect(whitelistService.updateWhitelistEntry).toHaveBeenCalledWith("test-entry-1", updateRequest);
       expect(result).toEqual(mockUpdatedEntry);
     });
 
-    it('should handle null result when entry not found', async () => {
+    it("should handle null result when entry not found", async () => {
       vi.mocked(whitelistService.updateWhitelistEntry).mockResolvedValue(null);
 
       const store = useWhitelistStore();
       const updateRequest = {
-        entityName: 'Updated Name',
+        entityName: "Updated Name",
       };
 
-      const result = await store.updateWhitelistEntry('non-existent-id', updateRequest);
+      const result = await store.updateWhitelistEntry("non-existent-id", updateRequest);
 
-      expect(whitelistService.updateWhitelistEntry).toHaveBeenCalledWith('non-existent-id', updateRequest);
+      expect(whitelistService.updateWhitelistEntry).toHaveBeenCalledWith("non-existent-id", updateRequest);
       expect(result).toBeNull();
     });
 
-    it('should handle errors when updating entry', async () => {
-      vi.mocked(whitelistService.updateWhitelistEntry).mockRejectedValue(new Error('Update failed'));
+    it("should handle errors when updating entry", async () => {
+      vi.mocked(whitelistService.updateWhitelistEntry).mockRejectedValue(new Error("Update failed"));
 
       const store = useWhitelistStore();
       const updateRequest = {
-        entityName: 'Updated Name',
+        entityName: "Updated Name",
       };
 
-      const result = await store.updateWhitelistEntry('test-id', updateRequest);
+      const result = await store.updateWhitelistEntry("test-id", updateRequest);
 
-      expect(whitelistService.updateWhitelistEntry).toHaveBeenCalledWith('test-id', updateRequest);
-      expect(store.error).toContain('Update failed');
+      expect(whitelistService.updateWhitelistEntry).toHaveBeenCalledWith("test-id", updateRequest);
+      expect(store.error).toContain("Update failed");
       expect(result).toBeNull();
     });
   });
 
-  describe('requestMoreInfo', () => {
-    it('should request more information for an entry', async () => {
+  describe("requestMoreInfo", () => {
+    it("should request more information for an entry", async () => {
       const mockUpdatedEntry = {
-        id: 'test-entry-1',
-        address: 'BL5G4DPK6V4N36NYAKE2TBURZQGKDDVVMKLNOSOAGGPK5FU6CJ2ZE4W5YY',
-        entityName: 'Test Entity',
-        entityType: 'individual' as const,
-        jurisdictionCode: 'US',
-        riskLevel: 'low' as const,
-        kycStatus: 'verified' as const,
-        status: 'more_info_requested' as const,
+        id: "test-entry-1",
+        address: "BL5G4DPK6V4N36NYAKE2TBURZQGKDDVVMKLNOSOAGGPK5FU6CJ2ZE4W5YY",
+        entityName: "Test Entity",
+        entityType: "individual" as const,
+        jurisdictionCode: "US",
+        riskLevel: "low" as const,
+        kycStatus: "verified" as const,
+        status: "more_info_requested" as const,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -788,10 +766,10 @@ describe('useWhitelistStore', () => {
 
       const store = useWhitelistStore();
       const request = {
-        id: 'test-entry-1',
-        requestedBy: 'admin',
-        message: 'Please provide additional documentation',
-        requiredFields: ['taxId', 'proofOfAddress'],
+        id: "test-entry-1",
+        requestedBy: "admin",
+        message: "Please provide additional documentation",
+        requiredFields: ["taxId", "proofOfAddress"],
       };
 
       const result = await store.requestMoreInfo(request);
@@ -800,26 +778,26 @@ describe('useWhitelistStore', () => {
       expect(result).toBe(true);
     });
 
-    it('should handle errors when requesting more info', async () => {
-      vi.mocked(whitelistService.requestMoreInfo).mockRejectedValue(new Error('Request failed'));
+    it("should handle errors when requesting more info", async () => {
+      vi.mocked(whitelistService.requestMoreInfo).mockRejectedValue(new Error("Request failed"));
 
       const store = useWhitelistStore();
       const request = {
-        id: 'test-id',
-        requestedBy: 'admin',
-        message: 'Please provide documentation',
+        id: "test-id",
+        requestedBy: "admin",
+        message: "Please provide documentation",
       };
 
       const result = await store.requestMoreInfo(request);
 
       expect(whitelistService.requestMoreInfo).toHaveBeenCalledWith(request);
-      expect(store.error).toContain('Request failed');
+      expect(store.error).toContain("Request failed");
       expect(result).toBe(false);
     });
   });
 
-  describe('validateCsv', () => {
-    it('should validate CSV file', async () => {
+  describe("validateCsv", () => {
+    it("should validate CSV file", async () => {
       const mockValidationResult = {
         isValid: true,
         errors: [],
@@ -831,7 +809,7 @@ describe('useWhitelistStore', () => {
       vi.mocked(whitelistService.validateCsv).mockResolvedValue(mockValidationResult);
 
       const store = useWhitelistStore();
-      const file = new File(['test,csv,content'], 'test.csv', { type: 'text/csv' });
+      const file = new File(["test,csv,content"], "test.csv", { type: "text/csv" });
 
       const result = await store.validateCsv(file);
 
@@ -839,11 +817,11 @@ describe('useWhitelistStore', () => {
       expect(result).toEqual(mockValidationResult);
     });
 
-    it('should handle null result when validation fails', async () => {
+    it("should handle null result when validation fails", async () => {
       vi.mocked(whitelistService.validateCsv).mockResolvedValue(null);
 
       const store = useWhitelistStore();
-      const file = new File(['invalid,csv'], 'test.csv', { type: 'text/csv' });
+      const file = new File(["invalid,csv"], "test.csv", { type: "text/csv" });
 
       const result = await store.validateCsv(file);
 
@@ -851,22 +829,22 @@ describe('useWhitelistStore', () => {
       expect(result).toBeNull();
     });
 
-    it('should handle errors during CSV validation', async () => {
-      vi.mocked(whitelistService.validateCsv).mockRejectedValue(new Error('Validation error'));
+    it("should handle errors during CSV validation", async () => {
+      vi.mocked(whitelistService.validateCsv).mockRejectedValue(new Error("Validation error"));
 
       const store = useWhitelistStore();
-      const file = new File(['test'], 'test.csv', { type: 'text/csv' });
+      const file = new File(["test"], "test.csv", { type: "text/csv" });
 
       const result = await store.validateCsv(file);
 
       expect(whitelistService.validateCsv).toHaveBeenCalledWith(file);
-      expect(store.error).toContain('Validation error');
+      expect(store.error).toContain("Validation error");
       expect(result).toBeNull();
     });
   });
 
-  describe('bulkImport', () => {
-    it('should perform bulk import', async () => {
+  describe("bulkImport", () => {
+    it("should perform bulk import", async () => {
       const mockImportResult = {
         success: true,
         totalEntries: 5,
@@ -881,15 +859,15 @@ describe('useWhitelistStore', () => {
       const request = {
         entries: [
           {
-            address: 'BULK1',
-            entityName: 'Bulk Entity 1',
-            entityType: 'individual' as const,
-            jurisdictionCode: 'US',
-            riskLevel: 'low' as const,
-            kycStatus: 'verified' as const,
+            address: "BULK1",
+            entityName: "Bulk Entity 1",
+            entityType: "individual" as const,
+            jurisdictionCode: "US",
+            riskLevel: "low" as const,
+            kycStatus: "verified" as const,
           },
         ],
-        approvedBy: 'admin',
+        approvedBy: "admin",
       };
 
       const result = await store.bulkImport(request);
@@ -898,13 +876,13 @@ describe('useWhitelistStore', () => {
       expect(result).toEqual(mockImportResult);
     });
 
-    it('should handle null result when bulk import fails', async () => {
+    it("should handle null result when bulk import fails", async () => {
       vi.mocked(whitelistService.bulkImport).mockResolvedValue(null);
 
       const store = useWhitelistStore();
       const request = {
         entries: [],
-        approvedBy: 'admin',
+        approvedBy: "admin",
       };
 
       const result = await store.bulkImport(request);
@@ -913,41 +891,41 @@ describe('useWhitelistStore', () => {
       expect(result).toBeNull();
     });
 
-    it('should handle errors during bulk import', async () => {
-      vi.mocked(whitelistService.bulkImport).mockRejectedValue(new Error('Import failed'));
+    it("should handle errors during bulk import", async () => {
+      vi.mocked(whitelistService.bulkImport).mockRejectedValue(new Error("Import failed"));
 
       const store = useWhitelistStore();
       const request = {
         entries: [
           {
-            address: 'TEST',
-            entityName: 'Test Entity',
-            entityType: 'individual' as const,
-            jurisdictionCode: 'US',
-            riskLevel: 'low' as const,
-            kycStatus: 'verified' as const,
+            address: "TEST",
+            entityName: "Test Entity",
+            entityType: "individual" as const,
+            jurisdictionCode: "US",
+            riskLevel: "low" as const,
+            kycStatus: "verified" as const,
           },
         ],
-        approvedBy: 'admin',
+        approvedBy: "admin",
       };
 
       const result = await store.bulkImport(request);
 
       expect(whitelistService.bulkImport).toHaveBeenCalledWith(request);
-      expect(store.error).toContain('Import failed');
+      expect(store.error).toContain("Import failed");
       expect(result).toBeNull();
     });
   });
 
-  describe('fetchJurisdictionRules', () => {
-    it('should fetch jurisdiction rules', async () => {
+  describe("fetchJurisdictionRules", () => {
+    it("should fetch jurisdiction rules", async () => {
       const mockRules = [
         {
-          id: 'rule-1',
-          jurisdictionCode: 'US',
-          name: 'United States',
-          description: 'US jurisdiction rules',
-          riskLevel: 'low' as const,
+          id: "rule-1",
+          jurisdictionCode: "US",
+          name: "United States",
+          description: "US jurisdiction rules",
+          riskLevel: "low" as const,
           requiresKyc: true,
           restricted: false,
           createdAt: new Date(),
@@ -965,24 +943,22 @@ describe('useWhitelistStore', () => {
       expect(store.isLoadingJurisdictions).toBe(false);
     });
 
-    it('should handle errors when fetching jurisdiction rules', async () => {
-      vi.mocked(whitelistService.getJurisdictionRules).mockRejectedValue(new Error('Fetch failed'));
+    it("should handle errors when fetching jurisdiction rules", async () => {
+      vi.mocked(whitelistService.getJurisdictionRules).mockRejectedValue(new Error("Fetch failed"));
 
       const store = useWhitelistStore();
       await store.fetchJurisdictionRules();
 
       expect(whitelistService.getJurisdictionRules).toHaveBeenCalled();
-      expect(store.error).toContain('Fetch failed');
+      expect(store.error).toContain("Fetch failed");
       expect(store.isLoadingJurisdictions).toBe(false);
     });
   });
 
-  describe('fetchJurisdictionCoverage', () => {
-    it('should fetch jurisdiction coverage', async () => {
+  describe("fetchJurisdictionCoverage", () => {
+    it("should fetch jurisdiction coverage", async () => {
       const mockCoverage = {
-        coverage: [
-          { jurisdictionCode: 'US', coveredAddresses: 100, totalAddresses: 100, percentage: 100 },
-        ],
+        coverage: [{ jurisdictionCode: "US", coveredAddresses: 100, totalAddresses: 100, percentage: 100 }],
         totalJurisdictions: 1,
         coveredJurisdictions: 1,
         coveragePercentage: 100,
@@ -997,25 +973,25 @@ describe('useWhitelistStore', () => {
       expect(store.jurisdictionCoverage).toEqual(mockCoverage);
     });
 
-    it('should handle errors when fetching jurisdiction coverage', async () => {
-      vi.mocked(whitelistService.getJurisdictionCoverage).mockRejectedValue(new Error('Coverage fetch failed'));
+    it("should handle errors when fetching jurisdiction coverage", async () => {
+      vi.mocked(whitelistService.getJurisdictionCoverage).mockRejectedValue(new Error("Coverage fetch failed"));
 
       const store = useWhitelistStore();
       await store.fetchJurisdictionCoverage();
 
       expect(whitelistService.getJurisdictionCoverage).toHaveBeenCalled();
-      expect(store.error).toContain('Coverage fetch failed');
+      expect(store.error).toContain("Coverage fetch failed");
     });
   });
 
-  describe('createJurisdictionRule', () => {
-    it('should create a jurisdiction rule', async () => {
+  describe("createJurisdictionRule", () => {
+    it("should create a jurisdiction rule", async () => {
       const mockRule = {
-        id: 'new-rule-1',
-        jurisdictionCode: 'CA',
-        name: 'Canada',
-        description: 'Canadian jurisdiction',
-        riskLevel: 'low' as const,
+        id: "new-rule-1",
+        jurisdictionCode: "CA",
+        name: "Canada",
+        description: "Canadian jurisdiction",
+        riskLevel: "low" as const,
         requiresKyc: true,
         restricted: false,
         createdAt: new Date(),
@@ -1026,10 +1002,10 @@ describe('useWhitelistStore', () => {
 
       const store = useWhitelistStore();
       const ruleData = {
-        jurisdictionCode: 'CA',
-        name: 'Canada',
-        description: 'Canadian jurisdiction',
-        riskLevel: 'low' as const,
+        jurisdictionCode: "CA",
+        name: "Canada",
+        description: "Canadian jurisdiction",
+        riskLevel: "low" as const,
         requiresKyc: true,
         restricted: false,
       };
@@ -1040,15 +1016,15 @@ describe('useWhitelistStore', () => {
       expect(result).toEqual(mockRule);
     });
 
-    it('should handle errors when creating jurisdiction rule', async () => {
-      vi.mocked(whitelistService.createJurisdictionRule).mockRejectedValue(new Error('Creation failed'));
+    it("should handle errors when creating jurisdiction rule", async () => {
+      vi.mocked(whitelistService.createJurisdictionRule).mockRejectedValue(new Error("Creation failed"));
 
       const store = useWhitelistStore();
       const ruleData = {
-        jurisdictionCode: 'XX',
-        name: 'Invalid',
-        description: 'Invalid jurisdiction',
-        riskLevel: 'high' as const,
+        jurisdictionCode: "XX",
+        name: "Invalid",
+        description: "Invalid jurisdiction",
+        riskLevel: "high" as const,
         requiresKyc: false,
         restricted: true,
       };
@@ -1056,19 +1032,19 @@ describe('useWhitelistStore', () => {
       const result = await store.createJurisdictionRule(ruleData);
 
       expect(whitelistService.createJurisdictionRule).toHaveBeenCalledWith(ruleData);
-      expect(store.error).toContain('Creation failed');
+      expect(store.error).toContain("Creation failed");
       expect(result).toBeNull();
     });
   });
 
-  describe('updateJurisdictionRule', () => {
-    it('should update a jurisdiction rule', async () => {
+  describe("updateJurisdictionRule", () => {
+    it("should update a jurisdiction rule", async () => {
       const mockUpdatedRule = {
-        id: 'rule-1',
-        jurisdictionCode: 'US',
-        name: 'United States Updated',
-        description: 'Updated US rules',
-        riskLevel: 'medium' as const,
+        id: "rule-1",
+        jurisdictionCode: "US",
+        name: "United States Updated",
+        description: "Updated US rules",
+        riskLevel: "medium" as const,
         requiresKyc: false,
         restricted: false,
         createdAt: new Date(),
@@ -1079,64 +1055,64 @@ describe('useWhitelistStore', () => {
 
       const store = useWhitelistStore();
       const updateData = {
-        name: 'United States Updated',
+        name: "United States Updated",
         requiresKyc: false,
       };
 
-      const result = await store.updateJurisdictionRule('rule-1', updateData);
+      const result = await store.updateJurisdictionRule("rule-1", updateData);
 
-      expect(whitelistService.updateJurisdictionRule).toHaveBeenCalledWith('rule-1', updateData);
+      expect(whitelistService.updateJurisdictionRule).toHaveBeenCalledWith("rule-1", updateData);
       expect(result).toEqual(mockUpdatedRule);
     });
 
-    it('should handle errors when updating jurisdiction rule', async () => {
-      vi.mocked(whitelistService.updateJurisdictionRule).mockRejectedValue(new Error('Update failed'));
+    it("should handle errors when updating jurisdiction rule", async () => {
+      vi.mocked(whitelistService.updateJurisdictionRule).mockRejectedValue(new Error("Update failed"));
 
       const store = useWhitelistStore();
       const updateData = {
-        name: 'Updated Name',
+        name: "Updated Name",
       };
 
-      const result = await store.updateJurisdictionRule('non-existent-rule', updateData);
+      const result = await store.updateJurisdictionRule("non-existent-rule", updateData);
 
-      expect(whitelistService.updateJurisdictionRule).toHaveBeenCalledWith('non-existent-rule', updateData);
-      expect(store.error).toContain('Update failed');
+      expect(whitelistService.updateJurisdictionRule).toHaveBeenCalledWith("non-existent-rule", updateData);
+      expect(store.error).toContain("Update failed");
       expect(result).toBeNull();
     });
   });
 
-  describe('deleteJurisdictionRule', () => {
-    it('should delete a jurisdiction rule', async () => {
+  describe("deleteJurisdictionRule", () => {
+    it("should delete a jurisdiction rule", async () => {
       vi.mocked(whitelistService.deleteJurisdictionRule).mockResolvedValue(undefined);
 
       const store = useWhitelistStore();
-      const result = await store.deleteJurisdictionRule('rule-1');
+      const result = await store.deleteJurisdictionRule("rule-1");
 
-      expect(whitelistService.deleteJurisdictionRule).toHaveBeenCalledWith('rule-1');
+      expect(whitelistService.deleteJurisdictionRule).toHaveBeenCalledWith("rule-1");
       expect(result).toBe(true);
     });
 
-    it('should handle errors when deleting jurisdiction rule', async () => {
-      vi.mocked(whitelistService.deleteJurisdictionRule).mockRejectedValue(new Error('Deletion failed'));
+    it("should handle errors when deleting jurisdiction rule", async () => {
+      vi.mocked(whitelistService.deleteJurisdictionRule).mockRejectedValue(new Error("Deletion failed"));
 
       const store = useWhitelistStore();
-      const result = await store.deleteJurisdictionRule('rule-1');
+      const result = await store.deleteJurisdictionRule("rule-1");
 
-      expect(whitelistService.deleteJurisdictionRule).toHaveBeenCalledWith('rule-1');
-      expect(store.error).toContain('Deletion failed');
+      expect(whitelistService.deleteJurisdictionRule).toHaveBeenCalledWith("rule-1");
+      expect(store.error).toContain("Deletion failed");
       expect(result).toBe(false);
     });
   });
 
-  describe('checkJurisdictionConflicts', () => {
-    it('should check jurisdiction conflicts', async () => {
+  describe("checkJurisdictionConflicts", () => {
+    it("should check jurisdiction conflicts", async () => {
       const mockConflicts = [
         {
-          id: 'conflict-1',
-          type: 'jurisdiction_restriction' as const,
-          severity: 'high' as const,
-          description: 'High-risk jurisdiction detected',
-          affectedEntries: ['entry-1', 'entry-2'],
+          id: "conflict-1",
+          type: "jurisdiction_restriction" as const,
+          severity: "high" as const,
+          description: "High-risk jurisdiction detected",
+          affectedEntries: ["entry-1", "entry-2"],
         },
       ];
 
@@ -1149,35 +1125,35 @@ describe('useWhitelistStore', () => {
       expect(store.conflicts).toEqual(mockConflicts);
     });
 
-    it('should check conflicts for specific token program', async () => {
+    it("should check conflicts for specific token program", async () => {
       const mockConflicts = [
         {
-          id: 'conflict-2',
-          type: 'token_program_restriction' as const,
-          severity: 'medium' as const,
-          description: 'Token program restriction',
-          affectedEntries: ['entry-3'],
+          id: "conflict-2",
+          type: "token_program_restriction" as const,
+          severity: "medium" as const,
+          description: "Token program restriction",
+          affectedEntries: ["entry-3"],
         },
       ];
 
       vi.mocked(whitelistService.checkJurisdictionConflicts).mockResolvedValue(mockConflicts);
 
       const store = useWhitelistStore();
-      const tokenProgramId = 'test-program-id';
+      const tokenProgramId = "test-program-id";
       await store.checkJurisdictionConflicts(tokenProgramId);
 
       expect(whitelistService.checkJurisdictionConflicts).toHaveBeenCalledWith(tokenProgramId);
       expect(store.conflicts).toEqual(mockConflicts);
     });
 
-    it('should handle errors when checking conflicts', async () => {
-      vi.mocked(whitelistService.checkJurisdictionConflicts).mockRejectedValue(new Error('Conflict check failed'));
+    it("should handle errors when checking conflicts", async () => {
+      vi.mocked(whitelistService.checkJurisdictionConflicts).mockRejectedValue(new Error("Conflict check failed"));
 
       const store = useWhitelistStore();
       await store.checkJurisdictionConflicts();
 
       expect(whitelistService.checkJurisdictionConflicts).toHaveBeenCalledWith(undefined);
-      expect(store.error).toContain('Conflict check failed');
+      expect(store.error).toContain("Conflict check failed");
     });
   });
 });

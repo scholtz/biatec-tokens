@@ -18,7 +18,7 @@ import type {
   ApproveWhitelistEntryRequest,
   RejectWhitelistEntryRequest,
   RequestMoreInfoRequest,
-} from '../types/whitelist';
+} from "../types/whitelist";
 
 /**
  * Paginated response wrapper
@@ -50,114 +50,114 @@ export class WhitelistService {
   private initializeMockData() {
     this.mockData = [
       {
-        id: '1',
-        name: 'John Smith',
-        email: 'john.smith@example.com',
-        walletAddress: '0x1234567890123456789012345678901234567890',
-        organizationId: 'ORG001',
-        organizationName: 'Acme Corp',
-        entityType: 'institutional',
-        status: 'approved',
-        jurisdictionCode: 'US',
-        jurisdictionName: 'United States',
-        riskLevel: 'low',
-        kycStatus: 'verified',
-        accreditationStatus: 'verified',
+        id: "1",
+        name: "John Smith",
+        email: "john.smith@example.com",
+        walletAddress: "0x1234567890123456789012345678901234567890",
+        organizationId: "ORG001",
+        organizationName: "Acme Corp",
+        entityType: "institutional",
+        status: "approved",
+        jurisdictionCode: "US",
+        jurisdictionName: "United States",
+        riskLevel: "low",
+        kycStatus: "verified",
+        accreditationStatus: "verified",
         documentationComplete: true,
-        documentsUploaded: ['kyc-doc-1.pdf', 'accreditation-cert.pdf'],
-        notes: 'Institutional investor, fully compliant',
+        documentsUploaded: ["kyc-doc-1.pdf", "accreditation-cert.pdf"],
+        notes: "Institutional investor, fully compliant",
         createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        createdBy: 'admin@biatec.io',
-        reviewedBy: 'compliance@biatec.io',
+        createdBy: "admin@biatec.io",
+        reviewedBy: "compliance@biatec.io",
         reviewedAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
         auditTrail: [
           {
-            id: 'audit-1',
+            id: "audit-1",
             timestamp: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-            action: 'created',
-            actor: 'admin@biatec.io',
-            actorName: 'Admin User',
-            details: 'Entry created',
+            action: "created",
+            actor: "admin@biatec.io",
+            actorName: "Admin User",
+            details: "Entry created",
           },
           {
-            id: 'audit-2',
+            id: "audit-2",
             timestamp: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
-            action: 'approved',
-            actor: 'compliance@biatec.io',
-            actorName: 'Compliance Officer',
-            details: 'Approved after KYC verification',
+            action: "approved",
+            actor: "compliance@biatec.io",
+            actorName: "Compliance Officer",
+            details: "Approved after KYC verification",
           },
         ],
       },
       {
-        id: '2',
-        name: 'Maria Garcia',
-        email: 'maria.garcia@example.com',
-        entityType: 'individual',
-        status: 'pending',
-        jurisdictionCode: 'ES',
-        jurisdictionName: 'Spain',
-        riskLevel: 'low',
-        kycStatus: 'pending',
-        accreditationStatus: 'not_required',
+        id: "2",
+        name: "Maria Garcia",
+        email: "maria.garcia@example.com",
+        entityType: "individual",
+        status: "pending",
+        jurisdictionCode: "ES",
+        jurisdictionName: "Spain",
+        riskLevel: "low",
+        kycStatus: "pending",
+        accreditationStatus: "not_required",
         documentationComplete: false,
         documentsUploaded: [],
-        notes: 'Awaiting KYC verification',
+        notes: "Awaiting KYC verification",
         createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        createdBy: 'admin@biatec.io',
+        createdBy: "admin@biatec.io",
         auditTrail: [
           {
-            id: 'audit-3',
+            id: "audit-3",
             timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            action: 'created',
-            actor: 'admin@biatec.io',
-            actorName: 'Admin User',
-            details: 'Entry created',
+            action: "created",
+            actor: "admin@biatec.io",
+            actorName: "Admin User",
+            details: "Entry created",
           },
         ],
       },
       {
-        id: '3',
-        name: 'BlockChain Investments Ltd',
-        email: 'contact@blockchain-inv.com',
-        walletAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-        organizationId: 'ORG002',
-        organizationName: 'BlockChain Investments Ltd',
-        entityType: 'corporate',
-        status: 'rejected',
-        jurisdictionCode: 'CN',
-        jurisdictionName: 'China',
-        riskLevel: 'high',
-        kycStatus: 'rejected',
-        accreditationStatus: 'rejected',
+        id: "3",
+        name: "BlockChain Investments Ltd",
+        email: "contact@blockchain-inv.com",
+        walletAddress: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+        organizationId: "ORG002",
+        organizationName: "BlockChain Investments Ltd",
+        entityType: "corporate",
+        status: "rejected",
+        jurisdictionCode: "CN",
+        jurisdictionName: "China",
+        riskLevel: "high",
+        kycStatus: "rejected",
+        accreditationStatus: "rejected",
         documentationComplete: false,
         documentsUploaded: [],
-        notes: 'Rejected due to jurisdiction restrictions',
-        rejectionReason: 'Jurisdiction blocked for token issuance',
+        notes: "Rejected due to jurisdiction restrictions",
+        rejectionReason: "Jurisdiction blocked for token issuance",
         createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
-        createdBy: 'admin@biatec.io',
-        reviewedBy: 'compliance@biatec.io',
+        createdBy: "admin@biatec.io",
+        reviewedBy: "compliance@biatec.io",
         reviewedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
         auditTrail: [
           {
-            id: 'audit-4',
+            id: "audit-4",
             timestamp: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-            action: 'created',
-            actor: 'admin@biatec.io',
-            actorName: 'Admin User',
-            details: 'Entry created',
+            action: "created",
+            actor: "admin@biatec.io",
+            actorName: "Admin User",
+            details: "Entry created",
           },
           {
-            id: 'audit-5',
+            id: "audit-5",
             timestamp: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
-            action: 'rejected',
-            actor: 'compliance@biatec.io',
-            actorName: 'Compliance Officer',
-            details: 'Rejected due to jurisdiction restrictions',
-            reasonCode: 'JURISDICTION_BLOCKED',
+            action: "rejected",
+            actor: "compliance@biatec.io",
+            actorName: "Compliance Officer",
+            details: "Rejected due to jurisdiction restrictions",
+            reasonCode: "JURISDICTION_BLOCKED",
           },
         ],
       },
@@ -165,47 +165,47 @@ export class WhitelistService {
 
     this.mockJurisdictions = [
       {
-        id: 'jur-1',
-        countryCode: 'US',
-        countryName: 'United States',
-        status: 'allowed',
+        id: "jur-1",
+        countryCode: "US",
+        countryName: "United States",
+        status: "allowed",
         kycRequired: true,
         accreditationRequired: true,
-        additionalRequirements: ['SEC accredited investor status'],
+        additionalRequirements: ["SEC accredited investor status"],
         effectiveDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-        notes: 'Full compliance with SEC regulations required',
+        notes: "Full compliance with SEC regulations required",
         createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-        createdBy: 'admin@biatec.io',
-        tokenPrograms: ['TOKEN-001', 'TOKEN-002'],
+        createdBy: "admin@biatec.io",
+        tokenPrograms: ["TOKEN-001", "TOKEN-002"],
       },
       {
-        id: 'jur-2',
-        countryCode: 'ES',
-        countryName: 'Spain',
-        status: 'allowed',
+        id: "jur-2",
+        countryCode: "ES",
+        countryName: "Spain",
+        status: "allowed",
         kycRequired: true,
         accreditationRequired: false,
         effectiveDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-        notes: 'EU MICA compliance',
+        notes: "EU MICA compliance",
         createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-        createdBy: 'admin@biatec.io',
-        tokenPrograms: ['TOKEN-001'],
+        createdBy: "admin@biatec.io",
+        tokenPrograms: ["TOKEN-001"],
       },
       {
-        id: 'jur-3',
-        countryCode: 'CN',
-        countryName: 'China',
-        status: 'blocked',
-        restrictionReason: 'Token issuance prohibited by local regulations',
+        id: "jur-3",
+        countryCode: "CN",
+        countryName: "China",
+        status: "blocked",
+        restrictionReason: "Token issuance prohibited by local regulations",
         kycRequired: false,
         accreditationRequired: false,
         effectiveDate: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString(),
-        notes: 'Blocked due to regulatory restrictions',
+        notes: "Blocked due to regulatory restrictions",
         createdAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString(),
-        createdBy: 'admin@biatec.io',
+        createdBy: "admin@biatec.io",
         tokenPrograms: [],
       },
     ];
@@ -221,9 +221,7 @@ export class WhitelistService {
   /**
    * Get whitelist entries with filtering and pagination
    */
-  async getWhitelistEntries(
-    filters?: WhitelistFilters
-  ): Promise<PaginatedResponse<WhitelistEntry>> {
+  async getWhitelistEntries(filters?: WhitelistFilters): Promise<PaginatedResponse<WhitelistEntry>> {
     await this.simulateDelay();
 
     let filtered = [...this.mockData];
@@ -236,9 +234,7 @@ export class WhitelistService {
       filtered = filtered.filter((entry) => filters.entityType!.includes(entry.entityType));
     }
     if (filters?.jurisdictionCode && filters.jurisdictionCode.length > 0) {
-      filtered = filtered.filter((entry) =>
-        filters.jurisdictionCode!.includes(entry.jurisdictionCode)
-      );
+      filtered = filtered.filter((entry) => filters.jurisdictionCode!.includes(entry.jurisdictionCode));
     }
     if (filters?.riskLevel && filters.riskLevel.length > 0) {
       filtered = filtered.filter((entry) => filters.riskLevel!.includes(entry.riskLevel));
@@ -248,17 +244,12 @@ export class WhitelistService {
     }
     if (filters?.searchQuery) {
       const query = filters.searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (entry) =>
-          entry.name.toLowerCase().includes(query) ||
-          entry.email.toLowerCase().includes(query) ||
-          entry.organizationName?.toLowerCase().includes(query)
-      );
+      filtered = filtered.filter((entry) => entry.name.toLowerCase().includes(query) || entry.email.toLowerCase().includes(query) || entry.organizationName?.toLowerCase().includes(query));
     }
 
     // Apply sorting
     if (filters?.sortBy) {
-      const sortOrder = filters.sortOrder === 'desc' ? -1 : 1;
+      const sortOrder = filters.sortOrder === "desc" ? -1 : 1;
       filtered.sort((a, b) => {
         const aVal = a[filters.sortBy!];
         const bVal = b[filters.sortBy!];
@@ -295,11 +286,11 @@ export class WhitelistService {
         acc[entry.status] = (acc[entry.status] || 0) + 1;
         return acc;
       },
-      {} as Record<string, number>
+      {} as Record<string, number>,
     );
 
     const jurisdictions = new Set(this.mockData.map((entry) => entry.jurisdictionCode));
-    const highRiskCount = this.mockData.filter((entry) => entry.riskLevel === 'high' || entry.riskLevel === 'critical').length;
+    const highRiskCount = this.mockData.filter((entry) => entry.riskLevel === "high" || entry.riskLevel === "critical").length;
 
     return {
       totalEntries: this.mockData.length,
@@ -325,32 +316,30 @@ export class WhitelistService {
   /**
    * Create new whitelist entry
    */
-  async createWhitelistEntry(
-    request: CreateWhitelistEntryRequest
-  ): Promise<WhitelistEntry> {
+  async createWhitelistEntry(request: CreateWhitelistEntryRequest): Promise<WhitelistEntry> {
     await this.simulateDelay();
 
     const newEntry: WhitelistEntry = {
       id: `entry-${Date.now()}`,
       ...request,
-      status: 'pending',
-      riskLevel: request.riskLevel || 'low',
-      kycStatus: 'not_started',
-      accreditationStatus: 'not_required',
+      status: "pending",
+      riskLevel: request.riskLevel || "low",
+      kycStatus: "not_started",
+      accreditationStatus: "not_required",
       documentationComplete: false,
       documentsUploaded: [],
       jurisdictionName: this.getJurisdictionName(request.jurisdictionCode),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      createdBy: 'current-user@example.com',
+      createdBy: "current-user@example.com",
       auditTrail: [
         {
           id: `audit-${Date.now()}`,
           timestamp: new Date().toISOString(),
-          action: 'created',
-          actor: 'current-user@example.com',
-          actorName: 'Current User',
-          details: 'Entry created',
+          action: "created",
+          actor: "current-user@example.com",
+          actorName: "Current User",
+          details: "Entry created",
         },
       ],
     };
@@ -362,10 +351,7 @@ export class WhitelistService {
   /**
    * Update whitelist entry
    */
-  async updateWhitelistEntry(
-    id: string,
-    request: UpdateWhitelistEntryRequest
-  ): Promise<WhitelistEntry | null> {
+  async updateWhitelistEntry(id: string, request: UpdateWhitelistEntryRequest): Promise<WhitelistEntry | null> {
     await this.simulateDelay();
 
     const entry = this.mockData.find((e) => e.id === id);
@@ -382,10 +368,10 @@ export class WhitelistService {
     entry.auditTrail.push({
       id: `audit-${Date.now()}`,
       timestamp: new Date().toISOString(),
-      action: 'updated',
-      actor: 'current-user@example.com',
-      actorName: 'Current User',
-      details: 'Entry updated',
+      action: "updated",
+      actor: "current-user@example.com",
+      actorName: "Current User",
+      details: "Entry updated",
     });
 
     return entry;
@@ -394,9 +380,7 @@ export class WhitelistService {
   /**
    * Approve whitelist entry
    */
-  async approveWhitelistEntry(
-    request: ApproveWhitelistEntryRequest
-  ): Promise<WhitelistEntry | null> {
+  async approveWhitelistEntry(request: ApproveWhitelistEntryRequest): Promise<WhitelistEntry | null> {
     await this.simulateDelay();
 
     const entry = this.mockData.find((e) => e.id === request.id);
@@ -404,8 +388,8 @@ export class WhitelistService {
       return null;
     }
 
-    entry.status = 'approved';
-    entry.reviewedBy = 'current-user@example.com';
+    entry.status = "approved";
+    entry.reviewedBy = "current-user@example.com";
     entry.reviewedAt = new Date().toISOString();
     entry.updatedAt = new Date().toISOString();
     if (request.notes) {
@@ -418,10 +402,10 @@ export class WhitelistService {
     entry.auditTrail.push({
       id: `audit-${Date.now()}`,
       timestamp: new Date().toISOString(),
-      action: 'approved',
-      actor: 'current-user@example.com',
-      actorName: 'Current User',
-      details: request.notes || 'Entry approved',
+      action: "approved",
+      actor: "current-user@example.com",
+      actorName: "Current User",
+      details: request.notes || "Entry approved",
     });
 
     return entry;
@@ -430,9 +414,7 @@ export class WhitelistService {
   /**
    * Reject whitelist entry
    */
-  async rejectWhitelistEntry(
-    request: RejectWhitelistEntryRequest
-  ): Promise<WhitelistEntry | null> {
+  async rejectWhitelistEntry(request: RejectWhitelistEntryRequest): Promise<WhitelistEntry | null> {
     await this.simulateDelay();
 
     const entry = this.mockData.find((e) => e.id === request.id);
@@ -440,9 +422,9 @@ export class WhitelistService {
       return null;
     }
 
-    entry.status = 'rejected';
+    entry.status = "rejected";
     entry.rejectionReason = request.reason;
-    entry.reviewedBy = 'current-user@example.com';
+    entry.reviewedBy = "current-user@example.com";
     entry.reviewedAt = new Date().toISOString();
     entry.updatedAt = new Date().toISOString();
     if (request.notes) {
@@ -452,11 +434,11 @@ export class WhitelistService {
     entry.auditTrail.push({
       id: `audit-${Date.now()}`,
       timestamp: new Date().toISOString(),
-      action: 'rejected',
-      actor: 'current-user@example.com',
-      actorName: 'Current User',
+      action: "rejected",
+      actor: "current-user@example.com",
+      actorName: "Current User",
       details: request.reason,
-      reasonCode: 'REJECTED_BY_REVIEWER',
+      reasonCode: "REJECTED_BY_REVIEWER",
     });
 
     return entry;
@@ -470,10 +452,10 @@ export class WhitelistService {
 
     const entry = this.mockData.find((e) => e.id === request.id);
     if (!entry) {
-      throw new Error('Entry not found');
+      throw new Error("Entry not found");
     }
 
-    entry.status = 'under_review';
+    entry.status = "under_review";
     entry.updatedAt = new Date().toISOString();
     if (request.notes) {
       entry.notes = request.notes;
@@ -482,10 +464,10 @@ export class WhitelistService {
     entry.auditTrail.push({
       id: `audit-${Date.now()}`,
       timestamp: new Date().toISOString(),
-      action: 'info_requested',
-      actor: 'current-user@example.com',
-      actorName: 'Current User',
-      details: `Requested: ${request.requestedInfo.join(', ')}`,
+      action: "info_requested",
+      actor: "current-user@example.com",
+      actorName: "Current User",
+      details: `Requested: ${request.requestedInfo.join(", ")}`,
     });
 
     return entry;
@@ -506,29 +488,29 @@ export class WhitelistService {
       errors: [
         {
           row: 3,
-          field: 'email',
-          value: 'invalid-email',
-          message: 'Invalid email format',
-          severity: 'error',
+          field: "email",
+          value: "invalid-email",
+          message: "Invalid email format",
+          severity: "error",
         },
       ],
       preview: [
         {
           row: 1,
-          name: 'Test User 1',
-          email: 'test1@example.com',
-          entityType: 'individual',
-          jurisdictionCode: 'US',
+          name: "Test User 1",
+          email: "test1@example.com",
+          entityType: "individual",
+          jurisdictionCode: "US",
           hasErrors: false,
           errors: [],
           warnings: [],
         },
         {
           row: 2,
-          name: 'Test User 2',
-          email: 'test2@example.com',
-          entityType: 'corporate',
-          jurisdictionCode: 'GB',
+          name: "Test User 2",
+          email: "test2@example.com",
+          entityType: "corporate",
+          jurisdictionCode: "GB",
           hasErrors: false,
           errors: [],
           warnings: [],
@@ -557,7 +539,7 @@ export class WhitelistService {
             skippedCount++;
             return;
           } else {
-            throw new Error('Duplicate email found');
+            throw new Error("Duplicate email found");
           }
         }
 
@@ -565,23 +547,23 @@ export class WhitelistService {
         const newEntry: WhitelistEntry = {
           id: `entry-${Date.now()}-${index}`,
           ...entry,
-          status: request.autoApprove ? 'approved' : 'pending',
-          kycStatus: entry.kycStatus || 'not_started',
-          accreditationStatus: entry.accreditationStatus || 'not_required',
+          status: request.autoApprove ? "approved" : "pending",
+          kycStatus: entry.kycStatus || "not_started",
+          accreditationStatus: entry.accreditationStatus || "not_required",
           documentationComplete: entry.documentationComplete || false,
           documentsUploaded: entry.documentsUploaded || [],
           jurisdictionName: this.getJurisdictionName(entry.jurisdictionCode),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          createdBy: 'current-user@example.com',
+          createdBy: "current-user@example.com",
           auditTrail: [
             {
               id: `audit-${Date.now()}-${index}`,
               timestamp: new Date().toISOString(),
-              action: 'created',
-              actor: 'current-user@example.com',
-              actorName: 'Current User',
-              details: 'Created via bulk import',
+              action: "created",
+              actor: "current-user@example.com",
+              actorName: "Current User",
+              details: "Created via bulk import",
             },
           ],
         };
@@ -593,7 +575,7 @@ export class WhitelistService {
         errors.push({
           row: index + 1,
           entry,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error instanceof Error ? error.message : "Unknown error",
         });
       }
     });
@@ -628,7 +610,7 @@ export class WhitelistService {
         acc[rule.status] = (acc[rule.status] || 0) + 1;
         return acc;
       },
-      {} as Record<string, number>
+      {} as Record<string, number>,
     );
 
     const jurisdictionsList = this.mockJurisdictions.map((rule) => ({
@@ -651,9 +633,7 @@ export class WhitelistService {
   /**
    * Create jurisdiction rule
    */
-  async createJurisdictionRule(
-    rule: Omit<JurisdictionRule, 'id' | 'createdAt' | 'updatedAt'>
-  ): Promise<JurisdictionRule> {
+  async createJurisdictionRule(rule: Omit<JurisdictionRule, "id" | "createdAt" | "updatedAt">): Promise<JurisdictionRule> {
     await this.simulateDelay();
 
     const newRule: JurisdictionRule = {
@@ -670,15 +650,12 @@ export class WhitelistService {
   /**
    * Update jurisdiction rule
    */
-  async updateJurisdictionRule(
-    id: string,
-    updates: Partial<JurisdictionRule>
-  ): Promise<JurisdictionRule> {
+  async updateJurisdictionRule(id: string, updates: Partial<JurisdictionRule>): Promise<JurisdictionRule> {
     await this.simulateDelay();
 
     const rule = this.mockJurisdictions.find((r) => r.id === id);
     if (!rule) {
-      throw new Error('Jurisdiction rule not found');
+      throw new Error("Jurisdiction rule not found");
     }
 
     Object.assign(rule, updates);
@@ -695,7 +672,7 @@ export class WhitelistService {
 
     const index = this.mockJurisdictions.findIndex((r) => r.id === id);
     if (index === -1) {
-      throw new Error('Jurisdiction rule not found');
+      throw new Error("Jurisdiction rule not found");
     }
 
     this.mockJurisdictions.splice(index, 1);
@@ -717,29 +694,29 @@ export class WhitelistService {
           entryId: entry.id,
           entryName: entry.name,
           jurisdictionCode: entry.jurisdictionCode,
-          conflictType: 'missing_rule',
-          severity: 'warning',
-          message: 'No jurisdiction rule defined for this country',
+          conflictType: "missing_rule",
+          severity: "warning",
+          message: "No jurisdiction rule defined for this country",
           affectedTokenPrograms: [],
         });
-      } else if (rule.status === 'blocked') {
+      } else if (rule.status === "blocked") {
         conflicts.push({
           entryId: entry.id,
           entryName: entry.name,
           jurisdictionCode: entry.jurisdictionCode,
-          conflictType: 'blocked',
-          severity: 'error',
-          message: `Jurisdiction blocked: ${rule.restrictionReason || 'Not allowed'}`,
+          conflictType: "blocked",
+          severity: "error",
+          message: `Jurisdiction blocked: ${rule.restrictionReason || "Not allowed"}`,
           affectedTokenPrograms: [],
         });
-      } else if (rule.status === 'restricted') {
+      } else if (rule.status === "restricted") {
         conflicts.push({
           entryId: entry.id,
           entryName: entry.name,
           jurisdictionCode: entry.jurisdictionCode,
-          conflictType: 'restricted',
-          severity: 'warning',
-          message: `Jurisdiction restricted: ${rule.restrictionReason || 'Additional requirements needed'}`,
+          conflictType: "restricted",
+          severity: "warning",
+          message: `Jurisdiction restricted: ${rule.restrictionReason || "Additional requirements needed"}`,
           affectedTokenPrograms: rule.tokenPrograms,
         });
       }
@@ -753,15 +730,15 @@ export class WhitelistService {
    */
   private getJurisdictionName(code: string): string {
     const jurisdictionNames: Record<string, string> = {
-      US: 'United States',
-      GB: 'United Kingdom',
-      ES: 'Spain',
-      FR: 'France',
-      DE: 'Germany',
-      CN: 'China',
-      JP: 'Japan',
-      AU: 'Australia',
-      CA: 'Canada',
+      US: "United States",
+      GB: "United Kingdom",
+      ES: "Spain",
+      FR: "France",
+      DE: "Germany",
+      CN: "China",
+      JP: "Japan",
+      AU: "Australia",
+      CA: "Canada",
     };
     return jurisdictionNames[code] || code;
   }

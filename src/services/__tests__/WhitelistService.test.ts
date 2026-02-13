@@ -88,7 +88,7 @@ describe("WhitelistService", () => {
       expect(result).toBeDefined();
       expect(result.data).toBeInstanceOf(Array);
       // All returned entries should have approved status
-      result.data.forEach(entry => {
+      result.data.forEach((entry) => {
         expect(entry.status).toBe("approved");
       });
     });
@@ -104,7 +104,7 @@ describe("WhitelistService", () => {
 
       expect(result).toBeDefined();
       expect(result.data).toBeInstanceOf(Array);
-      result.data.forEach(entry => {
+      result.data.forEach((entry) => {
         expect(entry.entityType).toBe("individual");
       });
     });
@@ -120,7 +120,7 @@ describe("WhitelistService", () => {
 
       expect(result).toBeDefined();
       expect(result.data).toBeInstanceOf(Array);
-      result.data.forEach(entry => {
+      result.data.forEach((entry) => {
         expect(entry.jurisdictionCode).toBe("US");
       });
     });
@@ -136,7 +136,7 @@ describe("WhitelistService", () => {
 
       expect(result).toBeDefined();
       expect(result.data).toBeInstanceOf(Array);
-      result.data.forEach(entry => {
+      result.data.forEach((entry) => {
         expect(entry.riskLevel).toBe("low");
       });
     });
@@ -152,7 +152,7 @@ describe("WhitelistService", () => {
 
       expect(result).toBeDefined();
       expect(result.data).toBeInstanceOf(Array);
-      result.data.forEach(entry => {
+      result.data.forEach((entry) => {
         expect(entry.kycStatus).toBe("verified");
       });
     });
@@ -327,8 +327,8 @@ describe("WhitelistService", () => {
 
       // Then update it
       const updateRequest: UpdateWhitelistEntryRequest = {
-        name: 'Updated Name',
-        riskLevel: 'medium',
+        name: "Updated Name",
+        riskLevel: "medium",
       };
 
       const updatedEntry = await service.updateWhitelistEntry(createdEntry!.id, updateRequest);

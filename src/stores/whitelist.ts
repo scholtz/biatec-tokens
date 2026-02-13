@@ -3,9 +3,9 @@
  * Manages state for compliance whitelist workflows
  */
 
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
-import { whitelistService } from '../services/whitelistService';
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import { whitelistService } from "../services/whitelistService";
 import type {
   WhitelistEntry,
   WhitelistFilters,
@@ -21,9 +21,9 @@ import type {
   BulkImportRequest,
   BulkImportResponse,
   CsvValidationResult,
-} from '../types/whitelist';
+} from "../types/whitelist";
 
-export const useWhitelistStore = defineStore('whitelist', () => {
+export const useWhitelistStore = defineStore("whitelist", () => {
   // State
   const entries = ref<WhitelistEntry[]>([]);
   const selectedEntry = ref<WhitelistEntry | null>(null);
@@ -31,17 +31,17 @@ export const useWhitelistStore = defineStore('whitelist', () => {
   const jurisdictionRules = ref<JurisdictionRule[]>([]);
   const jurisdictionCoverage = ref<JurisdictionCoverage | null>(null);
   const conflicts = ref<JurisdictionConflict[]>([]);
-  
+
   const isLoading = ref(false);
   const isLoadingSummary = ref(false);
   const isLoadingJurisdictions = ref(false);
   const error = ref<string | null>(null);
-  
+
   const filters = ref<WhitelistFilters>({
     page: 1,
     perPage: 10,
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
+    sortBy: "createdAt",
+    sortOrder: "desc",
   });
 
   const pagination = ref({
@@ -55,9 +55,7 @@ export const useWhitelistStore = defineStore('whitelist', () => {
   const hasEntries = computed(() => entries.value.length > 0);
   const hasJurisdictionRules = computed(() => jurisdictionRules.value.length > 0);
   const hasConflicts = computed(() => conflicts.value.length > 0);
-  const criticalConflicts = computed(() => 
-    conflicts.value.filter(c => c.severity === 'error')
-  );
+  const criticalConflicts = computed(() => conflicts.value.filter((c) => c.severity === "error"));
 
   // Actions
   async function fetchWhitelistEntries() {
@@ -74,8 +72,8 @@ export const useWhitelistStore = defineStore('whitelist', () => {
         totalPages: response.totalPages,
       };
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to load whitelist entries';
-      console.error('Error fetching whitelist entries:', err);
+      error.value = err instanceof Error ? err.message : "Failed to load whitelist entries";
+      console.error("Error fetching whitelist entries:", err);
     } finally {
       isLoading.value = false;
     }
@@ -88,8 +86,8 @@ export const useWhitelistStore = defineStore('whitelist', () => {
     try {
       summary.value = await whitelistService.getWhitelistSummary();
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to load summary';
-      console.error('Error fetching whitelist summary:', err);
+      error.value = err instanceof Error ? err.message : "Failed to load summary";
+      console.error("Error fetching whitelist summary:", err);
     } finally {
       isLoadingSummary.value = false;
     }
@@ -104,8 +102,8 @@ export const useWhitelistStore = defineStore('whitelist', () => {
       selectedEntry.value = entry;
       return entry;
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to load entry';
-      console.error('Error fetching whitelist entry:', err);
+      error.value = err instanceof Error ? err.message : "Failed to load entry";
+      console.error("Error fetching whitelist entry:", err);
       return null;
     } finally {
       isLoading.value = false;
@@ -118,48 +116,45 @@ export const useWhitelistStore = defineStore('whitelist', () => {
 
     try {
       const newEntry = await whitelistService.createWhitelistEntry(request);
-      
+
       // Optimistically add to entries
       entries.value.unshift(newEntry);
-      
+
       // Refresh summary
       await fetchWhitelistSummary();
-      
+
       return newEntry;
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to create entry';
-      console.error('Error creating whitelist entry:', err);
+      error.value = err instanceof Error ? err.message : "Failed to create entry";
+      console.error("Error creating whitelist entry:", err);
       return null;
     } finally {
       isLoading.value = false;
     }
   }
 
-  async function updateWhitelistEntry(
-    id: string,
-    request: UpdateWhitelistEntryRequest
-  ): Promise<WhitelistEntry | null> {
+  async function updateWhitelistEntry(id: string, request: UpdateWhitelistEntryRequest): Promise<WhitelistEntry | null> {
     isLoading.value = true;
     error.value = null;
 
     try {
       const updatedEntry = await whitelistService.updateWhitelistEntry(id, request);
-      
+
       // Update in entries array
-      const index = entries.value.findIndex(e => e.id === id);
+      const index = entries.value.findIndex((e) => e.id === id);
       if (index !== -1) {
         entries.value[index] = updatedEntry;
       }
-      
+
       // Update selected entry if it's the one being updated
       if (selectedEntry.value?.id === id) {
         selectedEntry.value = updatedEntry;
       }
-      
+
       return updatedEntry;
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to update entry';
-      console.error('Error updating whitelist entry:', err);
+      error.value = err instanceof Error ? err.message : "Failed to update entry";
+      console.error("Error updating whitelist entry:", err);
       return null;
     } finally {
       isLoading.value = false;
@@ -172,25 +167,25 @@ export const useWhitelistStore = defineStore('whitelist', () => {
 
     try {
       const updatedEntry = await whitelistService.approveWhitelistEntry(request);
-      
+
       // Update in entries array
-      const index = entries.value.findIndex(e => e.id === request.id);
+      const index = entries.value.findIndex((e) => e.id === request.id);
       if (index !== -1) {
         entries.value[index] = updatedEntry;
       }
-      
+
       // Update selected entry
       if (selectedEntry.value?.id === request.id) {
         selectedEntry.value = updatedEntry;
       }
-      
+
       // Refresh summary
       await fetchWhitelistSummary();
-      
+
       return true;
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to approve entry';
-      console.error('Error approving whitelist entry:', err);
+      error.value = err instanceof Error ? err.message : "Failed to approve entry";
+      console.error("Error approving whitelist entry:", err);
       return false;
     } finally {
       isLoading.value = false;
@@ -203,25 +198,25 @@ export const useWhitelistStore = defineStore('whitelist', () => {
 
     try {
       const updatedEntry = await whitelistService.rejectWhitelistEntry(request);
-      
+
       // Update in entries array
-      const index = entries.value.findIndex(e => e.id === request.id);
+      const index = entries.value.findIndex((e) => e.id === request.id);
       if (index !== -1) {
         entries.value[index] = updatedEntry;
       }
-      
+
       // Update selected entry
       if (selectedEntry.value?.id === request.id) {
         selectedEntry.value = updatedEntry;
       }
-      
+
       // Refresh summary
       await fetchWhitelistSummary();
-      
+
       return true;
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to reject entry';
-      console.error('Error rejecting whitelist entry:', err);
+      error.value = err instanceof Error ? err.message : "Failed to reject entry";
+      console.error("Error rejecting whitelist entry:", err);
       return false;
     } finally {
       isLoading.value = false;
@@ -234,22 +229,22 @@ export const useWhitelistStore = defineStore('whitelist', () => {
 
     try {
       const updatedEntry = await whitelistService.requestMoreInfo(request);
-      
+
       // Update in entries array
-      const index = entries.value.findIndex(e => e.id === request.id);
+      const index = entries.value.findIndex((e) => e.id === request.id);
       if (index !== -1) {
         entries.value[index] = updatedEntry;
       }
-      
+
       // Update selected entry
       if (selectedEntry.value?.id === request.id) {
         selectedEntry.value = updatedEntry;
       }
-      
+
       return true;
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to request info';
-      console.error('Error requesting more info:', err);
+      error.value = err instanceof Error ? err.message : "Failed to request info";
+      console.error("Error requesting more info:", err);
       return false;
     } finally {
       isLoading.value = false;
@@ -263,8 +258,8 @@ export const useWhitelistStore = defineStore('whitelist', () => {
     try {
       return await whitelistService.validateCsv(file);
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to validate CSV';
-      console.error('Error validating CSV:', err);
+      error.value = err instanceof Error ? err.message : "Failed to validate CSV";
+      console.error("Error validating CSV:", err);
       return null;
     } finally {
       isLoading.value = false;
@@ -277,15 +272,15 @@ export const useWhitelistStore = defineStore('whitelist', () => {
 
     try {
       const response = await whitelistService.bulkImport(request);
-      
+
       // Refresh entries and summary
       await fetchWhitelistEntries();
       await fetchWhitelistSummary();
-      
+
       return response;
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to import entries';
-      console.error('Error bulk importing entries:', err);
+      error.value = err instanceof Error ? err.message : "Failed to import entries";
+      console.error("Error bulk importing entries:", err);
       return null;
     } finally {
       isLoading.value = false;
@@ -299,8 +294,8 @@ export const useWhitelistStore = defineStore('whitelist', () => {
     try {
       jurisdictionRules.value = await whitelistService.getJurisdictionRules();
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to load jurisdiction rules';
-      console.error('Error fetching jurisdiction rules:', err);
+      error.value = err instanceof Error ? err.message : "Failed to load jurisdiction rules";
+      console.error("Error fetching jurisdiction rules:", err);
     } finally {
       isLoadingJurisdictions.value = false;
     }
@@ -313,16 +308,14 @@ export const useWhitelistStore = defineStore('whitelist', () => {
     try {
       jurisdictionCoverage.value = await whitelistService.getJurisdictionCoverage();
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to load jurisdiction coverage';
-      console.error('Error fetching jurisdiction coverage:', err);
+      error.value = err instanceof Error ? err.message : "Failed to load jurisdiction coverage";
+      console.error("Error fetching jurisdiction coverage:", err);
     } finally {
       isLoadingJurisdictions.value = false;
     }
   }
 
-  async function createJurisdictionRule(
-    rule: Omit<JurisdictionRule, 'id' | 'createdAt' | 'updatedAt'>
-  ): Promise<JurisdictionRule | null> {
+  async function createJurisdictionRule(rule: Omit<JurisdictionRule, "id" | "createdAt" | "updatedAt">): Promise<JurisdictionRule | null> {
     isLoadingJurisdictions.value = true;
     error.value = null;
 
@@ -332,32 +325,29 @@ export const useWhitelistStore = defineStore('whitelist', () => {
       await fetchJurisdictionCoverage();
       return newRule;
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to create jurisdiction rule';
-      console.error('Error creating jurisdiction rule:', err);
+      error.value = err instanceof Error ? err.message : "Failed to create jurisdiction rule";
+      console.error("Error creating jurisdiction rule:", err);
       return null;
     } finally {
       isLoadingJurisdictions.value = false;
     }
   }
 
-  async function updateJurisdictionRule(
-    id: string,
-    updates: Partial<JurisdictionRule>
-  ): Promise<JurisdictionRule | null> {
+  async function updateJurisdictionRule(id: string, updates: Partial<JurisdictionRule>): Promise<JurisdictionRule | null> {
     isLoadingJurisdictions.value = true;
     error.value = null;
 
     try {
       const updatedRule = await whitelistService.updateJurisdictionRule(id, updates);
-      const index = jurisdictionRules.value.findIndex(r => r.id === id);
+      const index = jurisdictionRules.value.findIndex((r) => r.id === id);
       if (index !== -1) {
         jurisdictionRules.value[index] = updatedRule;
       }
       await fetchJurisdictionCoverage();
       return updatedRule;
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to update jurisdiction rule';
-      console.error('Error updating jurisdiction rule:', err);
+      error.value = err instanceof Error ? err.message : "Failed to update jurisdiction rule";
+      console.error("Error updating jurisdiction rule:", err);
       return null;
     } finally {
       isLoadingJurisdictions.value = false;
@@ -370,12 +360,12 @@ export const useWhitelistStore = defineStore('whitelist', () => {
 
     try {
       await whitelistService.deleteJurisdictionRule(id);
-      jurisdictionRules.value = jurisdictionRules.value.filter(r => r.id !== id);
+      jurisdictionRules.value = jurisdictionRules.value.filter((r) => r.id !== id);
       await fetchJurisdictionCoverage();
       return true;
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to delete jurisdiction rule';
-      console.error('Error deleting jurisdiction rule:', err);
+      error.value = err instanceof Error ? err.message : "Failed to delete jurisdiction rule";
+      console.error("Error deleting jurisdiction rule:", err);
       return false;
     } finally {
       isLoadingJurisdictions.value = false;
@@ -389,8 +379,8 @@ export const useWhitelistStore = defineStore('whitelist', () => {
     try {
       conflicts.value = await whitelistService.checkJurisdictionConflicts(tokenProgramId);
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to check conflicts';
-      console.error('Error checking jurisdiction conflicts:', err);
+      error.value = err instanceof Error ? err.message : "Failed to check conflicts";
+      console.error("Error checking jurisdiction conflicts:", err);
     } finally {
       isLoadingJurisdictions.value = false;
     }
@@ -404,8 +394,8 @@ export const useWhitelistStore = defineStore('whitelist', () => {
     filters.value = {
       page: 1,
       perPage: 10,
-      sortBy: 'createdAt',
-      sortOrder: 'desc',
+      sortBy: "createdAt",
+      sortOrder: "desc",
     };
   }
 
