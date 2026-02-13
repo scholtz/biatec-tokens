@@ -1,6 +1,18 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <!-- Compliance gating banner (if blocked) -->
+    <div v-if="!isEligibleForIssuance && !loading" class="max-w-7xl mx-auto px-4 py-8">
+      <ComplianceGatingBanner
+        :eligibility="complianceEligibility"
+        @complete-compliance="navigateToCompliance"
+        @contact-support="contactSupport"
+        @retry-compliance="retryCompliance"
+      />
+    </div>
+
+    <!-- Wizard (if eligible or loading) -->
     <WizardContainer
+      v-if="isEligibleForIssuance || loading"
       title="Create Your Token"
       subtitle="A guided, wallet-free experience for compliant token creation"
       :steps="wizardSteps"
@@ -79,6 +91,7 @@ import { useAuthStore } from '../stores/auth'
 import { useTokenDraftStore } from '../stores/tokenDraft'
 import { useSubscriptionStore } from '../stores/subscription'
 import { useComplianceStore } from '../stores/compliance'
+import { useComplianceOrchestrationStore } from '../stores/complianceOrchestration'
 import { analyticsService } from '../services/analytics'
 import WizardContainer from '../components/wizard/WizardContainer.vue'
 import AuthenticationConfirmationStep from '../components/wizard/steps/AuthenticationConfirmationStep.vue'
@@ -90,6 +103,7 @@ import MetadataStep from '../components/wizard/steps/MetadataStep.vue'
 import StandardsCompatibilityStep from '../components/wizard/steps/StandardsCompatibilityStep.vue'
 import DeploymentReviewStep from '../components/wizard/steps/DeploymentReviewStep.vue'
 import DeploymentStatusStep from '../components/wizard/steps/DeploymentStatusStep.vue'
+import ComplianceGatingBanner from '../components/compliance/ComplianceGatingBanner.vue'
 import type { WizardStep } from '../components/wizard/WizardContainer.vue'
 
 const router = useRouter()
@@ -97,6 +111,18 @@ const authStore = useAuthStore()
 const tokenDraftStore = useTokenDraftStore()
 const subscriptionStore = useSubscriptionStore()
 const complianceStore = useComplianceStore()
+const complianceOrchestrationStore = useComplianceOrchestrationStore()
+
+const loading = ref(true)
+
+// Compliance eligibility check
+const isEligibleForIssuance = computed(() => 
+  complianceOrchestrationStore.isEligibleForIssuance
+)
+
+const complianceEligibility = computed(() => 
+  complianceOrchestrationStore.checkIssuanceEligibility()
+)
 
 const step1Ref = ref<InstanceType<typeof AuthenticationConfirmationStep>>()
 const step2Ref = ref<InstanceType<typeof SubscriptionSelectionStep>>()
@@ -344,6 +370,24 @@ onBeforeUnmount(() => {
     )
   }
 })
+
+// Navigation methods for compliance gating
+const navigateToCompliance = () => {
+  router.push('/compliance/orchestration')
+}
+
+const contactSupport = () => {
+  window.open('mailto:support@biatec.io?subject=Token Issuance Support', '_blank')
+}
+
+const retryCompliance = async () => {
+  if (authStore.user) {
+    await complianceOrchestrationStore.initializeComplianceState(
+      authStore.user.address,
+      authStore.user.email || ''
+    )
+  }
+}
 </script>
 
 <style scoped>
