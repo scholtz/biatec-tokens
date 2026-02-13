@@ -11,6 +11,79 @@
 
 **PAST VIOLATIONS:** Copilot has previously finished work with failing tests and reduced coverage, violating these instructions. This has introduced bugs and reduced quality. This MUST NOT happen again.
 
+## 🚨 PRODUCT OWNER QUALITY REQUIREMENTS 🚨
+
+**MANDATORY COMPLETENESS CHECKLIST** - Work is NEVER considered complete without ALL of the following:
+
+### 1. Test Coverage Requirements (MANDATORY)
+- [ ] **Unit Tests**: Minimum 15+ tests for new stores, 10+ for new utilities, 10+ for new components
+- [ ] **E2E Tests**: Minimum 10+ tests for new views/pages, 5+ for wizard steps
+- [ ] **Component Tests**: Every new component MUST have unit tests covering props, events, edge cases
+- [ ] **Integration Tests**: State transitions and API interactions must be tested
+- [ ] **Test Matrix Document**: Create comprehensive testing matrix (e.g., `FEATURE_TESTING_MATRIX.md`) with:
+  - Unit test counts and coverage areas
+  - Integration test patterns
+  - E2E test descriptions with scenarios
+  - Edge case validation
+  - Business value linkage to roadmap
+  - Test evidence (pass/fail counts, duration)
+
+### 2. Documentation Requirements (MANDATORY)
+- [ ] **Implementation Summary**: Create `FEATURE_IMPLEMENTATION_SUMMARY.md` with:
+  - Business value analysis (revenue impact, user impact, risk reduction)
+  - Technical architecture deep dive
+  - Acceptance criteria mapping (with test evidence)
+  - Risk assessment and mitigation strategies
+  - Rollout plan with phases
+  - Dependencies and assumptions
+- [ ] **Testing Matrix**: Link tests to acceptance criteria explicitly
+- [ ] **Manual Verification Checklist**: 5+ step-by-step test scenarios for product owner
+- [ ] **Screenshots/Videos**: Visual evidence of key user flows and states
+
+### 3. Quality Gates (MANDATORY BEFORE COMPLETION)
+- [ ] **All Tests Pass Locally**: Exact count (e.g., 2737/2762 passing)
+- [ ] **Build Succeeds**: Zero TypeScript errors, zero build warnings
+- [ ] **Test Coverage**: New code ≥70% branch coverage
+- [ ] **E2E Tests Pass**: All critical user flows validated
+- [ ] **No Regressions**: All existing tests still pass
+- [ ] **Accessibility Check**: WCAG 2.1 AA baseline (labels, contrast, keyboard)
+
+### 4. Issue Linkage and Acceptance Criteria (MANDATORY)
+- [ ] **Link to Issue Number**: PR description must reference issue (e.g., "Closes #389")
+- [ ] **Map ALL Acceptance Criteria**: Each criterion from issue mapped to implementation + tests
+- [ ] **Provide Test Evidence**: For each criterion, show which tests validate it
+
+### 5. Risk Controls Documentation (MANDATORY)
+- [ ] **False Positive Prevention**: How system prevents incorrect blocking
+- [ ] **False Negative Prevention**: How system prevents incorrect approval
+- [ ] **Error Handling**: All error states have explicit user-facing messages
+- [ ] **Rollback Plan**: How to revert if critical issues arise
+
+### 6. No Wallet Connector Verification (MANDATORY)
+- [ ] **E2E Tests Verify**: No wallet connector buttons/text appear
+- [ ] **Code Review**: Grep for wallet-related imports (WalletConnect, Pera, Defly, MetaMask)
+- [ ] **Explicit Statement**: "This PR does not introduce wallet connectors. Email/password authentication only."
+
+---
+
+## FAILURE TO MEET REQUIREMENTS = IMMEDIATE REJECTION
+
+**Product Owner will reject ANY PR that lacks:**
+1. Comprehensive test coverage (unit + E2E + testing matrix doc)
+2. Implementation summary with business value
+3. Manual verification checklist
+4. Acceptance criteria mapping with test evidence
+5. All tests passing locally with exact counts
+6. Build success verification
+
+**When Product Owner rejects for quality, you MUST:**
+1. Create detailed testing matrix document
+2. Add missing unit/E2E tests until minimums met
+3. Document business value and risk controls
+4. Provide test execution evidence (counts, duration)
+5. Map every acceptance criterion to tests
+6. Re-request review with ALL evidence attached
+
 **QUALITY DOCUMENTATION REQUIREMENTS:** Every significant feature MUST include a comprehensive testing matrix document that details:
 - Unit test coverage with specific test counts
 - Integration test patterns and API interactions
