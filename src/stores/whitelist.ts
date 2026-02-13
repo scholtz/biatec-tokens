@@ -95,15 +95,18 @@ export const useWhitelistStore = defineStore('whitelist', () => {
     }
   }
 
-  async function fetchWhitelistEntry(id: string) {
+  async function fetchWhitelistEntry(id: string): Promise<WhitelistEntry | null> {
     isLoading.value = true;
     error.value = null;
 
     try {
-      selectedEntry.value = await whitelistService.getWhitelistEntry(id);
+      const entry = await whitelistService.getWhitelistEntry(id);
+      selectedEntry.value = entry;
+      return entry;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to load entry';
       console.error('Error fetching whitelist entry:', err);
+      return null;
     } finally {
       isLoading.value = false;
     }

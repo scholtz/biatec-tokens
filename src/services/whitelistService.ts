@@ -35,7 +35,7 @@ interface PaginatedResponse<T> {
  * Mock whitelist service for development
  * TODO: Replace with actual API calls when backend endpoints are available
  */
-class WhitelistService {
+export class WhitelistService {
   // private baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
   private mockData: WhitelistEntry[] = [];
   private mockJurisdictions: JurisdictionRule[] = [];
@@ -365,12 +365,12 @@ class WhitelistService {
   async updateWhitelistEntry(
     id: string,
     request: UpdateWhitelistEntryRequest
-  ): Promise<WhitelistEntry> {
+  ): Promise<WhitelistEntry | null> {
     await this.simulateDelay();
 
     const entry = this.mockData.find((e) => e.id === id);
     if (!entry) {
-      throw new Error('Entry not found');
+      return null;
     }
 
     Object.assign(entry, request);
@@ -396,12 +396,12 @@ class WhitelistService {
    */
   async approveWhitelistEntry(
     request: ApproveWhitelistEntryRequest
-  ): Promise<WhitelistEntry> {
+  ): Promise<WhitelistEntry | null> {
     await this.simulateDelay();
 
     const entry = this.mockData.find((e) => e.id === request.id);
     if (!entry) {
-      throw new Error('Entry not found');
+      return null;
     }
 
     entry.status = 'approved';
@@ -432,12 +432,12 @@ class WhitelistService {
    */
   async rejectWhitelistEntry(
     request: RejectWhitelistEntryRequest
-  ): Promise<WhitelistEntry> {
+  ): Promise<WhitelistEntry | null> {
     await this.simulateDelay();
 
     const entry = this.mockData.find((e) => e.id === request.id);
     if (!entry) {
-      throw new Error('Entry not found');
+      return null;
     }
 
     entry.status = 'rejected';
