@@ -602,3 +602,214 @@ export interface ComplianceAlert {
   status: 'active' | 'acknowledged' | 'resolved';
   actionRequired?: string;
 }
+
+/**
+ * KYC + AML Orchestration Types
+ * For production-ready compliance workflow and token issuance gating
+ */
+
+/**
+ * User compliance status lifecycle states
+ */
+export type UserComplianceStatus = 
+  | 'not_started'           // User hasn't begun compliance process
+  | 'pending_documents'     // Awaiting document upload
+  | 'pending_review'        // Documents submitted, under review
+  | 'approved'              // Compliance approved, can issue tokens
+  | 'rejected'              // Compliance rejected, remediation needed
+  | 'escalated'             // Case escalated to manual review
+  | 'blocked_by_aml'        // AML screening failed, blocked
+  | 'expired';              // Compliance approval expired, re-verification needed
+
+/**
+ * KYC document types required for verification
+ */
+export type KYCDocumentType = 
+  | 'government_id'         // Passport, driver's license, national ID
+  | 'proof_of_address'      // Utility bill, bank statement
+  | 'business_registration' // For business entities
+  | 'tax_id'                // Tax identification document
+  | 'beneficial_ownership'  // UBO declaration
+  | 'bank_verification';    // Bank account verification
+
+/**
+ * KYC document upload status
+ */
+export type KYCDocumentStatus = 
+  | 'not_uploaded'
+  | 'uploaded'
+  | 'under_review'
+  | 'approved'
+  | 'rejected'
+  | 'expired';
+
+/**
+ * KYC document item in checklist
+ */
+export interface KYCDocument {
+  type: KYCDocumentType;
+  label: string;
+  description: string;
+  required: boolean;
+  status: KYCDocumentStatus;
+  uploadedAt?: string;
+  reviewedAt?: string;
+  rejectionReason?: string;
+  expiresAt?: string;
+  documentUrl?: string;
+}
+
+/**
+ * AML screening verdict categories
+ */
+export type AMLScreeningVerdict = 
+  | 'not_started'           // Screening not yet initiated
+  | 'in_progress'           // Screening in progress
+  | 'clear'                 // No matches found, cleared
+  | 'potential_match'       // Possible match, needs review
+  | 'confirmed_match'       // Confirmed sanctions list match, blocked
+  | 'error'                 // Screening service error
+  | 'manual_review';        // Requires manual compliance review
+
+/**
+ * AML screening details
+ */
+export interface AMLScreeningResult {
+  verdict: AMLScreeningVerdict;
+  screenedAt?: string;
+  provider?: string;          // e.g., 'ComplyAdvantage', 'Dow Jones'
+  matchDetails?: {
+    listName: string;         // e.g., 'OFAC SDN', 'EU Sanctions'
+    matchScore: number;       // 0-100 confidence score
+    matchedFields: string[];  // Which fields matched
+  }[];
+  processingError?: string;   // If verdict is 'error'
+  notes?: string;
+}
+
+/**
+ * Compliance event types for audit timeline
+ */
+export type ComplianceEventType = 
+  | 'compliance_started'
+  | 'document_uploaded'
+  | 'document_rejected'
+  | 'kyc_review_started'
+  | 'kyc_approved'
+  | 'kyc_rejected'
+  | 'aml_screening_started'
+  | 'aml_screening_completed'
+  | 'aml_match_detected'
+  | 'case_escalated'
+  | 'compliance_approved'
+  | 'compliance_rejected'
+  | 'compliance_expired'
+  | 'issuance_attempted'
+  | 'issuance_blocked'
+  | 'remediation_requested';
+
+/**
+ * Compliance event for audit timeline
+ */
+export interface ComplianceEvent {
+  id: string;
+  type: ComplianceEventType;
+  timestamp: string;
+  actor: 'user' | 'system' | 'admin' | 'provider';
+  actorId?: string;           // User email, admin ID, or provider name
+  description: string;        // Human-readable event description
+  metadata?: Record<string, any>;
+  visible: boolean;           // Whether visible to user (vs internal only)
+}
+
+/**
+ * Remediation action types
+ */
+export type RemediationActionType = 
+  | 'upload_document'
+  | 'resubmit_document'
+  | 'contact_support'
+  | 'provide_additional_info'
+  | 'wait_for_review'
+  | 'acknowledge_block';
+
+/**
+ * Remediation action for rejected/blocked states
+ */
+export interface RemediationAction {
+  type: RemediationActionType;
+  title: string;
+  description: string;
+  actionUrl?: string;         // Link to action (e.g., upload form)
+  priority: 'high' | 'medium' | 'low';
+  dueDate?: string;           // If action is time-sensitive
+}
+
+/**
+ * Complete user compliance state
+ */
+export interface UserComplianceState {
+  userId: string;
+  email: string;
+  status: UserComplianceStatus;
+  kycDocuments: KYCDocument[];
+  amlScreening: AMLScreeningResult;
+  events: ComplianceEvent[];
+  remediationActions: RemediationAction[];
+  canIssueTokens: boolean;    // Computed eligibility for token issuance
+  blockedReasons?: string[];  // Reasons why issuance is blocked
+  approvedAt?: string;
+  expiresAt?: string;         // When compliance approval expires
+  lastUpdated: string;
+}
+
+/**
+ * Issuance eligibility check result
+ */
+export interface IssuanceEligibility {
+  eligible: boolean;
+  status: UserComplianceStatus;
+  reasons: string[];          // Why user is/isn't eligible
+  nextActions: RemediationAction[];
+  canRetry: boolean;          // Whether user can retry failed steps
+}
+
+/**
+ * Admin compliance list filters
+ */
+export interface AdminComplianceFilters {
+  status?: UserComplianceStatus[];
+  search?: string;            // Search by email or user ID
+  dateFrom?: string;
+  dateTo?: string;
+  needsReview?: boolean;      // Filter for pending/escalated
+  riskLevel?: 'low' | 'medium' | 'high';
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * Admin compliance list item (summary view)
+ */
+export interface AdminComplianceListItem {
+  userId: string;
+  email: string;
+  status: UserComplianceStatus;
+  submittedAt?: string;
+  lastUpdated: string;
+  riskLevel: 'low' | 'medium' | 'high';
+  pendingActions: number;
+  amlVerdict: AMLScreeningVerdict;
+  assignedTo?: string;        // Compliance officer assigned
+}
+
+/**
+ * Admin compliance list response
+ */
+export interface AdminComplianceListResponse {
+  items: AdminComplianceListItem[];
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+}
