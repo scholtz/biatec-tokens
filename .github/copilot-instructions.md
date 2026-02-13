@@ -11,6 +11,16 @@
 
 **PAST VIOLATIONS:** Copilot has previously finished work with failing tests and reduced coverage, violating these instructions. This has introduced bugs and reduced quality. This MUST NOT happen again.
 
+**QUALITY DOCUMENTATION REQUIREMENTS:** Every significant feature MUST include a comprehensive testing matrix document that details:
+- Unit test coverage with specific test counts
+- Integration test patterns and API interactions
+- E2E test coverage with user flow descriptions
+- Edge case validation (duplicates, invalid data, errors)
+- Business value linkage to product roadmap
+- Test evidence (pass/fail counts, duration)
+
+**Example**: See `docs/implementations/WHITELIST_MANAGEMENT_TESTING_MATRIX.md` for the required level of detail.
+
 ### Test Quality Requirements
 
 **ALL tests must pass before marking work complete.** When writing tests:
