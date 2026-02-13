@@ -271,7 +271,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onErrorCaptured } from 'vue'
 import { useTokenDraftStore } from '../../../stores/tokenDraft'
 import WizardStep from '../WizardStep.vue'
 import Input from '../../ui/Input.vue'
@@ -284,6 +284,12 @@ const tokenDraftStore = useTokenDraftStore()
 const showErrors = ref(false)
 const errors = ref<string[]>([])
 const fieldErrors = ref<Record<string, string>>({})
+
+// Error boundary to prevent unhandled errors from breaking the UI
+onErrorCaptured((err, _instance, info) => {
+  console.error('Error in ProjectSetupStep:', err, info)
+  return false // Prevent error from propagating
+})
 
 // Form data
 const formData = ref({
@@ -326,21 +332,26 @@ const getPurposeLabel = (purpose: string): string => {
 
 // Compute recommended standards based on token purpose
 const recommendedStandards = computed<UtilityComparison[]>(() => {
-  if (!formData.value.tokenPurpose) {
-    return []
-  }
+  try {
+    if (!formData.value.tokenPurpose) {
+      return []
+    }
 
-  const useCase = mapPurposeToUseCase(formData.value.tokenPurpose)
-  if (!useCase) {
-    return []
-  }
+    const useCase = mapPurposeToUseCase(formData.value.tokenPurpose)
+    if (!useCase) {
+      return []
+    }
 
-  // Get recommendations with appropriate flags
-  return getUtilityComparisons({
-    useCase,
-    requiresCompliance: formData.value.tokenPurpose === 'asset' || formData.value.tokenPurpose === 'security',
-    costSensitive: true, // Default to preferring low-cost options
-  })
+    // Get recommendations with appropriate flags
+    return getUtilityComparisons({
+      useCase,
+      requiresCompliance: formData.value.tokenPurpose === 'asset' || formData.value.tokenPurpose === 'security',
+      costSensitive: true, // Default to preferring low-cost options
+    })
+  } catch (error) {
+    console.error('Error computing recommendations:', error)
+    return [] // Gracefully return empty array on error
+  }
 })
 
 // Show standard details (placeholder for future modal)
