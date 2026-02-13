@@ -282,7 +282,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onErrorCaptured } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   ArrowPathIcon,
@@ -329,22 +329,56 @@ const selectedFile = ref<File | null>(null)
 const uploading = ref(false)
 const documentsSection = ref<HTMLElement | null>(null)
 
+// Error handling
+onErrorCaptured((err, instance, info) => {
+  console.error('[ComplianceOrchestrationView] Error captured:', {
+    error: err,
+    component: instance?.$options?.name || 'Unknown',
+    info
+  })
+  // Prevent error from propagating and crashing the app
+  return false
+})
+
 // Computed
-const currentEligibility = computed(() => complianceStore.checkIssuanceEligibility())
+const currentEligibility = computed(() => {
+  try {
+    return complianceStore.checkIssuanceEligibility()
+  } catch (err) {
+    console.error('[ComplianceOrchestrationView] Error checking eligibility:', err)
+    return {
+      eligible: false,
+      status: 'not_started' as const,
+      reasons: ['Error checking compliance status. Please contact support.'],
+      nextActions: [],
+      canRetry: true
+    }
+  }
+})
 
 const totalRequiredDocuments = computed(() => {
   if (!userComplianceState) return 0
-  return userComplianceState.kycDocuments.filter(doc => doc.required).length
+  try {
+    return userComplianceState.kycDocuments.filter(doc => doc.required).length
+  } catch (err) {
+    console.error('[ComplianceOrchestrationView] Error calculating required documents:', err)
+    return 0
+  }
 })
 
 // Lifecycle
 onMounted(async () => {
-  // Initialize compliance state for current user
-  if (authStore.user) {
-    await complianceStore.initializeComplianceState(
-      authStore.user.address,
-      authStore.user.email || ''
-    )
+  try {
+    // Initialize compliance state for current user
+    if (authStore.user) {
+      await complianceStore.initializeComplianceState(
+        authStore.user.address,
+        authStore.user.email || ''
+      )
+    }
+  } catch (err) {
+    console.error('[ComplianceOrchestrationView] Initialization error:', err)
+    // Error will be shown in error state from store
   }
 })
 

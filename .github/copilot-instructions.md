@@ -918,6 +918,41 @@ npm run test:e2e
 
 If ANY check fails, STOP and fix immediately. Do not mark work complete until ALL checks pass.
 
+### Playwright CI Failure Patterns (Exit Code 1 with Passing Tests)
+
+**CRITICAL**: When Playwright reports "X tests passed" but exits with code 1, the issue is NOT test failures but process-level failures.
+
+**Common Causes**:
+1. **Browser Console Errors**: Unhandled errors/warnings in browser console cause Playwright to fail
+2. **Unhandled Promise Rejections**: Async errors not caught properly
+3. **Server Errors**: Dev server crashes or returns 500 errors during test execution
+4. **Resource Loading Failures**: Missing assets, failed network requests
+5. **Memory/Timeout Issues**: CI environment resource constraints
+
+**Debugging Steps**:
+1. Check browser console logs in CI artifacts (test-results/)
+2. Look for server startup errors in workflow logs
+3. Check for race conditions in component initialization
+4. Verify all assets/routes exist and are accessible
+5. Review Playwright HTML report artifacts for screenshots/traces
+
+**Prevention**:
+- Handle all promise rejections in components
+- Use try/catch blocks for async operations
+- Validate all routes exist before testing
+- Mock or stub external API calls properly
+- Use proper error boundaries in Vue components
+- Test locally with `CI=true npm run test:e2e` to simulate CI environment
+
+**When This Happens**:
+1. Run tests locally first to verify they pass
+2. Check CI artifacts for actual error (not just test count)
+3. Fix root cause (usually console errors or server issues)
+4. Document exact error in PR/issue for product owner visibility
+5. Re-run CI after fix
+
+**Historical Pattern**: This exact issue occurred in PR #390 where 67 tests passed but Playwright exited with code 1 due to environment configuration, not test quality.
+
 ## App Initialization Requirements
 
 ### 🚨 CRITICAL: Auth Store Must Initialize Before App Mounting
