@@ -21,9 +21,9 @@
           <tbody>
             <!-- Your Project Row -->
             <tr class="border-b border-gray-700 bg-blue-900/20">
-              <td class="py-3 text-white font-medium">
+              <td class="py-3 text-white">
                 Your Token
-                <Badge variant="primary" size="sm" class="ml-2">You</Badge>
+                <Badge variant="info" size="sm" class="ml-2">You</Badge>
               </td>
               <td class="text-right text-white">
                 {{ formatMetric(currentMetrics.adoption) }}

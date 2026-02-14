@@ -21,13 +21,14 @@
           <Select
             :modelValue="filters.timeframe"
             @update:modelValue="updateFilter('timeframe', $event)"
-          >
-            <option value="7d">Last 7 Days</option>
-            <option value="30d">Last 30 Days</option>
-            <option value="90d">Last 90 Days</option>
-            <option value="1y">Last Year</option>
-            <option value="all">All Time</option>
-          </Select>
+            :options="[
+              { label: 'Last 7 Days', value: '7d' },
+              { label: 'Last 30 Days', value: '30d' },
+              { label: 'Last 90 Days', value: '90d' },
+              { label: 'Last Year', value: '1y' },
+              { label: 'All Time', value: 'all' }
+            ]"
+          />
         </div>
 
         <!-- Network Filter -->
@@ -38,13 +39,14 @@
           <Select
             :modelValue="filters.networks.length > 0 ? filters.networks[0] : ''"
             @update:modelValue="updateFilter('networks', $event ? [$event] : [])"
-          >
-            <option value="">All Networks</option>
-            <option value="algorand">Algorand Mainnet</option>
-            <option value="ethereum">Ethereum</option>
-            <option value="arbitrum">Arbitrum</option>
-            <option value="base">Base</option>
-          </Select>
+            :options="[
+              { label: 'All Networks', value: '' },
+              { label: 'Algorand Mainnet', value: 'algorand' },
+              { label: 'Ethereum', value: 'ethereum' },
+              { label: 'Arbitrum', value: 'arbitrum' },
+              { label: 'Base', value: 'base' }
+            ]"
+          />
         </div>
 
         <!-- Wallet Segment Filter -->
@@ -55,14 +57,15 @@
           <Select
             :modelValue="filters.walletSegment"
             @update:modelValue="updateFilter('walletSegment', $event)"
-          >
-            <option value="all">All Wallets</option>
-            <option value="whales">Whales (>1M tokens)</option>
-            <option value="retail">Retail (<10K tokens)</option>
-            <option value="institutional">Institutional</option>
-            <option value="active">Active (30d)</option>
-            <option value="dormant">Dormant (>90d)</option>
-          </Select>
+            :options="[
+              { label: 'All Wallets', value: 'all' },
+              { label: 'Whales (>1M tokens)', value: 'whales' },
+              { label: 'Retail (<10K tokens)', value: 'retail' },
+              { label: 'Institutional', value: 'institutional' },
+              { label: 'Active (30d)', value: 'active' },
+              { label: 'Dormant (>90d)', value: 'dormant' }
+            ]"
+          />
         </div>
       </div>
 

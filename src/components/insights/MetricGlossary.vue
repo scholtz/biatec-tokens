@@ -1,10 +1,13 @@
 <template>
   <Modal
-    :isOpen="true"
+    :show="true"
     @close="$emit('close')"
-    title="Metric Definitions"
     size="lg"
   >
+    <template #header>
+      <h2 class="text-xl font-semibold text-white">Metric Definitions</h2>
+    </template>
+
     <div class="space-y-4 max-h-96 overflow-y-auto">
       <div
         v-for="metric in metrics"

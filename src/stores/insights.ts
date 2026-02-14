@@ -270,7 +270,7 @@ export const useInsightsStore = defineStore('insights', () => {
     ]
   }
 
-  function generateMockTrendData(metricId: string): TrendDataPoint[] {
+  function generateMockTrendData(_metricId: string): TrendDataPoint[] {
     const points: TrendDataPoint[] = []
     const days = filters.value.timeframe === '7d' ? 7 : 
                  filters.value.timeframe === '30d' ? 30 : 

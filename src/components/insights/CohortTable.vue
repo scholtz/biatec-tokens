@@ -22,7 +22,7 @@
             >
               <td class="py-3 text-white">
                 <div class="flex items-center gap-2">
-                  <Badge :variant="cohort.badgeVariant" size="sm">
+                  <Badge :variant="cohort.badgeVariant as 'default' | 'success' | 'warning' | 'error' | 'info'" size="sm">
                     {{ cohort.segment }}
                   </Badge>
                 </div>
@@ -81,7 +81,7 @@ interface CohortData {
   percentage: number
   avgBalance: number
   activityScore: number
-  badgeVariant: 'default' | 'primary' | 'success' | 'warning' | 'danger'
+  badgeVariant: 'default' | 'success' | 'warning' | 'error' | 'info'
 }
 
 // Mock data - TODO: fetch from API
@@ -92,7 +92,7 @@ const cohorts = computed<CohortData[]>(() => [
     percentage: 1.0,
     avgBalance: 2500000,
     activityScore: 85,
-    badgeVariant: 'primary',
+    badgeVariant: 'info',
   },
   {
     segment: 'Institutional',
