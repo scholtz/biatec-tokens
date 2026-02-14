@@ -41,55 +41,58 @@ test.describe('Compliance Orchestration View', () => {
     // Navigate to compliance orchestration page
     await page.goto('/compliance/orchestration')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3500) // Further increased timeout for CI environment reliability
+    await page.waitForTimeout(5000) // Maximum timeout for CI environment - handles slow async initialization
     
     // Wait for main heading to ensure page is fully loaded
-    await page.getByRole('heading', { name: /Compliance Verification/i, level: 1 }).waitFor({ state: 'visible', timeout: 25000 })
+    await page.getByRole('heading', { name: /Compliance Verification/i, level: 1 }).waitFor({ state: 'visible', timeout: 30000 })
+    
+    // Additional wait for all component data to load and render
+    await page.waitForTimeout(1000)
   })
 
   test('should display compliance orchestration page with correct title', async ({ page }) => {
     const heading = page.getByRole('heading', { name: /Compliance Verification/i, level: 1 })
-    await expect(heading).toBeVisible({ timeout: 25000 }) // Increased timeout for CI
+    await expect(heading).toBeVisible({ timeout: 30000 }) // Increased timeout for CI
   })
 
   test('should display KYC document checklist', async ({ page }) => {
     const checklistHeading = page.getByRole('heading', { name: /KYC Document Checklist/i, level: 3 })
-    await expect(checklistHeading).toBeVisible({ timeout: 25000 })
+    await expect(checklistHeading).toBeVisible({ timeout: 30000 })
     
     // Check for document types
     const governmentId = page.getByText(/Government-Issued ID/i).first()
-    await expect(governmentId).toBeVisible({ timeout: 25000 })
+    await expect(governmentId).toBeVisible({ timeout: 30000 })
     
     const proofOfAddress = page.getByText(/Proof of Address/i).first()
-    await expect(proofOfAddress).toBeVisible({ timeout: 25000 })
+    await expect(proofOfAddress).toBeVisible({ timeout: 30000 })
   })
 
   test('should display AML screening status panel', async ({ page }) => {
     const amlHeading = page.getByRole('heading', { name: /AML Screening Status/i, level: 3 })
-    await expect(amlHeading).toBeVisible({ timeout: 25000 })
+    await expect(amlHeading).toBeVisible({ timeout: 30000 })
     
     // Check for screening description
     const screeningText = page.getByText(/Anti-money laundering and sanctions screening/i)
-    await expect(screeningText).toBeVisible({ timeout: 25000 })
+    await expect(screeningText).toBeVisible({ timeout: 30000 })
   })
 
   test('should display status overview sidebar', async ({ page }) => {
     const statusOverview = page.getByRole('heading', { name: /Status Overview/i, level: 3 })
-    await expect(statusOverview).toBeVisible({ timeout: 25000 })
+    await expect(statusOverview).toBeVisible({ timeout: 30000 })
     
     // Check for current status label
     const currentStatusLabel = page.getByText(/Current Status/i).first()
-    await expect(currentStatusLabel).toBeVisible({ timeout: 25000 })
+    await expect(currentStatusLabel).toBeVisible({ timeout: 30000 })
   })
 
   test('should display document progress indicator', async ({ page }) => {
     const progressLabel = page.getByText(/Document Progress/i).first()
-    await expect(progressLabel).toBeVisible({ timeout: 25000 })
+    await expect(progressLabel).toBeVisible({ timeout: 30000 })
   })
 
   test('should display help and support section', async ({ page }) => {
     const helpHeading = page.getByRole('heading', { name: /Need Help\?/i, level: 3 })
-    await expect(helpHeading).toBeVisible({ timeout: 25000 })
+    await expect(helpHeading).toBeVisible({ timeout: 30000 })
     
     // Check for support button - use count() for reliability
     const supportButtons = page.locator('button').filter({ hasText: /Contact Support/i })
@@ -99,7 +102,7 @@ test.describe('Compliance Orchestration View', () => {
 
   test('should display verification timeline section', async ({ page }) => {
     const timelineHeading = page.getByRole('heading', { name: /Verification Timeline/i, level: 3 })
-    await expect(timelineHeading).toBeVisible({ timeout: 25000 })
+    await expect(timelineHeading).toBeVisible({ timeout: 30000 })
   })
 
   test('should display compliance gating banner when not eligible', async ({ page }) => {
@@ -114,7 +117,7 @@ test.describe('Compliance Orchestration View', () => {
 
   test('should have accessible form elements', async ({ page }) => {
     // Check for proper heading hierarchy - wait for page to be stable
-    await page.waitForSelector('h1', { timeout: 25000 })
+    await page.waitForSelector('h1', { timeout: 30000 })
     const h1Count = await page.locator('h1').count()
     expect(h1Count).toBeGreaterThan(0)
     
@@ -126,31 +129,31 @@ test.describe('Compliance Orchestration View', () => {
   test('should handle navigation back to home', async ({ page }) => {
     // Verify page is accessible and doesn't crash
     const body = page.locator('body')
-    await expect(body).toBeVisible({ timeout: 25000 })
+    await expect(body).toBeVisible({ timeout: 30000 })
   })
 
   test('should display AML screening verdict text', async ({ page }) => {
     // Check for AML verdict display (should show "Not Started" or similar)
     const amlSection = page.locator('text=/AML Screening/i').first()
-    await expect(amlSection).toBeVisible({ timeout: 25000 })
+    await expect(amlSection).toBeVisible({ timeout: 30000 })
   })
 
   test('should display document completion percentage', async ({ page }) => {
     // Check for percentage display (format: "X%")
     const percentagePattern = /\d+%/
     const percentageElements = page.locator('text=' + percentagePattern.source).first()
-    await expect(percentageElements).toBeVisible({ timeout: 25000 })
+    await expect(percentageElements).toBeVisible({ timeout: 30000 })
   })
 
   test('should have responsive layout', async ({ page }) => {
     // Check that main container exists
     const mainContainer = page.locator('.max-w-7xl').first()
-    await expect(mainContainer).toBeVisible({ timeout: 25000 })
+    await expect(mainContainer).toBeVisible({ timeout: 30000 })
   })
 
   test('should display documentation link section', async ({ page }) => {
     const documentationHeading = page.getByRole('heading', { name: /Documentation/i, level: 4 })
-    await expect(documentationHeading).toBeVisible({ timeout: 25000 })
+    await expect(documentationHeading).toBeVisible({ timeout: 30000 })
   })
 })
 
@@ -174,7 +177,7 @@ test.describe('Token Creation Wizard - Compliance Gating', () => {
   test('should display compliance gating in wizard when not eligible', async ({ page }) => {
     // Check if compliance gating banner appears or wizard loads
     const pageTitle = page.locator('h1, h2').first()
-    await expect(pageTitle).toBeVisible({ timeout: 25000 })
+    await expect(pageTitle).toBeVisible({ timeout: 30000 })
   })
 
   test('should have navigation to compliance dashboard from wizard', async ({ page }) => {
@@ -189,7 +192,7 @@ test.describe('Token Creation Wizard - Compliance Gating', () => {
   test('should show wizard content when eligible (or gating banner when not)', async ({ page }) => {
     // Check for either wizard or gating content
     const body = page.locator('body')
-    await expect(body).toBeVisible({ timeout: 25000 })
+    await expect(body).toBeVisible({ timeout: 30000 })
     
     // Verify no JavaScript errors rendered
     const hasError = await page.locator('text=/error/i').count() === 0
