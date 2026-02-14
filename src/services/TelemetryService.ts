@@ -206,6 +206,208 @@ export class TelemetryService {
   }
 
   /**
+   * Track token wizard abandoned
+   * Emitted when user exits wizard without completing deployment
+   */
+  trackTokenWizardAbandoned(data: {
+    lastStep: number
+    totalSteps: number
+    tokenStandard?: string
+    network?: string
+  }): void {
+    this.track('token_wizard_abandoned', {
+      last_step: data.lastStep,
+      total_steps: data.totalSteps,
+      progress_percentage: Math.round((data.lastStep / data.totalSteps) * 100),
+      token_standard: data.tokenStandard,
+      network: data.network,
+    })
+  }
+
+  /**
+   * Track token list viewed
+   * Emitted when user views their token dashboard
+   */
+  trackTokenListViewed(data?: {
+    filterApplied?: boolean
+    tokenCount?: number
+    source?: string
+  }): void {
+    this.track('token_list_viewed', {
+      filter_applied: data?.filterApplied || false,
+      token_count: data?.tokenCount,
+      source: data?.source || 'dashboard',
+    })
+  }
+
+  /**
+   * Track token creation attempt
+   * Emitted when user initiates token deployment
+   */
+  trackTokenCreationAttempt(data: {
+    tokenStandard: string
+    network: string
+    tokenType: 'fungible' | 'nft' | 'security'
+  }): void {
+    this.track('token_creation_attempt', {
+      token_standard: data.tokenStandard,
+      network: data.network,
+      token_type: data.tokenType,
+    })
+  }
+
+  /**
+   * Track token creation success
+   * Emitted when token deployment succeeds
+   */
+  trackTokenCreationSuccess(data: {
+    tokenId: string
+    tokenStandard: string
+    network: string
+    durationMs?: number
+  }): void {
+    this.track('token_creation_success', {
+      token_id: data.tokenId,
+      token_standard: data.tokenStandard,
+      network: data.network,
+      duration_ms: data.durationMs,
+    })
+  }
+
+  /**
+   * Track token creation failure
+   * Emitted when token deployment fails
+   */
+  trackTokenCreationFailure(data: {
+    tokenStandard: string
+    network: string
+    errorType: string
+    errorMessage: string
+  }): void {
+    this.track('token_creation_failure', {
+      token_standard: data.tokenStandard,
+      network: data.network,
+      error_type: data.errorType,
+      error_message: data.errorMessage,
+    })
+  }
+
+  /**
+   * Track token transfer initiated
+   * Emitted when user starts token transfer flow
+   */
+  trackTokenTransferInitiated(data: {
+    tokenId: string
+    tokenStandard: string
+    network: string
+  }): void {
+    this.track('token_transfer_initiated', {
+      token_id: data.tokenId,
+      token_standard: data.tokenStandard,
+      network: data.network,
+    })
+  }
+
+  /**
+   * Track token transfer success
+   * Emitted when token transfer completes
+   */
+  trackTokenTransferSuccess(data: {
+    tokenId: string
+    transactionId: string
+    network: string
+    durationMs?: number
+  }): void {
+    this.track('token_transfer_success', {
+      token_id: data.tokenId,
+      transaction_id: data.transactionId,
+      network: data.network,
+      duration_ms: data.durationMs,
+    })
+  }
+
+  /**
+   * Track token standards comparison viewed
+   * Emitted when user views token standards comparison page
+   */
+  trackTokenStandardsComparisonViewed(data?: {
+    source?: string
+  }): void {
+    this.track('token_standards_comparison_viewed', {
+      source: data?.source || 'direct',
+    })
+  }
+
+  /**
+   * Track token metadata updated
+   * Emitted when user updates token metadata
+   */
+  trackTokenMetadataUpdated(data: {
+    tokenId: string
+    tokenStandard: string
+    fieldsUpdated: string[]
+  }): void {
+    this.track('token_metadata_updated', {
+      token_id: data.tokenId,
+      token_standard: data.tokenStandard,
+      fields_updated: data.fieldsUpdated.join(','),
+      field_count: data.fieldsUpdated.length,
+    })
+  }
+
+  /**
+   * Track deployment status check
+   * Emitted when user checks deployment status
+   */
+  trackDeploymentStatusCheck(data: {
+    transactionId: string
+    network: string
+    status: 'pending' | 'completed' | 'failed'
+  }): void {
+    this.track('deployment_status_check', {
+      transaction_id: data.transactionId,
+      network: data.network,
+      status: data.status,
+    })
+  }
+
+  /**
+   * Track transaction success
+   * Generic transaction success tracking
+   */
+  trackTransactionSuccess(data: {
+    transactionType: string
+    transactionId: string
+    network: string
+    durationMs?: number
+  }): void {
+    this.track('transaction_success', {
+      transaction_type: data.transactionType,
+      transaction_id: data.transactionId,
+      network: data.network,
+      duration_ms: data.durationMs,
+    })
+  }
+
+  /**
+   * Track transaction failure
+   * Generic transaction failure tracking
+   */
+  trackTransactionFailure(data: {
+    transactionType: string
+    network: string
+    errorType: string
+    errorMessage: string
+  }): void {
+    this.track('transaction_failure', {
+      transaction_type: data.transactionType,
+      network: data.network,
+      error_type: data.errorType,
+      error_message: data.errorMessage,
+    })
+  }
+
+  /**
    * Track plan upgrade started
    */
   trackPlanUpgradeStarted(data: {

@@ -1,15 +1,15 @@
 # Biatec Tokens
 
 <div align="center">
-  <h3>Next-Generation Tokenization Platform</h3>
-  <p>Create, manage, and deploy tokens across multiple standards with enterprise-grade security and lightning-fast performance on Algorand-based networks.</p>
+  <h3>Enterprise Tokenization Platform</h3>
+  <p>Create and deploy regulated tokens across multiple blockchain standards without wallet knowledge—email/password authentication only.</p>
 </div>
 
 ---
 
 ## 🚀 Overview
 
-Biatec Tokens is a comprehensive Vue 3-based frontend application that simplifies the creation and management of blockchain tokens on Algorand-based networks. With support for multiple token standards and seamless wallet integration, Biatec Tokens empowers developers and businesses to tokenize assets quickly and securely.
+Biatec Tokens is a comprehensive Vue 3-based frontend application designed for **non-crypto native enterprises** who need to create regulated tokens without blockchain or wallet expertise. Using email/password authentication with ARC76 account derivation, the platform handles all blockchain operations through secure backend services.
 
 ## Deployment
 
@@ -18,35 +18,40 @@ Biatec Tokens is a comprehensive Vue 3-based frontend application that simplifie
 
 ### Key Features
 
-- **Multi-Standard Support**: Create tokens across 8 different standards including:
-  - **Algorand Native**: ASA (Algorand Standard Assets)
-  - **ARC Standards**: ARC3 Fungible Tokens, ARC3 NFTs, ARC3 Fractional NFTs, ARC200, ARC72
-  - **Ethereum Standards**: ERC20, ERC721
+- **🔐 Wallet-Free Authentication**: 
+  - Email/password authentication using ARC76 standard
+  - No wallet downloads or private key management
+  - Backend-managed account derivation
+  - Perfect for non-crypto native users
   
-- **Multi-Wallet Integration**: Seamless connection with popular Algorand wallets:
-  - Biatec Wallet
-  - Pera Wallet
-  - Defly Wallet
-  - Exodus
-  - Kibisis
-  - Lute Connect
+- **🪙 Multi-Standard Support**: Create tokens across 8 blockchain standards:
+  - **AVM Chains** (Algorand, VOI, Aramid): ASA, ARC3, ARC19, ARC69, ARC200, ARC72
+  - **EVM Chains** (Ethereum, Arbitrum, Base): ERC20, ERC721
   
-- **Multi-Network Support**: Deploy tokens on multiple networks:
+- **🌍 Multi-Network Deployment**: 
+  - Algorand Mainnet & Testnet
+  - Ethereum, Arbitrum, Base (Mainnet & Sepolia)
   - VOI Mainnet
   - Aramid Mainnet
-  - Dockernet (Local Development)
   
-- **Intuitive User Interface**: 
+- **✨ Enterprise UX**: 
   - Modern, responsive design with dark mode support
-  - Token creation wizard with validation
+  - 9-step token creation wizard with validation
   - Real-time dashboard for token management
-  - Transaction history and analytics
-  - **API Health Monitoring**: Real-time backend connectivity status with automatic retry
+  - Transaction history and compliance analytics
+  - Backend deployment status monitoring
   
-- **Enterprise-Grade Security**:
-  - Algorand-based authentication
-  - Secure wallet integration
-  - Transaction signing with user consent
+- **🛡️ MICA Compliance**:
+  - Built-in regulatory compliance checks (MICA Article 17-35)
+  - Whitelist management for regulated tokens
+  - Compliance dashboard with audit trails
+  - Automated reporting and attestations
+  
+- **🔒 Enterprise-Grade Security**:
+  - ARC76 deterministic account derivation
+  - Backend-managed transaction signing
+  - No gas fees (included in subscription)
+  - Encrypted credential storage
 
 ## 📋 Prerequisites
 
@@ -55,7 +60,8 @@ Before you begin, ensure you have the following installed:
 - **Node.js**: Version 18.x or higher
 - **npm**: Version 9.x or higher (comes with Node.js)
 - **Git**: For cloning the repository
-- **Compatible Wallet**: One of the supported Algorand wallets installed
+
+**Note:** No blockchain wallet or crypto knowledge required! The platform uses email/password authentication.
 
 ## 🛠️ Installation
 
