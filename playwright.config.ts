@@ -38,6 +38,8 @@ export default defineConfig({
       ...process.env,
       VITE_API_BASE_URL: "https://api.tokens.biatec.io/",
     },
+    /* Ignore console errors that don't affect test functionality */
+    ignoreHTTPSErrors: true,
   },
 
   /* Configure projects for major browsers */
