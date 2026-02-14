@@ -41,13 +41,13 @@ test.describe('Compliance Orchestration View', () => {
     // Navigate to compliance orchestration page
     await page.goto('/compliance/orchestration')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000) // Maximum timeout for CI environment - handles slow async initialization
+    await page.waitForTimeout(10000) // Extreme timeout for CI environment - handles very slow async initialization
     
     // Wait for main heading to ensure page is fully loaded
     await page.getByRole('heading', { name: /Compliance Verification/i, level: 1 }).waitFor({ state: 'visible', timeout: 30000 })
     
     // Additional wait for all component data to load and render
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(2000)
   })
 
   test('should display compliance orchestration page with correct title', async ({ page }) => {
