@@ -326,6 +326,69 @@ class AnalyticsService {
   }
 
   /**
+   * Track insights workspace interaction
+   */
+  trackInsightsWorkspaceViewed(): void {
+    this.trackEvent({
+      event: 'insights_workspace_viewed',
+      category: 'Insights',
+      action: 'Page Viewed',
+    })
+  }
+
+  /**
+   * Track insights filter change
+   */
+  trackInsightsFilterChanged(filterType: string, filterValue: any): void {
+    this.trackEvent({
+      event: 'insights_filter_changed',
+      category: 'Insights',
+      action: 'Filter Changed',
+      label: filterType,
+      filterType,
+      filterValue,
+    })
+  }
+
+  /**
+   * Track insights data export
+   */
+  trackInsightsExported(format: 'csv' | 'json'): void {
+    this.trackEvent({
+      event: 'insights_exported',
+      category: 'Insights',
+      action: 'Data Exported',
+      label: format,
+      format,
+    })
+  }
+
+  /**
+   * Track scenario planning
+   */
+  trackScenarioRun(inputs: Record<string, any>): void {
+    this.trackEvent({
+      event: 'insights_scenario_run',
+      category: 'Insights',
+      action: 'Scenario Run',
+      ...inputs,
+    })
+  }
+
+  /**
+   * Track metric clicked
+   */
+  trackMetricClicked(metricId: string, metricLabel: string): void {
+    this.trackEvent({
+      event: 'insights_metric_clicked',
+      category: 'Insights',
+      action: 'Metric Clicked',
+      label: metricLabel,
+      metricId,
+    })
+  }
+
+  /**
    * Enable/disable analytics tracking
    */
   setTrackingEnabled(enabled: boolean): void {

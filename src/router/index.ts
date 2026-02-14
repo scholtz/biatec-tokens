@@ -18,6 +18,7 @@ import OnboardingFlow from "../views/OnboardingFlow.vue";
 import EnterpriseOnboardingCommandCenter from "../views/EnterpriseOnboardingCommandCenter.vue";
 import WhitelistsView from "../views/WhitelistsView.vue";
 import ComplianceOrchestrationView from "../views/ComplianceOrchestrationView.vue";
+import VisionInsightsWorkspace from "../views/VisionInsightsWorkspace.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 
 // Subscription views
@@ -117,6 +118,12 @@ const router = createRouter({
       path: "/attestations",
       name: "AttestationsDashboard",
       component: AttestationsDashboard,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/insights",
+      name: "VisionInsightsWorkspace",
+      component: VisionInsightsWorkspace,
       meta: { requiresAuth: true },
     },
     {
