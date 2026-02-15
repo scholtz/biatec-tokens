@@ -9,15 +9,17 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Guided Token Launch Flow', () => {
   test.beforeEach(async ({ page }) => {
-    // Suppress console/page errors to prevent Playwright from failing on browser console output
+    // Note: We suppress browser console/page errors because this is a frontend-only implementation
+    // with mock backend data. Expected console warnings about missing APIs are not test failures.
+    // In production, these will be replaced with actual backend integration.
     page.on('console', msg => {
       if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed for test stability): ${msg.text()}`)
+        console.log(`Browser console error (suppressed - mock environment): ${msg.text()}`)
       }
     })
     
     page.on('pageerror', error => {
-      console.log(`Page error (suppressed for test stability): ${error.message}`)
+      console.log(`Page error (suppressed - mock environment): ${error.message}`)
     })
     
     // Set up authenticated user with email/password (no wallet)
@@ -33,10 +35,12 @@ test.describe('Guided Token Launch Flow', () => {
   test('should display guided launch page correctly', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000) // Wait for async data loading
+    
+    // Wait for title to be visible (indicates page loaded)
+    await page.waitForSelector('h1:has-text("Guided Token Launch")', { timeout: 15000 })
     
     // Check page title
-    await expect(page.getByRole('heading', { name: 'Guided Token Launch', level: 1 })).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole('heading', { name: 'Guided Token Launch', level: 1 })).toBeVisible()
     
     // Check subtitle mentions email/password (no wallet)
     const subtitle = page.getByText(/Email\/password authentication.*No blockchain expertise required/i)
@@ -52,7 +56,7 @@ test.describe('Guided Token Launch Flow', () => {
   test('should show progress indicators', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
+    await page.waitForSelector('h1:has-text("Guided Token Launch")', { timeout: 15000 })
     
     // Check progress bar
     const progressText = page.getByText(/0 of 6 steps complete/i)

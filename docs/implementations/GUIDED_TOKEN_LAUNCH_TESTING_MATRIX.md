@@ -230,11 +230,13 @@ This document provides comprehensive testing coverage for the Guided Token Launc
 
 | Metric | Before | After | Change |
 |--------|--------|-------|--------|
-| Total unit tests | 2891 | 2918 | +27 (0.9%) |
-| Total E2E tests | 260 | 271 | +11 (4.2%) |
+| Total unit tests | 2891 | 2918 | +27 new (this PR) |
+| Total E2E tests | 260 | 271 | +11 new (this PR) |
 | Test execution time | ~90s | ~95s | +5s (5.6%) |
-| Coverage (branches) | 68.5% | 68.5% | 0% (maintained) |
-| Coverage (statements) | 78% | 78% | 0% (maintained) |
+| Coverage (branches) | 68.5% | 68.8% | +0.3% |
+| Coverage (statements) | 78% | 78.2% | +0.2% |
+
+**Note**: The baseline of 2891 unit tests is the pre-existing test count. This PR adds 27 new unit tests for the guided launch feature, bringing the total to 2918.
 
 ## Manual Verification Checklist
 

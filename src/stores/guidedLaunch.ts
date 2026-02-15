@@ -26,6 +26,7 @@ import { launchTelemetryService } from '../services/launchTelemetry'
 
 const DRAFT_STORAGE_KEY = 'biatec_guided_launch_draft'
 const DRAFT_VERSION = '1.0'
+const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24
 
 /**
  * Mock token templates (TODO: Replace with backend API)
@@ -196,7 +197,7 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
       hasDraftLoaded.value = true
 
       // Track draft resumed
-      const daysSince = Math.floor((Date.now() - parsed.form.lastModified.getTime()) / (1000 * 60 * 60 * 24))
+      const daysSince = Math.floor((Date.now() - parsed.form.lastModified.getTime()) / MILLISECONDS_PER_DAY)
       launchTelemetryService.trackDraftResumed(
         parsed.form.draftId || 'unknown',
         parsed.form.lastModified,
@@ -313,7 +314,9 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
 
       // Track completion or validation failure
       if (validation.isValid) {
-        launchTelemetryService.trackStepCompleted(step.id, step.title, stepIndex, 0) // TODO: Track actual time
+        // TODO: Implement actual time tracking - store step start timestamp and calculate duration
+        const timeSpentSeconds = 0
+        launchTelemetryService.trackStepCompleted(step.id, step.title, stepIndex, timeSpentSeconds)
       } else {
         launchTelemetryService.trackValidationFailed(
           step.id,
@@ -393,10 +396,12 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
       saveDraft()
 
       // Track success
+      // TODO: Implement flow timing - store flow start timestamp in initializeTelemetry and calculate duration
+      const timeToCompleteSeconds = 0
       launchTelemetryService.trackLaunchSuccess(
         mockResponse.submissionId,
         mockResponse.tokenId || '',
-        0 // TODO: Calculate actual time
+        timeToCompleteSeconds
       )
 
       return mockResponse

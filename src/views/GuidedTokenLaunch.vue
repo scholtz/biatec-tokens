@@ -406,8 +406,8 @@ onMounted(() => {
     return
   }
 
-  // Initialize telemetry
-  const userId = authStore.user?.email || authStore.user?.address || 'unknown'
+  // Initialize telemetry (email/password authentication only - no wallet addresses)
+  const userId = authStore.user?.email || 'unknown'
   guidedLaunchStore.initializeTelemetry(userId)
 
   // Load draft if exists
@@ -423,7 +423,13 @@ onBeforeUnmount(() => {
   // Track abandonment if not submitted
   if (!currentForm.value.isSubmitted && completedSteps.value > 0) {
     const lastStep = stepStatuses.value[currentStep.value]
-    // launchTelemetryService.trackFlowAbandoned is called in store
+    if (lastStep) {
+      launchTelemetryService.trackFlowAbandoned(
+        lastStep.id,
+        completedSteps.value,
+        totalSteps.value
+      )
+    }
   }
 })
 </script>

@@ -196,6 +196,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useGuidedLaunchStore } from '../../../stores/guidedLaunch'
 import type { OrganizationProfile, ValidationResult } from '../../../types/guidedLaunch'
+import { isValidEmail, isRequiredFieldValid } from '../../../utils/formValidation'
 import Button from '../../ui/Button.vue'
 import { BuildingOfficeIcon, InformationCircleIcon } from '@heroicons/vue/24/outline'
 
@@ -226,13 +227,13 @@ const fieldErrors = ref<Record<string, string>>({})
 // Computed
 const isFormValid = computed(() => {
   return (
-    formData.value.organizationName.trim() !== '' &&
+    isRequiredFieldValid(formData.value.organizationName) &&
     formData.value.organizationType !== '' &&
-    formData.value.jurisdiction.trim() !== '' &&
-    formData.value.contactName.trim() !== '' &&
-    formData.value.contactEmail.trim() !== '' &&
+    isRequiredFieldValid(formData.value.jurisdiction) &&
+    isRequiredFieldValid(formData.value.contactName) &&
+    isRequiredFieldValid(formData.value.contactEmail) &&
     formData.value.role !== '' &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.value.contactEmail)
+    isValidEmail(formData.value.contactEmail)
   )
 })
 
@@ -247,7 +248,7 @@ const validateField = (field: keyof OrganizationProfile) => {
       }
       break
     case 'contactEmail':
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.value.contactEmail)) {
+      if (!isValidEmail(formData.value.contactEmail)) {
         fieldErrors.value.contactEmail = 'Please enter a valid email address'
       } else {
         delete fieldErrors.value.contactEmail
@@ -274,7 +275,7 @@ const validateForm = (): ValidationResult => {
   }
   if (!formData.value.contactEmail.trim()) {
     errors.push('Contact email is required')
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.value.contactEmail)) {
+  } else if (!isValidEmail(formData.value.contactEmail)) {
     errors.push('Invalid email format')
   }
   if (!formData.value.role) {
