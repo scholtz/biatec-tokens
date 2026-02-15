@@ -231,9 +231,22 @@ test('should display auth-required page', async ({ page }) => {
   await input.waitFor({ state: 'visible', timeout: 45000 });
   await input.fill('Test Company');
   
-  // Extra wait after interactions (2000ms for CI)
-  await page.waitForTimeout(2000);
+  // Extra wait after interactions (3000ms for CI)
+  await page.waitForTimeout(3000);
 });
+```
+
+**CRITICAL**: Multi-step wizard navigation requires 3000ms waits between steps in CI:
+```typescript
+// After filling form and clicking Continue
+await page.waitForTimeout(3000); // Validation + state update
+const continueButton = page.locator('button').filter({ hasText: /continue/i });
+await continueButton.waitFor({ state: 'visible', timeout: 45000 });
+await expect(continueButton).toBeEnabled();
+await continueButton.click();
+await page.waitForTimeout(3000); // Step transition in CI needs extra time
+
+// Repeat pattern for each step navigation
 ```
 
 4. **Click Actions**: Add small waits after animations

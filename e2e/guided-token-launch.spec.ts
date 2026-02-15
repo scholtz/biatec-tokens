@@ -277,25 +277,25 @@ test.describe('Guided Token Launch Flow', () => {
     await emailInput.waitFor({ state: 'visible', timeout: 45000 })
     await emailInput.fill('john@test.com')
     
-    await page.waitForTimeout(2000) // Wait for validation - extra time for CI
+    await page.waitForTimeout(3000) // Wait for validation - extra time for CI
     
     const continueButton = page.locator('button').filter({ hasText: /continue/i })
     await continueButton.waitFor({ state: 'visible', timeout: 45000 })
     await expect(continueButton).toBeEnabled()
     await continueButton.click()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(3000) // Extra time for step transition in CI
     
     // Complete token intent step
     const purposeInput = page.getByPlaceholder(/describe the primary purpose/i)
     await purposeInput.waitFor({ state: 'visible', timeout: 45000 })
     await purposeInput.fill('Test purpose')
     
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(3000) // Extra time for validation in CI
     const continueButton2 = page.locator('button').filter({ hasText: /continue/i })
     await continueButton2.waitFor({ state: 'visible', timeout: 45000 })
     await expect(continueButton2).toBeEnabled()
     await continueButton2.click()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(3000) // Extra time for step transition in CI
     
     // Now on compliance step
     const complianceHeading = page.locator('h2').filter({ hasText: /compliance readiness/i })
@@ -345,29 +345,29 @@ test.describe('Guided Token Launch Flow', () => {
     await emailInput.waitFor({ state: 'visible', timeout: 45000 })
     await emailInput.fill('john@test.com')
     
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(3000) // Extra time for validation in CI
     let continueButton = page.locator('button').filter({ hasText: /continue/i })
     await continueButton.waitFor({ state: 'visible', timeout: 45000 })
     await expect(continueButton).toBeEnabled()
     await continueButton.click()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(3000) // Extra time for step transition in CI
     
     const purposeInput = page.getByPlaceholder(/describe the primary purpose/i)
     await purposeInput.waitFor({ state: 'visible', timeout: 45000 })
     await purposeInput.fill('Test')
     
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(3000) // Extra time for validation in CI
     continueButton = page.locator('button').filter({ hasText: /continue/i })
     await continueButton.waitFor({ state: 'visible', timeout: 45000 })
     await expect(continueButton).toBeEnabled()
     await continueButton.click()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(3000) // Extra time for step transition in CI
     
     continueButton = page.locator('button').filter({ hasText: /continue to template/i })
     await continueButton.waitFor({ state: 'visible', timeout: 45000 })
     await expect(continueButton).toBeEnabled()
     await continueButton.click()
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(3000) // Extra time for step transition in CI
     
     // Check template selection step
     const templateHeading = page.locator('h2').filter({ hasText: /select token template/i })
