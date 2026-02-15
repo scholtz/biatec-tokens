@@ -228,11 +228,11 @@ const fieldErrors = ref<Record<string, string>>({})
 const isFormValid = computed(() => {
   return (
     isRequiredFieldValid(formData.value.organizationName) &&
-    formData.value.organizationType !== '' &&
+    formData.value.organizationType.length > 0 &&
     isRequiredFieldValid(formData.value.jurisdiction) &&
     isRequiredFieldValid(formData.value.contactName) &&
     isRequiredFieldValid(formData.value.contactEmail) &&
-    formData.value.role !== '' &&
+    formData.value.role.length > 0 &&
     isValidEmail(formData.value.contactEmail)
   )
 })

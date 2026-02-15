@@ -95,7 +95,7 @@ const formData = ref<TokenIntent>({
 })
 
 const isFormValid = computed(() => {
-  return formData.value.tokenPurpose.trim() !== '' && formData.value.utilityType !== ''
+  return formData.value.tokenPurpose.trim() !== '' && formData.value.utilityType.length > 0
 })
 
 const handleSubmit = () => {

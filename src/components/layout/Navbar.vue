@@ -166,6 +166,7 @@ import {
   ArrowRightOnRectangleIcon,
   CurrencyDollarIcon,
   ChartPieIcon,
+  RocketLaunchIcon,
 } from "@heroicons/vue/24/outline";
 import WalletConnectModal from "../WalletConnectModal.vue";
 import { useAuthStore } from "../../stores/auth";
@@ -182,6 +183,7 @@ const showWalletModal = ref(false);
 
 const navigationItems = [
   { name: "Home", path: "/", icon: HomeIcon },
+  { name: "Guided Launch", path: "/launch/guided", icon: RocketLaunchIcon },
   { name: "Create", path: "/create", icon: PlusCircleIcon },
   { name: "Dashboard", path: "/dashboard", icon: ChartBarIcon },
   { name: "Insights", path: "/insights", icon: ChartPieIcon },
