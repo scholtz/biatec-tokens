@@ -294,6 +294,9 @@ await expect(continueButton).toBeEnabled();
 await continueButton.click();
 await page.waitForTimeout(5000); // CI needs 5s for step transition (unmount + mount)
 
+// For tests with 2+ step transitions, add cumulative wait before final check
+await page.waitForTimeout(3000); // Additional time for multi-step accumulation
+
 // Now check next step
 const nextStepHeading = page.locator('h2').filter({ hasText: /Next Step/i });
 await expect(nextStepHeading).toBeVisible({ timeout: 45000 });

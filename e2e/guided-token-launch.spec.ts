@@ -297,6 +297,9 @@ test.describe('Guided Token Launch Flow', () => {
     await continueButton2.click()
     await page.waitForTimeout(5000) // CI needs 5s for step transitions (unmount + mount cycle)
     
+    // Additional wait for final step after multiple transitions (CI accumulation)
+    await page.waitForTimeout(3000)
+    
     // Now on compliance step
     const complianceHeading = page.locator('h2').filter({ hasText: /compliance readiness/i })
     await expect(complianceHeading).toBeVisible({ timeout: 45000 })
@@ -368,6 +371,9 @@ test.describe('Guided Token Launch Flow', () => {
     await expect(continueButton).toBeEnabled()
     await continueButton.click()
     await page.waitForTimeout(5000) // CI needs 5s for step transitions (unmount + mount cycle)
+    
+    // Additional wait for final step after multiple transitions (CI accumulation)
+    await page.waitForTimeout(3000)
     
     // Check template selection step
     const templateHeading = page.locator('h2').filter({ hasText: /select token template/i })
