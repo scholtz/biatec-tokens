@@ -19,6 +19,7 @@ import EnterpriseOnboardingCommandCenter from "../views/EnterpriseOnboardingComm
 import WhitelistsView from "../views/WhitelistsView.vue";
 import ComplianceOrchestrationView from "../views/ComplianceOrchestrationView.vue";
 import VisionInsightsWorkspace from "../views/VisionInsightsWorkspace.vue";
+import GuidedTokenLaunch from "../views/GuidedTokenLaunch.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 
 // Subscription views
@@ -124,6 +125,13 @@ const router = createRouter({
       path: "/insights",
       name: "VisionInsightsWorkspace",
       component: VisionInsightsWorkspace,
+      meta: { requiresAuth: true },
+    },
+    // Guided Token Launch
+    {
+      path: "/launch/guided",
+      name: "GuidedTokenLaunch",
+      component: GuidedTokenLaunch,
       meta: { requiresAuth: true },
     },
     {
