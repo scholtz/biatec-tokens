@@ -79,6 +79,37 @@
 - [ ] **Code Review**: Grep for wallet-related imports (WalletConnect, Pera, Defly, MetaMask)
 - [ ] **Explicit Statement**: "This PR does not introduce wallet connectors. Email/password authentication only."
 
+### 7. Build Verification (MANDATORY BEFORE COMPLETION)
+- [ ] **TypeScript Compilation**: Run `npm run build` and ensure zero errors
+  - ❌ **Common Error**: String comparison with empty string for union types (`organizationType !== ''`)
+  - ✅ **Solution**: Use `.length > 0` for string comparisons with union types
+- [ ] **Missing Imports**: Check all imports are present (especially services/utilities)
+  - ❌ **Common Error**: Using service without importing (e.g., `launchTelemetryService` used but not imported)
+  - ✅ **Solution**: Add import statement at top of file
+- [ ] **Build Warnings**: Address all warnings, don't just ignore them
+- [ ] **Verify Build Output**: Check dist/ folder is generated correctly
+
+### 8. Feature Accessibility (MANDATORY FOR NEW ROUTES)
+- [ ] **Navigation Link Required**: If implementing new route, MUST add navigation link
+  - ❌ **Past Violation**: Guided launch implemented but not accessible from navbar
+  - ✅ **Solution**: Add link to `src/components/layout/Navbar.vue` with appropriate icon
+- [ ] **Mobile Navigation**: Ensure feature appears in mobile menu too
+- [ ] **Route Registration**: Verify route is in `src/router/index.ts` with auth guard
+- [ ] **Manual Testing**: Actually click the navigation link and verify page loads
+- [ ] **E2E Test**: Add test verifying navigation link exists and works
+
+**Example - Adding Navigation Link**:
+```typescript
+// In src/components/layout/Navbar.vue
+import { RocketLaunchIcon } from "@heroicons/vue/24/outline"
+
+const navigationItems = [
+  { name: "Home", path: "/", icon: HomeIcon },
+  { name: "New Feature", path: "/new-feature", icon: RocketLaunchIcon }, // ADD THIS
+  // ... existing items
+]
+```
+
 ---
 
 ## FAILURE TO MEET REQUIREMENTS = IMMEDIATE REJECTION
