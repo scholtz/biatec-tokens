@@ -246,9 +246,26 @@ await expect(element).toHaveAttribute('aria-expanded', 'true');
 5. **Visibility Timeouts**: Use generous timeouts for CI environments
    - Local: 5000-10000ms may work
    - CI (no auth): 15000ms recommended (slower environments)
-   - CI (auth-required): 30000ms recommended (auth init + component load)
+   - CI (auth-required): 45000ms recommended (auth init + component load)
 
-6. **Playwright Strict Mode**: Avoid ambiguous selectors
+6. **Playwright locator.waitFor() API**: CRITICAL - `state` parameter accepts only: 'attached' | 'detached' | 'visible' | 'hidden'
+   - ❌ BAD: `await button.waitFor({ state: 'enabled' })` - **NOT A VALID STATE** - causes "state: expected one of (attached|detached|visible|hidden)" error
+   - ✅ GOOD: `await button.waitFor({ state: 'visible' }); await expect(button).toBeEnabled()`
+   - Use `waitFor({state: 'visible'})` first, then `expect(locator).toBeEnabled()` to check if element is enabled
+   
+```typescript
+// CORRECT pattern for checking if button is visible and enabled
+const button = page.locator('button').filter({ hasText: /Continue/i });
+await button.waitFor({ state: 'visible', timeout: 45000 });
+await expect(button).toBeEnabled();  // Check enabled separately
+await button.click();
+
+// WRONG pattern - causes test failure
+const button = page.locator('button').filter({ hasText: /Continue/i });
+await button.waitFor({ state: 'enabled', timeout: 45000 }); // ERROR: 'enabled' not valid
+```
+
+7. **Playwright Strict Mode**: Avoid ambiguous selectors
    - ❌ BAD: `page.getByText('Jurisdiction')` when word appears multiple times
    - ✅ GOOD: `page.getByText('Jurisdiction').first()` or use count() to check existence
    - ✅ BETTER: Use role-based selectors with specific names

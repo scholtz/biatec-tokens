@@ -179,7 +179,8 @@ test.describe('Guided Token Launch Flow', () => {
     
     // Continue to next step
     const continueButton = page.locator('button').filter({ hasText: /continue to token intent/i })
-    await continueButton.waitFor({ state: 'enabled', timeout: 45000 })
+    await continueButton.waitFor({ state: 'visible', timeout: 45000 })
+    await expect(continueButton).toBeEnabled()
     await continueButton.click()
     await page.waitForTimeout(2000) // Wait for animation - extra time for CI
     
@@ -279,7 +280,8 @@ test.describe('Guided Token Launch Flow', () => {
     await page.waitForTimeout(2000) // Wait for validation - extra time for CI
     
     const continueButton = page.locator('button').filter({ hasText: /continue/i })
-    await continueButton.waitFor({ state: 'enabled', timeout: 45000 })
+    await continueButton.waitFor({ state: 'visible', timeout: 45000 })
+    await expect(continueButton).toBeEnabled()
     await continueButton.click()
     await page.waitForTimeout(2000)
     
@@ -290,7 +292,8 @@ test.describe('Guided Token Launch Flow', () => {
     
     await page.waitForTimeout(2000)
     const continueButton2 = page.locator('button').filter({ hasText: /continue/i })
-    await continueButton2.waitFor({ state: 'enabled', timeout: 45000 })
+    await continueButton2.waitFor({ state: 'visible', timeout: 45000 })
+    await expect(continueButton2).toBeEnabled()
     await continueButton2.click()
     await page.waitForTimeout(2000)
     
@@ -344,7 +347,8 @@ test.describe('Guided Token Launch Flow', () => {
     
     await page.waitForTimeout(2000)
     let continueButton = page.locator('button').filter({ hasText: /continue/i })
-    await continueButton.waitFor({ state: 'enabled', timeout: 45000 })
+    await continueButton.waitFor({ state: 'visible', timeout: 45000 })
+    await expect(continueButton).toBeEnabled()
     await continueButton.click()
     await page.waitForTimeout(2000)
     
@@ -354,12 +358,14 @@ test.describe('Guided Token Launch Flow', () => {
     
     await page.waitForTimeout(2000)
     continueButton = page.locator('button').filter({ hasText: /continue/i })
-    await continueButton.waitFor({ state: 'enabled', timeout: 45000 })
+    await continueButton.waitFor({ state: 'visible', timeout: 45000 })
+    await expect(continueButton).toBeEnabled()
     await continueButton.click()
     await page.waitForTimeout(2000)
     
     continueButton = page.locator('button').filter({ hasText: /continue to template/i })
-    await continueButton.waitFor({ state: 'enabled', timeout: 45000 })
+    await continueButton.waitFor({ state: 'visible', timeout: 45000 })
+    await expect(continueButton).toBeEnabled()
     await continueButton.click()
     await page.waitForTimeout(2000)
     
