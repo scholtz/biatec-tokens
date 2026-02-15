@@ -210,25 +210,29 @@ test('should display element', async ({ page }) => {
 ```
 
 3. **Auth-Dependent Routes** (CRITICAL for CI): Routes requiring authentication need EXTRA time in CI
-   - Auth store initializes async in main.ts → component mounts → renders (5+ seconds in CI)
+   - Auth store initializes async in main.ts → component mounts → renders (5-10 seconds in CI)
    - ❌ BAD: 3s wait, 20s timeouts (fails in CI but passes locally)
-   - ✅ GOOD: 5s wait, 30s timeouts (passes in CI and locally)
+   - ⚠️ PARTIAL: 5s wait, 30s timeouts (may still fail in CI for complex flows)
+   - ✅ GOOD: 10s wait, 45s timeouts (passes reliably in CI and locally)
    
 ```typescript
 // Pattern for auth-dependent routes (e.g., /launch/guided, /compliance/*, /tokens/*)
 test('should display auth-required page', async ({ page }) => {
   await page.goto('/launch/guided');
   await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(5000); // CI needs time for auth store init + mount
+  await page.waitForTimeout(10000); // CI needs EXTRA time for auth store init + mount + render
   
   // Wait for SPECIFIC element that proves page loaded
   const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 });
-  await expect(title).toBeVisible({ timeout: 30000 }); // Extra time for CI
+  await expect(title).toBeVisible({ timeout: 45000 }); // Extra time for CI
   
   // Now interact with form elements
   const input = page.getByPlaceholder(/enter your organization name/i);
-  await input.waitFor({ state: 'visible', timeout: 30000 });
+  await input.waitFor({ state: 'visible', timeout: 45000 });
   await input.fill('Test Company');
+  
+  // Extra wait after interactions (2000ms for CI)
+  await page.waitForTimeout(2000);
 });
 ```
 
