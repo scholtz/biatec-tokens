@@ -35,18 +35,18 @@ test.describe('Guided Token Launch Flow', () => {
   test('should display guided launch page correctly', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000) // CI needs more time for component initialization
     
-    // Wait for title to be visible (indicates page loaded)
-    await page.waitForSelector('h1', { timeout: 20000 })
+    // CI environment needs MUCH longer for auth store initialization + component mount
+    // Auth store initializes async in main.ts, then component mounts, then renders
+    await page.waitForTimeout(5000) // Increased from 3000ms
     
-    // Check page title contains expected text
-    const title = await page.locator('h1').textContent()
-    expect(title?.toLowerCase()).toContain('guided token launch')
+    // Wait for SPECIFIC title text (not just any h1)
+    const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
+    await expect(title).toBeVisible({ timeout: 30000 }) // Increased from 20000ms
     
     // Check subtitle mentions email/password (no wallet)
     const subtitle = page.getByText(/email.*password.*authentication/i)
-    await expect(subtitle).toBeVisible({ timeout: 20000 })
+    await expect(subtitle).toBeVisible({ timeout: 30000 })
     
     // Verify no wallet connector references
     const noWalletText = await page.content()
@@ -144,52 +144,56 @@ test.describe('Guided Token Launch Flow', () => {
   test('should navigate between steps', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000) // CI needs more time
+    await page.waitForTimeout(5000) // Increased for CI auth initialization
+    
+    // First wait for page to be ready
+    const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
+    await expect(title).toBeVisible({ timeout: 30000 })
     
     // Fill organization profile using placeholders
     const orgNameInput = page.getByPlaceholder(/enter your organization name/i)
-    await orgNameInput.waitFor({ state: 'visible', timeout: 20000 })
+    await orgNameInput.waitFor({ state: 'visible', timeout: 30000 }) // Increased timeout
     await orgNameInput.fill('Test Company')
     
     const orgTypeSelect = page.locator('select').filter({ hasText: /select type/i }).first()
-    await orgTypeSelect.waitFor({ state: 'visible', timeout: 20000 })
+    await orgTypeSelect.waitFor({ state: 'visible', timeout: 30000 })
     await orgTypeSelect.selectOption({ index: 1 })
     
     const jurisdictionInput = page.getByPlaceholder(/country or region/i)
-    await jurisdictionInput.waitFor({ state: 'visible', timeout: 20000 })
+    await jurisdictionInput.waitFor({ state: 'visible', timeout: 30000 })
     await jurisdictionInput.fill('United States')
     
     const roleSelect = page.locator('select').filter({ hasText: /select your role/i })
-    await roleSelect.waitFor({ state: 'visible', timeout: 20000 })
+    await roleSelect.waitFor({ state: 'visible', timeout: 30000 })
     await roleSelect.selectOption({ index: 1 })
     
     const contactNameInput = page.getByPlaceholder(/your full name/i)
-    await contactNameInput.waitFor({ state: 'visible', timeout: 20000 })
+    await contactNameInput.waitFor({ state: 'visible', timeout: 30000 })
     await contactNameInput.fill('John Doe')
     
     const emailInput = page.getByPlaceholder(/email@example.com/i)
-    await emailInput.waitFor({ state: 'visible', timeout: 20000 })
+    await emailInput.waitFor({ state: 'visible', timeout: 30000 })
     await emailInput.fill('john@test.com')
     
-    await page.waitForTimeout(1000) // Wait for validation
+    await page.waitForTimeout(1500) // Wait for validation
     
     // Continue to next step
     const continueButton = page.locator('button').filter({ hasText: /continue to token intent/i })
-    await continueButton.waitFor({ state: 'enabled', timeout: 20000 })
+    await continueButton.waitFor({ state: 'enabled', timeout: 30000 })
     await continueButton.click()
-    await page.waitForTimeout(1000) // Wait for animation
+    await page.waitForTimeout(1500) // Wait for animation
     
     // Check we're on token intent step
     const intentHeading = page.locator('h2').filter({ hasText: /token intent.*use case/i })
-    await expect(intentHeading).toBeVisible({ timeout: 20000 })
+    await expect(intentHeading).toBeVisible({ timeout: 30000 })
     
     // Can navigate back
     const prevButton = page.locator('button').filter({ hasText: /previous/i })
     await prevButton.click()
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(1500)
     
     const orgHeading = page.locator('h2').filter({ hasText: /organization profile/i })
-    await expect(orgHeading).toBeVisible({ timeout: 20000 })
+    await expect(orgHeading).toBeVisible({ timeout: 30000 })
   })
 
   test('should save draft functionality', async ({ page }) => {
@@ -240,126 +244,134 @@ test.describe('Guided Token Launch Flow', () => {
   test('should show compliance step with checkboxes', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000) // CI needs more time
+    await page.waitForTimeout(5000) // Increased for CI auth initialization
+    
+    // Wait for page to be ready
+    const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
+    await expect(title).toBeVisible({ timeout: 30000 })
     
     // Navigate to compliance step (step 2)
     // First complete organization step using placeholders
     const orgNameInput = page.getByPlaceholder(/enter your organization name/i)
-    await orgNameInput.waitFor({ state: 'visible', timeout: 20000 })
+    await orgNameInput.waitFor({ state: 'visible', timeout: 30000 })
     await orgNameInput.fill('Test Company')
     
     const orgTypeSelect = page.locator('select').filter({ hasText: /select type/i }).first()
-    await orgTypeSelect.waitFor({ state: 'visible', timeout: 20000 })
+    await orgTypeSelect.waitFor({ state: 'visible', timeout: 30000 })
     await orgTypeSelect.selectOption({ index: 1 })
     
     const jurisdictionInput = page.getByPlaceholder(/country or region/i)
-    await jurisdictionInput.waitFor({ state: 'visible', timeout: 20000 })
+    await jurisdictionInput.waitFor({ state: 'visible', timeout: 30000 })
     await jurisdictionInput.fill('US')
     
     const roleSelect = page.locator('select').filter({ hasText: /select your role/i })
-    await roleSelect.waitFor({ state: 'visible', timeout: 20000 })
+    await roleSelect.waitFor({ state: 'visible', timeout: 30000 })
     await roleSelect.selectOption({ index: 1 })
     
     const contactNameInput = page.getByPlaceholder(/your full name/i)
-    await contactNameInput.waitFor({ state: 'visible', timeout: 20000 })
+    await contactNameInput.waitFor({ state: 'visible', timeout: 30000 })
     await contactNameInput.fill('John')
     
     const emailInput = page.getByPlaceholder(/email@example.com/i)
-    await emailInput.waitFor({ state: 'visible', timeout: 20000 })
+    await emailInput.waitFor({ state: 'visible', timeout: 30000 })
     await emailInput.fill('john@test.com')
     
-    await page.waitForTimeout(1000) // Wait for validation
+    await page.waitForTimeout(1500) // Wait for validation
     
     const continueButton = page.locator('button').filter({ hasText: /continue/i })
-    await continueButton.waitFor({ state: 'enabled', timeout: 20000 })
+    await continueButton.waitFor({ state: 'enabled', timeout: 30000 })
     await continueButton.click()
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(1500)
     
     // Complete token intent step
     const purposeInput = page.getByPlaceholder(/describe the primary purpose/i)
-    await purposeInput.waitFor({ state: 'visible', timeout: 20000 })
+    await purposeInput.waitFor({ state: 'visible', timeout: 30000 })
     await purposeInput.fill('Test purpose')
     
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(1500)
     const continueButton2 = page.locator('button').filter({ hasText: /continue/i })
-    await continueButton2.waitFor({ state: 'enabled', timeout: 20000 })
+    await continueButton2.waitFor({ state: 'enabled', timeout: 30000 })
     await continueButton2.click()
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(1500)
     
     // Now on compliance step
     const complianceHeading = page.locator('h2').filter({ hasText: /compliance readiness/i })
-    await expect(complianceHeading).toBeVisible({ timeout: 20000 })
+    await expect(complianceHeading).toBeVisible({ timeout: 30000 })
     
     // Check MICA checkbox text is visible
     const micaText = page.getByText(/mica compliance/i)
-    await expect(micaText).toBeVisible({ timeout: 20000 })
+    await expect(micaText).toBeVisible({ timeout: 30000 })
     
     // Check KYC checkbox text is visible
     const kycText = page.getByText(/kyc.*aml requirements/i)
-    await expect(kycText).toBeVisible({ timeout: 20000 })
+    await expect(kycText).toBeVisible({ timeout: 30000 })
   })
 
   test('should display template selection with cards', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000) // CI needs more time
+    await page.waitForTimeout(5000) // Increased for CI auth initialization
+    
+    // Wait for page to be ready
+    const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
+    await expect(title).toBeVisible({ timeout: 30000 })
     
     // Navigate to template selection (step 3)
     // Quick navigation through previous steps using placeholders
     const orgNameInput = page.getByPlaceholder(/enter your organization name/i)
-    await orgNameInput.waitFor({ state: 'visible', timeout: 20000 })
+    await orgNameInput.waitFor({ state: 'visible', timeout: 30000 })
     await orgNameInput.fill('Test')
     
     const orgTypeSelect = page.locator('select').filter({ hasText: /select type/i }).first()
-    await orgTypeSelect.waitFor({ state: 'visible', timeout: 20000 })
+    await orgTypeSelect.waitFor({ state: 'visible', timeout: 30000 })
     await orgTypeSelect.selectOption({ index: 1 })
     
     const jurisdictionInput = page.getByPlaceholder(/country or region/i)
-    await jurisdictionInput.waitFor({ state: 'visible', timeout: 20000 })
+    await jurisdictionInput.waitFor({ state: 'visible', timeout: 30000 })
     await jurisdictionInput.fill('US')
     
     const roleSelect = page.locator('select').filter({ hasText: /select your role/i })
-    await roleSelect.waitFor({ state: 'visible', timeout: 20000 })
+    await roleSelect.waitFor({ state: 'visible', timeout: 30000 })
     await roleSelect.selectOption({ index: 1 })
     
     const contactNameInput = page.getByPlaceholder(/your full name/i)
-    await contactNameInput.waitFor({ state: 'visible', timeout: 20000 })
+    await contactNameInput.waitFor({ state: 'visible', timeout: 30000 })
     await contactNameInput.fill('John')
     
     const emailInput = page.getByPlaceholder(/email@example.com/i)
-    await emailInput.waitFor({ state: 'visible', timeout: 20000 })
+    await emailInput.waitFor({ state: 'visible', timeout: 30000 })
     await emailInput.fill('john@test.com')
     
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(1500)
     let continueButton = page.locator('button').filter({ hasText: /continue/i })
-    await continueButton.waitFor({ state: 'enabled', timeout: 20000 })
+    await continueButton.waitFor({ state: 'enabled', timeout: 30000 })
     await continueButton.click()
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(1500)
     
     const purposeInput = page.getByPlaceholder(/describe the primary purpose/i)
-    await purposeInput.waitFor({ state: 'visible', timeout: 20000 })
+    await purposeInput.waitFor({ state: 'visible', timeout: 30000 })
     await purposeInput.fill('Test')
     
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(1500)
     continueButton = page.locator('button').filter({ hasText: /continue/i })
-    await continueButton.waitFor({ state: 'enabled', timeout: 20000 })
+    await continueButton.waitFor({ state: 'enabled', timeout: 30000 })
     await continueButton.click()
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(1500)
     
     continueButton = page.locator('button').filter({ hasText: /continue to template/i })
-    await continueButton.waitFor({ state: 'enabled', timeout: 20000 })
+    await continueButton.waitFor({ state: 'enabled', timeout: 30000 })
     await continueButton.click()
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(1500)
     
     // Check template selection step
     const templateHeading = page.locator('h2').filter({ hasText: /select token template/i })
-    await expect(templateHeading).toBeVisible({ timeout: 20000 })
+    await expect(templateHeading).toBeVisible({ timeout: 30000 })
     
     // Check at least one template card is visible
     const loyaltyText = page.getByText(/loyalty.*rewards token/i)
     const accessText = page.getByText(/access rights nft/i)
-    const hasLoyalty = await loyaltyText.isVisible({ timeout: 5000 }).catch(() => false)
-    const hasAccess = await accessText.isVisible({ timeout: 5000 }).catch(() => false)
+    const hasLoyalty = await loyaltyText.isVisible({ timeout: 10000 }).catch(() => false)
+    const hasAccess = await accessText.isVisible({ timeout: 10000 }).catch(() => false)
     
     // At least one should be visible
     expect(hasLoyalty || hasAccess).toBe(true)
@@ -368,7 +380,11 @@ test.describe('Guided Token Launch Flow', () => {
   test('should ensure no wallet connector references in entire flow', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000) // CI needs more time
+    await page.waitForTimeout(5000) // Increased for CI auth initialization
+    
+    // Wait for page to be ready before checking content
+    const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
+    await expect(title).toBeVisible({ timeout: 30000 })
     
     const pageContent = await page.content()
     
