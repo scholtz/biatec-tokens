@@ -278,7 +278,28 @@ const button = page.locator('button').filter({ hasText: /Continue/i });
 await button.waitFor({ state: 'enabled', timeout: 45000 }); // ERROR: 'enabled' not valid
 ```
 
-7. **Playwright Strict Mode**: Avoid ambiguous selectors
+7. **Wizard Step Transition Timing (Multi-Step Forms)**: Step transitions need extra time in CI
+   - Multi-step wizards that unmount/mount components require 5000ms waits (not 2000ms or 3000ms)
+   - Pattern: Form validation + state update + component unmount + next component mount
+   - Apply after EVERY form submit and BEFORE checking next step elements
+   
+```typescript
+// CORRECT pattern for wizard step navigation in CI
+await input.fill('value');
+await page.waitForTimeout(5000); // CI needs 5s for validation + state updates
+
+const continueButton = page.locator('button').filter({ hasText: /Continue/i });
+await continueButton.waitFor({ state: 'visible', timeout: 45000 });
+await expect(continueButton).toBeEnabled();
+await continueButton.click();
+await page.waitForTimeout(5000); // CI needs 5s for step transition (unmount + mount)
+
+// Now check next step
+const nextStepHeading = page.locator('h2').filter({ hasText: /Next Step/i });
+await expect(nextStepHeading).toBeVisible({ timeout: 45000 });
+```
+
+8. **Playwright Strict Mode**: Avoid ambiguous selectors
    - ❌ BAD: `page.getByText('Jurisdiction')` when word appears multiple times
    - ✅ GOOD: `page.getByText('Jurisdiction').first()` or use count() to check existence
    - ✅ BETTER: Use role-based selectors with specific names
