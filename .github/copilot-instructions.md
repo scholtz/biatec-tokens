@@ -209,18 +209,42 @@ test('should display element', async ({ page }) => {
 });
 ```
 
-3. **Click Actions**: Add small waits after animations
+3. **Auth-Dependent Routes** (CRITICAL for CI): Routes requiring authentication need EXTRA time in CI
+   - Auth store initializes async in main.ts → component mounts → renders (5+ seconds in CI)
+   - ❌ BAD: 3s wait, 20s timeouts (fails in CI but passes locally)
+   - ✅ GOOD: 5s wait, 30s timeouts (passes in CI and locally)
+   
+```typescript
+// Pattern for auth-dependent routes (e.g., /launch/guided, /compliance/*, /tokens/*)
+test('should display auth-required page', async ({ page }) => {
+  await page.goto('/launch/guided');
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(5000); // CI needs time for auth store init + mount
+  
+  // Wait for SPECIFIC element that proves page loaded
+  const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 });
+  await expect(title).toBeVisible({ timeout: 30000 }); // Extra time for CI
+  
+  // Now interact with form elements
+  const input = page.getByPlaceholder(/enter your organization name/i);
+  await input.waitFor({ state: 'visible', timeout: 30000 });
+  await input.fill('Test Company');
+});
+```
+
+4. **Click Actions**: Add small waits after animations
 ```typescript
 await button.click();
 await page.waitForTimeout(300); // Wait for animation/transition
 await expect(element).toHaveAttribute('aria-expanded', 'true');
 ```
 
-4. **Visibility Timeouts**: Use generous timeouts for CI environments
+5. **Visibility Timeouts**: Use generous timeouts for CI environments
    - Local: 5000-10000ms may work
-   - CI: 15000ms recommended (slower environments)
+   - CI (no auth): 15000ms recommended (slower environments)
+   - CI (auth-required): 30000ms recommended (auth init + component load)
 
-5. **Playwright Strict Mode**: Avoid ambiguous selectors
+6. **Playwright Strict Mode**: Avoid ambiguous selectors
    - ❌ BAD: `page.getByText('Jurisdiction')` when word appears multiple times
    - ✅ GOOD: `page.getByText('Jurisdiction').first()` or use count() to check existence
    - ✅ BETTER: Use role-based selectors with specific names
