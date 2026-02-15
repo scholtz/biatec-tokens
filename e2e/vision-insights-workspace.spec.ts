@@ -99,11 +99,11 @@ test.describe('Vision Insights Workspace', () => {
   })
 
   test('should display competitor benchmarks', async ({ page }) => {
-    await page.waitForTimeout(1500)
+    await page.waitForTimeout(3000) // Increased wait for CI environment
     
     // Check for Competitor Benchmarks section
     const benchmarkHeading = page.getByRole('heading', { name: /Competitor Benchmarks/i })
-    await expect(benchmarkHeading).toBeVisible({ timeout: 15000 })
+    await expect(benchmarkHeading).toBeVisible({ timeout: 20000 })
   })
 
   test('should display scenario planning section', async ({ page }) => {
@@ -212,17 +212,17 @@ test.describe('Vision Insights Workspace', () => {
   })
 
   test('should handle wallet segment filter changes', async ({ page }) => {
-    await page.waitForTimeout(1500)
+    await page.waitForTimeout(3000) // Increased wait for CI environment
     
     // Find wallet segment filter
     const segmentSelect = page.locator('select').nth(2)
-    if (await segmentSelect.isVisible({ timeout: 5000 }).catch(() => false)) {
+    if (await segmentSelect.isVisible({ timeout: 10000 }).catch(() => false)) {
       await segmentSelect.selectOption('whales')
-      await page.waitForTimeout(1000)
+      await page.waitForTimeout(1500)
       
       // Check for active filter badge
       const filterBadge = page.getByText(/whales/i).first()
-      await expect(filterBadge).toBeVisible({ timeout: 10000 })
+      await expect(filterBadge).toBeVisible({ timeout: 15000 })
     }
   })
 
