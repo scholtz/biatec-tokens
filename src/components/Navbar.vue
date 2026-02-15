@@ -110,7 +110,7 @@
         </div>
 
         <!-- Sign-In Modal (Email/Password) -->
-        <WalletConnectModal :is-open="showWalletModal" :show-network-selector="false" @close="showWalletModal = false" @connected="handleConnected" />
+        <EmailAuthModal :is-open="showWalletModal" :show-network-selector="false" @close="showWalletModal = false" @connected="handleConnected" />
 
         <!-- Mobile Menu Button -->
         <button @click="toggleMobileMenu" class="md:hidden p-3 rounded-xl text-white hover:bg-white/10 transition-colors">
@@ -137,7 +137,7 @@ import { ref, computed } from "vue";
 // AUTH_STORAGE_KEYS removed - no longer used in this component
 import { AUTH_UI_COPY } from "../constants/uiCopy";
 import { telemetryService } from "../services/TelemetryService";
-import WalletConnectModal from "./WalletConnectModal.vue";
+import EmailAuthModal from "./EmailAuthModal.vue";
 import { useAuthStore } from "../stores/auth";
 // WalletOnboardingWizard removed per MVP requirements (wallet-free mode)
 // NetworkSwitcher removed per MVP requirements (wallet-free mode)

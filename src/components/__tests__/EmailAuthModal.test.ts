@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
 import { createTestingPinia } from "@pinia/testing";
-import WalletConnectModal from "../WalletConnectModal.vue";
+import EmailAuthModal from "../EmailAuthModal.vue";
 
 // Mock the @txnlab/use-wallet-vue module
 const mockConnect = vi.fn().mockResolvedValue(undefined);
@@ -34,13 +34,13 @@ vi.mock("@txnlab/use-wallet-vue", () => ({
   })),
 }));
 
-describe("WalletConnectModal", () => {
+describe("EmailAuthModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("should render modal when isOpen is true", async () => {
-    const wrapper = mount(WalletConnectModal, {
+    const wrapper = mount(EmailAuthModal, {
       props: {
         isOpen: true,
       },
@@ -60,7 +60,7 @@ describe("WalletConnectModal", () => {
   });
 
   it("should not render modal when isOpen is false", async () => {
-    const wrapper = mount(WalletConnectModal, {
+    const wrapper = mount(EmailAuthModal, {
       props: {
         isOpen: false,
       },
@@ -81,7 +81,7 @@ describe("WalletConnectModal", () => {
   });
 
   it("should display email/password form only (wallet-free authentication)", async () => {
-    const wrapper = mount(WalletConnectModal, {
+    const wrapper = mount(EmailAuthModal, {
       props: {
         isOpen: true,
       },
@@ -108,7 +108,7 @@ describe("WalletConnectModal", () => {
   });
 
   it("should show network selector when showNetworkSelector is true", async () => {
-    const wrapper = mount(WalletConnectModal, {
+    const wrapper = mount(EmailAuthModal, {
       props: {
         isOpen: true,
         showNetworkSelector: true,
@@ -131,7 +131,7 @@ describe("WalletConnectModal", () => {
   });
 
   it("should hide network selector when showNetworkSelector is false", async () => {
-    const wrapper = mount(WalletConnectModal, {
+    const wrapper = mount(EmailAuthModal, {
       props: {
         isOpen: true,
         showNetworkSelector: false,
@@ -157,7 +157,7 @@ describe("WalletConnectModal", () => {
   });
 
   it("should emit close event when close button is clicked", async () => {
-    const wrapper = mount(WalletConnectModal, {
+    const wrapper = mount(EmailAuthModal, {
       props: {
         isOpen: true,
       },
@@ -189,7 +189,7 @@ describe("WalletConnectModal", () => {
   });
 
   it("should not display wallet provider UI (wallet-free authentication)", async () => {
-    const wrapper = mount(WalletConnectModal, {
+    const wrapper = mount(EmailAuthModal, {
       props: {
         isOpen: true,
       },
@@ -217,7 +217,7 @@ describe("WalletConnectModal", () => {
   });
 
   it("should display Terms of Service information", async () => {
-    const wrapper = mount(WalletConnectModal, {
+    const wrapper = mount(EmailAuthModal, {
       props: {
         isOpen: true,
       },
@@ -237,7 +237,7 @@ describe("WalletConnectModal", () => {
   });
 
   it("should not handle wallet connection (wallet-free authentication)", async () => {
-    const wrapper = mount(WalletConnectModal, {
+    const wrapper = mount(EmailAuthModal, {
       props: {
         isOpen: true,
       },
@@ -268,7 +268,7 @@ describe("WalletConnectModal", () => {
     const errorMessage = "Connection failed";
     mockConnect.mockRejectedValueOnce(new Error(errorMessage));
 
-    const wrapper = mount(WalletConnectModal, {
+    const wrapper = mount(EmailAuthModal, {
       props: {
         isOpen: true,
       },

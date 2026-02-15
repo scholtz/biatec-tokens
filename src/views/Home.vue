@@ -97,7 +97,7 @@
     </div>
 
     <!-- Sign-In Modal (Email/Password Authentication) -->
-    <WalletConnectModal :is-open="showAuthModal" :show-network-selector="false" @close="showAuthModal = false" @connected="handleAuthComplete" />
+    <EmailAuthModal :is-open="showAuthModal" :show-network-selector="false" @close="showAuthModal = false" @connected="handleAuthComplete" />
 
     <!-- Onboarding Checklist (Persistent) -->
     <OnboardingChecklist />
@@ -115,7 +115,7 @@ import Button from "../components/ui/Button.vue";
 import Card from "../components/ui/Card.vue";
 import Badge from "../components/ui/Badge.vue";
 import MainLayout from "../layout/MainLayout.vue";
-import WalletConnectModal from "../components/WalletConnectModal.vue";
+import EmailAuthModal from "../components/EmailAuthModal.vue";
 import LandingEntryModule from "../components/LandingEntryModule.vue";
 import OnboardingChecklist from "../components/OnboardingChecklist.vue";
 import { PlusCircleIcon, ChartBarIcon, BoltIcon, ShieldCheckIcon, GlobeAltIcon } from "@heroicons/vue/24/outline";
