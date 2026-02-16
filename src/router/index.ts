@@ -20,6 +20,7 @@ import WhitelistsView from "../views/WhitelistsView.vue";
 import ComplianceOrchestrationView from "../views/ComplianceOrchestrationView.vue";
 import VisionInsightsWorkspace from "../views/VisionInsightsWorkspace.vue";
 import GuidedTokenLaunch from "../views/GuidedTokenLaunch.vue";
+import ComplianceSetupWorkspace from "../views/ComplianceSetupWorkspace.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 
 // Subscription views
@@ -113,6 +114,12 @@ const router = createRouter({
       path: "/compliance/whitelists",
       name: "WhitelistManagement",
       component: WhitelistsView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/compliance/setup",
+      name: "ComplianceSetupWorkspace",
+      component: ComplianceSetupWorkspace,
       meta: { requiresAuth: true },
     },
     {
