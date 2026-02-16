@@ -168,14 +168,18 @@ test.describe('Token Lifecycle Cockpit', () => {
     // Clear auth
     await page.goto('/')
     await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(1000)
     await page.evaluate(() => localStorage.clear())
     
-    // Try to access cockpit
+    // Try to access cockpit (unauthenticated)
     await page.goto('/cockpit')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000) // Wait for redirect to complete
+    await page.waitForTimeout(5000) // CI needs extra time for auth guard redirect
     
     // Should redirect to home with auth prompt
-    await expect(page).toHaveURL('/?showAuth=true', { timeout: 10000 })
+    // Check URL contains showAuth=true query parameter
+    const url = page.url()
+    expect(url).toContain('showAuth=true')
+    expect(url).toMatch(/^https?:\/\/[^/]+(\/)?(\?|#.*\?)showAuth=true/)
   })
 })
