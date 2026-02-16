@@ -3,7 +3,7 @@
 **Feature:** Frontend Competitive Intelligence and Token Lifecycle Cockpit  
 **Test Suite:** Unit + Integration + E2E  
 **Last Updated:** February 16, 2026  
-**Total Tests:** 37 new tests (3083 total passing)  
+**Total Tests:** 51 new tests (3083 total passing)  
 
 ## Test Summary
 
