@@ -24,7 +24,6 @@ import type {
   ValidationError,
   ValidationWarning,
   RiskLevel,
-  BlockerSeverity,
   SetupStepStatus,
 } from '../types/complianceSetup'
 

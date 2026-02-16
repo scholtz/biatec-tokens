@@ -324,7 +324,6 @@ import type {
   ValidationError,
   ValidationWarning,
   IssuerAttestation,
-  EvidenceReference,
 } from '../../types/complianceSetup'
 
 interface Props {

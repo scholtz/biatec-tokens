@@ -388,7 +388,6 @@ import type {
   StepValidation,
   ValidationError,
   ValidationWarning,
-  KYCDocumentRequirement,
 } from '../../types/complianceSetup'
 
 interface Props {

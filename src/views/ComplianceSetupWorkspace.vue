@@ -126,7 +126,7 @@
           <ReadinessSummaryStep
             v-else-if="currentStepIndex === 4"
             :readiness="readiness"
-            @go-to-step="goToStep"
+            @go-to-step="goToStepById"
           />
         </transition>
       </div>
@@ -188,7 +188,7 @@
     </div>
 
     <!-- Success Modal -->
-    <Modal v-if="showSuccessModal" @close="handleSuccessClose">
+    <Modal :show="showSuccessModal" @close="handleSuccessClose">
       <template #header>
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
@@ -303,6 +303,13 @@ const readinessScoreColor = computed(() => {
 const goToStep = (index: number) => {
   if (canNavigateToStep(index)) {
     setupStore.goToStep(index)
+  }
+}
+
+const goToStepById = (stepId: string) => {
+  const index = steps.value.findIndex(s => s.id === stepId)
+  if (index !== -1) {
+    goToStep(index)
   }
 }
 
