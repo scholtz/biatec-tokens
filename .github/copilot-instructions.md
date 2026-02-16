@@ -295,7 +295,8 @@ await continueButton.click();
 await page.waitForTimeout(5000); // CI needs 5s for step transition (unmount + mount)
 
 // For tests with 2+ step transitions, add cumulative wait before final check
-await page.waitForTimeout(3000); // Additional time for multi-step accumulation
+// Increased from 3s to 5s after 11th optimization attempt
+await page.waitForTimeout(5000); // Additional time for multi-step accumulation in CI
 
 // Now check next step
 const nextStepHeading = page.locator('h2').filter({ hasText: /Next Step/i });
