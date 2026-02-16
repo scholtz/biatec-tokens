@@ -168,6 +168,7 @@ import {
   ChartPieIcon,
   RocketLaunchIcon,
   ShieldCheckIcon,
+  CommandLineIcon,
 } from "@heroicons/vue/24/outline";
 import EmailAuthModal from "../EmailAuthModal.vue";
 import { useAuthStore } from "../../stores/auth";
@@ -184,6 +185,7 @@ const showWalletModal = ref(false);
 
 const navigationItems = [
   { name: "Home", path: "/", icon: HomeIcon },
+  { name: "Cockpit", path: "/cockpit", icon: CommandLineIcon },
   { name: "Guided Launch", path: "/launch/guided", icon: RocketLaunchIcon },
   { name: "Compliance", path: "/compliance/setup", icon: ShieldCheckIcon },
   { name: "Create", path: "/create", icon: PlusCircleIcon },

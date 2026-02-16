@@ -21,6 +21,7 @@ import ComplianceOrchestrationView from "../views/ComplianceOrchestrationView.vu
 import VisionInsightsWorkspace from "../views/VisionInsightsWorkspace.vue";
 import GuidedTokenLaunch from "../views/GuidedTokenLaunch.vue";
 import ComplianceSetupWorkspace from "../views/ComplianceSetupWorkspace.vue";
+import LifecycleCockpit from "../views/LifecycleCockpit.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 
 // Subscription views
@@ -139,6 +140,13 @@ const router = createRouter({
       path: "/launch/guided",
       name: "GuidedTokenLaunch",
       component: GuidedTokenLaunch,
+      meta: { requiresAuth: true },
+    },
+    // Lifecycle Cockpit
+    {
+      path: "/cockpit",
+      name: "LifecycleCockpit",
+      component: LifecycleCockpit,
       meta: { requiresAuth: true },
     },
     {
