@@ -337,6 +337,44 @@ await expect(nextStepHeading).toBeVisible({ timeout: 45000 });
    - ✅ GOOD: `page.getByText('Jurisdiction').first()` or use count() to check existence
    - ✅ BETTER: Use role-based selectors with specific names
 
+9. **Auth Redirect Testing**: Testing authentication guards requires special handling
+   - Auth guards redirect to home with query params (e.g., `/?showAuth=true`)
+   - CI environment may format URLs differently than local
+   - Use flexible URL assertions, not exact matches
+   
+```typescript
+// CORRECT pattern for auth redirect testing
+test('should require authentication', async ({ page }) => {
+  // Clear auth
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(1000) // Stabilize before localStorage operation
+  await page.evaluate(() => localStorage.clear())
+  
+  // Try to access protected route
+  await page.goto('/protected-route')
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(10000) // CI needs 10s for auth guard redirect
+  
+  // Should redirect to home with auth prompt
+  // Use flexible URL assertion (CI may format URLs differently)
+  const url = page.url()
+  expect(url).toContain('showAuth=true') // Simple contains check
+})
+
+// WRONG patterns - too strict for CI
+test('should require authentication', async ({ page }) => {
+  // ... setup ...
+  
+  // ❌ Exact URL match fails in CI with different URL formatting
+  await expect(page).toHaveURL('/?showAuth=true')
+  
+  // ❌ Complex regex may not match all CI URL formats
+  const url = page.url()
+  expect(url).toMatch(/^https?:\/\/[^/]+\/\?showAuth=true$/)
+})
+```
+
 **Product Owner Requirement**: E2E tests must pass in CI. If tests are flaky due to timing, fix the waits - never skip or disable tests.
 
 ### E2E Test Coverage Requirements for New Features
