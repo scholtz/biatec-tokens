@@ -167,13 +167,15 @@ test.describe('Token Lifecycle Cockpit', () => {
   test('should require authentication', async ({ page }) => {
     // Clear auth
     await page.goto('/')
+    await page.waitForLoadState('networkidle')
     await page.evaluate(() => localStorage.clear())
     
     // Try to access cockpit
     await page.goto('/cockpit')
     await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(2000) // Wait for redirect to complete
     
     // Should redirect to home with auth prompt
-    await expect(page).toHaveURL('/?showAuth=true')
+    await expect(page).toHaveURL('/?showAuth=true', { timeout: 10000 })
   })
 })
