@@ -2,6 +2,18 @@
 
 This directory contains Playwright end-to-end tests for the Biatec Tokens application.
 
+## Authentication Model
+
+**Email/Password Only - No Wallet Connectors**
+
+This application uses an **auth-first** approach with email and password authentication. There are no wallet connectors (MetaMask, WalletConnect, Pera, Defly, etc.) in the MVP user experience.
+
+All tests should reflect this authentication model:
+- Use `localStorage.setItem('algorand_user', ...)` to simulate authenticated sessions
+- Test routes with `requiresAuth: true` meta flag
+- Verify auth-first redirects for unauthenticated users
+- Ensure no wallet-related UI elements appear in navigation
+
 ## Running Tests
 
 ### Prerequisites
@@ -35,28 +47,56 @@ npm run test:e2e:report
 
 Tests are organized by feature:
 
-- `wallet-connection.spec.ts` - Tests for wallet connection flow and authentication
-- `enhanced-ux.spec.ts` - Tests for enhanced UX features (network selection, error handling, responsive design)
+- `auth-first-token-creation.spec.ts` - Auth-first journey and route guards (MVP critical)
+- `guided-token-launch.spec.ts` - Guided token launch flow (supported auth-first path)
+- `compliance-orchestration.spec.ts` - KYC/AML compliance orchestration
+- `compliance-dashboard.spec.ts` - Compliance dashboard and metrics
+- `compliance-setup-workspace.spec.ts` - Compliance workspace setup
+- `token-discovery-dashboard.spec.ts` - Token discovery and search
+- `token-detail-view.spec.ts` - Individual token detail pages
+- `whitelist-management-view.spec.ts` - MICA whitelist management
+- `whitelist-jurisdiction.spec.ts` - Jurisdiction-based whitelist rules
+- `team-management.spec.ts` - Team collaboration features
+- `lifecycle-cockpit.spec.ts` - Token lifecycle monitoring
+- `vision-insights-workspace.spec.ts` - Analytics and insights
+
+**Legacy Tests (Deprecated):**
+- `token-utility-recommendations.spec.ts` - Uses legacy `/create/wizard` path (skipped)
+- `token-wizard-whitelist.spec.ts` - Uses legacy `/create/wizard` path (skipped)
+
+**Note:** Tests using `/create/wizard` are deprecated in favor of `/launch/guided` which is the supported auth-first token creation flow.
 
 ## Writing Tests
 
 ### Best Practices
 
-1. **Use Page Object Model** for complex pages
+1. **Use Auth-First Pattern** - Set up localStorage auth before testing protected routes
 2. **Wait for elements** properly using `expect().toBeVisible()`
 3. **Use semantic selectors** like `getByRole()`, `getByText()`
 4. **Test user behavior**, not implementation details
 5. **Keep tests independent** - each test should be able to run standalone
 6. **Use descriptive test names** that explain what is being tested
+7. **Avoid hard-coded timeouts** - use `waitForLoadState()` and visibility checks instead
+8. **Test auth-first routing** - verify unauthenticated users are redirected appropriately
 
-### Example Test
+### Example Test - Auth-First Pattern
 
 ```typescript
 import { test, expect } from '@playwright/test';
 
 test.describe('Feature Name', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    // Set up authenticated session
+    await page.addInitScript(() => {
+      localStorage.setItem('algorand_user', JSON.stringify({
+        address: 'TEST_ADDRESS',
+        email: 'test@example.com',
+        isConnected: true,
+      }))
+    });
+    
+    await page.goto('/protected-route');
+    await page.waitForLoadState('networkidle');
   });
 
   test('should do something', async ({ page }) => {
@@ -117,36 +157,58 @@ npm run test:e2e:report
 
 Our E2E tests cover:
 
-1. **Authentication Flow**
-   - Opening authentication modal
-   - Displaying wallet options
-   - Closing modal
-   - Wallet connection (mocked)
+1. **Auth-First Authentication Flow** ⭐ MVP Critical
+   - Unauthenticated users redirected to login
+   - Authenticated users access protected routes
+   - No wallet connector UI elements
+   - Email/password authentication model
+   - Session persistence across navigation
 
-2. **Navigation**
-   - Page navigation
-   - Route changes
+2. **Token Creation Journey**
+   - Guided token launch flow (`/launch/guided`)
+   - Advanced token creation (`/create`)
+   - Compliance gating and eligibility checks
+   - Step-by-step wizard navigation
+   - Draft saving and restoration
+
+3. **Compliance & Regulatory**
+   - KYC document checklist
+   - AML screening status
+   - Compliance orchestration dashboard
+   - MICA whitelist management
+   - Jurisdiction-based rules
+
+4. **Navigation & Routes**
+   - Page navigation with auth guards
+   - Route changes and deep linking
    - Back button behavior
+   - Protected route redirects
 
-3. **Network Selection**
-   - Network indicator display
-   - Status indicators
-   - Network switching
+5. **Dashboard & Discovery**
+   - Token discovery and filtering
+   - Token detail views
+   - Lifecycle monitoring (cockpit)
+   - Analytics and insights
 
-4. **Error Handling**
+6. **Error Handling**
    - API connection errors
    - Graceful degradation
-   - User feedback
+   - User feedback messages
+   - Form validation
 
-5. **Responsive Design**
+7. **Responsive Design**
    - Mobile viewports
    - Tablet viewports
    - Desktop viewports
+   - Adaptive navigation
 
-6. **Accessibility**
+8. **Accessibility**
    - Semantic HTML
    - ARIA labels
    - Keyboard navigation
+   - Screen reader compatibility
+
+**Note:** Wallet connection testing has been removed. This application uses email/password authentication only.
 
 ## Adding New Tests
 
@@ -154,11 +216,23 @@ When adding new features:
 
 1. Create a new test file in `e2e/` directory
 2. Name it `feature-name.spec.ts`
-3. Follow existing patterns and best practices
-4. Test critical user paths
-5. Include negative test cases (error scenarios)
+3. Follow the **auth-first pattern** shown above
+4. Test critical user paths with authentication
+5. Include negative test cases (error scenarios, unauthenticated access)
 6. Test responsive behavior if UI changes
-7. Update this README if adding new test categories
+7. Verify no wallet-related UI appears
+8. Update this README if adding new test categories
+
+### Auth-First Testing Checklist
+
+For any new protected route or feature:
+
+- [ ] Test unauthenticated access redirects to login
+- [ ] Test authenticated access shows correct content
+- [ ] Verify no wallet/network selectors appear
+- [ ] Test session persistence across navigation
+- [ ] Verify email display in user menu (not wallet address)
+- [ ] Test compliance gating if applicable
 
 ## Troubleshooting
 
@@ -183,8 +257,19 @@ await expect(element).toBeVisible({ timeout: 10000 });
 
 1. Add proper waits for async operations
 2. Use `page.waitForLoadState('networkidle')`
-3. Avoid hard-coded `page.waitForTimeout()`
+3. Avoid hard-coded `page.waitForTimeout()` where possible
 4. Use retry logic for assertions
+5. For auth-required routes in CI, increase initial wait to 10000ms
+6. Use generous visibility timeouts (45000ms) for CI environments
+
+### Auth Store Initialization in CI
+
+Auth-required routes need extra time in CI:
+- Auth store initializes async in main.ts
+- Component then mounts and renders
+- Total CI time: 5-10 seconds minimum
+- Use pattern: `await page.waitForTimeout(10000)` after navigation
+- Then check for specific visible element with 45000ms timeout
 
 ## Resources
 
