@@ -45,9 +45,18 @@
 - [ ] **Build Succeeds**: Zero TypeScript errors, zero build warnings
 - [ ] **Test Coverage**: New code ≥70% branch coverage
 - [ ] **E2E Tests Pass**: All critical user flows validated
+  - **MANDATORY:** Run `npm run test:e2e` for affected feature areas before completion
+  - **CRITICAL:** Auth-first tests must pass (auth-first-token-creation.spec.ts)
+  - **REQUIRED:** Document pass counts (e.g., "8/8 auth-first tests passing")
+  - **PROHIBITED:** Never skip E2E tests without 10+ optimization attempts AND local 100% pass rate
 - [ ] **No Regressions**: All existing tests still pass
 - [ ] **ALL CI Checks Green**: Every required check must pass, including pre-existing test suites
 - [ ] **Accessibility Check**: WCAG 2.1 AA baseline (labels, contrast, keyboard)
+- [ ] **Business Roadmap Alignment**: Verify changes align with product definition
+  - **Email/password only** - No wallet connector UI
+  - **Backend token deployment** - No frontend signing/deployment
+  - **Compliance-first** - MVP blockers addressed per roadmap
+  - **Auth-first routing** - Unauthenticated users redirected to login
 
 **🚨 CRITICAL: CI FAILURE POLICY 🚨**
 
@@ -466,6 +475,141 @@ it('should be valid when conditions met', async () => {
 2. Check for tests that verify `isValid` state
 3. Update tests to satisfy ALL validation conditions
 4. Never assume tests will pass without verification
+
+## 🚨 E2E TESTING REQUIREMENTS 🚨
+
+**MANDATORY:** E2E tests are NOT OPTIONAL for user-facing features. They are REQUIRED quality gates.
+
+### Pre-Completion E2E Checklist
+
+**Before marking ANY work complete:**
+
+- [ ] **Run E2E tests locally** - Execute `npm run test:e2e` for affected areas
+- [ ] **Document pass counts** - Record exact numbers (e.g., "8/8 passing in 58.6s")
+- [ ] **Verify CI compatibility** - Tests must use deterministic waits (10s auth + 45s visibility)
+- [ ] **Check for skipped tests** - No new test.skip() without product owner approval
+- [ ] **Validate auth-first patterns** - All protected routes must test unauthenticated redirect
+
+### Auth-First E2E Testing Pattern (MANDATORY)
+
+For ALL protected routes and auth-required features:
+
+```typescript
+test('should redirect unauthenticated user to login', async ({ page }) => {
+  // Clear auth state
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await page.evaluate(() => localStorage.clear())
+  
+  // Try to access protected route
+  await page.goto('/protected-route')
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(5000) // Auth guard redirect
+  
+  // Flexible verification (CI-safe)
+  const url = page.url()
+  const urlHasAuthParam = url.includes('showAuth=true')
+  const authModalVisible = await page.locator('form').filter({ hasText: /email/i }).isVisible().catch(() => false)
+  
+  expect(urlHasAuthParam || authModalVisible).toBe(true)
+})
+
+test('should allow authenticated user to access route', async ({ page }) => {
+  // Set up auth before navigation
+  await page.addInitScript(() => {
+    localStorage.setItem('algorand_user', JSON.stringify({
+      address: 'TEST_ADDRESS',
+      email: 'test@example.com',
+      isConnected: true,
+    }))
+  })
+  
+  // Navigate to protected route
+  await page.goto('/protected-route')
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(10000) // CI: auth store init + mount
+  
+  // Verify page loaded
+  const heading = page.getByRole('heading', { name: /Expected Title/i, level: 1 })
+  await expect(heading).toBeVisible({ timeout: 45000 }) // CI-safe timeout
+})
+```
+
+### E2E Quality Standards
+
+**Deterministic Waits (REQUIRED):**
+- Auth-required routes: 10s wait after navigation
+- Element visibility: 45s timeout minimum
+- NO brittle `waitForTimeout()` without justification
+- Use `waitForLoadState('networkidle')` before waits
+
+**Product Alignment (REQUIRED):**
+- Verify NO wallet connector UI appears
+- Verify NO "Not connected" status text
+- Verify email/password authentication only
+- Verify backend-driven token deployment flows
+
+**Test Skipping (PROHIBITED without approval):**
+- Never skip E2E tests without 10+ optimization attempts
+- Tests must pass 100% locally before considering skip
+- Document all optimization iterations in skip comment
+- Get product owner approval for CI-only skips
+
+### E2E Failure Investigation Protocol
+
+**When E2E tests fail:**
+
+1. **Run locally first** - `npm run test:e2e -- failing-test.spec.ts`
+2. **Check timing patterns** - Are waits sufficient for CI?
+3. **Verify selectors** - Use role-based selectors, not CSS
+4. **Test in CI mode** - Run with `CI=true npm run test:e2e`
+5. **Document findings** - Record optimization attempts
+6. **Fix deterministically** - NO "might work" timing guesses
+
+**Progressive Optimization Pattern:**
+- Iteration 1-3: Increase timeouts (5s → 10s → 15s)
+- Iteration 4-6: Flexible assertions (exact → regex → flexible)
+- Iteration 7-9: Alternative approaches (different selectors)
+- Iteration 10+: Consider CI-only skip with PO approval
+
+### Business Roadmap Alignment Verification
+
+**Before completing ANY feature, verify:**
+
+```typescript
+// Run this E2E check for all user-facing features
+test('should align with business roadmap requirements', async ({ page }) => {
+  await page.goto('/')
+  const content = await page.content()
+  
+  // Email/password only - NO wallet connectors
+  expect(content).not.toMatch(/WalletConnect|MetaMask|Pera.*Wallet|Defly/i)
+  expect(content).not.toContain('connect wallet')
+  
+  // Auth-first routing
+  expect(content).toMatch(/Sign\s+In|Email|Password/i)
+  
+  // Backend-driven deployment (no frontend signing)
+  expect(content).not.toContain('sign transaction')
+  expect(content).not.toContain('approve in wallet')
+})
+```
+
+**Reference:** https://raw.githubusercontent.com/scholtz/biatec-tokens/refs/heads/main/business-owner-roadmap.md
+
+### Past E2E Quality Violations
+
+**NEVER REPEAT:**
+- ❌ Finishing work without running E2E tests
+- ❌ Skipping E2E tests without optimization attempts
+- ❌ Using brittle timing waits (hardcoded timeouts)
+- ❌ Ignoring CI failures as "pre-existing"
+- ❌ Not verifying product roadmap alignment
+
+**Product Owner Rejection History:**
+- Work rejected for missing E2E coverage
+- Work rejected for flaky E2E tests in CI
+- Work rejected for wallet UI traces in auth-first flows
 
 ## Project Overview
 
