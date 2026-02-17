@@ -13,7 +13,7 @@ import EnterpriseGuideView from "../views/EnterpriseGuideView.vue";
 import Marketplace from "../views/Marketplace.vue";
 import AccountSecurity from "../views/AccountSecurity.vue";
 import DiscoveryDashboard from "../views/DiscoveryDashboard.vue";
-import TokenCreationWizard from "../views/TokenCreationWizard.vue";
+// TokenCreationWizard removed - legacy /create/wizard route now redirects to /launch/guided
 import OnboardingFlow from "../views/OnboardingFlow.vue";
 import EnterpriseOnboardingCommandCenter from "../views/EnterpriseOnboardingCommandCenter.vue";
 import WhitelistsView from "../views/WhitelistsView.vue";
@@ -45,9 +45,7 @@ const router = createRouter({
     },
     {
       path: "/create/wizard",
-      name: "TokenCreationWizard",
-      component: TokenCreationWizard,
-      meta: { requiresAuth: true },
+      redirect: "/launch/guided", // Legacy route - redirect to auth-first guided launch
     },
     {
       path: "/create/batch",

@@ -426,7 +426,7 @@ const scrollToDocuments = () => {
 }
 
 const navigateToTokenCreation = () => {
-  router.push('/create/wizard')
+  router.push('/launch/guided')
 }
 
 const contactSupport = () => {

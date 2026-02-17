@@ -49,7 +49,7 @@
           <!-- Sign In Button (when not authenticated) -->
           <div v-if="!authStore.isAuthenticated">
             <button
-              @click="handleWalletClick"
+              @click="handleSignInClick"
               class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white transition-colors"
             >
               <ArrowRightOnRectangleIcon class="w-5 h-5" />
@@ -113,7 +113,7 @@
     </div>
 
     <!-- Authentication Modal (Email/Password only) -->
-    <EmailAuthModal :is-open="showWalletModal" @close="showWalletModal = false" @connected="handleWalletConnected" />
+    <EmailAuthModal :is-open="showAuthModal" @close="showAuthModal = false" @connected="handleAuthSuccess" />
 
     <!-- Mobile Menu -->
     <Transition
@@ -181,7 +181,7 @@ const subscriptionStore = useSubscriptionStore();
 
 const showMobileMenu = ref(false);
 const showUserMenu = ref(false);
-const showWalletModal = ref(false);
+const showAuthModal = ref(false);
 
 const navigationItems = [
   { name: "Home", path: "/", icon: HomeIcon },
@@ -214,12 +214,12 @@ const handleSignOut = async () => {
   router.push("/");
 };
 
-const handleWalletClick = () => {
-  showWalletModal.value = true;
+const handleSignInClick = () => {
+  showAuthModal.value = true;
 };
 
-const handleWalletConnected = (_data: { address: string; walletId: string; network: string }) => {
-  showWalletModal.value = false;
+const handleAuthSuccess = (_data: { address: string; walletId: string; network: string }) => {
+  showAuthModal.value = false;
 
   // Check if there's a redirect path stored (AC #6)
   const redirectPath = localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);

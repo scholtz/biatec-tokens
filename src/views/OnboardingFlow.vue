@@ -521,7 +521,7 @@ const viewAllPlans = () => {
 }
 
 const startTokenCreation = () => {
-  router.push('/create/wizard')
+  router.push('/launch/guided')
 }
 
 const goToDashboard = () => {

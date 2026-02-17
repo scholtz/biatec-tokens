@@ -107,7 +107,7 @@
               Create your first token to start monitoring compliance.
             </p>
             <router-link
-              to="/create/wizard"
+              to="/launch/guided"
               class="px-6 py-2 bg-biatec-accent hover:bg-biatec-accent/80 text-white rounded-lg transition-colors inline-flex items-center gap-2"
             >
               <i class="pi pi-plus"></i>

@@ -111,8 +111,8 @@ describe('Sidebar Component', () => {
       expect(links).toHaveLength(8); // Now includes Compliance Monitoring and Whitelist Management
 
       // Check link texts and routes
-      expect(links[0].text()).toContain('Create Token (Wizard)');
-      expect(links[0].attributes('to')).toBe('/create/wizard');
+      expect(links[0].text()).toContain('Guided Token Launch');
+      expect(links[0].attributes('to')).toBe('/launch/guided');
 
       expect(links[1].text()).toContain('Create Token (Advanced)');
       expect(links[1].attributes('to')).toBe('/create');
