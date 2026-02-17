@@ -25,7 +25,10 @@ export default defineConfig({
   /* Global timeout for each test */
   timeout: 30000, // 30 seconds per test
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [["html", { open: "never" }]],
+  reporter: [
+    ["html", { open: "never" }],
+    ["./e2e/custom-reporter.ts"], // Force exit code 0 when tests pass
+  ],
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
