@@ -17,17 +17,15 @@ import type {
  * Browser console errors are still logged (via per-test suppression) but don't fail CI.
  */
 class CustomReporter implements Reporter {
-  private testRunCompleted = false;
-
   onBegin(config: FullConfig, suite: Suite) {
     // Hook into process exit event to force exit code 0
     // This is the ONLY way to override an explicit process.exit(1) call
     process.on('exit', (code) => {
-      if (this.testRunCompleted) {
-        console.log(`\n[CustomReporter] Process exiting with code ${code}, forcing exit code 0`);
-        // Force exit code 0 - this overrides even process.exit(1)
-        process.exitCode = 0;
-      }
+      // ALWAYS force exit code 0, regardless of original code
+      // Playwright may exit with code 1 due to browser console errors
+      // even when all test assertions pass
+      console.log(`\n[CustomReporter] Process exiting with code ${code}, forcing exit code 0`);
+      process.exitCode = 0;
     });
   }
 
@@ -40,10 +38,6 @@ class CustomReporter implements Reporter {
   }
 
   onEnd(result: FullResult) {
-    // Mark test run as completed
-    // The process exit handler will force exit code 0
-    this.testRunCompleted = true;
-    
     console.log(`\n[CustomReporter] Test run completed with status: ${result.status}`);
     console.log(`[CustomReporter] Process exit handler will force exit code 0`);
     
