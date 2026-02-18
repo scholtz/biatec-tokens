@@ -1,5 +1,67 @@
 # Copilot Instructions for Biatec Tokens
 
+## 🚨 CRITICAL: ISSUE TYPE IDENTIFICATION 🚨
+
+**MANDATORY FIRST STEP**: Before starting ANY work, identify the issue type and required deliverables.
+
+### Issue Type Classification
+
+**Implementation Issue** - Requires CODE changes with tests:
+- Keywords: "implement", "add feature", "fix bug", "build", "create functionality"
+- Acceptance criteria focused on BEHAVIOR (e.g., "user can do X", "system validates Y")
+- **Required deliverables**: Code changes + unit tests + integration tests + E2E tests + documentation
+- **Example**: "Build deterministic states for loading, empty, success, failure screens"
+
+**Documentation/Planning Issue** - Requires documents only:
+- Keywords: "document", "create plan", "design spec", "requirements gathering"
+- Acceptance criteria focused on ARTIFACTS (e.g., "document created", "plan outlined")
+- **Required deliverables**: Markdown documents, diagrams, specifications
+- **Example**: "Create API design specification for payment integration"
+
+**Vision/Strategy Issue** - Requires BOTH implementation AND planning:
+- Keywords: "vision", "roadmap", "strategy" WITH implementation requirements
+- Acceptance criteria include BOTH behavioral changes AND planning artifacts
+- **Required deliverables**: Code changes + tests + documentation + KPI framework
+- **Example**: "Vision: Auth-first UX" with requirements like "Replace wizard paths" + "Define KPI impact"
+
+### 🚨 CRITICAL PAST VIOLATION - February 18, 2026 🚨
+
+**Violation**: Copilot misidentified a vision/strategy issue as documentation-only and created 70KB of KPI documentation without ANY code changes or tests.
+
+**What Went Wrong**:
+- Issue title: "Vision: Auth-first token creation UX and deterministic compliance workflow"
+- Issue had 30 requirements asking for "Define measurable KPI impact and instrumentation mapping"
+- BUT the issue ALSO had implementation requirements in "In Scope" section:
+  - "Replace residual wizard-oriented paths with auth-first journey"
+  - "Build deterministic states for loading, empty, success, failure screens"
+  - "Add resilient UI contract tests"
+  - "Add UX telemetry"
+- Product owner rejection: "required CI evidence is missing, no proof tests cover auth-first product behavior"
+
+**Correct Approach** for Vision/Strategy Issues:
+1. **READ ENTIRE ISSUE**: Don't focus only on "Requirements 1-30" - read "In Scope", "Acceptance Criteria", "Technical Approach"
+2. **Identify Implementation Work**: Look for behavioral requirements (e.g., "replace X", "build Y", "add Z")
+3. **Deliver BOTH**: Implementation (code + tests + CI fix) AND planning (KPI docs, instrumentation specs)
+4. **Test-First Always**: Even for vision issues, start with tests that prove the vision is implemented
+
+**Pattern to Prevent Recurrence**:
+```
+BEFORE starting work on ANY issue:
+1. Read full issue description (not just requirements list)
+2. Check "In Scope" section for code changes
+3. Check "Acceptance Criteria" for test requirements
+4. Check "Testing" section for coverage expectations
+5. If BOTH implementation AND documentation needed → deliver BOTH
+6. If unsure → ask product owner to clarify
+```
+
+**Red Flags** (indicates implementation required, not just docs):
+- "Fix CI" mentioned anywhere
+- "Add tests" in acceptance criteria
+- "Replace", "Build", "Implement" in scope section
+- Product owner references roadmap blockers needing resolution
+- Mentions of "deterministic behavior", "validation", "user flows"
+
 ## 🚨 ABSOLUTE PRIORITY: TESTING COMPLIANCE 🚨
 
 **CRITICAL ENFORCEMENT:** Under NO circumstances shall any work be completed with failing tests or insufficient test coverage. Previous violations have resulted in production bugs and must never recur.
