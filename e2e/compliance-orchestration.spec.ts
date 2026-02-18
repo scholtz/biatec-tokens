@@ -124,7 +124,9 @@ test.describe('Compliance Orchestration View', () => {
     const h1Count = await page.locator('h1').count()
     expect(h1Count).toBeGreaterThan(0)
     
-    // Check for interactive elements
+    // Check for interactive elements - wait for buttons to render
+    // CI environment needs extra time for components to mount and render
+    await page.waitForTimeout(3000) // Additional wait for button rendering
     const buttons = await page.locator('button').count()
     expect(buttons).toBeGreaterThan(0)
   })
