@@ -11,6 +11,40 @@
 
 **PAST VIOLATIONS:** Copilot has previously finished work with failing tests and reduced coverage, violating these instructions. This has introduced bugs and reduced quality. This MUST NOT happen again.
 
+**CRITICAL PAST VIOLATION - February 2026**: Copilot submitted PR #419 with only E2E tests but NO unit/integration tests for the underlying logic being tested (auth store, router guard). This was rejected by product owner. ALWAYS write unit/integration tests FIRST, then E2E tests to validate the complete user journey.
+
+## 🚨 TEST PYRAMID ENFORCEMENT 🚨
+
+**MANDATORY TEST ORDER** - Tests must be written in this order:
+
+1. **FIRST: Unit Tests** - Test individual functions, stores, utilities in isolation
+   - Auth stores, router guards, services, utilities
+   - Minimum 15+ tests for new stores, 10+ for utilities
+   - These are FAST (milliseconds) and test logic directly
+   
+2. **SECOND: Integration Tests** - Test interactions between components
+   - Store + router guard interactions
+   - Component + store interactions
+   - Service integrations
+   
+3. **LAST: E2E Tests** - Test complete user journeys
+   - These are SLOW (seconds) and test the full stack
+   - Used to validate user flows, not test logic
+   - E2E tests without unit tests = INCOMPLETE COVERAGE
+
+**WHY THIS MATTERS**:
+- Unit tests catch 80% of bugs in milliseconds
+- E2E tests catch 20% of bugs in minutes
+- E2E-only testing is 100x slower and misses edge cases
+- Product owner WILL REJECT PRs with E2E-only coverage
+
+**EXAMPLE - Auth-First Routing**:
+❌ **WRONG**: Only add E2E tests for login flow
+✅ **CORRECT**: 
+- Unit tests for auth store (24 tests) - test initialization, persistence, edge cases
+- Integration tests for router guard (17 tests) - test routing logic directly  
+- E2E tests (13 tests) - test complete user journey
+
 ## 🚨 PRODUCT OWNER QUALITY REQUIREMENTS 🚨
 
 **MANDATORY COMPLETENESS CHECKLIST** - Work is NEVER considered complete without ALL of the following:
