@@ -46,7 +46,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
 import type { DeterministicState } from '../../utils/deterministicStateManager';
 
 interface Props {
