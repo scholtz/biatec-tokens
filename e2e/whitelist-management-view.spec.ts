@@ -29,7 +29,6 @@ test.describe('Whitelist Management View', () => {
     // Navigate to whitelist management page
     await page.goto('/compliance/whitelists');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1500); // Let mock data load (500-800ms typical)
   });
 
   test('should display Whitelist Management page with correct title', async ({ page }) => {
@@ -41,10 +40,7 @@ test.describe('Whitelist Management View', () => {
   });
 
   test('should display summary metrics cards', async ({ page }) => {
-    // Wait for page to fully load
-    await page.waitForTimeout(1500);
-
-    // Check for metric cards - graceful handling for CI
+    // Check for metric cards - semantic wait replaces arbitrary 1500ms timeout
     const totalEntriesCard = page.getByText('Total Entries');
     const approvedCard = page.getByText('Approved');
     const pendingCard = page.getByText('Pending Review');
@@ -60,10 +56,7 @@ test.describe('Whitelist Management View', () => {
   });
 
   test('should show action buttons (Import CSV and Add Entry)', async ({ page }) => {
-    // Wait for buttons to render
-    await page.waitForTimeout(1500);
-
-    // Check for Import CSV button
+    // Check for Import CSV button - semantic wait
     const importButton = page.locator('button:has-text("Import CSV")');
     await expect(importButton.first()).toBeVisible({ timeout: 15000 });
 
@@ -73,10 +66,7 @@ test.describe('Whitelist Management View', () => {
   });
 
   test('should display empty state when no entries exist', async ({ page }) => {
-    // Wait for content to load
-    await page.waitForTimeout(1500);
-
-    // Check for either empty state or table
+    // Check for either empty state or table - semantic wait
     const emptyStateHeading = page.getByRole('heading', { name: /No Whitelist Entries Yet/i });
     const whitelistTable = page.locator('.whitelist-table').or(page.getByText('Name')); // Table header
 
@@ -88,10 +78,7 @@ test.describe('Whitelist Management View', () => {
   });
 
   test('should display empty state guidance when no entries', async ({ page }) => {
-    // Wait for content to load
-    await page.waitForTimeout(1500);
-
-    // Check for empty state
+    // Check for empty state - semantic wait
     const emptyStateHeading = page.getByRole('heading', { name: /No Whitelist Entries Yet/i });
     const hasEmptyState = await emptyStateHeading.count().then(count => count > 0);
 

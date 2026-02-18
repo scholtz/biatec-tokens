@@ -34,9 +34,8 @@ test.describe('Token Lifecycle Cockpit', () => {
   test('should display cockpit page correctly', async ({ page }) => {
     await page.goto('/cockpit')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000) // Auth store init + component load in CI
 
-    // Check page title
+    // Check page title - use longer timeout instead of arbitrary wait
     const title = page.getByRole('heading', { name: /Token Lifecycle Cockpit/i, level: 1 })
     await expect(title).toBeVisible({ timeout: 45000 })
 
@@ -56,20 +55,19 @@ test.describe('Token Lifecycle Cockpit', () => {
   test('should navigate to cockpit from navbar', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
 
-    // Click cockpit link
+    // Click cockpit link - wait for it to be visible first
     const cockpitLink = page.getByRole('link', { name: /Cockpit/i })
+    await expect(cockpitLink).toBeVisible({ timeout: 15000 })
     await cockpitLink.click()
     
     // Wait for navigation and page load
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000) // CI needs time for auth + page load
 
     // Verify we're on the cockpit page
     await expect(page).toHaveURL('/cockpit')
     
-    // Check main heading
+    // Check main heading - semantic wait replaces arbitrary 10s timeout
     const title = page.getByRole('heading', { name: /Token Lifecycle Cockpit/i })
     await expect(title).toBeVisible({ timeout: 45000 })
   })
@@ -77,7 +75,6 @@ test.describe('Token Lifecycle Cockpit', () => {
   test('should display role selector', async ({ page }) => {
     await page.goto('/cockpit')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
 
     // Check role selector dropdown
     const roleSelect = page.locator('select')
@@ -94,9 +91,8 @@ test.describe('Token Lifecycle Cockpit', () => {
   test('should display readiness status widget', async ({ page }) => {
     await page.goto('/cockpit')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
 
-    // Check for readiness widget
+    // Check for readiness widget - semantic wait instead of arbitrary timeout
     const readinessWidget = page.getByRole('heading', { name: /Launch Readiness/i })
     await expect(readinessWidget).toBeVisible({ timeout: 45000 })
     
@@ -107,9 +103,8 @@ test.describe('Token Lifecycle Cockpit', () => {
   test('should display guided actions widget', async ({ page }) => {
     await page.goto('/cockpit')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
 
-    // Check for actions widget
+    // Check for actions widget - semantic wait
     const actionsWidget = page.getByRole('heading', { name: /Guided Next Actions/i })
     await expect(actionsWidget).toBeVisible({ timeout: 45000 })
   })
@@ -117,9 +112,8 @@ test.describe('Token Lifecycle Cockpit', () => {
   test('should display wallet diagnostics widget', async ({ page }) => {
     await page.goto('/cockpit')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
 
-    // Check for diagnostics widget
+    // Check for diagnostics widget - semantic wait
     const diagnosticsWidget = page.getByRole('heading', { name: /Wallet Diagnostics/i })
     await expect(diagnosticsWidget).toBeVisible({ timeout: 45000 })
   })
@@ -127,9 +121,8 @@ test.describe('Token Lifecycle Cockpit', () => {
   test('should display risk indicators widget', async ({ page }) => {
     await page.goto('/cockpit')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
 
-    // Check for risk widget
+    // Check for risk widget - semantic wait
     const riskWidget = page.getByRole('heading', { name: /Lifecycle Risk Indicators/i })
     await expect(riskWidget).toBeVisible({ timeout: 45000 })
   })
@@ -137,9 +130,8 @@ test.describe('Token Lifecycle Cockpit', () => {
   test('should have refresh button', async ({ page }) => {
     await page.goto('/cockpit')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
 
-    // Check for refresh button
+    // Check for refresh button - semantic wait
     const refreshButton = page.getByRole('button', { name: /Refresh/i })
     await expect(refreshButton).toBeVisible({ timeout: 45000 })
   })
@@ -147,21 +139,16 @@ test.describe('Token Lifecycle Cockpit', () => {
   test('should show last updated timestamp', async ({ page }) => {
     await page.goto('/cockpit')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
 
-    // Wait for data to load
-    await page.waitForTimeout(2000)
-
-    // Check for last updated text
+    // Check for last updated text - semantic wait (removed extra 2s timeout)
     await expect(page.getByText(/Last updated:/i)).toBeVisible({ timeout: 45000 })
   })
 
   test('should change role and update visible widgets', async ({ page }) => {
     await page.goto('/cockpit')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
 
-    // Initially as Issuer Admin, all widgets should be visible
+    // Initially as Issuer Admin, all widgets should be visible - semantic wait
     await expect(page.getByRole('heading', { name: /Launch Readiness/i })).toBeVisible({ timeout: 45000 })
     await expect(page.getByRole('heading', { name: /Post-Launch Telemetry/i })).toBeVisible()
     
@@ -169,9 +156,8 @@ test.describe('Token Lifecycle Cockpit', () => {
     const roleSelect = page.locator('select')
     await roleSelect.waitFor({ state: 'visible', timeout: 45000 })
     await roleSelect.selectOption('compliance')
-    await page.waitForTimeout(2000)
     
-    // Compliance should see readiness but not telemetry
+    // Wait for role change to propagate by checking readiness is still visible
     await expect(page.getByRole('heading', { name: /Launch Readiness/i })).toBeVisible()
     // Note: Telemetry widget is hidden based on permissions, would need to check it's not in DOM
   })

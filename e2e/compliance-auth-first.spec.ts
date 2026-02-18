@@ -55,9 +55,8 @@ test.describe('Compliance Dashboard - Auth-First Flow', () => {
     // Navigate to compliance dashboard
     await page.goto('/compliance/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000) // CI needs extra time for auth store init + mount
     
-    // Should display the dashboard
+    // Should display the dashboard - semantic wait replaces arbitrary 10s timeout
     const heading = page.getByRole('heading', { level: 1 }).first()
     await expect(heading).toBeVisible({ timeout: 45000 })
   })
@@ -75,9 +74,8 @@ test.describe('Compliance Dashboard - Auth-First Flow', () => {
     // Navigate to compliance dashboard
     await page.goto('/compliance/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
     
-    // Wait for page to load
+    // Wait for page to load - semantic wait
     const heading = page.getByRole('heading', { level: 1 }).first()
     await expect(heading).toBeVisible({ timeout: 45000 })
     
@@ -103,18 +101,16 @@ test.describe('Compliance Dashboard - Auth-First Flow', () => {
     // Start at compliance dashboard
     await page.goto('/compliance/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
     
-    // Verify compliance dashboard loaded
+    // Verify compliance dashboard loaded - semantic wait
     const heading1 = page.getByRole('heading', { level: 1 }).first()
     await expect(heading1).toBeVisible({ timeout: 45000 })
     
     // Navigate to main dashboard
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
     
-    // Should still be authenticated (page loads, not redirected)
+    // Should still be authenticated (page loads, not redirected) - semantic wait
     const heading2 = page.getByRole('heading', { level: 1 }).first()
     await expect(heading2).toBeVisible({ timeout: 45000 })
     
@@ -136,9 +132,8 @@ test.describe('Compliance Dashboard - Auth-First Flow', () => {
     // Navigate to compliance dashboard
     await page.goto('/compliance/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
     
-    // Wait for page to load
+    // Wait for page to load - semantic wait
     const heading = page.getByRole('heading', { level: 1 }).first()
     await expect(heading).toBeVisible({ timeout: 45000 })
     
