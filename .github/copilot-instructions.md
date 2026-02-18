@@ -62,6 +62,55 @@ BEFORE starting work on ANY issue:
 - Product owner references roadmap blockers needing resolution
 - Mentions of "deterministic behavior", "validation", "user flows"
 
+**Validation/Verification Issue** - Requires VALIDATION of existing code + documentation:
+- Keywords: "validate", "verify", "confirm", "document existing", "audit"
+- Acceptance criteria focused on PROVING existing functionality works
+- **Required deliverables**: Test execution evidence + documentation + gap analysis + CI proof
+- **Example**: "Validate auth-first routing is complete and document test coverage"
+
+### 🚨 CRITICAL PAST VIOLATION - February 18, 2026 (Issue #430) 🚨
+
+**Violation**: Copilot misidentified validation issue as documentation-only and delivered 120KB of analysis docs WITHOUT running tests or proving CI works.
+
+**What Went Wrong**:
+- Issue title: "Frontend auth-first determinism and compliance UX hardening"
+- Issue scope: "Ensure every user journey routes to auth", "Remove wallet-era affordances", "E2E stability hardening"
+- Keywords like "ensure", "verify", "reduce flakiness" suggested VALIDATION work
+- Copilot delivered: Analysis docs, skip rationale, implementation summary
+- Product owner rejection: "no passing CI evidence", "add concrete unit and integration tests", "fix CI"
+
+**What Should Have Happened**:
+1. **Run existing tests FIRST** to prove functionality works
+2. **Check CI status** - are tests passing in CI?
+3. **If tests exist and pass**: Document execution evidence + screenshots + CI links
+4. **If tests missing**: Write the missing tests FIRST, then document
+5. **If CI failing**: Investigate and FIX CI before claiming completion
+6. **Deliver PROOF**: Test execution logs, CI workflow links, before/after screenshots
+
+**Correct Approach for Validation Issues**:
+```
+VALIDATION WORK CHECKLIST:
+1. ✅ Run existing unit tests locally → Document pass counts
+2. ✅ Run existing E2E tests locally → Document pass counts  
+3. ✅ Check CI status → Link to passing workflows OR fix failures
+4. ✅ If tests missing → Write tests FIRST, document SECOND
+5. ✅ If CI broken → Fix CI FIRST, document SECOND
+6. ✅ Provide EVIDENCE: Test logs, CI links, screenshots, coverage reports
+7. ✅ Document gaps with MITIGATION plans (not just analysis)
+8. ✅ Link PR to issue number (e.g., "Fixes #430")
+```
+
+**Red Flags for Validation Issues**:
+- "Validate", "Verify", "Ensure", "Confirm" in title
+- "Prove", "Demonstrate", "Show evidence" in acceptance criteria
+- "CI passing", "Tests green", "Coverage maintained" requirements
+- Product owner asking for "proof", "evidence", "execution logs"
+
+**Deliverable Requirements**:
+- ❌ WRONG: Only analysis documents (no proof tests work)
+- ❌ WRONG: Documentation + "tests exist" claim (no execution evidence)
+- ✅ CORRECT: Test execution logs + CI links + screenshots + gap mitigation + docs
+
 ## 🚨 ABSOLUTE PRIORITY: TESTING COMPLIANCE 🚨
 
 **CRITICAL ENFORCEMENT:** Under NO circumstances shall any work be completed with failing tests or insufficient test coverage. Previous violations have resulted in production bugs and must never recur.
