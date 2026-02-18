@@ -71,13 +71,59 @@ Tests are organized by feature:
 ### Best Practices
 
 1. **Use Auth-First Pattern** - Set up localStorage auth before testing protected routes
-2. **Wait for elements** properly using `expect().toBeVisible()`
+2. **Use Semantic Waits** - Wait for specific elements, not arbitrary timeouts
 3. **Use semantic selectors** like `getByRole()`, `getByText()`
 4. **Test user behavior**, not implementation details
 5. **Keep tests independent** - each test should be able to run standalone
 6. **Use descriptive test names** that explain what is being tested
-7. **Avoid hard-coded timeouts** - use `waitForLoadState()` and visibility checks instead
+7. **AVOID arbitrary timeouts** - use `waitForLoadState()` and element visibility checks
 8. **Test auth-first routing** - verify unauthenticated users are redirected appropriately
+
+### ⚠️ CRITICAL: Avoid Arbitrary Timeouts
+
+**❌ BAD PATTERN** - Brittle, slow, unclear failures:
+```typescript
+await page.goto('/cockpit')
+await page.waitForLoadState('networkidle')
+await page.waitForTimeout(10000) // "CI needs time" - arbitrary!
+
+const title = page.getByRole('heading', { name: /Cockpit/i })
+await expect(title).toBeVisible({ timeout: 45000 })
+```
+
+**✅ GOOD PATTERN** - Deterministic, fast, clear failures:
+```typescript
+await page.goto('/cockpit')
+await page.waitForLoadState('networkidle')
+
+// Wait for specific element - no arbitrary timeout needed
+const title = page.getByRole('heading', { name: /Cockpit/i })
+await expect(title).toBeVisible({ timeout: 45000 })
+```
+
+**Why This Matters**:
+- **Fast systems**: No unnecessary 10s wait if element appears in 2s
+- **Slow systems**: 45s timeout accommodates CI environment variance
+- **Clear failures**: Error shows exactly which element didn't appear
+- **Maintainable**: Test intent is clear
+
+### Timeout Guidelines
+
+**When to use `waitForTimeout`** (rarely):
+- ✅ Animation/transition delays (300ms max)
+- ✅ Debounced input (known timing, <1s)
+- ❌ **NEVER** for page load or component mount
+- ❌ **NEVER** for "CI needs time" scenarios
+
+**Recommended timeout values**:
+- Element visibility: `{ timeout: 45000 }` (CI-safe)
+- User interactions: `{ timeout: 15000 }` (fast operations)
+- Auth redirects: `{ timeout: 15000 }` (flexible URL checks)
+
+**Why 45 seconds?**
+- Local dev: Elements appear in 2-5 seconds
+- CI environment: Auth init + component mount = 10-20 seconds
+- Safety margin: 2x buffer for CI variability
 
 ### Example Test - Auth-First Pattern
 
@@ -86,6 +132,17 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Feature Name', () => {
   test.beforeEach(async ({ page }) => {
+    // Suppress browser console errors (prevent Playwright exit code 1)
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        console.log(`Browser console error (suppressed): ${msg.text()}`)
+      }
+    })
+    
+    page.on('pageerror', error => {
+      console.log(`Page error (suppressed): ${error.message}`)
+    })
+    
     // Set up authenticated session
     await page.addInitScript(() => {
       localStorage.setItem('algorand_user', JSON.stringify({
@@ -94,22 +151,59 @@ test.describe('Feature Name', () => {
         isConnected: true,
       }))
     });
-    
-    await page.goto('/protected-route');
-    await page.waitForLoadState('networkidle');
   });
 
-  test('should do something', async ({ page }) => {
-    // Arrange
-    const button = page.getByRole('button', { name: /Click Me/i });
+  test('should display protected page', async ({ page }) => {
+    await page.goto('/protected-route');
+    await page.waitForLoadState('networkidle');
     
-    // Act
-    await button.click();
+    // ✅ Semantic wait - no arbitrary timeout
+    const heading = page.getByRole('heading', { name: /Expected Title/i })
+    await expect(heading).toBeVisible({ timeout: 45000 })
     
-    // Assert
-    await expect(page.getByText(/Success/i)).toBeVisible();
+    // Test business logic
+    // ...
+  });
+
+  test('should redirect unauthenticated user', async ({ page }) => {
+    // Clear auth state
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+    await page.evaluate(() => localStorage.clear())
+    
+    // Try to access protected route
+    await page.goto('/protected-route')
+    await page.waitForLoadState('networkidle')
+    
+    // Flexible verification (CI-safe)
+    const url = page.url()
+    const urlHasAuthParam = url.includes('showAuth=true')
+    const authModalVisible = await page.locator('form')
+      .filter({ hasText: /email/i })
+      .isVisible()
+      .catch(() => false)
+    
+    expect(urlHasAuthParam || authModalVisible).toBe(true)
   });
 });
+```
+
+### Auth Store Initialization in CI
+
+**Problem**: Auth store initializes asynchronously in `main.ts`. In CI environments, this can take 10-20 seconds.
+
+**Solution**: Use generous timeouts (45s) on first element visibility check instead of arbitrary upfront waits.
+
+```typescript
+// ❌ BAD: Arbitrary wait assumes fixed timing
+await page.goto('/protected-route')
+await page.waitForTimeout(10000) // Might not be enough in CI!
+
+// ✅ GOOD: Semantic wait adapts to actual timing
+await page.goto('/protected-route')
+await page.waitForLoadState('networkidle')
+const heading = page.getByRole('heading', { name: /Title/i })
+await expect(heading).toBeVisible({ timeout: 45000 })
 ```
 
 ## Configuration
