@@ -589,6 +589,28 @@ test('should allow authenticated user to access route', async ({ page }) => {
 - Document all optimization iterations in skip comment
 - Get product owner approval for CI-only skips
 
+**Exit Code Forcing (PROHIBITED):**
+- ❌ **NEVER** force `process.exitCode = 0` to hide test failures
+- ❌ **NEVER** use exit hooks to mask CI failures
+- ✅ **ALWAYS** let real test failures surface in CI
+- ✅ **CRITICAL LESSON LEARNED (Feb 2026)**: When removing exit code forcing that was masking failures:
+  1. **MUST** run full E2E test suite locally FIRST
+  2. **MUST** fix any exposed flaky tests BEFORE committing
+  3. **MUST** verify all tests pass in CI after removal
+  4. Pattern: Remove forcing → Run E2E locally → Fix flaky tests → Commit → Verify CI
+
+**Why Exit Code Forcing is Prohibited:**
+- Masks real test failures, violating deterministic behavior requirements
+- Makes debugging impossible (failures hidden)
+- Violates product owner quality standards
+- Creates false confidence in CI green status
+
+**What to Do Instead:**
+- Use per-test error suppression: `page.on('console', ...)` in `beforeEach`
+- Fix flaky tests with proper waits (not arbitrary timeouts)
+- Let custom reporters show actual test results
+- Address root causes, not symptoms
+
 ### E2E Failure Investigation Protocol
 
 **When E2E tests fail:**
@@ -639,11 +661,13 @@ test('should align with business roadmap requirements', async ({ page }) => {
 - ❌ Using brittle timing waits (hardcoded timeouts)
 - ❌ Ignoring CI failures as "pre-existing"
 - ❌ Not verifying product roadmap alignment
+- ❌ **NEW (Feb 2026)**: Removing exit code forcing without running full E2E suite first
 
 **Product Owner Rejection History:**
 - Work rejected for missing E2E coverage
 - Work rejected for flaky E2E tests in CI
 - Work rejected for wallet UI traces in auth-first flows
+- **Feb 2026 (PR #421)**: Work initially incomplete - removed exit code forcing (correct per requirements) but didn't run full E2E suite to fix exposed flaky tests. Fixed by adding proper waits to flaky test.
 
 ## Project Overview
 
