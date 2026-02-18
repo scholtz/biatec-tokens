@@ -179,5 +179,264 @@
 
 ---
 
-**Last Updated:** February 16, 2026
-**Next Review:** February 23, 2026
+## UX/Design Improvement Roadmap (Added February 18, 2026)
+
+### Critical UX/Design Issues Identified 🔴
+
+Based on comprehensive product review including source code analysis, E2E test coverage review, and component structure assessment, the following design and UX issues require immediate attention:
+
+#### 1. **CRITICAL: WCAG Accessibility Compliance** 🔴 **PRIORITY: HIGH**
+
+**Issue:** Color contrast violations likely failing WCAG 2.1 AA standards (4.5:1 ratio requirement)
+
+**Evidence:**
+- `text-gray-300`, `text-gray-400`, `text-gray-500` used extensively on dark backgrounds
+- `text-red-300` error messages on light backgrounds
+- Focus indicators present but not consistently visible across interactive elements
+
+**Business Impact:** 
+- Legal compliance risk (EU Web Accessibility Directive, ADA)
+- Excludes users with visual impairments (15%+ of potential market)
+- Regulatory review blocker for MICA compliance (accessibility is part of consumer protection)
+
+**Required Actions:**
+1. Audit all color combinations using automated tools (axe DevTools, WAVE)
+2. Replace low-contrast grays with WCAG AA compliant alternatives
+3. Redesign error state colors to meet 4.5:1 minimum contrast
+4. Implement visible focus indicators on all interactive elements
+5. Test with real screen readers (NVDA, JAWS, VoiceOver)
+6. Document keyboard navigation patterns for all workflows
+
+**Acceptance Criteria:**
+- 100% WCAG 2.1 AA compliance verified with automated tools
+- All error messages pass 4.5:1 contrast ratio
+- Focus indicators visible at 1.5rem distance
+- Screen reader testing on 5 critical user flows
+- Keyboard-only navigation documentation complete
+
+**Estimated Effort:** 40-60 hours (2-3 weeks, 1 developer)
+
+---
+
+#### 2. **Navigation Complexity & Mobile Inconsistency** 🟡 **PRIORITY: MEDIUM**
+
+**Issue:** Desktop shows 9 navigation items, mobile menu shows only 7 items (missing 2 links)
+
+**Evidence:**
+- Desktop navigation: Home, Cockpit, Guided Launch, Compliance, Create, Dashboard, Insights, Pricing, Settings (9 items)
+- Mobile navigation: Incomplete subset of desktop items
+- Cognitive load at upper limit for non-technical users (target audience per roadmap)
+
+**Business Impact:**
+- Confuses non-crypto native users (target audience)
+- Mobile users cannot access all features (40%+ of traffic)
+- Reduces feature discovery and conversion rates
+
+**Required Actions:**
+1. Consolidate navigation to 5-7 core items maximum
+2. Group related items under dropdowns (e.g., "Compliance" → Setup, Dashboard, Whitelists)
+3. Ensure 100% parity between desktop and mobile navigation
+4. Add visual hierarchy (primary vs secondary actions)
+5. A/B test reduced navigation for conversion impact
+
+**Acceptance Criteria:**
+- Maximum 7 top-level navigation items
+- 100% mobile/desktop parity
+- Sub-navigation for grouped features
+- User testing shows improved task completion time
+- Analytics show improved feature discovery
+
+**Estimated Effort:** 24-32 hours (1-2 weeks, 1 developer)
+
+---
+
+#### 3. **Legacy Wizard Flow Cleanup** 🟡 **PRIORITY: MEDIUM**
+
+**Issue:** Multiple E2E tests still reference `/create/wizard` path (legacy, redirects to `/launch/guided`)
+
+**Evidence:**
+- 6 test files contain wizard references: `token-wizard-whitelist.spec.ts`, `compliance-orchestration.spec.ts`, `token-utility-recommendations.spec.ts`, `guided-token-launch.spec.ts`, `compliance-setup-workspace.spec.ts`, `auth-first-token-creation.spec.ts`
+- Tests are skipped but still present in codebase
+- Comments indicate "legacy path" but no migration timeline
+- Creates confusion about which flow is canonical
+
+**Business Impact:**
+- Development velocity reduced (unclear which flow to maintain)
+- QA confidence lowered (skipped tests don't validate functionality)
+- User confusion if old documentation references wizard path
+
+**Required Actions:**
+1. Migrate all wizard functionality to guided launch flow
+2. Remove or update all `/create/wizard` test references
+3. Verify `/create/wizard` → `/launch/guided` redirect works
+4. Update all documentation to reference guided launch only
+5. Remove TokenCreationWizard.vue component if no longer used
+
+**Acceptance Criteria:**
+- Zero skipped tests referencing `/create/wizard`
+- All wizard tests migrated or removed
+- Redirect tested in E2E suite
+- Documentation audit complete (no wizard references)
+- Component removed or clearly marked as deprecated
+
+**Estimated Effort:** 16-24 hours (1 week, 1 developer)
+
+---
+
+#### 4. **Error Message User Experience** 🟡 **PRIORITY: MEDIUM**
+
+**Issue:** Error messages sometimes expose technical details instead of user-friendly guidance
+
+**Evidence:**
+- Components use `err.message` patterns which may show stack traces or error codes
+- Good patterns exist (`StateMessage` component with `userGuidance` and `nextAction` fields) but not used consistently
+- Some errors show "Temporary Issue" vs "Error" semantic differentiation (good) but inconsistent
+
+**Business Impact:**
+- Non-technical users confused by error messages (target audience per roadmap)
+- Increased support ticket volume
+- Reduced user trust and confidence
+- Longer time to resolution for user errors
+
+**Required Actions:**
+1. Audit all error handling code for user-facing error messages
+2. Implement consistent error message translation layer
+3. Ensure all errors include:
+   - What happened (user-friendly language)
+   - Why it matters (business impact)
+   - How to fix it (actionable next steps)
+   - Support contact (for unresolvable errors)
+4. Add error message testing to QA checklist
+5. Document error message patterns in style guide
+
+**Acceptance Criteria:**
+- 100% of user-facing errors use translation layer
+- All errors include 3-part structure (what/why/how)
+- No technical error codes or stack traces shown to users
+- Error messages tested with non-technical users
+- Style guide documented with 10+ examples
+
+**Estimated Effort:** 32-48 hours (2 weeks, 1 developer)
+
+---
+
+#### 5. **View/Component Consolidation** 🟡 **PRIORITY: LOW**
+
+**Issue:** 28 views detected, potential duplication (GuidedTokenLaunch + TokenCreationWizard both create tokens)
+
+**Evidence:**
+- `src/views/` contains 28 view files
+- Multiple similar flows: GuidedTokenLaunch.vue, TokenCreationWizard.vue, TokenCreator.vue
+- Unclear which flow is recommended for different user types
+- Increases maintenance burden and testing surface
+
+**Business Impact:**
+- Confuses users about which flow to use
+- Increased development and QA costs
+- Risk of feature drift between duplicate flows
+- Harder to measure conversion metrics (split across flows)
+
+**Required Actions:**
+1. Map all 28 views to user journeys
+2. Identify duplicate/overlapping functionality
+3. Consolidate to single recommended flow per use case
+4. Archive or remove deprecated views
+5. Update navigation to reflect consolidated structure
+6. Add flow selection guidance for edge cases
+
+**Acceptance Criteria:**
+- Single recommended token creation flow documented
+- Deprecated views removed from codebase
+- Navigation updated to reflect consolidated structure
+- User journey map shows clear paths (no overlap)
+- Analytics tracking on single consolidated flow
+
+**Estimated Effort:** 40-60 hours (2-3 weeks, 1 developer)
+
+---
+
+### Low Priority UX Improvements 🟢
+
+#### 6. **Loading State Consistency** 🟢 **PRIORITY: LOW**
+
+**Issue:** Loading states exist (Button component has loading spinner) but consistency across views not verified
+
+**Required Actions:**
+1. Audit all async operations for loading state indicators
+2. Standardize loading state patterns (skeleton loaders, spinners, progress bars)
+3. Ensure loading states accessible (aria-busy, aria-live announcements)
+4. Document loading state guidelines
+
+**Estimated Effort:** 16-24 hours
+
+---
+
+#### 7. **Form Validation UX** 🟢 **PRIORITY: LOW**
+
+**Issue:** Form validation present (Input/Select components have error states) but validation timing not documented
+
+**Required Actions:**
+1. Audit validation timing (on blur vs on submit vs on change)
+2. Standardize validation feedback patterns
+3. Add inline validation hints before errors occur
+4. Test validation UX with real users
+
+**Estimated Effort:** 16-24 hours
+
+---
+
+#### 8. **Progressive Disclosure** 🟢 **PRIORITY: LOW**
+
+**Issue:** Some components use `<details>` for technical information (good pattern) but not consistent across complex flows
+
+**Required Actions:**
+1. Identify complex workflows with 5+ steps
+2. Implement progressive disclosure (show essential, hide advanced)
+3. Add "Show advanced options" toggles
+4. Test with beginner vs expert users
+
+**Estimated Effort:** 24-32 hours
+
+---
+
+### Recommended Implementation Priority
+
+**Phase 1 (MVP Blockers - Next 2 Weeks):**
+1. ✅ **WCAG Accessibility Compliance** - Legal/regulatory requirement
+2. ✅ **Navigation Mobile Parity** - Blocks 40%+ of users from features
+
+**Phase 2 (Post-MVP UX Hardening - Weeks 3-6):**
+3. ✅ **Error Message UX** - Reduces support costs
+4. ✅ **Legacy Wizard Cleanup** - Improves development velocity
+
+**Phase 3 (Continuous Improvement - Q2 2026):**
+5. ✅ **View/Component Consolidation** - Long-term maintainability
+6. ✅ **Loading State Consistency** - Polish
+7. ✅ **Form Validation UX** - Conversion optimization
+8. ✅ **Progressive Disclosure** - Advanced user experience
+
+---
+
+### Success Metrics
+
+**Accessibility:**
+- WCAG 2.1 AA compliance: 0% → 100%
+- Screen reader compatibility: Unknown → 5 flows tested
+
+**Navigation:**
+- Mobile feature access: ~70% → 100%
+- Task completion time: Baseline → -20%
+
+**Error UX:**
+- Support tickets (error-related): Baseline → -30%
+- User satisfaction (error scenarios): Baseline → +40%
+
+**Code Quality:**
+- Skipped E2E tests: 23 → 0
+- View count: 28 → 15-20 (consolidated)
+- Test coverage (UX flows): Unknown → 80%+
+
+---
+
+**Last Updated:** February 18, 2026 (UX/Design Review by Barb UxDesigner)
+**Next Review:** February 25, 2026
