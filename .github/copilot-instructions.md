@@ -68,6 +68,42 @@ BEFORE starting work on ANY issue:
 - **Required deliverables**: Test execution evidence + documentation + gap analysis + CI proof
 - **Example**: "Validate auth-first routing is complete and document test coverage"
 
+### 🚨 CRITICAL PAST VIOLATION - February 18, 2026 (Issue #432) 🚨
+
+**Violation**: Copilot misidentified implementation issue as validation-only based on memory that "auth-first routing already implemented."
+
+**What Went Wrong**:
+- Issue title: "Build the next high-impact frontend milestone" - keyword "BUILD" indicates IMPLEMENTATION
+- Issue scope: "Implement or refine", "Remove or refactor", "Ensure CTAs consistently route"
+- Copilot saw "Ensure" and "verify" keywords, assumed validation-only work
+- Copilot relied on memory saying "auth-first routing fully implemented" without verifying CURRENT state
+- Delivered only documentation (validation summary, manual checklist)
+- Product owner rejection: "no implementation evidence, no passing CI signal, only initialization text"
+
+**Root Cause**:
+- **Memory Blindness**: Trusted stale memory without checking if product roadmap shows issues
+- **Keyword Over-Focus**: Saw "ensure" and ignored "BUILD", "implement or refine", "remove or refactor"
+- **Context Ignore**: Roadmap says "55% complete", "integration issues persist", "ARC76 needs completion"
+- **AC Misread**: ACs say "Ensure CTAs **consistently** route" (implies they DON'T currently), not "Validate CTAs route"
+
+**Correct Approach When Issue Title Says "BUILD"**:
+1. **ALWAYS treat "BUILD" as IMPLEMENTATION** - regardless of other keywords
+2. **CHECK ROADMAP STATUS FIRST**: If roadmap shows incomplete features (50%, 55%, 70%), assume gaps exist
+3. **RUN TESTS TO FIND GAPS**: Don't assume memory is current - test to find what's broken
+4. **IMPLEMENT GAPS FIRST**: Fix broken tests, add missing features, THEN validate
+5. **IGNORE MEMORIES ABOUT "ALREADY COMPLETE"**: Memories may be stale, roadmap is source of truth
+
+**Red Flags This Was Implementation, Not Validation**:
+- ✅ Issue title starts with "BUILD"
+- ✅ Roadmap shows 50-70% completion (not 100%)
+- ✅ Scope uses "implement OR refine" (implies might need implementation)
+- ✅ Product owner explicitly asks for "implementation evidence"
+- ✅ Context mentions "integration issues", "needs completion", "partially working"
+
+**When to Do VALIDATION vs IMPLEMENTATION**:
+- **VALIDATION**: Issue title "Validate X", roadmap 100% complete, all tests passing, product owner asks for "proof"
+- **IMPLEMENTATION**: Issue title "Build X", roadmap <100%, ANY mention of bugs/gaps/issues in context
+
 ### 🚨 CRITICAL PAST VIOLATION - February 18, 2026 (Issue #430) 🚨
 
 **Violation**: Copilot misidentified validation issue as documentation-only and delivered 120KB of analysis docs WITHOUT running tests or proving CI works.
