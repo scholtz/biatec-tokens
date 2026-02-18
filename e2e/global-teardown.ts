@@ -2,17 +2,20 @@
  * Playwright Global Teardown
  * 
  * This file handles cleanup after all Playwright tests complete.
+ * 
+ * Per issue #[NUMBER]: Removed exit code forcing to allow real failures to surface.
+ * Cleanup only - exit code reflects actual test results for CI visibility.
  */
 
 import { FullConfig } from '@playwright/test'
 
 async function globalTeardown(config: FullConfig) {
-  // Ensure we exit with code 0 even if there were browser console errors
-  // as long as all test assertions passed
   console.log('Global Playwright teardown completed')
   
-  // Force successful exit if we got here (tests passed)
-  process.exitCode = 0
+  // DO NOT force exit code - let Playwright report actual results
+  // This ensures CI failures are visible and actionable
+  
+  // Optional: Add any cleanup logic here (close connections, etc.)
 }
 
 export default globalTeardown

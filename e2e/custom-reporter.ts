@@ -8,41 +8,54 @@ import type {
 } from '@playwright/test/reporter';
 
 /**
- * Custom Playwright reporter that forces exit code 0 when all test assertions pass.
+ * Custom Playwright reporter that provides detailed test execution summary.
  * 
- * This reporter addresses the issue where Playwright exits with code 1 due to browser
- * console errors, even when all test assertions pass. It hooks into the process exit
- * event to force exit code 0 at the last possible moment before process terminates.
+ * This reporter logs test execution status and helps diagnose CI failures.
+ * Error suppression is handled per-test via beforeEach hooks, not globally.
  * 
- * Browser console errors are still logged (via per-test suppression) but don't fail CI.
+ * Per issue #[NUMBER]: Remove exit code forcing to allow real failures to surface.
+ * Deterministic behavior requires tests to pass/fail based on actual results, not masking.
  */
 class CustomReporter implements Reporter {
+  private testCount = 0;
+  private passedCount = 0;
+  private failedCount = 0;
+  private skippedCount = 0;
+
   onBegin(config: FullConfig, suite: Suite) {
-    // Hook into process exit event to force exit code 0
-    // This is the ONLY way to override an explicit process.exit(1) call
-    process.on('exit', (code) => {
-      // ALWAYS force exit code 0, regardless of original code
-      // Playwright may exit with code 1 due to browser console errors
-      // even when all test assertions pass
-      console.log(`\n[CustomReporter] Process exiting with code ${code}, forcing exit code 0`);
-      process.exitCode = 0;
-    });
+    console.log(`\n[CustomReporter] Starting test run with ${suite.allTests().length} tests`);
   }
 
   onTestBegin(test: TestCase, result: TestResult) {
-    // Optional: Log individual test start
+    this.testCount++;
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
-    // Optional: Log individual test completion
+    if (result.status === 'passed') {
+      this.passedCount++;
+    } else if (result.status === 'failed') {
+      this.failedCount++;
+      console.log(`[CustomReporter] Test FAILED: ${test.title}`);
+      if (result.error) {
+        console.log(`[CustomReporter] Error: ${result.error.message}`);
+      }
+    } else if (result.status === 'skipped') {
+      this.skippedCount++;
+    }
   }
 
   onEnd(result: FullResult) {
     console.log(`\n[CustomReporter] Test run completed with status: ${result.status}`);
-    console.log(`[CustomReporter] Process exit handler will force exit code 0`);
+    console.log(`[CustomReporter] Summary: ${this.passedCount} passed, ${this.failedCount} failed, ${this.skippedCount} skipped`);
     
-    // Also set exitCode directly as belt-and-suspenders
-    process.exitCode = 0;
+    if (this.failedCount > 0) {
+      console.log(`[CustomReporter] ⚠️ ${this.failedCount} test(s) failed - exit code will reflect failures`);
+    } else {
+      console.log(`[CustomReporter] ✅ All tests passed`);
+    }
+    
+    // DO NOT force exit code - let Playwright report actual results
+    // This ensures CI failures are visible and actionable
   }
 }
 
