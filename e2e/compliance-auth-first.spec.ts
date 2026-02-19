@@ -26,13 +26,19 @@ test.describe('Compliance Dashboard - Auth-First Flow', () => {
     // Clear auth state
     await page.goto('/')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1000)
     await page.evaluate(() => localStorage.clear())
     
     // Try to access compliance dashboard
     await page.goto('/compliance/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000) // Auth guard redirect
+    
+    // Semantic wait: Wait for auth guard redirect to complete
+    await page.waitForFunction(() => {
+      const url = window.location.href
+      const hasAuthParam = url.includes('showAuth=true')
+      const emailForm = document.querySelector('form input[type="email"]')
+      return hasAuthParam || emailForm !== null
+    }, { timeout: 10000 })
     
     // Should redirect to home with auth modal trigger
     const url = page.url()
@@ -159,13 +165,19 @@ test.describe('Compliance Orchestration - Auth-First Flow', () => {
     // Clear auth state
     await page.goto('/')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1000)
     await page.evaluate(() => localStorage.clear())
     
     // Try to access compliance orchestration
     await page.goto('/compliance/orchestration')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000) // Auth guard redirect
+    
+    // Semantic wait: Wait for auth guard redirect to complete
+    await page.waitForFunction(() => {
+      const url = window.location.href
+      const hasAuthParam = url.includes('showAuth=true')
+      const emailForm = document.querySelector('form input[type="email"]')
+      return hasAuthParam || emailForm !== null
+    }, { timeout: 10000 })
     
     // Should redirect to home with auth modal trigger
     const url = page.url()
@@ -188,10 +200,9 @@ test.describe('Compliance Orchestration - Auth-First Flow', () => {
     // Navigate to compliance orchestration
     await page.goto('/compliance/orchestration')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000) // CI needs extra time
     
-    // Should display the page
+    // Semantic wait: Wait for page heading to appear (proves page loaded)
     const heading = page.getByRole('heading', { level: 1 }).first()
-    await expect(heading).toBeVisible({ timeout: 45000 })
+    await expect(heading).toBeVisible({ timeout: 60000 }) // Increased for CI auth store init
   })
 })

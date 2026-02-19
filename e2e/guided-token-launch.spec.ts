@@ -36,13 +36,9 @@ test.describe('Guided Token Launch Flow', () => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
     
-    // CI environment needs MUCH longer for auth store initialization + component mount
-    // Auth store initializes async in main.ts, then component mounts, then renders
-    await page.waitForTimeout(5000) // Increased from 3000ms
-    
-    // Wait for SPECIFIC title text (not just any h1)
+    // Semantic wait: Wait for SPECIFIC title text (not just any h1)
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
-    await expect(title).toBeVisible({ timeout: 30000 }) // Increased from 20000ms
+    await expect(title).toBeVisible({ timeout: 60000 }) // Increased for CI auth store init
     
     // Check subtitle mentions email/password (no wallet)
     const subtitle = page.getByText(/email.*password.*authentication/i)
@@ -58,7 +54,10 @@ test.describe('Guided Token Launch Flow', () => {
   test('should show progress indicators', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForSelector('h1:has-text("Guided Token Launch")', { timeout: 15000 })
+    
+    // Semantic wait: Wait for main heading first
+    const mainTitle = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
+    await expect(mainTitle).toBeVisible({ timeout: 60000 })
     
     // Check progress bar
     const progressText = page.getByText(/0 of 6 steps complete/i)
@@ -72,7 +71,10 @@ test.describe('Guided Token Launch Flow', () => {
   test('should display organization profile step', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000) // CI needs more time
+    
+    // Semantic wait: Wait for page to be ready
+    const mainTitle = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
+    await expect(mainTitle).toBeVisible({ timeout: 60000 })
     
     // Check step heading
     const heading = page.locator('h2').filter({ hasText: /organization profile/i })
@@ -96,7 +98,10 @@ test.describe('Guided Token Launch Flow', () => {
   test('should validate required fields on organization step', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000) // CI needs more time
+    
+    // Semantic wait: Wait for page to be ready
+    const mainTitle = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
+    await expect(mainTitle).toBeVisible({ timeout: 60000 })
     
     // Try to submit without filling required fields
     const continueButton = page.locator('button').filter({ hasText: /continue to token intent/i })
@@ -134,11 +139,8 @@ test.describe('Guided Token Launch Flow', () => {
     await emailInput.waitFor({ state: 'visible', timeout: 20000 })
     await emailInput.fill('john@test.com')
     
-    // Wait a bit for validation to run
-    await page.waitForTimeout(1000)
-    
-    // Button should now be enabled
-    await expect(continueButton).toBeEnabled({ timeout: 20000 })
+    // Semantic wait: Wait for validation to complete by checking button state
+    await expect(continueButton).toBeEnabled({ timeout: 5000 })
   })
 
   test('should navigate between steps', async ({ page }) => {
@@ -200,15 +202,20 @@ test.describe('Guided Token Launch Flow', () => {
   test('should save draft functionality', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000) // CI needs more time
+    
+    // Semantic wait: Wait for page to be ready
+    const mainTitle = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
+    await expect(mainTitle).toBeVisible({ timeout: 60000 })
     
     // Fill some data
     const orgNameInput = page.getByPlaceholder(/enter your organization name/i)
     await orgNameInput.waitFor({ state: 'visible', timeout: 20000 })
     await orgNameInput.fill('Draft Company')
     
-    // Save draft button should be visible after entering data
-    await page.waitForTimeout(2000) // Wait for auto-save
+    // Semantic wait: Wait for auto-save by checking localStorage
+    await page.waitForFunction(() => {
+      return localStorage.getItem('biatec_guided_launch_draft') !== null
+    }, { timeout: 5000 })
     
     // Check localStorage has draft
     const draft = await page.evaluate(() => {
@@ -402,11 +409,10 @@ test.describe('Guided Token Launch Flow', () => {
   test('should ensure no wallet connector references in entire flow', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000) // Increased for CI auth initialization
     
-    // Wait for page to be ready before checking content
+    // Semantic wait: Wait for page to be ready before checking content
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
-    await expect(title).toBeVisible({ timeout: 30000 })
+    await expect(title).toBeVisible({ timeout: 60000 })
     
     const pageContent = await page.content()
     
