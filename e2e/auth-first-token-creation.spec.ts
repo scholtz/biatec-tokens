@@ -31,13 +31,20 @@ test.describe('Auth-First Token Creation Journey', () => {
     // Clear any existing auth
     await page.goto('/')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1000)
     await page.evaluate(() => localStorage.clear())
     
     // Try to access protected route
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000) // Wait for auth guard redirect
+    
+    // Wait for auth guard redirect - check for URL param OR visible form
+    // Semantic wait: check multiple conditions that prove redirect happened
+    await page.waitForFunction(() => {
+      const url = window.location.href
+      const hasAuthParam = url.includes('showAuth=true')
+      const emailForm = document.querySelector('form input[type="email"]')
+      return hasAuthParam || emailForm !== null
+    }, { timeout: 10000 })
     
     // Should redirect to home with auth modal trigger
     const url = page.url()
@@ -52,13 +59,19 @@ test.describe('Auth-First Token Creation Journey', () => {
     // Clear any existing auth
     await page.goto('/')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1000)
     await page.evaluate(() => localStorage.clear())
     
     // Try to access protected route
     await page.goto('/create')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000) // Wait for auth guard redirect
+    
+    // Wait for auth guard redirect - semantic wait for redirect evidence
+    await page.waitForFunction(() => {
+      const url = window.location.href
+      const hasAuthParam = url.includes('showAuth=true')
+      const emailForm = document.querySelector('form input[type="email"]')
+      return hasAuthParam || emailForm !== null
+    }, { timeout: 10000 })
     
     // Should redirect to home with auth modal trigger
     const url = page.url()
@@ -81,15 +94,14 @@ test.describe('Auth-First Token Creation Journey', () => {
     // Navigate to guided launch
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000) // CI needs extra time for auth store init + mount
     
-    // Should display the page title
+    // Semantic wait: Wait for the actual page title to appear (proves auth store loaded + component mounted)
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
-    await expect(title).toBeVisible({ timeout: 45000 })
+    await expect(title).toBeVisible({ timeout: 60000 }) // Increased timeout for CI auth store init
     
     // Should show auth-first messaging
     const subtitle = page.getByText(/email.*password.*authentication/i)
-    await expect(subtitle).toBeVisible({ timeout: 45000 })
+    await expect(subtitle).toBeVisible({ timeout: 15000 })
   })
 
   test('should allow authenticated user to access advanced token creation', async ({ page }) => {
@@ -105,11 +117,10 @@ test.describe('Auth-First Token Creation Journey', () => {
     // Navigate to advanced creation
     await page.goto('/create')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000) // CI needs extra time
     
-    // Should display the page (check for token creation related content)
+    // Semantic wait: Wait for the actual page heading (proves page loaded successfully after auth)
     const heading = page.getByRole('heading', { level: 1 }).first()
-    await expect(heading).toBeVisible({ timeout: 45000 })
+    await expect(heading).toBeVisible({ timeout: 60000 }) // Increased timeout for CI auth store init
   })
 
   test('should not display wallet/network UI elements in top navigation', async ({ page }) => {
@@ -124,11 +135,10 @@ test.describe('Auth-First Token Creation Journey', () => {
     
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
     
-    // Wait for page to load
+    // Semantic wait: Wait for page title (proves page loaded)
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
-    await expect(title).toBeVisible({ timeout: 45000 })
+    await expect(title).toBeVisible({ timeout: 60000 }) // Increased timeout for CI
     
     // Get page content
     const content = await page.content()
@@ -154,9 +164,8 @@ test.describe('Auth-First Token Creation Journey', () => {
     await page.evaluate(() => localStorage.clear())
     await page.reload()
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000)
     
-    // Should show Sign In button (not "Connect Wallet")
+    // Semantic wait: Wait for Sign In button to appear
     const signInButton = page.getByRole('button', { name: /sign in/i }).first()
     await expect(signInButton).toBeVisible({ timeout: 15000 })
     
@@ -187,21 +196,18 @@ test.describe('Auth-First Token Creation Journey', () => {
     // Navigate to guided launch
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
     
-    // Verify page loaded
+    // Semantic wait: Wait for page title
     const title1 = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
-    await expect(title1).toBeVisible({ timeout: 45000 })
+    await expect(title1).toBeVisible({ timeout: 60000 })
     
     // Navigate to dashboard
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
     
-    // Should still be authenticated (page should load, not redirect to login)
-    // Check for any main heading (dashboard content)
+    // Semantic wait: Should still be authenticated (page should load, not redirect to login)
     const heading = page.getByRole('heading', { level: 1 }).first()
-    await expect(heading).toBeVisible({ timeout: 45000 })
+    await expect(heading).toBeVisible({ timeout: 60000 })
     
     // Verify we're on dashboard (not redirected to home)
     const url = page.url()
@@ -221,11 +227,10 @@ test.describe('Auth-First Token Creation Journey', () => {
     // Navigate to guided launch
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
     
-    // Page should load (compliance gating may be shown or wizard may be accessible)
+    // Semantic wait: Page should load (compliance gating may be shown or wizard may be accessible)
     const title = page.getByRole('heading', { level: 1 }).first()
-    await expect(title).toBeVisible({ timeout: 45000 })
+    await expect(title).toBeVisible({ timeout: 60000 })
     
     // Check if compliance-related text is present (either in gating or in steps)
     const pageContent = await page.content()

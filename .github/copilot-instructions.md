@@ -147,6 +147,82 @@ VALIDATION WORK CHECKLIST:
 - ❌ WRONG: Documentation + "tests exist" claim (no execution evidence)
 - ✅ CORRECT: Test execution logs + CI links + screenshots + gap mitigation + docs
 
+### 🚨 CRITICAL PAST VIOLATION - February 19, 2026 (PR #437) 🚨
+
+**Violation**: Copilot misidentified "hardening" issue as validation-only and delivered only documentation WITHOUT fixing tests or CI.
+
+**What Went Wrong**:
+- Issue title: "Next MVP step: frontend auth-first issuance determinism and compliance UX **hardening**"
+- "Hardening" keyword means STRENGTHEN/IMPROVE existing features, not just validate
+- Issue had 307 arbitrary `waitForTimeout()` calls in E2E tests - clear implementation gap
+- CI status: "action_required" - needed investigation and fixes
+- Copilot delivered: 4 validation documents (54KB) but NO test improvements or CI fixes
+- Product owner rejection: "unstable", "lacks CI evidence", "needs unit/integration tests", "needs E2E improvements"
+
+**Root Cause**:
+- **Keyword Blindness**: Saw "determinism" and "verify" keywords, ignored "**hardening**" and "Next MVP **step**"
+- **Memory Over-Trust**: Relied on memory saying "auth-first routing already implemented" without checking for quality gaps
+- **Scope Misjudgment**: Focused on proving existing functionality works vs improving test quality/CI stability
+- **AC Misread**: ACs like "Critical frontend tests are deterministic in CI" require FIXING tests, not just documenting they exist
+
+**Correct Approach for "Hardening" Issues**:
+1. **"Hardening" = BUILD WORK** - Always treat as implementation requiring code/test changes
+2. **Check E2E Test Quality**: Count arbitrary timeouts (`grep -r "waitForTimeout" e2e/`), check CI pass rate
+3. **Replace Arbitrary Waits**: Use semantic waits (`await expect(element).toBeVisible({ timeout: X })`)
+4. **Fix CI Failures**: Investigate "action_required" status, fix root causes (timing, auth init, etc.)
+5. **Add Missing Tests**: If test coverage gaps exist, write tests FIRST
+6. **Improve Error Messages**: Replace console.error with user-friendly toasts/alerts
+7. **Deliver PROOF**: Green CI status + reduced timeout count + improved test pass rate
+
+**Pattern: What "Hardening" Means**:
+- **Stability Hardening**: Fix flaky tests, replace arbitrary waits, improve CI pass rate
+- **UX Hardening**: Improve error messages, add loading states, handle edge cases
+- **Security Hardening**: Add input validation, sanitization, XSS prevention
+- **Compliance Hardening**: Strengthen audit trails, improve validation messaging, add determin istic state transitions
+
+**Red Flags This Was BUILD, Not Validation**:
+- ✅ Issue title contains "**hardening**" (means improve/strengthen)
+- ✅ Issue title contains "Next MVP **step**" (implies new work, not just validation)
+- ✅ 307 arbitrary `waitForTimeout()` calls in E2E tests (clear quality gap)
+- ✅ CI status "action_required" (needs fixes, not just documentation)
+- ✅ Product owner asks for "E2E coverage with semantic waits **only**" (implementation directive)
+
+**When to Do HARDENING vs VALIDATION**:
+- **HARDENING**: Issue title has "hardening", "stability", "determinism" + mentions test improvements/CI fixes
+- **VALIDATION**: Issue title has "validate" + roadmap 100% complete + all tests passing + PO asks for proof only
+
+**E2E Test Hardening Pattern** (Replacing Arbitrary Timeouts):
+```typescript
+// ❌ WRONG (brittle, timing-dependent):
+await page.waitForTimeout(10000) // Hope auth store initializes in time
+
+// ✅ CORRECT (semantic, deterministic):
+const title = page.getByRole('heading', { name: /Expected Title/i })
+await expect(title).toBeVisible({ timeout: 60000 }) // Wait for actual element
+
+// ✅ CORRECT (wait for multiple conditions):
+await page.waitForFunction(() => {
+  const hasElement = document.querySelector('.expected-element')
+  const hasData = window.myGlobalState?.loaded === true
+  return hasElement && hasData
+}, { timeout: 30000 })
+```
+
+**E2E Test Hardening Checklist**:
+1. ✅ Replace `waitForTimeout()` with `expect(element).toBeVisible()`
+2. ✅ Use `waitForLoadState('networkidle')` before assertions
+3. ✅ Increase timeouts for CI (45-60s vs 10-15s locally)
+4. ✅ Use `waitForFunction()` for complex state checks
+5. ✅ Add explicit error messages to waits for debugging
+6. ✅ Test locally AND in CI mode (`CI=true npm run test:e2e`)
+7. ✅ Document any unavoidable CI skips with business justification
+
+**Never Again**:
+- ❌ Deliver only documentation for "hardening" issues
+- ❌ Ignore 307 arbitrary timeouts in E2E tests
+- ❌ Claim "tests passing" without proving CI is green
+- ❌ Skip E2E test improvements when issue explicitly asks for them
+
 ## 🚨 ABSOLUTE PRIORITY: TESTING COMPLIANCE 🚨
 
 **CRITICAL ENFORCEMENT:** Under NO circumstances shall any work be completed with failing tests or insufficient test coverage. Previous violations have resulted in production bugs and must never recur.
