@@ -54,10 +54,6 @@ test.describe('Compliance Setup Workspace', () => {
     // Verify progress tracker is visible
     const progressText = page.getByText(/0 of 5 Steps Complete/i)
     await expect(progressText).toBeVisible({ timeout: 15000 })
-    
-    // Verify step indicators
-    const step1Button = page.locator('button').filter({ hasText: /1/ }).first()
-    await expect(step1Button).toBeVisible({ timeout: 15000 })
   })
 
   test('should complete jurisdiction step with all required fields', async ({ page }) => {

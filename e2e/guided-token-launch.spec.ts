@@ -300,11 +300,11 @@ test.describe('Guided Token Launch Flow', () => {
     await expect(complianceHeading).toBeVisible({ timeout: 30000 })
     
     // Check MICA compliance text is visible
-    const micaText = page.getByText(/mica compliance/i)
+    const micaText = page.getByText(/mica compliance/i).first()
     await expect(micaText).toBeVisible({ timeout: 15000 })
     
-    // Check KYC/AML requirements text is visible
-    const kycText = page.getByText(/kyc.*aml requirements/i)
+    // Check KYC requirements text is visible (separate from AML)
+    const kycText = page.getByText(/kyc requirements/i)
     await expect(kycText).toBeVisible({ timeout: 15000 })
   })
 
@@ -364,12 +364,12 @@ test.describe('Guided Token Launch Flow', () => {
     
     // Check at least one template card is visible
     const loyaltyText = page.getByText(/loyalty.*rewards token/i)
-    const accessText = page.getByText(/access rights nft/i)
+    const securityText = page.getByText(/mica.*compliant.*security token/i)
     const hasLoyalty = await loyaltyText.isVisible({ timeout: 15000 }).catch(() => false)
-    const hasAccess = await accessText.isVisible({ timeout: 15000 }).catch(() => false)
+    const hasSecurity = await securityText.isVisible({ timeout: 15000 }).catch(() => false)
     
     // At least one should be visible
-    expect(hasLoyalty || hasAccess).toBe(true)
+    expect(hasLoyalty || hasSecurity).toBe(true)
   })
 
   test('should ensure no wallet connector references in entire flow', async ({ page }) => {
