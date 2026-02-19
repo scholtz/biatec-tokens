@@ -1,5 +1,5 @@
 <template>
-  <nav class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800">
+  <nav class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800" role="navigation" aria-label="Main navigation">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
         <!-- Logo -->
@@ -16,14 +16,15 @@
             v-for="item in navigationItems"
             :key="item.name"
             :to="item.path"
-            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors relative group"
+            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             :class="
               isActiveRoute(item.path)
                 ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
                 : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
             "
+            :aria-current="isActiveRoute(item.path) ? 'page' : undefined"
           >
-            <component :is="item.icon" class="w-4 h-4 inline mr-2" />
+            <component :is="item.icon" class="w-4 h-4 inline mr-2" aria-hidden="true" />
             {{ item.name }}
           </router-link>
         </div>
@@ -33,8 +34,8 @@
           <!-- Theme Toggle -->
           <button
             @click="themeStore.toggleTheme()"
-            class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            :title="themeStore.isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+            class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            :aria-label="themeStore.isDark ? 'Switch to light mode' : 'Switch to dark mode'"
           >
             <SunIcon v-if="themeStore.isDark" class="w-5 h-5" />
             <MoonIcon v-else class="w-5 h-5" />
@@ -103,7 +104,10 @@
           <!-- Mobile Menu Button -->
           <button
             @click="toggleMobileMenu"
-            class="md:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            class="md:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            :aria-expanded="showMobileMenu"
+            aria-controls="mobile-nav-menu"
+            :aria-label="showMobileMenu ? 'Close navigation menu' : 'Open navigation menu'"
           >
             <Bars3Icon v-if="!showMobileMenu" class="w-6 h-6" />
             <XMarkIcon v-else class="w-6 h-6" />
@@ -124,21 +128,22 @@
       leave-from-class="opacity-100 translate-y-0"
       leave-to-class="opacity-0 -translate-y-1"
     >
-      <div v-if="showMobileMenu" class="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+      <div v-if="showMobileMenu" id="mobile-nav-menu" class="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div class="px-4 py-3 space-y-1">
           <router-link
             v-for="item in navigationItems"
             :key="item.name"
             :to="item.path"
             @click="showMobileMenu = false"
-            class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            class="flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
             :class="
               isActiveRoute(item.path)
                 ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
                 : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
             "
+            :aria-current="isActiveRoute(item.path) ? 'page' : undefined"
           >
-            <component :is="item.icon" class="w-5 h-5 mr-3" />
+            <component :is="item.icon" class="w-5 h-5 mr-3" aria-hidden="true" />
             {{ item.name }}
           </router-link>
         </div>
@@ -155,7 +160,6 @@ import { useSubscriptionStore } from "../../stores/subscription";
 import { AUTH_STORAGE_KEYS } from "../../constants/auth";
 import {
   HomeIcon,
-  PlusCircleIcon,
   ChartBarIcon,
   Cog6ToothIcon,
   SunIcon,
@@ -188,7 +192,6 @@ const navigationItems = [
   { name: "Cockpit", path: "/cockpit", icon: CommandLineIcon },
   { name: "Guided Launch", path: "/launch/guided", icon: RocketLaunchIcon },
   { name: "Compliance", path: "/compliance/setup", icon: ShieldCheckIcon },
-  { name: "Create", path: "/create", icon: PlusCircleIcon },
   { name: "Dashboard", path: "/dashboard", icon: ChartBarIcon },
   { name: "Insights", path: "/insights", icon: ChartPieIcon },
   { name: "Pricing", path: "/subscription/pricing", icon: CurrencyDollarIcon },
