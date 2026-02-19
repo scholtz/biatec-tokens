@@ -10,34 +10,40 @@
       </p>
     </div>
 
-    <form @submit.prevent="handleSubmit" class="space-y-6">
+    <form @submit.prevent="handleSubmit" class="space-y-6" aria-label="Organization profile form">
       <!-- Organization Name -->
       <div>
-        <label class="block text-sm font-medium text-gray-300 mb-2">
-          Organization Name <span class="text-red-400">*</span>
+        <label for="org-name" class="block text-sm font-medium text-gray-300 mb-2">
+          Organization Name <span class="text-red-400" aria-hidden="true">*</span>
         </label>
         <input
+          id="org-name"
           v-model="formData.organizationName"
           type="text"
           required
-          class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+          aria-required="true"
+          :aria-invalid="!!fieldErrors.organizationName"
+          :aria-describedby="fieldErrors.organizationName ? 'org-name-error' : undefined"
+          class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
           placeholder="Enter your organization name"
           @blur="validateField('organizationName')"
         />
-        <p v-if="fieldErrors.organizationName" class="mt-1 text-sm text-red-400">
+        <p v-if="fieldErrors.organizationName" id="org-name-error" role="alert" class="mt-1 text-sm text-red-400">
           {{ fieldErrors.organizationName }}
         </p>
       </div>
 
       <!-- Organization Type -->
       <div>
-        <label class="block text-sm font-medium text-gray-300 mb-2">
-          Organization Type <span class="text-red-400">*</span>
+        <label for="org-type" class="block text-sm font-medium text-gray-300 mb-2">
+          Organization Type <span class="text-red-400" aria-hidden="true">*</span>
         </label>
         <select
+          id="org-type"
           v-model="formData.organizationType"
           required
-          class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors"
+          aria-required="true"
+          class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
         >
           <option value="">Select type...</option>
           <option value="company">Company / Corporation</option>
@@ -50,48 +56,54 @@
 
       <!-- Registration Number -->
       <div>
-        <label class="block text-sm font-medium text-gray-300 mb-2">
+        <label for="reg-number" class="block text-sm font-medium text-gray-300 mb-2">
           Registration Number
           <span class="text-gray-500 text-xs ml-2">(Optional but recommended)</span>
         </label>
         <input
+          id="reg-number"
           v-model="formData.registrationNumber"
           type="text"
-          class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+          aria-describedby="reg-number-hint"
+          class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
           placeholder="Company registration or tax ID"
         />
-        <p class="mt-1 text-xs text-gray-400">
+        <p id="reg-number-hint" class="mt-1 text-xs text-gray-400">
           Required for MICA-compliant tokens
         </p>
       </div>
 
       <!-- Jurisdiction -->
       <div>
-        <label class="block text-sm font-medium text-gray-300 mb-2">
-          Jurisdiction <span class="text-red-400">*</span>
+        <label for="jurisdiction" class="block text-sm font-medium text-gray-300 mb-2">
+          Jurisdiction <span class="text-red-400" aria-hidden="true">*</span>
         </label>
         <input
+          id="jurisdiction"
           v-model="formData.jurisdiction"
           type="text"
           required
-          class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+          aria-required="true"
+          aria-describedby="jurisdiction-hint"
+          class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
           placeholder="Country or region (e.g., United States, EU)"
         />
-        <p class="mt-1 text-xs text-gray-400">
+        <p id="jurisdiction-hint" class="mt-1 text-xs text-gray-400">
           Where your organization is registered or operates
         </p>
       </div>
 
       <!-- Website -->
       <div>
-        <label class="block text-sm font-medium text-gray-300 mb-2">
+        <label for="website" class="block text-sm font-medium text-gray-300 mb-2">
           Website
           <span class="text-gray-500 text-xs ml-2">(Optional)</span>
         </label>
         <input
+          id="website"
           v-model="formData.website"
           type="url"
-          class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+          class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
           placeholder="https://example.com"
         />
       </div>
@@ -103,13 +115,15 @@
         <div class="space-y-4">
           <!-- Your Role -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">
-              Your Role <span class="text-red-400">*</span>
+            <label for="contact-role" class="block text-sm font-medium text-gray-300 mb-2">
+              Your Role <span class="text-red-400" aria-hidden="true">*</span>
             </label>
             <select
+              id="contact-role"
               v-model="formData.role"
               required
-              class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors"
+              aria-required="true"
+              class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             >
               <option value="">Select your role...</option>
               <option value="compliance_officer">Compliance Officer</option>
@@ -124,42 +138,52 @@
 
           <!-- Contact Name -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">
-              Contact Name <span class="text-red-400">*</span>
+            <label for="contact-name" class="block text-sm font-medium text-gray-300 mb-2">
+              Contact Name <span class="text-red-400" aria-hidden="true">*</span>
             </label>
             <input
+              id="contact-name"
               v-model="formData.contactName"
               type="text"
               required
-              class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+              aria-required="true"
+              class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               placeholder="Your full name"
             />
           </div>
 
           <!-- Contact Email -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">
-              Contact Email <span class="text-red-400">*</span>
+            <label for="contact-email" class="block text-sm font-medium text-gray-300 mb-2">
+              Contact Email <span class="text-red-400" aria-hidden="true">*</span>
             </label>
             <input
+              id="contact-email"
               v-model="formData.contactEmail"
               type="email"
               required
-              class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+              aria-required="true"
+              :aria-invalid="!!fieldErrors.contactEmail"
+              :aria-describedby="fieldErrors.contactEmail ? 'contact-email-error' : undefined"
+              class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               placeholder="email@example.com"
             />
+            <p v-if="fieldErrors.contactEmail" id="contact-email-error" role="alert" class="mt-1 text-sm text-red-400">
+              {{ fieldErrors.contactEmail }}
+            </p>
           </div>
 
           <!-- Contact Phone -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">
+            <label for="contact-phone" class="block text-sm font-medium text-gray-300 mb-2">
               Contact Phone
               <span class="text-gray-500 text-xs ml-2">(Optional)</span>
             </label>
             <input
+              id="contact-phone"
               v-model="formData.contactPhone"
               type="tel"
-              class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+              class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               placeholder="+1 (555) 123-4567"
             />
           </div>

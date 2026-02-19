@@ -163,28 +163,33 @@ test.describe('Token Lifecycle Cockpit', () => {
   })
 
   test('should require authentication', async ({ page }) => {
-    // Skip in CI after 4 failed iterations - test passes 100% locally
-    // Iterations: 1) 2s wait+exact URL, 2) 5s+regex, 3) 10s+toContain, 4) 10s+dual check
-    // Root cause: CI environment URL redirect behavior inconsistent vs local
-    test.skip(!!process.env.CI, 'CI absolute timing ceiling reached after 4 optimization attempts. Test passes 100% locally.')
+    // Previously skipped in CI after 4 iterations using arbitrary waitForTimeout.
+    // Refactored: use semantic waitForFunction that checks actual redirect condition
+    // without relying on timing. This eliminates the arbitrary 10s wait.
     
-    // Clear auth
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1000)
-    await page.evaluate(() => localStorage.clear())
+    // Clear auth via addInitScript to ensure it runs before any navigation
+    await page.addInitScript(() => {
+      localStorage.removeItem('algorand_user')
+      localStorage.removeItem('biatec_guided_launch_draft')
+    })
     
     // Try to access cockpit (unauthenticated)
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
     
-    // Should redirect to home with auth prompt
+    // Semantic wait: poll until redirect evidence is present
+    // This replaces the arbitrary waitForTimeout(10000)
+    await page.waitForFunction(() => {
+      const url = window.location.href
+      const hasAuthParam = url.includes('showAuth=true')
+      const emailInput = document.querySelector('input[type="email"]')
+      return hasAuthParam || emailInput !== null
+    }, { timeout: 20000 })
+    
+    // Verify redirect happened
     const url = page.url()
     const urlHasAuthParam = url.includes('showAuth=true')
-    const authModalVisible = await page.locator('form').filter({ hasText: /email/i }).isVisible().catch(() => false)
+    const authInputVisible = await page.locator('input[type="email"]').isVisible().catch(() => false)
     
-    // Test passes if either condition is true
-    expect(urlHasAuthParam || authModalVisible).toBe(true)
+    expect(urlHasAuthParam || authInputVisible).toBe(true)
   })
 })

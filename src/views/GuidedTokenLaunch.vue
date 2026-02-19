@@ -14,6 +14,43 @@
         </p>
       </div>
 
+      <!-- Error Banner: shown when submission or step-level errors occur -->
+      <div
+        v-if="submissionErrorMessage"
+        role="alert"
+        aria-live="assertive"
+        class="mb-6 rounded-lg border p-4 flex items-start gap-3"
+        :class="submissionErrorMessage.severity === 'error'
+          ? 'bg-red-900/30 border-red-700/50'
+          : submissionErrorMessage.severity === 'warning'
+          ? 'bg-yellow-900/30 border-yellow-700/50'
+          : 'bg-blue-900/30 border-blue-700/50'"
+      >
+        <ExclamationTriangleIcon
+          class="w-5 h-5 flex-shrink-0 mt-0.5"
+          :class="submissionErrorMessage.severity === 'error'
+            ? 'text-red-400'
+            : submissionErrorMessage.severity === 'warning'
+            ? 'text-yellow-400'
+            : 'text-blue-400'"
+          aria-hidden="true"
+        />
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-white">{{ submissionErrorMessage.title }}</p>
+          <p class="text-sm text-gray-300 mt-0.5">{{ submissionErrorMessage.description }}</p>
+          <p class="text-sm text-gray-400 mt-1">{{ submissionErrorMessage.action }}</p>
+        </div>
+        <button
+          @click="clearSubmissionError"
+          class="flex-shrink-0 p-1 rounded text-gray-400 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          aria-label="Dismiss error"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+          </svg>
+        </button>
+      </div>
+
       <!-- Progress Overview -->
       <Card variant="glass" padding="md" class="mb-6">
         <div class="flex items-center justify-between mb-4">
@@ -273,6 +310,7 @@ import Modal from '../components/ui/Modal.vue'
 import { CheckIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { launchTelemetryService } from '../services/launchTelemetry'
 import { competitiveTelemetryService } from '../services/CompetitiveTelemetryService'
+import { getLaunchErrorMessage, classifyLaunchError } from '../utils/launchErrorMessages'
 
 // Lazy load step components
 import OrganizationProfileStep from '../components/guidedLaunch/steps/OrganizationProfileStep.vue'
@@ -301,6 +339,18 @@ const stepStatuses = computed(() => guidedLaunchStore.stepStatuses)
 const readinessScore = computed(() => guidedLaunchStore.readinessScore)
 const currentForm = computed(() => guidedLaunchStore.currentForm)
 const isSubmitting = computed(() => guidedLaunchStore.isSubmitting)
+
+// Error banner: maps store submissionError to user-friendly message via launchErrorMessages
+const submissionErrorMessage = computed(() => {
+  const rawError = currentForm.value.submissionError
+  if (!rawError) return null
+  const code = classifyLaunchError(rawError)
+  return getLaunchErrorMessage(code)
+})
+
+const clearSubmissionError = () => {
+  currentForm.value.submissionError = ''
+}
 
 const canProceedToNext = computed(() => {
   const step = stepStatuses.value[currentStep.value]

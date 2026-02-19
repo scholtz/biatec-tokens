@@ -249,151 +249,118 @@ test.describe('Guided Token Launch Flow', () => {
   })
 
   test('should show compliance step with checkboxes', async ({ page }) => {
-    // Skip in CI due to absolute timing ceiling after 12 optimization attempts (commit 9ccfb81)
-    // Test passes 100% locally, validates functionality. CI environment 10-20x slower for multi-step navigation.
-    test.skip(!!process.env.CI, 'CI absolute timing ceiling: 90s+ waits insufficient for 2-step wizard navigation')
+    // Use draft injection to bypass slow multi-step UI navigation in CI.
+    // Inject a draft with currentStep=2 (compliance) and prior steps marked complete.
+    // This is deterministic: it tests the compliance step content without relying on
+    // cumulative wizard navigation timing.
+    await page.addInitScript(() => {
+      const draft = {
+        version: '1.0',
+        form: {
+          createdAt: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+          currentStep: 2,
+          completedSteps: [0, 1],
+          isSubmitted: false,
+          organizationProfile: {
+            organizationName: 'Test Company',
+            organizationType: 'company',
+            jurisdiction: 'US',
+            contactName: 'John Doe',
+            contactEmail: 'john@test.com',
+            role: 'business_owner',
+          },
+          tokenIntent: {
+            tokenPurpose: 'Test purpose for compliance validation',
+            targetAudience: ['retail'],
+            expectedHolders: 100,
+          },
+        },
+        stepStatuses: [
+          { id: 'organization', title: 'Organization Profile', isComplete: true, isValid: true, isOptional: false },
+          { id: 'intent', title: 'Token Intent', isComplete: true, isValid: true, isOptional: false },
+          { id: 'compliance', title: 'Compliance Readiness', isComplete: false, isValid: false, isOptional: false },
+          { id: 'template', title: 'Template Selection', isComplete: false, isValid: false, isOptional: false },
+          { id: 'economics', title: 'Economics Settings', isComplete: false, isValid: false, isOptional: true },
+          { id: 'review', title: 'Review & Submit', isComplete: false, isValid: false, isOptional: false },
+        ],
+      }
+      localStorage.setItem('biatec_guided_launch_draft', JSON.stringify(draft))
+    })
     
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000) // CI needs EXTRA time: auth init + component mount + render
     
-    // Wait for page to be ready
+    // Semantic wait for the page to be ready
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
-    await expect(title).toBeVisible({ timeout: 45000 })
+    await expect(title).toBeVisible({ timeout: 60000 })
     
-    // Navigate to compliance step (step 2)
-    // First complete organization step using placeholders
-    const orgNameInput = page.getByPlaceholder(/enter your organization name/i)
-    await orgNameInput.waitFor({ state: 'visible', timeout: 45000 })
-    await orgNameInput.fill('Test Company')
-    
-    const orgTypeSelect = page.locator('select').filter({ hasText: /select type/i }).first()
-    await orgTypeSelect.waitFor({ state: 'visible', timeout: 45000 })
-    await orgTypeSelect.selectOption({ index: 1 })
-    
-    const jurisdictionInput = page.getByPlaceholder(/country or region/i)
-    await jurisdictionInput.waitFor({ state: 'visible', timeout: 45000 })
-    await jurisdictionInput.fill('US')
-    
-    const roleSelect = page.locator('select').filter({ hasText: /select your role/i })
-    await roleSelect.waitFor({ state: 'visible', timeout: 45000 })
-    await roleSelect.selectOption({ index: 1 })
-    
-    const contactNameInput = page.getByPlaceholder(/your full name/i)
-    await contactNameInput.waitFor({ state: 'visible', timeout: 45000 })
-    await contactNameInput.fill('John')
-    
-    const emailInput = page.getByPlaceholder(/email@example.com/i)
-    await emailInput.waitFor({ state: 'visible', timeout: 45000 })
-    await emailInput.fill('john@test.com')
-    
-    await page.waitForTimeout(5000) // Wait for validation - CI needs 5s for state updates
-    
-    const continueButton = page.locator('button').filter({ hasText: /continue/i })
-    await continueButton.waitFor({ state: 'visible', timeout: 45000 })
-    await expect(continueButton).toBeEnabled()
-    await continueButton.click()
-    await page.waitForTimeout(5000) // CI needs 5s for step transitions (unmount + mount cycle)
-    
-    // Complete token intent step
-    const purposeInput = page.getByPlaceholder(/describe the primary purpose/i)
-    await purposeInput.waitFor({ state: 'visible', timeout: 45000 })
-    await purposeInput.fill('Test purpose')
-    
-    await page.waitForTimeout(5000) // Wait for validation - CI needs 5s for state updates
-    const continueButton2 = page.locator('button').filter({ hasText: /continue/i })
-    await continueButton2.waitFor({ state: 'visible', timeout: 45000 })
-    await expect(continueButton2).toBeEnabled()
-    await continueButton2.click()
-    await page.waitForTimeout(5000) // CI needs 5s for step transitions (unmount + mount cycle)
-    
-    // Additional wait for final step after multiple transitions (CI accumulation)
-    // Increased from 3s → 5s → 10s (12th attempt) for CI environment with 2+ step transitions
-    await page.waitForTimeout(10000)
-    
-    // Now on compliance step
+    // Now on compliance step (step 2) - check compliance heading
     const complianceHeading = page.locator('h2').filter({ hasText: /compliance readiness/i })
-    await expect(complianceHeading).toBeVisible({ timeout: 45000 })
+    await expect(complianceHeading).toBeVisible({ timeout: 30000 })
     
-    // Check MICA checkbox text is visible
+    // Check MICA compliance text is visible
     const micaText = page.getByText(/mica compliance/i)
-    await expect(micaText).toBeVisible({ timeout: 45000 })
+    await expect(micaText).toBeVisible({ timeout: 15000 })
     
-    // Check KYC checkbox text is visible
+    // Check KYC/AML requirements text is visible
     const kycText = page.getByText(/kyc.*aml requirements/i)
-    await expect(kycText).toBeVisible({ timeout: 45000 })
+    await expect(kycText).toBeVisible({ timeout: 15000 })
   })
 
   test('should display template selection with cards', async ({ page }) => {
-    // Skip in CI due to absolute timing ceiling after 12 optimization attempts (commit 9ccfb81)
-    // Test passes 100% locally, validates functionality. CI environment 10-20x slower for multi-step navigation.
-    test.skip(!!process.env.CI, 'CI absolute timing ceiling: 90s+ waits insufficient for 3-step wizard navigation')
+    // Use draft injection to bypass slow multi-step UI navigation in CI.
+    // Inject a draft with currentStep=3 (template selection) and prior steps complete.
+    await page.addInitScript(() => {
+      const draft = {
+        version: '1.0',
+        form: {
+          createdAt: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+          currentStep: 3,
+          completedSteps: [0, 1, 2],
+          isSubmitted: false,
+          organizationProfile: {
+            organizationName: 'Test Company',
+            organizationType: 'company',
+            jurisdiction: 'US',
+            contactName: 'John Doe',
+            contactEmail: 'john@test.com',
+            role: 'business_owner',
+          },
+          tokenIntent: {
+            tokenPurpose: 'Test purpose',
+            targetAudience: ['retail'],
+            expectedHolders: 100,
+          },
+          complianceReadiness: {
+            micaCompliance: true,
+            kycAmlRequired: true,
+            riskAcknowledged: true,
+          },
+        },
+        stepStatuses: [
+          { id: 'organization', title: 'Organization Profile', isComplete: true, isValid: true, isOptional: false },
+          { id: 'intent', title: 'Token Intent', isComplete: true, isValid: true, isOptional: false },
+          { id: 'compliance', title: 'Compliance Readiness', isComplete: true, isValid: true, isOptional: false },
+          { id: 'template', title: 'Template Selection', isComplete: false, isValid: false, isOptional: false },
+          { id: 'economics', title: 'Economics Settings', isComplete: false, isValid: false, isOptional: true },
+          { id: 'review', title: 'Review & Submit', isComplete: false, isValid: false, isOptional: false },
+        ],
+      }
+      localStorage.setItem('biatec_guided_launch_draft', JSON.stringify(draft))
+    })
     
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000) // CI needs EXTRA time: auth init + component mount + render
     
-    // Wait for page to be ready
+    // Semantic wait for the page to be ready
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
-    await expect(title).toBeVisible({ timeout: 45000 })
+    await expect(title).toBeVisible({ timeout: 60000 })
     
-    // Navigate to template selection (step 3)
-    // Quick navigation through previous steps using placeholders
-    const orgNameInput = page.getByPlaceholder(/enter your organization name/i)
-    await orgNameInput.waitFor({ state: 'visible', timeout: 45000 })
-    await orgNameInput.fill('Test')
-    
-    const orgTypeSelect = page.locator('select').filter({ hasText: /select type/i }).first()
-    await orgTypeSelect.waitFor({ state: 'visible', timeout: 45000 })
-    await orgTypeSelect.selectOption({ index: 1 })
-    
-    const jurisdictionInput = page.getByPlaceholder(/country or region/i)
-    await jurisdictionInput.waitFor({ state: 'visible', timeout: 45000 })
-    await jurisdictionInput.fill('US')
-    
-    const roleSelect = page.locator('select').filter({ hasText: /select your role/i })
-    await roleSelect.waitFor({ state: 'visible', timeout: 45000 })
-    await roleSelect.selectOption({ index: 1 })
-    
-    const contactNameInput = page.getByPlaceholder(/your full name/i)
-    await contactNameInput.waitFor({ state: 'visible', timeout: 45000 })
-    await contactNameInput.fill('John')
-    
-    const emailInput = page.getByPlaceholder(/email@example.com/i)
-    await emailInput.waitFor({ state: 'visible', timeout: 45000 })
-    await emailInput.fill('john@test.com')
-    
-    await page.waitForTimeout(5000) // Wait for validation - CI needs 5s for state updates
-    let continueButton = page.locator('button').filter({ hasText: /continue/i })
-    await continueButton.waitFor({ state: 'visible', timeout: 45000 })
-    await expect(continueButton).toBeEnabled()
-    await continueButton.click()
-    await page.waitForTimeout(5000) // CI needs 5s for step transitions (unmount + mount cycle)
-    
-    const purposeInput = page.getByPlaceholder(/describe the primary purpose/i)
-    await purposeInput.waitFor({ state: 'visible', timeout: 45000 })
-    await purposeInput.fill('Test')
-    
-    await page.waitForTimeout(5000) // Wait for validation - CI needs 5s for state updates
-    continueButton = page.locator('button').filter({ hasText: /continue/i })
-    await continueButton.waitFor({ state: 'visible', timeout: 45000 })
-    await expect(continueButton).toBeEnabled()
-    await continueButton.click()
-    await page.waitForTimeout(5000) // CI needs 5s for step transitions (unmount + mount cycle)
-    
-    continueButton = page.locator('button').filter({ hasText: /continue to template/i })
-    await continueButton.waitFor({ state: 'visible', timeout: 45000 })
-    await expect(continueButton).toBeEnabled()
-    await continueButton.click()
-    await page.waitForTimeout(5000) // CI needs 5s for step transitions (unmount + mount cycle)
-    
-    // Additional wait for final step after multiple transitions (CI accumulation)
-    // Increased from 3s → 5s → 10s (12th attempt) for CI environment with 3+ step transitions
-    await page.waitForTimeout(10000)
-    
-    // Check template selection step
+    // Now on template selection step - check heading
     const templateHeading = page.locator('h2').filter({ hasText: /select token template/i })
-    await expect(templateHeading).toBeVisible({ timeout: 45000 })
+    await expect(templateHeading).toBeVisible({ timeout: 30000 })
     
     // Check at least one template card is visible
     const loyaltyText = page.getByText(/loyalty.*rewards token/i)
@@ -426,5 +393,50 @@ test.describe('Guided Token Launch Flow', () => {
     // Verify email/password is mentioned
     expect(pageContent.toLowerCase()).toContain('email')
     expect(pageContent.toLowerCase()).toContain('password')
+  })
+
+  test('should show user-friendly error banner when submission error occurs (AC #5)', async ({ page }) => {
+    // Inject a draft state with a submission error to verify the error banner renders
+    await page.addInitScript(() => {
+      const draft = {
+        version: '1.0',
+        form: {
+          createdAt: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+          currentStep: 0,
+          completedSteps: [],
+          isSubmitted: false,
+          submissionError: 'submission failed: network error',
+        },
+        stepStatuses: [
+          { id: 'organization', title: 'Organization Profile', isComplete: false, isValid: false, isOptional: false },
+          { id: 'intent', title: 'Token Intent', isComplete: false, isValid: false, isOptional: false },
+          { id: 'compliance', title: 'Compliance Readiness', isComplete: false, isValid: false, isOptional: false },
+          { id: 'template', title: 'Template Selection', isComplete: false, isValid: false, isOptional: false },
+          { id: 'economics', title: 'Economics Settings', isComplete: false, isValid: false, isOptional: true },
+          { id: 'review', title: 'Review & Submit', isComplete: false, isValid: false, isOptional: false },
+        ],
+      }
+      localStorage.setItem('biatec_guided_launch_draft', JSON.stringify(draft))
+    })
+    
+    await page.goto('/launch/guided')
+    await page.waitForLoadState('networkidle')
+    
+    // Semantic wait: Wait for page to be ready
+    const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
+    await expect(title).toBeVisible({ timeout: 60000 })
+    
+    // Error banner should be visible with user-friendly message
+    const errorBanner = page.locator('[role="alert"]').first()
+    await expect(errorBanner).toBeVisible({ timeout: 15000 })
+    
+    // Error banner should contain user-friendly title (not raw error string)
+    const bannerText = await errorBanner.textContent()
+    expect(bannerText).toBeTruthy()
+    // Should not show raw technical error to user
+    expect(bannerText).not.toContain('network error')
+    // Should show human-friendly message
+    expect(bannerText?.toLowerCase()).toMatch(/submission|deploy|try again|contact/i)
   })
 })

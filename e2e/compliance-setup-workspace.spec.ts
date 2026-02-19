@@ -35,32 +35,29 @@ test.describe('Compliance Setup Workspace', () => {
   // ============================================================================
 
   test('should navigate to compliance setup workspace and display main elements', async ({ page }) => {
-    // Skip in CI due to absolute timing ceiling after optimization attempts
-    // Test validates workspace page loads with correct elements
-    // CI environment 10-20x slower than local for complex auth-dependent routes
-    test.skip(!!process.env.CI, 'CI absolute timing ceiling: auth store + component mount exceeds practical limits')
+    // Previously skipped in CI due to arbitrary waitForTimeout(10000) eating budget.
+    // Refactored: removed arbitrary wait, use semantic waits with explicit timeouts.
+    // Follows the same pattern as passing auth-first-token-creation.spec.ts tests.
     
     await page.goto('/compliance/setup')
     await page.waitForLoadState('networkidle')
     
-    // CI environment needs extra time for auth store initialization + component mount
-    await page.waitForTimeout(10000)
-    
-    // Verify main heading
+    // Semantic wait: page title proves auth store initialized + component mounted
+    // No arbitrary wait needed - addInitScript sets localStorage before navigation
     const title = page.getByRole('heading', { name: /Compliance Setup Workspace/i, level: 1 })
-    await expect(title).toBeVisible({ timeout: 45000 })
+    await expect(title).toBeVisible({ timeout: 60000 })
     
     // Verify subtitle
     const subtitle = page.getByText(/Configure your token's compliance requirements/i)
-    await expect(subtitle).toBeVisible({ timeout: 45000 })
+    await expect(subtitle).toBeVisible({ timeout: 15000 })
     
     // Verify progress tracker is visible
     const progressText = page.getByText(/0 of 5 Steps Complete/i)
-    await expect(progressText).toBeVisible({ timeout: 45000 })
+    await expect(progressText).toBeVisible({ timeout: 15000 })
     
     // Verify step indicators
     const step1Button = page.locator('button').filter({ hasText: /1/ }).first()
-    await expect(step1Button).toBeVisible({ timeout: 45000 })
+    await expect(step1Button).toBeVisible({ timeout: 15000 })
   })
 
   test('should complete jurisdiction step with all required fields', async ({ page }) => {
