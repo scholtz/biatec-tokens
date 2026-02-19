@@ -405,7 +405,7 @@ const handleSubmit = async () => {
     competitiveTelemetryService.completeJourney('token_creation', true, {
       submissionId: response.submissionId,
       deploymentStatus: response.deploymentStatus,
-      template: guidedLaunchStore.selectedTemplate?.id,
+      template: guidedLaunchStore.currentForm.selectedTemplate?.id,
       completedSteps: completedSteps.value
     })
   } catch (error) {
@@ -442,15 +442,15 @@ onMounted(() => {
   const userId = authStore.user?.email || 'unknown'
   guidedLaunchStore.initializeTelemetry(userId)
   
+  // Load draft if exists (do this first to check if user has draft)
+  const hasDraft = guidedLaunchStore.loadDraft()
+  
   // Start competitive journey tracking
   competitiveTelemetryService.startJourney('token_creation', {
-    userType: guidedLaunchStore.hasDraft() ? 'returning' : 'new',
+    userType: hasDraft ? 'returning' : 'new',
     source: document.referrer || 'direct',
-    standard: guidedLaunchStore.selectedTemplate?.standard || 'unknown'
+    standard: guidedLaunchStore.currentForm.selectedTemplate?.standard || 'unknown'
   })
-
-  // Load draft if exists
-  const hasDraft = guidedLaunchStore.loadDraft()
   
   // Start flow tracking if new
   if (!hasDraft) {

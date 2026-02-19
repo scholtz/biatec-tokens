@@ -503,7 +503,7 @@ const startDeployment = async () => {
   // Track competitive journey start
   competitiveTelemetryService.startJourney('token_deployment', {
     standard: tokenDraftStore.currentDraft?.selectedStandard || 'unknown',
-    network: tokenDraftStore.currentDraft?.network || 'unknown'
+    network: tokenDraftStore.currentDraft?.selectedNetwork || 'unknown'
   })
   
   const draft = tokenDraftStore.currentDraft
@@ -591,7 +591,7 @@ const startRealDeployment = async (draft: any) => {
         competitiveTelemetryService.completeJourney('token_deployment', true, {
           assetId: state.result?.assetId,
           standard: draft.selectedStandard,
-          network: draft.network
+          network: draft.selectedNetwork
         })
       }
     })
