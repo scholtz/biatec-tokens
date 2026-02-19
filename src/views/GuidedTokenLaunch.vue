@@ -272,6 +272,7 @@ import Badge from '../components/ui/Badge.vue'
 import Modal from '../components/ui/Modal.vue'
 import { CheckIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { launchTelemetryService } from '../services/launchTelemetry'
+import { competitiveTelemetryService } from '../services/CompetitiveTelemetryService'
 
 // Lazy load step components
 import OrganizationProfileStep from '../components/guidedLaunch/steps/OrganizationProfileStep.vue'
@@ -350,6 +351,21 @@ const handleSaveDraft = async () => {
 const handleStepComplete = (validation: ValidationResult) => {
   guidedLaunchStore.completeStep(currentStep.value, validation)
   
+  // Track milestone completion
+  const currentStepData = stepStatuses.value[currentStep.value]
+  if (currentStepData) {
+    competitiveTelemetryService.trackMilestone({
+      journey: 'token_creation',
+      milestone: currentStepData.id,
+      timestamp: new Date(),
+      metadata: {
+        stepNumber: currentStep.value + 1,
+        isValid: validation.isValid,
+        totalSteps: totalSteps.value
+      }
+    })
+  }
+  
   // Auto-advance if valid and not last step
   if (validation.isValid && currentStep.value < totalSteps.value - 1) {
     setTimeout(() => {
@@ -384,8 +400,23 @@ const handleSubmit = async () => {
     const response = await guidedLaunchStore.submitLaunch(userEmail)
     submissionResponse.value = response
     showSuccessModal.value = true
+    
+    // Track successful journey completion
+    competitiveTelemetryService.completeJourney('token_creation', true, {
+      submissionId: response.submissionId,
+      deploymentStatus: response.deploymentStatus,
+      template: guidedLaunchStore.selectedTemplate?.id,
+      completedSteps: completedSteps.value
+    })
   } catch (error) {
     console.error('Launch submission failed:', error)
+    
+    // Track failed journey
+    competitiveTelemetryService.completeJourney('token_creation', false, {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      abandonedAtStep: currentStep.value,
+      completedSteps: completedSteps.value
+    })
     // Error handling is done in the store
   }
 }
@@ -410,6 +441,13 @@ onMounted(() => {
   // Initialize telemetry (email/password authentication only - no wallet addresses)
   const userId = authStore.user?.email || 'unknown'
   guidedLaunchStore.initializeTelemetry(userId)
+  
+  // Start competitive journey tracking
+  competitiveTelemetryService.startJourney('token_creation', {
+    userType: guidedLaunchStore.hasDraft() ? 'returning' : 'new',
+    source: document.referrer || 'direct',
+    standard: guidedLaunchStore.selectedTemplate?.standard || 'unknown'
+  })
 
   // Load draft if exists
   const hasDraft = guidedLaunchStore.loadDraft()
@@ -430,6 +468,14 @@ onBeforeUnmount(() => {
         completedSteps.value,
         totalSteps.value
       )
+      
+      // Track competitive journey abandonment
+      competitiveTelemetryService.completeJourney('token_creation', false, {
+        reason: 'user_navigated_away',
+        abandonedAtStep: currentStep.value,
+        completedSteps: completedSteps.value,
+        progressPercentage: progressPercentage.value
+      })
     }
   }
 })
