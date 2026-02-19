@@ -146,11 +146,10 @@ test.describe('Guided Token Launch Flow', () => {
   test('should navigate between steps', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000) // CI needs EXTRA time: auth init + component mount + render
     
-    // First wait for page to be ready
+    // Semantic wait: page heading proves auth store initialized + component mounted
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
-    await expect(title).toBeVisible({ timeout: 45000 })
+    await expect(title).toBeVisible({ timeout: 60000 })
     
     // Fill organization profile using placeholders
     const orgNameInput = page.getByPlaceholder(/enter your organization name/i)
@@ -177,24 +176,21 @@ test.describe('Guided Token Launch Flow', () => {
     await emailInput.waitFor({ state: 'visible', timeout: 45000 })
     await emailInput.fill('john@test.com')
     
-    await page.waitForTimeout(2000) // Wait for validation - extra time for CI
-    
-    // Continue to next step
+    // Semantic wait: continue button enabled proves Vue reactivity + validation complete
     const continueButton = page.locator('button').filter({ hasText: /continue to token intent/i })
     await continueButton.waitFor({ state: 'visible', timeout: 45000 })
-    await expect(continueButton).toBeEnabled()
+    await expect(continueButton).toBeEnabled({ timeout: 10000 })
     await continueButton.click()
-    await page.waitForTimeout(2000) // Wait for animation - extra time for CI
     
-    // Check we're on token intent step
+    // Semantic wait: next step heading proves step transition completed (no arbitrary delay)
     const intentHeading = page.locator('h2').filter({ hasText: /token intent.*use case/i })
     await expect(intentHeading).toBeVisible({ timeout: 45000 })
     
     // Can navigate back
     const prevButton = page.locator('button').filter({ hasText: /previous/i })
     await prevButton.click()
-    await page.waitForTimeout(2000)
     
+    // Semantic wait: org heading reappears proves back navigation completed
     const orgHeading = page.locator('h2').filter({ hasText: /organization profile/i })
     await expect(orgHeading).toBeVisible({ timeout: 45000 })
   })
@@ -239,7 +235,10 @@ test.describe('Guided Token Launch Flow', () => {
     
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
+    
+    // Semantic wait: page heading proves page is ready before checking optional sidebar card
+    const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
+    await expect(title).toBeVisible({ timeout: 60000 })
     
     // Readiness score card should be visible on desktop
     const scoreCard = page.getByText(/Readiness Score/i).first()
