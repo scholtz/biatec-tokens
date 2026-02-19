@@ -12,27 +12,8 @@
           </p>
         </div>
 
-        <!-- Wallet Connection Required -->
-        <div v-if="!isWalletConnected" class="max-w-2xl mx-auto">
-          <div class="glass-effect rounded-xl p-8 text-center">
-            <i class="pi pi-wallet text-6xl text-gray-400 mb-4"></i>
-            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              Authenticate Your Account
-            </h2>
-            <p class="text-gray-600 dark:text-gray-400 mb-6">
-              You need to sign in to deploy tokens in batch mode.
-            </p>
-            <button
-              @click="connectWallet"
-              class="px-6 py-3 bg-biatec-accent hover:bg-biatec-accent-dark text-white rounded-lg transition-colors font-medium"
-            >
-              Sign In
-            </button>
-          </div>
-        </div>
-
-        <!-- Main Content (when wallet connected) -->
-        <div v-else>
+        <!-- Main Content -->
+        <div>
           <!-- Batch Configuration Header -->
           <div class="glass-effect rounded-xl p-6 mb-6">
             <div class="flex items-center justify-between mb-4">
@@ -128,7 +109,7 @@
               :key="index"
               :index="index"
               :token="token"
-              :walletAddress="walletAddress"
+              :walletAddress="authStore.user?.address ?? ''"
               @update:token="updateToken(index, $event)"
               @remove="removeToken(index)"
             />
@@ -198,6 +179,7 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
 import MainLayout from '../layout/MainLayout.vue';
 import Badge from '../components/ui/Badge.vue';
 import BatchTokenEntryForm from '../components/BatchTokenEntryForm.vue';
@@ -208,6 +190,7 @@ import type { TokenDeploymentRequest } from '../types/api';
 import type { BatchValidationResult } from '../types/batch';
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 // Batch deployment composable
 const {
@@ -226,8 +209,6 @@ const {
 const tokens = ref<Partial<TokenDeploymentRequest>[]>([]);
 const batchName = ref('');
 const batchDescription = ref('');
-const isWalletConnected = ref(true); // Simplified - in real app, check wallet store
-const walletAddress = ref('0x1234567890123456789012345678901234567890'); // Simplified
 const showProgressDialog = ref(false);
 const showValidation = ref(false);
 const isValidating = ref(false);
@@ -254,9 +235,7 @@ const canDeploy = computed(() => {
 // Methods
 function addToken() {
   if (tokens.value.length < maxBatchSize) {
-    tokens.value.push({
-      walletAddress: walletAddress.value,
-    } as Partial<TokenDeploymentRequest>);
+    tokens.value.push({} as Partial<TokenDeploymentRequest>);
   }
 }
 
@@ -283,7 +262,7 @@ function validateBatch() {
   try {
     // Filter out incomplete tokens for validation
     const completeTokens = tokens.value.filter(
-      t => t.standard && t.name && t.walletAddress
+      t => t.standard && t.name
     ) as TokenDeploymentRequest[];
 
     if (completeTokens.length !== tokens.value.length) {
@@ -291,7 +270,7 @@ function validateBatch() {
         valid: false,
         errors: [{
           code: 'INCOMPLETE_TOKENS',
-          message: 'All tokens must have at least a standard, name, and wallet address configured',
+          message: 'All tokens must have at least a standard and name configured',
         }],
         warnings: [],
       };
@@ -318,7 +297,7 @@ async function createAndDeploy() {
   const success = await createBatch({
     name: batchName.value || undefined,
     description: batchDescription.value || undefined,
-    walletAddress: walletAddress.value,
+    walletAddress: authStore.user?.address ?? '',
     tokens: tokens.value as TokenDeploymentRequest[],
   });
 
@@ -348,11 +327,6 @@ async function retryAllFailed() {
 
 async function exportAudit() {
   await downloadAudit('csv');
-}
-
-function connectWallet() {
-  // In real app, trigger wallet connection
-  isWalletConnected.value = true;
 }
 
 function goBack() {
