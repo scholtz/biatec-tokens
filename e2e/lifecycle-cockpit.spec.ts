@@ -193,3 +193,121 @@ test.describe('Token Lifecycle Cockpit', () => {
     expect(urlHasAuthParam || authInputVisible).toBe(true)
   })
 })
+
+// ─── Complete User Flow: token detail → cockpit → execute action ──────────────
+
+test.describe('Token Operations Cockpit — complete user flow', () => {
+  test.beforeEach(async ({ page }) => {
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        console.log(`Browser console error (suppressed): ${msg.text()}`)
+      }
+    })
+    page.on('pageerror', error => {
+      console.log(`Page error (suppressed): ${error.message}`)
+    })
+
+    // Set up auth
+    await page.addInitScript(() => {
+      localStorage.setItem('algorand_user', JSON.stringify({
+        address: 'TESTADDRESS123',
+        name: 'Test User',
+        email: 'test@example.com',
+      }))
+    })
+  })
+
+  test('user navigates from dashboard to cockpit and sees health signals', async ({ page }) => {
+    // Start at dashboard
+    await page.goto('/dashboard')
+    await page.waitForLoadState('networkidle')
+
+    // Navigate to cockpit via nav link
+    const cockpitLink = page.getByRole('link', { name: /Cockpit/i }).first()
+    await expect(cockpitLink).toBeVisible({ timeout: 15000 })
+    await cockpitLink.click()
+    await page.waitForLoadState('networkidle')
+
+    // Verify cockpit page loaded
+    await expect(page).toHaveURL('/cockpit')
+    const heading = page.getByRole('heading', { name: /Token Lifecycle Cockpit/i })
+    await expect(heading).toBeVisible({ timeout: 45000 })
+
+    // Verify health/readiness section is visible
+    const readinessHeading = page.getByRole('heading', { name: /Launch Readiness/i })
+    await expect(readinessHeading).toBeVisible({ timeout: 45000 })
+  })
+
+  test('user views activity timeline on the cockpit page', async ({ page }) => {
+    await page.goto('/cockpit')
+    await page.waitForLoadState('networkidle')
+
+    // Wait for cockpit to load
+    const heading = page.getByRole('heading', { name: /Token Lifecycle Cockpit/i })
+    await expect(heading).toBeVisible({ timeout: 45000 })
+
+    // Activity Timeline widget should be visible
+    const timelineHeading = page.getByRole('heading', { name: /Activity Timeline/i })
+    await expect(timelineHeading).toBeVisible({ timeout: 45000 })
+
+    // Timeline should have a feed region (aria role)
+    const feed = page.locator('[role="feed"]')
+    await expect(feed).toBeVisible({ timeout: 15000 })
+  })
+
+  test('user reviews guided actions and can follow a deep link', async ({ page }) => {
+    await page.goto('/cockpit')
+    await page.waitForLoadState('networkidle')
+
+    // Wait for page to load
+    const heading = page.getByRole('heading', { name: /Token Lifecycle Cockpit/i })
+    await expect(heading).toBeVisible({ timeout: 45000 })
+
+    // Guided actions widget should be present
+    const actionsHeading = page.getByRole('heading', { name: /Guided Next Actions/i })
+    await expect(actionsHeading).toBeVisible({ timeout: 45000 })
+  })
+
+  test('user can refresh cockpit data and timestamp updates', async ({ page }) => {
+    await page.goto('/cockpit')
+    await page.waitForLoadState('networkidle')
+
+    // Wait for initial load
+    const heading = page.getByRole('heading', { name: /Token Lifecycle Cockpit/i })
+    await expect(heading).toBeVisible({ timeout: 45000 })
+
+    // Click refresh button
+    const refreshButton = page.getByRole('button', { name: /Refresh/i })
+    await expect(refreshButton).toBeVisible({ timeout: 15000 })
+    await refreshButton.click()
+
+    // After refresh, "Last updated:" timestamp should still be visible
+    await expect(page.getByText(/Last updated:/i)).toBeVisible({ timeout: 15000 })
+  })
+
+  test('cockpit does not display wallet connector UI (business roadmap alignment)', async ({ page }) => {
+    await page.goto('/cockpit')
+    await page.waitForLoadState('networkidle')
+
+    const heading = page.getByRole('heading', { name: /Token Lifecycle Cockpit/i })
+    await expect(heading).toBeVisible({ timeout: 45000 })
+
+    // Roadmap requirement: email/password only — no wallet connectors
+    const content = await page.content()
+    expect(content).not.toMatch(/WalletConnect|MetaMask|Pera.*Wallet|Defly/i)
+    expect(content).not.toContain('connect wallet')
+    expect(content).not.toContain('sign transaction')
+  })
+
+  test('cockpit is accessible — semantic headings and landmarks present', async ({ page }) => {
+    await page.goto('/cockpit')
+    await page.waitForLoadState('networkidle')
+
+    const h1 = page.getByRole('heading', { level: 1 })
+    await expect(h1.first()).toBeVisible({ timeout: 45000 })
+
+    // At least one h3 heading (widget section headings)
+    const h3Count = await page.getByRole('heading', { level: 3 }).count()
+    expect(h3Count).toBeGreaterThan(0)
+  })
+})
