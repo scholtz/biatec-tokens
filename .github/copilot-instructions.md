@@ -407,25 +407,171 @@ const navigationItems = [
 
 ---
 
+## 🚨 CRITICAL: PR QUALITY STANDARDS - HARDENING ISSUES 🚨
+
+**MANDATORY BEFORE SUBMITTING ANY PR FOR HARDENING ISSUES**
+
+### PR Quality Checklist (MUST ALL BE ✅ BEFORE SUBMISSION)
+
+Based on product owner rejection of PR #439, the following standards are MANDATORY:
+
+#### 1. Issue Linking (REQUIRED)
+- [ ] PR description must start with `Closes #[issue_number]`
+- [ ] Example: `Closes #438` (not just "fixes" or "addresses")
+
+#### 2. Business Value Documentation (REQUIRED)
+PR must explain in detail:
+- [ ] **Revenue Impact**: How does this reduce onboarding friction? (e.g., "reduces abandonment at login→token stage")
+- [ ] **Risk Reduction**: What specific business risks are mitigated? (e.g., "prevents auth-flow regressions")
+- [ ] **Support Efficiency**: How does this reduce support burden? (e.g., "clear navigation reduces confusion tickets by X%")
+- [ ] **Enterprise Trust**: How does this build buyer confidence? (e.g., "WCAG AA compliance meets procurement requirements")
+
+**Template**:
+```markdown
+## Business Value & Risk Mitigation
+
+### Revenue Impact (HIGH/MEDIUM/LOW)
+- **Onboarding Conversion**: [How this improves conversion]
+- **Enterprise Trust**: [How this builds trust]
+- **Support Efficiency**: [How this reduces tickets]
+
+### Risk Reduction Achieved
+- **Regression Prevention**: [What regressions are prevented]
+- **CI Stability**: [How this improves CI]
+- **Compliance Confidence**: [How this supports compliance]
+
+### Business Alignment
+Supports $29/$99/$299 tier customer acquisition by:
+1. [Specific improvement 1]
+2. [Specific improvement 2]
+```
+
+#### 3. Comprehensive Test Coverage (REQUIRED)
+BEFORE submitting PR, MUST have:
+- [ ] **Unit tests**: For all route guards, navigation logic, error messages, accessibility
+- [ ] **Integration tests**: For component interactions (e.g., router + auth store)
+- [ ] **E2E tests**: For complete user flows (unauth → login → feature)
+- [ ] **Test counts documented**: "X/Y passing (Z% pass rate)"
+
+**Minimum Test Coverage for Hardening Issues**:
+- Navigation changes: 5+ unit tests for parity, accessibility, no-wallet-UI
+- Router guard changes: 15+ integration tests for auth behavior
+- Error message changes: 5+ tests for user-friendly messaging
+- E2E flows: 10+ tests for critical paths (auth-first, mobile parity)
+
+#### 4. Test Evidence (REQUIRED)
+PR description MUST include:
+- [ ] **Before/After test counts**: Show improvement (e.g., "9 arbitrary waits → 0")
+- [ ] **Exact pass rates**: "3392/3417 unit tests (99.3%)"
+- [ ] **Test execution logs**: Paste actual test output showing passes
+- [ ] **CI workflow links**: Link to green CI runs
+
+**Template**:
+```markdown
+### Test Coverage Summary
+
+| Category | Tests | Pass Rate | Status |
+|----------|-------|-----------|--------|
+| Unit Tests | X/Y | Z% | ✅ PASSING |
+| Integration | X/Y | Z% | ✅ PASSING |
+| E2E Auth-First | X/Y | Z% | ✅ PASSING |
+```
+
+#### 5. Before/After Evidence (REQUIRED)
+MUST provide:
+- [ ] **Screenshots**: For UI changes (navigation, error messages, accessibility)
+- [ ] **Test logs**: Showing before/after test behavior
+- [ ] **Code snippets**: Showing before/after patterns (e.g., arbitrary waits → semantic)
+
+#### 6. CI Must Be Green (REQUIRED)
+- [ ] **All workflows passing**: No red checks allowed
+- [ ] **No skipped critical tests**: Only skip with documented justification
+- [ ] **Build succeeds**: TypeScript compiles without errors
+- [ ] **Coverage maintained**: No drops below thresholds
+
+**If CI fails with pre-existing issues**: Document which tests were already failing and provide evidence your changes don't make it worse.
+
+#### 7. Acceptance Criteria Mapping (REQUIRED)
+PR must explicitly map to issue ACs:
+- [ ] Table showing each AC and how it's met
+- [ ] Test evidence for each AC
+- [ ] Links to specific code changes for each AC
+
+**Template**:
+```markdown
+| AC | Description | Status | Evidence |
+|----|-------------|--------|----------|
+| AC #1 | Unauth redirect | ✅ PASS | 17 tests in auth-guard.test.ts |
+| AC #2 | No wallet UI | ✅ PASS | 5 tests in Navbar.navigation-parity.test.ts |
+```
+
+### Common Rejection Reasons (NEVER DO THIS)
+
+❌ **"Missing tests"** - PR submitted without unit/integration tests for new logic
+- **Prevention**: Write tests FIRST, then code
+
+❌ **"No business value"** - PR description only has technical changes, no business impact
+- **Prevention**: Always explain revenue/risk/support impact
+
+❌ **"CI failing"** - PR submitted with red checks
+- **Prevention**: Run all tests locally before pushing
+
+❌ **"Incomplete evidence"** - PR lacks test logs, screenshots, or pass counts
+- **Prevention**: Use template above, provide ALL evidence
+
+❌ **"Not linked to issue"** - PR doesn't reference issue number
+- **Prevention**: Start description with `Closes #XXX`
+
+### Quality Gates (ALL MUST PASS)
+
+Before marking PR as "Ready for Review":
+
+1. **Self-Review Checklist**:
+   - [ ] Read PR description as if you're the product owner
+   - [ ] Verify ALL business value points are clear
+   - [ ] Check ALL test evidence is included
+   - [ ] Confirm CI is green
+   - [ ] Validate issue link works
+
+2. **Test Verification**:
+   - [ ] Run `npm test` - all passing
+   - [ ] Run `npm run test:e2e` - all passing
+   - [ ] Run `npm run build` - succeeds
+   - [ ] Check coverage hasn't dropped
+
+3. **Documentation**:
+   - [ ] Implementation summary created (if significant feature)
+   - [ ] Testing matrix created (if new feature area)
+   - [ ] Copilot instructions updated (if process gap found)
+
+### Example of HIGH QUALITY PR Description
+
+See PR #XYZ for reference (after this is merged):
+- Clear `Closes #438` link
+- Detailed business value (revenue, risk, support)
+- Complete test coverage table
+- Before/after code examples
+- Test execution evidence
+- CI workflow links
+- AC mapping table
+
+---
+
 ## FAILURE TO MEET REQUIREMENTS = IMMEDIATE REJECTION
 
 **Product Owner will reject ANY PR that lacks:**
-1. Comprehensive test coverage (unit + E2E + testing matrix doc)
-2. Implementation summary with business value
-3. Manual verification checklist
-4. Acceptance criteria mapping with test evidence
-5. All tests passing locally with exact counts
-6. Build success verification
+1. Comprehensive test coverage (unit + integration + E2E)
+2. Business value documentation (revenue + risk + support)
+3. Test evidence (counts, logs, screenshots)
+4. Issue linking (`Closes #XXX`)
+5. All tests passing (CI green)
+6. AC mapping table
 
-**When Product Owner rejects for quality, you MUST:**
-1. Create detailed testing matrix document
-2. Add missing unit/E2E tests until minimums met
-3. Document business value and risk controls
-4. Provide test execution evidence (counts, duration)
-5. Map every acceptance criterion to tests
-6. Re-request review with ALL evidence attached
+**This is NOT optional. Every hardening PR MUST meet all standards.**
 
-**QUALITY DOCUMENTATION REQUIREMENTS:** Every significant feature MUST include a comprehensive testing matrix document that details:
+---
+
+## QUALITY DOCUMENTATION REQUIREMENTS
 - Unit test coverage with specific test counts
 - Integration test patterns and API interactions
 - E2E test coverage with user flow descriptions
