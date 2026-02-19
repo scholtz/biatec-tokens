@@ -22,6 +22,8 @@ import VisionInsightsWorkspace from "../views/VisionInsightsWorkspace.vue";
 import GuidedTokenLaunch from "../views/GuidedTokenLaunch.vue";
 import ComplianceSetupWorkspace from "../views/ComplianceSetupWorkspace.vue";
 import LifecycleCockpit from "../views/LifecycleCockpit.vue";
+import TokenDiscoveryJourney from "../views/TokenDiscoveryJourney.vue";
+import WalletActivationJourney from "../views/WalletActivationJourney.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 
 // Subscription views
@@ -84,6 +86,17 @@ const router = createRouter({
       path: "/discovery",
       name: "DiscoveryDashboard",
       component: DiscoveryDashboard,
+    },
+    {
+      path: "/discovery/journey",
+      name: "TokenDiscoveryJourney",
+      component: TokenDiscoveryJourney,
+    },
+    {
+      path: "/activation/wallet",
+      name: "WalletActivationJourney",
+      component: WalletActivationJourney,
+      meta: { requiresAuth: true },
     },
     {
       path: "/settings",
