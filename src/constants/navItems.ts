@@ -7,6 +7,7 @@ export const NAV_ITEMS = [
   { label: "Home", path: "/", routeName: "Home" },
   { label: "Create Token", path: "/launch/guided", routeName: "GuidedTokenLaunch" },
   { label: "Dashboard", path: "/dashboard", routeName: "TokenDashboard" },
+  { label: "Cockpit", path: "/cockpit", routeName: "LifecycleCockpit" },
   { label: "Marketplace", path: "/marketplace", routeName: "Marketplace" },
   { label: "Attestations", path: "/attestations", routeName: "AttestationsDashboard" },
   { label: "Settings", path: "/settings", routeName: "Settings" },

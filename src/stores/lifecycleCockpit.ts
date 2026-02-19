@@ -18,6 +18,7 @@ import type {
   RolePermissions,
   ActionPriority,
   ActionStatus,
+  TimelineData,
 } from '../types/lifecycleCockpit'
 
 export const useLifecycleCockpitStore = defineStore('lifecycleCockpit', () => {
@@ -29,6 +30,7 @@ export const useLifecycleCockpitStore = defineStore('lifecycleCockpit', () => {
   const walletDiagnostics = ref<WalletDiagnostics | null>(null)
   const riskIndicators = ref<LifecycleRiskIndicators | null>(null)
   const evidenceTraces = ref<EvidenceTrace[]>([])
+  const timeline = ref<TimelineData | null>(null)
   const isLoading = ref(false)
   const lastRefresh = ref<Date | null>(null)
   const error = ref<string | null>(null)
@@ -145,6 +147,7 @@ export const useLifecycleCockpitStore = defineStore('lifecycleCockpit', () => {
         loadWalletDiagnostics(),
         loadRiskIndicators(tokenId),
         loadEvidenceTraces(),
+        loadTimeline(),
       ])
       
       lastRefresh.value = new Date()
@@ -403,6 +406,54 @@ export const useLifecycleCockpitStore = defineStore('lifecycleCockpit', () => {
   }
 
   /**
+   * Load timeline entries
+   */
+  async function loadTimeline() {
+    // Mock data - will be replaced with API call
+    const now = new Date()
+    timeline.value = {
+      entries: [
+        {
+          id: 'tl-1',
+          category: 'compliance',
+          title: 'KYC Configuration Updated',
+          impactSummary: 'KYC provider settings were updated by compliance team.',
+          actor: 'compliance@example.com',
+          timestamp: new Date(now.getTime() - 2 * 60 * 60 * 1000), // 2 hours ago
+          deepLink: '/compliance/setup',
+        },
+        {
+          id: 'tl-2',
+          category: 'deployment',
+          title: 'Token Contract Deployed',
+          impactSummary: 'Token smart contract successfully deployed to Algorand mainnet.',
+          actor: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCD',
+          timestamp: new Date(now.getTime() - 24 * 60 * 60 * 1000), // 1 day ago
+        },
+        {
+          id: 'tl-3',
+          category: 'metadata_update',
+          title: 'Token Metadata Revised',
+          impactSummary: 'Token description and image URL updated for marketplace listing.',
+          actor: 'admin@example.com',
+          timestamp: new Date(now.getTime() - 36 * 60 * 60 * 1000), // 1.5 days ago
+        },
+        {
+          id: 'tl-4',
+          category: 'role_change',
+          title: 'Freeze Authority Assigned',
+          impactSummary: 'Freeze authority role assigned to compliance officer address.',
+          actor: 'system',
+          timestamp: new Date(now.getTime() - 48 * 60 * 60 * 1000), // 2 days ago
+        },
+      ],
+      lastUpdated: new Date(),
+      isTruncated: false,
+      totalCount: 4,
+    }
+  }
+
+  /**
    * Update action status
    */
   function updateActionStatus(actionId: string, status: ActionStatus) {
@@ -438,6 +489,7 @@ export const useLifecycleCockpitStore = defineStore('lifecycleCockpit', () => {
     walletDiagnostics,
     riskIndicators,
     evidenceTraces,
+    timeline,
     isLoading,
     lastRefresh,
     error,

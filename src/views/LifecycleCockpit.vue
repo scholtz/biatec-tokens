@@ -113,6 +113,12 @@
           :traces="cockpitStore.evidenceTraces"
           @evidence-viewed="handleEvidenceViewed"
         />
+
+        <!-- Activity Timeline Widget (Full Width) -->
+        <TimelineWidget
+          :timeline="cockpitStore.timeline"
+          @navigate="handleNavigate"
+        />
       </div>
     </div>
   </div>
@@ -123,6 +129,8 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLifecycleCockpitStore } from '../stores/lifecycleCockpit'
 import type { UserRole } from '../types/lifecycleCockpit'
+import { dispatchCockpitEvent } from '../utils/cockpitAnalytics'
+import { useAuthStore } from '../stores/auth'
 import Button from '../components/ui/Button.vue'
 import ReadinessStatusWidget from '../components/lifecycleCockpit/ReadinessStatusWidget.vue'
 import TelemetrySummaryWidget from '../components/lifecycleCockpit/TelemetrySummaryWidget.vue'
@@ -130,14 +138,23 @@ import GuidedActionsWidget from '../components/lifecycleCockpit/GuidedActionsWid
 import WalletDiagnosticsWidget from '../components/lifecycleCockpit/WalletDiagnosticsWidget.vue'
 import RiskIndicatorsWidget from '../components/lifecycleCockpit/RiskIndicatorsWidget.vue'
 import EvidenceLinksWidget from '../components/lifecycleCockpit/EvidenceLinksWidget.vue'
+import TimelineWidget from '../components/lifecycleCockpit/TimelineWidget.vue'
 
 const router = useRouter()
 const cockpitStore = useLifecycleCockpitStore()
+const authStore = useAuthStore()
 const selectedRole = ref<UserRole>('issuer_admin')
 
+/** Anonymised user identifier for analytics (never exposes raw address/email) */
+const anonymousUserId = (): string => {
+  const raw = authStore.account ?? 'anonymous'
+  // Simple hash-like truncation — in production use a proper anonymisation layer
+  return `u_${raw.slice(0, 8)}`
+}
+
 onMounted(async () => {
-  // Track page view
-  trackAnalyticsEvent('page_view')
+  // Track page view via privacy-safe utility
+  dispatchCockpitEvent('page_view', anonymousUserId())
   
   // Initialize cockpit data
   await cockpitStore.initialize()
@@ -145,12 +162,13 @@ onMounted(async () => {
 
 function handleRoleChange() {
   cockpitStore.setUserRole(selectedRole.value)
-  trackAnalyticsEvent('role_changed', { role: selectedRole.value })
+  // role_changed is not in the CockpitAnalyticsEvent schema; log locally only
+  console.log('[Cockpit] role_changed', { role: selectedRole.value })
 }
 
 async function handleRefresh() {
   await cockpitStore.refresh()
-  trackAnalyticsEvent('cockpit_refreshed')
+  dispatchCockpitEvent('page_view', anonymousUserId(), { refreshed: true })
 }
 
 function handleNavigate(deepLink: string) {
@@ -162,16 +180,16 @@ function handleNavigate(deepLink: string) {
 }
 
 function handleActionSelected(actionId: string) {
-  trackAnalyticsEvent('action_selected', { actionId })
+  dispatchCockpitEvent('action_selected', anonymousUserId(), { actionId })
 }
 
 function handleActionCompleted(actionId: string) {
   cockpitStore.updateActionStatus(actionId, 'completed')
-  trackAnalyticsEvent('action_completed', { actionId })
+  dispatchCockpitEvent('action_completed', anonymousUserId(), { actionId })
 }
 
 function handleEvidenceViewed(evidenceId: string) {
-  trackAnalyticsEvent('evidence_viewed', { evidenceId })
+  dispatchCockpitEvent('evidence_viewed', anonymousUserId(), { evidenceId })
 }
 
 function formatTimestamp(date: Date): string {
@@ -187,13 +205,5 @@ function formatTimestamp(date: Date): string {
   
   const days = Math.floor(hours / 24)
   return `${days} day${days > 1 ? 's' : ''} ago`
-}
-
-function trackAnalyticsEvent(eventType: string, metadata?: Record<string, unknown>) {
-  // Analytics tracking - would integrate with actual analytics service
-  console.log('[Analytics]', eventType, metadata)
-  
-  // In production, send to analytics service
-  // Example: sendToAnalytics({ eventType, timestamp: new Date(), userId: 'current-user-id', metadata })
 }
 </script>

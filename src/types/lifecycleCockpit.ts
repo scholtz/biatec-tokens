@@ -202,3 +202,38 @@ export interface CockpitAnalyticsEvent {
   userId: string
   metadata?: Record<string, unknown>
 }
+
+/**
+ * Timeline Event Types — recent token-affecting actions
+ */
+export type TimelineEventCategory =
+  | 'mint'
+  | 'burn'
+  | 'transfer'
+  | 'compliance'
+  | 'configuration'
+  | 'deployment'
+  | 'role_change'
+  | 'metadata_update'
+
+export interface TimelineEntry {
+  id: string
+  category: TimelineEventCategory
+  /** Short, human-readable title */
+  title: string
+  /** One-sentence impact summary */
+  impactSummary: string
+  /** Raw actor identifier (address, email, or system handle) */
+  actor: string
+  timestamp: Date
+  /** Optional link to blockchain explorer or audit log */
+  deepLink?: string
+}
+
+export interface TimelineData {
+  entries: TimelineEntry[]
+  lastUpdated: Date
+  /** True when the timeline has been truncated (more events exist) */
+  isTruncated: boolean
+  totalCount: number
+}
