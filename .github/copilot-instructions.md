@@ -384,6 +384,54 @@ test('test name', async ({ page }) => {
 - [ ] **Build Warnings**: Address all warnings, don't just ignore them
 - [ ] **Verify Build Output**: Check dist/ folder is generated correctly
 
+### 7a. TypeScript Store API Verification (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - February 19, 2026 🚨**
+
+**Violation**: Copilot used incorrect store API properties causing TypeScript compilation failures:
+- Used `guidedLaunchStore.selectedTemplate` when correct API is `guidedLaunchStore.currentForm.selectedTemplate`
+- Used `guidedLaunchStore.hasDraft()` when no such method exists (should use `loadDraft()` return value)
+- Used `draft.network` when correct property is `draft.selectedNetwork`
+
+**Root Cause**: Assumed store structure without verifying actual store implementation.
+
+**Correct Approach BEFORE Using Any Store**:
+1. **READ STORE FILE**: Check `src/stores/[storeName].ts` for exported properties and methods
+2. **CHECK RETURN BLOCK**: Look at the store's return statement to see what's actually exported
+3. **VERIFY PROPERTY PATHS**: Nested properties like `currentForm.selectedTemplate` must be accessed correctly
+4. **TEST BUILD IMMEDIATELY**: Run `npm run build` after ANY store integration to catch errors early
+
+**Common Store Patterns**:
+```typescript
+// ❌ WRONG - Assuming direct property access
+guidedLaunchStore.selectedTemplate // Doesn't exist!
+
+// ✅ CORRECT - Access via currentForm
+guidedLaunchStore.currentForm.selectedTemplate
+
+// ❌ WRONG - Assuming method exists
+if (guidedLaunchStore.hasDraft()) { ... } // No such method!
+
+// ✅ CORRECT - Use actual store methods
+const hasDraft = guidedLaunchStore.loadDraft() // Returns boolean
+if (hasDraft) { ... }
+
+// ❌ WRONG - Wrong property name
+draft.network // Doesn't exist on TokenDraftForm!
+
+// ✅ CORRECT - Use actual property name
+draft.selectedNetwork // Correct property name
+```
+
+**Verification Checklist**:
+- [ ] Read store file to understand API structure
+- [ ] Check if property is direct or nested (e.g., `store.prop` vs `store.form.prop`)
+- [ ] Verify method exists by checking store's return block
+- [ ] Run `npm run build` immediately after integration
+- [ ] Fix TypeScript errors BEFORE committing
+
+**Never Assume Store Structure** - Always verify by reading the actual store implementation!
+
 ### 8. Feature Accessibility (MANDATORY FOR NEW ROUTES)
 - [ ] **Navigation Link Required**: If implementing new route, MUST add navigation link
   - ❌ **Past Violation**: Guided launch implemented but not accessible from navbar
