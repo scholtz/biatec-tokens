@@ -382,6 +382,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useTokenDraftStore } from '../../../stores/tokenDraft'
 import { useAuthStore } from '../../../stores/auth'
 import { analyticsService } from '../../../services/analytics'
+import { competitiveTelemetryService } from '../../../services/CompetitiveTelemetryService'
 import { DeploymentStatusService } from '../../../services/DeploymentStatusService'
 import { auditTrailService } from '../../../services/AuditTrailService'
 import type { TokenDeploymentRequest } from '../../../types/api'
@@ -499,6 +500,12 @@ const startDeployment = async () => {
     label: tokenDraftStore.currentDraft?.selectedStandard || 'unknown',
   })
   
+  // Track competitive journey start
+  competitiveTelemetryService.startJourney('token_deployment', {
+    standard: tokenDraftStore.currentDraft?.selectedStandard || 'unknown',
+    network: tokenDraftStore.currentDraft?.network || 'unknown'
+  })
+  
   const draft = tokenDraftStore.currentDraft
   if (!draft) {
     console.error('No draft found for deployment')
@@ -532,6 +539,17 @@ const startRealDeployment = async (draft: any) => {
       deploymentStages.value = state.stages
       deploymentStatus.value = state.status
       
+      // Track deployment status visibility
+      const currentStage = state.stages.find(s => s.status === 'in-progress')
+      if (currentStage) {
+        competitiveTelemetryService.trackDeploymentStatusVisibility({
+          stage: currentStage.id,
+          status: currentStage.status,
+          progress: currentStage.progress,
+          userInteraction: 'viewed'
+        })
+      }
+      
       if (state.result) {
         deploymentResult.value = state.result
       }
@@ -545,6 +563,20 @@ const startRealDeployment = async (draft: any) => {
           category: 'deployment',
           label: state.error.code || 'unknown',
         })
+        
+        // Track competitive error (initially abandoned, may be recovered)
+        competitiveTelemetryService.trackErrorRecovery({
+          errorType: state.error.code || 'UNKNOWN',
+          stage: currentStage?.id || 'unknown',
+          recovered: false,
+          recoveryMethod: 'abandon'
+        })
+        
+        // Complete journey as failed
+        competitiveTelemetryService.completeJourney('token_deployment', false, {
+          error: state.error.message,
+          errorCode: state.error.code
+        })
       }
       
       if (state.status === 'completed') {
@@ -553,6 +585,13 @@ const startRealDeployment = async (draft: any) => {
           event: 'token_deployment_completed',
           category: 'deployment',
           label: draft.selectedStandard || 'unknown',
+        })
+        
+        // Track competitive journey success
+        competitiveTelemetryService.completeJourney('token_deployment', true, {
+          assetId: state.result?.assetId,
+          standard: draft.selectedStandard,
+          network: draft.network
         })
       }
     })
@@ -565,6 +604,14 @@ const startRealDeployment = async (draft: any) => {
       recoverable: true,
       remediation: 'Please try again. If the problem persists, contact support.',
     }
+    
+    // Track error recovery attempt opportunity
+    competitiveTelemetryService.trackErrorRecovery({
+      errorType: 'DEPLOYMENT_ERROR',
+      stage: 'deploying',
+      recovered: false,
+      recoveryMethod: 'abandon'
+    })
   }
 }
 
