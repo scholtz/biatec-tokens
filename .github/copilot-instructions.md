@@ -1519,6 +1519,26 @@ const button = page.locator('button').filter({ hasText: /Submit/i }).first();
 - Instead of `page.locator('text=/Some Text/i')` → use `page.getByRole('heading', { name: 'Some Text', level: 3 })` or `page.getByText('Some Text', { exact: false })`
 - For multiple matches, use `.first()`, `.last()`, or `.nth(index)` only when semantically correct
 
+**🚨 NAVBAR DUPLICATE ELEMENT PATTERN (Critical - Caused CI Failure in PR #447):**
+The Navbar renders BOTH desktop AND mobile versions in DOM simultaneously. Any button/link present in both menus will match **twice** when using `getByRole`. Always use `.first()` for elements that appear in both desktop and mobile nav:
+
+```typescript
+// ❌ WRONG - fails with "strict mode violation: resolved to 2 elements"
+// (both desktop Sign In + mobile Sign In are in DOM at same time)
+const signInButton = page.getByRole('button', { name: /sign in/i });
+await expect(signInButton).toBeVisible(); // FAILS: 2 elements found
+
+// ✅ CORRECT - use .first() to target the visible desktop button
+const signInButton = page.getByRole('button', { name: /sign in/i }).first();
+await expect(signInButton).toBeVisible(); // PASSES
+
+// ✅ CORRECT - for nav links present in both desktop and mobile
+const guidedLaunchLink = page.getByRole('link', { name: /guided launch/i }).first();
+await expect(guidedLaunchLink).toBeVisible();
+```
+
+**Pattern applies to:** Sign In button, all navigation links, any interactive element rendered in both desktop and mobile navbar variants.
+
 ### Critical E2E Testing Requirements
 
 **NEVER finish work request with failing E2E tests. Always:**

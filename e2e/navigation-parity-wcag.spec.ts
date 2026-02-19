@@ -64,8 +64,9 @@ test.describe("Navigation Parity and WCAG AA", () => {
     await page.reload();
     await page.waitForLoadState("networkidle");
 
-    // Sign In should be visible
-    const signInButton = page.getByRole("button", { name: /sign in/i });
+    // Sign In should be visible (use first() to avoid strict-mode violation when both
+    // desktop and mobile buttons are in DOM simultaneously)
+    const signInButton = page.getByRole("button", { name: /sign in/i }).first();
     await expect(signInButton).toBeVisible({ timeout: 15000 });
   });
 
