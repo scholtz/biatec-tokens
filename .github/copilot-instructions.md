@@ -147,6 +147,36 @@ VALIDATION WORK CHECKLIST:
 - ❌ WRONG: Documentation + "tests exist" claim (no execution evidence)
 - ✅ CORRECT: Test execution logs + CI links + screenshots + gap mitigation + docs
 
+### 🚨 CRITICAL PAST VIOLATION - February 20, 2026 (PR #455) 🚨
+
+**Violation**: Copilot submitted a new feature PR (Token Operations Cockpit v1) with component (`TimelineWidget.vue`) but WITHOUT component tests or integration tests in the same commit. Tests were only added after the first product owner rejection.
+
+**What Went Wrong**:
+- Issue: "Next-step: Token Operations Cockpit v1 for lifecycle intelligence"
+- Copilot created `TimelineWidget.vue` but did NOT add component tests (`TimelineWidget.test.ts`) in the same commit
+- Copilot created 4 utility modules but did NOT add integration tests until after PO rejection
+- E2E tests also contained strict-mode violations (multiple elements matched by `getByText(/Last updated:/i)`) and false-positive wallet-connector assertions that matched diagnostic widget labels
+- First submission required 3 follow-up commits to fix test gaps and CI failures
+
+**Root Cause**:
+- **Component Without Tests**: New components were committed WITHOUT their unit test file in the same commit
+- **No Pre-Push E2E Verification**: E2E tests were written but not run locally before committing
+- **Strict Mode Blindness**: Text-presence assertions (`getByText()`) were not verified against ALL content rendered on the page (including third-party/diagnostic widgets)
+- **Absence Assertion Risk**: Negative assertions (`expect(content).not.toContain(...)`) were not verified against full rendered DOM
+
+**Correct Approach for New Components/Features**:
+1. **ALWAYS create test file in same commit as component** — `TimelineWidget.vue` + `TimelineWidget.test.ts` must be one atomic commit
+2. **Run E2E tests locally before pushing** — `npm run test:e2e -- e2e/relevant-spec.ts` before `report_progress`
+3. **Check ALL page content for text assertions** — `getByText()` and `not.toContain()` assertions must be verified against every widget rendered on the page
+4. **Use `.first()` for repeated elements** — when multiple widgets share similar text (e.g., "Last updated:"), always use `.first()` or a more specific locator
+5. **Negative assertions need extra care** — assertions checking that something does NOT appear must consider all content from diagnostic/compatibility widgets
+
+**Red Flags This Pattern Is Repeating**:
+- ✅ New `.vue` component created without matching `.test.ts` file in same commit
+- ✅ Integration tests added in separate follow-up commit rather than initial one
+- ✅ E2E test failures discovered only after CI run (not local pre-push verification)
+- ✅ `getByText()` used without `.first()` on pages with multiple widgets
+
 ### 🚨 CRITICAL PAST VIOLATION - February 19, 2026 (PR #437) 🚨
 
 **Violation**: Copilot misidentified "hardening" issue as validation-only and delivered only documentation WITHOUT fixing tests or CI.
