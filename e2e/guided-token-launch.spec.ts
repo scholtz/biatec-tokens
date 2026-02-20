@@ -228,10 +228,9 @@ test.describe('Guided Token Launch Flow', () => {
   })
 
   test('should display readiness score card on desktop', async ({ page, viewport }) => {
-    // Only test on desktop viewport
-    if (viewport && viewport.width < 1024) {
-      test.skip()
-    }
+    // Use proper Playwright conditional skip: test.skip(condition, reason) pattern
+    // Readiness score card is only shown on desktop viewports ≥1024px; skip on mobile.
+    test.skip(!!(viewport && viewport.width < 1024), 'Readiness score card only rendered on desktop viewports ≥1024px')
     
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
