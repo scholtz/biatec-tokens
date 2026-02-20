@@ -439,4 +439,154 @@ test.describe('Guided Token Launch Flow', () => {
     // Should show human-friendly message
     expect(bannerText?.toLowerCase()).toMatch(/submission|deploy|try again|contact/i)
   })
+
+  // ── AC9: Failure scenario 1 ──────────────────────────────────────────────
+  // Missing compliance acknowledgement blocks progression with actionable guidance.
+  test('AC9 failure scenario 1: compliance acknowledgement required blocks progression', async ({ page }) => {
+    // Inject draft at the compliance step (step 2) with prior steps complete
+    await page.addInitScript(() => {
+      const draft = {
+        version: '1.0',
+        form: {
+          createdAt: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+          currentStep: 2,
+          completedSteps: [0, 1],
+          isSubmitted: false,
+          organizationProfile: {
+            organizationName: 'Test Company',
+            organizationType: 'company',
+            jurisdiction: 'US',
+            contactName: 'John Doe',
+            contactEmail: 'john@test.com',
+            role: 'business_owner',
+          },
+          tokenIntent: {
+            tokenPurpose: 'Test purpose',
+            targetAudience: 'retail',
+            expectedHolders: 'under_100',
+            utilityType: 'payment',
+            geographicScope: 'local',
+          },
+          complianceReadiness: {
+            requiresMICA: false,
+            requiresKYC: false,
+            requiresAML: false,
+            hasLegalReview: false,
+            hasRiskAssessment: false,
+            restrictedJurisdictions: [],
+            whitelistRequired: false,
+            riskAcknowledged: false,  // Not acknowledged — should block progression
+          },
+        },
+        stepStatuses: [
+          { id: 'organization', title: 'Organization Profile', isComplete: true, isValid: true, isOptional: false },
+          { id: 'intent', title: 'Token Intent', isComplete: true, isValid: true, isOptional: false },
+          { id: 'compliance', title: 'Compliance Readiness', isComplete: false, isValid: false, isOptional: false },
+          { id: 'template', title: 'Template Selection', isComplete: false, isValid: false, isOptional: false },
+          { id: 'economics', title: 'Economics Settings', isComplete: false, isValid: false, isOptional: true },
+          { id: 'review', title: 'Review & Submit', isComplete: false, isValid: false, isOptional: false },
+        ],
+      }
+      localStorage.setItem('biatec_guided_launch_draft', JSON.stringify(draft))
+    })
+
+    await page.goto('/launch/guided')
+    await page.waitForLoadState('networkidle')
+
+    const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
+    await expect(title).toBeVisible({ timeout: 60000 })
+
+    // Compliance step should be visible
+    const complianceHeading = page.locator('h2').filter({ hasText: /compliance readiness/i })
+    await expect(complianceHeading).toBeVisible({ timeout: 30000 })
+
+    // The continue button inside the compliance step should be disabled until acknowledged
+    const continueBtn = page.locator('button').filter({ hasText: /continue to template selection/i })
+    await continueBtn.waitFor({ state: 'visible', timeout: 20000 })
+    await expect(continueBtn).toBeDisabled()
+
+    // The acknowledgement checkbox should be present and unchecked
+    const ackCheckbox = page.locator('#risk-acknowledgement')
+    await expect(ackCheckbox).toBeVisible({ timeout: 10000 })
+    await expect(ackCheckbox).not.toBeChecked()
+
+    // After checking the acknowledgement, the button should become enabled
+    await ackCheckbox.check()
+    await expect(continueBtn).toBeEnabled({ timeout: 5000 })
+  })
+
+  // ── AC9: Failure scenario 2 ──────────────────────────────────────────────
+  // Backend submission error shows recoverable state: user-friendly message
+  // with clear what/why/how structure and a dismiss action.
+  test('AC9 failure scenario 2: backend error shows recoverable message with dismiss', async ({ page }) => {
+    // Inject draft with a submission error so the error banner renders immediately
+    await page.addInitScript(() => {
+      const draft = {
+        version: '1.0',
+        form: {
+          createdAt: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+          currentStep: 0,
+          completedSteps: [],
+          isSubmitted: false,
+          submissionError: 'SUBMISSION_FAILED',
+        },
+        stepStatuses: [
+          { id: 'organization', title: 'Organization Profile', isComplete: false, isValid: false, isOptional: false },
+          { id: 'intent', title: 'Token Intent', isComplete: false, isValid: false, isOptional: false },
+          { id: 'compliance', title: 'Compliance Readiness', isComplete: false, isValid: false, isOptional: false },
+          { id: 'template', title: 'Template Selection', isComplete: false, isValid: false, isOptional: false },
+          { id: 'economics', title: 'Economics Settings', isComplete: false, isValid: false, isOptional: true },
+          { id: 'review', title: 'Review & Submit', isComplete: false, isValid: false, isOptional: false },
+        ],
+      }
+      localStorage.setItem('biatec_guided_launch_draft', JSON.stringify(draft))
+    })
+
+    await page.goto('/launch/guided')
+    await page.waitForLoadState('networkidle')
+
+    const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
+    await expect(title).toBeVisible({ timeout: 60000 })
+
+    // Error banner must be visible with role="alert" for accessibility
+    const errorBanner = page.locator('[role="alert"]').first()
+    await expect(errorBanner).toBeVisible({ timeout: 15000 })
+
+    const bannerText = await errorBanner.textContent()
+    // Must use human language, not raw technical strings
+    expect(bannerText).toBeTruthy()
+    expect(bannerText).not.toMatch(/SUBMISSION_FAILED/)
+    expect(bannerText?.toLowerCase()).toMatch(/submission|deploy|try again|contact/i)
+
+    // Dismiss button must be present to clear the error (recoverable state)
+    const dismissBtn = page.locator('[aria-label="Dismiss error"]')
+    await expect(dismissBtn).toBeVisible({ timeout: 5000 })
+    await dismissBtn.click()
+
+    // After dismissal the error banner should no longer be shown
+    await expect(errorBanner).not.toBeVisible({ timeout: 5000 })
+  })
+
+  // ── AC7: Legacy wizard canonical redirect ────────────────────────────────
+  // The legacy /create/wizard route must redirect to /launch/guided.
+  test('AC7: legacy /create/wizard route redirects to canonical /launch/guided', async ({ page }) => {
+    // Authenticated user navigates to legacy URL
+    await page.goto('/create/wizard')
+    await page.waitForLoadState('networkidle')
+
+    // Should end up at the guided launch URL (or be redirected to login if unauthenticated)
+    const finalUrl = page.url()
+
+    // Either redirected to /launch/guided (authenticated) or to /? (unauthenticated with auth prompt)
+    const isCanonical = finalUrl.includes('/launch/guided')
+    const isAuthRedirect = finalUrl.includes('showAuth=true') || finalUrl.endsWith('/')
+
+    // Pass if on canonical guided launch OR auth redirect (correct for unauthenticated)
+    expect(isCanonical || isAuthRedirect).toBe(true)
+
+    // Should NOT stay on /create/wizard
+    expect(finalUrl).not.toContain('/create/wizard')
+  })
 })

@@ -44,6 +44,8 @@ export interface ComplianceReadiness {
   complianceNotes?: string
   whitelistRequired: boolean
   selectedWhitelistId?: string
+  /** Must be true before the compliance step can proceed. Explicit user acknowledgement of requirements. */
+  riskAcknowledged?: boolean
 }
 
 /**
