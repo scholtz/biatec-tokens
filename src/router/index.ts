@@ -24,6 +24,7 @@ import ComplianceSetupWorkspace from "../views/ComplianceSetupWorkspace.vue";
 import LifecycleCockpit from "../views/LifecycleCockpit.vue";
 import TokenDiscoveryJourney from "../views/TokenDiscoveryJourney.vue";
 import WalletActivationJourney from "../views/WalletActivationJourney.vue";
+import GuidedPortfolioOnboarding from "../views/GuidedPortfolioOnboarding.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 
 // Subscription views
@@ -171,6 +172,13 @@ const router = createRouter({
       path: "/onboarding",
       name: "OnboardingFlow",
       component: OnboardingFlow,
+      meta: { requiresAuth: true },
+    },
+    // Guided Portfolio Onboarding
+    {
+      path: "/portfolio/onboarding",
+      name: "GuidedPortfolioOnboarding",
+      component: GuidedPortfolioOnboarding,
       meta: { requiresAuth: true },
     },
     // Enterprise Onboarding Command Center
