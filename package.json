@@ -39,7 +39,7 @@
     "@pinia/testing": "^1.0.3",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/vite": "^4.1.18",
-    "@types/node": "^25.2.3",
+    "@types/node": "^25.3.0",
     "@vitejs/plugin-vue": "^6.0.4",
     "@vitest/coverage-v8": "^4.0.18",
     "@vitest/ui": "^4.0.18",
