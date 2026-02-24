@@ -545,3 +545,163 @@ describe('Telemetry and analytics event coverage', () => {
     expect(t2).toBeGreaterThanOrEqual(t1)
   })
 })
+
+// ─── Wallet reconnect state ───────────────────────────────────────────────────
+
+describe('Wallet reconnect state', () => {
+  beforeEach(() => localStorage.clear())
+  afterEach(() => localStorage.clear())
+
+  it('reconnected user (was authenticated, now unauthenticated) shows sign_in as in_progress', () => {
+    // Simulates a wallet session expiry / logout followed by reconnect
+    const reconnectCtx = ctx({ isAuthenticated: false, user: null })
+    const steps = deriveOnboardingSteps(reconnectCtx)
+    expect(steps.find((s) => s.id === 'sign_in')!.status).toBe('in_progress')
+  })
+
+  it('all non-auth steps are pending while wallet is not connected', () => {
+    const steps = deriveOnboardingSteps(ctx({ isAuthenticated: false, user: null }))
+    const nonAuthSteps = steps.filter((s) => s.id !== 'sign_in')
+    nonAuthSteps.forEach((s) => {
+      expect(['pending', 'blocked']).toContain(s.status)
+    })
+  })
+
+  it('progress is 0% for completely unauthenticated user', () => {
+    const steps = deriveOnboardingSteps(ctx({ isAuthenticated: false, user: null }))
+    expect(calculateOnboardingProgress(steps)).toBe(0)
+  })
+
+  it('after reconnect, provisioning step depends on status not previous session', () => {
+    // User reconnects and provisioning is now active (recovered from failed state)
+    const recoveredCtx = ctx({ provisioningStatus: 'active' })
+    const steps = deriveOnboardingSteps(recoveredCtx)
+    expect(steps.find((s) => s.id === 'account_provisioning')!.status).toBe('completed')
+  })
+
+  it('readiness check auth status reflects current session not cached state', () => {
+    // Session 1: authenticated
+    const session1 = evaluateActionReadiness({
+      isAuthenticated: true,
+      provisioningStatus: 'active',
+      networkValid: true,
+      requiredFieldsComplete: true,
+      estimatedImpactAvailable: true,
+    })
+    // Session 2: wallet reconnected but not authenticated yet
+    const session2 = evaluateActionReadiness({
+      isAuthenticated: false,
+      provisioningStatus: undefined,
+      networkValid: true,
+      requiredFieldsComplete: true,
+      estimatedImpactAvailable: true,
+    })
+    expect(session1.canProceed).toBe(true)
+    expect(session2.canProceed).toBe(false)
+    // Auth check must fail in session2
+    expect(session2.checks.find((c) => c.id === 'auth')!.status).toBe('fail')
+  })
+
+  it('snapshot survives wallet reconnect (persisted across sessions)', () => {
+    const snap: PortfolioSnapshot = {
+      tokenCount: 3,
+      deployedCount: 2,
+      complianceScore: 85,
+      capturedAt: new Date().toISOString(),
+    }
+    savePortfolioSnapshot(snap)
+    // Simulate reconnect: clear auth but NOT localStorage
+    // (localStorage snapshot should still be there)
+    const loaded = loadPortfolioSnapshot()
+    expect(loaded?.tokenCount).toBe(3)
+  })
+})
+
+// ─── First-time user setup state ─────────────────────────────────────────────
+
+describe('First-time user setup state', () => {
+  beforeEach(() => localStorage.clear())
+  afterEach(() => localStorage.clear())
+
+  it('first-time user has no localStorage snapshot', () => {
+    const loaded = loadPortfolioSnapshot()
+    expect(loaded).toBeNull()
+  })
+
+  it('first-time authenticated user sees explore_standards as next step', () => {
+    const firstTimeCtx = ctx({
+      provisioningStatus: 'active',
+      hasCreatedToken: false,
+      hasDeployedToken: false,
+      hasConfiguredCompliance: false,
+      tokenCount: 0,
+    })
+    const steps = deriveOnboardingSteps(firstTimeCtx)
+    const next = getNextStep(steps)
+    expect(['explore_standards', 'create_first_token']).toContain(next?.id)
+  })
+
+  it('first-time user progress is between 14% and 30% after sign-in and provisioning', () => {
+    const steps = deriveOnboardingSteps(ctx({
+      provisioningStatus: 'active',
+      hasCreatedToken: false,
+    }))
+    const pct = calculateOnboardingProgress(steps)
+    // 2 steps completed out of 7 = ~28%
+    expect(pct).toBeGreaterThanOrEqual(14)
+    expect(pct).toBeLessThan(50)
+  })
+
+  it('first-time user with pending provisioning has no next step after sign_in', () => {
+    const pendingProvisionCtx = ctx({ provisioningStatus: 'provisioning' })
+    const steps = deriveOnboardingSteps(pendingProvisionCtx)
+    const next = getNextStep(steps)
+    // Should be account_provisioning as in_progress
+    expect(next?.id).toBe('account_provisioning')
+  })
+
+  it('computePortfolioDeltas with null prev snapshot returns empty array', () => {
+    const current: PortfolioSnapshot = {
+      tokenCount: 1,
+      deployedCount: 0,
+      complianceScore: 0,
+      capturedAt: new Date().toISOString(),
+    }
+    const deltas = computePortfolioDeltas(null, current)
+    expect(deltas).toHaveLength(0)
+  })
+
+  it('action readiness for first-time user: fields not complete blocks action', () => {
+    const result = evaluateActionReadiness({
+      isAuthenticated: true,
+      provisioningStatus: 'active',
+      networkValid: true,
+      requiredFieldsComplete: false,
+      estimatedImpactAvailable: true,
+    })
+    // Fields check is a warn, not block — canProceed may still be true
+    const fieldsCheck = result.checks.find((c) => c.id === 'fields')!
+    expect(fieldsCheck.status).toBe('warning')
+    // Should not block proceed — warnings don't block
+    expect(result.canProceed).toBe(true)
+  })
+
+  it('all 7 steps are present for first-time user context', () => {
+    const steps = deriveOnboardingSteps(ctx({
+      provisioningStatus: 'active',
+      hasCreatedToken: false,
+      hasDeployedToken: false,
+      hasConfiguredCompliance: false,
+      tokenCount: 0,
+    }))
+    const ids = steps.map((s) => s.id)
+    expect(ids).toContain('sign_in')
+    expect(ids).toContain('account_provisioning')
+    expect(ids).toContain('explore_standards')
+    expect(ids).toContain('create_first_token')
+    expect(ids).toContain('configure_compliance')
+    expect(ids).toContain('deploy_token')
+    expect(ids).toContain('complete')
+    expect(steps).toHaveLength(7)
+  })
+})

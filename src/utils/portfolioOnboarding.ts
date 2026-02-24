@@ -232,11 +232,13 @@ export interface PortfolioDelta {
 /**
  * Compute "since last visit" deltas between a previous snapshot and the
  * current portfolio values. Returns at least three meaningful indicators.
+ * Returns an empty array if there is no prior snapshot (first visit).
  */
 export function computePortfolioDeltas(
-  previous: PortfolioSnapshot,
+  previous: PortfolioSnapshot | null,
   current: PortfolioSnapshot,
 ): PortfolioDelta[] {
+  if (!previous) return []
   return [
     buildDelta('Tokens Created', previous.tokenCount, current.tokenCount, current.capturedAt, (n) => n > 0),
     buildDelta('Deployed Tokens', previous.deployedCount, current.deployedCount, current.capturedAt, (n) => n > 0),

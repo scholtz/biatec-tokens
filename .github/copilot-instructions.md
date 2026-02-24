@@ -177,6 +177,65 @@ VALIDATION WORK CHECKLIST:
 - ✅ E2E test failures discovered only after CI run (not local pre-push verification)
 - ✅ `getByText()` used without `.first()` on pages with multiple widgets
 
+### 🚨 CRITICAL PAST VIOLATION - February 24, 2026 (PR #465) 🚨
+
+**Violation**: Copilot submitted a new feature PR (Guided Portfolio Onboarding) with incomplete test coverage in the first commit, requiring 3 product owner review cycles before reaching adequate quality. Tests were added incrementally across follow-up commits rather than being complete from the start.
+
+**What Went Wrong**:
+- Issue: "Frontend growth milestone: guided portfolio onboarding and cross-wallet continuity" (Issue #467, PR #465)
+- First commit had 56 unit + 13 E2E tests — NOT sufficient for a feature with 10 acceptance criteria
+- Integration tests covering empty wallet, interrupted session, and account switching were missing from the first commit
+- PR remained in draft state and product owner could not confirm CI evidence
+- Required 3 rounds of product owner feedback and 3 follow-up commits to reach 149+ tests
+- Business value / risk / rollback were not in the PR description from the start
+
+**Root Cause**:
+- **Underestimating test scope**: Treated a 10-AC vision/strategy feature as if 56 unit tests were sufficient
+- **Missing minimum test count threshold**: No explicit minimum was enforced for vision/strategy issues with 10+ ACs
+- **PR description incomplete**: Did not include business value, risk mitigation, and rollback from the initial commit
+- **Draft state left open**: PR was submitted without verifying CI evidence
+- **No edge-case pre-analysis**: Edge cases (empty wallet, interrupted session, account switch) were not identified upfront
+
+**Correct Approach for Vision/Strategy Issues with 10+ Acceptance Criteria**:
+1. **MINIMUM 150+ tests from FIRST commit** — Count them before `report_progress`:
+   - 60+ unit tests (all logic paths incl. edge cases)
+   - 40+ integration tests (empty wallet, interrupted session, account switching, analytics, complete journey)
+   - 30+ component tests (all 3 states: loading/error/empty/success per component)
+   - 15+ E2E tests (full journey, failure-recovery, returning-user, product-alignment)
+2. **PR description from day one MUST include**:
+   - `Closes #<issue_number>`
+   - Business value (user pain removed, metric to improve, risk mitigated)
+   - Rollback strategy
+   - Test evidence table with exact counts per layer
+3. **Never mark PR as "draft"** — Submit as ready-for-review only when all tests pass and counts are verified
+4. **Pre-analyze edge cases** before writing any code — List them explicitly:
+   - Empty wallet / null address
+   - Interrupted session / partial form completion
+   - Account switching / cross-wallet state isolation
+   - Error states / network failures
+   - Analytics / telemetry PII safety
+
+**Minimum Test Count Table (enforced per issue type)**:
+
+| Issue Type | Unit | Component | Integration | E2E | Total |
+|---|---|---|---|---|---|
+| Small fix (<3 ACs) | 5+ | — | — | 3+ | 8+ |
+| Feature (3–6 ACs) | 30+ | 15+ | 10+ | 8+ | 63+ |
+| Feature (7–10 ACs) | 50+ | 30+ | 20+ | 15+ | 115+ |
+| Vision/Strategy (10+ ACs) | 60+ | 30+ | 40+ | 15+ | 145+ |
+
+**Red Flags This Pattern Is Repeating**:
+- ✅ Issue has 10 acceptance criteria but first commit has <100 tests
+- ✅ Integration tests for edge cases (empty wallet, interrupted session) not present in first commit
+- ✅ PR description lacks business value / rollback strategy
+- ✅ PR submitted in draft state without CI evidence
+
+**Never Again**:
+- ❌ Submit vision/strategy PR with <150 tests in first commit
+- ❌ Leave PR in draft state without verifying test counts
+- ❌ Add edge-case tests only after product owner rejection
+- ❌ Omit business value / risk / rollback from initial PR description
+
 ### 🚨 CRITICAL PAST VIOLATION - February 19, 2026 (PR #437) 🚨
 
 **Violation**: Copilot misidentified "hardening" issue as validation-only and delivered only documentation WITHOUT fixing tests or CI.
