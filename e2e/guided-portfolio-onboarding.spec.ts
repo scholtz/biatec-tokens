@@ -238,13 +238,14 @@ test.describe('Guided Portfolio Onboarding', () => {
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(10000)
 
-    // Steps that are blocked should display their blocker reason
+    // The ActionReadinessIndicator surfaces blockers when conditions aren't met.
+    // With an unauthenticated/pending test user at least the auth or provisioning
+    // check fails, rendering "Action Blocked" and a specific failure reason.
     const content = await page.content()
-    // The "configure_compliance" step is blocked until first token created — check explanation
-    const hasBlockerContent = content.includes('Must create a token first')
-      || content.includes('Token required')
-      || content.includes('Complete this step')
-      || content.includes('required')
+    const hasBlockerContent = content.includes('Action Blocked')
+      || content.includes('You must be signed in')
+      || content.includes('Account is not active')
+      || content.includes('Create a token first')
     expect(hasBlockerContent).toBe(true)
   })
 
