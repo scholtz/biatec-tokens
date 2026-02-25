@@ -365,3 +365,197 @@ describe('Closure milestone completeness (AC #7 — traceability)', () => {
     expect(uniqueIds.size).toBe(ids.length);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Additional branch coverage: deriveSessionState edge cases
+// ---------------------------------------------------------------------------
+
+describe('deriveSessionState — all branch paths', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => localStorage.clear());
+
+  it('returns invalid for null value stored in localStorage', () => {
+    // Branch: !user after JSON.parse
+    localStorage.setItem('algorand_user', 'null');
+    expect(deriveSessionState()).toBe('invalid');
+  });
+
+  it('returns invalid for non-object primitive stored', () => {
+    // Branch: typeof user !== 'object'
+    localStorage.setItem('algorand_user', '"just-a-string"');
+    expect(deriveSessionState()).toBe('invalid');
+  });
+
+  it('returns invalid when address is present but email is empty string', () => {
+    // Branch: !user.email (empty string is falsy)
+    localStorage.setItem(
+      'algorand_user',
+      JSON.stringify({ address: 'ADDR', email: '', isConnected: true }),
+    );
+    expect(deriveSessionState()).toBe('invalid');
+  });
+
+  it('returns invalid when email is present but address is empty string', () => {
+    // Branch: !user.address (empty string is falsy)
+    localStorage.setItem(
+      'algorand_user',
+      JSON.stringify({ address: '', email: 'test@ex.com', isConnected: true }),
+    );
+    expect(deriveSessionState()).toBe('invalid');
+  });
+
+  it('returns invalid when isConnected is undefined (neither true nor false)', () => {
+    // Branch: falls through to return 'invalid' when isConnected is undefined
+    localStorage.setItem(
+      'algorand_user',
+      JSON.stringify({ address: 'ADDR', email: 'test@ex.com' }),
+    );
+    expect(deriveSessionState()).toBe('invalid');
+  });
+
+  it('returns invalid when isConnected is a string instead of boolean', () => {
+    // Branch: isConnected === false is false; isConnected === true is false → invalid
+    localStorage.setItem(
+      'algorand_user',
+      JSON.stringify({ address: 'ADDR', email: 'test@ex.com', isConnected: 'yes' }),
+    );
+    expect(deriveSessionState()).toBe('invalid');
+  });
+
+  it('returns unauthenticated for empty string in localStorage', () => {
+    // Branch: !userJson (empty string is falsy)
+    localStorage.setItem('algorand_user', '');
+    expect(deriveSessionState()).toBe('unauthenticated');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Additional branch coverage: classifyOnboardingError edge cases
+// ---------------------------------------------------------------------------
+
+describe('classifyOnboardingError — all error input branches', () => {
+  it('handles Error objects with auth message', () => {
+    expect(classifyOnboardingError(new Error('Unauthorized access'))).toBe('auth_required');
+  });
+
+  it('handles plain objects (JSON.stringify path)', () => {
+    // Branch: not string and not Error → JSON.stringify
+    const result = classifyOnboardingError({ code: 'NETWORK_ERROR', message: 'fetch failed' });
+    expect(result).toBe('network_error');
+  });
+
+  it('handles zero (falsy non-null)', () => {
+    // Branch: !error but 0 is falsy
+    expect(classifyOnboardingError(0)).toBe('unknown');
+  });
+
+  it('handles false (falsy non-null)', () => {
+    expect(classifyOnboardingError(false)).toBe('unknown');
+  });
+
+  it('offline keyword maps to network_error', () => {
+    expect(classifyOnboardingError('Device is offline')).toBe('network_error');
+  });
+
+  it('blocked keyword maps to compliance_blocked', () => {
+    expect(classifyOnboardingError('Request blocked by compliance rules')).toBe('compliance_blocked');
+  });
+
+  it('unauthorized keyword maps to auth_required (case-insensitive)', () => {
+    expect(classifyOnboardingError('UNAUTHORIZED request')).toBe('auth_required');
+  });
+
+  it('sign in keyword maps to auth_required', () => {
+    expect(classifyOnboardingError('Please sign in to continue')).toBe('auth_required');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Additional branch coverage: contentContainsForbiddenWalletPhrase
+// ---------------------------------------------------------------------------
+
+describe('contentContainsForbiddenWalletPhrase — case insensitivity and edge cases', () => {
+  it('is case-insensitive for "NOT CONNECTED"', () => {
+    expect(contentContainsForbiddenWalletPhrase('Status: NOT CONNECTED')).toBe(true);
+  });
+
+  it('is case-insensitive for "WALLETCONNECT"', () => {
+    expect(contentContainsForbiddenWalletPhrase('Using WALLETCONNECT protocol')).toBe(true);
+  });
+
+  it('handles empty string without error', () => {
+    expect(contentContainsForbiddenWalletPhrase('')).toBe(false);
+  });
+
+  it('detects "Pera Wallet" phrase', () => {
+    expect(contentContainsForbiddenWalletPhrase('Connect with Pera Wallet')).toBe(true);
+  });
+
+  it('detects "Defly" phrase', () => {
+    expect(contentContainsForbiddenWalletPhrase('Use Defly to connect')).toBe(true);
+  });
+
+  it('detects "MetaMask" phrase', () => {
+    expect(contentContainsForbiddenWalletPhrase('Open MetaMask extension')).toBe(true);
+  });
+
+  it('detects "network status" phrase', () => {
+    expect(contentContainsForbiddenWalletPhrase('Current network status: active')).toBe(true);
+  });
+
+  it('detects "wallet address" phrase', () => {
+    expect(contentContainsForbiddenWalletPhrase('Enter your wallet address below')).toBe(true);
+  });
+
+  it('findForbiddenWalletPhrases returns empty for clean content', () => {
+    expect(findForbiddenWalletPhrases('Sign in with your email address')).toEqual([]);
+  });
+
+  it('findForbiddenWalletPhrases detects single violation', () => {
+    const found = findForbiddenWalletPhrases('Please connect wallet to start');
+    expect(found).toHaveLength(1);
+    expect(found[0]).toBe('connect wallet');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Additional branch coverage: getRouteAccessibilityRequirements
+// ---------------------------------------------------------------------------
+
+describe('getRouteAccessibilityRequirements — all mapped routes', () => {
+  it('homepage WCAG criteria includes 2.4.1 (Bypass Blocks)', () => {
+    const req = getRouteAccessibilityRequirements('/');
+    expect(req!.wcagCriteria).toContain('2.4.1');
+  });
+
+  it('homepage WCAG criteria includes 4.1.2 (Name Role Value)', () => {
+    const req = getRouteAccessibilityRequirements('/');
+    expect(req!.wcagCriteria).toContain('4.1.2');
+  });
+
+  it('/launch/guided WCAG criteria includes 3.3.1 (Error Identification)', () => {
+    const req = getRouteAccessibilityRequirements('/launch/guided');
+    expect(req!.wcagCriteria).toContain('3.3.1');
+  });
+
+  it('/compliance/setup WCAG criteria includes 3.3.2 (Labels or Instructions)', () => {
+    const req = getRouteAccessibilityRequirements('/compliance/setup');
+    expect(req!.wcagCriteria).toContain('3.3.2');
+  });
+
+  it('/compliance/setup WCAG criteria includes 2.4.3 (Focus Order)', () => {
+    const req = getRouteAccessibilityRequirements('/compliance/setup');
+    expect(req!.wcagCriteria).toContain('2.4.3');
+  });
+
+  it('homepage does NOT require focus management on load (static page)', () => {
+    // Homepage is static — no focus management required on initial load
+    const req = getRouteAccessibilityRequirements('/');
+    expect(req!.requiresFocusManagement).toBe(false);
+  });
+
+  it('getAccessibilityAuditRoutes count matches known routes', () => {
+    const routes = getAccessibilityAuditRoutes();
+    expect(routes).toHaveLength(3);
+  });
+});
