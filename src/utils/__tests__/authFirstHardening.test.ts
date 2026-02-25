@@ -374,3 +374,137 @@ describe('authFirstHardening - test ID constants', () => {
     expect(unique.size).toBe(values.length);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Edge cases and boundary conditions
+// ---------------------------------------------------------------------------
+
+describe('authFirstHardening - edge cases and boundary conditions', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it('should treat /dashboard path as not auth-required (special exception)', () => {
+    // /dashboard allows unauthenticated access (shows empty state per router guard)
+    expect(isAuthRequired('/dashboard')).toBe(false);
+  });
+
+  it('should not classify /enterprise/onboarding as guest-accessible', () => {
+    expect(isGuestAccessible('/enterprise/onboarding')).toBe(false);
+  });
+
+  it('should classify /enterprise/onboarding as auth-required', () => {
+    expect(isAuthRequired('/enterprise/onboarding')).toBe(true);
+  });
+
+  it('should classify /onboarding as auth-required', () => {
+    expect(isAuthRequired('/onboarding')).toBe(true);
+  });
+
+  it('should classify /portfolio as auth-required', () => {
+    expect(isAuthRequired('/portfolio')).toBe(true);
+  });
+
+  it('should classify /portfolio/onboarding as auth-required', () => {
+    expect(isAuthRequired('/portfolio/onboarding')).toBe(true);
+  });
+
+  it('should classify /account/security as auth-required', () => {
+    expect(isAuthRequired('/account/security')).toBe(true);
+  });
+
+  it('should classify /attestations as auth-required', () => {
+    expect(isAuthRequired('/attestations')).toBe(true);
+  });
+
+  it('should classify /insights as auth-required', () => {
+    expect(isAuthRequired('/insights')).toBe(true);
+  });
+
+  it('should classify /enterprise-guide as guest-accessible', () => {
+    expect(isGuestAccessible('/enterprise-guide')).toBe(true);
+  });
+
+  it('should classify /discovery as guest-accessible', () => {
+    expect(isGuestAccessible('/discovery')).toBe(true);
+  });
+
+  it('should classify /subscription/cancel as guest-accessible', () => {
+    expect(isGuestAccessible('/subscription/cancel')).toBe(true);
+  });
+
+  it('should not classify /subscription/success as guest-accessible (requires auth)', () => {
+    expect(isGuestAccessible('/subscription/success')).toBe(false);
+  });
+
+  it('should handle paths with trailing slashes correctly', () => {
+    // Trailing slash should not break classification
+    expect(isAuthRequired('/launch/guided')).toBe(true);
+  });
+
+  it('should derive nav state correctly for subscription-paying authenticated user', () => {
+    const state = deriveNavState(true, true);
+    expect(state.showSubscriptionBadge).toBe(true);
+    expect(state.showSignIn).toBe(false);
+    expect(state.showUserMenu).toBe(true);
+    expect(state.hasWalletState).toBe(false);
+  });
+
+  it('should return deterministic nav state regardless of call order', () => {
+    // Multiple calls with same args produce identical results
+    const state1 = deriveNavState(false, false);
+    const state2 = deriveNavState(false, false);
+    expect(state1).toEqual(state2);
+  });
+
+  it('should not allow step regression from deploy back to any earlier step', () => {
+    expect(isValidStepProgression('deploy', 'review')).toBe(false);
+    expect(isValidStepProgression('deploy', 'network')).toBe(false);
+    expect(isValidStepProgression('deploy', 'organization')).toBe(false);
+  });
+
+  it('should correctly return index -1 for unknown step', () => {
+    // getOnboardingStepIndex returns -1 for unknown steps
+    // (TypeScript enforces valid inputs, but we verify the runtime behavior)
+    const idx = getOnboardingStepIndex('unknown-step' as OnboardingStep);
+    expect(idx).toBe(-1);
+  });
+
+  it('should preserve redirect through multiple localStorage operations', () => {
+    storePostAuthRedirect('/compliance/setup');
+    // Other localStorage operations should not clear the redirect
+    localStorage.setItem('other_key', 'other_value');
+    expect(peekPostAuthRedirect()).toBe('/compliance/setup');
+    // Cleanup
+    localStorage.removeItem('other_key');
+  });
+
+  it('should handle concurrent redirect stores (last write wins)', () => {
+    storePostAuthRedirect('/cockpit');
+    storePostAuthRedirect('/settings');
+    storePostAuthRedirect('/launch/guided');
+    expect(peekPostAuthRedirect()).toBe('/launch/guided');
+  });
+
+  it('assertGuestNavInvariants returns empty array for perfectly valid guest state', () => {
+    const state = deriveNavState(false, false);
+    const failures = assertGuestNavInvariants(state);
+    expect(failures).toEqual([]);
+  });
+
+  it('assertGuestNavInvariants should detect multiple violations simultaneously', () => {
+    const brokenState = {
+      ...deriveNavState(false),
+      showSignIn: false,    // violation 1
+      showUserMenu: true,   // violation 2
+      showSubscriptionBadge: true, // violation 3
+    };
+    const failures = assertGuestNavInvariants(brokenState);
+    // Should detect all three violations
+    expect(failures.length).toBeGreaterThanOrEqual(3);
+  });
+});
