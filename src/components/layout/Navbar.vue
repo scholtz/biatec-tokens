@@ -173,6 +173,7 @@ import {
   RocketLaunchIcon,
   ShieldCheckIcon,
   CommandLineIcon,
+  BriefcaseIcon,
 } from "@heroicons/vue/24/outline";
 import EmailAuthModal from "../EmailAuthModal.vue";
 import { useAuthStore } from "../../stores/auth";
@@ -193,6 +194,7 @@ const navigationItems = [
   { name: "Guided Launch", path: "/launch/guided", icon: RocketLaunchIcon },
   { name: "Compliance", path: "/compliance/setup", icon: ShieldCheckIcon },
   { name: "Dashboard", path: "/dashboard", icon: ChartBarIcon },
+  { name: "Portfolio", path: "/portfolio", icon: BriefcaseIcon },
   { name: "Insights", path: "/insights", icon: ChartPieIcon },
   { name: "Pricing", path: "/subscription/pricing", icon: CurrencyDollarIcon },
   { name: "Settings", path: "/settings", icon: Cog6ToothIcon },
