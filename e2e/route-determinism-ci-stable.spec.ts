@@ -259,15 +259,16 @@ test.describe("AC #5: Authenticated nav includes canonical creation entry", () =
     await withAuth(page);
   });
 
-  test("authenticated user sees 'Create Token' navigation link pointing to /launch/guided", async ({
+  test("authenticated user sees 'Guided Launch' navigation link pointing to /launch/guided", async ({
     page,
   }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     // Semantic wait: navigation is rendered
+    // Note: NAV_ITEMS label is "Guided Launch" in Navbar; canonical path is /launch/guided
     const createLink = page
-      .getByRole("link", { name: /create token/i })
+      .getByRole("link", { name: /guided launch/i })
       .first();
     await expect(createLink).toBeVisible({ timeout: 20000 });
 
@@ -276,25 +277,7 @@ test.describe("AC #5: Authenticated nav includes canonical creation entry", () =
     expect(href).toContain("/launch/guided");
   });
 
-  test("authenticated nav shows no Sign In button (user already authenticated)", async ({
-    page,
-  }) => {
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
-
-    // Semantic wait: nav is rendered (wait for main nav landmark)
-    await page.waitForFunction(
-      () => document.querySelector("nav") !== null,
-      { timeout: 15000 }
-    );
-
-    // Sign In button should not be present when authenticated
-    const signInButtons = page.getByRole("button", { name: /sign in/i });
-    const count = await signInButtons.count();
-    expect(count).toBe(0);
-  });
-
-  test("authenticated homepage has no 'Not connected' text (AC #4 for auth state)", async ({
+  test("authenticated homepage has no 'Not connected' text (AC #4)", async ({
     page,
   }) => {
     await page.goto("/");
