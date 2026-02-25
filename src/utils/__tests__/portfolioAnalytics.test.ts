@@ -119,43 +119,45 @@ describe('dispatchPortfolioEvent', () => {
 
 // ─── Typed helper functions ───────────────────────────────────────────────────
 
+// Shared setup: reset + spy before each helper test
+function setupConsoleSpy() {
+  vi.clearAllMocks()
+  vi.spyOn(console, 'log').mockImplementation(() => {})
+}
+
 describe('trackOnboardingStarted', () => {
-  beforeEach(() => { vi.spyOn(console, 'log').mockImplementation(() => {}); vi.clearAllMocks(); vi.spyOn(console, 'log').mockImplementation(() => {}) })
+  beforeEach(setupConsoleSpy)
 
   it('dispatches onboarding_started event', () => {
     trackOnboardingStarted('u1')
-    const call = vi.mocked(console.log).mock.calls[0]
-    expect(call[1]).toBe('onboarding_started')
+    expect(vi.mocked(console.log).mock.calls[0][1]).toBe('onboarding_started')
   })
 })
 
 describe('trackOnboardingCompleted', () => {
-  beforeEach(() => { vi.clearAllMocks(); vi.spyOn(console, 'log').mockImplementation(() => {}) })
+  beforeEach(setupConsoleSpy)
 
   it('dispatches onboarding_completed event', () => {
     trackOnboardingCompleted('u1')
-    const call = vi.mocked(console.log).mock.calls[0]
-    expect(call[1]).toBe('onboarding_completed')
+    expect(vi.mocked(console.log).mock.calls[0][1]).toBe('onboarding_completed')
   })
 })
 
 describe('trackOnboardingSkipped', () => {
-  beforeEach(() => { vi.clearAllMocks(); vi.spyOn(console, 'log').mockImplementation(() => {}) })
+  beforeEach(setupConsoleSpy)
 
   it('dispatches onboarding_skipped event', () => {
     trackOnboardingSkipped('u1')
-    const call = vi.mocked(console.log).mock.calls[0]
-    expect(call[1]).toBe('onboarding_skipped')
+    expect(vi.mocked(console.log).mock.calls[0][1]).toBe('onboarding_skipped')
   })
 })
 
 describe('trackInsightClicked', () => {
-  beforeEach(() => { vi.clearAllMocks(); vi.spyOn(console, 'log').mockImplementation(() => {}) })
+  beforeEach(setupConsoleSpy)
 
   it('dispatches insight_clicked event', () => {
     trackInsightClicked('u1', 'ins-1', 'concentration_risk')
-    const call = vi.mocked(console.log).mock.calls[0]
-    expect(call[1]).toBe('insight_clicked')
+    expect(vi.mocked(console.log).mock.calls[0][1]).toBe('insight_clicked')
   })
 
   it('includes insightId in payload', () => {
@@ -166,22 +168,20 @@ describe('trackInsightClicked', () => {
 })
 
 describe('trackInsightDismissed', () => {
-  beforeEach(() => { vi.clearAllMocks(); vi.spyOn(console, 'log').mockImplementation(() => {}) })
+  beforeEach(setupConsoleSpy)
 
   it('dispatches insight_dismissed event', () => {
     trackInsightDismissed('u1', 'ins-1')
-    const call = vi.mocked(console.log).mock.calls[0]
-    expect(call[1]).toBe('insight_dismissed')
+    expect(vi.mocked(console.log).mock.calls[0][1]).toBe('insight_dismissed')
   })
 })
 
 describe('trackWatchlistAdded', () => {
-  beforeEach(() => { vi.clearAllMocks(); vi.spyOn(console, 'log').mockImplementation(() => {}) })
+  beforeEach(setupConsoleSpy)
 
   it('dispatches watchlist_asset_added event', () => {
     trackWatchlistAdded('u1', 'asset-1', 'Algorand')
-    const call = vi.mocked(console.log).mock.calls[0]
-    expect(call[1]).toBe('watchlist_asset_added')
+    expect(vi.mocked(console.log).mock.calls[0][1]).toBe('watchlist_asset_added')
   })
 
   it('does not leak sensitive wallet fields in payload', () => {
@@ -192,11 +192,10 @@ describe('trackWatchlistAdded', () => {
 })
 
 describe('trackWatchlistRemoved', () => {
-  beforeEach(() => { vi.clearAllMocks(); vi.spyOn(console, 'log').mockImplementation(() => {}) })
+  beforeEach(setupConsoleSpy)
 
   it('dispatches watchlist_asset_removed event', () => {
     trackWatchlistRemoved('u1', 'asset-1', 'Ethereum')
-    const call = vi.mocked(console.log).mock.calls[0]
-    expect(call[1]).toBe('watchlist_asset_removed')
+    expect(vi.mocked(console.log).mock.calls[0][1]).toBe('watchlist_asset_removed')
   })
 })

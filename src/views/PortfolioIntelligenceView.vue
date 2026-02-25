@@ -235,8 +235,5 @@ onMounted(async () => {
 
   // Load portfolio
   await loadPortfolio()
-
-  // Track view
-  trackOnboardingStarted(currentUserId())
 })
 </script>
