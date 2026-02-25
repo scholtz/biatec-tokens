@@ -26,6 +26,7 @@ import TokenDiscoveryJourney from "../views/TokenDiscoveryJourney.vue";
 import WalletActivationJourney from "../views/WalletActivationJourney.vue";
 import GuidedPortfolioOnboarding from "../views/GuidedPortfolioOnboarding.vue";
 import PortfolioIntelligenceView from "../views/PortfolioIntelligenceView.vue";
+import BusinessCommandCenter from "../views/BusinessCommandCenter.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 
 // Subscription views
@@ -195,6 +196,18 @@ const router = createRouter({
       name: "EnterpriseOnboardingCommandCenter",
       component: EnterpriseOnboardingCommandCenter,
       meta: { requiresAuth: true },
+    },
+    // Business Command Center — canonical post-launch operations route
+    {
+      path: "/operations",
+      name: "BusinessCommandCenter",
+      component: BusinessCommandCenter,
+      meta: { requiresAuth: true },
+    },
+    // Legacy operations path — redirect to canonical command center
+    {
+      path: "/operations/legacy",
+      redirect: "/operations",
     },
     // Subscription routes
     {
