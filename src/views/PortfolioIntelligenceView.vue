@@ -79,6 +79,7 @@ import {
   saveWatchlist,
   addToWatchlist,
   removeFromWatchlist,
+  PORTFOLIO_ONBOARDING_COMPLETED_KEY,
 } from '../utils/portfolioWatchlist'
 import {
   trackOnboardingStarted,
@@ -90,7 +91,7 @@ import {
   trackWatchlistRemoved,
 } from '../utils/portfolioAnalytics'
 
-const ONBOARDING_COMPLETED_KEY = 'portfolio_onboarding_completed_v1'
+const ONBOARDING_COMPLETED_KEY = PORTFOLIO_ONBOARDING_COMPLETED_KEY
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 

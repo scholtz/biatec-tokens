@@ -9,6 +9,7 @@
 import type { WatchlistEntry } from '../types/portfolioIntelligence'
 
 export const WATCHLIST_STORAGE_KEY = 'portfolio_watchlist_v1'
+export const PORTFOLIO_ONBOARDING_COMPLETED_KEY = 'portfolio_onboarding_completed_v1'
 
 // ─── Persistence ──────────────────────────────────────────────────────────────
 

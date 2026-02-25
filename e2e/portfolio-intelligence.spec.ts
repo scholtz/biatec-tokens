@@ -53,6 +53,10 @@ test.describe('Portfolio Intelligence Layer', () => {
   })
 
   test('should add asset to watchlist', async ({ page }) => {
+    // Dismiss onboarding overlay so watchlist buttons are clickable
+    await page.addInitScript(() => {
+      localStorage.setItem('portfolio_onboarding_completed_v1', 'true')
+    })
     await page.goto('/portfolio')
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(8000)
@@ -73,11 +77,12 @@ test.describe('Portfolio Intelligence Layer', () => {
   })
 
   test('should remove asset from watchlist', async ({ page }) => {
-    // Pre-seed watchlist
+    // Pre-seed watchlist and dismiss onboarding overlay
     await page.addInitScript(() => {
       localStorage.setItem('portfolio_watchlist_v1', JSON.stringify([
         { assetId: 'usdc-algo', symbol: 'USDC', name: 'USD Coin', network: 'Algorand', addedAt: new Date().toISOString() },
       ]))
+      localStorage.setItem('portfolio_onboarding_completed_v1', 'true')
     })
     await page.goto('/portfolio')
     await page.waitForLoadState('networkidle')
@@ -96,6 +101,7 @@ test.describe('Portfolio Intelligence Layer', () => {
       localStorage.setItem('portfolio_watchlist_v1', JSON.stringify([
         { assetId: 'usdc-algo', symbol: 'USDC', name: 'USD Coin', network: 'Algorand', addedAt: new Date().toISOString() },
       ]))
+      localStorage.setItem('portfolio_onboarding_completed_v1', 'true')
     })
     await page.goto('/portfolio')
     await page.waitForLoadState('networkidle')

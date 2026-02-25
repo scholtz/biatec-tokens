@@ -41,7 +41,7 @@ export function computePortfolioSummary(assets: PortfolioAsset[]): PortfolioSumm
     totalValueUsd,
     change24hUsd,
     change24hPct,
-    allocationByCategory: categorizAssets(assets),
+    allocationByCategory: categorizeAssets(assets),
     assetCount: assets.length,
     capturedAt: new Date(),
   }
@@ -179,7 +179,7 @@ export function formatPct(pct: number, digits = 2): string {
 
 // ─── Asset categorization ─────────────────────────────────────────────────────
 
-export function categorizAssets(assets: PortfolioAsset[]): AllocationCategory[] {
+export function categorizeAssets(assets: PortfolioAsset[]): AllocationCategory[] {
   if (assets.length === 0) return []
 
   const total = assets.reduce((sum, a) => sum + a.valueUsd, 0)

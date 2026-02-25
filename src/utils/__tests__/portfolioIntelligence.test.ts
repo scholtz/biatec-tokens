@@ -9,7 +9,7 @@ import {
   filterAndSortInsights,
   formatPortfolioValue,
   formatPct,
-  categorizAssets,
+  categorizeAssets,
 } from '../portfolioIntelligence'
 import type { PortfolioAsset, PortfolioSummary } from '../../../types/portfolioIntelligence'
 
@@ -380,11 +380,11 @@ describe('formatPct', () => {
   })
 })
 
-// ─── categorizAssets ──────────────────────────────────────────────────────────
+// ─── categorizeAssets ──────────────────────────────────────────────────────────
 
-describe('categorizAssets', () => {
+describe('categorizeAssets', () => {
   it('returns empty for no assets', () => {
-    expect(categorizAssets([])).toHaveLength(0)
+    expect(categorizeAssets([])).toHaveLength(0)
   })
 
   it('groups by network', () => {
@@ -393,7 +393,7 @@ describe('categorizAssets', () => {
       liquid({ id: 'a2', network: 'Algorand', valueUsd: 100 }),
       liquid({ id: 'a3', network: 'Ethereum', valueUsd: 500 }),
     ]
-    const cats = categorizAssets(assets)
+    const cats = categorizeAssets(assets)
     expect(cats).toHaveLength(2)
     const algo = cats.find((c) => c.label === 'Algorand')
     expect(algo?.valueUsd).toBe(500)
@@ -405,7 +405,7 @@ describe('categorizAssets', () => {
       liquid({ network: 'Algorand', valueUsd: 250 }),
       liquid({ id: 'a2', network: 'Ethereum', valueUsd: 750 }),
     ]
-    const cats = categorizAssets(assets)
+    const cats = categorizeAssets(assets)
     const algo = cats.find((c) => c.label === 'Algorand')
     expect(algo?.pct).toBeCloseTo(25, 1)
     const eth = cats.find((c) => c.label === 'Ethereum')
@@ -414,7 +414,7 @@ describe('categorizAssets', () => {
 
   it('handles single network', () => {
     const assets = [liquid({ network: 'VOI' }), liquid({ id: 'b', network: 'VOI' })]
-    const cats = categorizAssets(assets)
+    const cats = categorizeAssets(assets)
     expect(cats).toHaveLength(1)
     expect(cats[0].label).toBe('VOI')
   })
@@ -424,7 +424,7 @@ describe('categorizAssets', () => {
       liquid({ network: 'X', valueUsd: 100 }),
       liquid({ id: 'b', network: 'Y', valueUsd: 900 }),
     ]
-    const cats = categorizAssets(assets)
+    const cats = categorizeAssets(assets)
     expect(cats[0].label).toBe('Y')
   })
 })

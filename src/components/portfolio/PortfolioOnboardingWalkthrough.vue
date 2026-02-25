@@ -66,8 +66,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { PORTFOLIO_ONBOARDING_COMPLETED_KEY } from '../../utils/portfolioWatchlist'
 
-const ONBOARDING_COMPLETED_KEY = 'portfolio_onboarding_completed_v1'
+const ONBOARDING_COMPLETED_KEY = PORTFOLIO_ONBOARDING_COMPLETED_KEY
 
 interface Props {
   isFirstVisit: boolean
