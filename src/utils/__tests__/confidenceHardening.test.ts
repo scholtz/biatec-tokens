@@ -53,6 +53,8 @@ import {
   findNavForbiddenPatterns,
   findMissingNavLabels,
   // Regression detectors
+  LOCALSTORAGE_SEEDING_ANTI_PATTERNS,
+  ARBITRARY_TIMEOUT_PATTERNS,
   containsLocalStorageAntiPattern,
   containsArbitraryTimeout,
   countArbitraryTimeouts,
@@ -955,5 +957,312 @@ describe('Determinism: helpers produce identical output for identical input', ()
   it('computeHardeningMetrics() is deterministic for same sources', () => {
     const sources = ['await page.waitForTimeout(1000)', 'clean code'];
     expect(computeHardeningMetrics(sources)).toEqual(computeHardeningMetrics(sources));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Additional edge-case coverage — route canonicalization
+// ---------------------------------------------------------------------------
+
+describe('Route canonicalization — edge cases and boundary conditions', () => {
+  it('isDeprecatedRoute() returns false for empty string', () => {
+    expect(isDeprecatedRoute('')).toBe(false);
+  });
+
+  it('isDeprecatedRoute() returns false for unrelated route with wizard substring elsewhere', () => {
+    // /wizard alone is not in DEPRECATED_ROUTES
+    expect(isDeprecatedRoute('/wizard')).toBe(false);
+  });
+
+  it('getCanonicalRedirectFor() returns null for /', () => {
+    expect(getCanonicalRedirectFor('/')).toBeNull();
+  });
+
+  it('getCanonicalRedirectFor() returns null for /compliance/setup', () => {
+    expect(getCanonicalRedirectFor('/compliance/setup')).toBeNull();
+  });
+
+  it('findDeprecatedRouteViolations() returns empty for URL with only /launch', () => {
+    expect(findDeprecatedRouteViolations('/launch')).toHaveLength(0);
+  });
+
+  it('findDeprecatedRouteViolations() is case-sensitive for deprecated paths', () => {
+    // Paths are case-sensitive in URLs — /Create/Wizard is NOT the deprecated path
+    expect(findDeprecatedRouteViolations('/Create/Wizard')).toHaveLength(0);
+  });
+
+  it('CANONICAL_TOKEN_CREATION_ROUTE starts with /', () => {
+    expect(CANONICAL_TOKEN_CREATION_ROUTE.startsWith('/')).toBe(true);
+  });
+
+  it('LEGACY_WIZARD_ROUTE starts with /', () => {
+    expect(LEGACY_WIZARD_ROUTE.startsWith('/')).toBe(true);
+  });
+
+  it('DEPRECATED_ROUTES is a readonly array with at least one entry', () => {
+    expect(DEPRECATED_ROUTES.length).toBeGreaterThan(0);
+  });
+
+  it('isCanonicalTokenCreationRoute() returns false for sub-path of canonical route', () => {
+    // /launch/guided/step-1 is NOT the canonical route itself
+    expect(isCanonicalTokenCreationRoute('/launch/guided/step-1')).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Additional edge-case coverage — session validation
+// ---------------------------------------------------------------------------
+
+describe('Session validation — edge cases and boundary conditions', () => {
+  it('validateHardenedSession() rejects a string value', () => {
+    const result = validateHardenedSession('not-an-object');
+    expect(result.valid).toBe(false);
+  });
+
+  it('validateHardenedSession() rejects a number value', () => {
+    const result = validateHardenedSession(42);
+    expect(result.valid).toBe(false);
+  });
+
+  it('validateHardenedSession() rejects an array value', () => {
+    const result = validateHardenedSession([]);
+    expect(result.valid).toBe(false);
+  });
+
+  it('validateHardenedSession() accumulates multiple errors', () => {
+    const result = validateHardenedSession({ address: '', email: '' });
+    expect(result.errors.length).toBeGreaterThan(1);
+  });
+
+  it('validateHardenedSession() accepts isConnected: false as structurally valid', () => {
+    const result = validateHardenedSession({ address: 'A', email: 'e@e.com', isConnected: false });
+    expect(result.valid).toBe(true);
+    expect(result.session?.isConnected).toBe(false);
+  });
+
+  it('buildHardenedSession() address is non-empty by default', () => {
+    expect(buildHardenedSession().address.trim()).not.toBe('');
+  });
+
+  it('buildHardenedSession() email contains @', () => {
+    expect(buildHardenedSession().email).toContain('@');
+  });
+
+  it('readAndValidateHardenedSession() handles JSON array input gracefully', () => {
+    const result = readAndValidateHardenedSession(JSON.stringify([]));
+    // Array is not a valid session object
+    expect(result.valid).toBe(false);
+  });
+
+  it('readAndValidateHardenedSession() handles JSON null gracefully', () => {
+    const result = readAndValidateHardenedSession(JSON.stringify(null));
+    expect(result.valid).toBe(false);
+  });
+
+  it('readAndValidateHardenedSession() returns valid for expired session', () => {
+    // Expired session is structurally valid, just not "live"
+    const expired = buildExpiredHardenedSession();
+    const result = readAndValidateHardenedSession(JSON.stringify(expired));
+    expect(result.valid).toBe(true);
+    expect(result.session?.isConnected).toBe(false);
+    expect(isLiveSession(result.session)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Additional edge-case coverage — message quality
+// ---------------------------------------------------------------------------
+
+describe('Message quality — edge cases and boundary conditions', () => {
+  it('validateMessageQuality() passes for message exactly at 80/120/100 char limits', () => {
+    const msg: WhatWhyHow = {
+      what: 'A'.repeat(80),
+      why: 'B'.repeat(120),
+      how: 'C'.repeat(100),
+    };
+    const result = validateMessageQuality(msg);
+    // Should pass (limits are inclusive)
+    expect(result.violations.filter((v) => v.includes('exceeds'))).toHaveLength(0);
+  });
+
+  it('validateMessageQuality() does not flag "operational" or "password" as jargon', () => {
+    const msg: WhatWhyHow = {
+      what: 'Operational check required',
+      why: 'Password verification is needed.',
+      how: 'Enter your email and password.',
+    };
+    const result = validateMessageQuality(msg);
+    expect(result.valid).toBe(true);
+  });
+
+  it('validateMessageQuality() does not flag "operations" as jargon', () => {
+    const msg: WhatWhyHow = {
+      what: 'Monitor progress in your operations dashboard',
+      why: 'Operations require active monitoring.',
+      how: 'Go to the operations view.',
+    };
+    const result = validateMessageQuality(msg);
+    expect(result.valid).toBe(true);
+  });
+
+  it('validateMessageQuality() flags "seed phrase" as jargon', () => {
+    const msg: WhatWhyHow = {
+      what: 'Enter your seed phrase',
+      why: 'Required.',
+      how: 'Type it in.',
+    };
+    const result = validateMessageQuality(msg);
+    expect(result.valid).toBe(false);
+  });
+
+  it('CONFIDENCE_MESSAGES has at least 4 entries', () => {
+    expect(Object.keys(CONFIDENCE_MESSAGES).length).toBeGreaterThanOrEqual(4);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Additional edge-case coverage — nav assertions
+// ---------------------------------------------------------------------------
+
+describe('Nav assertions — edge cases and boundary conditions', () => {
+  it('findNavForbiddenPatterns() returns empty for empty string', () => {
+    expect(findNavForbiddenPatterns('')).toHaveLength(0);
+  });
+
+  it('NAV_FORBIDDEN_PATTERNS contains at least 5 patterns', () => {
+    expect(NAV_FORBIDDEN_PATTERNS.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('GUEST_NAV_REQUIRED_LABELS has at least one entry', () => {
+    expect(GUEST_NAV_REQUIRED_LABELS.length).toBeGreaterThan(0);
+  });
+
+  it('AUTHED_NAV_REQUIRED_LABELS has at least two entries', () => {
+    expect(AUTHED_NAV_REQUIRED_LABELS.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('findMissingNavLabels() for empty nav text returns all required labels for guest', () => {
+    const missing = findMissingNavLabels('', 'guest');
+    expect(missing.length).toBe(GUEST_NAV_REQUIRED_LABELS.length);
+  });
+
+  it('findMissingNavLabels() for empty nav text returns all required labels for authenticated', () => {
+    const missing = findMissingNavLabels('', 'authenticated');
+    expect(missing.length).toBe(AUTHED_NAV_REQUIRED_LABELS.length);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Additional edge-case coverage — accessibility helpers
+// ---------------------------------------------------------------------------
+
+describe('Accessibility helpers — edge cases and boundary conditions', () => {
+  it('findAccessibilityViolations() handles empty string input', () => {
+    const violations = findAccessibilityViolations('');
+    expect(violations.length).toBeGreaterThan(0); // Empty HTML has no landmarks
+  });
+
+  it('hasSkipToContentLink() handles empty string', () => {
+    expect(hasSkipToContentLink('')).toBe(false);
+  });
+
+  it('hasErrorAlertRole() handles empty string', () => {
+    expect(hasErrorAlertRole('')).toBe(false);
+  });
+
+  it('hasStatusRole() handles empty string', () => {
+    expect(hasStatusRole('')).toBe(false);
+  });
+
+  it('hasMainLandmark() accepts <main> with attributes', () => {
+    expect(hasMainLandmark('<main id="content" class="page">')).toBe(true);
+  });
+
+  it('hasNavLandmark() accepts <nav> with attributes', () => {
+    expect(hasNavLandmark('<nav id="main-nav" aria-label="Primary">')).toBe(true);
+  });
+
+  it('REQUIRED_ARIA_ROLES.navigationLandmark is navigation', () => {
+    expect(REQUIRED_ARIA_ROLES.navigationLandmark).toBe('navigation');
+  });
+
+  it('REQUIRED_ARIA_ROLES.mainLandmark is main', () => {
+    expect(REQUIRED_ARIA_ROLES.mainLandmark).toBe('main');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Additional edge-case coverage — regression detectors
+// ---------------------------------------------------------------------------
+
+describe('Regression detectors — edge cases and boundary conditions', () => {
+  it('countArbitraryTimeouts() handles empty string', () => {
+    expect(countArbitraryTimeouts('')).toBe(0);
+  });
+
+  it('countTestSkips() handles empty string', () => {
+    expect(countTestSkips('')).toBe(0);
+  });
+
+  it('containsWizardAsCanonical() returns false for empty string', () => {
+    expect(containsWizardAsCanonical('')).toBe(false);
+  });
+
+  it('containsArbitraryTimeout() returns false for empty string', () => {
+    expect(containsArbitraryTimeout('')).toBe(false);
+  });
+
+  it('LOCALSTORAGE_SEEDING_ANTI_PATTERNS has at least 2 patterns', () => {
+    expect(LOCALSTORAGE_SEEDING_ANTI_PATTERNS.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('ARBITRARY_TIMEOUT_PATTERNS has at least 1 pattern', () => {
+    expect(ARBITRARY_TIMEOUT_PATTERNS.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('containsWizardAsCanonical() detects navigateTo() call', () => {
+    const src = `navigateTo('/create/wizard')`;
+    expect(containsWizardAsCanonical(src)).toBe(true);
+  });
+
+  it('containsWizardAsCanonical() detects router.push() call', () => {
+    const src = `router.push('/create/wizard')`;
+    expect(containsWizardAsCanonical(src)).toBe(true);
+  });
+
+  it('containsLocalStorageAntiPattern() returns false for JSON.stringify wrapping', () => {
+    const modern = `localStorage.setItem('algorand_user', JSON.stringify(session))`;
+    expect(containsLocalStorageAntiPattern(modern)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Additional edge-case coverage — observability
+// ---------------------------------------------------------------------------
+
+describe('Confidence observability — edge cases and boundary conditions', () => {
+  it('computeHardeningMetrics() returns all-zero for empty sources array', () => {
+    const metrics = computeHardeningMetrics([]);
+    expect(metrics.arbitraryTimeouts).toBe(0);
+    expect(metrics.testSkips).toBe(0);
+    expect(metrics.isFullyHardened).toBe(true);
+  });
+
+  it('computeHardeningMetrics() handles source with only comments', () => {
+    const src = '// This is a comment about wizards and wallets';
+    const metrics = computeHardeningMetrics([src]);
+    // Comments can still trigger detectors — that is expected behavior
+    expect(metrics).toBeDefined();
+  });
+
+  it('formatHardeningMetrics() returns a multi-line string', () => {
+    const metrics = computeHardeningMetrics([]);
+    const formatted = formatHardeningMetrics(metrics);
+    expect(formatted.split('\n').length).toBeGreaterThan(3);
+  });
+
+  it('HardeningMetrics.isFullyHardened is false if any metric is non-zero', () => {
+    const metrics = computeHardeningMetrics(['await page.waitForTimeout(1000)']);
+    expect(metrics.isFullyHardened).toBe(false);
   });
 });
