@@ -2,7 +2,7 @@
  * Unit tests for guidedLaunch store
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useGuidedLaunchStore } from './guidedLaunch'
 import { launchTelemetryService } from '../services/launchTelemetry'
@@ -12,6 +12,10 @@ describe('guidedLaunch store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     localStorage.clear()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   describe('initialization', () => {
@@ -545,16 +549,14 @@ describe('guidedLaunch store', () => {
       const store = useGuidedLaunchStore()
 
       // Mock localStorage.setItem to throw (e.g., storage quota exceeded)
-      const originalSetItem = localStorage.setItem.bind(localStorage)
-      vi.spyOn(localStorage, 'setItem').mockImplementationOnce(() => {
+      const setItemSpy = vi.spyOn(localStorage, 'setItem').mockImplementationOnce(() => {
         throw new DOMException('QuotaExceededError')
       })
 
       const saved = store.saveDraft()
       expect(saved).toBe(false)
 
-      // Restore
-      localStorage.setItem = originalSetItem
+      setItemSpy.mockRestore()
     })
   })
 
