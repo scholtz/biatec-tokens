@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useComplianceOrchestrationStore } from './complianceOrchestration'
+import type { UserComplianceStatus } from '../types/compliance'
 
 describe('complianceOrchestration store', () => {
   beforeEach(() => {
@@ -234,9 +235,9 @@ describe('complianceOrchestration store', () => {
   })
 
   describe('checkIssuanceEligibility switch branches', () => {
-    const setStatus = (store: ReturnType<typeof useComplianceOrchestrationStore>, status: string) => {
+    const setStatus = (store: ReturnType<typeof useComplianceOrchestrationStore>, status: UserComplianceStatus) => {
       if (store.userComplianceState) {
-        store.userComplianceState.status = status as any
+        store.userComplianceState.status = status
         store.userComplianceState.canIssueTokens = false
       }
     }

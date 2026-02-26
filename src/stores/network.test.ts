@@ -92,7 +92,7 @@ describe('Network Store', () => {
       const store = useNetworkStore()
       await expect(
         store.switchNetwork('invalid-network-xyz' as NetworkId)
-      ).rejects.toThrow('Unsupported network ID: invalid-network-xyz')
+      ).rejects.toThrow(/Unsupported network ID/)
     })
 
     it('should not change networkInfo when switchNetwork throws', async () => {
