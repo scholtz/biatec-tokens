@@ -18,7 +18,7 @@
  * all ISSUANCE_TEST_IDS are wired to actual DOM elements.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
 import { reactive } from 'vue'
@@ -434,5 +434,192 @@ describe('GuidedTokenLaunch — error banner rendering', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="issuance-error-banner"]').exists()).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Behavioral: step navigation
+// ---------------------------------------------------------------------------
+
+describe('GuidedTokenLaunch — step navigation behavior', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetStore()
+  })
+
+  it('Continue button is disabled when step is invalid and required', async () => {
+    mockStore.stepStatuses[0].isValid = false
+    mockStore.stepStatuses[0].isOptional = false
+    const wrapper = await mountView()
+    const continueBtn = wrapper.find('[data-testid="issuance-continue"]')
+    expect(continueBtn.exists()).toBe(true)
+    expect(continueBtn.attributes('disabled')).toBeDefined()
+  })
+
+  it('Continue button is NOT disabled when step is valid', async () => {
+    mockStore.stepStatuses[0].isValid = true
+    const wrapper = await mountView()
+    const continueBtn = wrapper.find('[data-testid="issuance-continue"]')
+    expect(continueBtn.exists()).toBe(true)
+    // disabled attribute should be absent or falsy
+    expect(continueBtn.attributes('disabled')).toBeUndefined()
+  })
+
+  it('Continue button is NOT disabled when step is optional (even if invalid)', async () => {
+    mockStore.stepStatuses[0].isValid = false
+    mockStore.stepStatuses[0].isOptional = true
+    const wrapper = await mountView()
+    const continueBtn = wrapper.find('[data-testid="issuance-continue"]')
+    expect(continueBtn.exists()).toBe(true)
+    expect(continueBtn.attributes('disabled')).toBeUndefined()
+  })
+
+  it('clicking Continue when valid calls goToStep(1)', async () => {
+    mockStore.stepStatuses[0].isValid = true
+    const wrapper = await mountView()
+    const continueBtn = wrapper.find('[data-testid="issuance-continue"]')
+    expect(continueBtn.exists()).toBe(true)
+    await continueBtn.trigger('click')
+    await flushPromises()
+    expect(mockStore.goToStep).toHaveBeenCalledWith(1)
+  })
+
+  it('clicking Continue when invalid does not call goToStep', async () => {
+    mockStore.stepStatuses[0].isValid = false
+    mockStore.stepStatuses[0].isOptional = false
+    const wrapper = await mountView()
+    const continueBtn = wrapper.find('[data-testid="issuance-continue"]')
+    // button is disabled; triggering click on a disabled button should not call the handler
+    await continueBtn.trigger('click')
+    await flushPromises()
+    expect(mockStore.goToStep).not.toHaveBeenCalled()
+  })
+
+  it('Back button click on step 1 calls goToStep(0)', async () => {
+    mockStore.currentForm.currentStep = 1
+    const wrapper = await mountView()
+    const backBtn = wrapper.find('[data-testid="issuance-back"]')
+    expect(backBtn.exists()).toBe(true)
+    await backBtn.trigger('click')
+    await flushPromises()
+    expect(mockStore.goToStep).toHaveBeenCalledWith(0)
+  })
+
+  it('Back button is absent on step 0 (no previous step)', async () => {
+    // already on step 0 by default
+    const wrapper = await mountView()
+    expect(wrapper.find('[data-testid="issuance-back"]').exists()).toBe(false)
+  })
+
+  it('step button click for a completed previous step navigates to that step', async () => {
+    // Mark step 0 as complete, advance to step 1
+    mockStore.stepStatuses[0].isComplete = true
+    mockStore.stepStatuses[0].isValid = true
+    mockStore.currentForm.currentStep = 1
+    const wrapper = await mountView()
+    // Click step 0 button — should navigate back
+    const stepBtn0 = wrapper.find('[data-testid="issuance-step-btn-0"]')
+    expect(stepBtn0.exists()).toBe(true)
+    await stepBtn0.trigger('click')
+    await flushPromises()
+    expect(mockStore.goToStep).toHaveBeenCalledWith(0)
+  })
+
+  it('step button for step 2+ when only on step 0 is disabled (cannot skip ahead)', async () => {
+    // On step 0, step 2 is unreachable (can only go to step 1)
+    mockStore.stepStatuses[0].isValid = false
+    const wrapper = await mountView()
+    const stepBtn2 = wrapper.find('[data-testid="issuance-step-btn-2"]')
+    expect(stepBtn2.exists()).toBe(true)
+    // The step button should be disabled (cursor-not-allowed class applied and disabled attr)
+    expect(stepBtn2.attributes('disabled')).toBeDefined()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Behavioral: draft persistence
+// ---------------------------------------------------------------------------
+
+describe('GuidedTokenLaunch — draft persistence behavior', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetStore()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('Save Draft button click calls guidedLaunchStore.saveDraft()', async () => {
+    // Show the button by advancing to step > 0
+    mockStore.currentForm.currentStep = 1
+    const wrapper = await mountView()
+    const saveDraftBtn = wrapper.find('[data-testid="issuance-save-draft"]')
+    expect(saveDraftBtn.exists()).toBe(true)
+    await saveDraftBtn.trigger('click')
+    await flushPromises()
+    expect(mockStore.saveDraft).toHaveBeenCalledTimes(1)
+  })
+
+  it('Save Draft button is absent on step 0 (nothing to save yet)', async () => {
+    // Default state: currentStep = 0
+    const wrapper = await mountView()
+    expect(wrapper.find('[data-testid="issuance-save-draft"]').exists()).toBe(false)
+  })
+
+  it('Save Draft button shows "Saving..." text while saving and reverts to "Save Draft"', async () => {
+    vi.useFakeTimers()
+    // Advance to step 1 so button is visible
+    mockStore.currentForm.currentStep = 1
+    const wrapper = await mountView()
+    const saveDraftBtn = wrapper.find('[data-testid="issuance-save-draft"]')
+    await saveDraftBtn.trigger('click')
+    // During save: isSaving should be true so text should be "Saving..."
+    expect(saveDraftBtn.text()).toContain('Saving...')
+    // Advance past the 500ms save delay
+    await vi.advanceTimersByTimeAsync(600)
+    // Text reverts
+    expect(saveDraftBtn.text()).toContain('Save Draft')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Behavioral: form submission
+// ---------------------------------------------------------------------------
+
+describe('GuidedTokenLaunch — submit behavior', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetStore()
+  })
+
+  it('ReviewSubmitStep is rendered on the last step (step 5)', async () => {
+    mockStore.currentForm.currentStep = 5
+    const wrapper = await mountView()
+    expect(wrapper.find('[data-testid="step-review"]').exists()).toBe(true)
+  })
+
+  it('Continue button is absent on the last step (ReviewSubmitStep handles submit)', async () => {
+    // On last step (index 5 of 6 total), Continue button v-if should be false
+    mockStore.currentForm.currentStep = 5
+    const wrapper = await mountView()
+    expect(wrapper.find('[data-testid="issuance-continue"]').exists()).toBe(false)
+  })
+
+  it('successful submitLaunch reveals success modal', async () => {
+    const mockResponse = {
+      submissionId: 'test-submission-id',
+      deploymentStatus: 'pending' as const,
+      estimatedTime: '5 minutes',
+      nextSteps: ['Verify token details', 'Monitor deployment'],
+    }
+    mockStore.submitLaunch = vi.fn().mockResolvedValue(mockResponse)
+    mockStore.currentForm.currentStep = 5
+    const wrapper = await mountView()
+    // Directly invoke the handleSubmit by emitting 'submit' from ReviewSubmitStep mock
+    await wrapper.find('[data-testid="step-review"]').trigger('submit')
+    await flushPromises()
+    // The modal should be visible
+    expect(wrapper.html()).toMatch(/Launch Submitted Successfully/i)
   })
 })
