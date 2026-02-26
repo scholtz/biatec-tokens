@@ -23,6 +23,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
 import { reactive } from 'vue'
 import GuidedTokenLaunch from '../GuidedTokenLaunch.vue'
+import type { StepStatus } from '../../types/guidedLaunch'
 
 // ---------------------------------------------------------------------------
 // Mock heavy step sub-components (they have their own unit tests)
@@ -652,9 +653,8 @@ describe('GuidedTokenLaunch — validation error indicator on step button', () =
       isComplete: true,
       isValid: false,
       isOptional: false,
-      // @ts-ignore: validation is an optional property defined in StepStatus
       validation: { isValid: false, errors: ['Name is required'] },
-    }
+    } as StepStatus
     mockStore.currentForm.currentStep = 1 // moved past step 0
     const wrapper = await mountView()
     const stepBtn0 = wrapper.find('[data-testid="issuance-step-btn-0"]')

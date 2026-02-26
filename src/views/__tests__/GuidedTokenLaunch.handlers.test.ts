@@ -613,15 +613,21 @@ describe('GuidedTokenLaunch — handleStepComplete with isValid=false (branch 9,
 
   it('handleStepComplete does NOT advance when on last step (branch 9 second condition)', async () => {
     vi.useFakeTimers()
-    // Put at last step — even with isValid=true, the auto-advance condition should be false
-    mockStore.currentForm.currentStep = 5
-    mockStore.stepStatuses[5].isValid = true
+    // Use a single-step store so step 0 IS the last step
+    // Then emitting complete with isValid=true: currentStep(0) >= totalSteps(1)-1(0) → condition fails
+    mockStore.stepStatuses = [
+      { id: 'organization', title: 'Organization Profile', isComplete: false, isValid: false, isOptional: false },
+    ]
+    mockStore.currentForm.currentStep = 0
     const { wrapper } = await mountView()
-    // The ReviewSubmitStep mock doesn't have org-emit-complete, so use direct step complete
-    // We instead verify the branch by checking canNavigateToStep won't advance past the last step
+    const orgBtn = wrapper.find('[data-testid="org-emit-complete"]')
+    expect(orgBtn.exists()).toBe(true)
+    await orgBtn.trigger('click')
     await vi.advanceTimersByTimeAsync(400)
     await flushPromises()
-    // On last step — goToStep should NOT be called for auto-advance (currentStep=5 >= totalSteps-1=5)
+    // completeStep IS called
+    expect(mockStore.completeStep).toHaveBeenCalledWith(0, { isValid: true, errors: [] })
+    // Auto-advance should NOT happen: currentStep(0) is NOT < totalSteps(1) - 1 = 0
     expect(mockStore.goToStep).not.toHaveBeenCalled()
     vi.useRealTimers()
   })
@@ -673,7 +679,7 @@ describe('GuidedTokenLaunch — onMounted user.email undefined (branch 16, line 
 
   it('uses "unknown" as userId when user.email is undefined', async () => {
     // user exists but has no email property
-    mockAuth.user = {} as { email: string }
+    mockAuth.user = { email: undefined } as unknown as { email: string }
     await mountView()
     // initializeTelemetry should be called with 'unknown' (fallback from user?.email || 'unknown')
     expect(mockStore.initializeTelemetry).toHaveBeenCalledWith('unknown')
