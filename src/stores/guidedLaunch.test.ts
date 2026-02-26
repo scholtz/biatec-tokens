@@ -5,6 +5,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useGuidedLaunchStore } from './guidedLaunch'
+import { launchTelemetryService } from '../services/launchTelemetry'
 import type { OrganizationProfile, TokenIntent, ComplianceReadiness, TokenTemplate, TokenEconomics } from '../types/guidedLaunch'
 
 describe('guidedLaunch store', () => {
@@ -471,6 +472,145 @@ describe('guidedLaunch store', () => {
       expect(() => {
         store.startFlow('https://example.com', 'direct')
       }).not.toThrow()
+    })
+  })
+
+  describe('readiness score edge cases', () => {
+    it('should add blocker when step is complete but invalid', () => {
+      const store = useGuidedLaunchStore()
+
+      // Directly set step as complete=true but isValid=false (edge case for defensive path)
+      store.stepStatuses[0].isComplete = true
+      store.stepStatuses[0].isValid = false
+
+      const score = store.readinessScore
+      expect(score.blockers.some(b => b.includes('Organization Profile'))).toBe(true)
+    })
+
+    it('should add KYC warning when KYC required but no whitelist', () => {
+      const store = useGuidedLaunchStore()
+
+      store.setComplianceReadiness({
+        requiresMICA: false,
+        requiresKYC: true,
+        requiresAML: false,
+        hasLegalReview: true,
+        hasRiskAssessment: true,
+        restrictedJurisdictions: [],
+        whitelistRequired: false,
+      })
+
+      const score = store.readinessScore
+      expect(score.warnings.some(w => w.includes('KYC'))).toBe(true)
+    })
+  })
+
+  describe('draft persistence edge cases', () => {
+    it('should return false from loadDraft when no draft in localStorage', () => {
+      const store = useGuidedLaunchStore()
+
+      // localStorage is empty (cleared in beforeEach)
+      const loaded = store.loadDraft()
+      expect(loaded).toBe(false)
+      expect(store.hasDraftLoaded).toBe(false)
+    })
+
+    it('should return false and clear draft on version mismatch', () => {
+      const store = useGuidedLaunchStore()
+
+      // Manually store a draft with a wrong version
+      localStorage.setItem('biatec_guided_launch_draft', JSON.stringify({
+        version: 'OLD_VERSION_9.9',
+        form: { currentStep: 3, createdAt: new Date(), lastModified: new Date(), completedSteps: [] },
+        stepStatuses: [],
+      }))
+
+      const loaded = store.loadDraft()
+      expect(loaded).toBe(false)
+      // Draft should be cleared
+      expect(localStorage.getItem('biatec_guided_launch_draft')).toBeNull()
+    })
+
+    it('should return false and not crash when loadDraft encounters invalid JSON', () => {
+      const store = useGuidedLaunchStore()
+
+      // Store invalid JSON to trigger the catch block
+      localStorage.setItem('biatec_guided_launch_draft', 'NOT_VALID_JSON{{{')
+
+      const loaded = store.loadDraft()
+      expect(loaded).toBe(false)
+    })
+
+    it('should return false from saveDraft when localStorage.setItem throws', () => {
+      const store = useGuidedLaunchStore()
+
+      // Mock localStorage.setItem to throw (e.g., storage quota exceeded)
+      const originalSetItem = localStorage.setItem.bind(localStorage)
+      vi.spyOn(localStorage, 'setItem').mockImplementationOnce(() => {
+        throw new DOMException('QuotaExceededError')
+      })
+
+      const saved = store.saveDraft()
+      expect(saved).toBe(false)
+
+      // Restore
+      localStorage.setItem = originalSetItem
+    })
+  })
+
+  describe('launch submission edge cases', () => {
+    it('should throw when canSubmit is false on empty form', async () => {
+      const store = useGuidedLaunchStore()
+
+      // Empty form has blockers → canSubmit = false
+      await expect(store.submitLaunch('user@test.com')).rejects.toThrow(
+        'Cannot submit: validation errors present'
+      )
+    })
+
+    it('should throw required data missing when canSubmit is true but form data is null', async () => {
+      const store = useGuidedLaunchStore()
+
+      // Mark all required steps as complete so canSubmit = true
+      store.stepStatuses.forEach(s => {
+        if (!s.isOptional) {
+          s.isComplete = true
+          s.isValid = true
+        }
+      })
+
+      // But don't set any form data (organizationProfile etc. are null)
+      await expect(store.submitLaunch('user@test.com')).rejects.toThrow(
+        'Cannot submit: required data missing'
+      )
+    })
+
+    it('should handle error in submitLaunch catch block', async () => {
+      const store = useGuidedLaunchStore()
+
+      // Set all required steps complete
+      store.stepStatuses.forEach(s => {
+        s.isComplete = true
+        s.isValid = true
+      })
+
+      // Set required form data so it passes the data missing check
+      const templates = store.getTemplates()
+      store.setOrganizationProfile({ name: 'Test Corp', type: 'company', website: '', description: '', country: 'US', regulatoryStatus: 'registered', contactEmail: 'test@test.com' })
+      store.setTokenIntent({ primaryUseCase: 'loyalty_rewards', tokenName: 'TestToken', tokenSymbol: 'TST', targetAudience: 'consumer', estimatedHolders: '100', revenueModel: 'direct', problemStatement: 'test', valueProposition: 'test' })
+      store.setComplianceReadiness({ requiresMICA: false, requiresKYC: false, requiresAML: false, hasLegalReview: true, hasRiskAssessment: true, restrictedJurisdictions: [], whitelistRequired: false })
+      store.setSelectedTemplate(templates[0])
+      store.setTokenEconomics({ totalSupply: '1000000', decimals: 6, initialDistribution: { team: 25, investors: 25, community: 25, reserve: 25 }, burnMechanism: false, mintingAllowed: false })
+
+      // Mock telemetry to throw — this triggers the catch block in submitLaunch's try
+      vi.spyOn(launchTelemetryService, 'trackLaunchSubmitted').mockImplementationOnce(() => {
+        throw new Error('telemetry error')
+      })
+
+      await expect(store.submitLaunch('user@test.com')).rejects.toThrow()
+
+      // After error, submissionStatus should be 'failed'
+      expect(store.currentForm.submissionStatus).toBe('failed')
     })
   })
 })
