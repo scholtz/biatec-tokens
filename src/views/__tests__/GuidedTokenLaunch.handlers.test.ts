@@ -417,6 +417,26 @@ describe('GuidedTokenLaunch — success modal actions (lines 489-494)', () => {
       await expect(closeBtn.trigger('click')).resolves.not.toThrow()
     }
   })
+
+  it('success modal renders without next-steps section when response has no nextSteps (line 281 false branch)', async () => {
+    // Coverage: false branch of v-if="submissionResponse?.nextSteps" at line 281
+    // When submitLaunch returns a response without a nextSteps array, the section is hidden
+    mockStore.currentForm.currentStep = 5
+    mockStore.submitLaunch = vi.fn().mockResolvedValue({
+      submissionId: 'sub-no-steps',
+      deploymentStatus: 'pending' as const,
+      estimatedCompletionTime: '5 minutes',
+      // nextSteps deliberately omitted → submissionResponse.nextSteps = undefined
+    })
+    const { wrapper } = await mountView()
+    await wrapper.find('[data-testid="review-emit-submit"]').trigger('click')
+    await flushPromises()
+    // Modal is shown with the submission ID
+    expect(wrapper.html()).toMatch(/Launch Submitted Successfully/i)
+    expect(wrapper.html()).toMatch(/sub-no-steps/)
+    // No "Next Steps" section (nextSteps was undefined)
+    expect(wrapper.html()).not.toContain('Next Steps:')
+  })
 })
 
 describe('GuidedTokenLaunch — onMounted auth redirect (lines 501-502)', () => {
@@ -707,5 +727,98 @@ describe('GuidedTokenLaunch — onMounted hasDraft=true (branch 17, line 524)', 
     mockStore.loadDraft = vi.fn(() => true)
     await mountView()
     expect(mockStore.startFlow).not.toHaveBeenCalled()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Null-guard false branches: line 420 (handleStepComplete) and line 539 (onBeforeUnmount)
+// These defensive guards protect against impossible states where stepStatuses
+// is shorter than expected. They are covered by testing with an empty stepStatuses array.
+// ---------------------------------------------------------------------------
+
+describe('GuidedTokenLaunch — handleStepComplete null-guard false branch (line 420)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetStore()
+  })
+
+  it('does NOT call trackMilestone when stepStatuses is empty (currentStepData is undefined)', async () => {
+    // Coverage: false branch of `if (currentStepData)` at line 420
+    // With stepStatuses=[], stepStatuses[0] returns undefined → false branch
+    mockStore.stepStatuses = []
+    const { wrapper } = await mountView()
+    // OrganizationProfileStep still renders at currentStep===0
+    const orgBtn = wrapper.find('[data-testid="org-emit-complete"]')
+    expect(orgBtn.exists()).toBe(true)
+    await orgBtn.trigger('click')
+    await flushPromises()
+    // completeStep IS called (always)
+    expect(mockStore.completeStep).toHaveBeenCalledWith(0, { isValid: true, errors: [] })
+    // trackMilestone is NOT called because currentStepData was undefined
+    expect(mockCompetitiveTelemetry.trackMilestone).not.toHaveBeenCalled()
+  })
+})
+
+describe('GuidedTokenLaunch — onBeforeUnmount lastStep null-guard false branch (line 539)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetStore()
+  })
+
+  it('does NOT call trackFlowAbandoned when stepStatuses[currentStep] is undefined', async () => {
+    // Coverage: false branch of `if (lastStep)` at line 539
+    // stepStatuses has 1 completed step at index 0, but currentStep=1 (out-of-bounds)
+    // → completedSteps=1 > 0 ✓, but stepStatuses[1]=undefined → false branch
+    mockStore.stepStatuses = [
+      { id: 'organization', title: 'Organization Profile', isComplete: true, isValid: true, isOptional: false },
+    ]
+    mockStore.currentForm.currentStep = 1 // out-of-bounds index
+    const { wrapper } = await mountView()
+    wrapper.unmount()
+    // trackFlowAbandoned is NOT called because lastStep was undefined
+    expect(mockLaunchTelemetry.trackFlowAbandoned).not.toHaveBeenCalled()
+    // completeJourney is also not called via this path
+    expect(mockCompetitiveTelemetry.completeJourney).not.toHaveBeenCalled()
+  })
+})
+
+describe('GuidedTokenLaunch — handleStepNavigation guard (line 387)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetStore()
+  })
+
+  it('step button is disabled when canNavigateToStep returns false (template prevents skip-ahead)', async () => {
+    // Validates the template-level guard: button has disabled attribute when canNavigateToStep(5)=false.
+    // The false branch of the JavaScript guard (line 387) is dead code because the template
+    // prevents users from clicking a disabled button — the disabled attribute is the authoritative guard.
+    mockStore.stepStatuses[0].isValid = false
+    mockStore.stepStatuses[0].isOptional = false
+    const { wrapper } = await mountView()
+    const btn5 = wrapper.find('[data-testid="issuance-step-btn-5"]')
+    expect(btn5.exists()).toBe(true)
+    // Template guard is authoritative: disabled prevents click, making JS guard defensive-only
+    expect(btn5.attributes('disabled')).toBeDefined()
+    expect(mockStore.goToStep).not.toHaveBeenCalled()
+  })
+})
+
+describe('GuidedTokenLaunch — handlePrevious guard (line 393)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetStore()
+  })
+
+  it('back button is absent on step 0 (v-if guard makes JS false-branch unreachable)', async () => {
+    // Validates the template-level guard: back button removed via v-if when currentStep === 0.
+    // The false branch of the JavaScript guard (line 393) is dead code because the v-if
+    // removes the button from the DOM, making handlePrevious uncallable when currentStep === 0.
+    mockStore.currentForm.currentStep = 0
+    const { wrapper } = await mountView()
+    expect(wrapper.find('[data-testid="issuance-back"]').exists()).toBe(false)
+    // Confirm back button appears when navigated to step 1 (guard is not a UI blocker on step 1+)
+    mockStore.currentForm.currentStep = 1
+    await flushPromises()
+    expect(wrapper.find('[data-testid="issuance-back"]').exists()).toBe(true)
   })
 })
