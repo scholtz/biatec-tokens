@@ -492,4 +492,60 @@ describe('Team Store', () => {
       expect(store.invitations).toHaveLength(0);
     });
   });
-});
+
+  describe('utility methods', () => {
+    it('should clear error with clearError()', () => {
+      const store = useTeamStore();
+      store.error = 'Some error message';
+
+      store.clearError();
+
+      expect(store.error).toBeNull();
+    });
+
+    it('should reset all state with $reset()', async () => {
+      const store = useTeamStore();
+      store.members = [{
+        id: 'm1',
+        email: 'test@example.com',
+        name: 'Test',
+        role: 'viewer',
+        status: 'active',
+        joinedAt: new Date().toISOString(),
+        permissions: [],
+      }];
+      store.invitations = [{
+        id: 'i1',
+        email: 'invite@example.com',
+        role: 'viewer',
+        status: 'pending',
+        invitedBy: 'm1',
+        invitedAt: new Date().toISOString(),
+        expiresAt: new Date().toISOString(),
+      }];
+      store.error = 'Some error';
+      store.loading = true;
+
+      store.$reset();
+
+      expect(store.members).toHaveLength(0);
+      expect(store.invitations).toHaveLength(0);
+      expect(store.auditLog).toHaveLength(0);
+      expect(store.loading).toBe(false);
+      expect(store.error).toBeNull();
+    });
+
+    it('should handle removeMember error gracefully', async () => {
+      const store = useTeamStore();
+      vi.mocked(teamManagementService.removeMember).mockRejectedValueOnce(
+        new Error('Network error')
+      );
+
+      const success = await store.removeMember('m1');
+
+      expect(success).toBe(false);
+      expect(store.error).toBe('Failed to remove member');
+      expect(store.loading).toBe(false);
+    });
+  });
+})

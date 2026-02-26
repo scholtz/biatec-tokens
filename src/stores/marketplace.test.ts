@@ -466,5 +466,107 @@ describe('useMarketplaceStore', () => {
 
       expect(PriceOracleModule.priceOracleService.getTokenPrice).not.toHaveBeenCalled();
     });
+
+    it('should fetch price for existing token and update it', async () => {
+      const store = useMarketplaceStore();
+      vi.resetAllMocks(); // Clear any leftover once-queued mocks from prior tests
+      // Directly add a token so fetchTokenPrice can find it
+      store.tokens = [{
+        id: 'token-abc',
+        name: 'Test Token',
+        symbol: 'TEST',
+        standard: 'ARC200',
+        network: 'VOI',
+        isVerified: false,
+        complianceBadge: 'None',
+        assetClass: 'Utility',
+        description: '',
+        issuer: '',
+        totalSupply: 1000000,
+        decimals: 6,
+        createdAt: new Date(),
+      }];
+
+      const mockPrice = {
+        id: 'token-abc',
+        symbol: 'TEST',
+        price: 1.07,
+        priceChange24h: 1.2,
+        priceChange7d: 2.5,
+        volume24h: 10000,
+        marketCap: 1000000,
+        lastUpdated: new Date(),
+        source: 'CoinGecko' as const,
+      };
+      vi.mocked(PriceOracleModule.priceOracleService.getTokenPrice).mockResolvedValueOnce(mockPrice);
+
+      await store.fetchTokenPrice('token-abc');
+
+      expect(PriceOracleModule.priceOracleService.getTokenPrice).toHaveBeenCalled();
+      const updatedToken = store.tokens.find(t => t.id === 'token-abc');
+      expect(updatedToken?.price).toBe(1.07);
+    });
+
+    it('should fetch price for existing token when price data is null (no update)', async () => {
+      const store = useMarketplaceStore();
+      vi.resetAllMocks();
+      store.tokens = [{
+        id: 'token-abc',
+        name: 'Test Token',
+        symbol: 'TEST',
+        standard: 'ARC200',
+        network: 'VOI',
+        isVerified: false,
+        complianceBadge: 'None',
+        assetClass: 'Utility',
+        description: '',
+        issuer: '',
+        totalSupply: 1000000,
+        decimals: 6,
+        createdAt: new Date(),
+      }];
+
+      vi.mocked(PriceOracleModule.priceOracleService.getTokenPrice).mockResolvedValueOnce(null);
+
+      await store.fetchTokenPrice('token-abc');
+
+      expect(PriceOracleModule.priceOracleService.getTokenPrice).toHaveBeenCalled();
+      // Price stays as original (undefined or prior value)
+    });
+
+    it('should restart polling when startPricePolling called while already polling', () => {
+      const store = useMarketplaceStore();
+
+      vi.useFakeTimers();
+      vi.mocked(PriceOracleModule.priceOracleService.getBatchPrices).mockResolvedValue([]);
+
+      store.startPricePolling(1000);
+      expect(store.pricePollingEnabled).toBe(true);
+
+      // Call again — should stop old interval and start new one (line 194)
+      store.startPricePolling(2000);
+      expect(store.pricePollingEnabled).toBe(true);
+
+      store.stopPricePolling();
+      vi.useRealTimers();
+    });
   });
+
+  describe('loadTokens error handling', () => {
+    it('should set error on loadTokens failure', async () => {
+      const store = useMarketplaceStore();
+
+      // Make setTimeout throw to trigger catch block in loadTokens
+      const spy = vi.spyOn(global, 'setTimeout').mockImplementationOnce((_cb: any) => {
+        throw new Error('Load failed')
+      });
+
+      await store.loadTokens();
+
+      expect(store.error).toBeTruthy();
+      expect(store.loading).toBe(false);
+      spy.mockRestore();
+    });
+  });
+
 });
