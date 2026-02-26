@@ -350,4 +350,101 @@ describe('Auth Store', () => {
       expect(authStore.provisioningError).toBe('Test error')
     })
   })
+
+  describe('connectWallet', () => {
+    it('should connect wallet with address only', async () => {
+      const authStore = useAuthStore()
+      const user = await authStore.connectWallet('TEST_ADDRESS')
+
+      expect(user.address).toBe('TEST_ADDRESS')
+      expect(authStore.isConnected).toBe(true)
+      expect(authStore.isAuthenticated).toBe(true)
+      expect(localStorage.getItem('algorand_user')).toBeTruthy()
+    })
+
+    it('should connect wallet with full userInfo', async () => {
+      const authStore = useAuthStore()
+      const user = await authStore.connectWallet('TEST_ADDRESS', {
+        name: 'Alice',
+        email: 'alice@example.com',
+      })
+
+      expect(user.name).toBe('Alice')
+      expect(user.email).toBe('alice@example.com')
+    })
+
+    it('should set loading to false after connecting wallet', async () => {
+      const authStore = useAuthStore()
+      await authStore.connectWallet('ADDR')
+      expect(authStore.loading).toBe(false)
+    })
+  })
+
+  describe('signOut', () => {
+    it('should clear all auth state on signOut', async () => {
+      const authStore = useAuthStore()
+      localStorage.setItem('algorand_user', JSON.stringify({ address: 'X', email: 'x@y.com' }))
+      localStorage.setItem('arc76_session', 'session')
+      localStorage.setItem('arc76_account', 'account')
+      localStorage.setItem('arc76_email', 'x@y.com')
+      await authStore.initialize()
+
+      await authStore.signOut()
+
+      expect(authStore.user).toBeNull()
+      expect(authStore.isConnected).toBe(false)
+      expect(localStorage.getItem('algorand_user')).toBeNull()
+      expect(localStorage.getItem('arc76_session')).toBeNull()
+    })
+  })
+
+  describe('updateUser', () => {
+    it('should update user fields when user exists', async () => {
+      const authStore = useAuthStore()
+      await authStore.connectWallet('ADDR', { email: 'old@example.com' })
+
+      authStore.updateUser({ email: 'new@example.com' })
+
+      expect(authStore.user?.email).toBe('new@example.com')
+    })
+
+    it('should do nothing when user is null', () => {
+      const authStore = useAuthStore()
+      expect(authStore.user).toBeNull()
+
+      // Should not throw
+      authStore.updateUser({ email: 'x@y.com' })
+
+      expect(authStore.user).toBeNull()
+    })
+  })
+
+  describe('restoreARC76Session', () => {
+    it('should return false when no saved session', async () => {
+      const authStore = useAuthStore()
+      const result = await authStore.restoreARC76Session()
+      expect(result).toBe(false)
+    })
+
+    it('should restore session from localStorage', async () => {
+      const authStore = useAuthStore()
+      localStorage.setItem('arc76_session', 'my-session')
+      localStorage.setItem('arc76_account', 'MY_ACCOUNT')
+      localStorage.setItem('arc76_email', 'test@example.com')
+
+      const result = await authStore.restoreARC76Session()
+
+      expect(result).toBe(true)
+      expect(authStore.session).toBe('my-session')
+      expect(authStore.arc76email).toBe('test@example.com')
+    })
+  })
+
+  describe('refreshProvisioningStatus', () => {
+    it('should return false when no account set', async () => {
+      const authStore = useAuthStore()
+      const result = await authStore.refreshProvisioningStatus()
+      expect(result).toBe(false)
+    })
+  })
 })

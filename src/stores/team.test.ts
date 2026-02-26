@@ -612,5 +612,27 @@ describe('Team Store', () => {
       expect(success).toBe(false);
       expect(store.error).toBe('Cannot resend');
     });
+
+    it('should return false and set error when resendInvitation throws', async () => {
+      const store = useTeamStore();
+
+      vi.mocked(teamManagementService.resendInvitation).mockRejectedValue(new Error('Network error'));
+
+      const success = await store.resendInvitation('inv-1');
+
+      expect(success).toBe(false);
+      expect(store.error).toBe('Failed to resend invitation');
+    });
+
+    it('should return false and set error when cancelInvitation throws', async () => {
+      const store = useTeamStore();
+
+      vi.mocked(teamManagementService.cancelInvitation).mockRejectedValue(new Error('Network error'));
+
+      const success = await store.cancelInvitation('inv-1');
+
+      expect(success).toBe(false);
+      expect(store.error).toBe('Failed to cancel invitation');
+    });
   });
 })

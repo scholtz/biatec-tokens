@@ -1238,4 +1238,48 @@ describe("useWhitelistStore", () => {
       expect(store.selectedEntry).toEqual(updatedEntry);
     });
   });
+
+  describe("fetchWhitelistSummary - non-Error catch", () => {
+    it("should set generic error when non-Error thrown in fetchWhitelistSummary", async () => {
+      vi.mocked(whitelistService.getWhitelistSummary).mockRejectedValue("string error");
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const store = useWhitelistStore();
+      await store.fetchWhitelistSummary();
+
+      expect(store.error).toBe("Failed to load summary");
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe("updateWhitelistEntry - entries array update branch", () => {
+    it("should update entries array when entry already exists in store", async () => {
+      const existingEntry = {
+        id: "existing-1",
+        address: "ADDR_EXISTING",
+        entityName: "Old Name",
+        entityType: "individual" as const,
+        jurisdictionCode: "US",
+        riskLevel: "low" as const,
+        kycStatus: "verified" as const,
+        status: "approved" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const updatedEntry = { ...existingEntry, entityName: "New Name" };
+
+      vi.mocked(whitelistService.updateWhitelistEntry).mockResolvedValue(updatedEntry);
+
+      const store = useWhitelistStore();
+      // Directly set entries to test the update-in-array branch
+      store.entries = [existingEntry] as any;
+
+      const result = await store.updateWhitelistEntry("existing-1", { entityName: "New Name" });
+
+      expect(result).toEqual(updatedEntry);
+      // The entry should be updated in the entries array
+      const found = store.entries.find((e) => e.id === "existing-1");
+      expect(found?.entityName).toBe("New Name");
+    });
+  });
 });
