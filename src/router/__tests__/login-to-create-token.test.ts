@@ -13,17 +13,30 @@
  * Business value: Prevents activation drop-off caused by broken redirect-after-login
  * patterns. Users who land on /launch/guided unauthenticated should resume exactly
  * where they intended after signing in.
+ *
+ * Router guard behaviour (src/router/index.ts):
+ *   - GuidedTokenLaunch: uses isIssuanceSessionValid() + stores path in ISSUANCE_RETURN_PATH_KEY
+ *   - All other protected routes: plain truthy check + stores path in AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { AUTH_STORAGE_KEYS } from '../../constants/auth'
+import {
+  ISSUANCE_RETURN_PATH_KEY,
+  isIssuanceSessionValid,
+} from '../../utils/authFirstIssuanceWorkspace'
 
 // ---------------------------------------------------------------------------
 // Simulate the full router guard + post-auth redirect chain
 // ---------------------------------------------------------------------------
 
 /**
- * Step 1: Unauthenticated access → guard fires, stores intended path, returns redirect
+ * Step 1: Unauthenticated access → guard fires, stores intended path, returns redirect.
+ *
+ * Mirrors the ACTUAL router guard logic in src/router/index.ts:
+ * - GuidedTokenLaunch uses structural session validation (address + isConnected) and
+ *   stores in ISSUANCE_RETURN_PATH_KEY (separate from generic redirect key)
+ * - All other protected routes use plain truthy check and AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH
  */
 function simulateUnauthenticatedAccess(
   path: string,
@@ -34,8 +47,23 @@ function simulateUnauthenticatedAccess(
   if (routeName === 'TokenDashboard') return { redirected: false, redirectTarget: null }
 
   const algorandUser = localStorage.getItem('algorand_user')
-  if (!algorandUser) {
-    localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, path)
+
+  // GuidedTokenLaunch uses the actual isIssuanceSessionValid utility (structural check):
+  // requires non-empty address AND isConnected === true
+  let isAuthenticated: boolean
+  if (routeName === 'GuidedTokenLaunch') {
+    isAuthenticated = isIssuanceSessionValid(algorandUser)
+  } else {
+    isAuthenticated = !!algorandUser
+  }
+
+  if (!isAuthenticated) {
+    // GuidedTokenLaunch stores in issuance-specific key; others use generic key
+    if (routeName === 'GuidedTokenLaunch') {
+      localStorage.setItem(ISSUANCE_RETURN_PATH_KEY, path)
+    } else {
+      localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, path)
+    }
     return {
       redirected: true,
       redirectTarget: { name: 'Home', query: { showAuth: 'true' } },
@@ -53,7 +81,21 @@ function simulateSuccessfulLogin(email: string, address: string): void {
 }
 
 /**
- * Step 3: After login, consumer checks for stored redirect and navigates
+ * Step 3a: After login, component checks for ISSUANCE-specific return path
+ * (mirrors consumeIssuanceReturnPath called in GuidedTokenLaunch.vue onMounted)
+ */
+function simulateIssuancePostAuthRedirect(): string | null {
+  const storedPath = localStorage.getItem(ISSUANCE_RETURN_PATH_KEY)
+  if (storedPath) {
+    localStorage.removeItem(ISSUANCE_RETURN_PATH_KEY)
+    return storedPath
+  }
+  return null
+}
+
+/**
+ * Step 3b: After login, consumer checks for stored redirect and navigates
+ * (generic redirect for non-issuance routes)
  */
 function simulatePostAuthRedirect(): string | null {
   const storedPath = localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH)
@@ -78,33 +120,35 @@ describe('Login-to-Create-Token Redirection Chain', () => {
   })
 
   describe('complete flow: unauthenticated → login → resume intended route', () => {
-    it('should store /launch/guided and redirect to login when unauthenticated', () => {
+    it('should store /launch/guided in ISSUANCE key and redirect to login when unauthenticated', () => {
       const result = simulateUnauthenticatedAccess('/launch/guided', true, 'GuidedTokenLaunch')
 
       expect(result.redirected).toBe(true)
       expect(result.redirectTarget?.name).toBe('Home')
       expect(result.redirectTarget?.query.showAuth).toBe('true')
-      expect(localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH)).toBe('/launch/guided')
+      // GuidedTokenLaunch stores in ISSUANCE_RETURN_PATH_KEY (not generic redirect key)
+      expect(localStorage.getItem(ISSUANCE_RETURN_PATH_KEY)).toBe('/launch/guided')
+      expect(localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH)).toBeNull()
     })
 
-    it('should resume /launch/guided after successful login', () => {
-      // Step 1: Unauthenticated access stores the intent
+    it('should resume /launch/guided via issuance return path after successful login', () => {
+      // Step 1: Unauthenticated access stores the intent in issuance-specific key
       simulateUnauthenticatedAccess('/launch/guided', true, 'GuidedTokenLaunch')
-      expect(localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH)).toBe('/launch/guided')
+      expect(localStorage.getItem(ISSUANCE_RETURN_PATH_KEY)).toBe('/launch/guided')
 
       // Step 2: User logs in
       simulateSuccessfulLogin('user@example.com', 'ALGO_ADDRESS_1234')
       expect(localStorage.getItem('algorand_user')).toBeTruthy()
 
-      // Step 3: Post-auth redirect fires
-      const resumePath = simulatePostAuthRedirect()
+      // Step 3: GuidedTokenLaunch.vue onMounted calls consumeIssuanceReturnPath
+      const resumePath = simulateIssuancePostAuthRedirect()
       expect(resumePath).toBe('/launch/guided')
 
-      // Verify redirect key is cleaned up after use
-      expect(localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH)).toBeNull()
+      // Verify issuance redirect key is cleaned up after use
+      expect(localStorage.getItem(ISSUANCE_RETURN_PATH_KEY)).toBeNull()
     })
 
-    it('should resume /create after successful login', () => {
+    it('should resume /create after successful login (generic redirect key)', () => {
       simulateUnauthenticatedAccess('/create', true, 'TokenCreator')
       simulateSuccessfulLogin('creator@example.com', 'ALGO_CREATOR_ADDR')
       const resumePath = simulatePostAuthRedirect()
@@ -132,6 +176,18 @@ describe('Login-to-Create-Token Redirection Chain', () => {
       // No stored path → consumer should use default (e.g., /dashboard or /launch/guided)
       expect(resumePath).toBeNull()
     })
+
+    it('issuance key and generic key are independent - no cross-contamination', () => {
+      // Accessing /settings stores in generic key
+      simulateUnauthenticatedAccess('/settings', true, 'Settings')
+      // Accessing /launch/guided stores in issuance key
+      simulateUnauthenticatedAccess('/launch/guided', true, 'GuidedTokenLaunch')
+
+      // Generic key still has /settings (not overwritten by issuance route)
+      expect(localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH)).toBe('/settings')
+      // Issuance key has /launch/guided (stored separately)
+      expect(localStorage.getItem(ISSUANCE_RETURN_PATH_KEY)).toBe('/launch/guided')
+    })
   })
 
   describe('edge cases: stale or corrupted redirect state', () => {
@@ -140,6 +196,7 @@ describe('Login-to-Create-Token Redirection Chain', () => {
       // Dashboard is special: allowed without auth
       expect(result.redirected).toBe(false)
       expect(localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH)).toBeNull()
+      expect(localStorage.getItem(ISSUANCE_RETURN_PATH_KEY)).toBeNull()
     })
 
     it('should not store redirect for public routes', () => {
@@ -148,22 +205,32 @@ describe('Login-to-Create-Token Redirection Chain', () => {
       expect(localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH)).toBeNull()
     })
 
-    it('should overwrite stale redirect when user attempts a new route', () => {
-      // User attempted /settings earlier (stored), now tries /launch/guided
+    it('should overwrite generic stale redirect when user attempts another non-issuance route', () => {
+      // User attempted /settings earlier (stored in generic key), now tries /create
       simulateUnauthenticatedAccess('/settings', true, 'Settings')
       expect(localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH)).toBe('/settings')
 
-      // New unauthenticated attempt to /launch/guided overwrites stored path
-      simulateUnauthenticatedAccess('/launch/guided', true, 'GuidedTokenLaunch')
-      expect(localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH)).toBe('/launch/guided')
+      // New unauthenticated attempt to /create overwrites stored generic path
+      simulateUnauthenticatedAccess('/create', true, 'TokenCreator')
+      expect(localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH)).toBe('/create')
     })
 
-    it('should clear redirect storage after consumption (prevents double-redirect)', () => {
-      simulateUnauthenticatedAccess('/launch/guided', true)
+    it('should overwrite stale issuance key when user re-attempts /launch/guided', () => {
+      // First attempt stores /launch/guided
+      simulateUnauthenticatedAccess('/launch/guided', true, 'GuidedTokenLaunch')
+      expect(localStorage.getItem(ISSUANCE_RETURN_PATH_KEY)).toBe('/launch/guided')
+
+      // Another attempt overwrites (e.g., user manually navigated again)
+      simulateUnauthenticatedAccess('/launch/guided', true, 'GuidedTokenLaunch')
+      expect(localStorage.getItem(ISSUANCE_RETURN_PATH_KEY)).toBe('/launch/guided')
+    })
+
+    it('should clear issuance redirect storage after consumption (prevents double-redirect)', () => {
+      simulateUnauthenticatedAccess('/launch/guided', true, 'GuidedTokenLaunch')
       simulateSuccessfulLogin('user@example.com', 'ADDR')
 
-      const first = simulatePostAuthRedirect()
-      const second = simulatePostAuthRedirect()
+      const first = simulateIssuancePostAuthRedirect()
+      const second = simulateIssuancePostAuthRedirect()
 
       expect(first).toBe('/launch/guided')
       expect(second).toBeNull() // Already consumed
@@ -174,6 +241,28 @@ describe('Login-to-Create-Token Redirection Chain', () => {
       simulateSuccessfulLogin('fresh@example.com', 'FRESH_ADDR')
       const resumePath = simulatePostAuthRedirect()
       expect(resumePath).toBeNull()
+    })
+
+    it('GuidedTokenLaunch rejects malformed session (missing isConnected)', () => {
+      // Plain truthy string (not a well-formed session)
+      localStorage.setItem('algorand_user', JSON.stringify({ address: 'ADDR', email: 'u@e.com' }))
+
+      const result = simulateUnauthenticatedAccess('/launch/guided', true, 'GuidedTokenLaunch')
+      // isConnected is not true → structural validation fails → redirect
+      expect(result.redirected).toBe(true)
+      expect(localStorage.getItem(ISSUANCE_RETURN_PATH_KEY)).toBe('/launch/guided')
+    })
+
+    it('GuidedTokenLaunch accepts well-formed session (address + isConnected)', () => {
+      localStorage.setItem(
+        'algorand_user',
+        JSON.stringify({ address: 'ALGO_1234', email: 'u@e.com', isConnected: true })
+      )
+
+      const result = simulateUnauthenticatedAccess('/launch/guided', true, 'GuidedTokenLaunch')
+      // Structural validation passes → not redirected
+      expect(result.redirected).toBe(false)
+      expect(localStorage.getItem(ISSUANCE_RETURN_PATH_KEY)).toBeNull()
     })
   })
 
@@ -187,6 +276,7 @@ describe('Login-to-Create-Token Redirection Chain', () => {
       const result = simulateUnauthenticatedAccess('/launch/guided', true, 'GuidedTokenLaunch')
       expect(result.redirected).toBe(false)
       expect(localStorage.getItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH)).toBeNull()
+      expect(localStorage.getItem(ISSUANCE_RETURN_PATH_KEY)).toBeNull()
     })
 
     it('should allow authenticated user to access /create without redirect', () => {
