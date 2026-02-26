@@ -569,4 +569,67 @@ describe('useMarketplaceStore', () => {
     });
   });
 
+  describe('fetchTokenPrices with tokens', () => {
+    it('should update tokens when prices are returned from batch fetch', async () => {
+      const store = useMarketplaceStore();
+      store.tokens = [
+        {
+          id: 'token-1',
+          name: 'Test Token',
+          symbol: 'TEST',
+          standard: 'ARC200',
+          network: 'VOI',
+          totalSupply: '1000000',
+          description: '',
+          status: 'active',
+          complianceBadges: [],
+          type: 'FT',
+        } as any,
+      ];
+
+      const priceMap = new Map([
+        ['token-1', {
+          price: 1.5,
+          priceChange24h: 0.05,
+          priceChange7d: 0.1,
+          volume24h: 10000,
+          marketCap: 1500000,
+          source: 'mock',
+          lastUpdated: new Date().toISOString(),
+        }],
+      ]);
+
+      vi.mocked(PriceOracleModule.priceOracleService.getBatchPrices).mockResolvedValueOnce(priceMap);
+
+      await store.fetchTokenPrices();
+
+      expect(store.tokens[0].price).toBe(1.5);
+      expect(store.tokens[0].priceChange24h).toBe(0.05);
+    });
+
+    it('should not update tokens when price not in map', async () => {
+      const store = useMarketplaceStore();
+      store.tokens = [
+        {
+          id: 'token-no-price',
+          name: 'No Price Token',
+          symbol: 'NP',
+          standard: 'ARC200',
+          network: undefined,
+          totalSupply: '1000000',
+          description: '',
+          status: 'active',
+          complianceBadges: [],
+          type: 'FT',
+        } as any,
+      ];
+
+      vi.mocked(PriceOracleModule.priceOracleService.getBatchPrices).mockResolvedValueOnce(new Map());
+
+      await store.fetchTokenPrices();
+
+      expect(store.tokens[0].price).toBeUndefined();
+    });
+  });
+
 });

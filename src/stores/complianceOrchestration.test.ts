@@ -385,6 +385,31 @@ describe('complianceOrchestration store', () => {
       expect(store.adminComplianceList?.items).toBeDefined()
       expect(store.adminFilters.limit).toBe(50)
     })
+
+    it('should use default limit and offset when not specified', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.fetchAdminComplianceList({})
+      expect(store.adminComplianceList?.limit).toBe(50)
+      expect(store.adminComplianceList?.offset).toBe(0)
+    })
+  })
+
+  describe('checkAndUpdateStatus via uploadKYCDocument', () => {
+    it('should not change status when all docs uploaded but status is already pending_review', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user1@example.com')
+
+      // Set status to pending_review already
+      store.userComplianceState!.status = 'pending_review'
+
+      // Upload all required documents
+      const fakeFile = new File(['content'], 'id.pdf', { type: 'application/pdf' })
+      await store.uploadKYCDocument('government_id', fakeFile)
+      await store.uploadKYCDocument('proof_of_address', fakeFile)
+
+      // Status should remain pending_review (not changed again)
+      expect(store.userComplianceState?.status).toBe('pending_review')
+    })
   })
 
   describe('reset', () => {

@@ -1156,4 +1156,86 @@ describe("useWhitelistStore", () => {
       expect(store.error).toContain("Conflict check failed");
     });
   });
+
+  describe("selectEntry and clearError", () => {
+    it("should set selected entry", () => {
+      const store = useWhitelistStore();
+      const mockEntry = { id: "e1", address: "ADDR1", status: "pending" } as any;
+      store.selectEntry(mockEntry);
+      expect(store.selectedEntry).toEqual(mockEntry);
+    });
+
+    it("should clear selected entry when null passed", () => {
+      const store = useWhitelistStore();
+      const mockEntry = { id: "e1", address: "ADDR1", status: "pending" } as any;
+      store.selectEntry(mockEntry);
+      store.selectEntry(null);
+      expect(store.selectedEntry).toBeNull();
+    });
+
+    it("should clear error with clearError()", () => {
+      const store = useWhitelistStore();
+      store.error = "some error";
+      store.clearError();
+      expect(store.error).toBeNull();
+    });
+  });
+
+  describe("updateWhitelistEntry - selectedEntry branch", () => {
+    it("should update selectedEntry when it matches the updated entry", async () => {
+      const mockEntry = { id: "e1", address: "ADDR1", status: "approved" } as any;
+      vi.mocked(whitelistService.updateWhitelistEntry).mockResolvedValue(mockEntry);
+
+      const store = useWhitelistStore();
+      store.selectedEntry = { id: "e1", address: "ADDR1", status: "pending" } as any;
+
+      await store.updateWhitelistEntry("e1", { notes: "test" } as any);
+
+      expect(store.selectedEntry).toEqual(mockEntry);
+    });
+  });
+
+  describe("approveWhitelistEntry - selectedEntry branch", () => {
+    it("should update selectedEntry when approve targets selected entry", async () => {
+      const updatedEntry = { id: "e1", address: "ADDR1", status: "approved" } as any;
+      vi.mocked(whitelistService.approveWhitelistEntry).mockResolvedValue(updatedEntry);
+      vi.mocked(whitelistService.getWhitelistSummary).mockResolvedValue({ total: 1 } as any);
+
+      const store = useWhitelistStore();
+      store.selectedEntry = { id: "e1", address: "ADDR1", status: "pending" } as any;
+
+      await store.approveWhitelistEntry({ id: "e1", approvedBy: "admin" } as any);
+
+      expect(store.selectedEntry).toEqual(updatedEntry);
+    });
+  });
+
+  describe("rejectWhitelistEntry - selectedEntry branch", () => {
+    it("should update selectedEntry when reject targets selected entry", async () => {
+      const updatedEntry = { id: "e1", address: "ADDR1", status: "rejected" } as any;
+      vi.mocked(whitelistService.rejectWhitelistEntry).mockResolvedValue(updatedEntry);
+      vi.mocked(whitelistService.getWhitelistSummary).mockResolvedValue({ total: 1 } as any);
+
+      const store = useWhitelistStore();
+      store.selectedEntry = { id: "e1", address: "ADDR1", status: "pending" } as any;
+
+      await store.rejectWhitelistEntry({ id: "e1", rejectedBy: "admin", reason: "invalid" } as any);
+
+      expect(store.selectedEntry).toEqual(updatedEntry);
+    });
+  });
+
+  describe("requestMoreInfo - selectedEntry branch", () => {
+    it("should update selectedEntry when requestMoreInfo targets selected entry", async () => {
+      const updatedEntry = { id: "e1", address: "ADDR1", status: "more_info_requested" } as any;
+      vi.mocked(whitelistService.requestMoreInfo).mockResolvedValue(updatedEntry);
+
+      const store = useWhitelistStore();
+      store.selectedEntry = { id: "e1", address: "ADDR1", status: "pending" } as any;
+
+      await store.requestMoreInfo({ id: "e1", requestedBy: "admin", message: "Need docs" } as any);
+
+      expect(store.selectedEntry).toEqual(updatedEntry);
+    });
+  });
 });

@@ -547,5 +547,70 @@ describe('Team Store', () => {
       expect(store.error).toBe('Failed to remove member');
       expect(store.loading).toBe(false);
     });
+
+    it('should return false when updateMemberRole has no data in response', async () => {
+      const store = useTeamStore();
+      store.members = [{
+        id: 'm1',
+        email: 'test@example.com',
+        name: 'Test',
+        role: 'viewer',
+        status: 'active',
+        joinedAt: new Date().toISOString(),
+        permissions: [],
+      }];
+
+      vi.mocked(teamManagementService.updateMemberRole).mockResolvedValue({
+        success: true,
+        data: undefined as any,
+      });
+
+      const success = await store.updateMemberRole({ memberId: 'm1', newRole: 'admin' });
+
+      expect(success).toBe(false);
+      expect(store.error).toBeTruthy();
+    });
+
+    it('should return false when inviteMember response has no data', async () => {
+      const store = useTeamStore();
+
+      vi.mocked(teamManagementService.inviteMember).mockResolvedValue({
+        success: false,
+        error: { message: 'Email already invited' },
+      } as any);
+
+      const success = await store.inviteMember({ email: 'test@test.com', role: 'viewer' } as any);
+
+      expect(success).toBe(false);
+      expect(store.error).toBe('Email already invited');
+    });
+
+    it('should return false when cancelInvitation response fails', async () => {
+      const store = useTeamStore();
+
+      vi.mocked(teamManagementService.cancelInvitation).mockResolvedValue({
+        success: false,
+        error: { message: 'Cannot cancel' },
+      } as any);
+
+      const success = await store.cancelInvitation('inv-1');
+
+      expect(success).toBe(false);
+      expect(store.error).toBe('Cannot cancel');
+    });
+
+    it('should return false when resendInvitation response fails', async () => {
+      const store = useTeamStore();
+
+      vi.mocked(teamManagementService.resendInvitation).mockResolvedValue({
+        success: false,
+        error: { message: 'Cannot resend' },
+      } as any);
+
+      const success = await store.resendInvitation('inv-1');
+
+      expect(success).toBe(false);
+      expect(store.error).toBe('Cannot resend');
+    });
   });
 })
