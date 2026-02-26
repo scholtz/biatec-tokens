@@ -28,6 +28,7 @@ import GuidedPortfolioOnboarding from "../views/GuidedPortfolioOnboarding.vue";
 import PortfolioIntelligenceView from "../views/PortfolioIntelligenceView.vue";
 import BusinessCommandCenter from "../views/BusinessCommandCenter.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
+import { isIssuanceSessionValid, storeIssuanceReturnPath } from "../utils/authFirstIssuanceWorkspace";
 
 // Subscription views
 import Pricing from "../views/subscription/Pricing.vue";
@@ -243,11 +244,23 @@ router.beforeEach((to, _from, next) => {
     // Check if user is authenticated using wallet-free architecture (email/password ARC76)
     // Per business-owner-roadmap.md: "no wallet connectors anywhere"
     const algorandUser = localStorage.getItem("algorand_user");
-    const isAuthenticated = !!algorandUser;
+
+    // For the canonical issuance route, use structural session validation from
+    // authFirstIssuanceWorkspace to verify the session object is well-formed
+    // (address non-empty + isConnected true), not just truthy.
+    const isAuthenticated = to.name === "GuidedTokenLaunch"
+      ? isIssuanceSessionValid(algorandUser)
+      : !!algorandUser;
 
     if (!isAuthenticated) {
-      // Store the intended destination
-      localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, to.fullPath);
+      // For the issuance route, store the return path in the issuance-specific key
+      // so post-auth redirect can resume the exact step the user was on.
+      if (to.name === "GuidedTokenLaunch") {
+        storeIssuanceReturnPath(to.fullPath);
+      } else {
+        // Store the intended destination in the generic auth redirect key
+        localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, to.fullPath);
+      }
 
       // Redirect to home with a flag to show sign-in modal (email/password auth)
       next({
