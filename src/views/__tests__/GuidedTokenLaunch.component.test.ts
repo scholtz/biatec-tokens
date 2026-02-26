@@ -623,3 +623,41 @@ describe('GuidedTokenLaunch — submit behavior', () => {
     expect(wrapper.html()).toMatch(/Launch Submitted Successfully/i)
   })
 })
+
+// ---------------------------------------------------------------------------
+// Branch: validation error indicator (line 126)
+// ---------------------------------------------------------------------------
+
+describe('GuidedTokenLaunch — validation error indicator on step button', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetStore()
+  })
+
+  it('validation error badge is hidden when step has no validation data', async () => {
+    // Default mock steps have no `validation` property — indicator should not appear
+    mockStore.stepStatuses[0].isComplete = false
+    const wrapper = await mountView()
+    // The validation indicator is inside step btn 0; should be absent
+    const stepBtn0 = wrapper.find('[data-testid="issuance-step-btn-0"]')
+    // No child with bg-red-500 class (the indicator)
+    expect(stepBtn0.html()).not.toContain('bg-red-500')
+  })
+
+  it('validation error badge is shown when step is complete but has invalid validation', async () => {
+    // Set step 0 as complete with invalid validation → v-if="step.validation && !step.validation.isValid && step.isComplete"
+    mockStore.stepStatuses[0] = {
+      id: 'organization',
+      title: 'Organization Profile',
+      isComplete: true,
+      isValid: false,
+      isOptional: false,
+      // @ts-ignore: validation is an optional property defined in StepStatus
+      validation: { isValid: false, errors: ['Name is required'] },
+    }
+    mockStore.currentForm.currentStep = 1 // moved past step 0
+    const wrapper = await mountView()
+    const stepBtn0 = wrapper.find('[data-testid="issuance-step-btn-0"]')
+    expect(stepBtn0.html()).toContain('bg-red-500')
+  })
+})
