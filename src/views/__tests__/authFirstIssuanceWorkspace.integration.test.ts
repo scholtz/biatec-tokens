@@ -493,3 +493,326 @@ describe('Accessibility label coverage', () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// AC #11: ISSUANCE_TEST_IDS constant integrity
+// ---------------------------------------------------------------------------
+
+describe('ISSUANCE_TEST_IDS constant integrity', () => {
+  it('all test IDs are non-empty strings', () => {
+    for (const [key, value] of Object.entries(ISSUANCE_TEST_IDS)) {
+      expect(typeof value).toBe('string');
+      expect((value as string).length).toBeGreaterThan(0);
+      expect(key).toBeTruthy();
+    }
+  });
+
+  it('all test IDs are unique (no duplicates)', () => {
+    const values = Object.values(ISSUANCE_TEST_IDS) as string[];
+    const unique = new Set(values);
+    expect(unique.size).toBe(values.length);
+  });
+
+  it('all test IDs use kebab-case format', () => {
+    for (const value of Object.values(ISSUANCE_TEST_IDS) as string[]) {
+      // kebab-case: lowercase letters, numbers, hyphens only
+      expect(value).toMatch(/^[a-z0-9-]+$/);
+    }
+  });
+
+  it('workspace-shell test ID exists and is correct', () => {
+    expect(ISSUANCE_TEST_IDS.WORKSPACE_SHELL).toBe('issuance-workspace-shell');
+  });
+
+  it('step indicator test ID exists', () => {
+    expect(ISSUANCE_TEST_IDS.STEP_INDICATOR).toBeTruthy();
+    expect(ISSUANCE_TEST_IDS.STEP_INDICATOR).toContain('step');
+  });
+
+  it('continue and back button test IDs are distinct', () => {
+    expect(ISSUANCE_TEST_IDS.CONTINUE_BUTTON).not.toBe(ISSUANCE_TEST_IDS.BACK_BUTTON);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AC #12: Session validation edge cases
+// ---------------------------------------------------------------------------
+
+describe('Session validation edge cases', () => {
+  it('null session string returns false', () => {
+    expect(isIssuanceSessionValid(null as unknown as string)).toBe(false);
+  });
+
+  it('undefined session string returns false', () => {
+    expect(isIssuanceSessionValid(undefined as unknown as string)).toBe(false);
+  });
+
+  it('empty string returns false', () => {
+    expect(isIssuanceSessionValid('')).toBe(false);
+  });
+
+  it('session with empty address returns false', () => {
+    const raw = JSON.stringify({ address: '', email: 'user@example.com', isConnected: true });
+    expect(isIssuanceSessionValid(raw)).toBe(false);
+  });
+
+  it('session with isConnected=false returns false', () => {
+    const raw = JSON.stringify({ address: 'ADDR001', email: 'user@example.com', isConnected: false });
+    expect(isIssuanceSessionValid(raw)).toBe(false);
+  });
+
+  it('session missing isConnected property returns false', () => {
+    const raw = JSON.stringify({ address: 'ADDR001', email: 'user@example.com' });
+    expect(isIssuanceSessionValid(raw)).toBe(false);
+  });
+
+  it('malformed JSON returns false', () => {
+    expect(isIssuanceSessionValid('{not valid json')).toBe(false);
+  });
+
+  it('session with address and isConnected=true returns true', () => {
+    const raw = JSON.stringify({ address: 'ADDR001', isConnected: true });
+    expect(isIssuanceSessionValid(raw)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AC #13: Complete draft save/restore cycle across all steps
+// ---------------------------------------------------------------------------
+
+describe('Complete draft save/restore cycle across all steps', () => {
+  beforeEach(clearLocalStorage);
+  afterEach(clearLocalStorage);
+
+  it('round-trips draft data for each step without data loss', () => {
+    for (let i = 0; i < ISSUANCE_STEP_IDS.length; i++) {
+      const stepId = ISSUANCE_STEP_IDS[i];
+      const formData = getValidFormDataForStep(stepId);
+      const draft: IssuanceDraft = {
+        currentStep: i,
+        formData,
+        savedAt: new Date().toISOString(),
+      };
+      saveIssuanceDraft(draft);
+      const loaded = loadIssuanceDraft();
+      expect(loaded).not.toBeNull();
+      expect(loaded!.currentStep).toBe(i);
+      // Verify the keys saved are the same as the keys loaded
+      for (const key of Object.keys(formData)) {
+        expect(loaded!.formData[key]).toStrictEqual(formData[key]);
+      }
+      clearIssuanceDraft();
+    }
+  });
+
+  it('overwriting a draft replaces the previous one', () => {
+    const firstDraft: IssuanceDraft = { currentStep: 0, formData: { token_type: 'equity' }, savedAt: new Date().toISOString() };
+    const secondDraft: IssuanceDraft = { currentStep: 2, formData: { jurisdiction: 'US' }, savedAt: new Date().toISOString() };
+
+    saveIssuanceDraft(firstDraft);
+    saveIssuanceDraft(secondDraft);
+
+    const loaded = loadIssuanceDraft();
+    expect(loaded!.currentStep).toBe(2);
+    expect(loaded!.formData.jurisdiction).toBe('US');
+    expect(loaded!.formData.token_type).toBeUndefined();
+  });
+
+  it('draft key is in localStorage after save', () => {
+    const draft: IssuanceDraft = { currentStep: 1, formData: {}, savedAt: new Date().toISOString() };
+    saveIssuanceDraft(draft);
+    expect(localStorage.getItem(ISSUANCE_DRAFT_KEY)).not.toBeNull();
+  });
+
+  it('draft key is removed from localStorage after clear', () => {
+    const draft: IssuanceDraft = { currentStep: 1, formData: {}, savedAt: new Date().toISOString() };
+    saveIssuanceDraft(draft);
+    clearIssuanceDraft();
+    expect(localStorage.getItem(ISSUANCE_DRAFT_KEY)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AC #14: Step navigation gating prevents skip-ahead
+// ---------------------------------------------------------------------------
+
+describe('Step navigation gating prevents skip-ahead', () => {
+  it('can navigate to same step index always', () => {
+    expect(canNavigateToStep(0, 0, new Set())).toBe(true);
+    expect(canNavigateToStep(1, 1, new Set())).toBe(true);
+  });
+
+  it('blocks forward navigation when intermediate steps not complete', () => {
+    const completed = new Set<IssuanceStepId>(['workspace-context']);
+    // From step 0 with only step 0 complete: can go to step 1, not step 2
+    expect(canNavigateToStep(1, 0, completed)).toBe(true); // step 0 is complete
+    expect(canNavigateToStep(2, 0, completed)).toBe(false); // step 1 not complete
+    expect(canNavigateToStep(3, 0, completed)).toBe(false); // steps 1,2 not complete
+  });
+
+  it('can navigate back to any already-completed step', () => {
+    const completed = new Set<IssuanceStepId>(['workspace-context', 'token-parameters', 'compliance-configuration']);
+    // Should be able to go back from step 3 to step 0, 1, or 2 (all < currentIndex)
+    expect(canNavigateToStep(0, 3, completed)).toBe(true);
+    expect(canNavigateToStep(1, 3, completed)).toBe(true);
+    expect(canNavigateToStep(2, 3, completed)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AC #15: Telemetry event metadata PII safety
+// ---------------------------------------------------------------------------
+
+describe('Telemetry event metadata PII safety', () => {
+  const SESSION_ID = 'sess_pii_test_001';
+
+  it('workspace_entered event contains no email or address fields', () => {
+    const evt = buildWorkspaceEnteredEvent(SESSION_ID);
+    const serialized = JSON.stringify(evt);
+    expect(serialized).not.toContain('@');
+    expect(serialized).not.toContain('email');
+  });
+
+  it('step_entered event contains no email or address fields', () => {
+    for (const stepId of ISSUANCE_STEP_IDS) {
+      const evt = buildStepEnteredEvent(stepId, SESSION_ID);
+      const serialized = JSON.stringify(evt);
+      expect(serialized).not.toContain('@');
+    }
+  });
+
+  it('deployment_completed event contains no email or address fields', () => {
+    const evt = buildDeploymentCompletedEvent(SESSION_ID, 2000);
+    const serialized = JSON.stringify(evt);
+    expect(serialized).not.toContain('@');
+    expect(serialized).not.toContain('email');
+  });
+
+  it('all ISSUANCE_TELEMETRY_EVENTS are non-empty strings', () => {
+    for (const [key, value] of Object.entries(ISSUANCE_TELEMETRY_EVENTS)) {
+      expect(typeof value).toBe('string');
+      expect((value as string).length).toBeGreaterThan(0);
+      expect(key).toBeTruthy();
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AC #16: Error surface completeness — all error types have required fields
+// ---------------------------------------------------------------------------
+
+describe('Error surface completeness', () => {
+  const allErrorTypes = [
+    'auth_required', 'session_expired', 'validation_error', 'compliance_blocked',
+    'api_error', 'deployment_error', 'network_error', 'unknown',
+  ] as const;
+
+  it('every error type returns a title', () => {
+    for (const errorType of allErrorTypes) {
+      const msg = getIssuanceErrorMessage(errorType);
+      expect(msg.title).toBeTruthy();
+      expect(msg.title.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('every error type returns a description', () => {
+    for (const errorType of allErrorTypes) {
+      const msg = getIssuanceErrorMessage(errorType);
+      expect(msg.description).toBeTruthy();
+      expect(msg.description.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('every error type returns a non-null action text', () => {
+    for (const errorType of allErrorTypes) {
+      const msg = getIssuanceErrorMessage(errorType);
+      // action may be null for unknown errors but should be string for actionable ones
+      if (errorType !== 'unknown') {
+        expect(msg.action).toBeTruthy();
+      }
+    }
+  });
+
+  it('every error type returns a severity', () => {
+    for (const errorType of allErrorTypes) {
+      const msg = getIssuanceErrorMessage(errorType);
+      expect(['error', 'warning', 'info']).toContain(msg.severity);
+    }
+  });
+
+  it('auth_required and session_expired are classified correctly from error messages', () => {
+    expect(classifyIssuanceError('401')).toBe('auth_required');
+    expect(classifyIssuanceError('unauthorized')).toBe('auth_required');
+    expect(classifyIssuanceError('session expired')).toBe('session_expired');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AC #17: Step title business language — no crypto jargon
+// ---------------------------------------------------------------------------
+
+describe('Step title business language', () => {
+  const CRYPTO_JARGON = ['wallet', 'blockchain', 'gas', 'metamask', 'pera', 'defly', 'mnemonic', 'private key'];
+
+  it('step titles contain no crypto jargon', () => {
+    for (const id of ISSUANCE_STEP_IDS) {
+      const title = ISSUANCE_STEP_TITLES[id].toLowerCase();
+      for (const jargon of CRYPTO_JARGON) {
+        expect(title).not.toContain(jargon);
+      }
+    }
+  });
+
+  it('step titles are title-case or sentence-case (not all-caps or all-lower)', () => {
+    for (const id of ISSUANCE_STEP_IDS) {
+      const title = ISSUANCE_STEP_TITLES[id];
+      // Title starts with a capital letter
+      expect(title.charAt(0)).toBe(title.charAt(0).toUpperCase());
+      // Title is not entirely uppercase
+      expect(title).not.toBe(title.toUpperCase());
+    }
+  });
+
+  it('each step has a unique title', () => {
+    const titles = ISSUANCE_STEP_IDS.map((id) => ISSUANCE_STEP_TITLES[id]);
+    const unique = new Set(titles);
+    expect(unique.size).toBe(titles.length);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AC #18: Route path canonicalization with query parameters
+// ---------------------------------------------------------------------------
+
+describe('Route path canonicalization with query parameters', () => {
+  it('isCanonicalIssuancePath returns true for exact canonical path', () => {
+    expect(isCanonicalIssuancePath('/launch/guided')).toBe(true);
+  });
+
+  it('isCanonicalIssuancePath returns false for path with query params (exact match only)', () => {
+    // The function does exact match or startsWith('/launch/guided/')
+    expect(isCanonicalIssuancePath('/launch/guided?step=token-parameters')).toBe(false);
+  });
+
+  it('isCanonicalIssuancePath returns true for sub-paths', () => {
+    expect(isCanonicalIssuancePath('/launch/guided/step/1')).toBe(true);
+  });
+
+  it('isLegacyIssuancePath returns true for exact legacy path', () => {
+    expect(isLegacyIssuancePath('/create/wizard')).toBe(true);
+  });
+
+  it('isLegacyIssuancePath returns false for unrelated paths', () => {
+    expect(isLegacyIssuancePath('/launch/guided')).toBe(false);
+    expect(isLegacyIssuancePath('/dashboard')).toBe(false);
+    expect(isLegacyIssuancePath('/operations')).toBe(false);
+  });
+
+  it('return path round-trip preserves query parameters', () => {
+    const pathWithQuery = '/launch/guided?step=compliance-configuration&referrer=dashboard';
+    storeIssuanceReturnPath(pathWithQuery);
+    const consumed = consumeIssuanceReturnPath();
+    expect(consumed).toBe(pathWithQuery);
+    localStorage.clear();
+  });
+});
