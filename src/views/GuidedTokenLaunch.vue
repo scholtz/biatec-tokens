@@ -1,5 +1,8 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8 px-4">
+  <div
+    class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8 px-4"
+    data-testid="issuance-workspace-shell"
+  >
     <div class="max-w-6xl mx-auto">
       <!-- Header -->
       <div class="text-center mb-8">
@@ -19,6 +22,7 @@
         v-if="submissionErrorMessage"
         role="alert"
         aria-live="assertive"
+        data-testid="issuance-error-banner"
         class="mb-6 rounded-lg border p-4 flex items-start gap-3"
         :class="submissionErrorMessage.severity === 'error'
           ? 'bg-red-900/30 border-red-700/50'
@@ -68,6 +72,7 @@
             variant="ghost"
             size="sm"
             :disabled="isSaving"
+            data-testid="issuance-save-draft"
           >
             <i class="pi pi-save mr-2"></i>
             {{ isSaving ? 'Saving...' : 'Save Draft' }}
@@ -75,16 +80,21 @@
         </div>
         
         <!-- Progress Bar -->
-        <div class="w-full bg-gray-700 rounded-full h-2">
+        <div class="w-full bg-gray-700 rounded-full h-2" data-testid="issuance-progress-bar">
           <div
             class="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
             :style="{ width: `${progressPercentage}%` }"
+            role="progressbar"
+            data-testid="issuance-progress-pct"
+            :aria-valuenow="progressPercentage"
+            aria-valuemin="0"
+            aria-valuemax="100"
           ></div>
         </div>
       </Card>
 
       <!-- Step Indicator -->
-      <div class="mb-8 overflow-x-auto">
+      <div class="mb-8 overflow-x-auto" data-testid="issuance-step-indicator" role="navigation" aria-label="Issuance progress steps">
         <div class="flex items-center gap-2 min-w-max">
           <div
             v-for="(step, index) in stepStatuses"
@@ -95,6 +105,7 @@
             <button
               @click="handleStepNavigation(index)"
               :disabled="!canNavigateToStep(index)"
+              :data-testid="`issuance-step-btn-${index}`"
               :class="[
                 'relative w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300',
                 currentStep === index
@@ -206,6 +217,7 @@
           @click="handlePrevious"
           variant="ghost"
           size="lg"
+          data-testid="issuance-back"
         >
           <i class="pi pi-arrow-left mr-2"></i>
           Previous
@@ -219,6 +231,7 @@
             variant="primary"
             size="lg"
             :disabled="!canProceedToNext"
+            data-testid="issuance-continue"
           >
             Continue
             <i class="pi pi-arrow-right ml-2"></i>

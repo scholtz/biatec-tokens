@@ -21,7 +21,7 @@
  * Issue: MVP — Build canonical auth-first token issuance workspace
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   // Step definitions
   ISSUANCE_STEP_IDS,
@@ -252,6 +252,14 @@ describe('buildStepStates', () => {
     const completed = new Set<IssuanceStepId>(['workspace-context']);
     const states = buildStepStates(1, completed, new Set());
     expect(states[0].ariaLabel).toContain('(completed)');
+  });
+
+  it('error step ariaLabel contains "(has errors)"', () => {
+    const errors = new Set<IssuanceStepId>(['workspace-context'] as IssuanceStepId[]);
+    const completed = new Set<IssuanceStepId>(['workspace-context']);
+    const states = buildStepStates(1, completed, errors);
+    // step 0 is complete but has an error — should show error label
+    expect(states[0].ariaLabel).toContain('(has errors)');
   });
 });
 
@@ -499,6 +507,14 @@ describe('storeIssuanceReturnPath / consumeIssuanceReturnPath', () => {
   it('returns null when no path was stored', () => {
     expect(consumeIssuanceReturnPath()).toBeNull();
   });
+
+  it('consumeIssuanceReturnPath returns null when localStorage.getItem throws', () => {
+    const getItemSpy = vi.spyOn(globalThis.localStorage, 'getItem').mockImplementationOnce(() => {
+      throw new Error('SecurityError: access denied');
+    });
+    expect(consumeIssuanceReturnPath()).toBeNull();
+    getItemSpy.mockRestore();
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -578,6 +594,15 @@ describe('buildDeploymentCompletedEvent', () => {
   });
 });
 
+describe('buildDeploymentStartedEvent', () => {
+  it('returns event with correct event name and step info', () => {
+    const evt = buildDeploymentStartedEvent('sess_deploy');
+    expect(evt.event).toBe(ISSUANCE_TELEMETRY_EVENTS.DEPLOYMENT_STARTED);
+    expect(evt.stepId).toBe('deployment-status');
+    expect(evt.sessionId).toBe('sess_deploy');
+  });
+});
+
 describe('buildDeploymentFailedEvent', () => {
   it('includes errorCode in metadata', () => {
     const evt = buildDeploymentFailedEvent('sess_1', 'DEPLOY_ERR_001');
@@ -620,6 +645,28 @@ describe('validateTelemetryPayload', () => {
     const evt = buildWorkspaceEnteredEvent('sess_1');
     const withPii = { ...evt, metadata: { wallet: 'walletval' as unknown as string } };
     expect(validateTelemetryPayload(withPii).some((v) => v.includes('wallet'))).toBe(true);
+  });
+
+  it('rejects payload without sessionId', () => {
+    const violations = validateTelemetryPayload({
+      event: ISSUANCE_TELEMETRY_EVENTS.WORKSPACE_ENTERED,
+      stepId: 'workspace-context',
+      stepIndex: 0,
+      sessionId: '',
+      timestamp: new Date().toISOString(),
+    });
+    expect(violations.some((v) => v.includes('sessionId'))).toBe(true);
+  });
+
+  it('rejects payload without timestamp', () => {
+    const violations = validateTelemetryPayload({
+      event: ISSUANCE_TELEMETRY_EVENTS.WORKSPACE_ENTERED,
+      stepId: 'workspace-context',
+      stepIndex: 0,
+      sessionId: 'sess_abc',
+      timestamp: '',
+    });
+    expect(violations.some((v) => v.includes('timestamp'))).toBe(true);
   });
 });
 
@@ -728,6 +775,45 @@ describe('classifyIssuanceError', () => {
 
   it('classifies unknown string as unknown', () => {
     expect(classifyIssuanceError('something random happened')).toBe('unknown');
+  });
+
+  it('classifies object with message property by delegating to string handler', () => {
+    // Object with no numeric status but a message string — should recursively classify the message
+    expect(classifyIssuanceError({ message: 'session expired' })).toBe('session_expired');
+    expect(classifyIssuanceError({ message: 'deploy failed' })).toBe('deployment_error');
+    expect(classifyIssuanceError({ message: 'network error occurred' })).toBe('network_error');
+  });
+
+  it('classifies object with status=0 by delegating to message field', () => {
+    // status 0 → no numeric status branch → falls through to message-based classification
+    expect(classifyIssuanceError({ status: 0, message: 'validation failed' })).toBe('validation_error');
+    expect(classifyIssuanceError({ status: 0, message: 'unknown problem' })).toBe('unknown');
+  });
+
+  it('classifies object with non-string message as unknown', () => {
+    // message is not a string → empty string fallback → 'unknown'
+    expect(classifyIssuanceError({ message: 42 })).toBe('unknown');
+    expect(classifyIssuanceError({ message: null })).toBe('unknown');
+  });
+
+  it('classifies non-string non-object types as unknown', () => {
+    // Numbers and booleans fall through to the final return 'unknown'
+    expect(classifyIssuanceError(42 as unknown)).toBe('unknown');
+    expect(classifyIssuanceError(true as unknown)).toBe('unknown');
+    expect(classifyIssuanceError(false as unknown)).toBe('unknown');
+  });
+
+  it('classifies "401 " string as auth_required via numeric string match', () => {
+    expect(classifyIssuanceError('401 ')).toBe('auth_required');
+  });
+
+  it('classifies "unauthorized" string as auth_required', () => {
+    expect(classifyIssuanceError('unauthorized access')).toBe('auth_required');
+  });
+
+  it('classifies "forbidden quota" string as compliance_blocked (restricted keyword)', () => {
+    // "quota" alone doesn't match any string pattern; "restrict" does → compliance_blocked
+    expect(classifyIssuanceError('rate restricted')).toBe('compliance_blocked');
   });
 });
 
@@ -925,6 +1011,23 @@ describe('saveIssuanceDraft / loadIssuanceDraft / clearIssuanceDraft', () => {
   it('returns null when currentStep is missing in stored data', () => {
     localStorage.setItem(ISSUANCE_DRAFT_KEY, JSON.stringify({ formData: {} }));
     expect(loadIssuanceDraft()).toBeNull();
+  });
+
+  it('returns null when formData is null in stored data', () => {
+    localStorage.setItem(ISSUANCE_DRAFT_KEY, JSON.stringify({ currentStep: 0, formData: null }));
+    expect(loadIssuanceDraft()).toBeNull();
+  });
+
+  it('saveIssuanceDraft returns false when localStorage.setItem throws', () => {
+    // Simulate a storage quota exceeded error
+    const setItemSpy = vi.spyOn(globalThis.localStorage, 'setItem').mockImplementationOnce(() => {
+      throw new Error('QuotaExceededError');
+    });
+    const result = saveIssuanceDraft(sampleDraft);
+    expect(result).toBe(false);
+    setItemSpy.mockRestore();
+    // Verify normal operation still works after restore
+    expect(saveIssuanceDraft(sampleDraft)).toBe(true);
   });
 });
 
