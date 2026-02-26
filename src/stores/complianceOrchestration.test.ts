@@ -196,6 +196,179 @@ describe('complianceOrchestration store', () => {
       expect(amlEvent).toBeDefined()
       expect(amlEvent?.actor).toBe('system')
     })
+
+    it('should throw when startAMLScreening is called without initialized state', async () => {
+      const store = useComplianceOrchestrationStore()
+      await expect(store.startAMLScreening()).rejects.toThrow('Compliance state not initialized')
+    })
+  })
+
+  describe('uploadKYCDocument edge cases', () => {
+    it('should throw when uploadKYCDocument is called without initialized state', async () => {
+      const store = useComplianceOrchestrationStore()
+      const fakeFile = new File(['content'], 'test.pdf', { type: 'application/pdf' })
+      await expect(store.uploadKYCDocument('government_id', fakeFile)).rejects.toThrow(
+        'Compliance state not initialized'
+      )
+    })
+
+    it('should upload a document with an unknown type (docIndex === -1) without crashing', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user1@example.com')
+      const fakeFile = new File(['content'], 'test.pdf', { type: 'application/pdf' })
+      // 'tax_id' might not be in the required list but exists in the list
+      await expect(store.uploadKYCDocument('tax_id', fakeFile)).resolves.toBeUndefined()
+    })
+
+    it('should update status to pending_review after all required documents are uploaded', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user1@example.com')
+      const fakeFile = new File(['content'], 'id.pdf', { type: 'application/pdf' })
+
+      // Upload all required documents (government_id and proof_of_address)
+      await store.uploadKYCDocument('government_id', fakeFile)
+      await store.uploadKYCDocument('proof_of_address', fakeFile)
+
+      expect(store.userComplianceState?.status).toBe('pending_review')
+    })
+  })
+
+  describe('checkIssuanceEligibility switch branches', () => {
+    const setStatus = (store: ReturnType<typeof useComplianceOrchestrationStore>, status: string) => {
+      if (store.userComplianceState) {
+        store.userComplianceState.status = status as any
+        store.userComplianceState.canIssueTokens = false
+      }
+    }
+
+    it('should include pending_documents reason', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user1@example.com')
+      setStatus(store, 'pending_documents')
+      const eligibility = store.checkIssuanceEligibility()
+      expect(eligibility.eligible).toBe(false)
+      const allReasons = eligibility.reasons.join(' ')
+      expect(allReasons).toContain('document')
+    })
+
+    it('should include pending_review reason', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user1@example.com')
+      setStatus(store, 'pending_review')
+      const eligibility = store.checkIssuanceEligibility()
+      expect(eligibility.eligible).toBe(false)
+      const allReasons = eligibility.reasons.join(' ')
+      expect(allReasons.toLowerCase()).toContain('review')
+    })
+
+    it('should include rejected reason', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user1@example.com')
+      setStatus(store, 'rejected')
+      const eligibility = store.checkIssuanceEligibility()
+      expect(eligibility.eligible).toBe(false)
+      const allReasons = eligibility.reasons.join(' ')
+      expect(allReasons.toLowerCase()).toContain('reject')
+    })
+
+    it('should include escalated reason', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user1@example.com')
+      setStatus(store, 'escalated')
+      const eligibility = store.checkIssuanceEligibility()
+      expect(eligibility.eligible).toBe(false)
+      const allReasons = eligibility.reasons.join(' ')
+      expect(allReasons.toLowerCase()).toContain('escalat')
+    })
+
+    it('should include blocked_by_aml reason', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user1@example.com')
+      setStatus(store, 'blocked_by_aml')
+      const eligibility = store.checkIssuanceEligibility()
+      expect(eligibility.eligible).toBe(false)
+      const allReasons = eligibility.reasons.join(' ')
+      expect(allReasons.toLowerCase()).toContain('aml')
+    })
+
+    it('should include expired reason', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user1@example.com')
+      setStatus(store, 'expired')
+      const eligibility = store.checkIssuanceEligibility()
+      expect(eligibility.eligible).toBe(false)
+      const allReasons = eligibility.reasons.join(' ')
+      expect(allReasons.toLowerCase()).toContain('expir')
+    })
+
+    it('should allow canRetry for rejected status', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user1@example.com')
+      setStatus(store, 'rejected')
+      const eligibility = store.checkIssuanceEligibility()
+      expect(eligibility.canRetry).toBe(true)
+    })
+
+    it('should allow canRetry for expired status', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user1@example.com')
+      setStatus(store, 'expired')
+      const eligibility = store.checkIssuanceEligibility()
+      expect(eligibility.canRetry).toBe(true)
+    })
+
+    it('should not allow canRetry for pending_review status', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user1@example.com')
+      setStatus(store, 'pending_review')
+      const eligibility = store.checkIssuanceEligibility()
+      expect(eligibility.canRetry).toBe(false)
+    })
+  })
+
+  describe('completedDocuments and activeRemediationActions computed', () => {
+    it('should list completed documents after upload', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user1@example.com')
+      // Set government_id to 'approved' directly (completedDocuments filters for required && approved)
+      if (store.userComplianceState) {
+        const doc = store.userComplianceState.kycDocuments.find(d => d.type === 'government_id')
+        if (doc) {
+          doc.status = 'approved'
+        }
+      }
+      const completed = store.completedDocuments
+      expect(completed.some(d => d.type === 'government_id')).toBe(true)
+    })
+
+    it('should list active remediation actions from state', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user1@example.com')
+      if (store.userComplianceState) {
+        store.userComplianceState.remediationActions = [
+          {
+            id: 'action-1',
+            type: 'upload_document',
+            title: 'Upload ID',
+            description: 'Please upload a valid ID',
+            status: 'pending',
+            priority: 'high',
+            createdAt: new Date().toISOString(),
+          },
+        ]
+      }
+      expect(store.activeRemediationActions.length).toBeGreaterThan(0)
+      expect(store.activeRemediationActions[0].id).toBe('action-1')
+    })
+
+    it('should list recent events', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user1@example.com')
+      const fakeFile = new File(['content'], 'id.pdf', { type: 'application/pdf' })
+      await store.uploadKYCDocument('government_id', fakeFile)
+      const events = store.recentEvents
+      expect(events.length).toBeGreaterThan(0)
+    })
   })
 
   describe('admin functionality', () => {

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useSettingsStore } from './settings'
 import type { NetworkConfig } from './settings'
@@ -180,6 +180,49 @@ describe('Settings Store', () => {
 
       expect(store.settings.network).toBe('dockernet')
       expect(store.settings.networkConfigs).toEqual(originalNetworkConfigs)
+    })
+  })
+
+  describe('localStorage error handling', () => {
+    it('should handle localStorage.getItem throwing during initialization', () => {
+      // Simulate localStorage.getItem throwing (e.g. in a sandboxed environment)
+      const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new Error('localStorage unavailable')
+      })
+      // Re-creating the store after mocking means loadPersistedNetwork catches the error
+      // and falls back to 'testnet'
+      const store = useSettingsStore()
+      expect(store.settings.network).toBe('testnet')
+      getItemSpy.mockRestore()
+    })
+
+    it('should ignore stored network if it is not a valid value', () => {
+      // Store an invalid network name
+      localStorage.setItem('biatec_selected_network', 'invalid-network')
+      const store = useSettingsStore()
+      // loadPersistedNetwork should return 'testnet' because 'invalid-network' is not in
+      // ['mainnet', 'testnet', 'dockernet']
+      expect(store.settings.network).toBe('testnet')
+      localStorage.removeItem('biatec_selected_network')
+    })
+
+    it('should load mainnet from localStorage when stored', () => {
+      localStorage.setItem('biatec_selected_network', 'mainnet')
+      const store = useSettingsStore()
+      expect(store.settings.network).toBe('mainnet')
+      localStorage.removeItem('biatec_selected_network')
+    })
+
+    it('should handle updateNetwork localStorage.setItem throwing', () => {
+      const store = useSettingsStore()
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('QuotaExceededError')
+      })
+      // Should not throw — catch block swallows the error
+      expect(() => store.updateNetwork('mainnet')).not.toThrow()
+      // State should still be updated even when persistence fails
+      expect(store.settings.network).toBe('mainnet')
+      setItemSpy.mockRestore()
     })
   })
 })

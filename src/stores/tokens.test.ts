@@ -557,4 +557,40 @@ describe('Token Store', () => {
       expect(overlap.length).toBe(0);
     });
   });
+
+  describe('null-path edge cases', () => {
+    it('should not throw when deleteToken is called with a non-existent id', () => {
+      const store = useTokenStore();
+      // No tokens in store — should be a no-op
+      expect(() => store.deleteToken('non-existent-id')).not.toThrow();
+      expect(store.tokens).toHaveLength(0);
+    });
+
+    it('should not throw when updateTokenStatus is called with a non-existent id', () => {
+      const store = useTokenStore();
+      // No tokens in store — should be a no-op (the if (token) branch is false)
+      expect(() => store.updateTokenStatus('non-existent-id', 'failed')).not.toThrow();
+      expect(store.tokens).toHaveLength(0);
+    });
+
+    it('should only update matching token when updateTokenStatus is called', async () => {
+      const store = useTokenStore();
+      const t1 = await store.createToken({
+        name: 'Token A', symbol: 'A', standard: 'ASA' as const,
+        type: 'FT' as const, supply: 100, description: '',
+      });
+      const t2 = await store.createToken({
+        name: 'Token B', symbol: 'B', standard: 'ASA' as const,
+        type: 'FT' as const, supply: 100, description: '',
+      });
+      store.updateTokenStatus(t1.id, 'failed');
+      // t1 updated, t2 unchanged
+      expect(store.tokens.find(t => t.id === t1.id)?.status).toBe('failed');
+      expect(store.tokens.find(t => t.id === t2.id)?.status).toBe('deployed');
+      // Calling with non-existent id still doesn't affect existing tokens
+      store.updateTokenStatus('ghost-id', 'deploying');
+      expect(store.tokens.find(t => t.id === t1.id)?.status).toBe('failed');
+      expect(store.tokens.find(t => t.id === t2.id)?.status).toBe('deployed');
+    });
+  });
 });
