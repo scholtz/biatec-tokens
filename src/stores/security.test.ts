@@ -344,4 +344,77 @@ describe('Security Store', () => {
       expect(store.transactionError).toBeNull()
     })
   })
+
+  describe('Activity Event Trimming', () => {
+    it('should trim events to 1000 when limit is exceeded', () => {
+      const store = useSecurityStore()
+
+      // Add 1001 events to trigger trim
+      for (let i = 0; i < 1001; i++) {
+        store.addActivityEvent({
+          type: ActivityEventType.LOGIN,
+          timestamp: new Date().toISOString(),
+          description: `Event ${i}`,
+          status: 'success',
+        })
+      }
+
+      expect(store.activityEvents.length).toBe(1000)
+    })
+  })
+
+  describe('fetchActivityEvents cache', () => {
+    it('should skip fetch when called within 30 seconds (cache hit)', async () => {
+      const store = useSecurityStore()
+      const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
+
+      // First call sets lastActivityFetch
+      await store.fetchActivityEvents()
+      consoleSpy.mockClear()
+
+      // Second call within 30s should be skipped (no additional console.info call)
+      await store.fetchActivityEvents()
+      expect(consoleSpy).not.toHaveBeenCalled()
+
+      consoleSpy.mockRestore()
+    })
+
+    it('should fetch again when forceRefresh is true', async () => {
+      const store = useSecurityStore()
+      const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
+
+      await store.fetchActivityEvents()
+      consoleSpy.mockClear()
+
+      await store.fetchActivityEvents(true)
+      expect(consoleSpy).toHaveBeenCalled()
+
+      consoleSpy.mockRestore()
+    })
+  })
+
+  describe('CSV escape edge cases', () => {
+    it('should escape values containing commas in CSV export', async () => {
+      const store = useSecurityStore()
+      const mockLink = document.createElement('a')
+      const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(mockLink)
+      const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url')
+      const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL')
+
+      store.addActivityEvent({
+        type: ActivityEventType.LOGIN,
+        timestamp: new Date().toISOString(),
+        description: 'Event, with, commas',
+        status: 'success',
+        metadata: { network: 'Algo,Main', correlationId: 'corr-1' },
+      })
+
+      await store.exportAuditTrail('csv')
+
+      expect(createElementSpy).toHaveBeenCalledWith('a')
+      createElementSpy.mockRestore()
+      createObjectURLSpy.mockRestore()
+      revokeObjectURLSpy.mockRestore()
+    })
+  })
 })

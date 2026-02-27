@@ -5,6 +5,7 @@ import { useAuthStore } from '../../stores/auth'
 import { useTokenDraftStore } from '../../stores/tokenDraft'
 import { useSubscriptionStore } from '../../stores/subscription'
 import { useComplianceStore } from '../../stores/compliance'
+import { useComplianceOrchestrationStore } from '../../stores/complianceOrchestration'
 import TokenCreationWizard from '../TokenCreationWizard.vue'
 
 describe('TokenCreationWizard', () => {
@@ -259,6 +260,101 @@ describe('TokenCreationWizard', () => {
       reviewStep.isValid()
       
       expect(vm.step7Ref.validateAll).toHaveBeenCalled()
+    })
+
+    it('should return false for steps without ref (null ref)', () => {
+      const wrapper = mount(TokenCreationWizard)
+      const vm = wrapper.vm as any
+      // step refs are null/undefined by default before component mounts child steps
+      vm.step3Ref = null
+      vm.step4Ref = null
+      vm.step5Ref = null
+      vm.step6Ref = null
+      vm.step7Ref = null
+      vm.step8Ref = null
+
+      expect(vm.wizardSteps[2].isValid()).toBe(false) // step3 project-setup
+      expect(vm.wizardSteps[3].isValid()).toBe(false) // step4 token-details
+      expect(vm.wizardSteps[4].isValid()).toBe(false) // step5 compliance
+      expect(vm.wizardSteps[5].isValid()).toBe(false) // step6 metadata
+      expect(vm.wizardSteps[6].isValid()).toBe(false) // step7 standards
+      expect(vm.wizardSteps[7].isValid()).toBe(false) // step8 review
+    })
+
+    it('should use step9Ref isValid for deployment step', () => {
+      const wrapper = mount(TokenCreationWizard)
+      const vm = wrapper.vm as any
+      vm.step9Ref = { isValid: true }
+      expect(vm.wizardSteps[8].isValid()).toBe(true)
+    })
+
+    it('should return false from deployment step when step9Ref is null', () => {
+      const wrapper = mount(TokenCreationWizard)
+      const vm = wrapper.vm as any
+      vm.step9Ref = null
+      expect(vm.wizardSteps[8].isValid()).toBe(false)
+    })
+
+    it('should handle handleStepValidated with invalid result and emit analytics', async () => {
+      const consoleSpy = vi.spyOn(console, 'log')
+      const wrapper = mount(TokenCreationWizard)
+      const vm = wrapper.vm as any
+      await vm.handleStepValidated(2, false)
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Step 2 validation: invalid')
+      )
+      consoleSpy.mockRestore()
+    })
+  })
+
+  describe('Navigation Helpers', () => {
+    it('should call navigateToCompliance without error', () => {
+      const wrapper = mount(TokenCreationWizard)
+      const vm = wrapper.vm as any
+      // Should call without throwing
+      expect(() => vm.navigateToCompliance()).not.toThrow()
+    })
+
+    it('should open support mailto on contactSupport', () => {
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+      const wrapper = mount(TokenCreationWizard)
+      const vm = wrapper.vm as any
+      vm.contactSupport()
+      expect(openSpy).toHaveBeenCalledWith(
+        expect.stringContaining('mailto:support@biatec.io'),
+        '_blank'
+      )
+      openSpy.mockRestore()
+    })
+
+    it('should call retryCompliance with user present (no throw)', async () => {
+      const authStore = useAuthStore()
+      authStore.user = { address: 'TEST_ADDR', email: 'test@test.com' } as any
+      const complianceOrchestrationStore = useComplianceOrchestrationStore()
+      const initSpy = vi.spyOn(complianceOrchestrationStore, 'initializeComplianceState').mockResolvedValue(undefined)
+      const wrapper = mount(TokenCreationWizard)
+      const vm = wrapper.vm as any
+      await vm.retryCompliance()
+      expect(initSpy).toHaveBeenCalledWith('TEST_ADDR', 'test@test.com')
+    })
+
+    it('should not throw from retryCompliance when user is null', async () => {
+      const authStore = useAuthStore()
+      authStore.user = null
+      const wrapper = mount(TokenCreationWizard)
+      const vm = wrapper.vm as any
+      await expect(vm.retryCompliance()).resolves.toBeUndefined()
+    })
+  })
+
+  describe('handleComplete edge cases', () => {
+    it('should complete without error when no current draft', async () => {
+      const tokenDraftStore = useTokenDraftStore()
+      tokenDraftStore.currentDraft = null
+      const wrapper = mount(TokenCreationWizard)
+      const vm = wrapper.vm as any
+      // Should resolve without throwing (router.push silently fails without router installed)
+      await expect(vm.handleComplete()).resolves.not.toThrow()
     })
   })
 })

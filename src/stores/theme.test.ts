@@ -85,4 +85,28 @@ describe('Theme Store', () => {
     expect(classList.add).toHaveBeenCalled();
     expect(classList.remove).toHaveBeenCalled();
   });
+
+  it('should initialize with dark theme from localStorage', () => {
+    localStorage.setItem('theme', 'dark');
+    const store = useThemeStore();
+    store.initTheme(null);
+    expect(store.isDark).toBe(true);
+  });
+
+  it('should initialize from system preference when no localStorage value', () => {
+    // System prefers dark
+    (global.window as any).matchMedia = vi.fn().mockReturnValue({ matches: true });
+    const store = useThemeStore();
+    store.initTheme(null);
+    expect(store.isDark).toBe(true);
+  });
+
+  it('should invoke callback when setCallback is provided', () => {
+    const callback = vi.fn();
+    const store = useThemeStore();
+    store.initTheme(callback);
+    // toggleTheme triggers updateTheme → callback
+    store.toggleTheme();
+    expect(callback).toHaveBeenCalled();
+  });
 });
