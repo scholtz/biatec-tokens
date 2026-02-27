@@ -433,4 +433,106 @@ describe('Subscription Store', () => {
       expect(result![1]).toBe(2)
     })
   })
-})
+
+  describe('fetchSubscription - additional branch coverage', () => {
+    it('should handle null current_period_end in cached data', async () => {
+      const store = useSubscriptionStore()
+      localStorage.setItem('subscription_cache', JSON.stringify({
+        customer_id: 'cust_abc',
+        subscription_id: 'sub_abc',
+        subscription_status: 'trialing',
+        price_id: null,
+        current_period_start: null,
+        current_period_end: null,
+        cancel_at_period_end: false,
+        payment_method_brand: 'visa',
+        payment_method_last4: '4242',
+      }))
+      
+      await store.fetchSubscription()
+      
+      expect(store.subscription?.subscription_status).toBe('trialing')
+      expect(store.subscription?.payment_method_brand).toBe('visa')
+      expect(store.subscription?.payment_method_last4).toBe('4242')
+    })
+
+    it('should use defaults for missing cache fields', async () => {
+      const store = useSubscriptionStore()
+      localStorage.setItem('subscription_cache', JSON.stringify({
+        // Minimal cache - missing most fields
+      }))
+      
+      await store.fetchSubscription()
+      
+      expect(store.subscription?.customer_id).toBe('demo_customer')
+      expect(store.subscription?.subscription_status).toBe('not_started')
+      expect(store.subscription?.cancel_at_period_end).toBe(false)
+    })
+
+    it('should handle valid cache with active status', async () => {
+      const store = useSubscriptionStore()
+      localStorage.setItem('subscription_cache', JSON.stringify({
+        customer_id: 'cust_xyz',
+        subscription_id: 'sub_xyz',
+        subscription_status: 'active',
+        price_id: 'price_test_pro',
+        current_period_start: 1700000000,
+        current_period_end: 1702600000,
+        cancel_at_period_end: true,
+        payment_method_brand: 'mastercard',
+        payment_method_last4: '5555',
+      }))
+      
+      await store.fetchSubscription()
+      
+      expect(store.subscription?.subscription_status).toBe('active')
+      expect(store.subscription?.cancel_at_period_end).toBe(true)
+      expect(store.isActive).toBe(true)
+    })
+  })
+
+  describe('currentPeriodEnd - additional cases', () => {
+    it('should compute currentPeriodEnd as Date from timestamp', async () => {
+      const store = useSubscriptionStore()
+      const timestamp = 1700000000
+      store.subscription = {
+        customer_id: 'cust',
+        subscription_id: 'sub',
+        subscription_status: 'active',
+        price_id: null,
+        current_period_start: null,
+        current_period_end: timestamp,
+        cancel_at_period_end: false,
+        payment_method_brand: null,
+        payment_method_last4: null,
+      } as any
+      
+      const date = store.currentPeriodEnd
+      expect(date).toBeInstanceOf(Date)
+      expect(date?.getTime()).toBe(timestamp * 1000)
+    })
+  })
+
+  describe('trackTokenCreationSuccess - edge cases', () => {
+    it('should handle success with no template or network', () => {
+      const store = useSubscriptionStore()
+      store.trackTokenCreationAttempt()
+      store.trackTokenCreationSuccess('ARC20')
+      
+      expect(store.conversionMetrics.successfulCreations).toBe(1)
+      expect(store.conversionMetrics.standardUsageCount['ARC20']).toBe(1)
+      expect(Object.keys(store.conversionMetrics.templateUsageCount)).toHaveLength(0)
+      expect(Object.keys(store.conversionMetrics.networkPreference)).toHaveLength(0)
+    })
+
+    it('should accumulate standard/template/network counts', () => {
+      const store = useSubscriptionStore()
+      store.trackTokenCreationSuccess('ERC20', 'defi', 'ethereum')
+      store.trackTokenCreationSuccess('ERC20', 'defi', 'ethereum')
+      
+      expect(store.conversionMetrics.standardUsageCount['ERC20']).toBe(2)
+      expect(store.conversionMetrics.templateUsageCount['defi']).toBe(2)
+      expect(store.conversionMetrics.networkPreference['ethereum']).toBe(2)
+    })
+  })
+});

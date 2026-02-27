@@ -297,3 +297,37 @@ describe('operationsErrorMessages - getAllOperationsErrorCodes', () => {
     expect(codes).toContain('SESSION_REQUIRED');
   });
 });
+
+describe('operationsErrorMessages - additional classifyOperationsError coverage', () => {
+  it('should return UNKNOWN_OPERATION_ERROR for unrecognized numeric status', () => {
+    // Test line 392: return 'UNKNOWN_OPERATION_ERROR' for numeric codes outside 401/403/404/429/502/503
+    expect(classifyOperationsError(500)).toBe('UNKNOWN_OPERATION_ERROR');
+    expect(classifyOperationsError(200)).toBe('UNKNOWN_OPERATION_ERROR');
+    expect(classifyOperationsError(0)).toBe('UNKNOWN_OPERATION_ERROR');
+  });
+
+  it('should return BACKEND_UNAVAILABLE for 502 and 503', () => {
+    expect(classifyOperationsError(502)).toBe('BACKEND_UNAVAILABLE');
+    expect(classifyOperationsError(503)).toBe('BACKEND_UNAVAILABLE');
+  });
+
+  it('should classify Error messages with deploy keyword', () => {
+    expect(classifyOperationsError(new Error('Failed to deploy contract'))).toBe('TOKEN_DEPLOY_FAILED');
+  });
+
+  it('should classify Error messages with compliance keyword', () => {
+    expect(classifyOperationsError(new Error('compliance check failed'))).toBe('COMPLIANCE_CHECK_FAILED');
+  });
+
+  it('should classify Error messages with attestation keyword', () => {
+    expect(classifyOperationsError(new Error('attestation submission error'))).toBe('ATTESTATION_SUBMISSION_FAILED');
+  });
+
+  it('should classify Error messages with whitelist keyword', () => {
+    expect(classifyOperationsError(new Error('whitelist update failed'))).toBe('WHITELIST_SAVE_FAILED');
+  });
+
+  it('should classify Error messages with partial keyword', () => {
+    expect(classifyOperationsError(new Error('partial update complete'))).toBe('BATCH_PARTIAL_FAILURE');
+  });
+});

@@ -255,3 +255,124 @@ describe("allowances utilities", () => {
     });
   });
 });
+
+describe("allowances utilities - additional branch coverage", () => {
+  describe("isUnlimitedAllowance - edge cases", () => {
+    it("should return false for invalid non-numeric strings", () => {
+      expect(isUnlimitedAllowance("not-a-number")).toBe(false);
+    });
+
+    it("should return false for empty string", () => {
+      expect(isUnlimitedAllowance("")).toBe(false);
+    });
+  });
+
+  describe("formatAllowanceAmount - error path", () => {
+    it("should return raw amount with symbol for invalid BigInt input", () => {
+      const result = formatAllowanceAmount("invalid-amount", 18, "ETH");
+      expect(result).toContain("ETH");
+    });
+
+    it("should handle zero fractional part correctly", () => {
+      // 1000000 with 6 decimals = 1 USDC (exact, no fractional)
+      const result = formatAllowanceAmount("1000000", 6, "USDC");
+      expect(result).toBe("1 USDC");
+    });
+  });
+
+  describe("calculateEVMRiskLevel - fallback path without USD value", () => {
+    it("should return HIGH risk for large amounts when no USD value", () => {
+      const result = calculateEVMRiskLevel({
+        isUnlimited: false,
+        allowanceAmount: "100000000000000000000000", // 100000 tokens with 18 decimals
+        tokenDecimals: 18,
+      });
+      expect(result).toBe(AllowanceRiskLevel.HIGH);
+    });
+
+    it("should return MEDIUM risk for moderate amounts when no USD value", () => {
+      const result = calculateEVMRiskLevel({
+        isUnlimited: false,
+        allowanceAmount: "5000000000000000000000", // 5000 tokens with 18 decimals
+        tokenDecimals: 18,
+      });
+      expect(result).toBe(AllowanceRiskLevel.MEDIUM);
+    });
+
+    it("should return LOW risk for small amounts when no USD value", () => {
+      const result = calculateEVMRiskLevel({
+        isUnlimited: false,
+        allowanceAmount: "500000000000000000000", // 500 tokens with 18 decimals
+        tokenDecimals: 18,
+      });
+      expect(result).toBe(AllowanceRiskLevel.LOW);
+    });
+
+    it("should return MEDIUM risk when amount is unparseable", () => {
+      const result = calculateEVMRiskLevel({
+        isUnlimited: false,
+        allowanceAmount: "not-a-number",
+        tokenDecimals: 18,
+      });
+      expect(result).toBe(AllowanceRiskLevel.MEDIUM);
+    });
+
+    it("should return MEDIUM risk when no amount info at all", () => {
+      const result = calculateEVMRiskLevel({
+        isUnlimited: false,
+      });
+      expect(result).toBe(AllowanceRiskLevel.MEDIUM);
+    });
+  });
+
+  describe("getRiskBadgeVariant - default branch", () => {
+    it("should return default for unknown risk level", () => {
+      const result = getRiskBadgeVariant("unknown-level" as AllowanceRiskLevel);
+      expect(result).toBe("default");
+    });
+  });
+
+  describe("getActivityBadgeVariant - default branch", () => {
+    it("should return default for unknown activity status", () => {
+      const result = getActivityBadgeVariant("unknown-status" as AllowanceActivityStatus);
+      expect(result).toBe("default");
+    });
+  });
+
+  describe("getRiskLevelLabel - default branch", () => {
+    it("should return Unknown Risk for unknown risk level", () => {
+      const result = getRiskLevelLabel("unknown-level" as AllowanceRiskLevel);
+      expect(result).toBe("Unknown Risk");
+    });
+  });
+
+  describe("getActivityStatusLabel - default branch", () => {
+    it("should return Unknown for unknown activity status", () => {
+      const result = getActivityStatusLabel("unknown-status" as AllowanceActivityStatus);
+      expect(result).toBe("Unknown");
+    });
+  });
+
+  describe("getKnownSpenderName - additional networks", () => {
+    it("should return spender name on Base", () => {
+      const result = getKnownSpenderName(
+        "0x2626664c2603336e57b271c5c0b26f421741e481",
+        "base" as any,
+      );
+      expect(result).toBe("Uniswap V3 Router");
+    });
+
+    it("should return spender name on Arbitrum", () => {
+      const result = getKnownSpenderName(
+        "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45",
+        "arbitrum" as any,
+      );
+      expect(result).toBe("Uniswap V3 Router");
+    });
+
+    it("should return undefined for unknown network", () => {
+      const result = getKnownSpenderName("0xSomeAddress", "voi-mainnet" as any);
+      expect(result).toBeUndefined();
+    });
+  });
+});

@@ -336,4 +336,143 @@ describe('useLifecycleCockpitStore', () => {
       expect(store.error).toBeNull()
     })
   })
-})
+
+  describe('rolePermissions - additional role coverage', () => {
+    it('should return correct permissions for treasury role', () => {
+      const store = useLifecycleCockpitStore()
+      store.setUserRole('treasury')
+      
+      const perms = store.rolePermissions
+      expect(perms.canViewReadiness).toBe(false)
+      expect(perms.canViewTelemetry).toBe(true)
+      expect(perms.canViewActions).toBe(false)
+      expect(perms.canViewWalletDiagnostics).toBe(false)
+      expect(perms.canViewRiskIndicators).toBe(true)
+      expect(perms.canViewEvidence).toBe(false)
+      expect(perms.canCompleteActions).toBe(false)
+      expect(perms.canExportReports).toBe(true)
+    })
+
+    it('should return restricted permissions for unknown/default role', () => {
+      const store = useLifecycleCockpitStore()
+      // Force an invalid role to trigger the default case
+      store.userRole = 'unknown_role' as any
+      
+      const perms = store.rolePermissions
+      expect(perms.canViewReadiness).toBe(false)
+      expect(perms.canViewTelemetry).toBe(false)
+      expect(perms.canViewActions).toBe(false)
+      expect(perms.canCompleteActions).toBe(false)
+      expect(perms.canExportReports).toBe(false)
+    })
+  })
+
+  describe('prioritizedActions - in_progress status filter', () => {
+    it('should include in_progress actions in prioritized list', async () => {
+      const store = useLifecycleCockpitStore()
+      
+      store.actions = [
+        {
+          id: 'in-prog-action',
+          priority: 'high',
+          status: 'in_progress',
+          title: 'In Progress Action',
+          description: 'This is in progress',
+          rationale: 'Test',
+          expectedImpact: 'Something',
+          deepLink: '/test',
+          category: 'setup',
+          createdAt: new Date(),
+        },
+      ]
+      
+      const prioritized = store.prioritizedActions
+      expect(prioritized.some(a => a.id === 'in-prog-action')).toBe(true)
+    })
+  })
+
+  describe('updateActionStatus - edge cases', () => {
+    it('should not throw when action id not found', () => {
+      const store = useLifecycleCockpitStore()
+      store.actions = []
+      expect(() => store.updateActionStatus('non-existent', 'completed')).not.toThrow()
+    })
+
+    it('should update action to in_progress without setting completedAt', () => {
+      const store = useLifecycleCockpitStore()
+      store.actions = [
+        {
+          id: 'action-1',
+          priority: 'high',
+          status: 'pending',
+          title: 'Action 1',
+          description: 'Test',
+          rationale: 'Test',
+          expectedImpact: 'Test',
+          deepLink: '/test',
+          category: 'setup',
+          createdAt: new Date(),
+        },
+      ]
+      
+      store.updateActionStatus('action-1', 'in_progress')
+      const action = store.actions.find(a => a.id === 'action-1')
+      expect(action?.status).toBe('in_progress')
+      expect(action?.completedAt).toBeUndefined()
+    })
+  })
+
+  describe('isLaunchReady - null state', () => {
+    it('should return false when readinessStatus is null', () => {
+      const store = useLifecycleCockpitStore()
+      expect(store.readinessStatus).toBeNull()
+      expect(store.isLaunchReady).toBe(false)
+    })
+  })
+
+  describe('criticalActionsCount', () => {
+    it('should count only critical pending actions', () => {
+      const store = useLifecycleCockpitStore()
+      store.actions = [
+        {
+          id: 'crit-1',
+          priority: 'critical',
+          status: 'pending',
+          title: 'Critical 1',
+          description: 'Test',
+          rationale: 'Test',
+          expectedImpact: 'Test',
+          deepLink: '/test',
+          category: 'setup',
+          createdAt: new Date(),
+        },
+        {
+          id: 'crit-completed',
+          priority: 'critical',
+          status: 'completed',
+          title: 'Critical Done',
+          description: 'Test',
+          rationale: 'Test',
+          expectedImpact: 'Test',
+          deepLink: '/test',
+          category: 'setup',
+          createdAt: new Date(),
+        },
+        {
+          id: 'high-1',
+          priority: 'high',
+          status: 'pending',
+          title: 'High 1',
+          description: 'Test',
+          rationale: 'Test',
+          expectedImpact: 'Test',
+          deepLink: '/test',
+          category: 'setup',
+          createdAt: new Date(),
+        },
+      ]
+      
+      expect(store.criticalActionsCount).toBe(1)
+    })
+  })
+});

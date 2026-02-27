@@ -373,3 +373,69 @@ describe('Network Sorting Utility', () => {
     });
   });
 });
+
+  describe('isAdvanced network sorting', () => {
+    it('should sort isAdvanced networks between primary mainnets and testnets', () => {
+      const networks = [
+        {
+          id: 'voi-mainnet',
+          name: 'voi-mainnet',
+          displayName: 'VOI Mainnet',
+          isTestnet: false,
+          isAdvanced: true,
+          chainType: 'AVM',
+        } as any,
+        {
+          id: 'algorand-testnet',
+          name: 'algorand-testnet',
+          displayName: 'Algorand Testnet',
+          isTestnet: true,
+          isAdvanced: false,
+          chainType: 'AVM',
+        } as any,
+        {
+          id: 'algorand-mainnet',
+          name: 'algorand-mainnet',
+          displayName: 'Algorand Mainnet',
+          isTestnet: false,
+          isAdvanced: false,
+          chainType: 'AVM',
+        } as any,
+      ];
+
+      const sorted = sortNetworksByPriority(networks);
+
+      // Algorand mainnet (primary, not advanced) comes first
+      expect(sorted[0].id).toBe('algorand-mainnet');
+      // VOI mainnet (advanced) comes second
+      expect(sorted[1].id).toBe('voi-mainnet');
+      // Testnet comes last
+      expect(sorted[2].id).toBe('algorand-testnet');
+    });
+
+    it('should sort multiple advanced networks among themselves alphabetically', () => {
+      const networks = [
+        {
+          id: 'voi-mainnet',
+          name: 'voi-mainnet',
+          displayName: 'VOI Mainnet',
+          isTestnet: false,
+          isAdvanced: true,
+          chainType: 'AVM',
+        } as any,
+        {
+          id: 'aramidmain',
+          name: 'aramidmain',
+          displayName: 'Aramid Mainnet',
+          isTestnet: false,
+          isAdvanced: true,
+          chainType: 'AVM',
+        } as any,
+      ];
+
+      const sorted = sortNetworksByPriority(networks);
+
+      // Both are advanced - should be sorted alphabetically by displayName
+      expect(sorted[0].displayName.localeCompare(sorted[1].displayName)).toBeLessThanOrEqual(0);
+    });
+  });

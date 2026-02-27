@@ -318,4 +318,106 @@ describe("useDeploymentTracking", () => {
       expect(steps[2].description).toContain("contract");
     });
   });
+
+  describe("Fee Estimates - additional coverage", () => {
+    it("should provide fee estimate for Aramid mainnet", () => {
+      const fee = tracker.getFeeEstimate("aramidmain");
+      expect(fee.currency).toBe("ALGO");
+      expect(fee.networkFee).toBe("0.001");
+    });
+
+    it("should provide fee estimate for Algorand testnet", () => {
+      const fee = tracker.getFeeEstimate("algorand-testnet");
+      expect(fee.currency).toBe("ALGO");
+      expect(fee.networkFee).toBe("0.001");
+    });
+
+    it("should provide fee estimate for Sepolia testnet", () => {
+      const fee = tracker.getFeeEstimate("sepolia");
+      expect(fee.currency).toBe("ETH");
+      expect(fee.networkFee).toBe("0.002");
+    });
+
+    it("should return same total for aramid and algorand mainnet fees", () => {
+      const aramidFee = tracker.getFeeEstimate("aramidmain");
+      const algoFee = tracker.getFeeEstimate("algorand-mainnet");
+      expect(aramidFee.total).toBe(algoFee.total);
+    });
+  });
+
+  describe("Explorer URLs - additional coverage", () => {
+    it("should generate explorer URL for Aramid mainnet", () => {
+      tracker.startDeployment("aramidmain");
+      tracker.setTransactionId("TX123");
+      const url = tracker.getExplorerUrl();
+      expect(url).toContain("aramid.finance");
+      expect(url).toContain("TX123");
+    });
+
+    it("should generate explorer URL for Algorand testnet", () => {
+      tracker.startDeployment("algorand-testnet");
+      tracker.setTransactionId("TESTTX");
+      const url = tracker.getExplorerUrl();
+      expect(url).toContain("testnet");
+      expect(url).toContain("TESTTX");
+    });
+
+    it("should generate explorer URL for VOI mainnet", () => {
+      tracker.startDeployment("voi-mainnet");
+      tracker.setTransactionId("VOITX");
+      const url = tracker.getExplorerUrl();
+      expect(url).toContain("voi.observer");
+      expect(url).toContain("VOITX");
+    });
+
+    it("should return null when networkId is null", () => {
+      // Don't start deployment - both transactionId and networkId are null
+      tracker.setTransactionId("TX123");
+      // deploymentState.networkId is still null
+      const url = tracker.getExplorerUrl();
+      expect(url).toBeNull();
+    });
+  });
+
+  describe("Computed properties", () => {
+    it("should show isDeploying for all deploying statuses", () => {
+      const deployingStatuses = ["preparing", "signing", "submitting", "confirming"] as const;
+      for (const status of deployingStatuses) {
+        tracker.startDeployment("algorand-mainnet");
+        tracker.deploymentState.value.status = status;
+        expect(tracker.isDeploying.value).toBe(true);
+      }
+    });
+
+    it("should show hasError when status is error", () => {
+      tracker.startDeployment("algorand-mainnet");
+      tracker.setError("Something failed");
+      expect(tracker.hasError.value).toBe(true);
+    });
+
+    it("should show canRetry when error and networkId set", () => {
+      tracker.startDeployment("algorand-mainnet");
+      tracker.setError("Failure");
+      expect(tracker.canRetry.value).toBe(true);
+    });
+
+    it("should show currentStep as active step", () => {
+      tracker.startDeployment("algorand-mainnet");
+      const step = tracker.currentStep.value;
+      expect(step?.status).toBe("active");
+    });
+  });
+
+  describe("nextStep - no active step case", () => {
+    it("should handle nextStep gracefully when no active step exists", () => {
+      tracker.startDeployment("algorand-mainnet");
+      // Clear all steps
+      tracker.deploymentState.value.steps = tracker.deploymentState.value.steps.map(s => ({
+        ...s,
+        status: "pending" as const,
+      }));
+      // nextStep with no active step should not throw
+      expect(() => tracker.nextStep()).not.toThrow();
+    });
+  });
 });

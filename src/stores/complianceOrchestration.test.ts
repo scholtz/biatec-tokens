@@ -428,4 +428,99 @@ describe('complianceOrchestration store', () => {
       expect(store.error).toBeNull()
     })
   })
-})
+
+  describe('additional branch coverage', () => {
+    it('should have clean error state before AML screening is called', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user@example.com')
+      
+      expect(store.error).toBeNull()
+      expect(store.userComplianceState).not.toBeNull()
+    })
+
+    it('should set custom limit and offset in fetchAdminComplianceList', async () => {
+      const store = useComplianceOrchestrationStore()
+      
+      await store.fetchAdminComplianceList({ limit: 10, offset: 20 })
+      
+      expect(store.adminComplianceList?.limit).toBe(10)
+      expect(store.adminComplianceList?.offset).toBe(20)
+      expect(store.adminFilters).toEqual({ limit: 10, offset: 20 })
+    })
+
+    it('should compute completedDocuments correctly with mixed statuses', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user@example.com')
+      
+      // Set one required doc as approved
+      store.userComplianceState!.kycDocuments[0].status = 'approved'
+      // Set another required doc as uploaded (not approved)
+      store.userComplianceState!.kycDocuments[1].status = 'uploaded'
+      
+      expect(store.completedDocuments).toHaveLength(1)
+      expect(store.completedDocuments[0].type).toBe('government_id')
+    })
+
+    it('should filter visible events and sort by most recent first in recentEvents', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user@example.com')
+      
+      const now = Date.now()
+      store.userComplianceState!.events = [
+        {
+          id: 'evt1',
+          type: 'document_uploaded',
+          timestamp: new Date(now - 60000).toISOString(), // 1 min ago
+          actor: 'user',
+          actorId: 'user@example.com',
+          description: 'Older event',
+          visible: true,
+        },
+        {
+          id: 'evt2',
+          type: 'document_uploaded',
+          timestamp: new Date(now - 1000).toISOString(), // 1 sec ago
+          actor: 'user',
+          actorId: 'user@example.com',
+          description: 'Newer event',
+          visible: true,
+        },
+        {
+          id: 'evt3',
+          type: 'aml_screening_started',
+          timestamp: new Date(now).toISOString(),
+          actor: 'system',
+          description: 'Hidden event',
+          visible: false, // This one should be filtered out
+        },
+      ]
+      
+      const events = store.recentEvents
+      expect(events).toHaveLength(2)
+      // Most recent first
+      expect(events[0].id).toBe('evt2')
+      expect(events[1].id).toBe('evt1')
+    })
+
+    it('should include not_started reason in checkIssuanceEligibility with no extra reason', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user@example.com')
+      
+      const result = store.checkIssuanceEligibility()
+      expect(result.eligible).toBe(false)
+      expect(result.reasons.some(r => r.includes('not started'))).toBe(true)
+    })
+
+    it('should set blockedReasons from state when available', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user@example.com')
+      
+      store.userComplianceState!.status = 'pending_review'
+      store.userComplianceState!.blockedReasons = ['Custom block reason']
+      store.userComplianceState!.canIssueTokens = false
+      
+      const result = store.checkIssuanceEligibility()
+      expect(result.reasons).toContain('Custom block reason')
+    })
+  })
+});

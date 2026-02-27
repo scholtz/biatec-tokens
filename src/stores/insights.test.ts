@@ -435,4 +435,69 @@ describe('useInsightsStore', () => {
       expect(store.trendData['adoption'].length).toBe(366) // 365 days + today (all falls to 365)
     })
   })
-})
+
+  describe('saveFiltersToStorage - error path', () => {
+    it('should handle localStorage.setItem throwing', () => {
+      const store = useInsightsStore()
+      const originalSetItem = localStorage.setItem.bind(localStorage)
+      try {
+        localStorage.setItem = () => { throw new Error('Storage quota exceeded') }
+        expect(() => store.saveFiltersToStorage()).not.toThrow()
+      } finally {
+        localStorage.setItem = originalSetItem
+      }
+    })
+  })
+
+  describe('loadFiltersFromStorage - error path', () => {
+    it('should handle JSON.parse throwing on corrupted storage', () => {
+      localStorage.setItem('biatec_insights_filters', '{invalid json}')
+      const store = useInsightsStore()
+      
+      expect(() => store.loadFiltersFromStorage()).not.toThrow()
+    })
+  })
+
+  describe('generateMockTrendData - timeframe branches', () => {
+    it('should generate correct points for 7d timeframe', async () => {
+      const store = useInsightsStore()
+      store.updateFilters({ timeframe: '7d' })
+      await store.fetchTrendData('retention')
+      expect(store.trendData['retention'].length).toBe(8) // 7 days + today
+    })
+
+    it('should generate correct points for 30d timeframe', async () => {
+      const store = useInsightsStore()
+      store.updateFilters({ timeframe: '30d' })
+      await store.fetchTrendData('txQuality')
+      expect(store.trendData['txQuality'].length).toBe(31) // 30 days + today
+    })
+  })
+
+  describe('exportData - edge cases', () => {
+    beforeEach(() => {
+      global.URL.createObjectURL = vi.fn(() => 'blob:mock-url')
+      global.URL.revokeObjectURL = vi.fn()
+      const mockClick = vi.fn()
+      document.createElement = vi.fn(() => ({
+        href: '',
+        download: '',
+        click: mockClick,
+      })) as any
+      document.body.appendChild = vi.fn()
+      document.body.removeChild = vi.fn()
+    })
+
+    it('should export JSON format without error', async () => {
+      const store = useInsightsStore()
+      await store.fetchMetrics()
+      expect(() => store.exportData('json')).not.toThrow()
+    })
+
+    it('should export CSV with empty benchmarks', () => {
+      const store = useInsightsStore()
+      // No benchmarks fetched yet
+      expect(() => store.exportData('csv')).not.toThrow()
+    })
+  })
+});
