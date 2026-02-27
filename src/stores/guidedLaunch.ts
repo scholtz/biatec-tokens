@@ -353,11 +353,13 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
       throw new Error('Cannot submit: required data missing')
     }
 
-    // Idempotency guard: prevent duplicate submissions for the same draft
-    const idempotencyKey = deriveIdempotencyKey(
-      currentForm.value.draftId ?? 'unknown',
-      userEmail,
-    )
+    // Idempotency guard: prevent duplicate submissions for the same draft.
+    // A missing draftId is a programming error — submission must always be anchored to a draft.
+    const draftId = currentForm.value.draftId
+    if (!draftId) {
+      throw new Error('Cannot submit: draft identity is missing (draftId required for idempotency)')
+    }
+    const idempotencyKey = deriveIdempotencyKey(draftId, userEmail)
     const idempotencyCheck = checkIdempotency(idempotencyKey)
     if (!idempotencyCheck.isSafeToSubmit) {
       // Return the previously-stored successful submission without re-executing
@@ -379,7 +381,7 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
     isSubmitting.value = true
 
     // Record attempt before network call so partial failures are tracked
-    recordSubmissionAttempt(idempotencyKey, currentForm.value.draftId ?? 'unknown')
+    recordSubmissionAttempt(idempotencyKey, draftId)
 
     try {
       const submission: LaunchSubmission = {

@@ -162,7 +162,7 @@ export const MAX_DECIMALS_BY_STANDARD: Record<string, number> = {
   ARC3: 19,
   ARC19: 19,
   ARC69: 19,
-  ARC200: 6,   // ARC200 fungible tokens conventionally use at most 6
+  ARC200: 6,   // ARC200 fungible tokens: protocol convention limits decimals to 6 for display/UX safety
   ARC72: 0,    // ARC72 = NFT, no decimals
   // EVM
   ERC20: 18,
