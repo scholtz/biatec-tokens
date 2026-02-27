@@ -540,4 +540,85 @@ describe('AnalyticsService', () => {
       )
     })
   })
+
+  describe('Analytics consent and disabled tracking', () => {
+    it('should respect consent=false and disable tracking', () => {
+      localStorage.setItem('analytics_consent', 'false')
+      const service = new AnalyticsService()
+      expect(service.isTrackingEnabled()).toBe(false)
+    })
+
+    it('should not fire console Analytics Event log when tracking is disabled', () => {
+      localStorage.setItem('analytics_consent', 'false')
+      const service = new AnalyticsService()
+      consoleLogSpy.mockClear()
+      service.trackEvent({ event: 'test_disabled' })
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '[Analytics] Tracking disabled, event not sent:',
+        expect.objectContaining({ event: 'test_disabled' }),
+      )
+      // The [Analytics Event] log must NOT have been called
+      const analyticsEventCalls = consoleLogSpy.mock.calls.filter(
+        (c: any[]) => c[0] === '[Analytics Event]',
+      )
+      expect(analyticsEventCalls).toHaveLength(0)
+    })
+
+    it('should call setTrackingEnabled and persist to localStorage', () => {
+      analyticsService.setTrackingEnabled(false)
+      expect(localStorage.getItem('analytics_consent')).toBe('false')
+      expect(analyticsService.isTrackingEnabled()).toBe(false)
+      analyticsService.setTrackingEnabled(true)
+      expect(localStorage.getItem('analytics_consent')).toBe('true')
+      expect(analyticsService.isTrackingEnabled()).toBe(true)
+    })
+  })
+
+  describe('initializeGoogleAnalytics path coverage', () => {
+    it('should log "already initialized" when window.gtag exists before init call', () => {
+      ;(window as any).gtag = vi.fn()
+      class TestableAnalyticsService extends AnalyticsService {
+        callInit(id: string) {
+          ;(this as any).trackingId = id
+          ;(this as any).initializeGoogleAnalytics()
+        }
+      }
+      const service = new TestableAnalyticsService()
+      service.callInit('UA-TEST-2')
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '[Analytics] Google Analytics already initialized',
+      )
+    })
+
+    it('should set up dataLayer and gtag function when window has no gtag', () => {
+      delete (window as any).gtag
+      ;(window as any).dataLayer = undefined
+      class TestableAnalyticsService extends AnalyticsService {
+        callInit(id: string) {
+          ;(this as any).trackingId = id
+          ;(this as any).initializeGoogleAnalytics()
+        }
+      }
+      const service = new TestableAnalyticsService()
+      service.callInit('UA-TEST-3')
+      expect(typeof (window as any).gtag).toBe('function')
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '[Analytics] Google Analytics initialized:',
+        'UA-TEST-3',
+      )
+    })
+  })
+
+  describe('trackEvent fires gtag when available', () => {
+    it('should invoke window.gtag with event data', () => {
+      const gtagFn = vi.fn()
+      ;(window as any).gtag = gtagFn
+      analyticsService.trackEvent({ event: 'gtag_test', category: 'Cat', action: 'Act' })
+      expect(gtagFn).toHaveBeenCalledWith(
+        'event',
+        'gtag_test',
+        expect.objectContaining({ event_category: 'Cat', event_action: 'Act' }),
+      )
+    })
+  })
 })
