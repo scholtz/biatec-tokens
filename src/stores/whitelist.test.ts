@@ -1282,4 +1282,119 @@ describe("useWhitelistStore", () => {
       expect(found?.entityName).toBe("New Name");
     });
   });
+
+  describe("requestMoreInfo - entry found in list", () => {
+    it("should update entry in entries array when entry is found", async () => {
+      const store = useWhitelistStore();
+      const existing = { id: "rmi-1", entityName: "Acme Corp", status: "pending" } as any;
+      const updated = { ...existing, status: "more_info_requested" } as any;
+      store.entries = [existing];
+      vi.mocked(whitelistService.requestMoreInfo).mockResolvedValue(updated);
+      const result = await store.requestMoreInfo({ id: "rmi-1", message: "Need more docs" } as any);
+      expect(result).toBe(true);
+      expect(store.entries[0].status).toBe("more_info_requested");
+    });
+
+    it("should handle non-Error throw in requestMoreInfo", async () => {
+      const store = useWhitelistStore();
+      vi.mocked(whitelistService.requestMoreInfo).mockRejectedValue("string error");
+      const result = await store.requestMoreInfo({ id: "rmi-2", message: "test" } as any);
+      expect(result).toBe(false);
+      expect(store.error).toBe("Failed to request info");
+    });
+  });
+
+  describe("non-Error catch paths", () => {
+    it("fetchWhitelistEntries sets fallback error on non-Error throw", async () => {
+      const store = useWhitelistStore();
+      vi.mocked(whitelistService.getWhitelistEntries).mockRejectedValue("string error");
+      await store.fetchWhitelistEntries();
+      expect(store.error).toBe("Failed to load whitelist entries");
+    });
+
+    it("fetchWhitelistSummary sets error.message on Error throw", async () => {
+      const store = useWhitelistStore();
+      vi.mocked(whitelistService.getWhitelistSummary).mockRejectedValue(new Error("Custom summary error"));
+      await store.fetchWhitelistSummary();
+      expect(store.error).toBe("Custom summary error");
+    });
+
+    it("fetchWhitelistEntry sets fallback error on non-Error throw", async () => {
+      const store = useWhitelistStore();
+      vi.mocked(whitelistService.getWhitelistEntry).mockRejectedValue("string error");
+      const result = await store.fetchWhitelistEntry("id-1");
+      expect(result).toBe(null);
+      expect(store.error).toBe("Failed to load entry");
+    });
+
+    it("createWhitelistEntry sets fallback error on non-Error throw", async () => {
+      const store = useWhitelistStore();
+      vi.mocked(whitelistService.createWhitelistEntry).mockRejectedValue("string error");
+      const result = await store.createWhitelistEntry({ entityName: "Test" } as any);
+      expect(result).toBe(null);
+      expect(store.error).toBe("Failed to create entry");
+    });
+
+    it("approveWhitelistEntry sets fallback error on non-Error throw", async () => {
+      const store = useWhitelistStore();
+      vi.mocked(whitelistService.approveWhitelistEntry).mockRejectedValue("string error");
+      const result = await store.approveWhitelistEntry({ id: "id-1" } as any);
+      expect(result).toBe(false);
+      expect(store.error).toBe("Failed to approve entry");
+    });
+
+    it("rejectWhitelistEntry sets error.message on Error throw", async () => {
+      const store = useWhitelistStore();
+      vi.mocked(whitelistService.rejectWhitelistEntry).mockRejectedValue(new Error("Reject error"));
+      const result = await store.rejectWhitelistEntry({ id: "id-1", reason: "test" } as any);
+      expect(result).toBe(false);
+      expect(store.error).toBe("Reject error");
+    });
+
+    it("rejectWhitelistEntry sets fallback error on non-Error throw", async () => {
+      const store = useWhitelistStore();
+      vi.mocked(whitelistService.rejectWhitelistEntry).mockRejectedValue("string error");
+      const result = await store.rejectWhitelistEntry({ id: "id-1", reason: "test" } as any);
+      expect(result).toBe(false);
+      expect(store.error).toBe("Failed to reject entry");
+    });
+
+    it("fetchJurisdictionRules sets fallback error on non-Error throw", async () => {
+      const store = useWhitelistStore();
+      vi.mocked(whitelistService.getJurisdictionRules).mockRejectedValue("string error");
+      await store.fetchJurisdictionRules();
+      expect(store.error).toBe("Failed to load jurisdiction rules");
+    });
+
+    it("updateJurisdictionRule sets fallback error on non-Error throw", async () => {
+      const store = useWhitelistStore();
+      vi.mocked(whitelistService.updateJurisdictionRule).mockRejectedValue("string error");
+      const result = await store.updateJurisdictionRule("rule-1", { name: "Test" });
+      expect(result).toBe(null);
+      expect(store.error).toBe("Failed to update jurisdiction rule");
+    });
+
+    it("deleteJurisdictionRule sets fallback error on non-Error throw", async () => {
+      const store = useWhitelistStore();
+      vi.mocked(whitelistService.deleteJurisdictionRule).mockRejectedValue("string error");
+      const result = await store.deleteJurisdictionRule("rule-1");
+      expect(result).toBe(false);
+      expect(store.error).toBe("Failed to delete jurisdiction rule");
+    });
+
+    it("checkJurisdictionConflicts sets fallback error on non-Error throw", async () => {
+      const store = useWhitelistStore();
+      vi.mocked(whitelistService.checkJurisdictionConflicts).mockRejectedValue("string error");
+      await store.checkJurisdictionConflicts();
+      expect(store.error).toBe("Failed to check conflicts");
+    });
+
+    it("updateJurisdictionRule with Error throw sets error message", async () => {
+      const store = useWhitelistStore();
+      vi.mocked(whitelistService.updateJurisdictionRule).mockRejectedValue(new Error("Rule error"));
+      const result = await store.updateJurisdictionRule("rule-1", {});
+      expect(result).toBe(null);
+      expect(store.error).toBe("Rule error");
+    });
+  });
 });

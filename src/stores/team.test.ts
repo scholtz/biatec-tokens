@@ -704,5 +704,93 @@ describe('Team Store', () => {
       expect(store.members[0].role).toBe('viewer');
       expect(store.error).toBe('Failed to update role');
     });
+
+    it('fetchMembers throws with fallback message when response.error is undefined', async () => {
+      const store = useTeamStore();
+      vi.mocked(teamManagementService.listMembers).mockResolvedValueOnce({
+        success: false,
+      } as any);
+      await expect(store.fetchMembers()).rejects.toThrow('Failed to fetch members');
+    });
+
+    it('fetchInvitations throws with fallback message when response.error is undefined', async () => {
+      const store = useTeamStore();
+      vi.mocked(teamManagementService.listInvitations).mockResolvedValueOnce({
+        success: false,
+      } as any);
+      await expect(store.fetchInvitations()).rejects.toThrow('Failed to fetch invitations');
+    });
+
+    it('fetchAuditLog throws with fallback message when response.error is undefined', async () => {
+      const store = useTeamStore();
+      vi.mocked(teamManagementService.getAuditLog).mockResolvedValueOnce({
+        success: false,
+      } as any);
+      await expect(store.fetchAuditLog()).rejects.toThrow('Failed to fetch audit log');
+    });
+
+    it('inviteMember returns false with fallback error when response.error is undefined', async () => {
+      const store = useTeamStore();
+      vi.mocked(teamManagementService.inviteMember).mockResolvedValueOnce({
+        success: false,
+      } as any);
+      const result = await store.inviteMember({ email: 'x@y.com', role: 'viewer', name: 'X' });
+      expect(result).toBe(false);
+      expect(store.error).toBe('Failed to send invitation');
+    });
+
+    it('resendInvitation succeeds but invitation not in list (index === -1)', async () => {
+      const store = useTeamStore();
+      store.invitations = []; // empty — index will be -1
+      const fakeInv = { id: 'inv-new', email: 'a@b.com', role: 'viewer', status: 'pending' };
+      vi.mocked(teamManagementService.resendInvitation).mockResolvedValueOnce({
+        success: true, data: fakeInv,
+      } as any);
+      vi.mocked(teamManagementService.getAuditLog).mockResolvedValue({ success: true, data: [] } as any);
+      const result = await store.resendInvitation('inv-new');
+      expect(result).toBe(true);
+    });
+
+    it('cancelInvitation returns false with fallback error when response.error is undefined', async () => {
+      const store = useTeamStore();
+      vi.mocked(teamManagementService.cancelInvitation).mockResolvedValueOnce({
+        success: false,
+      } as any);
+      const result = await store.cancelInvitation('inv-1');
+      expect(result).toBe(false);
+      expect(store.error).toBe('Failed to cancel invitation');
+    });
+
+    it('currentUserRole returns null when user has no email', () => {
+      const store = useTeamStore();
+      const authStore = useAuthStore();
+      authStore.user = null;
+      expect(store.currentUserRole).toBe(null);
+    });
+
+    it('currentUserRole returns null when user email not found in members', () => {
+      const store = useTeamStore();
+      const authStore = useAuthStore();
+      authStore.user = { email: 'notfound@example.com' } as any;
+      store.members = [];
+      expect(store.currentUserRole).toBe(null);
+    });
+
+    it('hasPermission returns false when no role', () => {
+      const store = useTeamStore();
+      const authStore = useAuthStore();
+      authStore.user = null;
+      expect(store.hasPermission('manage_members')).toBe(false);
+    });
+
+    it('removeMember returns false with fallback error when response.error is undefined', async () => {
+      const store = useTeamStore();
+      vi.mocked(teamManagementService.removeMember).mockResolvedValueOnce({
+        success: false,
+      } as any);
+      const result = await store.removeMember('m-1');
+      expect(result).toBe(false);
+      expect(store.error).toBe('Failed to remove member');
+    });
   });
 })
