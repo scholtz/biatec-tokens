@@ -634,5 +634,75 @@ describe('Team Store', () => {
       expect(success).toBe(false);
       expect(store.error).toBe('Failed to cancel invitation');
     });
+
+    it('fetchAuditLog sets auditLog when response.success && response.data', async () => {
+      const store = useTeamStore();
+      const mockLog = [{ id: 'log-1', action: 'member_invited', actor: 'admin@test.com', timestamp: new Date().toISOString(), details: {} }];
+      vi.mocked(teamManagementService.getAuditLog).mockResolvedValueOnce({
+        success: true,
+        data: mockLog,
+      } as any);
+
+      await store.fetchAuditLog();
+
+      expect(store.auditLog).toEqual(mockLog);
+    });
+
+    it('fetchAuditLog throws when response.success is false', async () => {
+      const store = useTeamStore();
+      vi.mocked(teamManagementService.getAuditLog).mockResolvedValueOnce({
+        success: false,
+        error: { message: 'Unauthorized' },
+      } as any);
+
+      await expect(store.fetchAuditLog()).rejects.toThrow('Unauthorized');
+    });
+
+    it('cancelInvitation sets error when response.success is false', async () => {
+      const store = useTeamStore();
+      vi.mocked(teamManagementService.cancelInvitation).mockResolvedValueOnce({
+        success: false,
+        error: { message: 'Not found' },
+      } as any);
+      vi.mocked(teamManagementService.getAuditLog).mockResolvedValue({ success: true, data: [] } as any);
+
+      const result = await store.cancelInvitation('inv-1');
+
+      expect(result).toBe(false);
+      expect(store.error).toBe('Not found');
+    });
+
+    it('updateMemberRole returns false when member not found (memberIndex === -1)', async () => {
+      const store = useTeamStore();
+      // No members in store — memberIndex will be -1
+      store.members = [];
+
+      const result = await store.updateMemberRole({ memberId: 'nonexistent', newRole: 'admin' });
+
+      expect(result).toBe(false);
+      expect(store.error).toBe('Member not found');
+    });
+
+    it('updateMemberRole rolls back and returns false on network error', async () => {
+      const store = useTeamStore();
+      store.members = [{
+        id: 'm-rollback',
+        email: 'test@example.com',
+        name: 'Test',
+        role: 'viewer',
+        status: 'active',
+        joinedAt: new Date().toISOString(),
+        permissions: [],
+      }];
+      vi.mocked(teamManagementService.updateMemberRole).mockRejectedValueOnce(new Error('Network error'));
+      vi.mocked(teamManagementService.getAuditLog).mockResolvedValue({ success: true, data: [] } as any);
+
+      const result = await store.updateMemberRole({ memberId: 'm-rollback', newRole: 'admin' });
+
+      expect(result).toBe(false);
+      // Role should be rolled back to 'viewer'
+      expect(store.members[0].role).toBe('viewer');
+      expect(store.error).toBe('Failed to update role');
+    });
   });
 })

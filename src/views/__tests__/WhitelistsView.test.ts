@@ -340,4 +340,74 @@ describe('WhitelistsView', () => {
       expect(wrapper.text()).not.toContain('No Whitelist Entries Yet')
     })
   })
+
+  describe('Event Handlers', () => {
+    it('viewDetails sets selectedEntry and opens detail modal', async () => {
+      const entry = createMockEntry('view-1')
+      const vm = wrapper.vm as any
+      vm.viewDetails(entry)
+      await wrapper.vm.$nextTick()
+      expect(vm.selectedEntry).toEqual(entry)
+      expect(vm.showDetailModal).toBe(true)
+    })
+
+    it('approveEntry sets selectedEntry and opens detail modal', async () => {
+      const entry = createMockEntry('approve-1')
+      const vm = wrapper.vm as any
+      vm.approveEntry(entry)
+      await wrapper.vm.$nextTick()
+      expect(vm.selectedEntry).toEqual(entry)
+      expect(vm.showDetailModal).toBe(true)
+    })
+
+    it('rejectEntry sets selectedEntry and opens detail modal', async () => {
+      const entry = createMockEntry('reject-1')
+      const vm = wrapper.vm as any
+      vm.rejectEntry(entry)
+      await wrapper.vm.$nextTick()
+      expect(vm.selectedEntry).toEqual(entry)
+      expect(vm.showDetailModal).toBe(true)
+    })
+
+    it('handleCreateEntry creates entry and closes modal on success', async () => {
+      const vm = wrapper.vm as any
+      const newEntry = createMockEntry('new-1')
+      ;(whitelistStore.createWhitelistEntry as any).mockResolvedValueOnce(newEntry)
+      vm.showCreateModal = true
+      await vm.handleCreateEntry({ name: 'New Entry', email: 'new@test.com', entityType: 'individual', jurisdictionCode: 'US' })
+      await wrapper.vm.$nextTick()
+      expect(vm.showCreateModal).toBe(false)
+    })
+
+    it('handleCreateEntry keeps modal open when createWhitelistEntry returns null', async () => {
+      const vm = wrapper.vm as any
+      ;(whitelistStore.createWhitelistEntry as any).mockResolvedValueOnce(null)
+      vm.showCreateModal = true
+      await vm.handleCreateEntry({ name: 'Bad Entry', email: 'bad@test.com', entityType: 'individual', jurisdictionCode: 'US' })
+      await wrapper.vm.$nextTick()
+      expect(vm.showCreateModal).toBe(true)
+    })
+
+    it('handleEntryUpdated fetches entries and summary', async () => {
+      const vm = wrapper.vm as any
+      ;(whitelistStore.fetchWhitelistEntries as any).mockClear()
+      ;(whitelistStore.fetchWhitelistSummary as any).mockClear()
+      vm.handleEntryUpdated()
+      await wrapper.vm.$nextTick()
+      expect(whitelistStore.fetchWhitelistEntries).toHaveBeenCalled()
+      expect(whitelistStore.fetchWhitelistSummary).toHaveBeenCalled()
+    })
+
+    it('handleImportClose closes import modal and refreshes data', async () => {
+      const vm = wrapper.vm as any
+      vm.showImportModal = true
+      ;(whitelistStore.fetchWhitelistEntries as any).mockClear()
+      ;(whitelistStore.fetchWhitelistSummary as any).mockClear()
+      vm.handleImportClose()
+      await wrapper.vm.$nextTick()
+      expect(vm.showImportModal).toBe(false)
+      expect(whitelistStore.fetchWhitelistEntries).toHaveBeenCalled()
+      expect(whitelistStore.fetchWhitelistSummary).toHaveBeenCalled()
+    })
+  })
 })

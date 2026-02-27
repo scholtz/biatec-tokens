@@ -569,6 +569,114 @@ describe('useMarketplaceStore', () => {
     });
   });
 
+  describe('Filter Logic with populated tokens', () => {
+    const makeToken = (overrides: Record<string, unknown> = {}) => ({
+      id: 'tk-1',
+      name: 'Alpha Token',
+      symbol: 'ALP',
+      standard: 'ARC200',
+      network: 'VOI',
+      totalSupply: '1000000',
+      description: 'A token',
+      status: 'active',
+      complianceBadges: [],
+      type: 'FT',
+      isMicaCompliant: false,
+      kycRequired: false,
+      whitelistStatus: 'disabled',
+      issuer: 'issuer@example.com',
+      ...overrides,
+    } as any);
+
+    it('should filter "None" complianceBadge — returns tokens with no compliance badges', () => {
+      const store = useMarketplaceStore();
+      store.tokens = [
+        makeToken({ id: 'tk-no-badge', complianceBadges: [] }),
+        makeToken({ id: 'tk-has-badge', complianceBadges: ['MICA Compliant'] }),
+      ];
+      store.updateFilters({ complianceBadge: 'None' });
+      const result = store.filteredTokens;
+      expect(result.every((t) => !t.complianceBadges || t.complianceBadges.length === 0)).toBe(true);
+      expect(result.some((t) => t.id === 'tk-no-badge')).toBe(true);
+    });
+
+    it('should return true for unknown complianceBadge value', () => {
+      const store = useMarketplaceStore();
+      store.tokens = [makeToken({ id: 'tk-1' })];
+      store.updateFilters({ complianceBadge: 'UnknownBadge' as any });
+      // fallback `return true` keeps all tokens
+      expect(store.filteredTokens.length).toBe(1);
+    });
+
+    it('should search by issuer field (optional chain branch)', () => {
+      const store = useMarketplaceStore();
+      store.tokens = [
+        makeToken({ id: 'tk-issuer', issuer: 'alice@biatec.io', name: 'ZZZ', symbol: 'ZZZ', description: '' }),
+        makeToken({ id: 'tk-no-issuer', issuer: undefined, name: 'YYY', symbol: 'YYY', description: '' }),
+      ];
+      store.updateFilters({ search: 'alice' });
+      const result = store.filteredTokens;
+      expect(result.some((t) => t.id === 'tk-issuer')).toBe(true);
+      expect(result.some((t) => t.id === 'tk-no-issuer')).toBe(false);
+    });
+
+    it('should handle undefined issuer without crashing (optional chain = undefined)', () => {
+      const store = useMarketplaceStore();
+      store.tokens = [makeToken({ id: 'tk-niss', issuer: undefined, name: 'Beta', symbol: 'BETA', description: 'b' })];
+      store.updateFilters({ search: 'alpha' });
+      // doesn't match, returns empty — importantly, no crash
+      expect(store.filteredTokens.length).toBe(0);
+    });
+  });
+
+  describe('fetchTokenPrices error handling', () => {
+    it('should catch and log error in fetchTokenPrices without throwing', async () => {
+      const store = useMarketplaceStore();
+      store.tokens = [
+        {
+          id: 'tk-err',
+          name: 'Err Token',
+          symbol: 'ERR',
+          standard: 'ARC200',
+          network: 'VOI',
+          totalSupply: '1',
+          description: '',
+          status: 'active',
+          complianceBadges: [],
+          type: 'FT',
+        } as any,
+      ];
+      vi.mocked(PriceOracleModule.priceOracleService.getBatchPrices).mockRejectedValueOnce(
+        new Error('Network error'),
+      );
+      // should resolve without throwing
+      await expect(store.fetchTokenPrices()).resolves.toBeUndefined();
+      expect(store.pricesLoading).toBe(false);
+    });
+
+    it('should catch and log error in fetchTokenPrice without throwing', async () => {
+      const store = useMarketplaceStore();
+      store.tokens = [
+        {
+          id: 'tk-single-err',
+          name: 'Single Err',
+          symbol: 'SE',
+          standard: 'ARC200',
+          network: 'VOI',
+          totalSupply: '1',
+          description: '',
+          status: 'active',
+          complianceBadges: [],
+          type: 'FT',
+        } as any,
+      ];
+      vi.mocked(PriceOracleModule.priceOracleService.getTokenPrice).mockRejectedValueOnce(
+        new Error('Price fetch failed'),
+      );
+      await expect(store.fetchTokenPrice('tk-single-err')).resolves.toBeUndefined();
+    });
+  });
+
   describe('fetchTokenPrices with tokens', () => {
     it('should update tokens when prices are returned from batch fetch', async () => {
       const store = useMarketplaceStore();
