@@ -37,19 +37,19 @@ test.describe('Compliance Orchestration View', () => {
       localStorage.setItem('algorand_user', JSON.stringify({
         address: 'TEST_ADDRESS_123',
         email: 'test@example.com',
-        name: 'Test User'
+        name: 'Test User',
+        isConnected: true
       }))
     })
 
     // Navigate to compliance orchestration page
     await page.goto('/compliance/orchestration')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000) // Extreme timeout for CI environment - handles very slow async initialization
     
     // Wait for main heading to ensure page is fully loaded
-    await page.getByRole('heading', { name: /Compliance Verification/i, level: 1 }).waitFor({ state: 'visible', timeout: 30000 })
+    await page.getByRole('heading', { name: /Compliance Verification/i, level: 1 }).waitFor({ state: 'visible', timeout: 45000 })
     
-    // Additional wait for all component data to load and render
+    // Wait for KYC content to render (storeToRefs reactivity triggers after mount)
     await page.waitForTimeout(2000)
   })
 
@@ -146,9 +146,8 @@ test.describe('Compliance Orchestration View', () => {
 
   test('should display document completion percentage', async ({ page }) => {
     // Check for percentage display (format: "X%")
-    const percentagePattern = /\d+%/
-    const percentageElements = page.locator('text=' + percentagePattern.source).first()
-    await expect(percentageElements).toBeVisible({ timeout: 30000 })
+    const percentageElement = page.getByText(/\d+%/).first()
+    await expect(percentageElement).toBeVisible({ timeout: 30000 })
   })
 
   test('should have responsive layout', async ({ page }) => {

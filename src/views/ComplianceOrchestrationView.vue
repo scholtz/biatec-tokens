@@ -283,6 +283,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onErrorCaptured } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import {
   ArrowPathIcon,
@@ -320,7 +321,7 @@ const {
   completedDocuments,
   documentCompletionPercentage,
   recentEvents,
-} = complianceStore
+} = storeToRefs(complianceStore)
 
 // Local state
 const uploadModalOpen = ref(false)
@@ -357,9 +358,9 @@ const currentEligibility = computed(() => {
 })
 
 const totalRequiredDocuments = computed(() => {
-  if (!userComplianceState) return 0
+  if (!userComplianceState.value) return 0
   try {
-    return userComplianceState.kycDocuments.filter(doc => doc.required).length
+    return userComplianceState.value.kycDocuments.filter(doc => doc.required).length
   } catch (err) {
     console.error('[ComplianceOrchestrationView] Error calculating required documents:', err)
     return 0
