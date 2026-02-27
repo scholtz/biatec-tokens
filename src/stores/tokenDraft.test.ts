@@ -255,4 +255,36 @@ describe('TokenDraft Store', () => {
       expect(loaded?.lastModified).toBeInstanceOf(Date)
     })
   })
+
+  describe('Edge cases — uncovered branches', () => {
+    it('should return null from loadDraft when sessionStorage is empty', () => {
+      sessionStorage.clear()
+      const store = useTokenDraftStore()
+      const result = store.loadDraft()
+      expect(result).toBeNull()
+    })
+
+    it('should return compatible:true with empty warnings when no currentDraft in validateNetworkSwitch', () => {
+      const store = useTokenDraftStore()
+      // currentDraft is null (not initialized)
+      const result = store.validateNetworkSwitch('voi-mainnet', 'ethereum')
+      expect(result.compatible).toBe(true)
+      expect(result.warnings).toHaveLength(0)
+    })
+
+    it('should warn about attestation metadata on network switch', () => {
+      const store = useTokenDraftStore()
+      store.initializeDraft('voi-mainnet')
+      store.updateDraft({
+        selectedStandard: 'ARC200',
+        attestationMetadata: {
+          enabled: true,
+          attestations: [],
+          complianceSummary: null as any,
+        } as any,
+      })
+      const result = store.validateNetworkSwitch('voi-mainnet', 'ethereum')
+      expect(result.warnings.some(w => w.includes('Attestation'))).toBe(true)
+    })
+  })
 })

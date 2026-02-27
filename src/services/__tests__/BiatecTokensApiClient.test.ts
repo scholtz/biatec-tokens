@@ -335,6 +335,48 @@ describe('BiatecTokensApiClient', () => {
       expect(mockInstance.interceptors.response.use).toHaveBeenCalled();
     });
 
+    it('should invoke request interceptor success handler and return config', () => {
+      const mockInstance = {
+        get: vi.fn(),
+        interceptors: {
+          request: { use: vi.fn() },
+          response: { use: vi.fn() },
+        },
+      };
+
+      mockedAxios.create.mockReturnValue(mockInstance);
+      client = new BiatecTokensApiClient();
+
+      // Get the success handler passed to request interceptor
+      const requestUseCall = mockInstance.interceptors.request.use.mock.calls[0];
+      const requestSuccessHandler = requestUseCall[0];
+
+      const fakeConfig = { method: 'get', url: '/test' };
+      const result = requestSuccessHandler(fakeConfig);
+      expect(result).toBe(fakeConfig);
+    });
+
+    it('should invoke response interceptor success handler and return response', () => {
+      const mockInstance = {
+        get: vi.fn(),
+        interceptors: {
+          request: { use: vi.fn() },
+          response: { use: vi.fn() },
+        },
+      };
+
+      mockedAxios.create.mockReturnValue(mockInstance);
+      client = new BiatecTokensApiClient();
+
+      // Get the success handler passed to response interceptor
+      const responseUseCall = mockInstance.interceptors.response.use.mock.calls[0];
+      const responseSuccessHandler = responseUseCall[0];
+
+      const fakeResponse = { status: 200, config: { url: '/test' }, data: { ok: true } };
+      const result = responseSuccessHandler(fakeResponse);
+      expect(result).toBe(fakeResponse);
+    });
+
     it('should setup request interceptor and handle errors', () => {
       const mockInstance = {
         get: vi.fn(),

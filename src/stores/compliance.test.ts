@@ -390,4 +390,52 @@ describe('Compliance Store', () => {
       expect(bothFiltered).toBeGreaterThanOrEqual(aramidFiltered)
     })
   })
+
+  describe('Edge cases — uncovered branches', () => {
+    it('should return 0 completionPercentage when no items match filter (total = 0)', () => {
+      // Use a network that filters to zero items by using a non-existing scenario
+      // We achieve this by mocking filteredChecklist to be empty via setting a specific network
+      // The easiest way: override checklistItems to be empty
+      const store = useComplianceStore()
+      // @ts-expect-error internal state manipulation for coverage
+      store.$patch({ checklistItems: [] })
+      expect(store.metrics.completionPercentage).toBe(0)
+    })
+
+    it('should reset completedAt when required item unchecked after completion (else if branch)', () => {
+      const store = useComplianceStore()
+      // Complete ALL required items so checklistCompletedAt is set
+      const requiredItems = store.filteredChecklist.filter(i => i.required)
+      for (const item of requiredItems) {
+        store.toggleCheckItem(item.id)
+      }
+      expect(store.metrics.completedAt).not.toBeNull()
+
+      // Now uncheck one required item — should reset completedAt
+      store.toggleCheckItem(requiredItems[0].id)
+      expect(store.metrics.completedAt).toBeNull()
+    })
+
+    it('should not update notes when item id does not exist', () => {
+      const store = useComplianceStore()
+      // Should not throw; nothing changes
+      expect(() => store.updateItemNotes('non-existent-id', 'notes')).not.toThrow()
+    })
+
+    it('should not update document URL when item id does not exist', () => {
+      const store = useComplianceStore()
+      expect(() => store.updateItemDocument('non-existent-id', 'https://example.com')).not.toThrow()
+    })
+
+    it('should not advance checklistStartedAt on second check (already set branch)', () => {
+      const store = useComplianceStore()
+      const items = store.filteredChecklist
+      // Check first item → starts the clock
+      store.toggleCheckItem(items[0].id)
+      const firstStartedAt = store.checklistStartedAt
+      // Check second item → clock should NOT change
+      store.toggleCheckItem(items[1].id)
+      expect(store.checklistStartedAt).toBe(firstStartedAt)
+    })
+  })
 })

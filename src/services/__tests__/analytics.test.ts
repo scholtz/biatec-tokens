@@ -395,4 +395,149 @@ describe('AnalyticsService', () => {
       expect(service1.getSessionId()).not.toBe(service2.getSessionId())
     })
   })
+
+  describe('Wizard Step Completed', () => {
+    it('should track wizard step completed', () => {
+      analyticsService.trackWizardStepCompleted({
+        stepIndex: 1,
+        stepId: 'token-details',
+        stepTitle: 'Token Details',
+      })
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '[Analytics Event]',
+        expect.objectContaining({
+          event: 'wizard_step_completed',
+          category: 'Wizard',
+          action: 'Step Completed',
+          label: 'Token Details',
+          stepIndex: 1,
+          stepId: 'token-details',
+        }),
+      )
+    })
+  })
+
+  describe('Token Creation Attempt', () => {
+    it('should track token creation attempt', () => {
+      analyticsService.trackTokenCreationAttempt({
+        tokenName: 'Draft Token',
+        standard: 'ERC20',
+        network: 'Ethereum',
+      })
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '[Analytics Event]',
+        expect.objectContaining({
+          event: 'token_creation_attempt',
+          category: 'Token Creation',
+          action: 'Attempt',
+          tokenName: 'Draft Token',
+        }),
+      )
+    })
+  })
+
+  describe('Insights Events', () => {
+    it('should track insights workspace viewed', () => {
+      analyticsService.trackInsightsWorkspaceViewed()
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '[Analytics Event]',
+        expect.objectContaining({
+          event: 'insights_workspace_viewed',
+          category: 'Insights',
+          action: 'Page Viewed',
+        }),
+      )
+    })
+
+    it('should track insights filter changed', () => {
+      analyticsService.trackInsightsFilterChanged('timeframe', '30d')
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '[Analytics Event]',
+        expect.objectContaining({
+          event: 'insights_filter_changed',
+          category: 'Insights',
+          action: 'Filter Changed',
+          label: 'timeframe',
+          filterType: 'timeframe',
+          filterValue: '30d',
+        }),
+      )
+    })
+
+    it('should track insights exported as csv', () => {
+      analyticsService.trackInsightsExported('csv')
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '[Analytics Event]',
+        expect.objectContaining({
+          event: 'insights_exported',
+          category: 'Insights',
+          action: 'Data Exported',
+          label: 'csv',
+          format: 'csv',
+        }),
+      )
+    })
+
+    it('should track insights exported as json', () => {
+      analyticsService.trackInsightsExported('json')
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '[Analytics Event]',
+        expect.objectContaining({
+          event: 'insights_exported',
+          format: 'json',
+        }),
+      )
+    })
+
+    it('should track scenario run', () => {
+      analyticsService.trackScenarioRun({ supplyGrowth: 10, priceTarget: 1.5 })
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '[Analytics Event]',
+        expect.objectContaining({
+          event: 'insights_scenario_run',
+          category: 'Insights',
+          action: 'Scenario Run',
+          supplyGrowth: 10,
+        }),
+      )
+    })
+
+    it('should track metric clicked', () => {
+      analyticsService.trackMetricClicked('total-supply', 'Total Supply')
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '[Analytics Event]',
+        expect.objectContaining({
+          event: 'insights_metric_clicked',
+          category: 'Insights',
+          action: 'Metric Clicked',
+          label: 'Total Supply',
+          metricId: 'total-supply',
+        }),
+      )
+    })
+  })
+
+  describe('Compliance Checklist unchecked branch', () => {
+    it('should track compliance item unchecked', () => {
+      analyticsService.trackComplianceChecklistUpdate('kyc-policy', false, 50)
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '[Analytics Event]',
+        expect.objectContaining({
+          event: 'compliance_checklist_update',
+          action: 'Item Unchecked',
+          label: 'kyc-policy',
+          completionPercentage: 50,
+        }),
+      )
+    })
+  })
 })

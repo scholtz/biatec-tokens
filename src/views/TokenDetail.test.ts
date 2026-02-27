@@ -251,4 +251,124 @@ describe("TokenDetail", () => {
       expect(wrapper.text()).toContain("deployed");
     });
   });
+
+  describe("Status Classes", () => {
+    const makeWrapper = async (status: string) => {
+      vi.mocked(useTokenStore).mockReturnValue({
+        tokens: [
+          {
+            id: "token123",
+            name: "Test Token",
+            symbol: "TEST",
+            standard: "ARC-200",
+            type: "RWA",
+            supply: 1000000,
+            decimals: 6,
+            status,
+            createdAt: new Date("2024-01-15T10:00:00Z"),
+            assetId: "123456",
+          } as any,
+        ],
+      } as any);
+
+      await router.push("/token/token123");
+      await router.isReady();
+
+      const wrapper = mount(TokenDetail, { global: { plugins: [router] } });
+      await flushPromises();
+      return wrapper;
+    };
+
+    it("should render deploying status badge", async () => {
+      const wrapper = await makeWrapper("deploying");
+      expect(wrapper.text()).toContain("deploying");
+    });
+
+    it("should render failed status badge", async () => {
+      const wrapper = await makeWrapper("failed");
+      expect(wrapper.text()).toContain("failed");
+    });
+
+    it("should render created status badge", async () => {
+      const wrapper = await makeWrapper("created");
+      expect(wrapper.text()).toContain("created");
+    });
+  });
+
+  describe("Token with description and attributes", () => {
+    it("should render token description when present", async () => {
+      vi.mocked(useTokenStore).mockReturnValue({
+        tokens: [
+          {
+            id: "token123",
+            name: "Test Token",
+            symbol: "TEST",
+            standard: "ARC-200",
+            type: "RWA",
+            supply: 1000000,
+            decimals: 6,
+            status: "deployed",
+            createdAt: new Date("2024-01-15T10:00:00Z"),
+            assetId: "123456",
+            description: "A test token description",
+          } as any,
+        ],
+      } as any);
+
+      await router.push("/token/token123");
+      await router.isReady();
+
+      const wrapper = mount(TokenDetail, { global: { plugins: [router] } });
+      await flushPromises();
+
+      expect(wrapper.text()).toContain("A test token description");
+    });
+
+    it("should render token attributes when present", async () => {
+      vi.mocked(useTokenStore).mockReturnValue({
+        tokens: [
+          {
+            id: "token123",
+            name: "Test Token",
+            symbol: "TEST",
+            standard: "ARC-200",
+            type: "RWA",
+            supply: 1000000,
+            decimals: 6,
+            status: "deployed",
+            createdAt: new Date("2024-01-15T10:00:00Z"),
+            assetId: "123456",
+            attributes: [{ trait_type: "Category", value: "RWA" }],
+          } as any,
+        ],
+      } as any);
+
+      await router.push("/token/token123");
+      await router.isReady();
+
+      const wrapper = mount(TokenDetail, { global: { plugins: [router] } });
+      await flushPromises();
+
+      expect(wrapper.text()).toContain("Attributes");
+      expect(wrapper.text()).toContain("Category");
+    });
+  });
+
+  describe("Token not found", () => {
+    it("should handle missing token gracefully", async () => {
+      vi.mocked(useTokenStore).mockReturnValue({ tokens: [] } as any);
+
+      await router.push("/token/nonexistent");
+      await router.isReady();
+
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const wrapper = mount(TokenDetail, { global: { plugins: [router] } });
+      await flushPromises();
+
+      // Component should render without crashing even when token is not found
+      expect(wrapper.exists()).toBe(true);
+      consoleSpy.mockRestore();
+    });
+  });
 });
