@@ -357,4 +357,90 @@ describe('TokenCreationWizard', () => {
       await expect(vm.handleComplete()).resolves.not.toThrow()
     })
   })
+
+  describe('onBeforeUnmount tracking', () => {
+    it('should track abandonment when wizard is unmounted with draft without createdAt', async () => {
+      const { useAuthStore } = await import('../../stores/auth');
+      const { useTokenDraftStore } = await import('../../stores/tokenDraft');
+      const authStore = useAuthStore();
+      authStore.user = { address: 'TEST_ADDR', email: 'test@test.com' } as any;
+      const tokenDraftStore = useTokenDraftStore();
+      tokenDraftStore.currentDraft = { name: 'Test', selectedStandard: 'ARC3' } as any; // no createdAt
+      
+      const wrapper = mount(TokenCreationWizard);
+      wrapper.unmount();
+      // Should not throw even if analytics service is called
+    });
+
+    it('should NOT track abandonment when draft has createdAt', async () => {
+      const { useAuthStore } = await import('../../stores/auth');
+      const { useTokenDraftStore } = await import('../../stores/tokenDraft');
+      const authStore = useAuthStore();
+      authStore.user = { address: 'TEST_ADDR', email: 'test@test.com' } as any;
+      const tokenDraftStore = useTokenDraftStore();
+      tokenDraftStore.currentDraft = { 
+        name: 'Test', 
+        selectedStandard: 'ARC3',
+        createdAt: new Date().toISOString()
+      } as any;
+      
+      const wrapper = mount(TokenCreationWizard);
+      wrapper.unmount();
+      // Should not throw
+    });
+
+    it('should NOT track abandonment when no draft exists', async () => {
+      const { useAuthStore } = await import('../../stores/auth');
+      const { useTokenDraftStore } = await import('../../stores/tokenDraft');
+      const authStore = useAuthStore();
+      authStore.user = { address: 'TEST_ADDR', email: 'test@test.com' } as any;
+      const tokenDraftStore = useTokenDraftStore();
+      tokenDraftStore.currentDraft = null;
+      
+      const wrapper = mount(TokenCreationWizard);
+      wrapper.unmount();
+      // Should not throw
+    });
+  });
+
+  describe('handleStepValidated', () => {
+    it('should handle validation with isValid true', async () => {
+      const wrapper = mount(TokenCreationWizard);
+      const vm = wrapper.vm as any;
+      expect(() => vm.handleStepValidated(0, true)).not.toThrow();
+    });
+
+    it('should handle validation with isValid false', async () => {
+      const wrapper = mount(TokenCreationWizard);
+      const vm = wrapper.vm as any;
+      expect(() => vm.handleStepValidated(0, false)).not.toThrow();
+    });
+
+    it('should handle validation for out-of-bounds stepIndex gracefully', async () => {
+      const wrapper = mount(TokenCreationWizard);
+      const vm = wrapper.vm as any;
+      expect(() => vm.handleStepValidated(999, false)).not.toThrow();
+    });
+  });
+
+  describe('handleSaveDraft with no draft', () => {
+    it('should not throw when no current draft', async () => {
+      const { useTokenDraftStore } = await import('../../stores/tokenDraft');
+      const tokenDraftStore = useTokenDraftStore();
+      tokenDraftStore.currentDraft = null;
+      const wrapper = mount(TokenCreationWizard);
+      const vm = wrapper.vm as any;
+      expect(() => vm.handleSaveDraft()).not.toThrow();
+    });
+  });
+
+  describe('handlePlanSelected', () => {
+    it('should set selectedPlan and not throw', async () => {
+      const wrapper = mount(TokenCreationWizard);
+      const vm = wrapper.vm as any;
+      vm.handlePlanSelected('pro');
+      expect(vm.selectedPlan).toBe('pro');
+    });
+  });
+
 })

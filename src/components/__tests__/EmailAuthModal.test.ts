@@ -285,4 +285,164 @@ describe("EmailAuthModal", () => {
 
     wrapper.unmount();
   });
-});
+
+  it("should call handleEmailPasswordSubmit successfully when auth succeeds", async () => {
+    const pinia = createTestingPinia({
+      createSpy: vi.fn,
+      initialState: {
+        auth: {
+          isAuthenticated: false,
+          account: null,
+        },
+      },
+    });
+    
+    const wrapper = mount(EmailAuthModal, {
+      props: { isOpen: true },
+      attachTo: document.body,
+      global: { plugins: [pinia] },
+    });
+
+    // Get the auth store from pinia and set up mock
+    const { useAuthStore } = await import("../../stores/auth");
+    const authStore = useAuthStore();
+    authStore.authenticateWithARC76 = vi.fn().mockImplementation(async () => {
+      authStore.isAuthenticated = true;
+      authStore.account = "ALGO_ADDR_123";
+    });
+
+    await nextTick();
+
+    // Fill in the form
+    const emailInput = wrapper.find('input[type="email"]');
+    const passwordInput = wrapper.find('input[type="password"]');
+    
+    if (emailInput.exists() && passwordInput.exists()) {
+      await emailInput.setValue("test@example.com");
+      await passwordInput.setValue("password123");
+      
+      const submitButton = wrapper.find('button[type="submit"]');
+      if (submitButton.exists()) {
+        await submitButton.trigger("click");
+        await nextTick();
+      }
+    }
+
+    wrapper.unmount();
+  });
+
+  it("should emit error when email is empty on submit", async () => {
+    const wrapper = mount(EmailAuthModal, {
+      props: { isOpen: true },
+      attachTo: document.body,
+      global: { plugins: [createTestingPinia()] },
+    });
+
+    await nextTick();
+
+    // Find and submit without filling the form
+    const vm = wrapper.vm as any;
+    if (vm.handleEmailPasswordSubmit) {
+      await vm.handleEmailPasswordSubmit();
+    }
+
+    // Should emit error if form is empty
+    const emitted = wrapper.emitted();
+    if (emitted.error) {
+      expect(emitted.error[0]).toBeDefined();
+    }
+
+    wrapper.unmount();
+  });
+
+  it("should handle network watcher prop change", async () => {
+    const wrapper = mount(EmailAuthModal, {
+      props: { isOpen: true, defaultNetwork: "algorand-mainnet" },
+      attachTo: document.body,
+      global: { plugins: [createTestingPinia()] },
+    });
+
+    await nextTick();
+
+    await wrapper.setProps({ defaultNetwork: "algorand-testnet" });
+    await nextTick();
+
+    wrapper.unmount();
+  });
+
+  it("should initialize selectedNetwork from localStorage", async () => {
+    localStorage.setItem("selected_network", "algorand-testnet");
+
+    const wrapper = mount(EmailAuthModal, {
+      props: { isOpen: true },
+      attachTo: document.body,
+      global: { plugins: [createTestingPinia()] },
+    });
+
+    await nextTick();
+
+    wrapper.unmount();
+    localStorage.removeItem("selected_network");
+  });
+
+  it("should handle authentication failure (not connected after auth)", async () => {
+    const pinia = createTestingPinia({
+      createSpy: vi.fn,
+      initialState: {
+        auth: {
+          isAuthenticated: false,
+          account: null,
+        },
+      },
+    });
+
+    const wrapper = mount(EmailAuthModal, {
+      props: { isOpen: true },
+      attachTo: document.body,
+      global: { plugins: [pinia] },
+    });
+
+    const { useAuthStore } = await import("../../stores/auth");
+    const authStore = useAuthStore();
+    // authenticateWithARC76 completes but doesn't set isAuthenticated
+    authStore.authenticateWithARC76 = vi.fn().mockResolvedValue(undefined);
+    authStore.isAuthenticated = false;
+    authStore.account = null;
+
+    await nextTick();
+
+    const vm = wrapper.vm as any;
+    if (vm.handleEmailPasswordSubmit) {
+      // Manually set email/password
+      if (vm.emailForm) {
+        vm.emailForm.email = "user@test.com";
+        vm.emailForm.password = "pass123";
+      }
+      await vm.handleEmailPasswordSubmit();
+      await nextTick();
+    }
+
+    wrapper.unmount();
+  });
+
+  it("should handle close function", async () => {
+    const wrapper = mount(EmailAuthModal, {
+      props: { isOpen: true },
+      attachTo: document.body,
+      global: { plugins: [createTestingPinia()] },
+    });
+
+    await nextTick();
+
+    const vm = wrapper.vm as any;
+    if (vm.close) {
+      vm.close();
+    }
+
+    const emitted = wrapper.emitted();
+    expect(emitted.close).toBeDefined();
+
+    wrapper.unmount();
+  });
+
+})

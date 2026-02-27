@@ -414,4 +414,244 @@ describe("DeploymentStatusStep", () => {
       expect(copyButtons.length).toBeGreaterThan(0);
     });
   });
-});
+
+  describe('Additional Function Coverage', () => {
+    it('should call retryDeployment and reset stages', async () => {
+      const wrapper = mount(DeploymentStatusStep, {
+        global: { stubs },
+      });
+      const vm = wrapper.vm as any;
+      // Set up failed state
+      vm.deploymentStatus = 'failed';
+      vm.deploymentError = { message: 'Test error', recoverable: true, remediation: 'Try again' };
+      vm.deploymentStages[0].status = 'failed';
+      vm.deploymentStages[0].error = 'Stage failed';
+      await wrapper.vm.$nextTick();
+
+      vm.retryDeployment();
+      await wrapper.vm.$nextTick();
+
+      // Stages should be reset to pending
+      expect(vm.deploymentStages[0].status).toBe('pending');
+      expect(vm.deploymentStages[0].error).toBeUndefined();
+    });
+
+    it('should call saveDraftAndExit without throwing', async () => {
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      expect(() => vm.saveDraftAndExit()).not.toThrow();
+    });
+
+    it('should call contactSupport without throwing', async () => {
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      expect(() => vm.contactSupport()).not.toThrow();
+    });
+
+    it('should call contactSupport with deploymentError code', async () => {
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      vm.deploymentError = { message: 'Error', code: 'RATE_LIMIT', recoverable: true, remediation: 'Wait' };
+      expect(() => vm.contactSupport()).not.toThrow();
+    });
+
+    it('should call copyToClipboard without throwing', async () => {
+      const mockWriteText = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: mockWriteText },
+        configurable: true,
+      });
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      vm.copyToClipboard('test-text');
+      expect(mockWriteText).toHaveBeenCalledWith('test-text');
+    });
+
+    it('should call formatAuditTime correctly', async () => {
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      const result = vm.formatAuditTime('2024-01-15T10:30:45.000Z');
+      expect(typeof result).toBe('string');
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it('should compute isValid as true when deployment completed', async () => {
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      vm.deploymentStatus = 'completed';
+      await wrapper.vm.$nextTick();
+      expect(vm.isValid).toBe(true);
+    });
+
+    it('should compute isValid as false when deployment in-progress', async () => {
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      vm.deploymentStatus = 'in-progress';
+      await wrapper.vm.$nextTick();
+      expect(vm.isValid).toBe(false);
+    });
+
+    it('should compute isValid as false when deployment failed', async () => {
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      vm.deploymentStatus = 'failed';
+      await wrapper.vm.$nextTick();
+      expect(vm.isValid).toBe(false);
+    });
+
+    it('should call viewOnExplorer with explorerUrl present', async () => {
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      vm.deploymentResult.explorerUrl = 'https://algoexplorer.io/tx/TEST123';
+      vm.viewOnExplorer();
+      expect(openSpy).toHaveBeenCalledWith('https://algoexplorer.io/tx/TEST123', '_blank');
+      openSpy.mockRestore();
+    });
+
+    it('should call viewOnExplorer with fallback Algorand URL when no explorerUrl', async () => {
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      vm.deploymentResult.explorerUrl = '';
+      vm.deploymentResult.network = 'Algorand';
+      vm.deploymentResult.assetId = '99999';
+      vm.viewOnExplorer();
+      expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('algoexplorer.io'), '_blank');
+      openSpy.mockRestore();
+    });
+
+    it('should call viewOnExplorer with fallback Ethereum URL', async () => {
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      vm.deploymentResult.explorerUrl = '';
+      vm.deploymentResult.network = 'Ethereum';
+      vm.deploymentResult.assetId = '0xABCDEF';
+      vm.viewOnExplorer();
+      expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('etherscan.io'), '_blank');
+      openSpy.mockRestore();
+    });
+
+    it('should call viewOnExplorer with fallback for unknown network', async () => {
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      vm.deploymentResult.explorerUrl = '';
+      vm.deploymentResult.network = 'UnknownNetwork';
+      vm.deploymentResult.assetId = '12345';
+      vm.viewOnExplorer();
+      expect(openSpy).toHaveBeenCalledWith('#', '_blank');
+      openSpy.mockRestore();
+    });
+
+    it('should call viewOnExplorer with VOI fallback URL', async () => {
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      vm.deploymentResult.explorerUrl = '';
+      vm.deploymentResult.network = 'VOI';
+      vm.deploymentResult.assetId = '54321';
+      vm.viewOnExplorer();
+      expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('voi.observer'), '_blank');
+      openSpy.mockRestore();
+    });
+
+    it('should toggleAuditTrail to true and load if empty', async () => {
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      vm.deploymentResult.assetId = 'ASSET-001';
+      expect(vm.showAuditTrail).toBe(false);
+      await vm.toggleAuditTrail();
+      expect(vm.showAuditTrail).toBe(true);
+    });
+
+    it('should toggleAuditTrail to false', async () => {
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      vm.showAuditTrail = true;
+      await vm.toggleAuditTrail();
+      expect(vm.showAuditTrail).toBe(false);
+    });
+
+    it('should handle loadAuditTrail with no assetId gracefully', async () => {
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      vm.deploymentResult.assetId = '';
+      // Should not throw
+      await expect(vm.loadAuditTrail()).resolves.toBeUndefined();
+    });
+
+    it('should downloadAuditReport without throwing', async () => {
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      vm.deploymentResult.assetId = 'ASSET-001';
+      vm.deploymentResult.tokenSymbol = 'TST';
+      await expect(vm.downloadAuditReport()).resolves.not.toThrow();
+    });
+
+    it('should call downloadSummary without throwing when draft exists', async () => {
+      const tokenDraftStore = useTokenDraftStore();
+      tokenDraftStore.currentDraft = {
+        projectSetup: { projectName: 'Test Project', organizationName: 'Test Org' },
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+      } as any;
+      
+      // Mock document.createElement for blob URLs
+      const createObjectURL = vi.fn().mockReturnValue('blob:test-url');
+      const revokeObjectURL = vi.fn();
+      global.URL.createObjectURL = createObjectURL;
+      global.URL.revokeObjectURL = revokeObjectURL;
+      
+      const appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(() => document.createElement('a'));
+      const removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation(() => document.createElement('a'));
+      const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      vm.deploymentResult = {
+        tokenName: 'Test Token',
+        tokenSymbol: 'TST',
+        network: 'Algorand',
+        standard: 'ARC3',
+        assetId: '12345',
+        txId: 'TX-001',
+      };
+      
+      expect(() => vm.downloadSummary()).not.toThrow();
+      
+      appendChildSpy.mockRestore();
+      removeChildSpy.mockRestore();
+      clickSpy.mockRestore();
+    });
+
+    it('should call downloadSummary without throwing when draft is null', async () => {
+      const tokenDraftStore = useTokenDraftStore();
+      tokenDraftStore.currentDraft = null;
+      
+      global.URL.createObjectURL = vi.fn().mockReturnValue('blob:test-url');
+      global.URL.revokeObjectURL = vi.fn();
+      vi.spyOn(document.body, 'appendChild').mockImplementation(() => document.createElement('a'));
+      vi.spyOn(document.body, 'removeChild').mockImplementation(() => document.createElement('a'));
+      vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+      vm.deploymentResult = {
+        tokenName: 'Test Token',
+        tokenSymbol: 'TST',
+        network: 'Algorand',
+        standard: 'ARC3',
+        assetId: '12345',
+        txId: 'TX-001',
+      };
+      
+      expect(() => vm.downloadSummary()).not.toThrow();
+      vi.restoreAllMocks();
+    });
+  });
+
+})

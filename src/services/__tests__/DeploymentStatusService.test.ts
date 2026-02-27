@@ -472,4 +472,675 @@ describe('DeploymentStatusService', () => {
       expect(finalState?.result?.explorerUrl).toContain('0xABC123');
     });
   });
-});
+
+  // ===== ADDITIONAL TESTS TO IMPROVE BRANCH COVERAGE =====
+
+  describe('mapErrorToUserMessage - Direct Coverage', () => {
+    it('should map network error correctly', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const networkError = new Error('network connection failed');
+      mockDeploymentService.deployToken.mockRejectedValue(networkError);
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.status).toBe('failed');
+      expect(finalState?.error?.code).toBe('NETWORK_ERROR');
+      expect(finalState?.error?.recoverable).toBe(true);
+    });
+
+    it('should map fetch error to network error', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const fetchError = new Error('fetch failed');
+      mockDeploymentService.deployToken.mockRejectedValue(fetchError);
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.error?.code).toBe('NETWORK_ERROR');
+    });
+
+    it('should map validation error correctly', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const validationError = new Error('validation failed: invalid parameters');
+      mockDeploymentService.deployToken.mockRejectedValue(validationError);
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.error?.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('should map invalid params to validation error', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const invalidError = new Error('invalid request data');
+      mockDeploymentService.deployToken.mockRejectedValue(invalidError);
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.error?.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('should map insufficient funds error', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const insufficientError = new Error('insufficient funds for gas');
+      mockDeploymentService.deployToken.mockRejectedValue(insufficientError);
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.error?.code).toBe('INSUFFICIENT_FUNDS');
+      expect(finalState?.error?.remediation).toContain('funds');
+    });
+
+    it('should map balance error to insufficient funds', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const balanceError = new Error('low balance');
+      mockDeploymentService.deployToken.mockRejectedValue(balanceError);
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.error?.code).toBe('INSUFFICIENT_FUNDS');
+    });
+
+    it('should map unauthorized error to auth error', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const authError = new Error('unauthorized access denied');
+      mockDeploymentService.deployToken.mockRejectedValue(authError);
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.error?.code).toBe('AUTH_ERROR');
+      expect(finalState?.error?.remediation).toContain('log in');
+    });
+
+    it('should map auth keyword to auth error', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const authError = new Error('auth token expired');
+      mockDeploymentService.deployToken.mockRejectedValue(authError);
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.error?.code).toBe('AUTH_ERROR');
+    });
+
+    it('should map rate limit error', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const rateLimitError = new Error('rate limit exceeded');
+      mockDeploymentService.deployToken.mockRejectedValue(rateLimitError);
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.error?.code).toBe('RATE_LIMIT');
+      expect(finalState?.error?.remediation).toContain('wait');
+    });
+
+    it('should map too many requests to rate limit', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const tooManyError = new Error('too many requests sent');
+      mockDeploymentService.deployToken.mockRejectedValue(tooManyError);
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.error?.code).toBe('RATE_LIMIT');
+    });
+
+    it('should use UNKNOWN_ERROR for unrecognized errors', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const unknownError = new Error('Something completely unexpected happened');
+      mockDeploymentService.deployToken.mockRejectedValue(unknownError);
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.error?.code).toBe('UNKNOWN_ERROR');
+      expect(finalState?.error?.recoverable).toBe(true);
+    });
+  });
+
+  describe('getSymbolFromRequest and getNetworkFromRequest', () => {
+    it('should use unitName when symbol is not present (ARC3)', async () => {
+      const arc3Request = {
+        standard: TokenStandard.ARC3,
+        name: 'My ARC3 Token',
+        unitName: 'MARC3',
+        totalSupply: 1000000,
+        walletAddress: '0xABC',
+      };
+      const mockDeployResponse = {
+        success: true,
+        transactionId: 'TX-ARC3-001',
+        timestamp: new Date().toISOString(),
+      };
+      const mockStatusResponse = {
+        status: 'confirmed',
+        assetId: 99999,
+      };
+      mockDeploymentService.deployToken.mockResolvedValue(mockDeployResponse);
+      mockDeploymentService.checkDeploymentStatus.mockResolvedValue(mockStatusResponse);
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(arc3Request as any, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.result?.tokenSymbol).toBe('MARC3');
+      expect(finalState?.result?.network).toBe('Algorand');
+    });
+
+    it('should use symbol when present (ERC20)', async () => {
+      const erc20Request = {
+        standard: TokenStandard.ERC20,
+        name: 'My ERC20 Token',
+        symbol: 'MERC',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const mockDeployResponse = {
+        success: true,
+        transactionId: 'TX-ERC20-001',
+        timestamp: new Date().toISOString(),
+      };
+      const mockStatusResponse = {
+        status: 'confirmed',
+        assetId: 11111,
+      };
+      mockDeploymentService.deployToken.mockResolvedValue(mockDeployResponse);
+      mockDeploymentService.checkDeploymentStatus.mockResolvedValue(mockStatusResponse);
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(erc20Request as any, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.result?.tokenSymbol).toBe('MERC');
+      expect(finalState?.result?.network).toBe('Ethereum');
+    });
+
+    it('should return N/A when neither symbol nor unitName is present', async () => {
+      const noSymbolRequest = {
+        standard: TokenStandard.ARC3,
+        name: 'No Symbol Token',
+        totalSupply: 1000000,
+        walletAddress: '0xABC',
+      };
+      const mockDeployResponse = {
+        success: true,
+        transactionId: 'TX-NS-001',
+        timestamp: new Date().toISOString(),
+      };
+      const mockStatusResponse = {
+        status: 'confirmed',
+        assetId: 77777,
+      };
+      mockDeploymentService.deployToken.mockResolvedValue(mockDeployResponse);
+      mockDeploymentService.checkDeploymentStatus.mockResolvedValue(mockStatusResponse);
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(noSymbolRequest as any, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.result?.tokenSymbol).toBe('N/A');
+    });
+  });
+
+  describe('buildExplorerUrl coverage', () => {
+    it('should generate correct Ethereum URL for ERC20', async () => {
+      const erc20Request = {
+        standard: TokenStandard.ERC20,
+        name: 'Test',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '100',
+        walletAddress: '0x1234',
+      };
+      const mockDeployResponse = {
+        success: true,
+        transactionId: '0xETH_TX',
+        timestamp: new Date().toISOString(),
+      };
+      mockDeploymentService.deployToken.mockResolvedValue(mockDeployResponse);
+      mockDeploymentService.checkDeploymentStatus.mockResolvedValue({
+        status: 'confirmed',
+        assetId: 22222,
+      });
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(erc20Request as any, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.result?.explorerUrl).toContain('etherscan.io');
+    });
+
+    it('should generate correct Algorand URL for ARC3', async () => {
+      const arc3Request = {
+        standard: TokenStandard.ARC3,
+        name: 'Alg Token',
+        unitName: 'ALGT',
+        totalSupply: 1000,
+        walletAddress: '0xALGO',
+      };
+      const mockDeployResponse = {
+        success: true,
+        transactionId: 'ALGOEXPLORER_TX',
+        timestamp: new Date().toISOString(),
+      };
+      mockDeploymentService.deployToken.mockResolvedValue(mockDeployResponse);
+      mockDeploymentService.checkDeploymentStatus.mockResolvedValue({
+        status: 'confirmed',
+        assetId: 33333,
+      });
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(arc3Request as any, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.result?.explorerUrl).toContain('algoexplorer.io');
+    });
+  });
+
+  describe('Deployment with API failure response (not exception)', () => {
+    it('should handle response.success === false without errorCode', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const failedResponse = {
+        success: false,
+        error: 'Token name already exists',
+        timestamp: new Date().toISOString(),
+      };
+      mockDeploymentService.deployToken.mockResolvedValue(failedResponse);
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.status).toBe('failed');
+      expect(finalState?.stages[2].status).toBe('failed');
+    });
+
+    it('should handle response.success === false with errorCode', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const failedResponse = {
+        success: false,
+        error: 'Rate limit exceeded',
+        errorCode: 'RATE_LIMIT',
+        timestamp: new Date().toISOString(),
+      };
+      mockDeploymentService.deployToken.mockResolvedValue(failedResponse);
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.status).toBe('failed');
+    });
+  });
+
+  describe('Polling with confirmations and progress', () => {
+    it('should handle confirmations-based progress from status', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const mockDeployResponse = {
+        success: true,
+        transactionId: 'TX-CONFIRM-001',
+        timestamp: new Date().toISOString(),
+      };
+      mockDeploymentService.deployToken.mockResolvedValue(mockDeployResponse);
+      mockDeploymentService.checkDeploymentStatus
+        .mockResolvedValueOnce({ status: 'pending', confirmations: 2, requiredConfirmations: 6 })
+        .mockResolvedValueOnce({ status: 'confirmed', assetId: 55555 });
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.status).toBe('completed');
+    });
+
+    it('should handle progress field in status response', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const mockDeployResponse = {
+        success: true,
+        transactionId: 'TX-PROG-001',
+        timestamp: new Date().toISOString(),
+      };
+      mockDeploymentService.deployToken.mockResolvedValue(mockDeployResponse);
+      mockDeploymentService.checkDeploymentStatus
+        .mockResolvedValueOnce({ status: 'processing', progress: 45 })
+        .mockResolvedValueOnce({ status: 'confirmed', assetId: 66666 });
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.status).toBe('completed');
+    });
+
+    it('should handle status: submitted in polling', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const mockDeployResponse = {
+        success: true,
+        transactionId: 'TX-SUB-001',
+        timestamp: new Date().toISOString(),
+      };
+      mockDeploymentService.deployToken.mockResolvedValue(mockDeployResponse);
+      mockDeploymentService.checkDeploymentStatus
+        .mockResolvedValueOnce({ status: 'submitted' })
+        .mockResolvedValueOnce({ status: 'confirmed', assetId: 77788 });
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.status).toBe('completed');
+    });
+
+    it('should handle status: confirming in polling', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const mockDeployResponse = {
+        success: true,
+        transactionId: 'TX-CONF-001',
+        timestamp: new Date().toISOString(),
+      };
+      mockDeploymentService.deployToken.mockResolvedValue(mockDeployResponse);
+      mockDeploymentService.checkDeploymentStatus
+        .mockResolvedValueOnce({ status: 'confirming' })
+        .mockResolvedValueOnce({ status: 'completed', tokenId: 'CTR-123' });
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.status).toBe('completed');
+      expect(finalState?.result?.assetId).toBe('CTR-123');
+    });
+
+    it('should handle default case for unknown status string in calculateProgress', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const mockDeployResponse = {
+        success: true,
+        transactionId: 'TX-DEF-001',
+        timestamp: new Date().toISOString(),
+      };
+      mockDeploymentService.deployToken.mockResolvedValue(mockDeployResponse);
+      mockDeploymentService.checkDeploymentStatus
+        .mockResolvedValueOnce({ status: 'unknown_status_xyz' })
+        .mockResolvedValueOnce({ status: 'confirmed', assetId: 88888 });
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.status).toBe('completed');
+    });
+
+    it('should handle polling status: failed response', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Test Token',
+        symbol: 'TST',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0x1234',
+      };
+      const mockDeployResponse = {
+        success: true,
+        transactionId: 'TX-FAIL-001',
+        timestamp: new Date().toISOString(),
+      };
+      mockDeploymentService.deployToken.mockResolvedValue(mockDeployResponse);
+      mockDeploymentService.checkDeploymentStatus.mockResolvedValue({
+        status: 'failed',
+        error: 'Transaction was reverted',
+        errorCode: 'TX_REVERTED',
+      });
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise.catch(() => {});
+      expect(finalState?.status).toBe('failed');
+      expect(finalState?.stages[3].status).toBe('failed');
+    });
+
+    it('should handle result with contractAddress', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'Contract Token',
+        symbol: 'CTK',
+        decimals: 18,
+        totalSupply: '5000000',
+        walletAddress: '0x5678',
+      };
+      const mockDeployResponse = {
+        success: true,
+        transactionId: 'TX-CTR-001',
+        timestamp: new Date().toISOString(),
+      };
+      mockDeploymentService.deployToken.mockResolvedValue(mockDeployResponse);
+      mockDeploymentService.checkDeploymentStatus.mockResolvedValue({
+        status: 'confirmed',
+        contractAddress: '0xCONTRACT_ADDR',
+        assetId: 44444,
+      });
+      let finalState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { finalState = state; };
+      const deployPromise = service.startDeployment(mockRequest, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(finalState?.result?.contractAddress).toBe('0xCONTRACT_ADDR');
+    });
+  });
+
+  describe('logDeploymentAudit with user in localStorage', () => {
+    it('should log audit event with user from localStorage', async () => {
+      const mockUser = { address: 'USER_ADDR', email: 'user@test.com', name: 'Test User' };
+      localStorage.setItem('algorand_user', JSON.stringify(mockUser));
+      const mockRequest = {
+        standard: TokenStandard.ARC3,
+        name: 'Test Token',
+        unitName: 'TEST',
+        totalSupply: 1000,
+        walletAddress: 'USER_ADDR',
+        network: 'algorand-testnet',
+      };
+      const mockDeployResponse = {
+        success: true,
+        transactionId: 'TX-AUDIT-001',
+        timestamp: new Date().toISOString(),
+      };
+      mockDeploymentService.deployToken.mockResolvedValue(mockDeployResponse);
+      mockDeploymentService.checkDeploymentStatus.mockResolvedValue({
+        status: 'confirmed',
+        assetId: 12121,
+      });
+      let completedState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { completedState = state; };
+      const deployPromise = service.startDeployment(mockRequest as any, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(completedState?.status).toBe('completed');
+      localStorage.removeItem('algorand_user');
+    });
+
+    it('should log audit event with ERC standard network detection', async () => {
+      const mockRequest = {
+        standard: TokenStandard.ERC20,
+        name: 'ERC Token',
+        symbol: 'ERC',
+        decimals: 18,
+        totalSupply: '1000000',
+        walletAddress: '0xUSER',
+      };
+      const mockDeployResponse = {
+        success: true,
+        transactionId: 'TX-ERC-AUDIT',
+        timestamp: new Date().toISOString(),
+      };
+      mockDeploymentService.deployToken.mockResolvedValue(mockDeployResponse);
+      mockDeploymentService.checkDeploymentStatus.mockResolvedValue({
+        status: 'confirmed',
+        assetId: 13131,
+      });
+      let completedState: DeploymentState | null = null;
+      const stateCallback = (state: DeploymentState) => { completedState = state; };
+      const deployPromise = service.startDeployment(mockRequest as any, stateCallback);
+      await vi.runAllTimersAsync();
+      await deployPromise;
+      expect(completedState?.status).toBe('completed');
+    });
+  });
+
+  describe('stopPolling and reset additional cases', () => {
+    it('should not throw when stopPolling called with no active interval', () => {
+      const freshService = new DeploymentStatusService(mockDeploymentService);
+      expect(() => freshService.stopPolling()).not.toThrow();
+    });
+
+    it('should clear pollingAttempts on reset', () => {
+      const freshService = new DeploymentStatusService(mockDeploymentService);
+      expect(() => freshService.reset()).not.toThrow();
+    });
+  });
+
+})
