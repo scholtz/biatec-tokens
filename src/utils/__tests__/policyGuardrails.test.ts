@@ -89,6 +89,24 @@ describe('validateNetworkCompatibility', () => {
       expect(result?.severity).toBe('error')
     }
   })
+
+  it('normalizes underscore network identifiers (app TokenTemplate format)', () => {
+    // TokenTemplate.network uses underscores; validation must accept both formats
+    expect(validateNetworkCompatibility('ARC200', 'algorand_mainnet')).toBeNull()
+    expect(validateNetworkCompatibility('ERC20', 'ethereum_mainnet')).toBeNull()
+  })
+
+  it('blocks AVM standard on EVM network even with underscore format', () => {
+    const result = validateNetworkCompatibility('ASA', 'ethereum_mainnet')
+    expect(result).not.toBeNull()
+    expect(result?.code).toBe('NETWORK_INCOMPATIBLE_AVM_ON_EVM')
+  })
+
+  it('blocks EVM standard on AVM network even with underscore format', () => {
+    const result = validateNetworkCompatibility('ERC20', 'algorand_mainnet')
+    expect(result).not.toBeNull()
+    expect(result?.code).toBe('NETWORK_INCOMPATIBLE_EVM_ON_AVM')
+  })
 })
 
 // ---------------------------------------------------------------------------

@@ -30,6 +30,7 @@ import {
   markSubmissionSuccess,
   markSubmissionFailed,
 } from '../utils/issuanceIdempotency'
+import { runPolicyGuardrails } from '../utils/policyGuardrails'
 
 const DRAFT_STORAGE_KEY = 'biatec_guided_launch_draft'
 const DRAFT_VERSION = '1.0'
@@ -351,6 +352,27 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
         !currentForm.value.complianceReadiness || !currentForm.value.selectedTemplate || 
         !currentForm.value.tokenEconomics) {
       throw new Error('Cannot submit: required data missing')
+    }
+
+    // Policy guardrails: enforce network/standard compatibility, decimal precision, and naming
+    // before touching the idempotency or submission state.
+    // Note: symbol is not collected separately in this wizard (template.name is used); symbol
+    // validation is deferred to the backend parameter review step.
+    const template = currentForm.value.selectedTemplate
+    const economics = currentForm.value.tokenEconomics
+    const policyResult = runPolicyGuardrails({
+      standard: template.standard,
+      network: template.network,
+      decimals: typeof economics.decimals === 'number' ? economics.decimals : null,
+      supply: economics.totalSupply != null ? Number(economics.totalSupply) : null,
+      name: template.name,
+      // symbol intentionally omitted — not yet collected in guided wizard (deferred to backend review)
+    })
+    if (!policyResult.isValid) {
+      const firstError = policyResult.errors[0]
+      throw new Error(
+        `Policy violation (${firstError.code}): ${firstError.message}. ${firstError.suggestion}`,
+      )
     }
 
     // Idempotency guard: prevent duplicate submissions for the same draft.

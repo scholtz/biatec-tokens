@@ -111,8 +111,11 @@ export type TokenStandard = AvmStandard | EvmStandard
  * when the pair is valid or unknown (unknown values are allowed through to
  * avoid false-positive blocking on new networks/standards).
  *
+ * Network identifiers are normalized (underscores → dashes) before matching
+ * so both 'algorand_mainnet' and 'algorand-mainnet' are accepted.
+ *
  * @param standard  Token standard identifier (e.g. 'ASA', 'ERC20')
- * @param network   Network identifier (e.g. 'algorand-mainnet', 'ethereum-mainnet')
+ * @param network   Network identifier (e.g. 'algorand-mainnet' or 'algorand_mainnet')
  */
 export function validateNetworkCompatibility(
   standard: string,
@@ -120,10 +123,14 @@ export function validateNetworkCompatibility(
 ): PolicyViolation | null {
   if (!standard || !network) return null
 
+  // Normalise separators: the app's TokenTemplate type uses underscores
+  // (e.g. 'algorand_mainnet') while the canonical lists use dashes.
+  const normalizedNetwork = network.replace(/_/g, '-')
+
   const isAvmStandard = (AVM_STANDARDS as readonly string[]).includes(standard)
   const isEvmStandard = (EVM_STANDARDS as readonly string[]).includes(standard)
-  const isAvmNetwork = (AVM_NETWORKS as readonly string[]).includes(network)
-  const isEvmNetwork = (EVM_NETWORKS as readonly string[]).includes(network)
+  const isAvmNetwork = (AVM_NETWORKS as readonly string[]).includes(normalizedNetwork)
+  const isEvmNetwork = (EVM_NETWORKS as readonly string[]).includes(normalizedNetwork)
 
   if (isAvmStandard && isEvmNetwork) {
     return {
@@ -487,6 +494,7 @@ export function runPolicyGuardrails(params: {
   network?: string
   decimals?: number | null
   name?: string | null
+  /** Pass a string value to validate, omit the key entirely to skip symbol validation. */
   symbol?: string | null
   supply?: number | null
 }): PolicyCheckResult {
@@ -504,8 +512,12 @@ export function runPolicyGuardrails(params: {
   const nameViolation = validateTokenName(params.name)
   if (nameViolation) violations.push(nameViolation)
 
-  const symbolViolation = validateTokenSymbol(params.symbol, params.standard ?? '')
-  if (symbolViolation) violations.push(symbolViolation)
+  // Only validate symbol when the caller explicitly includes the key (even as null/empty).
+  // Omitting 'symbol' from params means the caller doesn't yet have a symbol to check.
+  if ('symbol' in params) {
+    const symbolViolation = validateTokenSymbol(params.symbol, params.standard ?? '')
+    if (symbolViolation) violations.push(symbolViolation)
+  }
 
   const supplyViolation = validateSupplyBounds(params.supply, params.standard ?? '')
   if (supplyViolation) violations.push(supplyViolation)
