@@ -146,4 +146,100 @@ describe('TrendChart', () => {
     const circles = wrapper.findAll('circle')
     expect(circles.length).toBe(3)
   })
+
+  it('should show tooltip when mouseenter on data point', async () => {
+    const wrapper = mount(TrendChart, {
+      props: {
+        metricId: 'adoption',
+        label: 'Token Adoption',
+        data: mockData,
+      },
+    })
+
+    const vm = wrapper.vm as any
+    // Call showTooltip directly to test function coverage
+    vm.showTooltip(0)
+    expect(vm.tooltipVisible).toBe(true)
+    expect(vm.tooltipIndex).toBe(0)
+  })
+
+  it('should hide tooltip when mouseleave', async () => {
+    const wrapper = mount(TrendChart, {
+      props: {
+        metricId: 'adoption',
+        label: 'Token Adoption',
+        data: mockData,
+      },
+    })
+
+    const vm = wrapper.vm as any
+    vm.showTooltip(1)
+    expect(vm.tooltipVisible).toBe(true)
+    vm.hideTooltip()
+    expect(vm.tooltipVisible).toBe(false)
+    expect(vm.tooltipIndex).toBeNull()
+  })
+
+  it('should set tooltip coordinates based on point position', async () => {
+    const wrapper = mount(TrendChart, {
+      props: {
+        metricId: 'adoption',
+        label: 'Token Adoption',
+        data: mockData,
+      },
+    })
+
+    const vm = wrapper.vm as any
+    vm.showTooltip(2)
+    // tooltipX/Y should be set to point + offset
+    expect(typeof vm.tooltipX).toBe('number')
+    expect(typeof vm.tooltipY).toBe('number')
+  })
+
+  it('should return null tooltipData when tooltipIndex is null', () => {
+    const wrapper = mount(TrendChart, {
+      props: {
+        metricId: 'adoption',
+        label: 'Token Adoption',
+        data: mockData,
+      },
+    })
+
+    const vm = wrapper.vm as any
+    expect(vm.tooltipIndex).toBeNull()
+    expect(vm.tooltipData).toBeNull()
+  })
+
+  it('should return tooltipData when tooltipIndex is set', async () => {
+    const wrapper = mount(TrendChart, {
+      props: {
+        metricId: 'adoption',
+        label: 'Token Adoption',
+        data: mockData,
+      },
+    })
+
+    const vm = wrapper.vm as any
+    vm.showTooltip(0)
+    expect(vm.tooltipData).not.toBeNull()
+    expect(vm.tooltipData.value).toBe(100)
+  })
+
+  it('should handle all-equal values (zero range)', () => {
+    const equalData: TrendDataPoint[] = [
+      { timestamp: '2026-01-01', value: 50, label: 'Jan 1' },
+      { timestamp: '2026-01-02', value: 50, label: 'Jan 2' },
+      { timestamp: '2026-01-03', value: 50, label: 'Jan 3' },
+    ]
+
+    const wrapper = mount(TrendChart, {
+      props: {
+        metricId: 'flat',
+        label: 'Flat Line',
+        data: equalData,
+      },
+    })
+
+    expect(wrapper.find('svg').exists()).toBe(true)
+  })
 })

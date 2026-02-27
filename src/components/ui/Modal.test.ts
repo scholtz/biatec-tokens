@@ -129,4 +129,39 @@ describe('Modal Component', () => {
     // Just verify the component mounts without errors
     expect(wrapper.exists()).toBe(true);
   });
+
+  it('should accept sm size prop', () => {
+    const wrapper = mount(Modal, { props: { show: true, size: 'sm' } });
+    expect(wrapper.exists()).toBe(true);
+  });
+
+  it('should accept lg size prop', () => {
+    const wrapper = mount(Modal, { props: { show: true, size: 'lg' } });
+    expect(wrapper.exists()).toBe(true);
+  });
+
+  it('should accept xl size prop', () => {
+    const wrapper = mount(Modal, { props: { show: true, size: 'xl' } });
+    expect(wrapper.exists()).toBe(true);
+  });
+
+  it('should compute sm size class', () => {
+    const wrapper = mount(Modal, { props: { show: true, size: 'sm' } });
+    expect((wrapper.vm as any).modalSizeClass).toBe('max-w-sm');
+  });
+
+  it('should compute md size class', () => {
+    const wrapper = mount(Modal, { props: { show: true, size: 'md' } });
+    expect((wrapper.vm as any).modalSizeClass).toBe('max-w-md');
+  });
+
+  it('should compute lg size class', () => {
+    const wrapper = mount(Modal, { props: { show: true, size: 'lg' } });
+    expect((wrapper.vm as any).modalSizeClass).toBe('max-w-lg');
+  });
+
+  it('should compute xl size class', () => {
+    const wrapper = mount(Modal, { props: { show: true, size: 'xl' } });
+    expect((wrapper.vm as any).modalSizeClass).toBe('max-w-2xl');
+  });
 });

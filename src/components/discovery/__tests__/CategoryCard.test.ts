@@ -47,4 +47,34 @@ describe('CategoryCard Component', () => {
     expect(wrapper.emitted('select')).toBeTruthy();
     expect(wrapper.emitted('select')?.[0]).toEqual(['rwa']);
   });
+
+  it('should not show RWA Ready badge when rwaRelevance is medium', () => {
+    const mediumCategory = { ...mockCategory, rwaRelevance: 'medium' as const };
+    const wrapper = mount(CategoryCard, {
+      props: { category: mediumCategory },
+    });
+    expect(wrapper.text()).not.toContain('RWA Ready');
+  });
+
+  it('should not show RWA Ready badge when rwaRelevance is low', () => {
+    const lowCategory = { ...mockCategory, rwaRelevance: 'low' as const };
+    const wrapper = mount(CategoryCard, {
+      props: { category: lowCategory },
+    });
+    expect(wrapper.text()).not.toContain('RWA Ready');
+  });
+
+  it('should show selected ring styling when selected is true', () => {
+    const wrapper = mount(CategoryCard, {
+      props: { category: mockCategory, selected: true },
+    });
+    expect(wrapper.html()).toContain('ring-2');
+  });
+
+  it('should not show selected ring when selected is false', () => {
+    const wrapper = mount(CategoryCard, {
+      props: { category: mockCategory, selected: false },
+    });
+    expect(wrapper.html()).not.toContain('ring-2');
+  });
 });
