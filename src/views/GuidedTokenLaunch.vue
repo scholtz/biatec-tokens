@@ -1,5 +1,6 @@
 <template>
-  <div
+  <main
+    role="main"
     class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8 px-4"
     :data-testid="ISSUANCE_TEST_IDS.WORKSPACE_SHELL"
   >
@@ -299,7 +300,7 @@
         </div>
       </template>
     </Modal>
-  </div>
+  </main>
 </template>
 
 <script setup lang="ts">

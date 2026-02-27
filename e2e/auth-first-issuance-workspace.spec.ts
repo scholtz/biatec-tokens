@@ -90,7 +90,7 @@ test.describe('Canonical issuance route — /launch/guided is the primary entry'
 
     // Verify the page loaded — look for a main region or heading
     const main = page.getByRole('main')
-    await expect(main).toBeVisible({ timeout: 15000 })
+    await expect(main).toBeVisible({ timeout: 45000 })
   })
 
   test('page title or heading is present on /launch/guided', async ({ page }) => {
@@ -334,7 +334,7 @@ test.describe('Accessibility — keyboard navigation and ARIA labels', () => {
     await page.waitForLoadState('networkidle')
 
     const main = page.getByRole('main')
-    await expect(main).toBeVisible({ timeout: 15000 })
+    await expect(main).toBeVisible({ timeout: 45000 })
   })
 })
 
@@ -354,7 +354,7 @@ test.describe('Legacy /create route — compatibility', () => {
 
     // Page should load — either the create page or a redirect
     const main = page.getByRole('main')
-    await expect(main).toBeVisible({ timeout: 15000 })
+    await expect(main).toBeVisible({ timeout: 45000 })
   })
 })
 

@@ -183,14 +183,14 @@ test.describe('Auth Error Scenarios - Negative Path Testing', () => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
     
-    // NOTE: Router guard only checks if algorand_user exists, not isConnected flag
-    // So this will still allow access (router considers user authenticated if key exists)
-    // This is intentional - auth store layer handles isConnected, not router
+    // The router guard for GuidedTokenLaunch uses isIssuanceSessionValid() which
+    // checks isConnected === true. With isConnected=false, the user is redirected
+    // to the home page with showAuth=true.
     const url = page.url()
-    const isOnGuidedLaunch = url.includes('/launch/guided')
+    const wasRedirected = url.includes('showAuth=true') || !url.includes('/launch/guided')
     
-    // Should allow access (router doesn't check isConnected, only existence of user key)
-    expect(isOnGuidedLaunch).toBe(true)
+    // Should redirect because isIssuanceSessionValid requires isConnected === true
+    expect(wasRedirected).toBe(true)
   })
 
   test('should clear auth state when accessing route with empty localStorage', async ({ page }) => {
