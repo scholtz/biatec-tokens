@@ -23,6 +23,13 @@ import type {
   LaunchSubmissionResponse,
 } from '../types/guidedLaunch'
 import { launchTelemetryService } from '../services/launchTelemetry'
+import {
+  deriveIdempotencyKey,
+  checkIdempotency,
+  recordSubmissionAttempt,
+  markSubmissionSuccess,
+  markSubmissionFailed,
+} from '../utils/issuanceIdempotency'
 
 const DRAFT_STORAGE_KEY = 'biatec_guided_launch_draft'
 const DRAFT_VERSION = '1.0'
@@ -346,7 +353,33 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
       throw new Error('Cannot submit: required data missing')
     }
 
+    // Idempotency guard: prevent duplicate submissions for the same draft
+    const idempotencyKey = deriveIdempotencyKey(
+      currentForm.value.draftId ?? 'unknown',
+      userEmail,
+    )
+    const idempotencyCheck = checkIdempotency(idempotencyKey)
+    if (!idempotencyCheck.isSafeToSubmit) {
+      // Return the previously-stored successful submission without re-executing
+      const existing = idempotencyCheck.existingRecord
+      return {
+        success: true,
+        submissionId: existing?.serverSubmissionId ?? currentForm.value.submissionId ?? '',
+        deploymentStatus: 'queued',
+        message: 'This token launch was already submitted successfully.',
+        nextSteps: [
+          'Review deployment status in your dashboard',
+          'Complete any remaining compliance requirements',
+          'Prepare for token distribution',
+        ],
+        estimatedCompletionTime: '15-30 minutes',
+      }
+    }
+
     isSubmitting.value = true
+
+    // Record attempt before network call so partial failures are tracked
+    recordSubmissionAttempt(idempotencyKey, currentForm.value.draftId ?? 'unknown')
 
     try {
       const submission: LaunchSubmission = {
@@ -390,6 +423,9 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
         estimatedCompletionTime: '15-30 minutes',
       }
 
+      // Persist idempotency success record to prevent duplicate re-submission
+      markSubmissionSuccess(idempotencyKey, mockResponse.submissionId)
+
       currentForm.value.isSubmitted = true
       currentForm.value.submissionId = mockResponse.submissionId
       currentForm.value.submissionStatus = 'success'
@@ -409,6 +445,9 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
       currentForm.value.submissionStatus = 'failed'
       currentForm.value.submissionError = error instanceof Error ? error.message : 'Unknown error'
       saveDraft()
+
+      // Mark idempotency record as failed so the user can retry safely
+      markSubmissionFailed(idempotencyKey, currentForm.value.submissionError)
 
       // Track failure
       launchTelemetryService.trackLaunchFailed(
