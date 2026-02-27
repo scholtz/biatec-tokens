@@ -403,4 +403,226 @@ describe('TelemetryService', () => {
     expect(telemetryService).toBeInstanceOf(TelemetryService)
     expect(telemetryService).toBe(TelemetryService.getInstance())
   })
+
+  it('should track token wizard abandoned', () => {
+    service.trackTokenWizardAbandoned({ lastStep: 3, totalSteps: 5, tokenStandard: 'ARC3', network: 'algorand' })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('token_wizard_abandoned')
+    expect(events[0].properties?.last_step).toBe(3)
+    expect(events[0].properties?.total_steps).toBe(5)
+    expect(events[0].properties?.progress_percentage).toBe(60)
+    expect(events[0].properties?.token_standard).toBe('ARC3')
+    expect(events[0].properties?.network).toBe('algorand')
+  })
+
+  it('should track token list viewed without data', () => {
+    service.trackTokenListViewed()
+    const events = service.getEvents()
+    expect(events[0].event).toBe('token_list_viewed')
+    expect(events[0].properties?.filter_applied).toBe(false)
+    expect(events[0].properties?.source).toBe('dashboard')
+  })
+
+  it('should track token list viewed with data', () => {
+    service.trackTokenListViewed({ filterApplied: true, tokenCount: 5, source: 'search' })
+    const events = service.getEvents()
+    expect(events[0].properties?.filter_applied).toBe(true)
+    expect(events[0].properties?.token_count).toBe(5)
+    expect(events[0].properties?.source).toBe('search')
+  })
+
+  it('should track token creation attempt', () => {
+    service.trackTokenCreationAttempt({ tokenStandard: 'ERC20', network: 'ethereum', tokenType: 'fungible' })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('token_creation_attempt')
+    expect(events[0].properties?.token_standard).toBe('ERC20')
+    expect(events[0].properties?.token_type).toBe('fungible')
+  })
+
+  it('should track token creation success', () => {
+    service.trackTokenCreationSuccess({ tokenId: 'tok1', tokenStandard: 'ARC3', network: 'voi', durationMs: 1200 })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('token_creation_success')
+    expect(events[0].properties?.token_id).toBe('tok1')
+    expect(events[0].properties?.duration_ms).toBe(1200)
+  })
+
+  it('should track token creation failure', () => {
+    service.trackTokenCreationFailure({ tokenStandard: 'ARC69', network: 'algorand', errorType: 'validation', errorMessage: 'missing name' })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('token_creation_failure')
+    expect(events[0].properties?.error_type).toBe('validation')
+  })
+
+  it('should track token transfer initiated', () => {
+    service.trackTokenTransferInitiated({ tokenId: 'tok2', tokenStandard: 'ARC3', network: 'voi' })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('token_transfer_initiated')
+    expect(events[0].properties?.token_id).toBe('tok2')
+  })
+
+  it('should track token transfer success', () => {
+    service.trackTokenTransferSuccess({ tokenId: 'tok3', transactionId: 'tx1', network: 'algorand', durationMs: 800 })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('token_transfer_success')
+    expect(events[0].properties?.transaction_id).toBe('tx1')
+  })
+
+  it('should track token standards comparison viewed without source', () => {
+    service.trackTokenStandardsComparisonViewed()
+    const events = service.getEvents()
+    expect(events[0].event).toBe('token_standards_comparison_viewed')
+    expect(events[0].properties?.source).toBe('direct')
+  })
+
+  it('should track token standards comparison viewed with source', () => {
+    service.trackTokenStandardsComparisonViewed({ source: 'navbar' })
+    const events = service.getEvents()
+    expect(events[0].properties?.source).toBe('navbar')
+  })
+
+  it('should track token metadata updated', () => {
+    service.trackTokenMetadataUpdated({ tokenId: 'tok4', tokenStandard: 'ARC3', fieldsUpdated: ['name', 'symbol'] })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('token_metadata_updated')
+    expect(events[0].properties?.fields_updated).toBe('name,symbol')
+    expect(events[0].properties?.field_count).toBe(2)
+  })
+
+  it('should track deployment status check', () => {
+    service.trackDeploymentStatusCheck({ transactionId: 'tx5', network: 'ethereum', status: 'pending' })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('deployment_status_check')
+    expect(events[0].properties?.status).toBe('pending')
+  })
+
+  it('should track transaction success', () => {
+    service.trackTransactionSuccess({ transactionType: 'deploy', transactionId: 'tx6', network: 'base', durationMs: 2000 })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('transaction_success')
+    expect(events[0].properties?.transaction_type).toBe('deploy')
+  })
+
+  it('should track transaction failure', () => {
+    service.trackTransactionFailure({ transactionType: 'transfer', network: 'arbitrum', errorType: 'timeout', errorMessage: 'timed out' })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('transaction_failure')
+    expect(events[0].properties?.error_type).toBe('timeout')
+  })
+
+  it('should track onboarding started without data', () => {
+    service.trackOnboardingStarted()
+    const events = service.getEvents()
+    expect(events[0].event).toBe('onboarding_started')
+    expect(events[0].properties?.source).toBe('landing')
+  })
+
+  it('should track onboarding started with source', () => {
+    service.trackOnboardingStarted({ source: 'email' })
+    const events = service.getEvents()
+    expect(events[0].properties?.source).toBe('email')
+  })
+
+  it('should track onboarding step completed', () => {
+    service.trackOnboardingStepCompleted({ stepId: 'kyc', stepTitle: 'KYC', stepNumber: 2, totalSteps: 4 })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('onboarding_step_completed')
+    expect(events[0].properties?.progress_percentage).toBe(50)
+    expect(events[0].properties?.step_id).toBe('kyc')
+  })
+
+  it('should track onboarding completed without data', () => {
+    service.trackOnboardingCompleted()
+    const events = service.getEvents()
+    expect(events[0].event).toBe('onboarding_completed')
+  })
+
+  it('should track onboarding completed with duration', () => {
+    service.trackOnboardingCompleted({ durationMs: 5000 })
+    const events = service.getEvents()
+    expect(events[0].properties?.duration_ms).toBe(5000)
+  })
+
+  it('should track discovery dashboard viewed without source', () => {
+    service.trackDiscoveryDashboardViewed()
+    const events = service.getEvents()
+    expect(events[0].event).toBe('discovery_dashboard_viewed')
+    expect(events[0].properties?.source).toBe('direct')
+  })
+
+  it('should track discovery dashboard viewed with source', () => {
+    service.trackDiscoveryDashboardViewed({ source: 'navbar' })
+    const events = service.getEvents()
+    expect(events[0].properties?.source).toBe('navbar')
+  })
+
+  it('should track discovery filter applied', () => {
+    service.trackDiscoveryFilterApplied({ filterType: 'standard', filterValue: 'ARC3', filterCount: 1 })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('discovery_filter_applied')
+    expect(events[0].properties?.filter_type).toBe('standard')
+    expect(events[0].properties?.filter_count).toBe(1)
+  })
+
+  it('should track discovery filter saved', () => {
+    service.trackDiscoveryFilterSaved({ filterCount: 3, hasStandards: true, hasCompliance: false, hasChains: true })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('discovery_filter_saved')
+    expect(events[0].properties?.has_standards).toBe(true)
+    expect(events[0].properties?.has_compliance).toBe(false)
+  })
+
+  it('should track token detail viewed', () => {
+    service.trackTokenDetailViewed({ tokenId: 'tok7', tokenStandard: 'ARC69', tokenChain: 'algorand', source: 'discovery' })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('token_detail_viewed')
+    expect(events[0].properties?.source).toBe('discovery')
+  })
+
+  it('should track watchlist add', () => {
+    service.trackWatchlistAdd({ tokenId: 'tok8', tokenStandard: 'ARC3', source: 'card' })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('watchlist_add')
+    expect(events[0].properties?.source).toBe('card')
+  })
+
+  it('should track watchlist remove', () => {
+    service.trackWatchlistRemove({ tokenId: 'tok9', tokenStandard: 'ERC721' })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('watchlist_remove')
+    expect(events[0].properties?.token_standard).toBe('ERC721')
+  })
+
+  it('should track compliance badge clicked', () => {
+    service.trackComplianceBadgeClicked({ tokenId: 'tok10', badgeType: 'mica', complianceStatus: 'compliant' })
+    const events = service.getEvents()
+    expect(events[0].event).toBe('compliance_badge_clicked')
+    expect(events[0].properties?.badge_type).toBe('mica')
+    expect(events[0].properties?.compliance_status).toBe('compliant')
+  })
+
+  it('should track email signup started without source', () => {
+    service.trackEmailSignupStarted()
+    const events = service.getEvents()
+    expect(events[0].event).toBe('email_signup_started')
+    expect(events[0].properties?.source).toBe('landing')
+  })
+
+  it('should track email signup started with source', () => {
+    service.trackEmailSignupStarted({ source: 'modal' })
+    const events = service.getEvents()
+    expect(events[0].properties?.source).toBe('modal')
+  })
+
+  it('should track email signup completed without data', () => {
+    service.trackEmailSignupCompleted()
+    const events = service.getEvents()
+    expect(events[0].event).toBe('email_signup_completed')
+  })
+
+  it('should track email signup completed with duration', () => {
+    service.trackEmailSignupCompleted({ durationMs: 3000 })
+    const events = service.getEvents()
+    expect(events[0].properties?.duration_ms).toBe(3000)
+  })
 })

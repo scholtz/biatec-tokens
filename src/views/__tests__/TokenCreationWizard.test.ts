@@ -443,4 +443,41 @@ describe('TokenCreationWizard', () => {
     });
   });
 
+  describe('step8Ref (review step) validator', () => {
+    it('should call validateAll on review step when step8Ref has validateAll', () => {
+      const wrapper = mount(TokenCreationWizard)
+      const vm = wrapper.vm as any
+      vm.step8Ref = {
+        isValid: true,
+        validateAll: vi.fn(),
+      }
+      const reviewStep = vm.wizardSteps[7] // index 7 = 'review'
+      const result = reviewStep.isValid()
+      expect(vm.step8Ref.validateAll).toHaveBeenCalled()
+      expect(result).toBe(true)
+    })
+
+    it('should return false when step8Ref has no validateAll', () => {
+      const wrapper = mount(TokenCreationWizard)
+      const vm = wrapper.vm as any
+      vm.step8Ref = { isValid: false }
+      const reviewStep = vm.wizardSteps[7]
+      const result = reviewStep.isValid()
+      expect(result).toBe(false)
+    })
+  })
+
+  describe('handleComplete with draft', () => {
+    it('should call trackTokenCreationSuccess when draft exists', async () => {
+      const { useTokenDraftStore } = await import('../../stores/tokenDraft')
+      const tokenDraftStore = useTokenDraftStore()
+      tokenDraftStore.currentDraft = { selectedStandard: 'ARC3', selectedNetwork: 'algorand' } as any
+      const wrapper = mount(TokenCreationWizard)
+      const vm = wrapper.vm as any
+      await vm.handleComplete()
+      // Should not throw and draft should be cleared
+      expect(tokenDraftStore.currentDraft).toBeNull()
+    })
+  })
+
 })

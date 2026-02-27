@@ -233,4 +233,20 @@ describe('MicaReadinessPanel', () => {
       expect(expandButtons.length).toBeGreaterThan(0);
     });
   });
+
+  describe('articleStatusClass and articleStatusLabel coverage', () => {
+    it('should return correct class for not_applicable status', () => {
+      const wrapper = mount(MicaReadinessPanel);
+      const vm = wrapper.vm as any;
+      expect(vm.articleStatusClass('not_applicable')).toContain('bg-gray-500');
+      expect(vm.articleStatusClass('unknown_value')).toContain('bg-gray-500');
+    });
+
+    it('should return correct label for not_applicable and unknown status', () => {
+      const wrapper = mount(MicaReadinessPanel);
+      const vm = wrapper.vm as any;
+      expect(vm.articleStatusLabel('not_applicable')).toBe('N/A');
+      expect(vm.articleStatusLabel('unknown_value')).toBe('Unknown');
+    });
+  });
 });

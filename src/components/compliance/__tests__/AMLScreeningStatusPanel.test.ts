@@ -280,4 +280,20 @@ describe('AMLScreeningStatusPanel', () => {
       }
     }
   })
+
+  it('should render matchDetails when present', () => {
+    const wrapper = mount(AMLScreeningStatusPanel, {
+      props: {
+        screening: makeScreening({
+          verdict: 'confirmed_match',
+          matchDetails: [
+            { listName: 'OFAC SDN List', matchScore: 95, matchedFields: ['name', 'address'] }
+          ],
+        }),
+      },
+      global: { stubs },
+    })
+    expect(wrapper.html()).toContain('Screening Matches Detected')
+    expect(wrapper.html()).toContain('OFAC SDN List')
+  })
 })

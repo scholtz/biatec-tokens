@@ -365,4 +365,25 @@ describe('ComplianceReviewStep', () => {
       expect(wrapper.text()).toContain('MICA Compliance Guide')
     })
   })
+
+  describe('Additional coverage', () => {
+    it('should call window.open on navigateToCreateWhitelist', () => {
+      const wrapper = mount(ComplianceReviewStep, {
+        global: { components: { WizardStep } },
+      })
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+      const vm = wrapper.vm as any
+      vm.navigateToCreateWhitelist()
+      expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('/compliance/whitelists'), '_blank')
+      openSpy.mockRestore()
+    })
+
+    it('should expose selectedWhitelistId and allow setting it', () => {
+      const wrapper = mount(ComplianceReviewStep, { global: { components: { WizardStep } } })
+      const vm = wrapper.vm as any
+      expect(vm.selectedWhitelistId).toBeNull()
+      vm.selectedWhitelistId = 'test-whitelist-id'
+      expect(vm.selectedWhitelistId).toBe('test-whitelist-id')
+    })
+  })
 })
