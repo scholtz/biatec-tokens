@@ -49,8 +49,8 @@ export interface LaunchpadToken extends MarketplaceToken {
   trustScore?: number
   /** Liquidity indicator: high | medium | low | unknown */
   liquidityIndicator?: 'high' | 'medium' | 'low' | 'unknown'
-  /** Human-readable wallet compatibility note */
-  walletCompatibility?: string
+  /** Human-readable access/account note (e.g., KYC required) */
+  accessNote?: string
   /** Primary CTA label */
   actionLabel?: string
   /** Whether the token is featured / promoted */
@@ -161,13 +161,13 @@ export const usePortfolioLaunchpadStore = defineStore('portfolioLaunchpad', () =
     }
   }
 
-  /** Advance to execute stage (wallet connect + submit action). */
+  /** Advance to execute stage (review + backend submission). */
   function proceedToExecute(): void {
     if (stage.value !== 'simulate') return
     stage.value = 'execute'
   }
 
-  /** Submit the action (calls underlying tx pipeline). */
+  /** Submit the action via backend API. */
   async function submitAction(amount: number = 1): Promise<void> {
     if (!selectedToken.value) return
     actionLoading.value = true
@@ -215,13 +215,17 @@ export const usePortfolioLaunchpadStore = defineStore('portfolioLaunchpad', () =
         name: 'USD Coin (Algorand)',
         symbol: 'USDC',
         standard: 'ASA',
+        type: 'FT',
+        supply: 1_000_000_000,
+        description: 'USD Coin on Algorand – fully reserved stablecoin.',
         network: 'Algorand Mainnet',
-        status: 'active',
+        status: 'deployed',
+        createdAt: new Date('2023-01-01'),
         isFeatured: true,
         trustScore: 95,
         liquidityIndicator: 'high',
         utilitySummary: 'Fully backed stablecoin for payments, DeFi, and cross-border transfers.',
-        walletCompatibility: 'Compatible with all Algorand-native wallets',
+        accessNote: 'Available to verified accounts',
         actionLabel: 'Acquire USDC',
         helpUrl: 'https://docs.biatec.io/tokens/usdc',
         complianceStatus: 'compliant',
@@ -233,13 +237,17 @@ export const usePortfolioLaunchpadStore = defineStore('portfolioLaunchpad', () =
         name: 'Biatec Token',
         symbol: 'BIATEC',
         standard: 'ARC200',
+        type: 'FT',
+        supply: 100_000_000,
+        description: 'Biatec platform utility token with governance rights.',
         network: 'Algorand Mainnet',
-        status: 'active',
+        status: 'deployed',
+        createdAt: new Date('2024-01-01'),
         isFeatured: true,
         trustScore: 82,
         liquidityIndicator: 'medium',
         utilitySummary: 'Utility token granting platform fee discounts and governance rights.',
-        walletCompatibility: 'Compatible with ARC200-aware wallets',
+        accessNote: 'Available on Algorand Mainnet',
         actionLabel: 'Explore BIATEC',
         helpUrl: 'https://docs.biatec.io/tokens/biatec',
         complianceStatus: 'compliant',
@@ -249,14 +257,18 @@ export const usePortfolioLaunchpadStore = defineStore('portfolioLaunchpad', () =
         id: 'rwa-property-01',
         name: 'RWA Property Fund I',
         symbol: 'RWAP1',
-        standard: 'ARC3',
+        standard: 'ARC3FT',
+        type: 'FT',
+        supply: 10_000,
+        description: 'Fractional token representing a diversified real-estate portfolio.',
         network: 'Algorand Mainnet',
-        status: 'active',
+        status: 'deployed',
+        createdAt: new Date('2024-06-01'),
         isFeatured: false,
         trustScore: 71,
         liquidityIndicator: 'low',
         utilitySummary: 'Fractional ownership of a diversified real-estate portfolio.',
-        walletCompatibility: 'KYC wallet required',
+        accessNote: 'KYC verification required',
         actionLabel: 'Evaluate RWAP1',
         helpUrl: 'https://docs.biatec.io/tokens/rwa-property',
         complianceStatus: 'partial',
@@ -274,7 +286,7 @@ export const usePortfolioLaunchpadStore = defineStore('portfolioLaunchpad', () =
       tokenId: token.id,
       estimatedFee: fee,
       estimatedFeeDisplay: `${fee} ALGO`,
-      estimatedOutcome: `You will receive ${token.symbol} tokens in your wallet after confirmation.`,
+      estimatedOutcome: `You will receive ${token.symbol} tokens in your account after confirmation.`,
       constraints: token.kycRequired ? ['KYC verification required before transfer'] : [],
       warnings: token.liquidityIndicator === 'low'
         ? ['Low liquidity – expect wider spreads and slower fills']
@@ -287,7 +299,7 @@ export const usePortfolioLaunchpadStore = defineStore('portfolioLaunchpad', () =
 
   async function _submitTokenAction(_token: LaunchpadToken, _amount: number): Promise<string> {
     await Promise.resolve()
-    // Returns a mock tx ID; wired to real wallet pipeline in production.
+    // Returns a mock tx ID; wired to real backend API in production.
     return `TX${Date.now()}`
   }
 

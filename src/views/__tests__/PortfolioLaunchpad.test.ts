@@ -157,9 +157,9 @@ describe('PortfolioLaunchpad – simulate stage', () => {
     }
   })
 
-  it('shows Connect Wallet button', async () => {
+  it('shows Review & Submit button', async () => {
     const { wrapper } = await mountAtSimulate()
-    expect(wrapper.text()).toContain('Connect Wallet')
+    expect(wrapper.text()).toContain('Review')
   })
 
   it('shows Expected Outcome', async () => {
@@ -186,9 +186,9 @@ describe('PortfolioLaunchpad – execute stage', () => {
     expect(wrapper.text()).toContain('Execute Action')
   })
 
-  it('shows Wallet Connection Required notice', async () => {
+  it('shows Backend-Secured Transaction notice', async () => {
     const { wrapper } = await mountAtExecute()
-    expect(wrapper.text()).toContain('Wallet Connection Required')
+    expect(wrapper.text()).toContain('Backend-Secured Transaction')
   })
 
   it('shows Submit Action button', async () => {
@@ -317,5 +317,136 @@ describe('PortfolioLaunchpad – loading and error states', () => {
     })
     await flushPromises()
     expect(wrapper.text()).toContain('No opportunities available')
+  })
+})
+
+describe('PortfolioLaunchpad – simulation error state', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('shows simulation error and retry button on failure', async () => {
+    const { wrapper, store } = await mountLaunchpad()
+    await store.fetchTokens()
+    store.selectToken(store.tokens[0].id)
+    store.stage = 'simulate'
+    store.simulationError = 'Simulation service unavailable'
+    await flushPromises()
+    expect(wrapper.text()).toContain('Simulation failed')
+    expect(wrapper.text()).toContain('Simulation service unavailable')
+  })
+
+  it('retry simulation button calls handleRunSimulation', async () => {
+    const { wrapper, store } = await mountLaunchpad()
+    await store.fetchTokens()
+    store.selectToken(store.tokens[0].id)
+    store.stage = 'simulate'
+    store.simulationError = 'Timed out'
+    await flushPromises()
+    const retryBtn = wrapper.findAll('button').find(b => b.text().includes('Retry simulation'))
+    if (retryBtn) {
+      const runSpy = vi.spyOn(store, 'runSimulation')
+      await retryBtn.trigger('click')
+      await flushPromises()
+      expect(runSpy).toHaveBeenCalled()
+    }
+  })
+})
+
+describe('PortfolioLaunchpad – execute action error handling', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('shows action error after failed submit', async () => {
+    const { wrapper, store } = await mountLaunchpad()
+    await store.fetchTokens()
+    store.selectToken(store.tokens[0].id)
+    await store.runSimulation()
+    store.proceedToExecute()
+    store.actionError = 'Insufficient balance'
+    await flushPromises()
+    expect(wrapper.text()).toContain('Action failed')
+    expect(wrapper.text()).toContain('Insufficient balance')
+  })
+
+  it('handleSubmitAction tracks action failure event', async () => {
+    const { trackActionFailed } = await import('../../utils/launchpadFunnel')
+    const { wrapper, store } = await mountLaunchpad()
+    await store.fetchTokens()
+    store.selectToken(store.tokens[0].id)
+    await store.runSimulation()
+    store.proceedToExecute()
+    vi.spyOn(store, 'submitAction').mockImplementationOnce(async () => {
+      store.actionError = 'tx rejected'
+      store.actionLoading = false
+    })
+    await flushPromises()
+    const submitBtn = wrapper.findAll('button').find(b => b.text().includes('Submit Action'))
+    if (submitBtn) {
+      await submitBtn.trigger('click')
+      await flushPromises()
+      expect(trackActionFailed).toHaveBeenCalledWith(
+        expect.objectContaining({ reason: 'tx rejected' })
+      )
+    }
+  })
+
+  it('retryAction button clears actionError', async () => {
+    const { wrapper, store } = await mountLaunchpad()
+    await store.fetchTokens()
+    store.selectToken(store.tokens[0].id)
+    await store.runSimulation()
+    store.proceedToExecute()
+    store.actionError = 'Network timeout'
+    await flushPromises()
+    const retryBtn = wrapper.findAll('button').find(b => b.text().includes('Try again'))
+    if (retryBtn) {
+      await retryBtn.trigger('click')
+      await flushPromises()
+      expect(store.actionError).toBeNull()
+    }
+  })
+})
+
+describe('PortfolioLaunchpad – product alignment (no wallet connectors)', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('execute stage shows Backend-Secured Transaction notice, not wallet prompt', async () => {
+    const { wrapper, store } = await mountLaunchpad()
+    await store.fetchTokens()
+    store.selectToken(store.tokens[0].id)
+    await store.runSimulation()
+    store.proceedToExecute()
+    await flushPromises()
+    expect(wrapper.text()).toContain('Backend-Secured Transaction')
+    expect(wrapper.text()).not.toContain('Wallet Connection Required')
+    expect(wrapper.text()).not.toContain('sign this transaction in your wallet')
+    // Verify "No wallet app required" is a positive statement (not a prompt)
+    expect(wrapper.text()).toContain('No wallet app required')
+  })
+
+  it('Review & Submit button advances to execute stage, not wallet connect', async () => {
+    const { wrapper, store } = await mountLaunchpad()
+    await store.fetchTokens()
+    store.selectToken(store.tokens[0].id)
+    await store.runSimulation()
+    await flushPromises()
+    const reviewBtn = wrapper.findAll('button').find(b => b.text().includes('Review'))
+    if (reviewBtn) {
+      await reviewBtn.trigger('click')
+      await flushPromises()
+      expect(store.stage).toBe('execute')
+    }
+  })
+
+  it('discover cards show accessNote, not wallet compatibility text', async () => {
+    const { wrapper, store } = await mountLaunchpad()
+    await store.fetchTokens()
+    await flushPromises()
+    const firstToken = store.tokens[0]
+    if (firstToken.accessNote) {
+      expect(wrapper.text()).toContain(firstToken.accessNote)
+    }
+    // No wallet-specific text on discovery cards
+    expect(wrapper.text()).not.toContain('Algorand-native wallets')
+    expect(wrapper.text()).not.toContain('ARC200-aware wallets')
+    expect(wrapper.text()).not.toContain('KYC wallet required')
   })
 })

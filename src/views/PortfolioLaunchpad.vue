@@ -156,13 +156,13 @@
                 </span>
               </div>
 
-              <!-- Wallet compatibility -->
+              <!-- Account compatibility note -->
               <p
-                v-if="token.walletCompatibility"
+                v-if="token.accessNote"
                 class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1"
               >
-                <WalletIcon class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" />
-                {{ token.walletCompatibility }}
+                <InformationCircleIcon class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" />
+                {{ token.accessNote }}
               </p>
 
               <!-- CTA -->
@@ -392,7 +392,7 @@
                 class="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                 @click="handleProceedToExecute()"
               >
-                Connect Wallet &amp; Execute
+                Review &amp; Submit
               </button>
             </template>
           </div>
@@ -414,17 +414,17 @@
 
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Execute Action</h2>
             <p class="text-gray-500 dark:text-gray-400 text-sm mb-6">
-              Your wallet will be prompted to sign this transaction.
+              Your action will be processed securely by the Biatec backend.
             </p>
 
-            <!-- Wallet / chain state notice -->
-            <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg mb-6 flex items-start gap-3">
-              <WalletIcon class="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <!-- Auth / backend notice -->
+            <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-6 flex items-start gap-3">
+              <ShieldCheckIcon class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
               <div>
-                <p class="text-sm font-semibold text-yellow-700 dark:text-yellow-300">Wallet Connection Required</p>
-                <p class="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                  Ensure your wallet is connected to <strong>{{ store.selectedToken?.network }}</strong> before submitting.
-                  If you see a chain mismatch, switch networks in your wallet app and retry.
+                <p class="text-sm font-semibold text-blue-700 dark:text-blue-300">Backend-Secured Transaction</p>
+                <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                  This action will be executed by our backend service using your authenticated account on
+                  <strong>{{ store.selectedToken?.network }}</strong>. No wallet app required.
                 </p>
               </div>
             </div>
@@ -506,7 +506,6 @@ import {
   ShieldCheckIcon,
   ShieldExclamationIcon,
   IdentificationIcon,
-  WalletIcon,
   ArrowLeftIcon,
   ArrowTopRightOnSquareIcon,
   InformationCircleIcon,
