@@ -5,6 +5,14 @@
  * All labels and descriptions use plain business language — no blockchain jargon.
  */
 
+/**
+ * Readiness status for an individual setup step or the overall issuer launch readiness.
+ * - `not_started`: The step has not been started yet.
+ * - `in_progress`: The step has been started but is not yet complete.
+ * - `needs_attention`: The step has an issue requiring the issuer to take action.
+ * - `ready`: The step is complete and verified.
+ * - `blocked`: The step cannot proceed due to a dependency or system issue.
+ */
 export type ReadinessStatus = 'not_started' | 'in_progress' | 'needs_attention' | 'ready' | 'blocked'
 
 export interface ReadinessItem {
@@ -32,6 +40,12 @@ export interface IssuerReadinessReport {
   nextActionItem: ReadinessItem | null
 }
 
+/**
+ * Priority order for resolving the overall status and finding the next action item.
+ * Items earlier in the array have higher priority, meaning a single `blocked` required
+ * item overrides everything, then `needs_attention`, and so on. `ready` items are at
+ * the end because completed steps need no further action.
+ */
 const STATUS_ORDER: ReadinessStatus[] = ['blocked', 'needs_attention', 'in_progress', 'not_started', 'ready']
 
 /**
