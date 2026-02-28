@@ -311,3 +311,66 @@ describe('PriceDisplay', () => {
     });
   });
 });
+
+// Branch coverage: formatLargeNumber K and plain branches; formatTimeAgo hours/days branches
+describe('PriceDisplay branch coverage', () => {
+  it('formatLargeNumber K branch (>= 1000)', () => {
+    const wrapper = mount(PriceDisplay, {
+      props: { price: 1.0, volume24h: 5500, showMetrics: true },
+    });
+    expect(wrapper.text()).toContain('5.50K');
+  });
+
+  it('formatLargeNumber plain branch (< 1000)', () => {
+    const wrapper = mount(PriceDisplay, {
+      props: { price: 1.0, volume24h: 42.5, showMetrics: true },
+    });
+    expect(wrapper.text()).toContain('42.50');
+  });
+
+  it('formatTimeAgo hours branch (1 hour ago)', () => {
+    const oneHourAgo = new Date(Date.now() - 65 * 60 * 1000);
+    const wrapper = mount(PriceDisplay, {
+      props: { price: 1.0, lastUpdated: oneHourAgo, showLastUpdated: true },
+    });
+    expect(wrapper.text()).toMatch(/1 hour ago/);
+  });
+
+  it('formatTimeAgo hours branch (plural, 3 hours ago)', () => {
+    const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000 - 60 * 1000);
+    const wrapper = mount(PriceDisplay, {
+      props: { price: 1.0, lastUpdated: threeHoursAgo, showLastUpdated: true },
+    });
+    expect(wrapper.text()).toMatch(/3 hours ago/);
+  });
+
+  it('formatTimeAgo days branch (1 day ago)', () => {
+    const oneDayAgo = new Date(Date.now() - 25 * 60 * 60 * 1000);
+    const wrapper = mount(PriceDisplay, {
+      props: { price: 1.0, lastUpdated: oneDayAgo, showLastUpdated: true },
+    });
+    expect(wrapper.text()).toMatch(/1 day ago/);
+  });
+
+  it('formatTimeAgo days branch (plural, 3 days ago)', () => {
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 - 60 * 1000);
+    const wrapper = mount(PriceDisplay, {
+      props: { price: 1.0, lastUpdated: threeDaysAgo, showLastUpdated: true },
+    });
+    expect(wrapper.text()).toMatch(/3 days ago/);
+  });
+
+  it('showSource false hides price source', () => {
+    const wrapper = mount(PriceDisplay, {
+      props: { price: 1.0, priceSource: 'CoinGecko', showSource: false },
+    });
+    expect(wrapper.text()).not.toContain('CoinGecko');
+  });
+
+  it('show7dChange false hides 7d change', () => {
+    const wrapper = mount(PriceDisplay, {
+      props: { price: 1.0, priceChange7d: 3.5, showChanges: true, show7dChange: false },
+    });
+    expect(wrapper.text()).not.toContain('(7d)');
+  });
+});
