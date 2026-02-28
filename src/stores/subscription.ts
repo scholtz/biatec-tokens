@@ -122,7 +122,6 @@ export const useSubscriptionStore = defineStore('subscription', () => {
         subscription.value.cancel_at_period_end = true
         subscription.value.subscription_status = 'active' // remains active until period end
       }
-      console.log('[Subscription Store] Subscription cancelled (will end at period end)')
     } catch (err) {
       console.error('Error cancelling subscription:', err)
       error.value = err instanceof Error ? err.message : 'Failed to cancel subscription'
@@ -141,7 +140,6 @@ export const useSubscriptionStore = defineStore('subscription', () => {
         subscription.value.cancel_at_period_end = false
         subscription.value.subscription_status = 'active'
       }
-      console.log('[Subscription Store] Subscription reactivated')
     } catch (err) {
       console.error('Error reactivating subscription:', err)
       error.value = err instanceof Error ? err.message : 'Failed to reactivate subscription'

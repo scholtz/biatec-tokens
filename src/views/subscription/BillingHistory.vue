@@ -228,7 +228,7 @@ const fetchInvoices = async () => {
         date,
         amount: product.price,
         status: i === 0 && subscriptionStore.subscription?.subscription_status === 'past_due' ? 'Open' : 'Paid',
-        pdfUrl: `#invoice-${i}`
+        pdfUrl: i === 0 && subscriptionStore.subscription?.subscription_status === 'past_due' ? undefined : `https://invoice.stripe.com/i/mock_${Date.now()}_${i}`
       })
     }
     invoices.value = mockInvoices

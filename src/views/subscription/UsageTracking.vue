@@ -261,7 +261,7 @@ const loadUsageData = async () => {
   const metrics = subscriptionStore.conversionMetrics
   usageData.value = {
     tokensCreated: metrics.successfulCreations,
-    apiCalls: Math.floor(Math.random() * 500) // Mock API calls
+    apiCalls: metrics.tokenCreationAttempts * 12 // Approximate API calls based on creation attempts
   }
 }
 
