@@ -458,25 +458,23 @@ describe('PortfolioLaunchpad – liquidity style helpers', () => {
     const { wrapper, store } = await mountLaunchpad()
     // arc200-biatec has liquidityIndicator: 'medium'
     const medTok = store.tokens.find((t) => t.id === 'arc200-biatec')
-    if (medTok) {
-      store.selectToken(medTok.id)
-      await flushPromises()
-      // The evaluate stage renders liquidityTextClasses(token.liquidityIndicator)
-      // 'medium' branch should be exercised
-      expect(wrapper.text()).toContain('Utility Summary')
-      expect(wrapper.text()).toContain(medTok.symbol)
-    }
+    expect(medTok).toBeDefined()
+    store.selectToken(medTok!.id)
+    await flushPromises()
+    // The evaluate stage renders liquidityTextClasses(token.liquidityIndicator)
+    // 'medium' branch should be exercised
+    expect(wrapper.text()).toContain('Utility Summary')
+    expect(wrapper.text()).toContain(medTok!.symbol)
   })
 
   it('evaluate stage shows low-liquidity style when rwa-property-01 is selected', async () => {
     const { wrapper, store } = await mountLaunchpad()
     // rwa-property-01 has liquidityIndicator: 'low'
     const lowTok = store.tokens.find((t) => t.id === 'rwa-property-01')
-    if (lowTok) {
-      store.selectToken(lowTok.id)
-      await flushPromises()
-      expect(wrapper.text()).toContain(lowTok.symbol)
-    }
+    expect(lowTok).toBeDefined()
+    store.selectToken(lowTok!.id)
+    await flushPromises()
+    expect(wrapper.text()).toContain(lowTok!.symbol)
   })
 
   it('discover cards render low-liquidity badge for rwa-property-01', async () => {
@@ -560,26 +558,24 @@ describe('PortfolioLaunchpad – stage navigation (backward)', () => {
     const { wrapper, store } = await mountLaunchpad()
     // rwa-property-01 has kycRequired=true → simulation constraints list rendered
     const kycTok = store.tokens.find((t) => t.id === 'rwa-property-01')
-    if (kycTok) {
-      store.selectToken(kycTok.id)
-      await store.runSimulation()
-      await flushPromises()
-      expect(store.simulation?.constraints.length).toBeGreaterThan(0)
-      expect(wrapper.text()).toContain('KYC verification required')
-    }
+    expect(kycTok).toBeDefined()
+    store.selectToken(kycTok!.id)
+    await store.runSimulation()
+    await flushPromises()
+    expect(store.simulation?.constraints.length).toBeGreaterThan(0)
+    expect(wrapper.text()).toContain('KYC verification required')
   })
 
   it('simulate stage shows warnings for low-liquidity token', async () => {
     const { wrapper, store } = await mountLaunchpad()
     // rwa-property-01 has liquidityIndicator='low' → warnings list rendered
     const lowTok = store.tokens.find((t) => t.liquidityIndicator === 'low')
-    if (lowTok) {
-      store.selectToken(lowTok.id)
-      await store.runSimulation()
-      await flushPromises()
-      expect(store.simulation?.warnings.length).toBeGreaterThan(0)
-      expect(wrapper.text()).toContain('Low liquidity')
-    }
+    expect(lowTok).toBeDefined()
+    store.selectToken(lowTok!.id)
+    await store.runSimulation()
+    await flushPromises()
+    expect(store.simulation?.warnings.length).toBeGreaterThan(0)
+    expect(wrapper.text()).toContain('Low liquidity')
   })
 
   it('"Back to simulation" button in execute stage sets stage to simulate', async () => {
@@ -590,11 +586,10 @@ describe('PortfolioLaunchpad – stage navigation (backward)', () => {
     store.proceedToExecute()
     await flushPromises()
     const backBtn = wrapper.findAll('button').find((b) => b.text().includes('Back to simulation'))
-    if (backBtn) {
-      await backBtn.trigger('click')
-      await flushPromises()
-      expect(store.stage).toBe('simulate')
-    }
+    expect(backBtn).toBeDefined()
+    await backBtn!.trigger('click')
+    await flushPromises()
+    expect(store.stage).toBe('simulate')
   })
 
   it('progress nav evaluate button navigates back to evaluate from simulate', async () => {
@@ -606,11 +601,10 @@ describe('PortfolioLaunchpad – stage navigation (backward)', () => {
     // Now on simulate stage; click the 'Evaluate' nav button to go back
     const navBtns = wrapper.find('nav[aria-label="Launchpad progress"]').findAll('button')
     const evalBtn = navBtns.find((b) => b.attributes('aria-label')?.includes('Stage 2'))
-    if (evalBtn) {
-      await evalBtn.trigger('click')
-      await flushPromises()
-      expect(store.stage).toBe('evaluate')
-    }
+    expect(evalBtn).toBeDefined()
+    await evalBtn!.trigger('click')
+    await flushPromises()
+    expect(store.stage).toBe('evaluate')
   })
 
   it('progress nav simulate button navigates back to simulate from execute', async () => {
@@ -623,11 +617,10 @@ describe('PortfolioLaunchpad – stage navigation (backward)', () => {
     // Now on execute stage; click the 'Simulate' nav button to go back
     const navBtns = wrapper.find('nav[aria-label="Launchpad progress"]').findAll('button')
     const simBtn = navBtns.find((b) => b.attributes('aria-label')?.includes('Stage 3'))
-    if (simBtn) {
-      await simBtn.trigger('click')
-      await flushPromises()
-      expect(store.stage).toBe('simulate')
-    }
+    expect(simBtn).toBeDefined()
+    await simBtn!.trigger('click')
+    await flushPromises()
+    expect(store.stage).toBe('simulate')
   })
 
   it('progress nav discover button calls deselectToken', async () => {
@@ -638,12 +631,11 @@ describe('PortfolioLaunchpad – stage navigation (backward)', () => {
     // Click 'Discover' nav button (Stage 1)
     const navBtns = wrapper.find('nav[aria-label="Launchpad progress"]').findAll('button')
     const discBtn = navBtns.find((b) => b.attributes('aria-label')?.includes('Stage 1'))
-    if (discBtn) {
-      await discBtn.trigger('click')
-      await flushPromises()
-      expect(store.stage).toBe('discover')
-      expect(store.selectedTokenId).toBeNull()
-    }
+    expect(discBtn).toBeDefined()
+    await discBtn!.trigger('click')
+    await flushPromises()
+    expect(store.stage).toBe('discover')
+    expect(store.selectedTokenId).toBeNull()
   })
 })
 
