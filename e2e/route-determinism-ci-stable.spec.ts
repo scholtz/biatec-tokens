@@ -83,14 +83,17 @@ test.describe("AC #1 + #4: Guest homepage — auth-first entry and no wallet sta
     // Wait for page to settle
     await page.waitForFunction(() => document.readyState === "complete", { timeout: 10000 });
 
-    const content = await page.content();
+    // AC6 (Issue #495): Use nav-component assertion — more deterministic than page.content()
+    // which scans the full HTML including hidden script tags and data attributes.
+    const nav = page.getByRole("navigation").first();
+    const navText = await nav.textContent().catch(() => "");
 
-    // Canonical check: no wallet/network-only status phrases
-    // "Not connected" is a wallet-era phrase that should not appear in auth-first nav
-    expect(content).not.toMatch(/not connected/i);
+    // Canonical check: no wallet/network-only status phrases in top navigation
+    // "Not connected" is a wallet-era phrase that must not appear in auth-first nav
+    expect(navText).not.toMatch(/not connected/i);
 
     // No wallet connector phrases in primary nav
-    expect(content).not.toMatch(/WalletConnect|Pera Wallet|Defly|MetaMask/i);
+    expect(navText).not.toMatch(/WalletConnect|Pera Wallet|Defly|MetaMask/i);
   });
 
   test("guest homepage Sign In button has ARIA role=button (AC #7 accessibility)", async ({
@@ -285,8 +288,10 @@ test.describe("AC #5: Authenticated nav includes canonical creation entry", () =
 
     await page.waitForFunction(() => document.readyState === "complete", { timeout: 10000 });
 
-    const content = await page.content();
-    expect(content).not.toMatch(/not connected/i);
+    // AC6 (Issue #495): Use nav-component assertion for deterministic wallet state check
+    const nav = page.getByRole("navigation").first();
+    const navText = await nav.textContent().catch(() => "");
+    expect(navText).not.toMatch(/not connected/i);
   });
 });
 

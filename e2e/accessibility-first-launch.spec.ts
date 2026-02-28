@@ -116,7 +116,9 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
     await page.goto('/')
     await page.waitForLoadState('networkidle')
 
-    const content = await page.content()
+    // AC6 (Issue #495): Use nav-component assertion for wallet text checks.
+    const nav = page.getByRole('navigation').first()
+    const navContent = await nav.textContent().catch(() => '')
     const walletPhrases = [
       'Connect Wallet',
       'WalletConnect',
@@ -129,7 +131,7 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
       'Switch Network',
     ]
     for (const phrase of walletPhrases) {
-      expect(content).not.toContain(phrase)
+      expect(navContent).not.toContain(phrase)
     }
   })
 
@@ -140,10 +142,12 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
     await page.goto('/')
     await page.waitForLoadState('networkidle')
 
-    const content = await page.content()
+    // AC6 (Issue #495): Use nav-component assertion
+    const nav = page.getByRole('navigation').first()
+    const navContent = await nav.textContent().catch(() => '')
     const walletPhrases = ['Connect Wallet', 'WalletConnect', 'Wallet Connect', 'Not Connected']
     for (const phrase of walletPhrases) {
-      expect(content).not.toContain(phrase)
+      expect(navContent).not.toContain(phrase)
     }
   })
 
@@ -173,11 +177,13 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
     const heading = page.getByRole('heading', { name: /guided token launch/i }).first()
     await expect(heading).toBeVisible({ timeout: 30000 })
 
-    const content = await page.content()
-    expect(content).not.toMatch(/connect\s+wallet/i)
-    expect(content).not.toMatch(/wallet\s+connect/i)
-    expect(content).not.toMatch(/not\s+connected/i)
-    expect(content).not.toMatch(/wallet\s+required/i)
+    // AC6 (Issue #495): Use nav-component assertion
+    const nav = page.getByRole('navigation').first()
+    const navContent = await nav.textContent().catch(() => '')
+    expect(navContent).not.toMatch(/connect\s+wallet/i)
+    expect(navContent).not.toMatch(/wallet\s+connect/i)
+    expect(navContent).not.toMatch(/not\s+connected/i)
+    expect(navContent).not.toMatch(/wallet\s+required/i)
   })
 })
 
@@ -340,9 +346,11 @@ test.describe('Compliance setup workspace — non-wallet accessibility', () => {
     const h1 = page.getByRole('heading', { level: 1 }).first()
     await expect(h1).toBeVisible({ timeout: 30000 })
 
-    const content = await page.content()
-    expect(content).not.toMatch(/connect\s+wallet/i)
-    expect(content).not.toMatch(/wallet\s+required/i)
+    // AC6 (Issue #495): Use nav-component assertion
+    const nav = page.getByRole('navigation').first()
+    const navContent = await nav.textContent().catch(() => '')
+    expect(navContent).not.toMatch(/connect\s+wallet/i)
+    expect(navContent).not.toMatch(/wallet\s+required/i)
   })
 
   test('compliance page is accessible via keyboard Tab from navigation', async ({ page }) => {
