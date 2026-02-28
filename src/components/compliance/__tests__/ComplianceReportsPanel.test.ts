@@ -239,10 +239,11 @@ describe('ComplianceReportsPanel', () => {
     });
 
     describe('formatTimestamp', () => {
-      it('should return Yesterday for a timestamp 25 hours ago', () => {
+      it('should return Yesterday for a timestamp 36 hours ago', () => {
         const vm = wrapper.vm as any;
-        const yesterdayTimestamp = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
-        expect(vm.formatTimestamp(yesterdayTimestamp)).toBe('Yesterday');
+        // 36 hours → diffDays = Math.floor(1.5) = 1 → 'Yesterday', stable regardless of clock time
+        const ts = new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString();
+        expect(vm.formatTimestamp(ts)).toBe('Yesterday');
       });
     });
   });
