@@ -112,9 +112,12 @@ test.describe('Portfolio Launchpad', () => {
     const backButton = page.locator('button').filter({ hasText: /Back/i }).first()
     await expect(backButton).toBeVisible({ timeout: 10000 })
     await backButton.click()
-    await page.waitForTimeout(500)
-    // Should be back at discover - token grid visible
-    await expect(page.locator('article').first()).toBeVisible({ timeout: 10000 })
+    // Wait for evaluate section to disappear (semantic wait - proves back navigation completed)
+    const evaluateSection = page.getByRole('region', { name: /evaluate/i })
+    await expect(evaluateSection).toBeHidden({ timeout: 15000 })
+    // Should be back at discover - discovery token cards visible
+    const discoverSection = page.getByRole('region', { name: /discover/i })
+    await expect(discoverSection).toBeVisible({ timeout: 15000 })
   })
 
   // ── Simulate stage ─────────────────────────────────────────────────────────

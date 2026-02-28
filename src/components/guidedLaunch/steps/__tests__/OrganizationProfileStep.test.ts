@@ -46,6 +46,43 @@ describe('OrganizationProfileStep', () => {
     expect(vm.fieldErrors.contactEmail).toBeDefined()
   })
 
+  it('should clear email error when valid email entered', async () => {
+    const wrapper = mount(OrganizationProfileStep)
+    const vm = wrapper.vm as any
+    // First set invalid email to create error
+    vm.formData.contactEmail = 'invalid'
+    vm.validateField('contactEmail')
+    expect(vm.fieldErrors.contactEmail).toBeDefined()
+    // Now set valid email and validate
+    vm.formData.contactEmail = 'valid@test.com'
+    vm.validateField('contactEmail')
+    await wrapper.vm.$nextTick()
+    expect(vm.fieldErrors.contactEmail).toBeUndefined()
+  })
+
+  it('should set error when organizationName is empty', async () => {
+    const wrapper = mount(OrganizationProfileStep)
+    const vm = wrapper.vm as any
+    vm.formData.organizationName = ''
+    vm.validateField('organizationName')
+    await wrapper.vm.$nextTick()
+    expect(vm.fieldErrors.organizationName).toBeDefined()
+  })
+
+  it('should clear organizationName error when name is provided', async () => {
+    const wrapper = mount(OrganizationProfileStep)
+    const vm = wrapper.vm as any
+    // Set error first
+    vm.formData.organizationName = ''
+    vm.validateField('organizationName')
+    expect(vm.fieldErrors.organizationName).toBeDefined()
+    // Clear by providing a valid name
+    vm.formData.organizationName = 'Test Corp'
+    vm.validateField('organizationName')
+    await wrapper.vm.$nextTick()
+    expect(vm.fieldErrors.organizationName).toBeUndefined()
+  })
+
   it('should show warning for missing registration number', () => {
     const wrapper = mount(OrganizationProfileStep)
     const vm = wrapper.vm as any
@@ -58,6 +95,87 @@ describe('OrganizationProfileStep', () => {
     const validation = vm.validateForm()
     expect(validation.isValid).toBe(true)
     expect(validation.warnings.length).toBeGreaterThan(0)
+  })
+
+  it('should return errors when organizationName is missing', () => {
+    const wrapper = mount(OrganizationProfileStep)
+    const vm = wrapper.vm as any
+    vm.formData.organizationName = ''
+    vm.formData.jurisdiction = 'US'
+    vm.formData.contactName = 'John'
+    vm.formData.contactEmail = 'john@test.com'
+    vm.formData.role = 'business_owner'
+    const validation = vm.validateForm()
+    expect(validation.isValid).toBe(false)
+    expect(validation.errors).toContain('Organization name is required')
+  })
+
+  it('should return errors when contactEmail format is invalid', () => {
+    const wrapper = mount(OrganizationProfileStep)
+    const vm = wrapper.vm as any
+    vm.formData.organizationName = 'Test'
+    vm.formData.organizationType = 'company'
+    vm.formData.jurisdiction = 'US'
+    vm.formData.contactName = 'John'
+    vm.formData.contactEmail = 'not-a-valid-email'
+    vm.formData.role = 'business_owner'
+    const validation = vm.validateForm()
+    expect(validation.isValid).toBe(false)
+    expect(validation.errors).toContain('Invalid email format')
+  })
+
+  it('should return error when contactEmail is empty', () => {
+    const wrapper = mount(OrganizationProfileStep)
+    const vm = wrapper.vm as any
+    vm.formData.organizationName = 'Test'
+    vm.formData.organizationType = 'company'
+    vm.formData.jurisdiction = 'US'
+    vm.formData.contactName = 'John'
+    vm.formData.contactEmail = ''
+    vm.formData.role = 'business_owner'
+    const validation = vm.validateForm()
+    expect(validation.isValid).toBe(false)
+    expect(validation.errors).toContain('Contact email is required')
+  })
+
+  it('handleSubmit emits complete and update events when form is valid', async () => {
+    const wrapper = mount(OrganizationProfileStep)
+    const vm = wrapper.vm as any
+    // Fill in valid form data
+    vm.formData.organizationName = 'Valid Corp'
+    vm.formData.organizationType = 'company'
+    vm.formData.jurisdiction = 'US'
+    vm.formData.contactName = 'Jane Doe'
+    vm.formData.contactEmail = 'jane@validcorp.com'
+    vm.formData.role = 'business_owner'
+    await wrapper.vm.$nextTick()
+    // Call handleSubmit
+    vm.handleSubmit()
+    await wrapper.vm.$nextTick()
+    const emitted = wrapper.emitted()
+    expect(emitted.complete).toBeDefined()
+    expect(emitted.update).toBeDefined()
+  })
+
+  it('handleSubmit does not emit complete when form is invalid', async () => {
+    const wrapper = mount(OrganizationProfileStep)
+    const vm = wrapper.vm as any
+    // Leave form in invalid state (empty required fields)
+    vm.handleSubmit()
+    await wrapper.vm.$nextTick()
+    const emitted = wrapper.emitted()
+    expect(emitted.complete).toBeUndefined()
+  })
+
+  it('should emit update when form data changes (watch)', async () => {
+    const wrapper = mount(OrganizationProfileStep)
+    const vm = wrapper.vm as any
+    // Change formData to trigger watch
+    vm.formData.organizationName = 'Updated Name'
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
+    const emitted = wrapper.emitted()
+    expect(emitted.update).toBeDefined()
   })
 
   it('should load existing data from store', async () => {

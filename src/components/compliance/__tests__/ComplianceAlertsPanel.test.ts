@@ -118,6 +118,22 @@ describe('ComplianceAlertsPanel', () => {
       expect(notifyButton.exists()).toBe(true);
       expect(notifyButton.text()).toContain('Notify Me When Available');
     });
+
+    it('should call notifyInterest and show alert when notify button is clicked', async () => {
+      // happy-dom does not define window.alert; define it first so vi.spyOn can instrument it
+      if (!window.alert) window.alert = () => {};
+      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const wrapper = mount(ComplianceAlertsPanel);
+
+      const notifyButton = wrapper.find('button[aria-label="Express interest in compliance alerts feature"]');
+      await notifyButton.trigger('click');
+
+      expect(alertSpy).toHaveBeenCalledWith(
+        "Thank you for your interest! We'll notify you when Compliance Alerts are available."
+      );
+      expect(consoleSpy).toHaveBeenCalledWith('User expressed interest in Compliance Alerts feature');
+    });
   });
 
   describe('Info Box', () => {
