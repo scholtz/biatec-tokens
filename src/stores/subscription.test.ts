@@ -535,4 +535,94 @@ describe('Subscription Store', () => {
       expect(store.conversionMetrics.networkPreference['ethereum']).toBe(2)
     })
   })
+
+  describe('cancelSubscription', () => {
+    it('should set cancel_at_period_end to true', async () => {
+      const store = useSubscriptionStore()
+      store.subscription = {
+        customer_id: 'cus_123',
+        subscription_id: 'sub_123',
+        subscription_status: 'active',
+        price_id: 'price_test_basic',
+        current_period_start: null,
+        current_period_end: null,
+        cancel_at_period_end: false,
+        payment_method_brand: null,
+        payment_method_last4: null,
+      }
+      await store.cancelSubscription()
+      expect(store.subscription?.cancel_at_period_end).toBe(true)
+      expect(store.subscription?.subscription_status).toBe('active')
+    })
+
+    it('should set loading to false after completion', async () => {
+      const store = useSubscriptionStore()
+      store.subscription = {
+        customer_id: 'cus_123',
+        subscription_id: 'sub_123',
+        subscription_status: 'active',
+        price_id: 'price_test_basic',
+        current_period_start: null,
+        current_period_end: null,
+        cancel_at_period_end: false,
+        payment_method_brand: null,
+        payment_method_last4: null,
+      }
+      await store.cancelSubscription()
+      expect(store.loading).toBe(false)
+    })
+
+    it('should handle null subscription gracefully', async () => {
+      const store = useSubscriptionStore()
+      store.subscription = null
+      await store.cancelSubscription()
+      expect(store.subscription).toBeNull()
+      expect(store.loading).toBe(false)
+    })
+  })
+
+  describe('reactivateSubscription', () => {
+    it('should set cancel_at_period_end to false and status to active', async () => {
+      const store = useSubscriptionStore()
+      store.subscription = {
+        customer_id: 'cus_123',
+        subscription_id: 'sub_123',
+        subscription_status: 'active',
+        price_id: 'price_test_basic',
+        current_period_start: null,
+        current_period_end: null,
+        cancel_at_period_end: true,
+        payment_method_brand: null,
+        payment_method_last4: null,
+      }
+      await store.reactivateSubscription()
+      expect(store.subscription?.cancel_at_period_end).toBe(false)
+      expect(store.subscription?.subscription_status).toBe('active')
+    })
+
+    it('should set loading to false after completion', async () => {
+      const store = useSubscriptionStore()
+      store.subscription = {
+        customer_id: 'cus_123',
+        subscription_id: 'sub_123',
+        subscription_status: 'cancelled',
+        price_id: 'price_test_basic',
+        current_period_start: null,
+        current_period_end: null,
+        cancel_at_period_end: false,
+        payment_method_brand: null,
+        payment_method_last4: null,
+      }
+      await store.reactivateSubscription()
+      expect(store.loading).toBe(false)
+    })
+
+    it('should handle null subscription gracefully', async () => {
+      const store = useSubscriptionStore()
+      store.subscription = null
+      await store.reactivateSubscription()
+      expect(store.subscription).toBeNull()
+      expect(store.loading).toBe(false)
+    })
+  })
 });

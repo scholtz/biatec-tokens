@@ -93,6 +93,12 @@
                 <router-link to="/subscription/pricing" @click="showUserMenu = false" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
                   Subscription
                 </router-link>
+                <router-link to="/account/billing" @click="showUserMenu = false" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                  Billing History
+                </router-link>
+                <router-link to="/account/usage" @click="showUserMenu = false" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                  Usage & Limits
+                </router-link>
                 <router-link to="/settings" @click="showUserMenu = false" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
                   Settings
                 </router-link>

@@ -112,6 +112,44 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     }
   }
 
+  const cancelSubscription = async () => {
+    loading.value = true
+    error.value = null
+    try {
+      // In a real app, this would call /api/subscription/cancel
+      await new Promise(resolve => setTimeout(resolve, 800))
+      if (subscription.value) {
+        subscription.value.cancel_at_period_end = true
+        subscription.value.subscription_status = 'active' // remains active until period end
+      }
+      console.log('[Subscription Store] Subscription cancelled (will end at period end)')
+    } catch (err) {
+      console.error('Error cancelling subscription:', err)
+      error.value = err instanceof Error ? err.message : 'Failed to cancel subscription'
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const reactivateSubscription = async () => {
+    loading.value = true
+    error.value = null
+    try {
+      // In a real app, this would call /api/subscription/reactivate
+      await new Promise(resolve => setTimeout(resolve, 800))
+      if (subscription.value) {
+        subscription.value.cancel_at_period_end = false
+        subscription.value.subscription_status = 'active'
+      }
+      console.log('[Subscription Store] Subscription reactivated')
+    } catch (err) {
+      console.error('Error reactivating subscription:', err)
+      error.value = err instanceof Error ? err.message : 'Failed to reactivate subscription'
+    } finally {
+      loading.value = false
+    }
+  }
+
   const createCheckoutSession = async (priceId: string, mode: 'payment' | 'subscription' = 'subscription') => {
     loading.value = true
     error.value = null
@@ -191,6 +229,8 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     currentPeriodEnd,
     fetchSubscription,
     createCheckoutSession,
+    cancelSubscription,
+    reactivateSubscription,
     conversionMetrics,
     trackTokenCreationAttempt,
     trackTokenCreationSuccess,

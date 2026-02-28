@@ -35,6 +35,9 @@ import { isIssuanceSessionValid, storeIssuanceReturnPath } from "../utils/authFi
 import Pricing from "../views/subscription/Pricing.vue";
 import Success from "../views/subscription/Success.vue";
 import Cancel from "../views/subscription/Cancel.vue";
+import SubscriptionManagement from "../views/subscription/SubscriptionManagement.vue";
+import BillingHistory from "../views/subscription/BillingHistory.vue";
+import UsageTracking from "../views/subscription/UsageTracking.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -233,6 +236,24 @@ const router = createRouter({
       path: "/subscription/cancel",
       name: "SubscriptionCancel",
       component: Cancel,
+    },
+    {
+      path: "/account/subscription",
+      name: "SubscriptionManagement",
+      component: SubscriptionManagement,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/account/billing",
+      name: "BillingHistory",
+      component: BillingHistory,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/account/usage",
+      name: "UsageTracking",
+      component: UsageTracking,
+      meta: { requiresAuth: true },
     },
   ],
 });
