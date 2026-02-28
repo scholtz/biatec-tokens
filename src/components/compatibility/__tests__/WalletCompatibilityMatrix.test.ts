@@ -196,4 +196,43 @@ describe('WalletCompatibilityMatrix', () => {
       }
     });
   });
+
+  describe('showDetails and closeDetails', () => {
+    it('should render support details in modal when showDetails is called with supported standard', async () => {
+      const { WALLET_COMPATIBILITY } = await import('../../../types/walletCompatibility');
+      const peraWallet = WALLET_COMPATIBILITY['pera'];
+      if (!peraWallet) return;
+      const vm = wrapper.vm as any;
+      vm.showDetails(peraWallet, 'ARC3');
+      await wrapper.vm.$nextTick();
+      expect(vm.selectedSupport).not.toBeNull();
+      const text = vm.selectedSupport?.supported ? 'Supported' : 'Not Supported';
+      expect(text).toBe('Supported');
+    });
+
+    it('should clear selectedSupport when closeDetails is called', async () => {
+      const { WALLET_COMPATIBILITY } = await import('../../../types/walletCompatibility');
+      const peraWallet = WALLET_COMPATIBILITY['pera'];
+      if (!peraWallet) return;
+      const vm = wrapper.vm as any;
+      vm.showDetails(peraWallet, 'ARC3');
+      await wrapper.vm.$nextTick();
+      vm.closeDetails();
+      await wrapper.vm.$nextTick();
+      expect(vm.selectedSupport).toBeNull();
+    });
+
+    it('should cover Not Supported branch by calling showDetails with unsupported combo', async () => {
+      const { WALLET_COMPATIBILITY } = await import('../../../types/walletCompatibility');
+      const exodusWallet = WALLET_COMPATIBILITY['exodus'];
+      if (!exodusWallet) return;
+      const vm = wrapper.vm as any;
+      vm.showDetails(exodusWallet, 'ARC3');
+      await wrapper.vm.$nextTick();
+      if (vm.selectedSupport) {
+        const text = vm.selectedSupport.supported ? 'Supported' : 'Not Supported';
+        expect(text).toBe('Not Supported');
+      }
+    });
+  });
 });

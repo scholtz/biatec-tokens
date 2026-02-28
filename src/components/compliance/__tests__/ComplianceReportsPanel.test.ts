@@ -201,4 +201,49 @@ describe('ComplianceReportsPanel', () => {
       }
     });
   });
+
+  describe('Branch coverage - computed methods', () => {
+    let wrapper: ReturnType<typeof mount>;
+
+    beforeEach(() => {
+      wrapper = mount(ComplianceReportsPanel);
+    });
+
+    describe('reportIconClass', () => {
+      it('should return green class for annual type', () => {
+        const vm = wrapper.vm as any;
+        expect(vm.reportIconClass('annual')).toContain('green');
+      });
+
+      it('should return yellow class for on_demand type', () => {
+        const vm = wrapper.vm as any;
+        expect(vm.reportIconClass('on_demand')).toContain('yellow');
+      });
+
+      it('should return gray class for unknown type', () => {
+        const vm = wrapper.vm as any;
+        expect(vm.reportIconClass('unknown_type')).toContain('gray');
+      });
+    });
+
+    describe('formatBadgeClass', () => {
+      it('should return green class for csv format', () => {
+        const vm = wrapper.vm as any;
+        expect(vm.formatBadgeClass('csv')).toContain('green');
+      });
+
+      it('should return gray class for unknown format', () => {
+        const vm = wrapper.vm as any;
+        expect(vm.formatBadgeClass('unknown_format')).toContain('gray');
+      });
+    });
+
+    describe('formatTimestamp', () => {
+      it('should return Yesterday for a timestamp 25 hours ago', () => {
+        const vm = wrapper.vm as any;
+        const yesterdayTimestamp = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
+        expect(vm.formatTimestamp(yesterdayTimestamp)).toBe('Yesterday');
+      });
+    });
+  });
 });

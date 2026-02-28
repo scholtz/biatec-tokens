@@ -243,4 +243,43 @@ describe('WhitelistStatusPanel', () => {
       expect(wrapper.find('h2').exists()).toBe(true);
     });
   });
+
+  describe('Branch coverage - formatTimeAgo', () => {
+    let wrapper: ReturnType<typeof mount>;
+
+    beforeEach(() => {
+      wrapper = mount(WhitelistStatusPanel);
+    });
+
+    it('should return "Just now" for a current timestamp', () => {
+      const vm = wrapper.vm as any;
+      expect(vm.formatTimestamp(new Date().toISOString())).toBe('Just now');
+    });
+
+    it('should return "X minutes ago" for a timestamp 30 minutes ago', () => {
+      const vm = wrapper.vm as any;
+      const ts = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+      expect(vm.formatTimestamp(ts)).toMatch(/30 minutes ago/);
+    });
+
+    it('should return "X hours ago" for a timestamp 2 hours ago', () => {
+      const vm = wrapper.vm as any;
+      const ts = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+      expect(vm.formatTimestamp(ts)).toMatch(/2 hours ago/);
+    });
+
+    it('should return "X days ago" for a timestamp 3 days ago', () => {
+      const vm = wrapper.vm as any;
+      const ts = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+      expect(vm.formatTimestamp(ts)).toMatch(/3 days ago/);
+    });
+
+    it('should return a formatted date for a long-ago timestamp', () => {
+      const vm = wrapper.vm as any;
+      const ts = new Date(2020, 0, 1).toISOString();
+      const result = vm.formatTimestamp(ts);
+      expect(result).toMatch(/Jan/);
+      expect(result).toMatch(/2020/);
+    });
+  });
 });
