@@ -312,6 +312,118 @@ describe('portfolioLaunchpad store', () => {
     })
   })
 
+  // ── canAdvance extended branches ───────────────────────────────────────────
+
+  describe('canAdvance – extended branches', () => {
+    it('returns false on confirm stage (default case)', async () => {
+      const store = usePortfolioLaunchpadStore()
+      await store.fetchTokens()
+      store.selectToken(store.tokens[0].id)
+      await store.runSimulation()
+      store.proceedToExecute()
+      await store.submitAction()
+      // stage is now 'confirm', actionTxId is set → default branch → false
+      expect(store.stage).toBe('confirm')
+      expect(store.canAdvance).toBe(false)
+    })
+
+    it('returns false on execute stage when actionError is set', async () => {
+      const store = usePortfolioLaunchpadStore()
+      await store.fetchTokens()
+      store.selectToken(store.tokens[0].id)
+      await store.runSimulation()
+      store.proceedToExecute()
+      store.actionError = 'tx rejected'
+      expect(store.stage).toBe('execute')
+      expect(store.canAdvance).toBe(false)
+    })
+
+    it('returns false on execute stage when actionLoading is true', async () => {
+      const store = usePortfolioLaunchpadStore()
+      await store.fetchTokens()
+      store.selectToken(store.tokens[0].id)
+      await store.runSimulation()
+      store.proceedToExecute()
+      store.actionLoading = true
+      expect(store.canAdvance).toBe(false)
+    })
+
+    it('returns true on execute stage when no error and not loading', async () => {
+      const store = usePortfolioLaunchpadStore()
+      await store.fetchTokens()
+      store.selectToken(store.tokens[0].id)
+      await store.runSimulation()
+      store.proceedToExecute()
+      expect(store.actionError).toBeNull()
+      expect(store.actionLoading).toBe(false)
+      expect(store.canAdvance).toBe(true)
+    })
+
+    it('canAdvance is false on simulate stage when simulation is stale', async () => {
+      const store = usePortfolioLaunchpadStore()
+      await store.fetchTokens()
+      store.selectToken(store.tokens[0].id)
+      await store.runSimulation()
+      store.simulation!.isStale = true
+      expect(store.canAdvance).toBe(false)
+    })
+  })
+
+  // ── isComplete edge cases ──────────────────────────────────────────────────
+
+  describe('isComplete edge cases', () => {
+    it('is false when stage is confirm but actionTxId is null', () => {
+      const store = usePortfolioLaunchpadStore()
+      store.stage = 'confirm'
+      expect(store.actionTxId).toBeNull()
+      expect(store.isComplete).toBe(false)
+    })
+
+    it('is false when actionTxId is set but stage is not confirm', async () => {
+      const store = usePortfolioLaunchpadStore()
+      await store.fetchTokens()
+      store.selectToken(store.tokens[0].id)
+      await store.runSimulation()
+      store.proceedToExecute()
+      store.actionTxId = 'SOME_TX'
+      // stage is 'execute', not 'confirm'
+      expect(store.isComplete).toBe(false)
+    })
+  })
+
+  // ── featuredTokens ────────────────────────────────────────────────────────
+
+  describe('featuredTokens', () => {
+    it('returns only featured tokens', async () => {
+      const store = usePortfolioLaunchpadStore()
+      await store.fetchTokens()
+      const featured = store.featuredTokens
+      expect(featured.length).toBeGreaterThan(0)
+      expect(featured.length).toBeLessThan(store.tokens.length)
+      featured.forEach((t) => expect(t.isFeatured).toBe(true))
+    })
+
+    it('returns empty array when no tokens loaded', () => {
+      const store = usePortfolioLaunchpadStore()
+      expect(store.featuredTokens).toHaveLength(0)
+    })
+  })
+
+  // ── submitAction with amount parameter ────────────────────────────────────
+
+  describe('submitAction with amount parameter', () => {
+    it('accepts custom amount parameter', async () => {
+      const store = usePortfolioLaunchpadStore()
+      await store.fetchTokens()
+      store.selectToken(store.tokens[0].id)
+      await store.runSimulation()
+      store.proceedToExecute()
+      await store.submitAction(50)
+      expect(store.stage).toBe('confirm')
+      expect(store.actionTxId).toBeTruthy()
+    })
+  })
+
   // ── reset ──────────────────────────────────────────────────────────────────
 
   describe('reset', () => {
