@@ -650,3 +650,79 @@ describe('PortfolioLaunchpad – lifecycle cleanup', () => {
     expect(resetLaunchpadDispatchGuard).toHaveBeenCalled()
   })
 })
+
+describe('PortfolioLaunchpad – integration: complete navigation flow', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  it('full flow: discover → select token → evaluate → back → discover', async () => {
+    const { wrapper, store } = await mountLaunchpad()
+
+    // 1. Start at discover stage
+    expect(store.stage).toBe('discover')
+    // Back button is NOT rendered in discover stage
+    expect(wrapper.find('button[aria-label="Back to discover"]').exists()).toBe(false)
+
+    // 2. Select a token to advance to evaluate
+    await store.fetchTokens()
+    store.selectToken(store.tokens[0].id)
+    await flushPromises()
+    expect(store.stage).toBe('evaluate')
+
+    // 3. Back button IS rendered in evaluate stage with visible "Back" text
+    const backBtn = wrapper.find('button[aria-label="Back to discover"]')
+    expect(backBtn.exists()).toBe(true)
+    expect(backBtn.text()).toContain('Back')
+
+    // 4. Click Back to return to discover
+    await backBtn.trigger('click')
+    await flushPromises()
+    expect(store.stage).toBe('discover')
+    expect(store.selectedTokenId).toBeNull()
+
+    // 5. Back button is gone again after returning to discover
+    expect(wrapper.find('button[aria-label="Back to discover"]').exists()).toBe(false)
+  })
+
+  it('navigating forward changes the active step', async () => {
+    const { store } = await mountLaunchpad()
+    expect(store.stage).toBe('discover')
+    await store.fetchTokens()
+
+    // Discover → Evaluate
+    store.selectToken(store.tokens[0].id)
+    await flushPromises()
+    expect(store.stage).toBe('evaluate')
+    expect(store.stageIndex).toBe(1)
+
+    // Evaluate → Simulate
+    await store.runSimulation()
+    await flushPromises()
+    expect(store.stage).toBe('simulate')
+    expect(store.stageIndex).toBe(2)
+  })
+
+  it('navigating backward returns to the previous step', async () => {
+    const { wrapper, store } = await mountLaunchpad()
+    await store.fetchTokens()
+    store.selectToken(store.tokens[0].id)
+    await store.runSimulation()
+    await flushPromises()
+    expect(store.stage).toBe('simulate')
+
+    // Back from simulate → evaluate (via "Back to evaluation" button in the view)
+    const backToEvalBtn = wrapper.findAll('button').find((b) => b.text().includes('Back to evaluation'))
+    expect(backToEvalBtn).toBeDefined()
+    await backToEvalBtn!.trigger('click')
+    await flushPromises()
+    expect(store.stage).toBe('evaluate')
+    expect(store.stageIndex).toBe(1)
+
+    // Back from evaluate → discover (via "Back to discover" button in the view)
+    const backToDiscBtn = wrapper.find('button[aria-label="Back to discover"]')
+    expect(backToDiscBtn.exists()).toBe(true)
+    await backToDiscBtn.trigger('click')
+    await flushPromises()
+    expect(store.stage).toBe('discover')
+    expect(store.stageIndex).toBe(0)
+  })
+})
