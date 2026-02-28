@@ -249,4 +249,59 @@ describe('MicaReadinessPanel', () => {
       expect(vm.articleStatusLabel('unknown_value')).toBe('Unknown');
     });
   });
+
+  describe('statusBadgeClass and statusLabel computed coverage', () => {
+    const makeData = (status: string): MicaReadinessData => ({
+      overallScore: 80,
+      status: status as MicaReadinessData['status'],
+      lastUpdated: new Date().toISOString(),
+      nextReviewDate: new Date().toISOString(),
+      articles: [],
+    });
+
+    it('returns green class and Excellent label for status excellent', async () => {
+      const wrapper = mount(MicaReadinessPanel);
+      const vm = wrapper.vm as any;
+      vm.readinessData = makeData('excellent');
+      await wrapper.vm.$nextTick();
+      expect(vm.statusBadgeClass).toContain('green');
+      expect(vm.statusLabel).toBe('Excellent');
+    });
+
+    it('returns yellow class and Fair label for status fair', async () => {
+      const wrapper = mount(MicaReadinessPanel);
+      const vm = wrapper.vm as any;
+      vm.readinessData = makeData('fair');
+      await wrapper.vm.$nextTick();
+      expect(vm.statusBadgeClass).toContain('yellow');
+      expect(vm.statusLabel).toBe('Fair');
+    });
+
+    it('returns orange class and Poor label for status poor', async () => {
+      const wrapper = mount(MicaReadinessPanel);
+      const vm = wrapper.vm as any;
+      vm.readinessData = makeData('poor');
+      await wrapper.vm.$nextTick();
+      expect(vm.statusBadgeClass).toContain('orange');
+      expect(vm.statusLabel).toBe('Poor');
+    });
+
+    it('returns red class and Critical label for status critical', async () => {
+      const wrapper = mount(MicaReadinessPanel);
+      const vm = wrapper.vm as any;
+      vm.readinessData = makeData('critical');
+      await wrapper.vm.$nextTick();
+      expect(vm.statusBadgeClass).toContain('red');
+      expect(vm.statusLabel).toBe('Critical');
+    });
+
+    it('returns gray class and Unknown label for unknown status', async () => {
+      const wrapper = mount(MicaReadinessPanel);
+      const vm = wrapper.vm as any;
+      vm.readinessData = makeData('unknown_status_xyz');
+      await wrapper.vm.$nextTick();
+      expect(vm.statusBadgeClass).toContain('gray');
+      expect(vm.statusLabel).toBe('Unknown');
+    });
+  });
 });

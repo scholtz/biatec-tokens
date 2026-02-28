@@ -332,6 +332,36 @@ KYC Passed,John Doe`;
 
       await expect(service.importFromCsv("token123", csvData)).rejects.toThrow('CSV must contain an "address" column');
     });
+
+    it("should mark row as invalid when address format is neither Algorand nor Ethereum", async () => {
+      const csvData = `address,reason
+INVALIDADDR,test`;
+
+      const result = await service.importFromCsv("token123", csvData);
+
+      expect(result.failed).toBe(1);
+      expect(result.success).toBe(0);
+      const row = result.results.find((r) => r.address === "INVALIDADDR");
+      expect(row).toBeDefined();
+      expect(row!.valid).toBe(false);
+      expect(row!.error).toBe("Invalid address format");
+    });
+
+    it("should mark row as failed when addAddress (v1WhitelistCreate) throws", async () => {
+      const csvData = `address,reason
+A23456723456723456723456723456723456723456723456723456723A,KYC passed`;
+
+      mockApiClient.api.v1WhitelistCreate.mockRejectedValueOnce(new Error("Add failed"));
+
+      const result = await service.importFromCsv("token123", csvData);
+
+      expect(result.failed).toBe(1);
+      expect(result.success).toBe(0);
+      const row = result.results.find((r) => r.address === "A23456723456723456723456723456723456723456723456723456723A");
+      expect(row).toBeDefined();
+      expect(row!.valid).toBe(false);
+      expect(row!.error).toBe("Add failed");
+    });
   });
 
   describe("exportComplianceReport", () => {
@@ -380,6 +410,33 @@ KYC Passed,John Doe`;
       expect(result).toContain("Address"); // Note: Capital A in CSV header
       expect(result).toContain("Status");
       expect(result).toContain("Reason");
+    });
+
+    it("generates local report with jurisdictionCode coverage", async () => {
+      // Reset to clear any pending Once implementations from previous tests
+      mockApiClient.instance.get.mockReset();
+      mockApiClient.instance.get.mockRejectedValue(new Error("API unavailable"));
+
+      mockApiClient.api.v1WhitelistDetail.mockResolvedValue({
+        data: {
+          entries: [
+            {
+              address: "A23456723456723456723456723456723456723456723456723456723A",
+              status: "active",
+              addedAt: "2024-01-01T00:00:00Z",
+              jurisdictionCode: "US",
+              kycVerified: false,
+            },
+          ],
+        },
+      });
+
+      const result = await service.exportComplianceReport("token1", "VOI", "json");
+
+      expect(result).toHaveProperty("summary");
+      if (typeof result !== "string") {
+        expect(result.summary.totalWhitelisted).toBe(1);
+      }
     });
   });
 
