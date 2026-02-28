@@ -284,8 +284,10 @@ test.describe('ARC76 Account Derivation Validation', () => {
     const nav = page.getByRole('navigation').first()
     const navContent = await nav.textContent().catch(() => '')
 
-    // Wallet-specific text must not appear in the nav for guests
-    expect(navContent).not.toMatch(/WalletConnect|Connect Wallet|Not Connected|Pera|Defly/i)
+    // Wallet-specific text must not appear in the nav for guests.
+    // Note: use whole-word / specific-phrase patterns to avoid false positives –
+    // e.g. "Pera" is a substring of "Operations" so we check "Pera Wallet" instead.
+    expect(navContent).not.toMatch(/WalletConnect|Pera Wallet|Defly Wallet|Connect Wallet/i)
   })
 })
 
