@@ -188,4 +188,58 @@ describe('AuditTrailSummaryPanel', () => {
       expect(wrapper.find('h2').exists()).toBe(true);
     });
   });
+
+  describe('Branch coverage', () => {
+    it('formatTimestamp returns minutes-ago format for timestamps < 1 hour', () => {
+      const wrapper = mount(AuditTrailSummaryPanel);
+      const formatTimestamp = (wrapper.vm as any).$.setupState.formatTimestamp;
+
+      const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+      expect(formatTimestamp(thirtyMinsAgo)).toBe('30 minutes ago');
+    });
+
+    it('formatTimestamp returns singular "1 minute ago" for exactly 1 minute', () => {
+      const wrapper = mount(AuditTrailSummaryPanel);
+      const formatTimestamp = (wrapper.vm as any).$.setupState.formatTimestamp;
+
+      const oneMinAgo = new Date(Date.now() - 61 * 1000).toISOString();
+      expect(formatTimestamp(oneMinAgo)).toBe('1 minute ago');
+    });
+
+    it('formatTimestamp returns days-ago format for 2-6 day old timestamps', () => {
+      const wrapper = mount(AuditTrailSummaryPanel);
+      const formatTimestamp = (wrapper.vm as any).$.setupState.formatTimestamp;
+
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+      expect(formatTimestamp(threeDaysAgo)).toBe('3 days ago');
+    });
+
+    it('formatTimestamp returns singular "1 day ago" for exactly 1 day', () => {
+      const wrapper = mount(AuditTrailSummaryPanel);
+      const formatTimestamp = (wrapper.vm as any).$.setupState.formatTimestamp;
+
+      const oneDayAgo = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
+      expect(formatTimestamp(oneDayAgo)).toBe('1 day ago');
+    });
+
+    it('formatTimestamp returns locale date string for timestamps >= 7 days old', () => {
+      const wrapper = mount(AuditTrailSummaryPanel);
+      const formatTimestamp = (wrapper.vm as any).$.setupState.formatTimestamp;
+
+      const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+      const result = formatTimestamp(tenDaysAgo);
+      expect(result).toBeTruthy();
+      expect(result).not.toMatch(/days? ago/);
+    });
+
+    it('isDataStale is false when last event was recent (< 24 hours ago)', async () => {
+      const wrapper = mount(AuditTrailSummaryPanel);
+      await wrapper.vm.$nextTick();
+      await new Promise(resolve => setTimeout(resolve, 700));
+
+      // Mock data sets lastEventTime to 2 hours ago, so isDataStale should be false
+      // "Data may be stale" warning should NOT appear
+      expect(wrapper.text()).not.toContain('Data may be stale');
+    });
+  });
 });

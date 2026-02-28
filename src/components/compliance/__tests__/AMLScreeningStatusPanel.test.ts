@@ -296,4 +296,66 @@ describe('AMLScreeningStatusPanel', () => {
     expect(wrapper.html()).toContain('Screening Matches Detected')
     expect(wrapper.html()).toContain('OFAC SDN List')
   })
+
+  describe('Branch coverage', () => {
+    it('getVerdictCardClasses falls back to not_started class for unknown verdict', () => {
+      const wrapper = mount(AMLScreeningStatusPanel, {
+        props: { screening: makeScreening({ verdict: 'clear' }) },
+        global: { stubs },
+      })
+      const getVerdictCardClasses = (wrapper.vm as any).$.setupState.getVerdictCardClasses
+      const result = getVerdictCardClasses('not_a_valid_verdict')
+      expect(result).toContain('border-gray-700')
+    })
+
+    it('getVerdictIconColor falls back to text-gray-400 for unknown verdict', () => {
+      const wrapper = mount(AMLScreeningStatusPanel, {
+        props: { screening: makeScreening({ verdict: 'clear' }) },
+        global: { stubs },
+      })
+      const getVerdictIconColor = (wrapper.vm as any).$.setupState.getVerdictIconColor
+      const result = getVerdictIconColor('not_a_valid_verdict')
+      expect(result).toBe('text-gray-400')
+    })
+
+    it('getActionGuidance falls back to empty string for unknown verdict', () => {
+      const wrapper = mount(AMLScreeningStatusPanel, {
+        props: { screening: makeScreening({ verdict: 'clear' }) },
+        global: { stubs },
+      })
+      const getActionGuidance = (wrapper.vm as any).$.setupState.getActionGuidance
+      const result = getActionGuidance('not_a_valid_verdict')
+      expect(result).toBe('')
+    })
+
+    it('does not show action-required block when verdict does not require action', () => {
+      const nonActionVerdicts: Array<'not_started' | 'in_progress' | 'clear' | 'error' | 'manual_review'> = [
+        'not_started', 'in_progress', 'clear', 'error', 'manual_review',
+      ]
+      for (const verdict of nonActionVerdicts) {
+        const wrapper = mount(AMLScreeningStatusPanel, {
+          props: { screening: makeScreening({ verdict }) },
+          global: { stubs },
+        })
+        expect(wrapper.text()).not.toContain('Action Required')
+        wrapper.unmount()
+      }
+    })
+
+    it('shows action-required block when confirmed_match verdict', () => {
+      const wrapper = mount(AMLScreeningStatusPanel, {
+        props: { screening: makeScreening({ verdict: 'confirmed_match' }) },
+        global: { stubs },
+      })
+      expect(wrapper.text()).toContain('Action Required')
+    })
+
+    it('hides technical details section when showTechnicalDetails is false (default)', () => {
+      const wrapper = mount(AMLScreeningStatusPanel, {
+        props: { screening: makeScreening({ verdict: 'clear' }) },
+        global: { stubs },
+      })
+      expect(wrapper.text()).not.toContain('Technical Details')
+    })
+  })
 })
