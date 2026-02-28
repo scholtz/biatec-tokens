@@ -225,4 +225,41 @@ describe('DiscoveryTokenCard', () => {
       )
     })
   })
+
+  describe('handleViewDetails and handleComplianceClick', () => {
+    it('handleViewDetails emits view-details and tracks telemetry', async () => {
+      const { telemetryService } = await import('../../services/TelemetryService')
+      const token = makeToken()
+      const wrapper = mount(DiscoveryTokenCard, { props: { token } })
+      const handleViewDetails = (wrapper.vm as any).$.setupState.handleViewDetails
+      handleViewDetails()
+      expect(telemetryService.trackTokenDetailViewed).toHaveBeenCalledWith(
+        expect.objectContaining({ tokenId: token.id })
+      )
+      expect(wrapper.emitted('view-details')).toBeTruthy()
+    })
+
+    it('handleComplianceClick emits compliance-click and tracks telemetry', async () => {
+      const { telemetryService } = await import('../../services/TelemetryService')
+      const token = makeToken({ complianceStatus: 'compliant' })
+      const wrapper = mount(DiscoveryTokenCard, { props: { token } })
+      const handleComplianceClick = (wrapper.vm as any).$.setupState.handleComplianceClick
+      handleComplianceClick()
+      expect(telemetryService.trackComplianceBadgeClicked).toHaveBeenCalledWith(
+        expect.objectContaining({ tokenId: token.id })
+      )
+      expect(wrapper.emitted('compliance-click')).toBeTruthy()
+    })
+
+    it('handleViewDetails uses unknown fallbacks for missing standard/network', async () => {
+      const { telemetryService } = await import('../../services/TelemetryService')
+      const token = makeToken({ standard: undefined, network: undefined })
+      const wrapper = mount(DiscoveryTokenCard, { props: { token } })
+      const handleViewDetails = (wrapper.vm as any).$.setupState.handleViewDetails
+      handleViewDetails()
+      expect(telemetryService.trackTokenDetailViewed).toHaveBeenCalledWith(
+        expect.objectContaining({ tokenStandard: 'unknown', tokenChain: 'unknown' })
+      )
+    })
+  })
 })

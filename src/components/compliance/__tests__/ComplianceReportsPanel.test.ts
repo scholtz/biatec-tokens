@@ -224,6 +224,43 @@ describe('ComplianceReportsPanel', () => {
         const vm = wrapper.vm as any;
         expect(vm.reportIconClass('unknown_type')).toContain('gray');
       });
+
+      it('should return blue class for monthly type', () => {
+        const vm = wrapper.vm as any;
+        expect(vm.reportIconClass('monthly')).toContain('blue');
+      });
+
+      it('should return purple class for quarterly type', () => {
+        const vm = wrapper.vm as any;
+        expect(vm.reportIconClass('quarterly')).toContain('purple');
+      });
+    });
+
+    describe('reportIcon', () => {
+      it('should return calendar icon for monthly type', () => {
+        const vm = wrapper.vm as any;
+        expect(vm.reportIcon('monthly')).toBe('pi-calendar');
+      });
+
+      it('should return chart-bar icon for quarterly type', () => {
+        const vm = wrapper.vm as any;
+        expect(vm.reportIcon('quarterly')).toBe('pi-chart-bar');
+      });
+
+      it('should return calendar-times icon for annual type', () => {
+        const vm = wrapper.vm as any;
+        expect(vm.reportIcon('annual')).toBe('pi-calendar-times');
+      });
+
+      it('should return file-check icon for on_demand type', () => {
+        const vm = wrapper.vm as any;
+        expect(vm.reportIcon('on_demand')).toBe('pi-file-check');
+      });
+
+      it('should return default file icon for unknown type', () => {
+        const vm = wrapper.vm as any;
+        expect(vm.reportIcon('unknown_type')).toBe('pi-file');
+      });
     });
 
     describe('formatBadgeClass', () => {

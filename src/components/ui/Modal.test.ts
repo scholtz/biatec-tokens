@@ -164,4 +164,9 @@ describe('Modal Component', () => {
     const wrapper = mount(Modal, { props: { show: true, size: 'xl' } });
     expect((wrapper.vm as any).modalSizeClass).toBe('max-w-2xl');
   });
+
+  it('should return default max-w-md for unknown size', () => {
+    const wrapper = mount(Modal, { props: { show: true, size: 'unknown' as any } });
+    expect((wrapper.vm as any).modalSizeClass).toBe('max-w-md');
+  });
 });

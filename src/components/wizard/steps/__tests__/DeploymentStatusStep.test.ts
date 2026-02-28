@@ -654,4 +654,30 @@ describe("DeploymentStatusStep", () => {
     });
   });
 
+  describe('onUnmounted cleanup', () => {
+    it('should cleanup pollingInterval and service on unmount', async () => {
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+
+      // Set a polling interval to test the truthy branch
+      vm.pollingInterval = setInterval(() => {}, 1000);
+
+      // Should not throw when unmounting
+      expect(() => wrapper.unmount()).not.toThrow();
+      expect(mockStopPolling).toHaveBeenCalled();
+      expect(mockReset).toHaveBeenCalled();
+    });
+
+    it('should cleanup service on unmount even without pollingInterval', async () => {
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } });
+      const vm = wrapper.vm as any;
+
+      // Ensure pollingInterval is null (falsy branch)
+      vm.pollingInterval = null;
+
+      expect(() => wrapper.unmount()).not.toThrow();
+      expect(mockStopPolling).toHaveBeenCalled();
+    });
+  });
+
 })

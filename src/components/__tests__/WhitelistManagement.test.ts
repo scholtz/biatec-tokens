@@ -795,4 +795,50 @@ describe('WhitelistManagement Component', () => {
 
     expect(wrapper.vm.selectedNetwork).toBe('Aramid');
   });
+
+  it('should handle copyAddress clipboard failure (catch branch)', async () => {
+    vi.mocked(whitelistService.getWhitelist).mockResolvedValue([]);
+    vi.mocked(navigator.clipboard.writeText).mockRejectedValue(new Error('Clipboard not available'));
+
+    const wrapper = mount(WhitelistManagement, {
+      props: {
+        tokenId: 'token123',
+      },
+    });
+
+    await wrapper.vm.$nextTick();
+
+    // Should not throw even when clipboard fails
+    await expect(wrapper.vm.copyAddress('SHORTADDR')).resolves.toBeUndefined();
+  });
+
+  it('should return short address unchanged from formatAddress', async () => {
+    vi.mocked(whitelistService.getWhitelist).mockResolvedValue([]);
+
+    const wrapper = mount(WhitelistManagement, {
+      props: {
+        tokenId: 'token123',
+      },
+    });
+
+    await wrapper.vm.$nextTick();
+
+    const result = wrapper.vm.formatAddress('SHORTADDR');
+    expect(result).toBe('SHORTADDR');
+  });
+
+  it('should return default class for unknown status in statusBadgeClass', async () => {
+    vi.mocked(whitelistService.getWhitelist).mockResolvedValue([]);
+
+    const wrapper = mount(WhitelistManagement, {
+      props: {
+        tokenId: 'token123',
+      },
+    });
+
+    await wrapper.vm.$nextTick();
+
+    const result = wrapper.vm.statusBadgeClass('unknown_status');
+    expect(result).toContain('gray');
+  });
 });

@@ -304,4 +304,41 @@ describe('MicaReadinessPanel', () => {
       expect(vm.statusLabel).toBe('Unknown');
     });
   });
+
+  describe('scoreColor and progressBarColor computed coverage', () => {
+    const makeScoreData = (score: number): MicaReadinessData => ({
+      overallScore: score,
+      status: 'good' as MicaReadinessData['status'],
+      lastUpdated: new Date().toISOString(),
+      nextReviewDate: new Date().toISOString(),
+      articles: [],
+    });
+
+    it('returns text-yellow-400 scoreColor and bg-yellow-500 progressBarColor for score 50-69', async () => {
+      const wrapper = mount(MicaReadinessPanel);
+      const vm = wrapper.vm as any;
+      vm.readinessData = makeScoreData(60);
+      await wrapper.vm.$nextTick();
+      expect(vm.scoreColor).toBe('text-yellow-400');
+      expect(vm.progressBarColor).toBe('bg-yellow-500');
+    });
+
+    it('returns text-red-400 scoreColor and bg-red-500 progressBarColor for score below 50', async () => {
+      const wrapper = mount(MicaReadinessPanel);
+      const vm = wrapper.vm as any;
+      vm.readinessData = makeScoreData(40);
+      await wrapper.vm.$nextTick();
+      expect(vm.scoreColor).toBe('text-red-400');
+      expect(vm.progressBarColor).toBe('bg-red-500');
+    });
+
+    it('returns text-gray-400 scoreColor and bg-gray-500 progressBarColor when readinessData is null', async () => {
+      const wrapper = mount(MicaReadinessPanel);
+      const vm = wrapper.vm as any;
+      vm.readinessData = null;
+      await wrapper.vm.$nextTick();
+      expect(vm.scoreColor).toBe('text-gray-400');
+      expect(vm.progressBarColor).toBe('bg-gray-500');
+    });
+  });
 });

@@ -1096,4 +1096,97 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA,KYC Passed,John Doe,t
       expect(component.invalidCount).toBe(1);
     });
   });
+
+  describe('validateCsvData edge cases', () => {
+    it('should return early when csvData is empty', async () => {
+      const wrapper = mount(MicaWhitelistManagement, {
+        props: { tokenId: 'test-token-123', network: 'VOI' },
+        global: { stubs: { Modal: true, Input: true } },
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const component = wrapper.vm as any;
+      component.csvData = '';
+
+      await component.validateCsvData();
+
+      expect(whitelistService.validateCsv).not.toHaveBeenCalled();
+    });
+
+    it('should handle validateCsvData error gracefully (catch branch)', async () => {
+      vi.mocked(whitelistService.validateCsv).mockRejectedValue(new Error('Validation failed'));
+
+      const wrapper = mount(MicaWhitelistManagement, {
+        props: { tokenId: 'test-token-123', network: 'VOI' },
+        global: { stubs: { Modal: true, Input: true } },
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const component = wrapper.vm as any;
+      component.csvData = 'address\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+
+      await expect(component.validateCsvData()).resolves.toBeUndefined();
+      expect(component.isValidating).toBe(false);
+    });
+  });
+
+  describe('importCsv branch coverage', () => {
+    it('should show warning when some addresses fail to import (failed > 0 branch)', async () => {
+      vi.mocked(useSubscriptionStore).mockReturnValue({ isActive: true } as any);
+      vi.mocked(whitelistService.getWhitelist).mockResolvedValue([]);
+      vi.mocked(whitelistService.importFromCsv).mockResolvedValue({ success: 3, failed: 2 });
+
+      const wrapper = mount(MicaWhitelistManagement, {
+        props: { tokenId: 'test-token-123', network: 'VOI' },
+        global: { stubs: { Modal: true, Input: true } },
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const component = wrapper.vm as any;
+      component.csvData = 'address\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+
+      await expect(component.importCsv()).resolves.toBeUndefined();
+      expect(whitelistService.importFromCsv).toHaveBeenCalled();
+    });
+
+    it('should handle importCsv error gracefully (catch branch)', async () => {
+      vi.mocked(useSubscriptionStore).mockReturnValue({ isActive: true } as any);
+      vi.mocked(whitelistService.getWhitelist).mockResolvedValue([]);
+      vi.mocked(whitelistService.importFromCsv).mockRejectedValue(new Error('Import failed'));
+
+      const wrapper = mount(MicaWhitelistManagement, {
+        props: { tokenId: 'test-token-123', network: 'VOI' },
+        global: { stubs: { Modal: true, Input: true } },
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const component = wrapper.vm as any;
+      component.csvData = 'address\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+
+      await expect(component.importCsv()).resolves.toBeUndefined();
+      expect(component.isImporting).toBe(false);
+    });
+  });
+
+  describe('exportReport branch coverage', () => {
+    it('should handle exportReport error gracefully (catch branch)', async () => {
+      vi.mocked(useSubscriptionStore).mockReturnValue({ isActive: true } as any);
+      vi.mocked(whitelistService.getWhitelist).mockResolvedValue([]);
+      vi.mocked(whitelistService.exportComplianceReport).mockRejectedValue(new Error('Export failed'));
+
+      const wrapper = mount(MicaWhitelistManagement, {
+        props: { tokenId: 'test-token-123', network: 'VOI' },
+        global: { stubs: { Modal: true, Input: true } },
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      await expect(wrapper.vm.exportReport('json')).resolves.toBeUndefined();
+      expect(wrapper.vm.isExporting).toBe(false);
+    });
+  });
 });
