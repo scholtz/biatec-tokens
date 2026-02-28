@@ -95,13 +95,35 @@
           </div>
         </div>
 
+        <!-- Loading State -->
+        <div v-if="isLoading" class="text-center py-12" data-testid="token-dashboard-loading">
+          <div class="glass-effect rounded-xl p-12 max-w-md mx-auto">
+            <i class="pi pi-spin pi-spinner text-5xl text-biatec-accent mb-6"></i>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Loading tokens…</h3>
+            <p class="text-gray-400">Fetching your token portfolio</p>
+          </div>
+        </div>
+
+        <!-- Error State -->
+        <div v-else-if="loadError" class="text-center py-12" data-testid="token-dashboard-error">
+          <div class="glass-effect rounded-xl p-12 max-w-md mx-auto border border-red-500/30">
+            <i class="pi pi-exclamation-circle text-5xl text-red-400 mb-6"></i>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Unable to load tokens</h3>
+            <p class="text-gray-400 mb-6">{{ loadError }}</p>
+            <button @click="retryLoad" class="btn-primary px-6 py-3 rounded-xl text-gray-900 dark:text-white font-medium inline-flex items-center space-x-2">
+              <i class="pi pi-refresh"></i>
+              <span>Try again</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Tokens Grid -->
-        <div v-if="filteredTokens.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-else-if="filteredTokens.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="token-dashboard-grid">
           <TokenCard v-for="token in filteredTokens" :key="token.id" :token="token" @delete="deleteToken" />
         </div>
 
         <!-- Empty State -->
-        <div v-else class="text-center py-12">
+        <div v-else class="text-center py-12" data-testid="token-dashboard-empty">
           <div class="glass-effect rounded-xl p-12 max-w-md mx-auto">
             <i class="pi pi-coins text-6xl text-gray-400 mb-6"></i>
             <h3 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">No Tokens Found</h3>
@@ -132,8 +154,10 @@ const tokenStore = useTokenStore();
 
 const selectedStandardFilter = ref("");
 const selectedStatusFilter = ref("");
+const loadError = ref<string | null>(null);
 
 const tokens = computed(() => tokenStore.tokens);
+const isLoading = computed(() => tokenStore.isLoading);
 const totalTokens = computed(() => tokenStore.totalTokens);
 const deployedTokens = computed(() => tokenStore.deployedTokens);
 const deployingTokens = computed(() => tokens.value.filter((t) => t.status === "deploying").length);
@@ -162,6 +186,11 @@ const deleteToken = (tokenId: string) => {
 const refreshTokens = () => {
   // In a real app, this would fetch the latest data from the API
   console.log("Refreshing tokens...");
+};
+
+const retryLoad = () => {
+  loadError.value = null;
+  refreshTokens();
 };
 
 const navigateToCompliance = () => {
