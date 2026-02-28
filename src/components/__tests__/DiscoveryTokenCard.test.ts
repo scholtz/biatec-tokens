@@ -155,9 +155,9 @@ describe('DiscoveryTokenCard', () => {
       const wrapper = mount(DiscoveryTokenCard, {
         props: { token: makeToken({ contractVerified: false, issuerIdentityVerified: false, auditCompleted: false, riskFlags: [] }) },
       })
-      const formatNetwork = (wrapper.vm as any).$.setupState.formatNetwork
-      // hasOperationalInfo is false → operational section absent
-      expect(formatNetwork).toBeDefined()
+      // hasOperationalInfo is false → operational section absent from rendered output
+      expect(wrapper.text()).not.toContain('Contract Verified')
+      expect(wrapper.text()).not.toContain('Risk Flag')
     })
 
     it('formatNetwork returns N/A for undefined network', () => {

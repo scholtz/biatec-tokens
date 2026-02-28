@@ -452,12 +452,16 @@ describe("EmailAuthModal", () => {
       });
 
       const wrapper = mount(EmailAuthModal, {
-        props: { isOpen: true },
+        props: { isOpen: true, defaultNetwork: 'algorand-testnet' },
         attachTo: document.body,
         global: { plugins: [createTestingPinia()] },
       });
 
+      // Component should mount and fall back to the defaultNetwork prop
       expect(wrapper.exists()).toBe(true);
+      const vm = wrapper.vm as any;
+      // selectedNetwork should equal the defaultNetwork since localStorage threw
+      expect(vm.$.setupState.selectedNetwork).toBe('algorand-testnet');
       getItemSpy.mockRestore();
       wrapper.unmount();
     });

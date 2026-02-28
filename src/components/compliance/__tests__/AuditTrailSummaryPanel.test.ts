@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { flushPromises } from '@vue/test-utils';
 import { mount } from '@vue/test-utils';
 import AuditTrailSummaryPanel from '../AuditTrailSummaryPanel.vue';
 
@@ -235,7 +236,7 @@ describe('AuditTrailSummaryPanel', () => {
     it('isDataStale is false when last event was recent (< 24 hours ago)', async () => {
       const wrapper = mount(AuditTrailSummaryPanel);
       await wrapper.vm.$nextTick();
-      await new Promise(resolve => setTimeout(resolve, 700));
+      await flushPromises();
 
       // Mock data sets lastEventTime to 2 hours ago, so isDataStale should be false
       // "Data may be stale" warning should NOT appear
