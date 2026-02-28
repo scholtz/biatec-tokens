@@ -26,6 +26,7 @@ import TokenDiscoveryJourney from "../views/TokenDiscoveryJourney.vue";
 import WalletActivationJourney from "../views/WalletActivationJourney.vue";
 import GuidedPortfolioOnboarding from "../views/GuidedPortfolioOnboarding.vue";
 import PortfolioIntelligenceView from "../views/PortfolioIntelligenceView.vue";
+import PortfolioLaunchpad from "../views/PortfolioLaunchpad.vue";
 import BusinessCommandCenter from "../views/BusinessCommandCenter.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 import { isIssuanceSessionValid, storeIssuanceReturnPath } from "../utils/authFirstIssuanceWorkspace";
@@ -183,6 +184,12 @@ const router = createRouter({
       name: "GuidedPortfolioOnboarding",
       component: GuidedPortfolioOnboarding,
       meta: { requiresAuth: true },
+    },
+    // Portfolio Launchpad – discovery-to-action journey
+    {
+      path: "/launchpad",
+      name: "PortfolioLaunchpad",
+      component: PortfolioLaunchpad,
     },
     // Portfolio Intelligence
     {

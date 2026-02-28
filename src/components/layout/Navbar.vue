@@ -175,6 +175,7 @@ import {
   CommandLineIcon,
   BriefcaseIcon,
   BuildingOffice2Icon,
+  SparklesIcon,
 } from "@heroicons/vue/24/outline";
 import EmailAuthModal from "../EmailAuthModal.vue";
 import { useAuthStore } from "../../stores/auth";
@@ -191,6 +192,7 @@ const showAuthModal = ref(false);
 
 const navigationItems = [
   { name: "Home", path: "/", icon: HomeIcon },
+  { name: "Launchpad", path: "/launchpad", icon: SparklesIcon },
   { name: "Operations", path: "/operations", icon: BuildingOffice2Icon },
   { name: "Cockpit", path: "/cockpit", icon: CommandLineIcon },
   { name: "Guided Launch", path: "/launch/guided", icon: RocketLaunchIcon },
