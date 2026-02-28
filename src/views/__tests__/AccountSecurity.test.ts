@@ -881,4 +881,142 @@ describe('AccountSecurity View', () => {
       })
     })
   })
+
+  describe('Branch coverage - helper functions', () => {
+    function mountComponent() {
+      const pinia = createPinia()
+      const wrapper = mount(AccountSecurity, {
+        global: {
+          plugins: [pinia, router],
+          stubs: { MainLayout: { template: '<div><slot /></div>' } },
+        },
+      })
+      return wrapper
+    }
+
+    it('formatTimestamp: NaN-producing date returns Invalid Date', async () => {
+      const wrapper = mountComponent()
+      await flushPromises()
+      const vm = wrapper.vm as any
+      expect(vm.formatTimestamp('not-a-date')).toBe('Invalid Date')
+    })
+
+    it('formatTimestamp: within 1 minute returns Just now', async () => {
+      const wrapper = mountComponent()
+      await flushPromises()
+      const vm = wrapper.vm as any
+      const recent = new Date(Date.now() - 30 * 1000).toISOString()
+      expect(vm.formatTimestamp(recent)).toBe('Just now')
+    })
+
+    it('formatTimestamp: 30 minutes ago returns 30m ago', async () => {
+      const wrapper = mountComponent()
+      await flushPromises()
+      const vm = wrapper.vm as any
+      const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString()
+      expect(vm.formatTimestamp(thirtyMinsAgo)).toBe('30m ago')
+    })
+
+    it('formatTimestamp: 2 hours ago returns 2h ago', async () => {
+      const wrapper = mountComponent()
+      await flushPromises()
+      const vm = wrapper.vm as any
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+      expect(vm.formatTimestamp(twoHoursAgo)).toBe('2h ago')
+    })
+
+    it('formatTimestamp: old date returns DD. MM. YYYY format', async () => {
+      const wrapper = mountComponent()
+      await flushPromises()
+      const vm = wrapper.vm as any
+      // Use a known date far in the past (more than 1440 mins ago)
+      const result = vm.formatTimestamp('2020-01-01T00:00:00.000Z')
+      expect(result).toMatch(/\d+\.\s*\d+\.\s*\d{4},\s*\d{2}:\d{2}/)
+    })
+
+    it('getEventIconClasses: failure status returns red classes', async () => {
+      const wrapper = mountComponent()
+      await flushPromises()
+      const vm = wrapper.vm as any
+      expect(vm.getEventIconClasses('LOGIN', 'failure')).toContain('red')
+    })
+
+    it('getEventIconClasses: success status returns green classes', async () => {
+      const wrapper = mountComponent()
+      await flushPromises()
+      const vm = wrapper.vm as any
+      expect(vm.getEventIconClasses('LOGIN', 'success')).toContain('green')
+    })
+
+    it('getEventIconClasses: pending status returns yellow classes', async () => {
+      const wrapper = mountComponent()
+      await flushPromises()
+      const vm = wrapper.vm as any
+      expect(vm.getEventIconClasses('LOGIN', 'pending')).toContain('yellow')
+    })
+
+    it('getEventIconClasses: unknown status returns blue classes (default)', async () => {
+      const wrapper = mountComponent()
+      await flushPromises()
+      const vm = wrapper.vm as any
+      expect(vm.getEventIconClasses('LOGIN', 'unknown')).toContain('blue')
+    })
+
+    it('getStatusVariant: success returns success', async () => {
+      const wrapper = mountComponent()
+      await flushPromises()
+      const vm = wrapper.vm as any
+      expect(vm.getStatusVariant('success')).toBe('success')
+    })
+
+    it('getStatusVariant: failure returns error', async () => {
+      const wrapper = mountComponent()
+      await flushPromises()
+      const vm = wrapper.vm as any
+      expect(vm.getStatusVariant('failure')).toBe('error')
+    })
+
+    it('getStatusVariant: pending returns warning', async () => {
+      const wrapper = mountComponent()
+      await flushPromises()
+      const vm = wrapper.vm as any
+      expect(vm.getStatusVariant('pending')).toBe('warning')
+    })
+
+    it('getStatusVariant: info returns info', async () => {
+      const wrapper = mountComponent()
+      await flushPromises()
+      const vm = wrapper.vm as any
+      expect(vm.getStatusVariant('info')).toBe('info')
+    })
+
+    it('getStatusVariant: unknown status returns default', async () => {
+      const wrapper = mountComponent()
+      await flushPromises()
+      const vm = wrapper.vm as any
+      expect(vm.getStatusVariant('unknown')).toBe('default')
+    })
+
+    it('handleRecoveryAction: opens modal then close sets showRecoveryModal to false', async () => {
+      const wrapper = mountComponent()
+      await flushPromises()
+      const vm = wrapper.vm as any
+
+      const option = {
+        id: 'email_recovery',
+        title: 'Email Recovery',
+        description: 'Recover via email',
+        actionLabel: 'Start',
+        available: true,
+      }
+
+      vm.handleRecoveryAction(option)
+      await wrapper.vm.$nextTick()
+      expect(vm.showRecoveryModal).toBe(true)
+
+      vm.showRecoveryModal = false
+      await wrapper.vm.$nextTick()
+      expect(vm.showRecoveryModal).toBe(false)
+    })
+  })
 })

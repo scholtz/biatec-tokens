@@ -419,4 +419,56 @@ describe('TransferValidationForm', () => {
       expect(submitButton.attributes('disabled')).toBeDefined();
     });
   });
+
+  describe('Branch coverage - statusBadgeClass', () => {
+    function mountWrapper() {
+      return mount(TransferValidationForm, { props: defaultProps });
+    }
+
+    it('statusBadgeClass("pending") contains yellow', () => {
+      const vm = mountWrapper().vm as any;
+      expect(vm.statusBadgeClass('pending')).toContain('yellow');
+    });
+
+    it('statusBadgeClass("expired") contains orange', () => {
+      const vm = mountWrapper().vm as any;
+      expect(vm.statusBadgeClass('expired')).toContain('orange');
+    });
+
+    it('statusBadgeClass("denied") contains red', () => {
+      const vm = mountWrapper().vm as any;
+      expect(vm.statusBadgeClass('denied')).toContain('red');
+    });
+
+    it('statusBadgeClass("removed") contains red', () => {
+      const vm = mountWrapper().vm as any;
+      expect(vm.statusBadgeClass('removed')).toContain('red');
+    });
+
+    it('statusBadgeClass("not_listed") contains gray', () => {
+      const vm = mountWrapper().vm as any;
+      expect(vm.statusBadgeClass('not_listed')).toContain('gray');
+    });
+
+    it('statusBadgeClass("unknown_status") contains gray (default)', () => {
+      const vm = mountWrapper().vm as any;
+      expect(vm.statusBadgeClass('unknown_status')).toContain('gray');
+    });
+
+    it('should show error message in rendered output when validation throws', async () => {
+      vi.mocked(complianceService.validateTransfer).mockRejectedValue(new Error('Service unavailable'));
+
+      const wrapper = mount(TransferValidationForm, { props: defaultProps });
+
+      const inputs = wrapper.findAll('input[type="text"]');
+      await inputs[0].setValue('A23456723456723456723456723456723456723456723456723456723A');
+      await inputs[1].setValue('B23456723456723456723456723456723456723456723456723456723B');
+
+      const form = wrapper.find('form');
+      await form.trigger('submit.prevent');
+      await flushPromises();
+
+      expect(wrapper.text()).toContain('Validation Error');
+    });
+  });
 });
