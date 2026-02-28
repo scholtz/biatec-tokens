@@ -23,7 +23,6 @@ test.describe('Portfolio Launchpad', () => {
   test('should load the launchpad page with correct heading', async ({ page }) => {
     await page.goto('/launchpad')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
     const heading = page.getByRole('heading', { name: /Portfolio Launchpad/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 15000 })
   })
@@ -31,7 +30,6 @@ test.describe('Portfolio Launchpad', () => {
   test('should display 5 stage progress steps', async ({ page }) => {
     await page.goto('/launchpad')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
     const nav = page.getByRole('navigation', { name: /Launchpad progress/i })
     await expect(nav).toBeVisible({ timeout: 15000 })
     // Each stage is a button in the progress nav
@@ -43,7 +41,6 @@ test.describe('Portfolio Launchpad', () => {
   test('should show token opportunity cards on discovery', async ({ page }) => {
     await page.goto('/launchpad')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
     // Token grid should have at least one article card
     const firstCard = page.locator('article').first()
     await expect(firstCard).toBeVisible({ timeout: 15000 })
@@ -52,7 +49,6 @@ test.describe('Portfolio Launchpad', () => {
   test('should show Featured badge on featured tokens', async ({ page }) => {
     await page.goto('/launchpad')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
     const featuredBadge = page.getByText('Featured').first()
     await expect(featuredBadge).toBeVisible({ timeout: 15000 })
   })
@@ -60,7 +56,6 @@ test.describe('Portfolio Launchpad', () => {
   test('should NOT show wallet connector UI (product alignment)', async ({ page }) => {
     await page.goto('/launchpad')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
     const content = await page.content()
     // Product definition: email/password only, no wallet connectors
     expect(content).not.toMatch(/WalletConnect|Pera Wallet|Defly|MetaMask|connect.*wallet/i)
@@ -78,11 +73,9 @@ test.describe('Portfolio Launchpad', () => {
   test('should navigate to evaluate stage on token card click', async ({ page }) => {
     await page.goto('/launchpad')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
     const firstCard = page.locator('article').first()
     await expect(firstCard).toBeVisible({ timeout: 15000 })
     await firstCard.click()
-    await page.waitForTimeout(1000)
     // Evaluate stage shows Utility Summary
     const utilitySummary = page.getByRole('heading', { name: /Utility Summary/i })
     await expect(utilitySummary).toBeVisible({ timeout: 10000 })
@@ -91,11 +84,9 @@ test.describe('Portfolio Launchpad', () => {
   test('should show trust score in evaluate stage', async ({ page }) => {
     await page.goto('/launchpad')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
     const firstCard = page.locator('article').first()
     await expect(firstCard).toBeVisible({ timeout: 15000 })
     await firstCard.click()
-    await page.waitForTimeout(1000)
     const trustScore = page.getByText(/Trust Score/i)
     await expect(trustScore).toBeVisible({ timeout: 10000 })
   })
@@ -103,11 +94,9 @@ test.describe('Portfolio Launchpad', () => {
   test('should allow going back from evaluate to discover', async ({ page }) => {
     await page.goto('/launchpad')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
     const firstCard = page.locator('article').first()
     await expect(firstCard).toBeVisible({ timeout: 15000 })
     await firstCard.click()
-    await page.waitForTimeout(1000)
     // Click Back button
     const backButton = page.locator('button').filter({ hasText: /Back/i }).first()
     await expect(backButton).toBeVisible({ timeout: 10000 })
@@ -125,16 +114,13 @@ test.describe('Portfolio Launchpad', () => {
   test('should show simulation heading after running simulation', async ({ page }) => {
     await page.goto('/launchpad')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
     const firstCard = page.locator('article').first()
     await expect(firstCard).toBeVisible({ timeout: 15000 })
     await firstCard.click()
-    await page.waitForTimeout(1000)
     // Click Run Simulation
     const runSimBtn = page.locator('button').filter({ hasText: /Run Simulation/i }).first()
     await expect(runSimBtn).toBeVisible({ timeout: 10000 })
     await runSimBtn.click()
-    await page.waitForTimeout(2000)
     // Simulation panel shows estimated fee
     const simHeading = page.getByRole('heading', { name: /Simulation/i })
     await expect(simHeading).toBeVisible({ timeout: 15000 })
@@ -143,22 +129,18 @@ test.describe('Portfolio Launchpad', () => {
   // ── Execute stage – product alignment ──────────────────────────────────────
 
   test('should show Backend-Secured Transaction notice in execute stage (no wallet prompt)', async ({ page }) => {
-    test.skip(!!process.env.CI, 'Multi-step form CI absolute timing ceiling after 5 optimization attempts. Passes 100% locally.')
+    test.skip(!!process.env.CI, 'Multi-step form CI absolute timing ceiling after 5 optimization attempts — see #495. Passes 100% locally.')
     await page.goto('/launchpad')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000)
     const firstCard = page.locator('article').first()
     await expect(firstCard).toBeVisible({ timeout: 30000 })
     await firstCard.click()
-    await page.waitForTimeout(2000)
     const runSimBtn = page.locator('button').filter({ hasText: /Run Simulation/i }).first()
     await expect(runSimBtn).toBeVisible({ timeout: 15000 })
     await runSimBtn.click()
-    await page.waitForTimeout(5000)
     const reviewBtn = page.locator('button').filter({ hasText: /Review/i }).first()
     await expect(reviewBtn).toBeVisible({ timeout: 15000 })
     await reviewBtn.click()
-    await page.waitForTimeout(3000)
     // Verify backend-secured notice, NOT wallet connection
     await expect(page.getByText('Backend-Secured Transaction')).toBeVisible({ timeout: 15000 })
     const content = await page.content()
@@ -171,7 +153,6 @@ test.describe('Portfolio Launchpad', () => {
   test('should have correct ARIA landmarks on launchpad page', async ({ page }) => {
     await page.goto('/launchpad')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
     // Main landmark should exist
     const main = page.getByRole('main')
     await expect(main).toBeVisible({ timeout: 15000 })
@@ -183,7 +164,6 @@ test.describe('Portfolio Launchpad', () => {
   test('token cards should have accessible CTA buttons', async ({ page }) => {
     await page.goto('/launchpad')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
     const firstCard = page.locator('article').first()
     await expect(firstCard).toBeVisible({ timeout: 15000 })
     // CTA button should have an aria-label
@@ -200,7 +180,6 @@ test.describe('Portfolio Launchpad', () => {
     page.on('pageerror', err => errors.push(err.message))
     await page.goto('/launchpad')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
     // Page should load without crashing
     const heading = page.getByRole('heading', { name: /Portfolio Launchpad/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 15000 })

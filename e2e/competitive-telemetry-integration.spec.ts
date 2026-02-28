@@ -53,14 +53,12 @@ test.describe('Token Creation Journey Tracking', () => {
     // Navigate to guided token launch
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000) // Auth store init + component mount
 
     // Verify page loaded
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 45000 })
 
     // Verify journey_started event was fired
-    await page.waitForTimeout(2000) // Let telemetry initialize
     
     // Check browser console for telemetry events
     const consoleMessages = await page.evaluate(() => {
@@ -80,7 +78,6 @@ test.describe('Token Creation Journey Tracking', () => {
   test('should track milestone completion when user progresses through steps', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 45000 })
@@ -102,7 +99,6 @@ test.describe('Token Creation Journey Tracking', () => {
   test('should track journey abandonment when user leaves flow', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(10000)
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 45000 })
@@ -138,7 +134,6 @@ test.describe('Standards Comparison Tracking', () => {
   test('should track standards comparison usage', async ({ page }) => {
     await page.goto('/token-standards')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000)
 
     // Verify standards comparison page loaded
     const heading = page.getByRole('heading', { name: /Token Standards/i, level: 1 })

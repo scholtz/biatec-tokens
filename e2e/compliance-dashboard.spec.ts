@@ -71,7 +71,6 @@ test.describe('Compliance Dashboard 1.0', () => {
     await page.waitForLoadState('networkidle');
     
     // Wait longer for panels to load with async mock data (2 seconds)
-    await page.waitForTimeout(2000);
     
     // Wait for Audit Trail Panel container - this verifies the panel renders
     const auditHeading = page.getByRole('heading', { name: 'Audit Trail', level: 2 });
@@ -119,7 +118,6 @@ test.describe('Compliance Dashboard 1.0', () => {
     await page.waitForLoadState('networkidle');
     
     // Wait for data to load
-    await page.waitForTimeout(1500);
     
     // Wait for Alerts Panel container - this verifies the panel renders
     const alertsHeading = page.getByRole('heading', { name: /Compliance Alerts/i, level: 2 });
@@ -140,19 +138,16 @@ test.describe('Compliance Dashboard 1.0', () => {
     // Click on Audit Log tab (use first() to avoid strict mode violations)
     const auditLogTab = page.getByRole('button', { name: /Audit Log/i }).first();
     await auditLogTab.click();
-    await page.waitForTimeout(300); // Wait for animation
     await expect(auditLogTab).toHaveClass(/border-biatec-accent/);
     
     // Click on Whitelist Management tab
     const whitelistTab = page.getByRole('button', { name: /Whitelist Management/i }).first();
     await whitelistTab.click();
-    await page.waitForTimeout(300); // Wait for animation
     await expect(whitelistTab).toHaveClass(/border-biatec-accent/);
     
     // Navigate back to Overview
     const overviewTab = page.getByRole('button', { name: /Overview/i });
     await overviewTab.click();
-    await page.waitForTimeout(300); // Wait for animation
     await expect(overviewTab).toHaveClass(/border-biatec-accent/);
   });
 
@@ -170,7 +165,6 @@ test.describe('Compliance Dashboard 1.0', () => {
     await expect(refreshButton).toBeDisabled();
     
     // Wait for refresh to complete
-    await page.waitForTimeout(1000);
     
     // Button should be enabled again
     await expect(refreshButton).toBeEnabled();
@@ -180,7 +174,6 @@ test.describe('Compliance Dashboard 1.0', () => {
     await page.waitForLoadState('networkidle');
     
     // Wait for panels to load
-    await page.waitForTimeout(1500);
     
     // Wait for audit panel (use first() for strict mode)
     const csvButton = page.getByRole('button', { name: /Export.*CSV/i }).first();
@@ -193,7 +186,6 @@ test.describe('Compliance Dashboard 1.0', () => {
     await expect(csvButton).toBeDisabled();
     
     // Wait for export to complete
-    await page.waitForTimeout(2000);
     
     // Button should be enabled again
     await expect(csvButton).toBeEnabled();
@@ -203,7 +195,6 @@ test.describe('Compliance Dashboard 1.0', () => {
     await page.waitForLoadState('networkidle');
     
     // Wait longer for audit panel to fully load with data (2 seconds)
-    await page.waitForTimeout(2000);
     
     // Wait for audit heading first
     const auditHeading = page.getByRole('heading', { name: 'Audit Trail', level: 2 });
@@ -217,7 +208,6 @@ test.describe('Compliance Dashboard 1.0', () => {
     if (isButtonVisible) {
       // Click view button
       await viewButton.click();
-      await page.waitForTimeout(300); // Wait for animation
       
       // Should navigate to audit-log tab
       const auditLogTab = page.getByRole('button', { name: /Audit Log/i }).first();
@@ -238,7 +228,6 @@ test.describe('Compliance Dashboard 1.0', () => {
     
     // Click manage button
     await manageButton.click();
-    await page.waitForTimeout(300); // Wait for animation
     
     // Should navigate to whitelist tab
     const whitelistTab = page.getByRole('button', { name: /Whitelist Management/i }).first();
@@ -249,7 +238,6 @@ test.describe('Compliance Dashboard 1.0', () => {
     await page.waitForLoadState('networkidle');
     
     // Wait for MICA panel to load with data
-    await page.waitForTimeout(1500);
     
     // Find first article container - try to locate it but it may not exist if data doesn't load
     const firstArticle = page.locator('.bg-white\\/5.hover\\:bg-white\\/10.rounded-lg').first();
@@ -264,12 +252,10 @@ test.describe('Compliance Dashboard 1.0', () => {
       
       // Click to expand
       await expandButton.click({ force: true }); // Use force to click even if technically hidden by CSS
-      await page.waitForTimeout(300);
       await expect(expandButton).toHaveAttribute('aria-expanded', 'true');
       
       // Click again to collapse
       await expandButton.click({ force: true });
-      await page.waitForTimeout(300);
       await expect(expandButton).toHaveAttribute('aria-expanded', 'false');
     } else {
       // Button not found (mock data didn't load), skip test gracefully
@@ -339,12 +325,10 @@ test.describe('Compliance Dashboard 1.0', () => {
     
     // Test tablet viewport
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.waitForTimeout(500);
     await expect(page.getByRole('heading', { name: 'MICA Readiness', level: 2 })).toBeVisible();
     
     // Test mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.waitForTimeout(500);
     await expect(page.getByRole('heading', { name: 'Compliance Dashboard', level: 1 })).toBeVisible();
   });
 });

@@ -17,7 +17,6 @@ test.describe('Discovery Dashboard', () => {
     // Navigate to discovery dashboard (public page, no auth required)
     await page.goto('/discovery')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1500) // Wait for async data to load
   })
 
   test('should display discovery dashboard page correctly', async ({ page }) => {
@@ -48,7 +47,6 @@ test.describe('Discovery Dashboard', () => {
   })
 
   test('should display token cards in grid', async ({ page }) => {
-    await page.waitForTimeout(2000) // Wait for tokens to load
 
     // Check if there are any token cards displayed
     // Look for common token card patterns
@@ -91,14 +89,12 @@ test.describe('Discovery Dashboard', () => {
     if (hasSearch) {
       // Type in search
       await searchInput.fill('token')
-      await page.waitForTimeout(500)
     }
     
     expect(true).toBe(true) // Test passes regardless
   })
 
   test('should allow filter interactions', async ({ page }) => {
-    await page.waitForTimeout(1000)
 
     // Try to click a filter checkbox or button
     const filterCheckbox = page.locator('input[type="checkbox"]').first()
@@ -106,14 +102,12 @@ test.describe('Discovery Dashboard', () => {
     
     if (hasCheckbox) {
       await filterCheckbox.click()
-      await page.waitForTimeout(500)
     }
     
     expect(true).toBe(true) // Test passes regardless
   })
 
   test('should display token metadata in cards', async ({ page }) => {
-    await page.waitForTimeout(2000)
 
     // Look for typical token metadata fields
     const metadataFields = ['Name', 'Symbol', 'Standard', 'Supply', 'Network']
@@ -139,7 +133,6 @@ test.describe('Discovery Dashboard', () => {
   })
 
   test('should support token detail navigation', async ({ page }) => {
-    await page.waitForTimeout(2000)
 
     // Try to click on first token card if it exists
     const firstToken = page.locator('[class*="card"]').first()
@@ -147,7 +140,6 @@ test.describe('Discovery Dashboard', () => {
     
     if (isClickable) {
       await firstToken.click().catch(() => {})
-      await page.waitForTimeout(500)
     }
     
     expect(true).toBe(true) // Test passes regardless
@@ -156,7 +148,6 @@ test.describe('Discovery Dashboard', () => {
   test('should be responsive on mobile viewport', async ({ page }) => {
     // Resize to mobile viewport
     await page.setViewportSize({ width: 375, height: 667 })
-    await page.waitForTimeout(500)
 
     // Check that main heading is still visible
     const heading = page.getByRole('heading', { level: 1 }).first()
@@ -168,7 +159,6 @@ test.describe('Discovery Dashboard', () => {
   })
 
   test('should handle empty state gracefully', async ({ page }) => {
-    await page.waitForTimeout(2000)
 
     // If no tokens, should show meaningful message
     const tokenCount = await page.locator('[class*="card"]').count()
@@ -183,7 +173,6 @@ test.describe('Discovery Dashboard', () => {
   })
 
   test('should display filter count or active filters', async ({ page }) => {
-    await page.waitForTimeout(1000)
 
     // Click a filter
     const checkbox = page.locator('input[type="checkbox"]').first()
@@ -191,7 +180,6 @@ test.describe('Discovery Dashboard', () => {
     
     if (isVisible) {
       await checkbox.click()
-      await page.waitForTimeout(500)
 
       // Look for filter count badge or active filter indicator
       const filterBadge = page.getByText(/active|selected|applied/i).first()
@@ -203,12 +191,10 @@ test.describe('Discovery Dashboard', () => {
   })
 
   test('should support keyboard navigation in filters', async ({ page }) => {
-    await page.waitForTimeout(1000)
 
     // Tab through filter elements
     await page.keyboard.press('Tab')
     await page.keyboard.press('Tab')
-    await page.waitForTimeout(200)
     
     // Should be able to interact with focused element
     const focusedCount = await page.locator(':focus').count()

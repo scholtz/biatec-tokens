@@ -101,12 +101,10 @@ test.describe('Whitelist Management View', () => {
 
   test('should open Import CSV modal when clicking Import CSV button', async ({ page }) => {
     // Wait for button to be ready
-    await page.waitForTimeout(1500);
 
     // Click Import CSV button
     const importButton = page.locator('button:has-text("Import CSV")').first();
     await importButton.click();
-    await page.waitForTimeout(300); // Wait for modal animation
 
     // Verify modal or dialog appears (implementation may vary)
     // We expect some kind of import interface to appear
@@ -118,12 +116,10 @@ test.describe('Whitelist Management View', () => {
 
   test('should open Add Entry modal when clicking Add Entry button', async ({ page }) => {
     // Wait for button to be ready
-    await page.waitForTimeout(1500);
 
     // Click Add Entry button
     const addButton = page.locator('button:has-text("Add Entry")').first();
     await addButton.click();
-    await page.waitForTimeout(300); // Wait for modal animation
 
     // Verify modal or form appears
     const hasModal = await page.locator('[role="dialog"]').count().then(count => count > 0);
@@ -134,7 +130,6 @@ test.describe('Whitelist Management View', () => {
 
   test('should display jurisdiction conflicts alert when conflicts exist', async ({ page }) => {
     // Wait for data to load
-    await page.waitForTimeout(1500);
 
     // Check for conflicts alert (may or may not exist depending on mock data)
     const conflictsAlert = page.getByText(/Jurisdiction Conflicts Detected/i);
@@ -156,12 +151,10 @@ test.describe('Whitelist Management View', () => {
 
   test('should navigate back when clicking Back button', async ({ page }) => {
     // Wait for page to load
-    await page.waitForTimeout(1500);
 
     // Click back button
     const backButton = page.locator('button:has-text("Back")').first();
     await backButton.click();
-    await page.waitForTimeout(300);
 
     // Should navigate away from /compliance/whitelists
     const currentUrl = page.url();
@@ -172,7 +165,6 @@ test.describe('Whitelist Management View', () => {
     // Navigate to home first
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1500);
 
     // Find Whitelist Management link in sidebar
     const sidebarLink = page.getByRole('link', { name: /Whitelist Management/i });
@@ -181,7 +173,6 @@ test.describe('Whitelist Management View', () => {
     if (hasSidebarLink) {
       // Click the sidebar link
       await sidebarLink.click();
-      await page.waitForTimeout(300);
 
       // Should navigate to whitelist management page
       await expect(page).toHaveURL(/\/compliance\/whitelists/);
@@ -195,15 +186,11 @@ test.describe('Whitelist Management View', () => {
 
   test('should handle keyboard navigation', async ({ page }) => {
     // Wait for page to load
-    await page.waitForTimeout(1500);
 
     // Tab through elements
     await page.keyboard.press('Tab');
-    await page.waitForTimeout(200);
     await page.keyboard.press('Tab');
-    await page.waitForTimeout(200);
     await page.keyboard.press('Tab');
-    await page.waitForTimeout(200);
 
     // Check if focus is working
     const focusedElement = await page.evaluate(() => document.activeElement?.tagName);
@@ -214,7 +201,6 @@ test.describe('Whitelist Management View', () => {
 
   test('should display whitelist table when entries exist', async ({ page }) => {
     // Wait for data to load
-    await page.waitForTimeout(1500);
 
     // Check for table elements
     const nameHeader = page.getByText('Name').first();
@@ -236,7 +222,6 @@ test.describe('Whitelist Management View', () => {
 
   test('should show search input when table is visible', async ({ page }) => {
     // Wait for data to load
-    await page.waitForTimeout(1500);
 
     // Check for search input
     const searchInput = page.getByPlaceholder(/search by name, email/i);
@@ -248,7 +233,6 @@ test.describe('Whitelist Management View', () => {
       
       // Type in search
       await searchInput.fill('test');
-      await page.waitForTimeout(500);
 
       // Verify input has value
       const inputValue = await searchInput.inputValue();
@@ -260,7 +244,6 @@ test.describe('Whitelist Management View', () => {
 
   test('should show filters button when table is visible', async ({ page }) => {
     // Wait for data to load
-    await page.waitForTimeout(1500);
 
     // Check for filters button
     const filtersButton = page.locator('button:has-text("Filters")');
@@ -269,7 +252,6 @@ test.describe('Whitelist Management View', () => {
     if (hasFilters) {
       // Click filters button
       await filtersButton.first().click();
-      await page.waitForTimeout(300);
 
       // Verify filter panel appears
       const statusFilter = page.getByText('Status').or(page.getByText('Entity Type'));

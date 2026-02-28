@@ -50,7 +50,6 @@ test.describe('Compliance Orchestration View', () => {
     await page.getByRole('heading', { name: /Compliance Verification/i, level: 1 }).waitFor({ state: 'visible', timeout: 45000 })
     
     // Wait for KYC content to render (storeToRefs reactivity triggers after mount)
-    await page.waitForTimeout(2000)
   })
 
   test('should display compliance orchestration page with correct title', async ({ page }) => {

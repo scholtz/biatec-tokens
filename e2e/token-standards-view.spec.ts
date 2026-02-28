@@ -17,7 +17,6 @@ test.describe('Token Standards View', () => {
     // Navigate to token standards page (public page, no auth required)
     await page.goto('/token-standards')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1500) // Wait for async data to load
   })
 
   test('should display token standards page correctly', async ({ page }) => {
@@ -31,7 +30,6 @@ test.describe('Token Standards View', () => {
 
   test('should display token standards comparison table', async ({ page }) => {
     // Wait for comparison component to load
-    await page.waitForTimeout(1000)
 
     // Check for standard names in the comparison table
     // Using getByText with partial matches to find standard names
@@ -79,7 +77,6 @@ test.describe('Token Standards View', () => {
     if (isVisible) {
       // Click should not throw error
       await enterpriseButton.click().catch(() => {})
-      await page.waitForTimeout(500)
     }
     
     // Test passes regardless of click outcome
@@ -89,7 +86,6 @@ test.describe('Token Standards View', () => {
   test('should display call to action section', async ({ page }) => {
     // Scroll to bottom to ensure CTA is loaded
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
-    await page.waitForTimeout(500)
 
     // Look for CTA buttons or links at the bottom
     const ctaButton = page.getByRole('link', { name: /Get Started|Create Token|Sign Up/i }).first()
@@ -100,7 +96,6 @@ test.describe('Token Standards View', () => {
   test('should be responsive on mobile viewport', async ({ page }) => {
     // Resize to mobile viewport
     await page.setViewportSize({ width: 375, height: 667 })
-    await page.waitForTimeout(500)
 
     // Check that main heading is still visible
     const heading = page.getByRole('heading', { name: /Token Standards/i, level: 1 })
@@ -116,7 +111,6 @@ test.describe('Token Standards View', () => {
   test('should support keyboard navigation', async ({ page }) => {
     // Tab through interactive elements
     await page.keyboard.press('Tab')
-    await page.waitForTimeout(200)
     
     // Check that focus is visible (at least one element should have focus)
     const focusedElement = await page.locator(':focus').count()

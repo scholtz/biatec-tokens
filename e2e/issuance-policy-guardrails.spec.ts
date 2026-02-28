@@ -166,7 +166,7 @@ test.describe('Issuance workspace — auth-first routing guard', () => {
     // Skip in CI due to timing constraints on auth redirect tests
     test.skip(
       !!process.env.CI && browserName === 'chromium',
-      'CI absolute timing ceiling: auth guard redirect timing varies in CI. Test passes 100% locally. Validated through unit + integration test layers.',
+      'CI absolute timing ceiling — see #495: auth guard redirect timing varies in CI. Test passes 100% locally. Validated through unit + integration test layers.',
     )
 
     // Clear any auth data
@@ -177,7 +177,6 @@ test.describe('Issuance workspace — auth-first routing guard', () => {
     // Try to access protected route
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000) // Allow auth guard to evaluate
 
     const url = page.url()
     const content = await page.content()

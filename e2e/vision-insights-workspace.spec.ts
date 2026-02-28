@@ -42,7 +42,6 @@ test.describe('Vision Insights Workspace', () => {
     // Navigate to insights workspace
     await page.goto('/insights')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000) // Wait for async data loading
   })
 
   test('should load insights workspace successfully', async ({ page }) => {
@@ -55,7 +54,6 @@ test.describe('Vision Insights Workspace', () => {
 
   test('should display core metrics', async ({ page }) => {
     // Wait for metrics to load
-    await page.waitForTimeout(1000)
     
     // Check for Core Metrics section
     const coreMetricsHeading = page.getByRole('heading', { name: /Core Metrics/i })
@@ -77,21 +75,18 @@ test.describe('Vision Insights Workspace', () => {
   })
 
   test('should apply timeframe filter', async ({ page }) => {
-    await page.waitForTimeout(1500)
     
     // Find and change timeframe filter
     const timeframeSelect = page.locator('select').first()
     await timeframeSelect.selectOption('7d')
     
     // Wait for data to update
-    await page.waitForTimeout(1000)
     
     // Verify filter was applied (page should still be visible without errors)
     await expect(page.getByRole('heading', { name: /Vision Insights Workspace/i })).toBeVisible({ timeout: 10000 })
   })
 
   test('should display trend analysis section', async ({ page }) => {
-    await page.waitForTimeout(1500)
     
     // Check for Trend Analysis section
     const trendHeading = page.getByRole('heading', { name: /Trend Analysis/i })
@@ -99,11 +94,9 @@ test.describe('Vision Insights Workspace', () => {
   })
 
   test('should display competitor benchmarks', async ({ page }) => {
-    await page.waitForTimeout(3000) // Increased wait for CI environment
     
     // Scroll to ensure the section is in viewport
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2))
-    await page.waitForTimeout(500)
     
     // Check for Competitor Benchmarks section - use flexible assertion for async rendering
     const benchmarkHeading = page.getByRole('heading', { name: /Competitor Benchmarks/i })
@@ -113,7 +106,6 @@ test.describe('Vision Insights Workspace', () => {
   })
 
   test('should display scenario planning section', async ({ page }) => {
-    await page.waitForTimeout(1500)
     
     // Check for Scenario Planning section
     const scenarioHeading = page.getByRole('heading', { name: /Scenario Planning/i })
@@ -121,13 +113,11 @@ test.describe('Vision Insights Workspace', () => {
   })
 
   test('should run scenario planning', async ({ page }) => {
-    await page.waitForTimeout(2000)
     
     // Find scenario planning inputs
     const campaignInput = page.locator('input[type="number"]').first()
     await campaignInput.fill('15')
     
-    await page.waitForTimeout(300)
     
     // Click run scenario button
     const runButton = page.getByRole('button', { name: /Run Scenario/i })
@@ -135,7 +125,6 @@ test.describe('Vision Insights Workspace', () => {
       await runButton.click()
       
       // Wait for results
-      await page.waitForTimeout(1000)
       
       // Check for projected outcomes
       const projectedText = page.getByText(/Projected/i).first()
@@ -144,7 +133,6 @@ test.describe('Vision Insights Workspace', () => {
   })
 
   test('should display cohort analysis section', async ({ page }) => {
-    await page.waitForTimeout(1500)
     
     // Check for Wallet Segment Analysis section
     const cohortHeading = page.getByRole('heading', { name: /Wallet Segment Analysis/i })
@@ -152,7 +140,6 @@ test.describe('Vision Insights Workspace', () => {
   })
 
   test('should have refresh button', async ({ page }) => {
-    await page.waitForTimeout(1000)
     
     // Check for refresh button
     const refreshButton = page.getByRole('button', { name: /Refresh/i })
@@ -160,14 +147,12 @@ test.describe('Vision Insights Workspace', () => {
     
     // Click refresh
     await refreshButton.click()
-    await page.waitForTimeout(500)
     
     // Page should still be visible
     await expect(page.getByRole('heading', { name: /Vision Insights Workspace/i })).toBeVisible({ timeout: 10000 })
   })
 
   test('should have export functionality', async ({ page }) => {
-    await page.waitForTimeout(1000)
     
     // Check for export button
     const exportButton = page.getByRole('button', { name: /Export/i })
@@ -175,7 +160,6 @@ test.describe('Vision Insights Workspace', () => {
     
     // Click to open export menu
     await exportButton.click()
-    await page.waitForTimeout(300)
     
     // Check for export options
     const exportJson = page.getByText(/Export as JSON/i)
@@ -189,13 +173,11 @@ test.describe('Vision Insights Workspace', () => {
   })
 
   test('should have metric glossary', async ({ page }) => {
-    await page.waitForTimeout(1000)
     
     // Check for View Definitions button
     const definitionsButton = page.getByText(/View Definitions/i)
     if (await definitionsButton.isVisible({ timeout: 5000 }).catch(() => false)) {
       await definitionsButton.click()
-      await page.waitForTimeout(500)
       
       // Modal should open with metric definitions
       const modalTitle = page.getByText(/Metric Definitions/i)
@@ -204,13 +186,11 @@ test.describe('Vision Insights Workspace', () => {
   })
 
   test('should handle network filter changes', async ({ page }) => {
-    await page.waitForTimeout(1500)
     
     // Find network filter
     const networkSelect = page.locator('select').nth(1)
     if (await networkSelect.isVisible({ timeout: 5000 }).catch(() => false)) {
       await networkSelect.selectOption('algorand')
-      await page.waitForTimeout(1000)
       
       // Verify page still works
       await expect(page.getByRole('heading', { name: /Vision Insights Workspace/i })).toBeVisible({ timeout: 10000 })
@@ -218,13 +198,11 @@ test.describe('Vision Insights Workspace', () => {
   })
 
   test('should handle wallet segment filter changes', async ({ page }) => {
-    await page.waitForTimeout(3000) // Increased wait for CI environment
     
     // Find wallet segment filter
     const segmentSelect = page.locator('select').nth(2)
     if (await segmentSelect.isVisible({ timeout: 10000 }).catch(() => false)) {
       await segmentSelect.selectOption('whales')
-      await page.waitForTimeout(2000) // Increased wait for filter to apply
       
       // Verify select value changed (more reliable than checking badge)
       const selectedValue = await segmentSelect.inputValue()
@@ -237,19 +215,16 @@ test.describe('Vision Insights Workspace', () => {
   })
 
   test('should reset filters', async ({ page }) => {
-    await page.waitForTimeout(2000)
     
     // Apply a filter first
     const segmentSelect = page.locator('select').nth(2)
     if (await segmentSelect.isVisible({ timeout: 5000 }).catch(() => false)) {
       await segmentSelect.selectOption('whales')
-      await page.waitForTimeout(500)
       
       // Find and click reset button
       const resetButton = page.getByText(/Reset All/i)
       if (await resetButton.isVisible({ timeout: 5000 }).catch(() => false)) {
         await resetButton.click()
-        await page.waitForTimeout(500)
         
         // Filter badge should disappear
         const filterBadge = page.getByText(/whales/i).first()
@@ -285,7 +260,6 @@ test.describe('Vision Insights Workspace - Error Handling', () => {
     // Navigate without auth
     await page.goto('/insights')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1000)
     
     // Should redirect to home or show auth requirement
     const currentUrl = page.url()

@@ -63,7 +63,6 @@ test.describe('Team Management - Compliance Dashboard', () => {
     await teamTab.click();
 
     // Wait for team members list to load
-    await page.waitForTimeout(500); // Allow time for API mock to respond
 
     // Check for Team Members heading
     await expect(page.locator('h3').filter({ hasText: /Team Members/i })).toBeVisible({
@@ -85,7 +84,6 @@ test.describe('Team Management - Compliance Dashboard', () => {
     await teamTab.click();
 
     // Wait for page to load
-    await page.waitForTimeout(500);
 
     // Click Invite Member button
     const inviteButton = page
@@ -121,7 +119,6 @@ test.describe('Team Management - Compliance Dashboard', () => {
     await teamTab.click();
 
     // Wait for content to load
-    await page.waitForTimeout(500);
 
     // Check for Access Activity heading
     await expect(
@@ -138,7 +135,6 @@ test.describe('Team Management - Compliance Dashboard', () => {
     await teamTab.click();
 
     // Wait for team list to load
-    await page.waitForTimeout(500);
 
     // Look for role badges (Owner, Admin, Compliance Officer, Viewer)
     const roleBadges = page.locator('span').filter({ hasText: /Owner|Admin|Compliance Officer|Viewer/i });
@@ -161,7 +157,6 @@ test.describe('Team Management - Compliance Dashboard', () => {
     await teamTab.click();
 
     // Wait for content
-    await page.waitForTimeout(800);
 
     // Check for either members list or empty state - use more specific selector
     const hasMembersHeading = await page.getByRole('heading', { name: 'Team Members', level: 3 }).isVisible().catch(() => false);
@@ -182,7 +177,6 @@ test.describe('Team Management - Compliance Dashboard', () => {
     await teamTab.click();
 
     // Wait for content
-    await page.waitForTimeout(500);
 
     // Check that main heading exists (accessibility)
     await expect(page.locator('h2').filter({ hasText: /Team & Access/i })).toBeVisible();

@@ -82,7 +82,7 @@ test.describe('Business Command Center', () => {
     // Skip in CI due to auth guard redirect timing — test passes 100% locally
     // After clearing localStorage, the auth guard redirect relies on Vue Router navigation
     // guard timing which varies significantly between local and CI environments.
-    test.skip(!!process.env.CI, 'CI timing: auth guard redirect unreliable after mid-session localStorage clear')
+    test.skip(!!process.env.CI, 'CI timing: auth guard redirect unreliable after mid-session localStorage clear — see #495')
 
     // Clear auth — no addInitScript call
     await page.goto('/')
@@ -91,7 +91,6 @@ test.describe('Business Command Center', () => {
 
     await page.goto('/operations')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000) // Give auth guard time to redirect in CI
 
     const url = page.url()
     const redirectedToHome = url.includes('showAuth=true') || url.endsWith('/') || url.endsWith('/#')
@@ -107,7 +106,6 @@ test.describe('Business Command Center', () => {
   test('should redirect /operations/legacy to /operations', async ({ page }) => {
     await page.goto('/operations/legacy')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000) // allow redirect
 
     // Either on /operations or redirected due to auth guard first
     const url = page.url()
@@ -401,7 +399,6 @@ test.describe('Business Command Center', () => {
     await page.goto('/operations')
     await page.waitForLoadState('networkidle')
 
-    await page.waitForTimeout(3000) // Allow full render
 
     const content = await page.content()
 

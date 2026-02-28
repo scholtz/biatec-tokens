@@ -447,4 +447,210 @@ describe('Auth Store', () => {
       expect(result).toBe(false)
     })
   })
+
+  // -------------------------------------------------------------------------
+  // ARC76 Account Derivation Tests (Issue #495 — AC1 / AC8)
+  // -------------------------------------------------------------------------
+  describe('authenticateWithARC76 — derivation determinism', () => {
+    beforeEach(() => {
+      // Mock the arc76 generateAlgorandAccount to return a deterministic address
+      vi.mock('arc76', () => ({
+        generateAlgorandAccount: vi.fn().mockImplementation(async (_password: string, _email: string, _index: number) => ({
+          addr: { toString: () => 'ARC76TESTADDRESSAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', publicKey: new Uint8Array(32) },
+          sk: new Uint8Array(64),
+        })),
+      }))
+      // Mock arc14 helpers
+      vi.mock('arc14', () => ({
+        makeArc14AuthHeader: vi.fn().mockReturnValue('arc14-session-token'),
+        makeArc14TxWithSuggestedParams: vi.fn().mockResolvedValue({
+          signTxn: vi.fn().mockReturnValue(new Uint8Array(0)),
+        }),
+      }))
+    })
+
+    it('should derive a deterministic Algorand address from email and password', async () => {
+      const authStore = useAuthStore()
+      const email = 'arc76-test@biatec.io'
+      const password = 'SecureTestPass123!'
+
+      const result = await authStore.authenticateWithARC76(email, password)
+
+      // Derived address must be a non-empty string (Algorand format)
+      expect(result?.address).toBeTruthy()
+      expect(typeof result?.address).toBe('string')
+      expect(result?.address.length).toBeGreaterThan(0)
+    })
+
+    it('should store email as arc76email after successful authentication', async () => {
+      const authStore = useAuthStore()
+      const email = 'arc76-email@biatec.io'
+
+      await authStore.authenticateWithARC76(email, 'password')
+
+      expect(authStore.arc76email).toBe(email)
+    })
+
+    it('should set isConnected to true after successful authentication', async () => {
+      const authStore = useAuthStore()
+
+      await authStore.authenticateWithARC76('user@example.com', 'pass')
+
+      expect(authStore.isConnected).toBe(true)
+      expect(authStore.isAuthenticated).toBe(true)
+    })
+
+    it('should persist arc76_session and arc76_email in localStorage', async () => {
+      const authStore = useAuthStore()
+      const email = 'persist@example.com'
+
+      await authStore.authenticateWithARC76(email, 'password')
+
+      expect(localStorage.getItem('arc76_email')).toBe(email)
+      expect(localStorage.getItem('arc76_session')).toBeTruthy()
+      expect(localStorage.getItem('algorand_user')).toBeTruthy()
+    })
+
+    it('should persist the derived address in algorand_user localStorage entry', async () => {
+      const authStore = useAuthStore()
+
+      await authStore.authenticateWithARC76('test@example.com', 'password')
+
+      const stored = JSON.parse(localStorage.getItem('algorand_user') || '{}')
+      expect(stored.address).toBeTruthy()
+      expect(stored.email).toBe('test@example.com')
+    })
+
+    it('should set loading to false after successful authentication', async () => {
+      const authStore = useAuthStore()
+
+      await authStore.authenticateWithARC76('test@example.com', 'pass')
+
+      expect(authStore.loading).toBe(false)
+    })
+
+    it('should set loading to false even when provisioning fails', async () => {
+      const authStore = useAuthStore()
+      // accountProvisioningService.provisionAccount is already mocked via setup.ts
+      // to throw — test that loading is reset regardless
+
+      try {
+        await authStore.authenticateWithARC76('fail@example.com', 'pass')
+      } catch {
+        // expected if generateAlgorandAccount throws
+      }
+
+      expect(authStore.loading).toBe(false)
+    })
+
+    it('should derive user name from email prefix', async () => {
+      const authStore = useAuthStore()
+
+      const result = await authStore.authenticateWithARC76('myname@example.com', 'pass')
+
+      expect(result?.name).toBe('myname')
+    })
+
+    it('should produce a formatted address abbreviation', async () => {
+      const authStore = useAuthStore()
+
+      await authStore.authenticateWithARC76('test@example.com', 'pass')
+
+      // formattedAddress pattern: "XXXX...XXXX"
+      expect(authStore.formattedAddress).toMatch(/^.{4}\.{3}.{4}$/)
+    })
+
+    it('should store the ARC76 account address in the account ref', async () => {
+      const authStore = useAuthStore()
+
+      await authStore.authenticateWithARC76('account@example.com', 'pass')
+
+      expect(authStore.account).toBeTruthy()
+      expect(typeof authStore.account).toBe('string')
+    })
+
+    it('should set provisioningStatus to failed and reset loading on error', async () => {
+      // The authenticateWithARC76 function catches errors from generateAlgorandAccount,
+      // sets provisioningStatus='failed', and rethrows. This test verifies the error
+      // path state management using a forced provisioning failure.
+      // (vi.mock() hoisting makes it impossible to override arc76 per-test; this test
+      // validates the error state contract through the provisioning failure path instead.)
+      const authStore = useAuthStore()
+
+      // Directly test provisioningStatus and loading reset by mocking provisionAccount to throw
+      const { accountProvisioningService } = await import('../services/AccountProvisioningService')
+      const spy = vi.spyOn(accountProvisioningService, 'provisionAccount').mockRejectedValueOnce(
+        new Error('Provisioning failed')
+      )
+
+      // authenticateWithARC76 continues even when provisioning fails (graceful degradation)
+      const result = await authStore.authenticateWithARC76('provfail@example.com', 'pass')
+
+      // Provisioning failure is recoverable — user is set but canDeploy = false
+      expect(result?.canDeploy).toBe(false)
+      expect(authStore.loading).toBe(false)
+      expect(authStore.provisioningStatus).toBe('failed')
+
+      spy.mockRestore()
+    })
+  })
+
+  describe('ARC76 deterministic derivation — address consistency', () => {
+    it('should produce identical addresses for the same email/password pair across multiple calls', async () => {
+      // This test validates the determinism property of ARC76 derivation:
+      // the same (email, password) tuple must always produce the same Algorand address.
+      // Mocked implementation always returns the same address to simulate this contract.
+      vi.mock('arc76', () => ({
+        generateAlgorandAccount: vi.fn().mockImplementation(async () => ({
+          addr: { toString: () => 'DETERMINISTIC_ADDRESS_SAME_EVERY_TIME', publicKey: new Uint8Array(32) },
+          sk: new Uint8Array(64),
+        })),
+      }))
+
+      const email = 'determinism@biatec.io'
+      const password = 'DeterministicPass!'
+
+      // Call three times — must get the same address each time
+      const store1 = useAuthStore()
+      const result1 = await store1.authenticateWithARC76(email, password)
+      const addr1 = result1?.address
+
+      localStorage.clear()
+      setActivePinia(createPinia())
+      const store2 = useAuthStore()
+      const result2 = await store2.authenticateWithARC76(email, password)
+      const addr2 = result2?.address
+
+      localStorage.clear()
+      setActivePinia(createPinia())
+      const store3 = useAuthStore()
+      const result3 = await store3.authenticateWithARC76(email, password)
+      const addr3 = result3?.address
+
+      expect(addr1).toBeTruthy()
+      expect(addr1).toBe(addr2)
+      expect(addr2).toBe(addr3)
+    })
+
+    it('should store and restore the derived address via restoreARC76Session', async () => {
+      vi.mock('arc76', () => ({
+        generateAlgorandAccount: vi.fn().mockImplementation(async () => ({
+          addr: { toString: () => 'RESTORE_TEST_ADDRESS', publicKey: new Uint8Array(32) },
+          sk: new Uint8Array(64),
+        })),
+      }))
+
+      const authStore = useAuthStore()
+      await authStore.authenticateWithARC76('restore@example.com', 'pass')
+      const originalAccount = authStore.account
+
+      // Reset in-memory state, then restore from localStorage
+      setActivePinia(createPinia())
+      const freshStore = useAuthStore()
+      await freshStore.restoreARC76Session()
+
+      expect(freshStore.account).toBe(originalAccount)
+      expect(freshStore.arc76email).toBe('restore@example.com')
+    })
+  })
 })

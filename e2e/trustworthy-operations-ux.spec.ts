@@ -174,7 +174,6 @@ test.describe("Trustworthy Operations UX v1", () => {
 
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(3000);
 
     // Either stays at dashboard (which shows sign-in) or redirects with showAuth
     const url = page.url();
@@ -202,7 +201,6 @@ test.describe("Trustworthy Operations UX v1", () => {
 
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(5000);
 
     // Should be on dashboard — verify key UI elements are visible
     const pageContent = await page.content();
@@ -229,7 +227,6 @@ test.describe("Trustworthy Operations UX v1", () => {
 
     await page.goto("/compliance");
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(5000);
 
     const pageContent = await page.content();
     expect(pageContent.toLowerCase()).toMatch(/compliance/i);
@@ -251,7 +248,6 @@ test.describe("Trustworthy Operations UX v1", () => {
 
     await page.goto("/compliance/whitelists");
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(3000);
 
     // Should remain on whitelists route (deep link preserved)
     const url = page.url();
@@ -293,7 +289,6 @@ test.describe("Trustworthy Operations UX v1", () => {
 
     await page.goto("/settings");
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(3000);
 
     const pageContent = await page.content();
     expect(pageContent.toLowerCase()).toMatch(/settings|preference/i);
@@ -319,7 +314,6 @@ test.describe("Trustworthy Operations UX v1", () => {
 
     await page.goto("/launch/guided");
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(10000); // Auth store init + component mount
 
     const heading = page
       .getByRole("heading", { name: /guided token launch/i, level: 1 })
@@ -347,7 +341,6 @@ test.describe("Trustworthy Operations UX v1", () => {
 
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(5000);
 
     const content = await page.content();
     expect(content).not.toMatch(/WalletConnect/i);

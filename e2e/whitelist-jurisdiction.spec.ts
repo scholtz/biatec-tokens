@@ -50,7 +50,6 @@ test.describe('Whitelist & Jurisdiction Management', () => {
     await whitelistJurisdictionTab.click();
 
     // Wait for summary cards to load
-    await page.waitForTimeout(1000); // Wait for data to load
 
     // Check for metric cards (Approved, Pending, Rejected, Jurisdictions)
     const approvedCard = page.locator('text=Approved').first();
@@ -74,7 +73,6 @@ test.describe('Whitelist & Jurisdiction Management', () => {
     await whitelistJurisdictionTab.click();
 
     // Wait for table to load
-    await page.waitForTimeout(1000);
 
     // Check for table elements
     const tableHeader = page.locator('text=Name').first();
@@ -125,7 +123,6 @@ test.describe('Whitelist & Jurisdiction Management', () => {
     await whitelistJurisdictionTab.click();
 
     // Wait for content to load
-    await page.waitForTimeout(1000);
 
     // Find Jurisdiction Rules tab
     const jurisdictionTab = page.locator('button:has-text("Jurisdiction Rules")').first();
@@ -135,7 +132,6 @@ test.describe('Whitelist & Jurisdiction Management', () => {
       await jurisdictionTab.click();
       
       // Wait for jurisdiction content
-      await page.waitForTimeout(500);
       
       // Check if jurisdiction content is visible
       const jurisdictionContent = page.locator('text=Country').first();
@@ -155,7 +151,6 @@ test.describe('Whitelist & Jurisdiction Management', () => {
     await whitelistJurisdictionTab.click();
 
     // Wait for page to load
-    await page.waitForTimeout(1000);
 
     // Find search input
     const searchInput = page.getByPlaceholder(/search by name, email/i);
@@ -164,7 +159,6 @@ test.describe('Whitelist & Jurisdiction Management', () => {
     if (isSearchVisible) {
       // Type in search
       await searchInput.fill('test');
-      await page.waitForTimeout(500);
 
       // Verify search input has value
       const inputValue = await searchInput.inputValue();
@@ -181,7 +175,6 @@ test.describe('Whitelist & Jurisdiction Management', () => {
     await whitelistJurisdictionTab.click();
 
     // Wait for page to load
-    await page.waitForTimeout(1000);
 
     // Find and click Filters button
     const filtersButton = page.locator('button:has-text("Filters")').first();
@@ -189,7 +182,6 @@ test.describe('Whitelist & Jurisdiction Management', () => {
 
     if (isFiltersVisible) {
       await filtersButton.click();
-      await page.waitForTimeout(500);
 
       // Look for filter options (Status, Entity Type, Risk Level)
       const statusFilter = page.locator('text=Status').first();
@@ -208,13 +200,10 @@ test.describe('Whitelist & Jurisdiction Management', () => {
     await whitelistJurisdictionTab.click();
 
     // Wait for page to load
-    await page.waitForTimeout(1000);
 
     // Try to tab through elements
     await page.keyboard.press('Tab');
-    await page.waitForTimeout(200);
     await page.keyboard.press('Tab');
-    await page.waitForTimeout(200);
 
     // Check if focus is working (element should be focused)
     const focusedElement = await page.evaluate(() => document.activeElement?.tagName);

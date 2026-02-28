@@ -56,7 +56,6 @@ test.describe("Full E2E User Journey", () => {
     // Step 1: Landing Page
     await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
-    await page.waitForTimeout(1000);
 
     // Initialize mouse position to center of screen
     const viewport = page.viewportSize();
@@ -82,6 +81,5 @@ test.describe("Full E2E User Journey", () => {
     await page.waitForLoadState("domcontentloaded");
 
     // Wait for authentication to complete
-    await page.waitForTimeout(2000);
   });
 });
