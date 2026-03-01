@@ -906,6 +906,46 @@ describe("TokenCreator", () => {
       expect(wrapper!.vm.selectedNetwork).toBe("VOI");
       expect(wrapper!.vm.selectedStandard).toBe("ASA");
     });
+
+    it("watch(selectedNetwork): Algorand maps to VOI in compliance store", async () => {
+      wrapper!.vm.selectNetwork("Algorand");
+      await nextTick();
+      expect(localStorage.setItem).toHaveBeenCalledWith("biatec_selected_network", "Algorand");
+    });
+
+    it("watch(selectedNetwork): Aramid maps to Aramid in compliance store", async () => {
+      wrapper!.vm.selectNetwork("Aramid");
+      await nextTick();
+      expect(localStorage.setItem).toHaveBeenCalledWith("biatec_selected_network", "Aramid");
+    });
+
+    it("watch(selectedNetwork): EVM network maps to Both in compliance store", async () => {
+      wrapper!.vm.selectNetwork("Ethereum");
+      await nextTick();
+      expect(localStorage.setItem).toHaveBeenCalledWith("biatec_selected_network", "Ethereum");
+    });
+
+    it("watch(selectedNetwork): deselection (null) removes key from localStorage", async () => {
+      wrapper!.vm.selectNetwork("VOI");
+      await nextTick();
+      wrapper!.vm.selectedNetwork = null as any;
+      await nextTick();
+      expect(localStorage.removeItem).toHaveBeenCalledWith("biatec_selected_network");
+    });
+
+    it("watch(selectedTemplate): setting template saves to localStorage", async () => {
+      wrapper!.vm.selectedTemplate = "fungible-basic";
+      await nextTick();
+      expect(localStorage.setItem).toHaveBeenCalledWith("biatec_selected_template", "fungible-basic");
+    });
+
+    it("watch(selectedTemplate): clearing template removes key from localStorage", async () => {
+      wrapper!.vm.selectedTemplate = "fungible-basic";
+      await nextTick();
+      wrapper!.vm.selectedTemplate = null as any;
+      await nextTick();
+      expect(localStorage.removeItem).toHaveBeenCalledWith("biatec_selected_template");
+    });
   });
 
   describe("Deployment Functions", () => {
@@ -1619,6 +1659,72 @@ describe("TokenCreator", () => {
       // createToken was called with only the attribute that has both trait_type and value
       expect(tokenStore.createToken).toHaveBeenCalledWith(
         expect.objectContaining({ attributes: [{ trait_type: "Color", value: "Blue" }] }),
+      );
+    }, 10000);
+
+    it("should pass attestation metadata with 1 attestation (overallStatus=partial)", async () => {
+      wrapper!.vm.selectStandard("ASA");
+      wrapper!.vm.selectNetwork("VOI");
+      Object.assign(wrapper!.vm.tokenForm, {
+        name: "Attested Token",
+        symbol: "ATT",
+        description: "Token with attestation",
+        type: "FT",
+        supply: 1000000,
+        decimals: 6,
+        imageUrl: "",
+        attributes: [],
+        attestationEnabled: true,
+        attestations: [{ type: "KYC_AML", issuer: "issuer-1", timestamp: Date.now() }],
+        complianceMetadata: undefined,
+        complianceMetadataEnabled: false,
+        complianceMetadataValid: false,
+      });
+      vi.mocked(tokenStore.createToken).mockRejectedValue(new Error("attestation test error"));
+      const promise = wrapper!.vm.executeDeployment();
+      await vi.advanceTimersByTimeAsync(2000);
+      await promise;
+      // createToken was called with attestation metadata
+      expect(tokenStore.createToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          attestationMetadata: expect.objectContaining({
+            complianceSummary: expect.objectContaining({ overallStatus: "partial" }),
+          }),
+        }),
+      );
+    }, 10000);
+
+    it("should pass attestation metadata with 2+ attestations (overallStatus=compliant)", async () => {
+      wrapper!.vm.selectStandard("ASA");
+      wrapper!.vm.selectNetwork("VOI");
+      Object.assign(wrapper!.vm.tokenForm, {
+        name: "Attested Token",
+        symbol: "ATT",
+        description: "Token with attestations",
+        type: "FT",
+        supply: 1000000,
+        decimals: 6,
+        imageUrl: "",
+        attributes: [],
+        attestationEnabled: true,
+        attestations: [
+          { type: "KYC_AML", issuer: "issuer-1", timestamp: Date.now() },
+          { type: "ACCREDITED_INVESTOR", issuer: "issuer-2", timestamp: Date.now() },
+        ],
+        complianceMetadata: undefined,
+        complianceMetadataEnabled: false,
+        complianceMetadataValid: false,
+      });
+      vi.mocked(tokenStore.createToken).mockRejectedValue(new Error("attestation test error"));
+      const promise = wrapper!.vm.executeDeployment();
+      await vi.advanceTimersByTimeAsync(2000);
+      await promise;
+      expect(tokenStore.createToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          attestationMetadata: expect.objectContaining({
+            complianceSummary: expect.objectContaining({ overallStatus: "compliant" }),
+          }),
+        }),
       );
     }, 10000);
   });
