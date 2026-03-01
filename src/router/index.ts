@@ -221,6 +221,11 @@ const router = createRouter({
       redirect: "/operations",
     },
     // Subscription routes
+    // /subscribe is a convenience alias for the pricing page (referenced in AC #1)
+    {
+      path: "/subscribe",
+      redirect: "/subscription/pricing",
+    },
     {
       path: "/subscription/pricing",
       name: "Pricing",
