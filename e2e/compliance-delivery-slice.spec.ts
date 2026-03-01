@@ -23,7 +23,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { withAuth, suppressBrowserErrors, clearAuthScript, getNavText } from './helpers/auth';
+import { loginWithCredentials, suppressBrowserErrors, clearAuthScript, getNavText } from './helpers/auth';
 
 // ---------------------------------------------------------------------------
 // Setup
@@ -126,7 +126,9 @@ test.describe('Pipeline entry: unauthenticated user', () => {
 
 test.describe('Pipeline: authenticated user access', () => {
   test.beforeEach(async ({ page }) => {
-    await withAuth(page);
+    // Critical compliance journey: use loginWithCredentials for backend-verified auth
+    // Falls back to contract-validated localStorage seeding when backend unavailable.
+    await loginWithCredentials(page);
   });
 
   test('authenticated user can reach guided launch (past auth_required step)', async ({
@@ -199,7 +201,7 @@ test.describe('Product alignment: email/password-only, backend deployment', () =
   });
 
   test('guided launch page (authenticated) shows no wallet-signing UI', async ({ page }) => {
-    await withAuth(page);
+    await loginWithCredentials(page);
     await page.goto('/launch/guided');
     await page.waitForLoadState('networkidle');
 
@@ -218,19 +220,19 @@ test.describe('Product alignment: email/password-only, backend deployment', () =
 
 test.describe('Canonical route stability', () => {
   test('/launch/guided resolves without 404 (authenticated)', async ({ page }) => {
-    await withAuth(page);
+    await loginWithCredentials(page);
     const response = await page.goto('/launch/guided');
     expect(response?.status()).not.toBe(404);
   });
 
   test('/compliance/setup resolves without 404 (authenticated)', async ({ page }) => {
-    await withAuth(page);
+    await loginWithCredentials(page);
     const response = await page.goto('/compliance/setup');
     expect(response?.status()).not.toBe(404);
   });
 
   test('/dashboard resolves without 404 (authenticated)', async ({ page }) => {
-    await withAuth(page);
+    await loginWithCredentials(page);
     const response = await page.goto('/dashboard');
     expect(response?.status()).not.toBe(404);
   });
@@ -262,7 +264,7 @@ test.describe('Accessibility: pipeline entry points', () => {
   });
 
   test('guided launch (authenticated) has a main landmark', async ({ page }) => {
-    await withAuth(page);
+    await loginWithCredentials(page);
     await page.goto('/launch/guided');
     await page.waitForLoadState('networkidle');
 

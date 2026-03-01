@@ -4,29 +4,26 @@
  * Tests the complete user journey through the guided token launch onboarding.
  * Email/password authentication only - no wallet connectors.
  *
- * AC #1 (Issue scope): Uses `withAuth()` helper (contract-validated session bootstrap)
- * instead of raw `addInitScript(() => localStorage.setItem(...))`. This ensures:
- *   1. The ARC76 session contract is validated before every test.
- *   2. Migrating to real backend auth requires only swapping withAuth → loginWithCredentials.
+ * Critical journey: uses `loginWithCredentials()` which attempts real backend auth
+ * and falls back to contract-validated localStorage seeding when the backend is
+ * unavailable (e.g. CI without a live backend service). This ensures:
+ *   1. The ARC76 session contract is always validated before every test.
+ *   2. When API_BASE_URL is set, the real POST /api/auth/login endpoint is exercised.
  *
  * Canonical creation route: /launch/guided
  * Roadmap: https://raw.githubusercontent.com/scholtz/biatec-tokens/refs/heads/main/business-owner-roadmap.md
  */
 
 import { test, expect } from '@playwright/test'
-import { withAuth, suppressBrowserErrors } from './helpers/auth'
+import { loginWithCredentials, suppressBrowserErrors } from './helpers/auth'
 
 test.describe('Guided Token Launch Flow', () => {
   test.beforeEach(async ({ page }) => {
     suppressBrowserErrors(page)
 
-    // AC #1: Contract-validated session bootstrap replaces raw localStorage seeding.
-    // withAuth() validates the ARC76 session contract before seeding localStorage.
-    await withAuth(page, {
-      address: 'GUIDED_LAUNCH_TEST_USER_ARC76',
-      email: 'test@example.com',
-      isConnected: true,
-    })
+    // Critical journey: loginWithCredentials() attempts real backend auth (POST /api/auth/login)
+    // and falls back to contract-validated localStorage seeding when backend is unavailable.
+    await loginWithCredentials(page)
   })
 
   test('should display guided launch page correctly', async ({ page }) => {

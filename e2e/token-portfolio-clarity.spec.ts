@@ -43,7 +43,6 @@ test.describe('Token Portfolio Clarity', () => {
   test('should display the Token Dashboard page with a heading', async ({ page }) => {
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
 
     const heading = page.getByRole('heading', { name: /Token Dashboard/i })
     const hasHeading = await heading.isVisible({ timeout: 15000 }).catch(() => false)
@@ -53,7 +52,6 @@ test.describe('Token Portfolio Clarity', () => {
   test('should display stat cards on the Token Dashboard', async ({ page }) => {
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
 
     // Expect at least the Total Tokens stat card to be visible
     const statLabel = page.getByText(/Total Tokens/i).first()
@@ -64,7 +62,6 @@ test.describe('Token Portfolio Clarity', () => {
   test('should show either a token grid, an empty state, or a loading state', async ({ page }) => {
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000)
 
     const grid = page.locator('[data-testid="token-dashboard-grid"]')
     const empty = page.locator('[data-testid="token-dashboard-empty"]')
@@ -81,7 +78,6 @@ test.describe('Token Portfolio Clarity', () => {
   test('empty state should offer a "Create Token" action', async ({ page }) => {
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000)
 
     const empty = page.locator('[data-testid="token-dashboard-empty"]')
     const emptyVisible = await empty.isVisible().catch(() => false)
@@ -104,7 +100,6 @@ test.describe('Token Portfolio Clarity', () => {
   test('should display filter dropdowns for standard and status', async ({ page }) => {
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
 
     const standardFilter = page.getByRole('combobox').first()
     const hasFilter = await standardFilter.isVisible({ timeout: 15000 }).catch(() => false)
@@ -114,7 +109,6 @@ test.describe('Token Portfolio Clarity', () => {
   test('should have a Refresh button', async ({ page }) => {
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
 
     // Use .first() to avoid strict mode violation when multiple Refresh buttons exist
     const refreshBtn = page.getByRole('button', { name: /Refresh/i }).first()
@@ -125,7 +119,6 @@ test.describe('Token Portfolio Clarity', () => {
   test('should have a link to Create Token', async ({ page }) => {
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
 
     const createLink = page.getByRole('link', { name: /Create Token/i }).first()
     const hasCreate = await createLink.isVisible({ timeout: 15000 }).catch(() => false)
@@ -137,7 +130,6 @@ test.describe('Token Portfolio Clarity', () => {
   test('should show a meaningful state for a non-existent token', async ({ page }) => {
     await page.goto('/tokens/non-existent-token-xyz')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
 
     // Page should not crash; either an error message or a fallback heading is visible
     const heading = page.getByRole('heading').first()
@@ -148,7 +140,6 @@ test.describe('Token Portfolio Clarity', () => {
   test('token detail should show a back navigation option', async ({ page }) => {
     await page.goto('/tokens/any-token-id')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
 
     // Use .first() to avoid strict mode violation when back buttons appear in both desktop and mobile nav
     const backBtn = page.getByRole('button', { name: /back/i }).first()
@@ -161,7 +152,6 @@ test.describe('Token Portfolio Clarity', () => {
   test('token portfolio pages should not expose wallet-connector UI', async ({ page }) => {
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
 
     // Check visible body text (not compiled JS bundle) for wallet connector UI
     const bodyText = await page.locator('body').innerText().catch(() => '')
@@ -178,7 +168,6 @@ test.describe('Token Portfolio Clarity', () => {
   test('should allow authenticated user to access token dashboard', async ({ page }) => {
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000)
 
     // Authenticated users should see the dashboard heading, not a login form
     const heading = page.getByRole('heading', { name: /Token Dashboard/i })
@@ -212,7 +201,6 @@ test.describe('Wallet Connection State clarity', () => {
 
     await page.goto('/')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
 
     // Should see email / sign-in related text somewhere on the page
     const content = await page.content()
@@ -228,7 +216,6 @@ test.describe('Wallet Connection State clarity', () => {
 
     await page.goto('/')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
 
     // Verify no "Connect Wallet" button (explicit wallet-first auth prompt) appears
     // Use exact phrase check on visible body text (not compiled JS bundles)
@@ -256,7 +243,6 @@ test.describe('Wallet Connection State clarity', () => {
 
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000)
 
     // Page should render without a full-screen error
     const body = page.locator('body')
