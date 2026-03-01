@@ -1,25 +1,26 @@
 /**
  * E2E Tests for Compliance Dashboard Auth-First Flow
- * 
- * Additional tests to improve coverage of compliance flows
- * with auth-first patterns and business roadmap alignment.
+ *
+ * Critical journey spec: uses backend-realistic, contract-validated session bootstrap
+ * via the shared `withAuth()` and `loginWithCredentials()` helpers instead of ad-hoc
+ * localStorage.setItem calls. This ensures the ARC76 session contract is validated
+ * before every test, and makes the path to real backend auth trivial (swap withAuth
+ * for loginWithCredentials when a backend is available in CI).
+ *
+ * AC #1 (Issue scope): Auth-first E2E paths use contract-validated session bootstrap.
+ * AC #4 (Issue scope): Top-nav assertions are component-scoped (nav.textContent()), not
+ *        broad page.content() scans.
+ *
+ * Canonical auth model: email/password only — no wallet connectors.
+ * Roadmap: https://raw.githubusercontent.com/scholtz/biatec-tokens/refs/heads/main/business-owner-roadmap.md
  */
 
 import { test, expect } from '@playwright/test'
+import { withAuth, loginWithCredentials, suppressBrowserErrors } from './helpers/auth'
 
 test.describe('Compliance Dashboard - Auth-First Flow', () => {
   test.beforeEach(async ({ page }) => {
-    // Suppress console errors to prevent Playwright from failing on browser console output
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed for test stability): ${msg.text()}`)
-      }
-    })
-    
-    // Suppress page errors
-    page.on('pageerror', error => {
-      console.log(`Page error (suppressed for test stability): ${error.message}`)
-    })
+    suppressBrowserErrors(page)
   })
 
   test('should redirect unauthenticated user from compliance dashboard to login', async ({ page }) => {
@@ -49,59 +50,51 @@ test.describe('Compliance Dashboard - Auth-First Flow', () => {
   })
 
   test('should allow authenticated user to access compliance dashboard', async ({ page }) => {
-    // Set up authenticated session
-    await page.addInitScript(() => {
-      localStorage.setItem('algorand_user', JSON.stringify({
-        address: 'TEST_COMPLIANCE_USER',
-        email: 'compliance@example.com',
-        isConnected: true,
-      }))
-    })
-    
+    // AC #1: Use contract-validated session bootstrap (withAuth validates ARC76 contract
+    // before seeding localStorage — no raw localStorage.setItem shortcuts).
+    // loginWithCredentials() is used here as this is a critical journey spec; it attempts
+    // real backend auth and falls back to contract-validated seeding when backend is absent.
+    await loginWithCredentials(page, 'compliance@example.com')
+
     // Navigate to compliance dashboard
     await page.goto('/compliance/dashboard')
     await page.waitForLoadState('networkidle')
-    
+
     // Should display the dashboard - semantic wait replaces arbitrary 10s timeout
     const heading = page.getByRole('heading', { level: 1 }).first()
     await expect(heading).toBeVisible({ timeout: 45000 })
   })
 
   test('should not display wallet UI in compliance dashboard', async ({ page }) => {
-    // Set up authenticated session
-    await page.addInitScript(() => {
-      localStorage.setItem('algorand_user', JSON.stringify({
-        address: 'TEST_COMPLIANCE_USER',
-        email: 'compliance@example.com',
-        isConnected: true,
-      }))
-    })
-    
+    // AC #1: Contract-validated session bootstrap for critical journey.
+    await loginWithCredentials(page, 'compliance@example.com')
+
     // Navigate to compliance dashboard
     await page.goto('/compliance/dashboard')
     await page.waitForLoadState('networkidle')
-    
+
     // Wait for page to load - semantic wait
     const heading = page.getByRole('heading', { level: 1 }).first()
     await expect(heading).toBeVisible({ timeout: 45000 })
-    
-    // Get page content
-    const content = await page.content()
-    
-    // Verify no wallet-related UI
-    expect(content).not.toMatch(/WalletConnect|MetaMask|Pera.*Wallet|Defly/i)
-    expect(content).not.toContain('connect wallet')
-    expect(content).not.toContain('Not connected')
+
+    // AC #4: Component-scoped assertion — check nav textContent, not full page.content().
+    // page.content() scans compiled JS bundles that embed WalletConnect/Pera/Defly strings
+    // from third-party packages. nav.textContent() only captures visible text in the nav.
+    const nav = page.getByRole('navigation').first()
+    const navText = await nav.textContent().catch(() => '')
+
+    // Verify no wallet-related UI in the navigation
+    expect(navText).not.toMatch(/WalletConnect|MetaMask|Pera Wallet|Defly/i)
+    expect(navText).not.toMatch(/connect wallet/i)
+    expect(navText).not.toMatch(/not connected/i)
   })
 
   test('should maintain auth state when navigating from compliance to dashboard', async ({ page }) => {
-    // Set up authenticated session
-    await page.addInitScript(() => {
-      localStorage.setItem('algorand_user', JSON.stringify({
-        address: 'TEST_NAV_USER',
-        email: 'nav-test@example.com',
-        isConnected: true,
-      }))
+    // AC #1: Contract-validated session bootstrap for critical journey.
+    await withAuth(page, {
+      address: 'COMPLIANCE_NAV_TEST_USER',
+      email: 'nav-test@example.com',
+      isConnected: true,
     })
     
     // Start at compliance dashboard
@@ -126,41 +119,38 @@ test.describe('Compliance Dashboard - Auth-First Flow', () => {
   })
 
   test('should verify business roadmap alignment on compliance page', async ({ page }) => {
-    // Set up authenticated session
-    await page.addInitScript(() => {
-      localStorage.setItem('algorand_user', JSON.stringify({
-        address: 'TEST_ROADMAP_USER',
-        email: 'roadmap@example.com',
-        isConnected: true,
-      }))
-    })
-    
+    // AC #1: Contract-validated session bootstrap for critical journey.
+    await loginWithCredentials(page, 'roadmap@example.com')
+
     // Navigate to compliance dashboard
     await page.goto('/compliance/dashboard')
     await page.waitForLoadState('networkidle')
-    
+
     // Wait for page to load - semantic wait
     const heading = page.getByRole('heading', { level: 1 }).first()
     await expect(heading).toBeVisible({ timeout: 45000 })
-    
-    // Get page content
-    const content = await page.content()
-    
-    // Business roadmap requirements:
-    // 1. Email/password only - NO wallet connectors
-    expect(content).not.toMatch(/WalletConnect|MetaMask|Pera.*Wallet|Defly/i)
-    
-    // 2. Backend-driven (no frontend signing)
-    expect(content).not.toContain('sign transaction')
-    expect(content).not.toContain('approve in wallet')
-    
-    // 3. Compliance-first (compliance content should be present)
-    const hasComplianceContent = content.includes('compliance') || content.includes('Compliance')
+
+    // Business roadmap requirements — AC #4: use nav.textContent() not page.content().
+    const nav = page.getByRole('navigation').first()
+    const navText = await nav.textContent().catch(() => '')
+
+    // 1. Email/password only - NO wallet connectors in nav
+    expect(navText).not.toMatch(/WalletConnect|MetaMask|Pera Wallet|Defly/i)
+
+    // 2. Backend-driven: no wallet signing prompts in nav
+    expect(navText).not.toMatch(/sign transaction|approve in wallet/i)
+
+    // 3. Compliance-first: page body must contain compliance content
+    const bodyText = await page.locator('body').innerText().catch(() => '')
+    const hasComplianceContent = /compliance/i.test(bodyText)
     expect(hasComplianceContent).toBe(true)
   })
 })
 
 test.describe('Compliance Orchestration - Auth-First Flow', () => {
+  test.beforeEach(async ({ page }) => {
+    suppressBrowserErrors(page)
+  })
   test('should redirect unauthenticated user from compliance orchestration to login', async ({ page }) => {
     // Clear auth state
     await page.goto('/')
@@ -188,14 +178,8 @@ test.describe('Compliance Orchestration - Auth-First Flow', () => {
   })
 
   test('should allow authenticated user to access compliance orchestration', async ({ page }) => {
-    // Set up authenticated session
-    await page.addInitScript(() => {
-      localStorage.setItem('algorand_user', JSON.stringify({
-        address: 'TEST_ORCH_USER',
-        email: 'orch@example.com',
-        isConnected: true,
-      }))
-    })
+    // AC #1: Contract-validated session bootstrap for critical journey.
+    await loginWithCredentials(page, 'orch@example.com')
     
     // Navigate to compliance orchestration
     await page.goto('/compliance/orchestration')

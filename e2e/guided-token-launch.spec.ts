@@ -1,34 +1,31 @@
 /**
  * E2E tests for Guided Token Launch flow
- * 
+ *
  * Tests the complete user journey through the guided token launch onboarding.
  * Email/password authentication only - no wallet connectors.
+ *
+ * AC #1 (Issue scope): Uses `withAuth()` helper (contract-validated session bootstrap)
+ * instead of raw `addInitScript(() => localStorage.setItem(...))`. This ensures:
+ *   1. The ARC76 session contract is validated before every test.
+ *   2. Migrating to real backend auth requires only swapping withAuth → loginWithCredentials.
+ *
+ * Canonical creation route: /launch/guided
+ * Roadmap: https://raw.githubusercontent.com/scholtz/biatec-tokens/refs/heads/main/business-owner-roadmap.md
  */
 
 import { test, expect } from '@playwright/test'
+import { withAuth, suppressBrowserErrors } from './helpers/auth'
 
 test.describe('Guided Token Launch Flow', () => {
   test.beforeEach(async ({ page }) => {
-    // Note: We suppress browser console/page errors because this is a frontend-only implementation
-    // with mock backend data. Expected console warnings about missing APIs are not test failures.
-    // In production, these will be replaced with actual backend integration.
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed - mock environment): ${msg.text()}`)
-      }
-    })
-    
-    page.on('pageerror', error => {
-      console.log(`Page error (suppressed - mock environment): ${error.message}`)
-    })
-    
-    // Set up authenticated user with email/password (no wallet)
-    await page.addInitScript(() => {
-      localStorage.setItem('algorand_user', JSON.stringify({
-        address: 'test-user-address',
-        email: 'test@example.com',
-        isConnected: true,
-      }))
+    suppressBrowserErrors(page)
+
+    // AC #1: Contract-validated session bootstrap replaces raw localStorage seeding.
+    // withAuth() validates the ARC76 session contract before seeding localStorage.
+    await withAuth(page, {
+      address: 'GUIDED_LAUNCH_TEST_USER_ARC76',
+      email: 'test@example.com',
+      isConnected: true,
     })
   })
 

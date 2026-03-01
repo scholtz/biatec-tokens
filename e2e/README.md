@@ -43,9 +43,43 @@ Every session seeded in E2E tests must have these fields:
 
 The contract is validated by `validateARC76Session()` in `src/utils/arc76SessionContract.ts`. The same validation logic is also used by the router guard, so any mismatch between tests and runtime is caught by the unit tests in `src/utils/__tests__/arc76SessionContract.test.ts`.
 
-### Backend Auth Readiness
+### Backend Auth Readiness: `loginWithCredentials` for Critical Journeys
 
-Current E2E tests seed localStorage because the test environment has no live backend. When the backend auth endpoint is available in CI, replace `withAuth()` with `loginWithBackend()` (defined in helpers/auth.ts as a stub). The session contract and all E2E assertions remain identical.
+For **critical path specs** (auth-first launch, compliance flows, ARC76 validation, token creation), use
+`loginWithCredentials()` instead of `withAuth()`. This helper attempts a real backend login when
+`API_BASE_URL` is set, falling back to contract-validated localStorage seeding in CI without a backend.
+
+```typescript
+import { loginWithCredentials, suppressBrowserErrors } from './helpers/auth'
+
+// In a critical journey spec (e.g., compliance-auth-first.spec.ts)
+test.beforeEach(async ({ page }) => {
+  suppressBrowserErrors(page)
+})
+
+test('should allow access to compliance dashboard', async ({ page }) => {
+  await loginWithCredentials(page, 'user@example.com') // real auth when backend available
+  await page.goto('/compliance/dashboard')
+  // ...
+})
+```
+
+`loginWithCredentials` parameters:
+- `email` — optional; defaults to `TEST_USER_EMAIL` env var or `e2e-test@biatec.io`
+- `password` — optional; defaults to `TEST_USER_PASSWORD` env var or empty string
+- `API_BASE_URL` env var controls the backend base URL (default: `http://localhost:3000`)
+
+When `API_BASE_URL` resolves to a live backend that returns HTTP 200 with `{ address, email }`,
+`loginWithCredentials` validates the response against the ARC76 contract and seeds localStorage
+identically to `withAuth()`. All subsequent test assertions remain identical.
+
+**When to use which helper:**
+
+| Spec type | Recommended helper |
+|---|---|
+| Critical journey (auth, compliance, token creation) | `loginWithCredentials()` |
+| Isolated UI-only test (no backend dependency) | `withAuth()` |
+| Guest / unauthenticated test | `clearAuthScript()` + `clearAuth()` |
 
 ### Clearing Auth State
 
