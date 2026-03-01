@@ -31,24 +31,6 @@ import { test, expect } from '@playwright/test'
 import { withAuth, clearAuthScript } from './helpers/auth'
 
 // ---------------------------------------------------------------------------
-// Auth bootstrap helpers — delegate to shared, contract-validated helpers
-// ---------------------------------------------------------------------------
-
-/** @deprecated Use withAuth() directly. This alias preserved for call-site compatibility. */
-async function bootstrapValidSession(page: import('@playwright/test').Page) {
-  await withAuth(page, {
-    address: 'A11Y_LAUNCH_TEST_ADDRESS',
-    email: 'a11y-launch@biatec.io',
-    isConnected: true,
-  })
-}
-
-/** @deprecated Use clearAuthScript() directly. This alias preserved for call-site compatibility. */
-async function clearSession(page: import('@playwright/test').Page) {
-  await clearAuthScript(page)
-}
-
-// ---------------------------------------------------------------------------
 // Suite: Canonical launch route visibility
 // ---------------------------------------------------------------------------
 
@@ -84,7 +66,7 @@ test.describe('Canonical launch route — navigation and visibility', () => {
   })
 
   test('authenticated user nav contains link to /launch/guided', async ({ page }) => {
-    await bootstrapValidSession(page)
+    await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
@@ -106,7 +88,7 @@ test.describe('Canonical launch route — navigation and visibility', () => {
 
 test.describe('Non-wallet terminology — guest and authenticated surfaces', () => {
   test('home page contains no wallet-connect language for guest user', async ({ page }) => {
-    await clearSession(page)
+    await clearAuthScript(page)
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
@@ -132,7 +114,7 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
   })
 
   test('home page contains no wallet-connect language for authenticated user', async ({ page }) => {
-    await bootstrapValidSession(page)
+    await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
@@ -148,7 +130,7 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
   })
 
   test('navigation bar does not contain wallet connect text for guest', async ({ page }) => {
-    await clearSession(page)
+    await clearAuthScript(page)
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
@@ -163,7 +145,7 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
   })
 
   test('guided launch page contains no wallet-connect language', async ({ page }) => {
-    await bootstrapValidSession(page)
+    await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
@@ -194,7 +176,7 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
 
 test.describe('Keyboard navigation — primary launch CTA', () => {
   test('Tab navigation can reach the Create Token link in navigation', async ({ page }) => {
-    await clearSession(page)
+    await clearAuthScript(page)
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
@@ -215,7 +197,7 @@ test.describe('Keyboard navigation — primary launch CTA', () => {
   })
 
   test('Sign in button is focusable and has an accessible label', async ({ page }) => {
-    await clearSession(page)
+    await clearAuthScript(page)
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
@@ -236,7 +218,7 @@ test.describe('Keyboard navigation — primary launch CTA', () => {
 
 test.describe('Semantic HTML — accessibility attributes on critical surfaces', () => {
   test('guided launch page has a level-1 heading', async ({ page }) => {
-    await bootstrapValidSession(page)
+    await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
@@ -247,7 +229,7 @@ test.describe('Semantic HTML — accessibility attributes on critical surfaces',
   })
 
   test('guided launch page error banner uses role="alert" when an error is present', async ({ page }) => {
-    await bootstrapValidSession(page)
+    await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
@@ -263,7 +245,7 @@ test.describe('Semantic HTML — accessibility attributes on critical surfaces',
   })
 
   test('compliance setup workspace has a level-1 heading', async ({ page }) => {
-    await bootstrapValidSession(page)
+    await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/compliance/setup')
@@ -274,7 +256,7 @@ test.describe('Semantic HTML — accessibility attributes on critical surfaces',
   })
 
   test('guided launch step indicators have descriptive text', async ({ page }) => {
-    await bootstrapValidSession(page)
+    await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
@@ -296,7 +278,7 @@ test.describe('Semantic HTML — accessibility attributes on critical surfaces',
 
 test.describe('Compliance setup workspace — non-wallet accessibility', () => {
   test('compliance setup page loads without wallet-connect language', async ({ page }) => {
-    await bootstrapValidSession(page)
+    await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/compliance/setup')
@@ -313,7 +295,7 @@ test.describe('Compliance setup workspace — non-wallet accessibility', () => {
   })
 
   test('compliance page is accessible via keyboard Tab from navigation', async ({ page }) => {
-    await bootstrapValidSession(page)
+    await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/compliance/setup')
@@ -335,7 +317,7 @@ test.describe('Compliance setup workspace — non-wallet accessibility', () => {
 
 test.describe('Auth-first routing — launch and compliance routes', () => {
   test('unauthenticated access to /launch/guided redirects appropriately', async ({ page }) => {
-    await clearSession(page)
+    await clearAuthScript(page)
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
@@ -349,7 +331,7 @@ test.describe('Auth-first routing — launch and compliance routes', () => {
   })
 
   test('unauthenticated access to /compliance/setup redirects appropriately', async ({ page }) => {
-    await clearSession(page)
+    await clearAuthScript(page)
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/compliance/setup')
@@ -363,7 +345,7 @@ test.describe('Auth-first routing — launch and compliance routes', () => {
   })
 
   test('authenticated user can access /launch/guided', async ({ page }) => {
-    await bootstrapValidSession(page)
+    await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
@@ -374,7 +356,7 @@ test.describe('Auth-first routing — launch and compliance routes', () => {
   })
 
   test('authenticated user can access /compliance/setup', async ({ page }) => {
-    await bootstrapValidSession(page)
+    await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/compliance/setup')

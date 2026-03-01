@@ -28,14 +28,22 @@
 import { test, expect } from "@playwright/test";
 import {
   withAuth as withAuthHelper,
-  suppressBrowserErrors as suppressBrowserErrorsHelper,
+  suppressBrowserErrors,
+  getNavText,
 } from "./helpers/auth";
 
 // ---------------------------------------------------------------------------
-// Auth fixture helpers (email/password only — no wallet connectors)
-// Delegates to shared contract-validated helpers from ./helpers/auth
+// Spec-local auth fixtures — thin wrappers with semantic names
+//
+// These wrappers use fixed test credentials (CLOSURE_TEST_ADDRESS) consistent
+// across all tests in this spec, so that auth state is predictable and tests
+// do not depend on external user data.
 // ---------------------------------------------------------------------------
 
+/**
+ * Seeds a valid, connected auth session for this spec.
+ * Uses spec-local credentials to keep test isolation clean.
+ */
 function withAuth(page: import("@playwright/test").Page) {
   return withAuthHelper(page, {
     address: "CLOSURE_TEST_ADDRESS",
@@ -44,19 +52,17 @@ function withAuth(page: import("@playwright/test").Page) {
   });
 }
 
+/**
+ * Seeds a structurally valid but disconnected session.
+ * isConnected: false means the route guard will redirect the user —
+ * this fixture proves the guard checks the isConnected field, not just address.
+ */
 function withExpiredSession(page: import("@playwright/test").Page) {
-  // Structurally valid session (contract: address + email + boolean) but isConnected=false
-  // so the route guard redirects the user — proves the guard checks isConnected.
   return withAuthHelper(page, {
     address: "CLOSURE_TEST_ADDRESS",
     email: "closure@example.com",
-    isConnected: false, // Expired session — triggers auth guard redirect
+    isConnected: false, // Expired/logged-out session
   });
-}
-
-// Suppress browser console errors to prevent CI failure masking
-function suppressBrowserErrors(page: import("@playwright/test").Page) {
-  suppressBrowserErrorsHelper(page);
 }
 
 // ---------------------------------------------------------------------------
@@ -169,12 +175,8 @@ test.describe("AC #3: Top navigation — no wallet/network state for unauthentic
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    await page.waitForFunction(() => document.querySelector("nav") !== null, { timeout: 10000 });
-
-    // nav.textContent() scoped to the navigation element — avoids false positives
-    // from compiled bundle strings that appear in page.content() HTML.
-    const nav = page.getByRole("navigation").first();
-    const navText = await nav.textContent().catch(() => "");
+    // getNavText() waits for nav and returns nav.textContent() — avoids compiled-bundle false positives
+    const navText = await getNavText(page);
     expect(navText).not.toMatch(/not connected/i);
   });
 
@@ -183,8 +185,6 @@ test.describe("AC #3: Top navigation — no wallet/network state for unauthentic
     // incorrect expectations that a crypto wallet is needed.
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-
-    await page.waitForFunction(() => document.querySelector("nav") !== null, { timeout: 10000 });
 
     // body.innerText() checks only rendered visible text — not compiled JS bundle content.
     const bodyText = await page.locator("body").innerText().catch(() => "");
@@ -208,11 +208,8 @@ test.describe("AC #3: Top navigation — no wallet/network state for unauthentic
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    await page.waitForFunction(() => document.querySelector("nav") !== null, { timeout: 10000 });
-
-    // nav.textContent() scoped to nav element — avoids compiled-bundle false positives
-    const nav = page.getByRole("navigation").first();
-    const navText = await nav.textContent().catch(() => "");
+    // getNavText() waits for nav and returns textContent — avoids compiled-bundle false positives
+    const navText = await getNavText(page);
     expect(navText).not.toMatch(/not connected/i);
   });
 });
@@ -454,11 +451,8 @@ test.describe("AC #8: No regression — authenticated user flows", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    await page.waitForFunction(() => document.querySelector("nav") !== null, { timeout: 10000 });
-
-    // nav.textContent() scoped to the navigation — avoids compiled-bundle false positives
-    const nav = page.getByRole("navigation").first();
-    const navText = await nav.textContent().catch(() => "");
+    // getNavText() waits for nav and returns textContent — avoids compiled-bundle false positives
+    const navText = await getNavText(page);
     expect(navText).not.toMatch(/not connected/i);
   });
 

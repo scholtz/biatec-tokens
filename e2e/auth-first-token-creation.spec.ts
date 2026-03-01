@@ -17,7 +17,7 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { loginWithCredentials, suppressBrowserErrors } from './helpers/auth'
+import { loginWithCredentials, suppressBrowserErrors, getNavText } from './helpers/auth'
 
 /** Shared test user for auth-first token creation tests */
 const AUTH_FIRST_TEST_EMAIL = 'test@example.com'
@@ -122,10 +122,9 @@ test.describe('Auth-First Token Creation Journey', () => {
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(title).toBeVisible({ timeout: 60000 }) // Increased timeout for CI
 
-    // Use nav-component textContent assertion (not page.content() which includes compiled bundle)
+    // Use shared getNavText() helper — scoped to nav element, avoids compiled-bundle false positives
     // per AC #3: deterministic assertions must scope to visible DOM, not full HTML.
-    const nav = page.getByRole('navigation').first()
-    const navText = await nav.textContent().catch(() => '')
+    const navText = await getNavText(page)
 
     // Verify no wallet connector references in navigation text
     expect(navText).not.toMatch(/not connected/i)
@@ -154,9 +153,8 @@ test.describe('Auth-First Token Creation Journey', () => {
     const signInText = await signInButton.textContent().catch(() => '')
     expect(signInText).toMatch(/sign in/i)
 
-    // Nav-scoped textContent check: wallet strings must not appear in the navigation
-    const nav = page.getByRole('navigation').first()
-    const navText = await nav.textContent().catch(() => '')
+    // Use shared getNavText() helper for nav-scoped wallet assertion
+    const navText = await getNavText(page)
     expect(navText).not.toMatch(/WalletConnect|Connect Wallet/i)
   })
 

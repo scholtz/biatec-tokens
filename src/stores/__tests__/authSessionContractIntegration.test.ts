@@ -79,9 +79,12 @@ describe('Session contract → route guard integration', () => {
       expect(isConnectedSession(malformed)).toBe(false)
     })
 
-    it('denies access when isConnected is a string (contract violation)', () => {
-      // Strict typing: "true" (string) is not the same as true (boolean)
-      const malformed = { address: 'ADDR', email: 'test@biatec.io', isConnected: 'true' }
+    it('denies access when isConnected is a string (runtime type check)', () => {
+      // TypeScript prevents this at compile time, but the validator must also handle
+      // runtime type confusion (e.g., values deserialized from untrusted localStorage JSON).
+      // The `as any` cast simulates a value arriving at runtime without TypeScript's checks.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const malformed = { address: 'ADDR', email: 'test@biatec.io', isConnected: 'true' as any }
       expect(isConnectedSession(malformed)).toBe(false)
     })
   })

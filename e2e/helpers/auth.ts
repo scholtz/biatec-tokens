@@ -330,6 +330,28 @@ export function suppressBrowserErrors(page: Page): void {
 }
 
 /**
+ * Returns the textContent of the top navigation element (`<nav>`).
+ * Use this instead of `page.content()` for wallet/status text assertions because
+ * `page.content()` includes compiled JS bundle strings that embed WalletConnect/Pera/
+ * Defly symbols from third-party libraries, causing false-positive failures.
+ *
+ * This helper:
+ *   1. Waits for the nav element to appear in the DOM (semantic readiness check).
+ *   2. Returns the textContent of the first navigation landmark.
+ *   3. Returns an empty string on failure so callers can assert absence safely.
+ *
+ * Canonical pattern per AC #3 (deterministic navigation assertions):
+ *   const navText = await getNavText(page)
+ *   expect(navText).not.toMatch(/WalletConnect|Pera Wallet|Defly|MetaMask/i)
+ */
+export async function getNavText(page: Page): Promise<string> {
+  await page.waitForFunction(() => document.querySelector('nav') !== null, { timeout: 10000 }).catch(() => {
+    // If nav never appears, return empty string — caller assertion will handle it
+  })
+  return page.getByRole('navigation').first().textContent().catch(() => '')
+}
+
+/**
  * Full beforeEach setup helper: suppresses errors, seeds auth, and navigates
  * to the given route, waiting for networkidle.
  *

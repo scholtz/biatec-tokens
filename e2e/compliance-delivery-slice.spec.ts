@@ -23,7 +23,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { withAuth, suppressBrowserErrors, clearAuthScript } from './helpers/auth';
+import { withAuth, suppressBrowserErrors, clearAuthScript, getNavText } from './helpers/auth';
 
 // ---------------------------------------------------------------------------
 // Setup
@@ -113,10 +113,8 @@ test.describe('Pipeline entry: unauthenticated user', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    await page.waitForFunction(() => document.readyState === 'complete', { timeout: 10000 });
-
-    const nav = page.getByRole('navigation').first();
-    const navText = await nav.textContent().catch(() => '');
+    // getNavText() waits for nav and returns textContent — avoids compiled-bundle false positives
+    const navText = await getNavText(page);
     expect(navText).not.toMatch(/not connected/i);
     expect(navText).not.toMatch(/WalletConnect|Pera Wallet|Defly|MetaMask/i);
   });
@@ -162,8 +160,8 @@ test.describe('Pipeline: authenticated user access', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    const nav = page.getByRole('navigation').first();
-    const navText = await nav.textContent().catch(() => '');
+    // getNavText() waits for nav and returns textContent — avoids compiled-bundle false positives
+    const navText = await getNavText(page);
     expect(navText).not.toMatch(/not connected/i);
     expect(navText).not.toMatch(/WalletConnect|Pera Wallet|Defly|MetaMask/i);
   });

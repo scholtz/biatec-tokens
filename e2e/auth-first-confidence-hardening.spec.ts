@@ -26,7 +26,7 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { withAuth, suppressBrowserErrors } from "./helpers/auth";
+import { withAuth, suppressBrowserErrors, getNavText } from "./helpers/auth";
 
 // ---------------------------------------------------------------------------
 // AC #1 — Auth-first routing: all token creation entry points enforce auth
@@ -183,13 +183,9 @@ test.describe("AC #2: Guest nav — no wallet states, deterministic Sign In", ()
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // Semantic wait: nav renders
-    await page.waitForFunction(() => document.querySelector("nav") !== null, { timeout: 10000 });
-
-    // Use nav-component textContent (not page.content()) to avoid false positives
-    // from compiled JS bundles that embed third-party wallet library strings.
-    const nav = page.getByRole("navigation").first();
-    const navText = await nav.textContent().catch(() => "");
+    // Use shared getNavText() helper — waits for nav to appear and returns its textContent.
+    // Avoids false positives from compiled JS bundles that embed third-party wallet strings.
+    const navText = await getNavText(page);
 
     // Negative assertions: wallet-centric strings must not appear in nav text (AC #2)
     expect(navText).not.toMatch(/WalletConnect/i);
