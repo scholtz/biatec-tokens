@@ -469,3 +469,81 @@ describe('withAuth fail-fast contract enforcement (session shapes that must be r
     expect(missing).not.toContain('email')
   })
 })
+
+// ---------------------------------------------------------------------------
+// loginWithCredentials fallback contract — session shapes used by the
+// loginWithCredentials() E2E helper when the backend is unavailable in CI.
+// These tests verify the fallback session is contractually valid so that
+// auth-first journeys work correctly without a live backend.
+// ---------------------------------------------------------------------------
+
+describe('loginWithCredentials fallback session contract', () => {
+  // Fallback address seeded in localStorage when the backend is unavailable in CI.
+  // Must be exactly 58 characters (Algorand base32 standard).
+  const FALLBACK_ADDRESS = 'E2EFALLBACK7BIATECTOKENSNOBKND7777777777777777777777777777'
+
+  it('loginWithCredentials fallback address is a non-empty string', () => {
+    expect(typeof FALLBACK_ADDRESS).toBe('string')
+    expect(FALLBACK_ADDRESS.length).toBeGreaterThan(0)
+  })
+
+  it('loginWithCredentials fallback address is exactly 58 chars (Algorand standard)', () => {
+    expect(FALLBACK_ADDRESS.length).toBe(58)
+  })
+
+  it('loginWithCredentials fallback session passes ARC76 contract', () => {
+    const fallbackSession = {
+      address: FALLBACK_ADDRESS,
+      email: 'e2e-test@biatec.io',
+      isConnected: true,
+    }
+    const result = validateARC76Session(fallbackSession)
+    expect(result.valid).toBe(true)
+    expect(result.errors).toHaveLength(0)
+  })
+
+  it('loginWithCredentials fallback session passes isConnectedSession check', () => {
+    const fallbackSession = {
+      address: FALLBACK_ADDRESS,
+      email: 'e2e-test@biatec.io',
+      isConnected: true,
+    }
+    expect(isConnectedSession(fallbackSession)).toBe(true)
+  })
+
+  it('loginWithCredentials fallback session serialises and parses correctly', () => {
+    const fallbackSession = {
+      address: FALLBACK_ADDRESS,
+      email: 'arc76-fallback@biatec.io',
+      isConnected: true,
+    }
+    const serialised = JSON.stringify(fallbackSession)
+    const parsed = parseAndValidateSession(serialised)
+    expect(parsed).not.toBeNull()
+    expect(parsed!.address).toBe(FALLBACK_ADDRESS)
+    expect(parsed!.email).toBe('arc76-fallback@biatec.io')
+    expect(parsed!.isConnected).toBe(true)
+  })
+
+  it('ARC76 mock test addresses used in arc76-validation spec are >=58 chars', () => {
+    // These are the mock addresses used in e2e/arc76-validation.spec.ts Section 3.
+    // If they drop below 58 chars, the ARC76 contract length assertion fails in CI.
+    const MOCK_A = 'BIATECTEST7ARC76DERIVEDADDRESSAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+    const MOCK_B = 'BIATECTEST7ARC76DERIVEDADDRESSBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+    expect(MOCK_A.length).toBeGreaterThanOrEqual(58)
+    expect(MOCK_B.length).toBeGreaterThanOrEqual(58)
+    expect(MOCK_A).not.toBe(MOCK_B)
+  })
+
+  it('DEFAULT_TEST_USER address passes ARC76 contract (E2E test baseline)', () => {
+    // Mirrors the DEFAULT_TEST_USER constant in e2e/helpers/auth.ts.
+    // Changes to this address shape would silently break auth-first E2E tests.
+    const defaultUser = {
+      address: 'E2E_TEST_ARC76_ADDRESS_BIATEC_TOKENS',
+      email: 'e2e-test@biatec.io',
+      isConnected: true,
+    }
+    const result = validateARC76Session(defaultUser)
+    expect(result.valid).toBe(true)
+  })
+})

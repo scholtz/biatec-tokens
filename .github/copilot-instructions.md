@@ -606,6 +606,46 @@ if (savedPath) router.replace(savedPath)
 - ❌ Accept "utility coverage is high" as complete — must verify VIEW and ROUTER integration
 - ❌ Treat hardcoded strings as "integration" — import the constants and use them
 
+### 7c. Hardcoded Test Data Length Verification (MANDATORY FOR TESTS WITH LENGTH ASSERTIONS) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 1, 2026 (PR #508) 🚨**
+
+**Violation**: Copilot added E2E spec `arc76-validation.spec.ts` Section 3 with mock Algorand addresses that were 57 characters long, but the test assertion was `>= 58`. This caused CI failures: `Expected >= 58, Received 57`.
+
+**Root Cause**:
+- Hardcoded `MOCK_ARC76_ADDRESS_A = 'BIATECTEST7ARC76DERIVEDADDRESSAAAAAAAAAAAAAAAAAAAAAAAAAAA'` (57 chars)
+- Test asserted `expect(MOCK_ARC76_ADDRESS_A.length).toBeGreaterThanOrEqual(58)`
+- Did NOT run the test locally before committing (would have caught the off-by-one error immediately)
+
+**Correct Approach for Tests with Length/Format Assertions on Hardcoded Data**:
+1. **VERIFY BEFORE COMMITTING**: Run `node -e "console.log('MOCK_ADDR'.length)"` to confirm length
+2. **ASSERT ONLY WHAT'S TRUE**: If the address is 57 chars, either make it 58 or assert `>= 57`
+3. **RUN AFFECTED SPEC LOCALLY**: Always run the specific spec file before pushing:
+   ```bash
+   npx playwright test e2e/arc76-validation.spec.ts --headed=false
+   ```
+4. **UNIT TEST MOCK DATA**: Add a unit test (e.g., in `arc76SessionContract.test.ts`) that asserts
+   the mock address values used in E2E tests meet the length contract. This catches regressions.
+
+**Quick Verification Pattern** (before/after showing the PR #508 defect):
+```bash
+# ❌ WRONG — was committed without verification (PR #508):
+# const MOCK_A = 'BIATECTEST7ARC76DERIVEDADDRESSAAAAAAAAAAAAAAAAAAAAAAAAAAA' // 57 chars
+# expect(MOCK_A.length).toBeGreaterThanOrEqual(58) // FAILS: 57 < 58
+
+# ✅ CORRECT — verify before committing:
+node -e "
+const MOCK_A = 'BIATECTEST7ARC76DERIVEDADDRESSAAAAAAAAAAAAAAAAAAAAAAAAAAAA'; // 58 chars
+console.log('length:', MOCK_A.length, 'passes >= 58?', MOCK_A.length >= 58);
+"
+# Output: length: 58 passes >= 58? true
+```
+
+**Never Again**:
+- ❌ Write `expect(MOCK_STRING.length).toBeGreaterThanOrEqual(N)` without verifying the string is actually >= N chars
+- ❌ Push new E2E tests without running them locally first
+- ❌ Trust that a "comment says 58 chars" without verifying the actual string length
+
 ### 8. Feature Accessibility (MANDATORY FOR NEW ROUTES)
 - [ ] **Navigation Link Required**: If implementing new route, MUST add navigation link
   - ❌ **Past Violation**: Guided launch implemented but not accessible from navbar
