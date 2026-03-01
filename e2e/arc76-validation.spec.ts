@@ -345,9 +345,9 @@ async function deriveARC76Address(
   }
 }
 
-/** Minimum realistic Algorand address length for test purposes (full 58 chars preferred) */
-const MOCK_ARC76_ADDRESS_A = 'BIATECTEST7ARC76DERIVEDADDRESSAAAAAAAAAAAAAAAAAAAAAAAAAAA'
-const MOCK_ARC76_ADDRESS_B = 'BIATECTEST7ARC76DERIVEDADDRESSBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+/** Minimum realistic Algorand address length — exactly 58 base32 characters (Algorand standard) */
+const MOCK_ARC76_ADDRESS_A = 'BIATECTEST7ARC76DERIVEDADDRESSAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+const MOCK_ARC76_ADDRESS_B = 'BIATECTEST7ARC76DERIVEDADDRESSBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 
 test.describe('ARC76 Backend Derivation Assertions (API-level)', () => {
   test('ARC76 derivation: backend returns a non-empty Algorand address for known credentials', async ({
