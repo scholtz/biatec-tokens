@@ -121,22 +121,21 @@ test.describe('Auth-First Token Creation Journey', () => {
     // Semantic wait: Wait for page title (proves page loaded)
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(title).toBeVisible({ timeout: 60000 }) // Increased timeout for CI
-    
-    // Get page content
-    const content = await page.content()
-    
-    // Verify no "Not connected" text
-    expect(content).not.toContain('Not connected')
-    
-    // Verify no wallet connector references in navigation
-    expect(content).not.toMatch(/WalletConnect/i)
-    expect(content).not.toMatch(/MetaMask/i)
-    expect(content).not.toMatch(/Pera\s+Wallet/i)
-    expect(content).not.toMatch(/Defly/i)
-    
+
+    // Use nav-component textContent assertion (not page.content() which includes compiled bundle)
+    // per AC #3: deterministic assertions must scope to visible DOM, not full HTML.
+    const nav = page.getByRole('navigation').first()
+    const navText = await nav.textContent().catch(() => '')
+
+    // Verify no wallet connector references in navigation text
+    expect(navText).not.toMatch(/not connected/i)
+    expect(navText).not.toMatch(/WalletConnect|MetaMask|Pera\s+Wallet|Defly/i)
+    expect(navText).not.toMatch(/connect wallet/i)
+
     // Verify page loaded successfully (authenticated user can access)
-    // If we got this far, auth is working - no need to check for specific UI element
-    expect(content).toContain('Guided Token Launch')
+    // The heading presence already proved the page loaded correctly above.
+    const headingText = await title.textContent().catch(() => '')
+    expect(headingText).toMatch(/Guided Token Launch/i)
   })
 
   test('should show email/password authentication elements for unauthenticated users', async ({ page }) => {
@@ -150,19 +149,15 @@ test.describe('Auth-First Token Creation Journey', () => {
     // Semantic wait: Wait for Sign In button to appear
     const signInButton = page.getByRole('button', { name: /sign in/i }).first()
     await expect(signInButton).toBeVisible({ timeout: 15000 })
-    
-    // Get button text and verify it doesn't mention wallet
-    const content = await page.content()
-    
-    // Should have "Sign In" somewhere
-    expect(content).toMatch(/Sign\s+In/i)
-    
-    // Should NOT have wallet-related text in auth context
-    const hasWalletConnect = content.includes('WalletConnect')
-    const hasConnectWallet = content.includes('Connect Wallet')
-    
-    expect(hasWalletConnect).toBe(false)
-    expect(hasConnectWallet).toBe(false)
+
+    // Sign In button is visible and correctly labeled (email/password flow, not wallet-connect)
+    const signInText = await signInButton.textContent().catch(() => '')
+    expect(signInText).toMatch(/sign in/i)
+
+    // Nav-scoped textContent check: wallet strings must not appear in the navigation
+    const nav = page.getByRole('navigation').first()
+    const navText = await nav.textContent().catch(() => '')
+    expect(navText).not.toMatch(/WalletConnect|Connect Wallet/i)
   })
 
   test('should maintain auth state across navigation', async ({ page }) => {
@@ -197,16 +192,17 @@ test.describe('Auth-First Token Creation Journey', () => {
     // Navigate to guided launch
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    
+
     // Semantic wait: Page should load (compliance gating may be shown or wizard may be accessible)
     const title = page.getByRole('heading', { level: 1 }).first()
     await expect(title).toBeVisible({ timeout: 60000 })
-    
-    // Check if compliance-related text is present (either in gating or in steps)
-    const pageContent = await page.content()
-    const hasComplianceText = pageContent.includes('compliance') || pageContent.includes('Compliance')
-    
-    // Guided launch should reference compliance somewhere in the flow
+
+    // Check main content area for compliance-related text using body.innerText()
+    // (not page.content() which includes compiled bundle strings)
+    const bodyText = await page.locator('body').innerText().catch(() => '')
+    const hasComplianceText = bodyText.toLowerCase().includes('compliance')
+
+    // Guided launch should reference compliance somewhere in the visible flow
     expect(hasComplianceText).toBe(true)
   })
 })

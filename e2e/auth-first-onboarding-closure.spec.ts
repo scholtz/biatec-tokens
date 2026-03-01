@@ -26,47 +26,37 @@
  */
 
 import { test, expect } from "@playwright/test";
+import {
+  withAuth as withAuthHelper,
+  suppressBrowserErrors as suppressBrowserErrorsHelper,
+} from "./helpers/auth";
 
 // ---------------------------------------------------------------------------
 // Auth fixture helpers (email/password only — no wallet connectors)
+// Delegates to shared contract-validated helpers from ./helpers/auth
 // ---------------------------------------------------------------------------
 
 function withAuth(page: import("@playwright/test").Page) {
-  return page.addInitScript(() => {
-    localStorage.setItem(
-      "algorand_user",
-      JSON.stringify({
-        address: "CLOSURE_TEST_ADDRESS",
-        email: "closure@example.com",
-        isConnected: true,
-      })
-    );
+  return withAuthHelper(page, {
+    address: "CLOSURE_TEST_ADDRESS",
+    email: "closure@example.com",
+    isConnected: true,
   });
 }
 
 function withExpiredSession(page: import("@playwright/test").Page) {
-  return page.addInitScript(() => {
-    localStorage.setItem(
-      "algorand_user",
-      JSON.stringify({
-        address: "CLOSURE_TEST_ADDRESS",
-        email: "closure@example.com",
-        isConnected: false, // Expired session
-      })
-    );
+  // Structurally valid session (contract: address + email + boolean) but isConnected=false
+  // so the route guard redirects the user — proves the guard checks isConnected.
+  return withAuthHelper(page, {
+    address: "CLOSURE_TEST_ADDRESS",
+    email: "closure@example.com",
+    isConnected: false, // Expired session — triggers auth guard redirect
   });
 }
 
 // Suppress browser console errors to prevent CI failure masking
 function suppressBrowserErrors(page: import("@playwright/test").Page) {
-  page.on("console", (msg) => {
-    if (msg.type() === "error") {
-      console.log(`[closure-e2e suppressed] ${msg.text()}`);
-    }
-  });
-  page.on("pageerror", (error) => {
-    console.log(`[closure-e2e pageerror suppressed] ${error.message}`);
-  });
+  suppressBrowserErrorsHelper(page);
 }
 
 // ---------------------------------------------------------------------------
@@ -178,14 +168,14 @@ test.describe("AC #3: Top navigation — no wallet/network state for unauthentic
     // have wallets — directly damages first-impression conversion.
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    await page.evaluate(() => localStorage.clear());
 
-    await page.waitForFunction(() => document.readyState === "complete", {
-      timeout: 10000,
-    });
+    await page.waitForFunction(() => document.querySelector("nav") !== null, { timeout: 10000 });
 
-    const content = await page.content();
-    expect(content).not.toMatch(/not connected/i);
+    // nav.textContent() scoped to the navigation element — avoids false positives
+    // from compiled bundle strings that appear in page.content() HTML.
+    const nav = page.getByRole("navigation").first();
+    const navText = await nav.textContent().catch(() => "");
+    expect(navText).not.toMatch(/not connected/i);
   });
 
   test("guest homepage contains no wallet connector names", async ({ page }) => {
@@ -193,10 +183,12 @@ test.describe("AC #3: Top navigation — no wallet/network state for unauthentic
     // incorrect expectations that a crypto wallet is needed.
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    await page.evaluate(() => localStorage.clear());
 
-    const content = await page.content();
-    expect(content).not.toMatch(/WalletConnect|Pera Wallet|Defly|MetaMask/i);
+    await page.waitForFunction(() => document.querySelector("nav") !== null, { timeout: 10000 });
+
+    // body.innerText() checks only rendered visible text — not compiled JS bundle content.
+    const bodyText = await page.locator("body").innerText().catch(() => "");
+    expect(bodyText).not.toMatch(/WalletConnect|Pera Wallet|Defly|MetaMask/i);
   });
 
   test("guest nav shows Sign In button — auth-first primary CTA", async ({ page }) => {
@@ -216,12 +208,12 @@ test.describe("AC #3: Top navigation — no wallet/network state for unauthentic
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    await page.waitForFunction(() => document.readyState === "complete", {
-      timeout: 10000,
-    });
+    await page.waitForFunction(() => document.querySelector("nav") !== null, { timeout: 10000 });
 
-    const content = await page.content();
-    expect(content).not.toMatch(/not connected/i);
+    // nav.textContent() scoped to nav element — avoids compiled-bundle false positives
+    const nav = page.getByRole("navigation").first();
+    const navText = await nav.textContent().catch(() => "");
+    expect(navText).not.toMatch(/not connected/i);
   });
 });
 
@@ -462,12 +454,12 @@ test.describe("AC #8: No regression — authenticated user flows", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    await page.waitForFunction(() => document.readyState === "complete", {
-      timeout: 10000,
-    });
+    await page.waitForFunction(() => document.querySelector("nav") !== null, { timeout: 10000 });
 
-    const content = await page.content();
-    expect(content).not.toMatch(/not connected/i);
+    // nav.textContent() scoped to the navigation — avoids compiled-bundle false positives
+    const nav = page.getByRole("navigation").first();
+    const navText = await nav.textContent().catch(() => "");
+    expect(navText).not.toMatch(/not connected/i);
   });
 
   test("Sign In button is not visible for authenticated users (correct nav state)", async ({

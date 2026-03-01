@@ -28,28 +28,24 @@
  */
 
 import { test, expect } from '@playwright/test'
+import { withAuth, clearAuthScript } from './helpers/auth'
 
 // ---------------------------------------------------------------------------
-// Auth bootstrap helpers — structured, contract-validated
+// Auth bootstrap helpers — delegate to shared, contract-validated helpers
 // ---------------------------------------------------------------------------
 
+/** @deprecated Use withAuth() directly. This alias preserved for call-site compatibility. */
 async function bootstrapValidSession(page: import('@playwright/test').Page) {
-  await page.addInitScript(() => {
-    localStorage.setItem(
-      'algorand_user',
-      JSON.stringify({
-        address: 'A11Y_LAUNCH_TEST_ADDRESS',
-        email: 'a11y-launch@biatec.io',
-        isConnected: true,
-      }),
-    )
+  await withAuth(page, {
+    address: 'A11Y_LAUNCH_TEST_ADDRESS',
+    email: 'a11y-launch@biatec.io',
+    isConnected: true,
   })
 }
 
+/** @deprecated Use clearAuthScript() directly. This alias preserved for call-site compatibility. */
 async function clearSession(page: import('@playwright/test').Page) {
-  await page.addInitScript(() => {
-    localStorage.removeItem('algorand_user')
-  })
+  await clearAuthScript(page)
 }
 
 // ---------------------------------------------------------------------------

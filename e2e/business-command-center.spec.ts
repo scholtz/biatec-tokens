@@ -22,6 +22,7 @@
  */
 
 import { test, expect } from '@playwright/test'
+import { clearAuthScript } from './helpers/auth'
 
 // ---------------------------------------------------------------------------
 // Shared test setup
@@ -79,21 +80,25 @@ test.describe('Business Command Center', () => {
   })
 
   test('should redirect unauthenticated user from /operations to home with auth prompt', async ({ page }) => {
-    // Skip in CI due to auth guard redirect timing — test passes 100% locally
-    // After clearing localStorage, the auth guard redirect relies on Vue Router navigation
-    // guard timing which varies significantly between local and CI environments.
-    test.skip(!!process.env.CI, 'CI timing: auth guard redirect unreliable after mid-session localStorage clear — see #495')
-
-    // Clear auth — no addInitScript call
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
-    await page.evaluate(() => localStorage.clear())
+    // No CI skip — using clearAuthScript (addInitScript) so auth is absent from the
+    // very first page load, eliminating the timing race from post-navigation localStorage.clear().
+    await clearAuthScript(page);
 
     await page.goto('/operations')
     await page.waitForLoadState('networkidle')
 
+    // Semantic wait: router guard fires one of three auth signals
+    await page.waitForFunction(
+      () => {
+        const url = window.location.href;
+        const emailInput = document.querySelector('input[type="email"]');
+        return url.includes('showAuth=true') || emailInput !== null || !url.includes('/operations');
+      },
+      { timeout: 20000 },
+    );
+
     const url = page.url()
-    const redirectedToHome = url.includes('showAuth=true') || url.endsWith('/') || url.endsWith('/#')
+    const redirectedToHome = url.includes('showAuth=true') || url.endsWith('/') || url.endsWith('/#') || !url.includes('/operations')
     const authModalVisible = await page
       .locator('form')
       .filter({ hasText: /email/i })
