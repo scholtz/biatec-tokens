@@ -620,7 +620,7 @@ export function hasNavLandmark(html: string): boolean {
  * (WCAG 2.4.1 Bypass Blocks).
  */
 export function hasSkipToContentLink(html: string): boolean {
-  return /href=["']#(main|content|maincontent)["']/.test(html);
+  return /href=["']#(main|content|maincontent|main-content)["']/.test(html);
 }
 
 /**

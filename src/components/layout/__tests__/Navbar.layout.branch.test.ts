@@ -335,3 +335,50 @@ describe('Navbar layout – branch coverage', () => {
     expect(vm.showMobileMenu).toBe(false)
   })
 })
+
+// ---------------------------------------------------------------------------
+// WCAG 2.1 AA accessibility features
+// ---------------------------------------------------------------------------
+
+describe('Navbar — WCAG 2.1 AA accessibility compliance', () => {
+  it('renders a skip-to-main-content link for keyboard users (WCAG SC 2.4.1)', () => {
+    const wrapper = mountNavbar()
+    // The skip link must be present in the DOM so keyboard users can bypass nav
+    const skipLink = wrapper.find('a[href="#main-content"]')
+    expect(skipLink.exists()).toBe(true)
+    expect(skipLink.text()).toMatch(/skip to main content/i)
+  })
+
+  it('skip link is visually hidden by default but focusable (sr-only pattern)', () => {
+    const wrapper = mountNavbar()
+    const skipLink = wrapper.find('a[href="#main-content"]')
+    expect(skipLink.exists()).toBe(true)
+    // sr-only class hides visually; focus:not-sr-only makes it visible on focus
+    const classes = skipLink.classes()
+    expect(classes).toContain('sr-only')
+  })
+
+  it('nav element has role="navigation" and aria-label for landmark navigation', () => {
+    const wrapper = mountNavbar()
+    const nav = wrapper.find('nav')
+    expect(nav.exists()).toBe(true)
+    expect(nav.attributes('role')).toBe('navigation')
+    expect(nav.attributes('aria-label')).toMatch(/main navigation/i)
+  })
+
+  it('mobile menu toggle button has aria-label for screen readers', () => {
+    const wrapper = mountNavbar()
+    const vm = wrapper.vm as any
+    // Find the mobile menu toggle button (the one with aria-label related to navigation menu)
+    const mobileToggle = wrapper.find('button[aria-label*="navigation menu"]')
+    expect(mobileToggle.exists()).toBe(true)
+  })
+
+  it('theme toggle button has aria-label for screen readers', () => {
+    const wrapper = mountNavbar()
+    const themeButtons = wrapper.findAll('button[aria-label]').filter(
+      b => b.attributes('aria-label')?.toLowerCase().includes('mode')
+    )
+    expect(themeButtons.length).toBeGreaterThan(0)
+  })
+})

@@ -802,6 +802,10 @@ describe('hasSkipToContentLink()', () => {
     expect(hasSkipToContentLink('<a href="#maincontent">Skip</a>')).toBe(true);
   });
 
+  it('returns true for href="#main-content" (canonical Navbar pattern)', () => {
+    expect(hasSkipToContentLink('<a href="#main-content">Skip to main content</a>')).toBe(true);
+  });
+
   it('returns false when absent', () => {
     expect(hasSkipToContentLink('<div>No skip link</div>')).toBe(false);
   });
