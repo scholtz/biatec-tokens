@@ -268,6 +268,46 @@ describe('normalizeTokenList', () => {
   })
 })
 
+// ─── normalizeTokenMeta – null optional fields ───────────────────────────────
+
+describe('normalizeTokenMeta – null optional fields (branch coverage)', () => {
+  it('handles null name gracefully (null-safe trim)', () => {
+    // null triggers the `?.` optional chaining fallback
+    const meta = normalizeTokenMeta(makeToken({ name: null as unknown as string }))
+    expect(meta.displayName).toMatch(/^Token [A-F0-9]+$/)
+    expect(meta.isComplete).toBe(false)
+  })
+
+  it('handles null symbol gracefully', () => {
+    const meta = normalizeTokenMeta(makeToken({ symbol: null as unknown as string }))
+    expect(meta.displaySymbol).toBe('—')
+  })
+
+  it('handles null description gracefully (covers ?? 0 branch)', () => {
+    const meta = normalizeTokenMeta(makeToken({ description: null as unknown as string }))
+    expect(meta.displayDescription).toBe('No description provided.')
+    expect(meta.isComplete).toBe(false)
+  })
+
+  it('handles unknown token status (covers ?? fallback in STATUS_LABELS and STATUS_COLOR_CLASSES)', () => {
+    const meta = normalizeTokenMeta(makeToken({ status: 'unknown_status' as Token['status'] }))
+    // Should fall back to the raw status string
+    expect(meta.displayStatus).toBe('unknown_status')
+    // Should fall back to the gray default colour class
+    expect(meta.statusColorClass).toContain('gray')
+  })
+
+  it('handles empty imageUrl string (treated same as missing)', () => {
+    const meta = normalizeTokenMeta(makeToken({ imageUrl: '' }))
+    expect(meta.resolvedImageUrl).toBeNull()
+  })
+
+  it('handles NaN decimals (covers !isNaN branch)', () => {
+    const meta = normalizeTokenMeta(makeToken({ decimals: NaN }))
+    expect(meta.displayDecimals).toBe('—')
+  })
+})
+
 // ─── metaCompletenessLabel ───────────────────────────────────────────────────
 
 describe('metaCompletenessLabel', () => {

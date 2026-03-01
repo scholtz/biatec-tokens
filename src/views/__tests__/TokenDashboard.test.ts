@@ -213,4 +213,103 @@ describe('TokenDashboard.vue', () => {
     expect(wrapper.find('[data-testid="token-dashboard-loading"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="token-dashboard-error"]').exists()).toBe(false)
   })
+
+  // ── filteredTokens with filters applied ─────────────────────────────────────
+
+  it('filters tokens by standard when selectedStandardFilter is set', async () => {
+    const tokens = [
+      { id: 'a', name: 'Alpha', symbol: 'A', standard: 'ARC3FT', type: 'FT', supply: 1000, description: 'Test', status: 'deployed', createdAt: new Date() },
+      { id: 'b', name: 'Beta', symbol: 'B', standard: 'ERC20', type: 'FT', supply: 2000, description: 'Test', status: 'deployed', createdAt: new Date() },
+    ]
+    const mock = makeTokenStoreMock({ isLoading: false, tokens })
+    const wrapper = await mountDashboard(mock)
+
+    const vm = wrapper.vm as unknown as { selectedStandardFilter: string }
+    vm.selectedStandardFilter = 'ARC3FT'
+    await wrapper.vm.$nextTick()
+
+    // Grid should show; only ARC3FT token shown
+    expect(wrapper.find('[data-testid="token-dashboard-grid"]').exists()).toBe(true)
+    expect(wrapper.findAll('.token-card-stub')).toHaveLength(1)
+    expect(wrapper.text()).toContain('Alpha')
+    expect(wrapper.text()).not.toContain('Beta')
+  })
+
+  it('filters tokens by status when selectedStatusFilter is set', async () => {
+    const tokens = [
+      { id: 'c', name: 'Charlie', symbol: 'C', standard: 'ASA', type: 'FT', supply: 100, description: 'Test', status: 'deployed', createdAt: new Date() },
+      { id: 'd', name: 'Delta', symbol: 'D', standard: 'ASA', type: 'FT', supply: 200, description: 'Test', status: 'failed', createdAt: new Date() },
+    ]
+    const mock = makeTokenStoreMock({ isLoading: false, tokens })
+    const wrapper = await mountDashboard(mock)
+
+    const vm = wrapper.vm as unknown as { selectedStatusFilter: string }
+    vm.selectedStatusFilter = 'failed'
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findAll('.token-card-stub')).toHaveLength(1)
+    expect(wrapper.text()).toContain('Delta')
+    expect(wrapper.text()).not.toContain('Charlie')
+  })
+
+  it('shows empty state message about filters when tokens exist but none match', async () => {
+    const tokens = [
+      { id: 'e', name: 'Echo', symbol: 'E', standard: 'ASA', type: 'FT', supply: 100, description: 'Test', status: 'deployed', createdAt: new Date() },
+    ]
+    const mock = makeTokenStoreMock({ isLoading: false, tokens })
+    const wrapper = await mountDashboard(mock)
+
+    const vm = wrapper.vm as unknown as { selectedStatusFilter: string }
+    vm.selectedStatusFilter = 'failed'
+    await wrapper.vm.$nextTick()
+
+    // All tokens filtered out → empty state
+    expect(wrapper.find('[data-testid="token-dashboard-empty"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('No tokens match your current filters')
+  })
+
+  // ── navigateToCompliance ────────────────────────────────────────────────────
+
+  it('navigateToCompliance pushes to ComplianceDashboard route', async () => {
+    const mock = makeTokenStoreMock({ isLoading: false, tokens: [] })
+    const wrapper = await mountDashboard(mock)
+
+    const vm = wrapper.vm as unknown as { navigateToCompliance: () => void }
+    // Should not throw
+    expect(() => vm.navigateToCompliance()).not.toThrow()
+  })
+
+  // ── deleteToken confirm ──────────────────────────────────────────────────────
+
+  it('calls tokenStore.deleteToken when user confirms deletion', async () => {
+    const tokens = [
+      { id: 't1', name: 'Token1', symbol: 'T', standard: 'ASA', type: 'FT', supply: 100, description: 'Test', status: 'deployed', createdAt: new Date() },
+    ]
+    const mock = makeTokenStoreMock({ isLoading: false, tokens })
+    const wrapper = await mountDashboard(mock)
+
+    // happy-dom doesn't have window.confirm – stub directly on globalThis
+    const originalConfirm = globalThis.confirm
+    globalThis.confirm = vi.fn().mockReturnValue(true) as typeof confirm
+
+    const vm = wrapper.vm as unknown as { deleteToken: (id: string) => void }
+    vm.deleteToken('t1')
+    expect(mock.deleteToken).toHaveBeenCalledWith('t1')
+
+    globalThis.confirm = originalConfirm
+  })
+
+  it('does NOT call tokenStore.deleteToken when user cancels deletion', async () => {
+    const mock = makeTokenStoreMock({ isLoading: false, tokens: [] })
+    const wrapper = await mountDashboard(mock)
+
+    const originalConfirm = globalThis.confirm
+    globalThis.confirm = vi.fn().mockReturnValue(false) as typeof confirm
+
+    const vm = wrapper.vm as unknown as { deleteToken: (id: string) => void }
+    vm.deleteToken('any-id')
+    expect(mock.deleteToken).not.toHaveBeenCalled()
+
+    globalThis.confirm = originalConfirm
+  })
 })
