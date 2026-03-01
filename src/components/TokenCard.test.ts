@@ -356,4 +356,45 @@ describe('TokenCard Component', () => {
     const card = wrapper.find('.token-card');
     expect(card.classes()).toContain('glass-effect');
   });
+
+  it('should show OnChainComplianceBadge for Algorand-based (ASA) token', () => {
+    const asaToken = { ...mockToken, standard: 'ASA' };
+    const wrapper = mount(TokenCard, {
+      global: { stubs },
+      props: { token: asaToken },
+    });
+    expect(wrapper.find('[data-testid="onchain-badge"]').exists()).toBe(true);
+  });
+
+  it('isVoiOrAramidToken is false for non-Algorand standard', () => {
+    const evmToken = { ...mockToken, standard: 'ERC20' };
+    const wrapper = mount(TokenCard, {
+      global: { stubs },
+      props: { token: evmToken },
+    });
+    expect(wrapper.find('[data-testid="onchain-badge"]').exists()).toBe(false);
+  });
+
+  it('isVoiOrAramidToken is true for ARC200 standard (covers getTokenNetwork and getComplianceScore)', () => {
+    const arc200Token = { ...mockToken, standard: 'ARC200' };
+    const wrapper = mount(TokenCard, {
+      global: { stubs },
+      props: { token: arc200Token },
+    });
+    expect(wrapper.find('[data-testid="onchain-badge"]').exists()).toBe(true);
+  });
+
+  it('should open MICA compliance modal when checklist button is clicked', async () => {
+    const wrapper = mount(TokenCard, {
+      global: { stubs },
+      props: { token: mockToken },
+    });
+    const vm = wrapper.vm as any;
+    expect(vm.showComplianceModal).toBe(false);
+    const btn = wrapper.find('button[title="View MICA Checklist"]');
+    await btn.trigger('click');
+    expect(vm.showComplianceModal).toBe(true);
+    // Modal should now be visible (stub renders when show=true)
+    expect(wrapper.find('[data-testid="compliance-checklist"]').exists()).toBe(true);
+  });
 });

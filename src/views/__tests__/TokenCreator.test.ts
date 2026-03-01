@@ -1500,6 +1500,129 @@ describe("TokenCreator", () => {
     });
   });
 
+  describe("executeDeployment error branches", () => {
+    const setupValidForm = () => {
+      wrapper!.vm.selectStandard("ASA");
+      wrapper!.vm.selectNetwork("VOI");
+      Object.assign(wrapper!.vm.tokenForm, {
+        name: "Test Token",
+        symbol: "TST",
+        description: "Test description",
+        type: "FT",
+        supply: 1000000,
+        decimals: 6,
+        imageUrl: "",
+        attributes: [],
+        attestationEnabled: false,
+        attestations: [],
+        complianceMetadata: undefined,
+        complianceMetadataEnabled: false,
+        complianceMetadataValid: false,
+      });
+    };
+
+    it("should set deploymentErrorType to insufficient_funds on matching error", async () => {
+      setupValidForm();
+      vi.mocked(tokenStore.createToken).mockRejectedValue(new Error("insufficient funds in account"));
+      const promise = wrapper!.vm.executeDeployment();
+      await vi.advanceTimersByTimeAsync(2000);
+      await promise;
+      expect(wrapper!.vm.deploymentErrorType).toBe("insufficient_funds");
+      expect(wrapper!.vm.deploymentStatus).toBe("error");
+    }, 10000);
+
+    it("should set deploymentErrorType to wallet_rejected on rejection error", async () => {
+      setupValidForm();
+      vi.mocked(tokenStore.createToken).mockRejectedValue(new Error("user rejected the request"));
+      const promise = wrapper!.vm.executeDeployment();
+      await vi.advanceTimersByTimeAsync(2000);
+      await promise;
+      expect(wrapper!.vm.deploymentErrorType).toBe("wallet_rejected");
+      expect(wrapper!.vm.deploymentStatus).toBe("error");
+    }, 10000);
+
+    it("should set deploymentErrorType to network_error on network error", async () => {
+      setupValidForm();
+      vi.mocked(tokenStore.createToken).mockRejectedValue(new Error("network connection refused"));
+      const promise = wrapper!.vm.executeDeployment();
+      await vi.advanceTimersByTimeAsync(2000);
+      await promise;
+      expect(wrapper!.vm.deploymentErrorType).toBe("network_error");
+      expect(wrapper!.vm.deploymentStatus).toBe("error");
+    }, 10000);
+
+    it("should set deploymentErrorType to network_error on connection error", async () => {
+      setupValidForm();
+      vi.mocked(tokenStore.createToken).mockRejectedValue(new Error("connection timed out"));
+      const promise = wrapper!.vm.executeDeployment();
+      await vi.advanceTimersByTimeAsync(2000);
+      await promise;
+      expect(wrapper!.vm.deploymentErrorType).toBe("network_error");
+      expect(wrapper!.vm.deploymentStatus).toBe("error");
+    }, 10000);
+
+    it("should set deploymentErrorType to timeout on timeout error", async () => {
+      setupValidForm();
+      vi.mocked(tokenStore.createToken).mockRejectedValue(new Error("request timeout exceeded"));
+      const promise = wrapper!.vm.executeDeployment();
+      await vi.advanceTimersByTimeAsync(2000);
+      await promise;
+      expect(wrapper!.vm.deploymentErrorType).toBe("timeout");
+      expect(wrapper!.vm.deploymentStatus).toBe("error");
+    }, 10000);
+
+    it("should set deploymentErrorType to unknown on unrecognised error", async () => {
+      setupValidForm();
+      vi.mocked(tokenStore.createToken).mockRejectedValue(new Error("something unexpected"));
+      const promise = wrapper!.vm.executeDeployment();
+      await vi.advanceTimersByTimeAsync(2000);
+      await promise;
+      expect(wrapper!.vm.deploymentErrorType).toBe("unknown");
+      expect(wrapper!.vm.deploymentStatus).toBe("error");
+    }, 10000);
+
+    it("should handle non-Error thrown value", async () => {
+      setupValidForm();
+      vi.mocked(tokenStore.createToken).mockRejectedValue("plain string error");
+      const promise = wrapper!.vm.executeDeployment();
+      await vi.advanceTimersByTimeAsync(2000);
+      await promise;
+      expect(wrapper!.vm.deploymentError).toBe("Failed to deploy token");
+      expect(wrapper!.vm.deploymentStatus).toBe("error");
+    }, 10000);
+
+    it("should filter NFT attributes and cover the NFT branch in executeDeployment", async () => {
+      wrapper!.vm.selectStandard("ASA");
+      wrapper!.vm.selectNetwork("VOI");
+      Object.assign(wrapper!.vm.tokenForm, {
+        name: "My NFT",
+        symbol: "NFT1",
+        description: "An NFT token",
+        type: "NFT",
+        supply: 1,
+        decimals: 0,
+        imageUrl: "",
+        attributes: [
+          { trait_type: "Color", value: "Blue" },
+          { trait_type: "", value: "ignored" },
+        ],
+        attestationEnabled: false,
+        attestations: [],
+        complianceMetadata: undefined,
+        complianceMetadataEnabled: false,
+        complianceMetadataValid: false,
+      });
+      vi.mocked(tokenStore.createToken).mockRejectedValue(new Error("nft deploy error"));
+      const promise = wrapper!.vm.executeDeployment();
+      await vi.advanceTimersByTimeAsync(2000);
+      await promise;
+      // createToken was called with only the attribute that has both trait_type and value
+      expect(tokenStore.createToken).toHaveBeenCalledWith(
+        expect.objectContaining({ attributes: [{ trait_type: "Color", value: "Blue" }] }),
+      );
+    }, 10000);
+  });
+
   describe("Computed Properties", () => {
     it("should compute current template correctly", () => {
       wrapper!.vm.selectedTemplate = "fungible-basic";
