@@ -13,7 +13,7 @@ import ApiHealthBanner from "../components/ApiHealthBanner.vue";
 
     <div class="flex">
       <Sidebar />
-      <main class="flex-1 lg:pl-64">
+      <main id="main-content" class="flex-1 lg:pl-64">
         <div class="py-6">
           <slot />
         </div>

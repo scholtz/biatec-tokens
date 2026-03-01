@@ -65,7 +65,7 @@ describe("Canonical Nav Routes - Router Alignment", () => {
   });
 
   it("should define Guided Launch as canonical create entry in NAV_ITEMS", () => {
-    const createEntry = NAV_ITEMS.find((item) => item.label === "Create Token");
+    const createEntry = NAV_ITEMS.find((item) => item.label === "Guided Launch");
     expect(createEntry?.path).toBe("/launch/guided");
     expect(createEntry?.routeName).toBe("GuidedTokenLaunch");
   });

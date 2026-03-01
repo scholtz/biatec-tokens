@@ -202,7 +202,7 @@ describe('AC #2: Navigation contract — guest state determinism', () => {
   })
 
   it('NAV_ITEMS Guided Launch path is /launch/guided (canonical, not wallet-setup)', () => {
-    const guidedEntry = NAV_ITEMS.find((item) => item.label === 'Create Token')
+    const guidedEntry = NAV_ITEMS.find((item) => item.label === 'Guided Launch')
     expect(guidedEntry?.path).toBe('/launch/guided')
     expect(guidedEntry?.path).not.toContain('wallet')
     expect(guidedEntry?.path).not.toContain('connect')

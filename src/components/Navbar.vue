@@ -1,4 +1,11 @@
 <template>
+  <!-- Skip to main content — WCAG 2.1 AA: provides keyboard shortcut to bypass navigation -->
+  <a
+    href="#main-content"
+    class="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-[100] focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:text-sm focus:font-medium focus:rounded-br-lg"
+  >
+    Skip to main content
+  </a>
   <nav class="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-white/10" role="navigation" aria-label="Main navigation">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-20">

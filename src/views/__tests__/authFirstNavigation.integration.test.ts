@@ -213,7 +213,7 @@ describe('Auth-First Navigation Invariants Integration', () => {
   });
 
   it('canonical create entry should point to /launch/guided not /create/wizard', () => {
-    const createTokenItem = NAV_ITEMS.find((item) => item.label === 'Create Token');
+    const createTokenItem = NAV_ITEMS.find((item) => item.label === 'Guided Launch');
     expect(createTokenItem?.path).toBe('/launch/guided');
     expect(createTokenItem?.path).not.toBe('/create/wizard');
     expect(createTokenItem?.path).not.toBe('/create');

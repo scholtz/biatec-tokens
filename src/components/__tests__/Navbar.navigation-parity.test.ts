@@ -3,7 +3,7 @@
  *
  * Validates that:
  * 1. Desktop and mobile navigation share the same items (AC #3)
- * 2. "Create Token" canonical route points to /launch/guided (AC #4)
+ * 2. "Guided Launch" canonical route points to /launch/guided (AC #4)
  * 3. No dead-end routes (e.g., removed /allowances which has no router definition)
  * 4. No wallet connector UI in navigation items (business roadmap: email/password only)
  */
@@ -22,8 +22,8 @@ describe("Navigation Parity - Single Source of Truth", () => {
     expect(NAV_ITEMS[0].path).toBe("/");
   });
 
-  it("should include Create Token pointing to /launch/guided (canonical auth-first flow)", () => {
-    const createItem = NAV_ITEMS.find((item) => item.label === "Create Token");
+  it("should include Guided Launch pointing to /launch/guided (canonical auth-first flow)", () => {
+    const createItem = NAV_ITEMS.find((item) => item.label === "Guided Launch");
     expect(createItem).toBeDefined();
     expect(createItem?.path).toBe("/launch/guided");
     expect(createItem?.routeName).toBe("GuidedTokenLaunch");
