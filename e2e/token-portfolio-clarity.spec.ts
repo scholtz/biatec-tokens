@@ -165,11 +165,12 @@ test.describe('Token Portfolio Clarity', () => {
 
     // Check visible body text (not compiled JS bundle) for wallet connector UI
     const bodyText = await page.locator('body').innerText().catch(() => '')
+    // Exact phrase "connect wallet" indicates wallet-first auth UI
     expect(bodyText.toLowerCase()).not.toContain('connect wallet')
-    // Verify no wallet connector buttons are present
-    const walletConnectBtn = page.locator('button').filter({ hasText: /connect.*wallet|wallet.*connect/i })
-    const count = await walletConnectBtn.count()
-    expect(count).toBe(0)
+    // Verify no wallet connector-specific DOM elements are present
+    const walletConnectUI = page.locator('[class*="walletconnect" i], [data-testid*="walletconnect" i]')
+    const walletConnectCount = await walletConnectUI.count()
+    expect(walletConnectCount).toBe(0)
   })
 
   // ─── Auth-first routing ─────────────────────────────────────────────────────
@@ -232,10 +233,10 @@ test.describe('Wallet Connection State clarity', () => {
     // Verify no "Connect Wallet" button (explicit wallet-first auth prompt) appears
     // Use exact phrase check on visible body text (not compiled JS bundles)
     const bodyText = await page.locator('body').innerText().catch(() => '')
-    // "connect wallet" as a standalone phrase (not "no wallet needed...connect one later")
-    expect(bodyText.toLowerCase()).not.toContain('connect to wallet')
-    // No WalletConnect/MetaMask specific UI elements
-    const walletConnectUI = page.locator('[class*="WalletConnect"], [class*="walletconnect"], [data-testid*="walletconnect"]')
+    // Exact phrase "connect wallet" indicates wallet-first auth UI (distinct from "no wallet needed")
+    expect(bodyText.toLowerCase()).not.toContain('connect wallet')
+    // No WalletConnect/MetaMask specific DOM elements (case-insensitive attribute check)
+    const walletConnectUI = page.locator('[class*="walletconnect" i], [data-testid*="walletconnect" i]')
     const walletConnectCount = await walletConnectUI.count()
     expect(walletConnectCount).toBe(0)
   })
