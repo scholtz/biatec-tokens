@@ -131,43 +131,8 @@ test.describe('Canonical launch route — navigation and visibility', () => {
 
 // ---------------------------------------------------------------------------
 // Suite: Legacy /create/wizard route — redirect coverage
+// Consolidated into e2e/wizard-redirect-compat.spec.ts (max 3 tests per spec).
 // ---------------------------------------------------------------------------
-
-test.describe('Legacy /create/wizard route — redirect only, not canonical', () => {
-  test.beforeEach(async ({ page }) => {
-    suppressConsoleErrors(page)
-    await clearHardenedSession(page)
-  })
-
-  test('/create/wizard redirects away from the deprecated path', async ({ page }) => {
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    // Wait for redirect — use semantic URL assertion
-    await page.waitForFunction(
-      () => !window.location.pathname.includes('/create/wizard'),
-      { timeout: 15000 },
-    )
-
-    const finalUrl = page.url()
-    expect(finalUrl).not.toContain('/create/wizard')
-  })
-
-  test('/create/wizard does NOT render wizard step UI after redirect', async ({ page }) => {
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    // Wait for redirect
-    await page.waitForFunction(
-      () => !window.location.pathname.includes('/create/wizard'),
-      { timeout: 15000 },
-    )
-
-    // Should not show any wizard step heading
-    const wizardHeading = page.getByRole('heading', { name: /create.*wizard/i })
-    await expect(wizardHeading).not.toBeVisible({ timeout: 5000 })
-  })
-})
 
 // ---------------------------------------------------------------------------
 // Suite: Auth-first session bootstrap — contract-validated patterns

@@ -142,7 +142,10 @@ export const DEFAULT_TEST_USER: AuthUser = {
  * The session is validated against the ARC76 contract before seeding.
  * If validation fails, the test will throw immediately (fail-fast).
  *
- * This is the canonical pattern for auth-first E2E tests.
+ * **For isolated UI-only tests only.** For critical journey specs (token
+ * creation, compliance dashboard, subscription billing) use
+ * `loginWithCredentials()` instead, which validates the real backend auth
+ * contract when a backend is available.
  */
 export async function withAuth(page: Page, user: AuthUser = DEFAULT_TEST_USER): Promise<void> {
   const session: AuthUser = { ...DEFAULT_TEST_USER, ...user }
@@ -158,23 +161,118 @@ export async function withAuth(page: Page, user: AuthUser = DEFAULT_TEST_USER): 
 }
 
 /**
- * Stub for future backend-auth integration. When the backend auth endpoint
- * is available in CI, replace the body of this function with a real HTTP
- * call and session storage. The E2E test call sites remain identical.
+ * Logs in using the backend `/api/auth/login` endpoint when available, falling
+ * back to localStorage seeding when the backend is unreachable (e.g. in CI
+ * without a live backend service).
  *
- * @example
- *   // Future: loginWithBackend(page, 'test@biatec.io', process.env.E2E_PASSWORD)
+ * **Use this helper for all critical journey specs** (token creation, compliance
+ * dashboard, subscription billing) instead of the raw `withAuth()` helper.
+ * `withAuth()` may be used for isolated UI-only tests where backend
+ * unavailability is acceptable.
+ *
+ * Environment variables:
+ *   - `TEST_USER_EMAIL`    — email to use for login (default: e2e-test@biatec.io)
+ *   - `TEST_USER_PASSWORD` — password to use for login (default: empty)
+ *   - `API_BASE_URL`       — base URL of the backend API (default: http://localhost:3000)
+ *
+ * When `API_BASE_URL` resolves to a live backend:
+ *   1. POSTs to `POST {API_BASE_URL}/api/auth/login` with `{ email, password }`.
+ *   2. On HTTP 200, stores the returned session via the application's normal
+ *      localStorage mechanism so the Vue auth store recognises it.
+ *   3. Asserts a valid session ID is returned (fail-fast on contract violation).
+ *
+ * When the backend is unavailable (connection refused / non-200), the function
+ * automatically falls back to `withAuth()` localStorage seeding and logs a
+ * warning so CI logs remain informative.
+ *
+ * @param page      - Playwright Page instance
+ * @param email     - Optional override for TEST_USER_EMAIL
+ * @param password  - Optional override for TEST_USER_PASSWORD
+ */
+export async function loginWithCredentials(
+  page: Page,
+  email?: string,
+  password?: string,
+): Promise<void> {
+  const resolvedEmail = email ?? process.env.TEST_USER_EMAIL ?? 'e2e-test@biatec.io'
+  const resolvedPassword = password ?? process.env.TEST_USER_PASSWORD ?? ''
+  const apiBaseUrl = process.env.API_BASE_URL ?? 'http://localhost:3000'
+
+  try {
+    // Attempt real backend login
+    const response = await page.request.post(`${apiBaseUrl}/api/auth/login`, {
+      data: { email: resolvedEmail, password: resolvedPassword },
+      timeout: 5000,
+    })
+
+    if (response.ok()) {
+      const body = await response.json().catch(() => null)
+      if (!body) {
+        throw new Error('[loginWithCredentials] Backend returned non-JSON response body')
+      }
+
+      // Build session from backend response — prefer explicit fields, fall back
+      // to sensible defaults so the auth store accepts the session.
+      const backendAddress = (body.address as string) || (body.algorandAddress as string)
+      if (!backendAddress) {
+        throw new Error(
+          '[loginWithCredentials] Backend response missing address field — cannot build ARC76 session',
+        )
+      }
+      const session: AuthUser = {
+        address: backendAddress,
+        email: (body.email as string) || resolvedEmail,
+        isConnected: true,
+        name: (body.name as string) || undefined,
+      }
+
+      const validation = validateSessionContract(session)
+      if (!validation.valid) {
+        throw new Error(
+          `[loginWithCredentials] Backend session failed ARC76 contract:\n  ${validation.errors.join('\n  ')}`,
+        )
+      }
+
+      await page.addInitScript((userData: AuthUser) => {
+        localStorage.setItem('algorand_user', JSON.stringify(userData))
+      }, session)
+
+      console.log(`[loginWithCredentials] Authenticated via backend as ${resolvedEmail}`)
+      return
+    }
+
+    // Non-200 response — fall through to localStorage fallback
+    console.warn(
+      `[loginWithCredentials] Backend returned HTTP ${response.status()} — falling back to localStorage seeding`,
+    )
+  } catch {
+    // Network error (backend not running) — fall back to localStorage seeding
+    console.warn(
+      '[loginWithCredentials] Backend unavailable — falling back to localStorage seeding (set API_BASE_URL to enable real auth)',
+    )
+  }
+
+  // Fallback: localStorage seeding with contract-validated session.
+  // The address is a well-known E2E test placeholder — it is only used
+  // for auth guard checks (which verify non-empty string, not Algorand format).
+  await withAuth(page, {
+    address: 'E2EFALLBACK7BIATECTOKENSNOBKND7777777777777777777777777777',
+    email: resolvedEmail,
+    isConnected: true,
+  })
+}
+
+/**
+ * @deprecated Use `loginWithCredentials` for critical journey specs.
+ * `loginWithBackend` is retained for API compatibility but delegates to
+ * `loginWithCredentials`. It will be removed once all call sites are migrated.
  */
 export async function loginWithBackend(
-  _page: Page,
-  _email: string,
-  _password: string,
+  page: Page,
+  email: string,
+  password: string,
 ): Promise<void> {
-  // TODO: implement real POST /api/auth/login when backend is stable in CI
-  // For now, callers should use withAuth() which validates the session contract.
-  throw new Error(
-    '[auth-helper] loginWithBackend: backend auth endpoint not yet available in CI. Use withAuth() instead.',
-  )
+  return loginWithCredentials(page, email, password)
 }
 
 /**

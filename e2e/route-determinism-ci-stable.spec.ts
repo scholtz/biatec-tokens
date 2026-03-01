@@ -168,61 +168,9 @@ test.describe("AC #1: Protected routes redirect unauthenticated users", () => {
 });
 
 // ---------------------------------------------------------------------------
-// AC #3: /create/wizard redirect to /launch/guided
+// AC #3: /create/wizard redirect coverage
+// Consolidated into e2e/wizard-redirect-compat.spec.ts (max 3 tests per spec).
 // ---------------------------------------------------------------------------
-
-test.describe("AC #3: /create/wizard redirects deterministically to /launch/guided", () => {
-  test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page);
-  });
-
-  test("/create/wizard access redirects away from wizard (semantic wait)", async ({ page }) => {
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
-    await page.evaluate(() => localStorage.clear());
-
-    await page.goto("/create/wizard");
-    await page.waitForLoadState("networkidle");
-
-    // Wait for redirect to complete
-    await page.waitForFunction(
-      () => {
-        const url = window.location.href;
-        return !url.includes("/create/wizard");
-      },
-      { timeout: 20000 }
-    );
-
-    const url = page.url();
-    // Must NOT remain on /create/wizard (deprecated canonical route)
-    expect(url).not.toContain("/create/wizard");
-  });
-
-  test("/create/wizard does NOT render wizard UI (no wizard heading visible)", async ({
-    page,
-  }) => {
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
-    await page.evaluate(() => localStorage.clear());
-
-    await page.goto("/create/wizard");
-    await page.waitForLoadState("networkidle");
-
-    // Semantic wait: either redirected, or no wizard heading present
-    await page.waitForFunction(
-      () => {
-        const url = window.location.href;
-        return !url.includes("/create/wizard");
-      },
-      { timeout: 20000 }
-    );
-
-    // Verify no wizard-era heading is rendered
-    const wizardHeading = page.getByRole("heading", { name: /token creation wizard/i });
-    const isWizardVisible = await wizardHeading.isVisible().catch(() => false);
-    expect(isWizardVisible).toBe(false);
-  });
-});
 
 // ---------------------------------------------------------------------------
 // AC #5: Authenticated user sees guided launch nav

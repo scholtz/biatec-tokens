@@ -189,45 +189,8 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
 
 // ---------------------------------------------------------------------------
 // Suite: Legacy /create/wizard redirect
+// Consolidated into e2e/wizard-redirect-compat.spec.ts (max 3 tests per spec).
 // ---------------------------------------------------------------------------
-
-test.describe('Legacy redirect — /create/wizard to /launch/guided', () => {
-  test('navigating to /create/wizard redirects to /launch/guided', async ({ page }) => {
-    await bootstrapValidSession(page)
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
-
-    await page.goto('/create/wizard')
-    // Wait for redirect to complete (semantic: URL changes)
-    await expect(page).toHaveURL(/\/launch\/guided/, { timeout: 15000 })
-  })
-
-  test('after redirect, the guided launch page heading is visible', async ({ page }) => {
-    await bootstrapValidSession(page)
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
-
-    await page.goto('/create/wizard')
-    await expect(page).toHaveURL(/\/launch\/guided/, { timeout: 15000 })
-
-    const heading = page.getByRole('heading', { name: /guided token launch/i }).first()
-    await expect(heading).toBeVisible({ timeout: 30000 })
-  })
-
-  test('unauthenticated access to /create/wizard redirects appropriately', async ({ page }) => {
-    await clearSession(page)
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
-
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    // Should either redirect to home with auth prompt or to /launch/guided then to auth
-    const url = page.url()
-    const validRedirect =
-      url.includes('showAuth=true') ||
-      url.includes('/launch/guided') ||
-      url.endsWith('/')
-    expect(validRedirect).toBe(true)
-  })
-})
 
 // ---------------------------------------------------------------------------
 // Suite: Keyboard navigation — primary launch CTA reachable

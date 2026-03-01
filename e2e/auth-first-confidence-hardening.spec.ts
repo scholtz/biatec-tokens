@@ -229,51 +229,9 @@ test.describe("AC #2: Guest nav — no wallet states, deterministic Sign In", ()
 });
 
 // ---------------------------------------------------------------------------
-// AC #3 — Legacy /create/wizard is redirect-only, not canonical
+// AC #3 — Legacy /create/wizard redirect coverage
+// Consolidated into e2e/wizard-redirect-compat.spec.ts (max 3 tests per spec).
 // ---------------------------------------------------------------------------
-
-test.describe("AC #3: Legacy /create/wizard redirect (not canonical)", () => {
-  test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page);
-  });
-
-  test("/create/wizard redirects to /launch/guided for authenticated user", async ({ page }) => {
-    await withAuth(page);
-
-    await page.goto("/create/wizard");
-    await page.waitForLoadState("networkidle");
-
-    // Semantic wait: wait until URL is no longer /create/wizard
-    await page.waitForFunction(
-      () => !window.location.pathname.includes("wizard"),
-      { timeout: 10000 }
-    );
-
-    const url = page.url();
-    expect(url).not.toContain("/create/wizard");
-    // Should land on /launch/guided (canonical auth-first route)
-    expect(url).toContain("/launch/guided");
-  });
-
-  test("/create/wizard does NOT load a wizard UI (canonical route is /launch/guided)", async ({
-    page,
-  }) => {
-    await withAuth(page);
-
-    await page.goto("/create/wizard");
-    await page.waitForLoadState("networkidle");
-
-    // Semantic wait: URL changes away from /create/wizard
-    await page.waitForFunction(
-      () => !window.location.pathname.includes("wizard"),
-      { timeout: 10000 }
-    );
-
-    // Should be on guided launch page — the wizard component is NOT loaded
-    const guidedHeading = page.getByRole("heading", { name: /guided token launch/i, level: 1 });
-    await expect(guidedHeading).toBeVisible({ timeout: 60000 });
-  });
-});
 
 // ---------------------------------------------------------------------------
 // AC #4 — WCAG 2.1 AA: keyboard accessible, headings, aria

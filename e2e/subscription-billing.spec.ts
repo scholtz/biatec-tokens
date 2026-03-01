@@ -45,7 +45,6 @@ test.describe('Subscription & Billing Management', () => {
     test('should display three pricing tiers', async ({ page }) => {
       await page.goto('/subscription/pricing')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(2000)
 
       await expect(page.getByRole('heading', { name: 'Basic', level: 3 }).first()).toBeVisible({ timeout: 15000 })
       await expect(page.getByRole('heading', { name: 'Professional', level: 3 }).first()).toBeVisible({ timeout: 15000 })
@@ -55,7 +54,6 @@ test.describe('Subscription & Billing Management', () => {
     test('should display price amounts', async ({ page }) => {
       await page.goto('/subscription/pricing')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(2000)
 
       const content = await page.content()
       expect(content).toContain('$29')
@@ -66,7 +64,6 @@ test.describe('Subscription & Billing Management', () => {
     test('should show sign-in CTA for unauthenticated users', async ({ page }) => {
       await page.goto('/subscription/pricing')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(2000)
 
       const signInBtn = page.getByRole('button', { name: /Sign In or Create Account/i }).first()
       await expect(signInBtn).toBeVisible({ timeout: 15000 })
@@ -75,7 +72,6 @@ test.describe('Subscription & Billing Management', () => {
     test('should not contain wallet connector UI', async ({ page }) => {
       await page.goto('/subscription/pricing')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(1000)
 
       const content = await page.content()
       expect(content).not.toMatch(/WalletConnect|MetaMask|Pera.*Wallet|Defly/i)
@@ -85,7 +81,6 @@ test.describe('Subscription & Billing Management', () => {
     test('should show feature comparison table', async ({ page }) => {
       await page.goto('/subscription/pricing')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(2000)
 
       const heading = page.getByRole('heading', { name: /Detailed Feature Comparison/i })
       await expect(heading).toBeVisible({ timeout: 15000 })
@@ -94,15 +89,23 @@ test.describe('Subscription & Billing Management', () => {
 
   test.describe('Subscription Management Page (auth required)', () => {
     test('should redirect unauthenticated user away from /account/subscription', async ({ page }) => {
-      test.skip(!!process.env.CI, 'CI absolute timing ceiling: auth redirect tests require 10s+ in CI environment')
-
       await page.goto('/')
       await page.waitForLoadState('networkidle')
       await page.evaluate(() => localStorage.clear())
 
       await page.goto('/account/subscription')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(5000)
+
+      // Semantic wait: auth guard redirect completes when URL changes or auth form appears
+      await page.waitForFunction(
+        () => {
+          const url = window.location.href
+          const hasAuthParam = url.includes('showAuth=true')
+          const emailField = document.querySelector("input[type='email'], form")
+          return hasAuthParam || emailField !== null || !url.includes('/account/subscription')
+        },
+        { timeout: 20000 },
+      )
 
       const url = page.url()
       const urlHasAuthParam = url.includes('showAuth=true')
@@ -117,7 +120,6 @@ test.describe('Subscription & Billing Management', () => {
 
       await page.goto('/account/subscription')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(10000)
 
       const heading = page.getByRole('heading', { name: /Subscription Management/i, level: 1 })
       await expect(heading).toBeVisible({ timeout: 45000 })
@@ -130,7 +132,6 @@ test.describe('Subscription & Billing Management', () => {
 
       await page.goto('/account/subscription')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(10000)
 
       const planCard = page.locator('[data-testid="current-plan-card"]')
       await expect(planCard).toBeVisible({ timeout: 45000 })
@@ -143,7 +144,6 @@ test.describe('Subscription & Billing Management', () => {
 
       await page.goto('/account/subscription')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(10000)
 
       const billingLink = page.locator('[data-testid="billing-history-link"]')
       await expect(billingLink).toBeVisible({ timeout: 45000 })
@@ -159,7 +159,6 @@ test.describe('Subscription & Billing Management', () => {
 
       await page.goto('/account/subscription')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(10000)
 
       const paymentCard = page.locator('[data-testid="payment-method-card"]')
       await expect(paymentCard).toBeVisible({ timeout: 45000 })
@@ -174,7 +173,6 @@ test.describe('Subscription & Billing Management', () => {
 
       await page.goto('/account/billing')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(10000)
 
       const heading = page.getByRole('heading', { name: /Billing History/i, level: 1 })
       await expect(heading).toBeVisible({ timeout: 45000 })
@@ -187,7 +185,6 @@ test.describe('Subscription & Billing Management', () => {
 
       await page.goto('/account/billing')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(10000)
 
       const invoiceList = page.locator('[data-testid="invoice-list"]')
       await expect(invoiceList).toBeVisible({ timeout: 45000 })
@@ -200,7 +197,6 @@ test.describe('Subscription & Billing Management', () => {
 
       await page.goto('/account/billing')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(10000)
 
       const backBtn = page.locator('[data-testid="back-to-subscription-btn"]')
       await expect(backBtn).toBeVisible({ timeout: 45000 })
@@ -215,7 +211,6 @@ test.describe('Subscription & Billing Management', () => {
 
       await page.goto('/account/usage')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(10000)
 
       const heading = page.getByRole('heading', { name: /Usage & Limits/i, level: 1 })
       await expect(heading).toBeVisible({ timeout: 45000 })
@@ -228,7 +223,6 @@ test.describe('Subscription & Billing Management', () => {
 
       await page.goto('/account/usage')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(10000)
 
       const tokensCard = page.locator('[data-testid="tokens-usage-card"]')
       await expect(tokensCard).toBeVisible({ timeout: 45000 })
@@ -241,7 +235,6 @@ test.describe('Subscription & Billing Management', () => {
 
       await page.goto('/account/usage')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(10000)
 
       const apiCard = page.locator('[data-testid="api-usage-card"]')
       await expect(apiCard).toBeVisible({ timeout: 45000 })
@@ -254,7 +247,6 @@ test.describe('Subscription & Billing Management', () => {
 
       await page.goto('/account/usage')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(10000)
 
       const planSummary = page.locator('[data-testid="plan-summary"]')
       await expect(planSummary).toBeVisible({ timeout: 45000 })
@@ -269,7 +261,6 @@ test.describe('Subscription & Billing Management', () => {
 
       await page.goto('/subscription/success')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(5000)
 
       const content = await page.content()
       expect(content).toContain('Payment Successful')
@@ -280,7 +271,6 @@ test.describe('Subscription & Billing Management', () => {
     test('should display cancel page when payment is cancelled', async ({ page }) => {
       await page.goto('/subscription/cancel')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(2000)
 
       const content = await page.content()
       expect(content).toContain('Payment Cancelled')

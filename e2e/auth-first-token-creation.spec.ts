@@ -9,22 +9,18 @@
  *
  * Auth model: email/password only — no wallet connectors.
  * Canonical creation route: /launch/guided
- * Legacy /create/wizard redirects to /launch/guided.
+ * Legacy /create/wizard redirects to /launch/guided (covered by wizard-redirect-compat.spec.ts).
  *
- * All auth seeding uses the canonical withAuth() helper from e2e/helpers/auth.ts
- * which validates the ARC76 session contract before seeding. This ensures E2E
- * tests use the same session shape as the runtime auth guard.
+ * Critical journey specs use `loginWithCredentials()` which validates the real
+ * backend auth contract when a backend is available (falls back to localStorage
+ * seeding when the backend is not running in CI).
  */
 
 import { test, expect } from '@playwright/test'
-import { withAuth, suppressBrowserErrors } from './helpers/auth'
+import { loginWithCredentials, suppressBrowserErrors } from './helpers/auth'
 
 /** Shared test user for auth-first token creation tests */
-const AUTH_FIRST_TEST_USER = {
-  address: 'TEST_ADDRESS_AUTH_FIRST',
-  email: 'test@example.com',
-  isConnected: true as const,
-}
+const AUTH_FIRST_TEST_EMAIL = 'test@example.com'
 
 test.describe('Auth-First Token Creation Journey', () => {
   test.beforeEach(async ({ page }) => {
@@ -87,7 +83,7 @@ test.describe('Auth-First Token Creation Journey', () => {
 
   test('should allow authenticated user to access guided token launch', async ({ page }) => {
     // Use canonical auth helper — validates ARC76 session contract before seeding
-    await withAuth(page, AUTH_FIRST_TEST_USER)
+    await loginWithCredentials(page, AUTH_FIRST_TEST_EMAIL)
     
     // Navigate to guided launch
     await page.goto('/launch/guided')
@@ -104,7 +100,7 @@ test.describe('Auth-First Token Creation Journey', () => {
 
   test('should allow authenticated user to access advanced token creation', async ({ page }) => {
     // Use canonical auth helper — validates ARC76 session contract before seeding
-    await withAuth(page, AUTH_FIRST_TEST_USER)
+    await loginWithCredentials(page, AUTH_FIRST_TEST_EMAIL)
     
     // Navigate to advanced creation
     await page.goto('/create')
@@ -117,7 +113,7 @@ test.describe('Auth-First Token Creation Journey', () => {
 
   test('should not display wallet/network UI elements in top navigation', async ({ page }) => {
     // Use canonical auth helper — validates ARC76 session contract before seeding
-    await withAuth(page, AUTH_FIRST_TEST_USER)
+    await loginWithCredentials(page, AUTH_FIRST_TEST_EMAIL)
     
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
@@ -170,12 +166,8 @@ test.describe('Auth-First Token Creation Journey', () => {
   })
 
   test('should maintain auth state across navigation', async ({ page }) => {
-    // Use canonical auth helper — validates ARC76 session contract before seeding
-    await withAuth(page, {
-      address: 'TEST_ADDRESS_AUTH_FIRST',
-      email: 'auth-persist@example.com',
-      isConnected: true,
-    })
+    // Use loginWithCredentials for critical journey — validates backend auth contract
+    await loginWithCredentials(page, 'auth-persist@example.com')
     
     // Navigate to guided launch
     await page.goto('/launch/guided')
@@ -199,12 +191,8 @@ test.describe('Auth-First Token Creation Journey', () => {
   })
 
   test('should display compliance gating when accessing token creation', async ({ page }) => {
-    // Use canonical auth helper — validates ARC76 session contract before seeding
-    await withAuth(page, {
-      address: 'TEST_ADDRESS_COMPLIANCE',
-      email: 'compliance@example.com',
-      isConnected: true,
-    })
+    // Use loginWithCredentials for critical journey — validates backend auth contract
+    await loginWithCredentials(page, 'compliance@example.com')
     
     // Navigate to guided launch
     await page.goto('/launch/guided')

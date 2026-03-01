@@ -167,76 +167,8 @@ test.describe('AC #2: Backend-derived identity surfaced in authenticated UI', ()
 
 // ---------------------------------------------------------------------------
 // AC #3 — Canonical route policy: /create/wizard is redirect-only
+// Redirect-compatibility tests consolidated into wizard-redirect-compat.spec.ts.
 // ---------------------------------------------------------------------------
-
-test.describe('AC #3: Canonical route policy — /create/wizard redirect-only', () => {
-  test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
-  })
-
-  test('/create/wizard redirects authenticated user to /launch/guided (redirect-only reference)', async ({ page }) => {
-    // AC #3: /create/wizard must only appear in redirect compatibility tests.
-    // All canonical flows start at /launch/guided.
-    await withAuth(page)
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    // Semantic wait: URL changes away from legacy path
-    await page.waitForFunction(
-      () => !window.location.pathname.includes('wizard'),
-      { timeout: 15000 },
-    )
-
-    const url = page.url()
-    // Must redirect to canonical guided launch (not stay on wizard)
-    expect(url).not.toContain('/create/wizard')
-    expect(url).toContain('/launch/guided')
-  })
-
-  test('/create/wizard does not render wizard-era UI headings', async ({ page }) => {
-    // AC #3: No wizard UI component is served from the legacy path
-    await withAuth(page)
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    // Semantic wait: URL leaves legacy path
-    await page.waitForFunction(
-      () => !window.location.pathname.includes('wizard'),
-      { timeout: 15000 },
-    )
-
-    // Guided launch heading must be present (not a wizard heading)
-    const guidedHeading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
-    await expect(guidedHeading).toBeVisible({ timeout: 60000 })
-
-    // Old wizard heading must not appear
-    const wizardHeading = page.getByRole('heading', { name: /token creation wizard/i })
-    const wizardVisible = await wizardHeading.isVisible().catch(() => false)
-    expect(wizardVisible).toBe(false)
-  })
-
-  test('/create/wizard redirect works for unauthenticated user (no wizard rendered)', async ({ page }) => {
-    // AC #3: Legacy path never renders wizard UI regardless of auth state
-    await clearAuthScript(page)
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    // Should either redirect to /launch/guided (then to auth) OR to home with showAuth
-    // In either case, /create/wizard should not remain as the final URL
-    await page.waitForFunction(
-      () => !window.location.pathname.includes('wizard'),
-      { timeout: 15000 },
-    )
-
-    const url = page.url()
-    expect(url).not.toContain('/create/wizard')
-
-    // Wizard UI must not be rendered
-    const wizardHeading = page.getByRole('heading', { name: /token creation wizard/i })
-    const wizardVisible = await wizardHeading.isVisible().catch(() => false)
-    expect(wizardVisible).toBe(false)
-  })
-})
 
 // ---------------------------------------------------------------------------
 // AC #4 — Top-nav assertions: component-specific and deterministic

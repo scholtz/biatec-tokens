@@ -159,59 +159,8 @@ test.describe("AC #1: Token creation entry points enforce auth gating", () => {
 
 // ---------------------------------------------------------------------------
 // AC #2: Guided launch is canonical — wizard redirect confirmed
+// Redirect-compatibility tests consolidated into wizard-redirect-compat.spec.ts.
 // ---------------------------------------------------------------------------
-
-test.describe("AC #2: /create/wizard redirect to /launch/guided (canonical path)", () => {
-  test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page);
-  });
-
-  test("/create/wizard never renders wizard UI — redirects away (no waitForTimeout)", async ({
-    page,
-  }) => {
-    // Business risk: if the legacy wizard renders, users follow a deprecated flow
-    // that may not enforce auth-first or compliance steps — regression risk.
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
-    await page.evaluate(() => localStorage.clear());
-
-    await page.goto("/create/wizard");
-    await page.waitForLoadState("networkidle");
-
-    // Semantic wait: wizard route must not remain in URL
-    await page.waitForFunction(
-      () => !window.location.href.includes("/create/wizard"),
-      { timeout: 20000 }
-    );
-
-    const url = page.url();
-    expect(url).not.toContain("/create/wizard");
-  });
-
-  test("/create/wizard does not show wizard heading (deprecated flow guard)", async ({
-    page,
-  }) => {
-    // Business risk: wizard UI rendering after redirect indicates the router
-    // guard is not firing correctly — test of redirect completeness.
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
-    await page.evaluate(() => localStorage.clear());
-
-    await page.goto("/create/wizard");
-    await page.waitForLoadState("networkidle");
-
-    await page.waitForFunction(
-      () => !window.location.href.includes("/create/wizard"),
-      { timeout: 20000 }
-    );
-
-    const wizardHeading = page.getByRole("heading", {
-      name: /token creation wizard/i,
-    });
-    const visible = await wizardHeading.isVisible().catch(() => false);
-    expect(visible).toBe(false);
-  });
-});
 
 // ---------------------------------------------------------------------------
 // AC #3: Top navigation — no wallet-era language

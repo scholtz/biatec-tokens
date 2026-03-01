@@ -60,24 +60,6 @@ test.describe("AC #1: Canonical route enforcement", () => {
     expect(href).toContain("/launch/guided");
   });
 
-  test("/create/wizard redirects to /launch/guided (legacy compatibility)", async ({
-    page,
-  }) => {
-    await clearAuthScript(page);
-    await withAuth(page);
-    await page.goto("/create/wizard");
-    await page.waitForLoadState("networkidle");
-
-    // The router defines redirect: /create/wizard → /launch/guided
-    // Semantic wait: wait until we land on /launch/guided
-    await page.waitForFunction(
-      () => window.location.pathname === "/launch/guided",
-      { timeout: 15000 }
-    );
-
-    expect(page.url()).toContain("/launch/guided");
-  });
-
   test("nav does NOT contain /create/wizard as a primary link", async ({
     page,
   }) => {
@@ -89,6 +71,9 @@ test.describe("AC #1: Canonical route enforcement", () => {
     const count = await wizardLinks.count();
     expect(count).toBe(0);
   });
+
+  // Redirect-compatibility for /create/wizard is consolidated in
+  // e2e/wizard-redirect-compat.spec.ts (max 3 tests per issue specification).
 });
 
 // ---------------------------------------------------------------------------

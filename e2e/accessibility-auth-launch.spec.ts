@@ -369,26 +369,6 @@ test.describe("Accessibility: Auth-First Redirect", () => {
     expect(hasUsefulUI).toBe(true);
   });
 
-  test("legacy /create/wizard route redirects to canonical /launch/guided", async ({ page }) => {
-    // Authenticate so we can verify the final destination (not just auth redirect)
-    await page.addInitScript(() => {
-      localStorage.setItem(
-        "algorand_user",
-        JSON.stringify({
-          address: "A11Y_REDIRECT_TEST",
-          email: "redirect@example.com",
-          isConnected: true,
-        })
-      );
-    });
-
-    await page.goto("/create/wizard");
-    await page.waitForLoadState("networkidle");
-
-    // Should land on /launch/guided (canonical route) — not stay on /create/wizard
-    const finalUrl = page.url();
-    expect(finalUrl).not.toContain("/create/wizard");
-    // Should contain the canonical path (may also have query params from auth)
-    expect(finalUrl).toContain("/launch/guided");
-  });
+  // Legacy /create/wizard redirect coverage consolidated into
+  // e2e/wizard-redirect-compat.spec.ts (max 3 tests per spec).
 });

@@ -83,34 +83,9 @@ test.describe('Canonical issuance route — /launch/guided is the primary entry'
 })
 
 // ---------------------------------------------------------------------------
-// AC #5: Legacy /create/wizard route redirects to canonical route
+// AC #5: Legacy /create/wizard redirect coverage
+// Consolidated into e2e/wizard-redirect-compat.spec.ts (max 3 tests per spec).
 // ---------------------------------------------------------------------------
-
-test.describe('Legacy /create/wizard — redirects to canonical issuance route', () => {
-  test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page, { address: 'ISSUANCE_WORKSPACE_TEST_ADDR', email: 'issuance-test@biatec.io', isConnected: true })
-  })
-
-  test('/create/wizard redirects to /launch/guided', async ({ page }) => {
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    // After redirect, URL should be /launch/guided (not /create/wizard)
-    const url = page.url()
-    // Flexible: URL should contain /launch/guided
-    expect(url).toContain('/launch/guided')
-  })
-
-  test('/create/wizard does not render the old wizard page', async ({ page }) => {
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    // The legacy wizard heading should NOT be visible
-    const wizardHeading = page.getByRole('heading', { name: /token creation wizard/i })
-    await expect(wizardHeading).not.toBeVisible({ timeout: 1000 })
-  })
-})
 
 // ---------------------------------------------------------------------------
 // AC #3: Unauthenticated access triggers auth redirect

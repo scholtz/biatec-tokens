@@ -573,24 +573,7 @@ test.describe('Guided Token Launch Flow', () => {
     await expect(errorBanner).not.toBeVisible({ timeout: 5000 })
   })
 
-  // ── AC7: Legacy wizard canonical redirect ────────────────────────────────
-  // The legacy /create/wizard route must redirect to /launch/guided.
-  test('AC7: legacy /create/wizard route redirects to canonical /launch/guided', async ({ page }) => {
-    // Authenticated user navigates to legacy URL
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    // Should end up at the guided launch URL (or be redirected to login if unauthenticated)
-    const finalUrl = page.url()
-
-    // Either redirected to /launch/guided (authenticated) or to /? (unauthenticated with auth prompt)
-    const isCanonical = finalUrl.includes('/launch/guided')
-    const isAuthRedirect = finalUrl.includes('showAuth=true') || finalUrl.endsWith('/')
-
-    // Pass if on canonical guided launch OR auth redirect (correct for unauthenticated)
-    expect(isCanonical || isAuthRedirect).toBe(true)
-
-    // Should NOT stay on /create/wizard
-    expect(finalUrl).not.toContain('/create/wizard')
-  })
+  // ── AC7: Legacy wizard redirect — covered by wizard-redirect-compat.spec.ts
+  // Redirect-compatibility assertions for /create/wizard are consolidated in
+  // e2e/wizard-redirect-compat.spec.ts (max 3 tests per issue specification).
 })

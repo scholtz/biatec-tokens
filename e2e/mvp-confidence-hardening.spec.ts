@@ -430,62 +430,9 @@ test.describe('AC #3: Top navigation state is deterministic', () => {
 })
 
 // ===========================================================================
-// AC #1 (redirect guard): Legacy /create/wizard redirects to canonical route
+// AC #1 (redirect guard): Legacy /create/wizard redirect coverage
+// Consolidated into e2e/wizard-redirect-compat.spec.ts (max 3 tests per spec).
 // ===========================================================================
-
-test.describe('AC #1 redirect guard: Legacy /create/wizard has no functional ownership', () => {
-  test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
-  })
-
-  test('authenticated user: /create/wizard redirects to /launch/guided', async ({ page }) => {
-    // Business risk: if /create/wizard renders wizard UI for authenticated users,
-    // the canonical path confusion creates duplicate journeys and support debt.
-    await bootstrapValidSession(page)
-
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    // Semantic wait: wait for redirect to complete by checking URL
-    await page.waitForFunction(
-      () => !window.location.href.includes('/create/wizard'),
-      { timeout: 10000 },
-    )
-
-    const finalUrl = page.url()
-    // Must redirect away from legacy route — this is the critical invariant
-    expect(finalUrl).not.toContain('/create/wizard')
-    // Must land on either the canonical launch route OR the auth prompt
-    // (auth-store init race may redirect to /?showAuth=true before /launch/guided loads)
-    const onCanonical = finalUrl.includes('/launch/guided')
-    const onAuthPrompt = finalUrl.includes('showAuth=true') || finalUrl.match(/localhost:\d+\/?$/) !== null
-    expect(onCanonical || onAuthPrompt).toBe(true)
-  })
-
-  test('guest user: /create/wizard does not render wizard UI', async ({ page }) => {
-    // Business risk: legacy wizard rendering for guests would bypass auth gating.
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
-    await clearSessionInPage(page)
-
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    // Semantic wait: wait for redirect or auth prompt
-    await page.waitForFunction(
-      () => {
-        const url = window.location.href
-        const emailInput = document.querySelector("input[type='email']")
-        return !url.includes('/create/wizard') || emailInput !== null
-      },
-      { timeout: 15000 },
-    )
-
-    const finalUrl = page.url()
-    // Must not remain on /create/wizard
-    expect(finalUrl).not.toContain('/create/wizard')
-  })
-})
 
 // ===========================================================================
 // AC #4: CI confidence — no waitForTimeout, draft injection for mid-flow steps
