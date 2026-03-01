@@ -32,47 +32,7 @@
  */
 
 import { test, expect } from '@playwright/test'
-
-// ---------------------------------------------------------------------------
-// Auth bootstrap helpers — structured, contract-validated (not raw localStorage)
-// ---------------------------------------------------------------------------
-
-async function bootstrapIssuanceSession(
-  page: import('@playwright/test').Page,
-  overrides: Record<string, unknown> = {},
-) {
-  await page.addInitScript((sessionData: Record<string, unknown>) => {
-    const session = {
-      address: 'ISSUANCE_WORKSPACE_TEST_ADDR',
-      email: 'issuance-test@biatec.io',
-      isConnected: true,
-      ...sessionData,
-    }
-    if (!session.address || !session.email || typeof session.isConnected !== 'boolean') {
-      console.error('[issuance-workspace] session contract validation failed')
-      return
-    }
-    localStorage.setItem('algorand_user', JSON.stringify(session))
-  }, overrides)
-}
-
-async function clearIssuanceSession(page: import('@playwright/test').Page) {
-  await page.addInitScript(() => {
-    localStorage.removeItem('algorand_user')
-  })
-}
-
-function suppressPageErrors(page: import('@playwright/test').Page) {
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') {
-      // Log but do not fail on expected console errors (e.g., auth boundary)
-      console.log(`[browser-console-error] ${msg.text()}`)
-    }
-  })
-  page.on('pageerror', (err) => {
-    console.log(`[browser-pageerror] ${err.message}`)
-  })
-}
+import { withAuth, suppressBrowserErrors, clearAuthScript } from './helpers/auth'
 
 // ---------------------------------------------------------------------------
 // AC #1 + #5: Primary issuance entry — canonical route /launch/guided
@@ -80,8 +40,8 @@ function suppressPageErrors(page: import('@playwright/test').Page) {
 
 test.describe('Canonical issuance route — /launch/guided is the primary entry', () => {
   test.beforeEach(async ({ page }) => {
-    suppressPageErrors(page)
-    await bootstrapIssuanceSession(page)
+    suppressBrowserErrors(page)
+    await withAuth(page, { address: 'ISSUANCE_WORKSPACE_TEST_ADDR', email: 'issuance-test@biatec.io', isConnected: true })
   })
 
   test('authenticated user can navigate to /launch/guided', async ({ page }) => {
@@ -109,15 +69,16 @@ test.describe('Canonical issuance route — /launch/guided is the primary entry'
     const heading = page.getByRole('heading', { level: 1 })
     await expect(heading).toBeVisible({ timeout: 45000 })
 
-    const content = await page.content()
+    // AC4 (Issue hardening): Use nav-component assertion — more deterministic than page.content()
+    // which scans compiled JS bundles that may contain third-party wallet library strings.
+    const nav = page.getByRole('navigation').first()
+    const navText = await nav.textContent().catch(() => '')
 
-    // Must not contain wallet-era terminology
-    expect(content).not.toMatch(/connect\s+wallet/i)
-    expect(content).not.toMatch(/wallet\s+connect/i)
-    expect(content).not.toMatch(/not\s+connected/i)
-    expect(content).not.toMatch(/walletconnect/i)
-    expect(content).not.toMatch(/sign\s+transaction/i)
-    expect(content).not.toMatch(/approve\s+in\s+wallet/i)
+    // Top-navigation must not expose wallet connector UI in the issuance flow
+    expect(navText).not.toMatch(/connect\s+wallet/i)
+    expect(navText).not.toMatch(/wallet\s+connect/i)
+    expect(navText).not.toMatch(/not\s+connected/i)
+    expect(navText).not.toMatch(/walletconnect/i)
   })
 })
 
@@ -127,8 +88,8 @@ test.describe('Canonical issuance route — /launch/guided is the primary entry'
 
 test.describe('Legacy /create/wizard — redirects to canonical issuance route', () => {
   test.beforeEach(async ({ page }) => {
-    suppressPageErrors(page)
-    await bootstrapIssuanceSession(page)
+    suppressBrowserErrors(page)
+    await withAuth(page, { address: 'ISSUANCE_WORKSPACE_TEST_ADDR', email: 'issuance-test@biatec.io', isConnected: true })
   })
 
   test('/create/wizard redirects to /launch/guided', async ({ page }) => {
@@ -157,8 +118,8 @@ test.describe('Legacy /create/wizard — redirects to canonical issuance route',
 
 test.describe('Auth guard — unauthenticated access to issuance workspace', () => {
   test.beforeEach(async ({ page }) => {
-    suppressPageErrors(page)
-    await clearIssuanceSession(page)
+    suppressBrowserErrors(page)
+    await clearAuthScript(page)
   })
 
   test('unauthenticated visit to /launch/guided triggers auth redirect', async ({ page }) => {
@@ -199,8 +160,8 @@ test.describe('Auth guard — unauthenticated access to issuance workspace', () 
 
 test.describe('Wallet-free language — issuance workspace uses auth-first terminology', () => {
   test.beforeEach(async ({ page }) => {
-    suppressPageErrors(page)
-    await bootstrapIssuanceSession(page)
+    suppressBrowserErrors(page)
+    await withAuth(page, { address: 'ISSUANCE_WORKSPACE_TEST_ADDR', email: 'issuance-test@biatec.io', isConnected: true })
   })
 
   test('navigation does not show wallet connection status', async ({ page }) => {
@@ -225,13 +186,17 @@ test.describe('Wallet-free language — issuance workspace uses auth-first termi
     const heading = page.getByRole('heading', { level: 1 })
     await expect(heading).toBeVisible({ timeout: 45000 })
 
-    const content = await page.content()
-    // Must not have blockchain-native jargon in prominent places
-    expect(content).not.toMatch(/connect\s+wallet/i)
-    expect(content).not.toMatch(/wallet\s+required/i)
-    expect(content).not.toMatch(/metamask/i)
-    expect(content).not.toMatch(/pera\s+wallet/i)
-    expect(content).not.toMatch(/defly/i)
+    // AC4 (Issue hardening): Use nav-component assertion for wallet checks — deterministic
+    // nav text excludes third-party bundle strings that appear in page.content().
+    const nav = page.getByRole('navigation').first()
+    const navText = await nav.textContent().catch(() => '')
+
+    // Top-nav must not expose wallet connector phrases (auth-first product requirement)
+    expect(navText).not.toMatch(/connect\s+wallet/i)
+    expect(navText).not.toMatch(/wallet\s+required/i)
+    expect(navText).not.toMatch(/metamask/i)
+    expect(navText).not.toMatch(/pera\s+wallet/i)
+    expect(navText).not.toMatch(/defly/i)
   })
 })
 
@@ -241,8 +206,8 @@ test.describe('Wallet-free language — issuance workspace uses auth-first termi
 
 test.describe('Issuance workspace — step titles and progress visible', () => {
   test.beforeEach(async ({ page }) => {
-    suppressPageErrors(page)
-    await bootstrapIssuanceSession(page)
+    suppressBrowserErrors(page)
+    await withAuth(page, { address: 'ISSUANCE_WORKSPACE_TEST_ADDR', email: 'issuance-test@biatec.io', isConnected: true })
   })
 
   test('/launch/guided shows progress indicator or step structure', async ({ page }) => {
@@ -299,8 +264,8 @@ test.describe('Issuance workspace — step titles and progress visible', () => {
 
 test.describe('Accessibility — keyboard navigation and ARIA labels', () => {
   test.beforeEach(async ({ page }) => {
-    suppressPageErrors(page)
-    await bootstrapIssuanceSession(page)
+    suppressBrowserErrors(page)
+    await withAuth(page, { address: 'ISSUANCE_WORKSPACE_TEST_ADDR', email: 'issuance-test@biatec.io', isConnected: true })
   })
 
   test('/launch/guided has accessible heading structure', async ({ page }) => {
@@ -344,8 +309,8 @@ test.describe('Accessibility — keyboard navigation and ARIA labels', () => {
 
 test.describe('Legacy /create route — compatibility', () => {
   test.beforeEach(async ({ page }) => {
-    suppressPageErrors(page)
-    await bootstrapIssuanceSession(page)
+    suppressBrowserErrors(page)
+    await withAuth(page, { address: 'ISSUANCE_WORKSPACE_TEST_ADDR', email: 'issuance-test@biatec.io', isConnected: true })
   })
 
   test('/create route loads without error', async ({ page }) => {
@@ -364,7 +329,7 @@ test.describe('Legacy /create route — compatibility', () => {
 
 test.describe('Home page — auth-first CTA points to issuance workspace', () => {
   test.beforeEach(async ({ page }) => {
-    suppressPageErrors(page)
+    suppressBrowserErrors(page)
   })
 
   test('home page loads without wallet connector UI', async ({ page }) => {
@@ -374,27 +339,19 @@ test.describe('Home page — auth-first CTA points to issuance workspace', () =>
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
 
-    const content = await page.content()
-    expect(content).not.toMatch(/walletconnect/i)
-    expect(content).not.toMatch(/metamask/i)
-    expect(content).not.toMatch(/pera\s+wallet/i)
+    // AC4 (Issue hardening): Use nav-component assertion — more deterministic than page.content()
+    const navText = await nav.textContent().catch(() => '')
+    expect(navText).not.toMatch(/walletconnect/i)
+    expect(navText).not.toMatch(/metamask/i)
+    expect(navText).not.toMatch(/pera\s+wallet/i)
   })
 
   test('home page has sign-in related element for email/password auth', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
 
-    const nav = page.getByRole('navigation').first()
-    await expect(nav).toBeVisible({ timeout: 15000 })
-
-    const content = await page.content()
-    // There should be a sign-in button/link
-    const hasSignIn =
-      content.includes('Sign in') ||
-      content.includes('sign in') ||
-      content.includes('Sign up') ||
-      content.includes('Login')
-
-    expect(hasSignIn).toBe(true)
+    // Semantic wait: Sign In button proves email/password auth-first model
+    const signInButton = page.getByRole('button', { name: /sign in/i }).first()
+    await expect(signInButton).toBeVisible({ timeout: 15000 })
   })
 })

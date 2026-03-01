@@ -378,6 +378,32 @@ describe('E2E session bootstrap shapes meet contract', () => {
         isConnected: true,
       },
     },
+    // Sessions used in harden-auth-guided-launch.spec.ts (AC #1)
+    {
+      label: 'harden-auth-guided-launch: custom hardening session',
+      session: {
+        address: 'CUSTOM_ARC76_TEST_ADDR_HARDENING',
+        email: 'custom-hardening@biatec.io',
+        isConnected: true,
+        name: 'Hardening Test User',
+      },
+    },
+    {
+      label: 'harden-auth-guided-launch: ARC76 derived identity session',
+      session: {
+        address: 'ARC76_DERIVED_IDENTITY_ADDR_BIATEC_HARDENING',
+        email: 'identity-check@biatec.io',
+        isConnected: true,
+      },
+    },
+    {
+      label: 'harden-auth-guided-launch: persistent identity session',
+      session: {
+        address: 'ARC76_PERSISTENT_SESSION_TEST',
+        email: 'arc76-persistent-identity@biatec.io',
+        isConnected: true,
+      },
+    },
   ]
 
   for (const { label, session } of e2eSessionShapes) {
@@ -390,4 +416,56 @@ describe('E2E session bootstrap shapes meet contract', () => {
       expect(isConnectedSession(session)).toBe(true)
     })
   }
+})
+
+// ---------------------------------------------------------------------------
+// withAuth contract enforcement (fail-fast validation for E2E session bootstrap)
+// ---------------------------------------------------------------------------
+
+describe('withAuth fail-fast contract enforcement (session shapes that must be rejected)', () => {
+  // These tests verify the same logic used by withAuth() in e2e/helpers/auth.ts.
+  // validateARC76Session() accepts `unknown` so we can pass intentionally invalid
+  // shapes without TypeScript compile errors — the function must catch them at runtime.
+
+  it('session missing address fails contract', () => {
+    // Invalid: address field is absent — withAuth() would throw before seeding localStorage
+    const result = validateARC76Session({ email: 'test@test.com', isConnected: true } as unknown)
+    expect(result.valid).toBe(false)
+    expect(result.errors.some(e => e.includes('address'))).toBe(true)
+  })
+
+  it('session missing email fails contract', () => {
+    // Invalid: email field is absent
+    const result = validateARC76Session({ address: 'ADDR', isConnected: true } as unknown)
+    expect(result.valid).toBe(false)
+    expect(result.errors.some(e => e.includes('email'))).toBe(true)
+  })
+
+  it('session with string isConnected fails contract', () => {
+    // Invalid: isConnected must be a boolean, not a string
+    const result = validateARC76Session({ address: 'ADDR', email: 'x@y.com', isConnected: 'true' } as unknown)
+    expect(result.valid).toBe(false)
+    expect(result.errors.some(e => e.includes('isConnected'))).toBe(true)
+  })
+
+  it('session with empty address fails contract', () => {
+    // Invalid: address must be a non-empty string
+    const result = validateARC76Session({ address: '', email: 'x@y.com', isConnected: true } as unknown)
+    expect(result.valid).toBe(false)
+  })
+
+  it('describeSessionFailure provides actionable error for empty address', () => {
+    const msg = describeSessionFailure({ address: '', email: 'x@y.com', isConnected: true } as unknown)
+    // Error message should reference the contract violation clearly
+    expect(msg).toMatch(/address|contract/i)
+  })
+
+  it('getMissingSessionFields identifies missing fields for withAuth input validation', () => {
+    // This mirrors what withAuth() would check before seeding localStorage
+    const session = { email: 'x@y.com' } as unknown // missing address and isConnected
+    const missing = getMissingSessionFields(session)
+    expect(missing).toContain('address')
+    expect(missing).toContain('isConnected')
+    expect(missing).not.toContain('email')
+  })
 })

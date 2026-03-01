@@ -28,35 +28,7 @@
  */
 
 import { test, expect } from "@playwright/test";
-
-// ---------------------------------------------------------------------------
-// Auth fixture helpers
-// ---------------------------------------------------------------------------
-
-function withAuth(page: import("@playwright/test").Page) {
-  return page.addInitScript(() => {
-    localStorage.setItem(
-      "algorand_user",
-      JSON.stringify({
-        address: "ROUTE_DETERMINISM_E2E_ADDR",
-        email: "route-determinism@example.com",
-        isConnected: true,
-      })
-    );
-  });
-}
-
-// Suppress browser console errors to prevent masking real test failures
-function suppressBrowserErrors(page: import("@playwright/test").Page) {
-  page.on("console", (msg) => {
-    if (msg.type() === "error") {
-      console.log(`[route-determinism suppressed] ${msg.text()}`);
-    }
-  });
-  page.on("pageerror", (error) => {
-    console.log(`[route-determinism pageerror suppressed] ${error.message}`);
-  });
-}
+import { withAuth, suppressBrowserErrors } from "./helpers/auth";
 
 // ---------------------------------------------------------------------------
 // AC #1 + AC #4: Guest sees Sign In, never wallet/network state
