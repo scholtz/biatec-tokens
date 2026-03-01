@@ -1,30 +1,34 @@
 /**
  * E2E Tests for Auth-First Token Creation Journey
- * 
+ *
  * Tests validate the MVP auth-first routing model:
  * - Unauthenticated users are redirected to login
  * - Authenticated users can access token creation
  * - No wallet/network UI elements visible in auth-first context
  * - Compliance gating surfaces correctly
- * 
- * Email/password authentication only - no wallet connectors.
+ *
+ * Auth model: email/password only — no wallet connectors.
+ * Canonical creation route: /launch/guided
+ * Legacy /create/wizard redirects to /launch/guided.
+ *
+ * All auth seeding uses the canonical withAuth() helper from e2e/helpers/auth.ts
+ * which validates the ARC76 session contract before seeding. This ensures E2E
+ * tests use the same session shape as the runtime auth guard.
  */
 
 import { test, expect } from '@playwright/test'
+import { withAuth, suppressBrowserErrors } from './helpers/auth'
+
+/** Shared test user for auth-first token creation tests */
+const AUTH_FIRST_TEST_USER = {
+  address: 'TEST_ADDRESS_AUTH_FIRST',
+  email: 'test@example.com',
+  isConnected: true as const,
+}
 
 test.describe('Auth-First Token Creation Journey', () => {
   test.beforeEach(async ({ page }) => {
-    // Suppress console errors to prevent Playwright from failing on browser console output
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed for test stability): ${msg.text()}`)
-      }
-    })
-    
-    // Suppress page errors
-    page.on('pageerror', error => {
-      console.log(`Page error (suppressed for test stability): ${error.message}`)
-    })
+    suppressBrowserErrors(page)
   })
 
   test('should redirect unauthenticated user to login when accessing /launch/guided', async ({ page }) => {
@@ -82,14 +86,8 @@ test.describe('Auth-First Token Creation Journey', () => {
   })
 
   test('should allow authenticated user to access guided token launch', async ({ page }) => {
-    // Set up authenticated session
-    await page.addInitScript(() => {
-      localStorage.setItem('algorand_user', JSON.stringify({
-        address: 'TEST_ADDRESS_AUTH_FIRST',
-        email: 'test@example.com',
-        isConnected: true,
-      }))
-    })
+    // Use canonical auth helper — validates ARC76 session contract before seeding
+    await withAuth(page, AUTH_FIRST_TEST_USER)
     
     // Navigate to guided launch
     await page.goto('/launch/guided')
@@ -105,14 +103,8 @@ test.describe('Auth-First Token Creation Journey', () => {
   })
 
   test('should allow authenticated user to access advanced token creation', async ({ page }) => {
-    // Set up authenticated session
-    await page.addInitScript(() => {
-      localStorage.setItem('algorand_user', JSON.stringify({
-        address: 'TEST_ADDRESS_AUTH_FIRST',
-        email: 'test@example.com',
-        isConnected: true,
-      }))
-    })
+    // Use canonical auth helper — validates ARC76 session contract before seeding
+    await withAuth(page, AUTH_FIRST_TEST_USER)
     
     // Navigate to advanced creation
     await page.goto('/create')
@@ -124,14 +116,8 @@ test.describe('Auth-First Token Creation Journey', () => {
   })
 
   test('should not display wallet/network UI elements in top navigation', async ({ page }) => {
-    // Set up authenticated session
-    await page.addInitScript(() => {
-      localStorage.setItem('algorand_user', JSON.stringify({
-        address: 'TEST_ADDRESS_AUTH_FIRST',
-        email: 'test@example.com',
-        isConnected: true,
-      }))
-    })
+    // Use canonical auth helper — validates ARC76 session contract before seeding
+    await withAuth(page, AUTH_FIRST_TEST_USER)
     
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
@@ -184,13 +170,11 @@ test.describe('Auth-First Token Creation Journey', () => {
   })
 
   test('should maintain auth state across navigation', async ({ page }) => {
-    // Set up authenticated session
-    await page.addInitScript(() => {
-      localStorage.setItem('algorand_user', JSON.stringify({
-        address: 'TEST_ADDRESS_AUTH_FIRST',
-        email: 'auth-persist@example.com',
-        isConnected: true,
-      }))
+    // Use canonical auth helper — validates ARC76 session contract before seeding
+    await withAuth(page, {
+      address: 'TEST_ADDRESS_AUTH_FIRST',
+      email: 'auth-persist@example.com',
+      isConnected: true,
     })
     
     // Navigate to guided launch
@@ -215,13 +199,11 @@ test.describe('Auth-First Token Creation Journey', () => {
   })
 
   test('should display compliance gating when accessing token creation', async ({ page }) => {
-    // Set up authenticated session
-    await page.addInitScript(() => {
-      localStorage.setItem('algorand_user', JSON.stringify({
-        address: 'TEST_ADDRESS_COMPLIANCE',
-        email: 'compliance@example.com',
-        isConnected: true,
-      }))
+    // Use canonical auth helper — validates ARC76 session contract before seeding
+    await withAuth(page, {
+      address: 'TEST_ADDRESS_COMPLIANCE',
+      email: 'compliance@example.com',
+      isConnected: true,
     })
     
     // Navigate to guided launch

@@ -16,49 +16,17 @@
  * - Error states expose user guidance, not raw exceptions
  * - Onboarding path has no dead ends — every blocked state has a clear action
  *
+ * Auth model: email/password only — no wallet connectors.
+ * All auth seeding uses withAuth() from e2e/helpers/auth.ts which validates
+ * the ARC76 session contract before seeding localStorage. This replaces the
+ * previous inline session bootstrap helpers in this file.
+ *
  * Roadmap alignment: https://raw.githubusercontent.com/scholtz/biatec-tokens/refs/heads/main/business-owner-roadmap.md
  * Issue: Frontend milestone — auth-first accessibility and onboarding confidence hardening
  */
 
 import { test, expect } from "@playwright/test";
-
-// ---------------------------------------------------------------------------
-// Auth fixture helpers (email/password only — no wallet connectors)
-// ---------------------------------------------------------------------------
-
-const AUTH_USER = JSON.stringify({
-  address: "HARDENING_TEST_ADDRESS",
-  email: "hardening@example.com",
-  isConnected: true,
-});
-
-function withAuth(page: import("@playwright/test").Page) {
-  return page.addInitScript(() => {
-    localStorage.setItem(
-      "algorand_user",
-      JSON.stringify({
-        address: "HARDENING_TEST_ADDRESS",
-        email: "hardening@example.com",
-        isConnected: true,
-      })
-    );
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Shared error suppression (prevents console errors from masking real failures)
-// ---------------------------------------------------------------------------
-
-function suppressBrowserErrors(page: import("@playwright/test").Page) {
-  page.on("console", (msg) => {
-    if (msg.type() === "error") {
-      console.log(`[hardening-suppressed] ${msg.text()}`);
-    }
-  });
-  page.on("pageerror", (error) => {
-    console.log(`[hardening-pageerror suppressed] ${error.message}`);
-  });
-}
+import { withAuth, suppressBrowserErrors } from "./helpers/auth";
 
 // ---------------------------------------------------------------------------
 // AC #1 — Auth-first routing: all token creation entry points enforce auth

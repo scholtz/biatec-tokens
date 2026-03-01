@@ -8,11 +8,56 @@ This directory contains Playwright end-to-end tests for the Biatec Tokens applic
 
 This application uses an **auth-first** approach with email and password authentication. There are no wallet connectors (MetaMask, WalletConnect, Pera, Defly, etc.) in the MVP user experience.
 
-All tests should reflect this authentication model:
-- Use `localStorage.setItem('algorand_user', ...)` to simulate authenticated sessions
-- Test routes with `requiresAuth: true` meta flag
-- Verify auth-first redirects for unauthenticated users
-- Ensure no wallet-related UI elements appear in navigation
+### Canonical Auth Pattern: Use the `withAuth` Helper
+
+**All E2E tests must use the canonical auth helper** from `e2e/helpers/auth.ts`:
+
+```typescript
+import { withAuth, suppressBrowserErrors, setupAuthAndNavigate } from './helpers/auth'
+
+test.beforeEach(async ({ page }) => {
+  suppressBrowserErrors(page)
+  await withAuth(page)  // ← canonical pattern — validates ARC76 contract before seeding
+})
+```
+
+The `withAuth()` helper:
+1. Validates the session object against the **ARC76 session contract** before seeding
+2. Throws immediately if the session is malformed (fail-fast during test setup)
+3. Uses `addInitScript` so auth state is available before the page loads
+4. Is the only officially supported auth setup pattern
+
+**Do NOT use raw `localStorage.setItem('algorand_user', ...)` in tests**. Always use `withAuth()` instead.
+
+### ARC76 Session Contract
+
+Every session seeded in E2E tests must have these fields:
+
+```typescript
+{
+  address: string      // Non-empty ARC76-derived address
+  email: string        // Non-empty user email
+  isConnected: boolean // Must be true for protected routes
+}
+```
+
+The contract is validated by `validateARC76Session()` in `src/utils/arc76SessionContract.ts`. The same validation logic is also used by the router guard, so any mismatch between tests and runtime is caught by the unit tests in `src/utils/__tests__/arc76SessionContract.test.ts`.
+
+### Backend Auth Readiness
+
+Current E2E tests seed localStorage because the test environment has no live backend. When the backend auth endpoint is available in CI, replace `withAuth()` with `loginWithBackend()` (defined in helpers/auth.ts as a stub). The session contract and all E2E assertions remain identical.
+
+### Clearing Auth State
+
+```typescript
+import { clearAuth, clearAuthScript } from './helpers/auth'
+
+// In beforeEach (before any page.goto) — use addInitScript-based version:
+await clearAuthScript(page)
+
+// After page.goto (page already loaded) — use evaluate-based version:
+await clearAuth(page)
+```
 
 ## Running Tests
 
@@ -43,11 +88,32 @@ npm run test:e2e:debug
 npm run test:e2e:report
 ```
 
+## Canonical Route Policy
+
+**Every test must use `/launch/guided` as the canonical token creation route.**
+
+| Route | Status | Behaviour |
+|-------|--------|-----------|
+| `/launch/guided` | ✅ **Canonical** | Primary token creation entry point. Auth-required. |
+| `/create` | ✅ Supported | Advanced token creator. Auth-required. |
+| `/create/wizard` | ⛔ Deprecated | **Redirects to `/launch/guided`**. Must not appear as a primary CTA or nav link. |
+
+**Rules:**
+1. No test may use `/create/wizard` as the *expected* landing route — only as the *source* of a redirect test.
+2. Navigation links in the nav bar must point to `/launch/guided`, not `/create/wizard`.
+3. If you encounter a test that asserts `/create/wizard` is the canonical route, that test is wrong and must be updated.
+
+**Redirect compatibility is tested separately** in `confidence-hardening-deterministic.spec.ts` and `auth-first-onboarding-closure.spec.ts`.
+
 ## Test Structure
 
 Tests are organized by feature:
 
 - `auth-first-token-creation.spec.ts` - Auth-first journey and route guards (MVP critical)
+- `confidence-hardening-deterministic.spec.ts` - Deterministic auth/nav state assertions (MVP CI gate)
+- `auth-first-confidence-hardening.spec.ts` - Auth-first onboarding confidence (all entry points)
+- `auth-first-issuance-workspace.spec.ts` - Canonical issuance workspace e2e flow
+- `arc76-validation.spec.ts` - ARC76 account derivation and session persistence
 - `guided-token-launch.spec.ts` - Guided token launch flow (supported auth-first path)
 - `compliance-orchestration.spec.ts` - KYC/AML compliance orchestration
 - `compliance-dashboard.spec.ts` - Compliance dashboard and metrics
@@ -59,12 +125,13 @@ Tests are organized by feature:
 - `team-management.spec.ts` - Team collaboration features
 - `lifecycle-cockpit.spec.ts` - Token lifecycle monitoring
 - `vision-insights-workspace.spec.ts` - Analytics and insights
+- `navigation-parity-wcag.spec.ts` - Navigation parity and WCAG AA accessibility
 
-**Legacy Tests (Deprecated):**
-- `token-utility-recommendations.spec.ts` - Uses legacy `/create/wizard` path (skipped)
-- `token-wizard-whitelist.spec.ts` - Uses legacy `/create/wizard` path (skipped)
+**Redirect Compatibility (Isolated — not canonical path tests):**
+- `auth-first-onboarding-closure.spec.ts` - Legacy route redirect coverage
+- `route-determinism-ci-stable.spec.ts` - CI-stable redirect determinism
 
-**Note:** Tests using `/create/wizard` are deprecated in favor of `/launch/guided` which is the supported auth-first token creation flow.
+**Note:** Tests using `/create/wizard` as a *redirect source* are correct. Tests asserting `/create/wizard` is a canonical destination are **wrong and must be updated**.
 
 ## Writing Tests
 
@@ -129,28 +196,13 @@ await expect(title).toBeVisible({ timeout: 45000 })
 
 ```typescript
 import { test, expect } from '@playwright/test';
+import { withAuth, suppressBrowserErrors } from './helpers/auth';
 
 test.describe('Feature Name', () => {
   test.beforeEach(async ({ page }) => {
-    // Suppress browser console errors (prevent Playwright exit code 1)
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed): ${msg.text()}`)
-      }
-    })
-    
-    page.on('pageerror', error => {
-      console.log(`Page error (suppressed): ${error.message}`)
-    })
-    
-    // Set up authenticated session
-    await page.addInitScript(() => {
-      localStorage.setItem('algorand_user', JSON.stringify({
-        address: 'TEST_ADDRESS',
-        email: 'test@example.com',
-        isConnected: true,
-      }))
-    });
+    // ✅ Use canonical helpers — never inline localStorage.setItem
+    suppressBrowserErrors(page)
+    await withAuth(page)  // validates ARC76 contract + seeds localStorage
   });
 
   test('should display protected page', async ({ page }) => {
@@ -166,7 +218,7 @@ test.describe('Feature Name', () => {
   });
 
   test('should redirect unauthenticated user', async ({ page }) => {
-    // Clear auth state
+    // Clear auth state — use clearAuthScript in beforeEach, clearAuth after goto
     await page.goto('/')
     await page.waitForLoadState('networkidle')
     await page.evaluate(() => localStorage.clear())

@@ -33,59 +33,26 @@
  */
 
 import { test, expect } from '@playwright/test'
+import { withAuth, suppressBrowserErrors as suppressConsoleErrors, clearAuthScript as clearHardenedSession } from './helpers/auth'
 
 // ---------------------------------------------------------------------------
-// Auth bootstrap helpers — structured, contract-validated (not raw localStorage)
+// File-specific test user constant
 // ---------------------------------------------------------------------------
 
 /**
- * Bootstraps a valid, connected session in the browser's localStorage.
- * Uses the HardenedSession shape from confidenceHardening.ts so all fields
- * are validated before the session is used. This is the approved pattern.
+ * Canonical session for confidence-hardening tests. Uses a distinctive address
+ * so any accidental address leak to the UI can be identified as coming from
+ * this specific test suite. Validated against the ARC76 contract by withAuth().
  */
-async function bootstrapHardenedSession(
-  page: import('@playwright/test').Page,
-  overrides: Record<string, unknown> = {},
-) {
-  await page.addInitScript((sessionData: Record<string, unknown>) => {
-    // Validate contract fields before writing (mirrors validateHardenedSession)
-    const session = {
-      address: 'CONFIDENCE_HARDENING_TEST_ADDRESS',
-      email: 'confidence-hardening@biatec.io',
-      isConnected: true,
-      ...sessionData,
-    }
-    if (!session.address || !session.email || typeof session.isConnected !== 'boolean') {
-      console.error('[confidence-hardening] bootstrapHardenedSession: contract validation failed')
-      return
-    }
-    localStorage.setItem('algorand_user', JSON.stringify(session))
-  }, overrides)
+const CONFIDENCE_HARDENING_USER = {
+  address: 'CONFIDENCE_HARDENING_TEST_ADDRESS',
+  email: 'confidence-hardening@biatec.io',
+  isConnected: true as const,
 }
 
-/**
- * Clears the session to simulate a guest (unauthenticated) user.
- */
-async function clearHardenedSession(page: import('@playwright/test').Page) {
-  await page.addInitScript(() => {
-    localStorage.removeItem('algorand_user')
-  })
-}
-
-/**
- * Standard before-each handler: suppress console errors and set up
- * page error suppression for test stability.
- */
-function suppressConsoleErrors(page: import('@playwright/test').Page) {
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') {
-      console.log(`[E2E suppressed error]: ${msg.text()}`)
-    }
-  })
-  page.on('pageerror', (error) => {
-    console.log(`[E2E suppressed page error]: ${error.message}`)
-  })
-}
+/** Convenience alias — seeds the hardened session using the canonical withAuth helper */
+const bootstrapHardenedSession = (page: import('@playwright/test').Page) =>
+  withAuth(page, CONFIDENCE_HARDENING_USER)
 
 // ---------------------------------------------------------------------------
 // Suite: Canonical launch route — navigation and visibility
