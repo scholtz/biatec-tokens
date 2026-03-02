@@ -327,6 +327,7 @@ import { launchTelemetryService } from '../services/launchTelemetry'
 import { competitiveTelemetryService } from '../services/CompetitiveTelemetryService'
 import { getLaunchErrorMessage, classifyLaunchError } from '../utils/launchErrorMessages'
 import { ISSUANCE_TEST_IDS, consumeIssuanceReturnPath } from '../utils/authFirstIssuanceWorkspace'
+import { validatePreflightChecks } from '../utils/launchPreflightValidator'
 
 // Lazy load step components
 import OrganizationProfileStep from '../components/guidedLaunch/steps/OrganizationProfileStep.vue'
@@ -463,6 +464,22 @@ const handleEconomicsUpdate = (economics: TokenEconomics) => {
 const handleSubmit = async () => {
   try {
     const userEmail = authStore.user?.email || ''
+    const form = guidedLaunchStore.currentForm
+
+    // Run preflight validation before submitting
+    const preflight = validatePreflightChecks({
+      tokenName: form.tokenIntent?.tokenName,
+      tokenSymbol: form.tokenIntent?.tokenSymbol?.toUpperCase(),
+      totalSupply: form.tokenIntent?.totalSupply,
+      network: form.selectedTemplate?.network,
+      templateSelected: !!form.selectedTemplate,
+      organizationVerified: !!form.organizationProfile?.companyName,
+      complianceComplete: completedSteps.value.length >= 4,
+    })
+    if (!preflight.passed) {
+      console.warn('[Preflight] Launch blocked:', preflight.summary)
+    }
+
     const response = await guidedLaunchStore.submitLaunch(userEmail)
     submissionResponse.value = response
     showSuccessModal.value = true

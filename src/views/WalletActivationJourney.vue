@@ -217,6 +217,7 @@ import ReadinessCheckItem from '../components/walletActivation/ReadinessCheckIte
 import ActionCard from '../components/walletActivation/ActionCard.vue';
 import { CompetitiveTelemetryService } from '../services/CompetitiveTelemetryService';
 import { analyticsService } from '../services/analytics';
+import { saveCheckpoint, loadCheckpoint, clearCheckpoint, isCheckpointResumable } from '../utils/walletActivationCheckpoint';
 import {
   RocketLaunchIcon,
   CheckCircleIcon,
@@ -234,6 +235,7 @@ const telemetryService = CompetitiveTelemetryService.getInstance();
 
 const currentStep = ref(1);
 const totalSteps = 4;
+const JOURNEY_ID = 'wallet_activation';
 const selectedAction = ref<'guided' | 'compare' | null>(null);
 const checkingProvisioning = ref(false);
 
@@ -296,6 +298,9 @@ const nextStep = () => {
   if (currentStep.value < totalSteps) {
     currentStep.value++;
     
+    // Persist progress so the journey can be resumed if interrupted
+    saveCheckpoint(JOURNEY_ID, currentStep.value, totalSteps, [currentStep.value - 1]);
+
     // Track milestone
     analyticsService.trackEvent({
       event: 'wallet_activation_step',
@@ -367,6 +372,9 @@ const retryProvisioningCheck = async () => {
 const completeActivation = () => {
   currentStep.value = 4;
   
+  // Clear checkpoint on successful completion
+  clearCheckpoint(JOURNEY_ID);
+
   // Track activation completion
   analyticsService.trackEvent({
     event: 'wallet_activation_complete',
@@ -395,6 +403,12 @@ const navigateToAction = () => {
 };
 
 onMounted(async () => {
+  // Restore checkpoint if journey was interrupted
+  const checkpointResult = loadCheckpoint(JOURNEY_ID);
+  if (isCheckpointResumable(checkpointResult) && checkpointResult.checkpoint) {
+    currentStep.value = checkpointResult.checkpoint.step;
+  }
+
   // Track journey start
   analyticsService.trackEvent({
     event: 'wallet_activation_started',

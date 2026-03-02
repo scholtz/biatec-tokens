@@ -186,6 +186,7 @@ import {
   ExclamationCircleIcon,
   QuestionMarkCircleIcon,
 } from '@heroicons/vue/24/outline'
+import { computeTrustScore, buildDefaultTrustSignals } from '../utils/trustScoreCalculator'
 
 const insightsStore = useInsightsStore()
 const showExportMenu = ref(false)
@@ -201,6 +202,19 @@ const scenarioInputs = computed(() => insightsStore.scenarioInputs)
 const scenarioOutputs = computed(() => insightsStore.scenarioOutputs)
 const loading = computed(() => insightsStore.loading)
 const error = computed(() => insightsStore.error)
+
+// Platform trust score derived from insights data
+const platformTrustScore = computed(() => {
+  const signals = buildDefaultTrustSignals({
+    hasComplianceCheck: metrics.value.some(m => m.id === 'compliance_score' && Number(m.value) > 0),
+    hasAttestation: metrics.value.some(m => m.id === 'attestation_count' && Number(m.value) > 0),
+    hasAuditTrail: true,
+    hasTokenMetadata: metrics.value.some(m => m.id === 'token_count' && Number(m.value) > 0),
+    organizationVerified: true,
+    identityVerified: true,
+  })
+  return computeTrustScore(signals)
+})
 
 const metricsAsRecord = computed(() => {
   const record: Record<string, number | string> = {}
