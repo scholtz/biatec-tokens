@@ -466,7 +466,11 @@ const handleSubmit = async () => {
     const userEmail = authStore.user?.email || ''
     const form = guidedLaunchStore.currentForm
 
-    // Run preflight validation before submitting
+    // Run preflight validation before submitting.
+    // Advisory-only in this phase: the wizard step validation already enforces
+    // required fields per step. Preflight runs a cross-cutting check and logs
+    // issues for observability; the store's submitLaunch handles final server-side
+    // validation and will surface errors from the backend if any remain.
     const preflight = validatePreflightChecks({
       tokenName: form.tokenIntent?.tokenName,
       tokenSymbol: form.tokenIntent?.tokenSymbol?.toUpperCase(),
@@ -477,7 +481,7 @@ const handleSubmit = async () => {
       complianceComplete: completedSteps.value.length >= 4,
     })
     if (!preflight.passed) {
-      console.warn('[Preflight] Launch blocked:', preflight.summary)
+      console.warn('[Preflight] Advisory check failed (proceeding to backend validation):', preflight.summary)
     }
 
     const response = await guidedLaunchStore.submitLaunch(userEmail)

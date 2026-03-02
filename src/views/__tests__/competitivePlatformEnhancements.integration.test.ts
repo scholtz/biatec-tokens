@@ -239,7 +239,7 @@ describe('runTokenConfigCheck: edge cases', () => {
     expect(checks.find(c => c.id === 'total-supply')!.status).toBe('pass')
   })
 
-  it('fails supply of 0.5 (but truthy)', () => {
+  it('passes supply of 0.5 (positive fraction)', () => {
     // 0.5 > 0, so should pass
     const checks = runTokenConfigCheck({ totalSupply: 0.5 })
     expect(checks.find(c => c.id === 'total-supply')!.status).toBe('pass')

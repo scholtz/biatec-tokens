@@ -134,6 +134,11 @@ describe('runTokenConfigCheck', () => {
     expect(checks.find(c => c.id === 'total-supply')!.status).toBe('fail')
   })
 
+  it('passes supply of 0.5 (positive fraction)', () => {
+    const checks = runTokenConfigCheck({ ...validConfig, totalSupply: 0.5 })
+    expect(checks.find(c => c.id === 'total-supply')!.status).toBe('pass')
+  })
+
   it('fails total supply when undefined', () => {
     const checks = runTokenConfigCheck({ ...validConfig, totalSupply: undefined })
     expect(checks.find(c => c.id === 'total-supply')!.status).toBe('fail')
