@@ -24,7 +24,7 @@
  * These tests use pure logic — no browser, no DOM, no arbitrary timeouts.
  *
  * Issue: MVP Hardening: Canonical Guided Launch, Accessibility, and Backend-Verified Auth Quality Gates
- * Fixes: #523
+ * Closes: #523
  * Roadmap: https://raw.githubusercontent.com/scholtz/biatec-tokens/refs/heads/main/business-owner-roadmap.md
  */
 
@@ -223,7 +223,14 @@ describe('MVP Hardening — Route Guard Auth Contract (AC #3)', () => {
 // ---------------------------------------------------------------------------
 
 describe('MVP Hardening — Accessibility Contract (AC #2)', () => {
-  // Simulate key HTML fragments from the touched views
+  // Simulate key HTML fragments from the touched views.
+  // These are representative snapshots of the key accessibility anchors in each component.
+  // ⚠️  Maintenance note: these fixtures are manually synchronized with actual component
+  //     templates and must be updated when the corresponding components change:
+  //       - src/components/layout/Navbar.vue (skip-to-content, nav aria-label)
+  //       - src/views/GuidedTokenLaunch.vue (main landmark, h1, stepper nav)
+  //       - src/views/ComplianceDashboard.vue (back button aria-label, focus ring)
+  //     Unit-level coverage for full render behavior is in component-specific test files.
 
   const navbarHtml = `
     <a href="#main-content" class="sr-only focus:not-sr-only">Skip to main content</a>
@@ -286,9 +293,10 @@ describe('MVP Hardening — Accessibility Contract (AC #2)', () => {
     expect(hasErrorAlertRole(complianceDashboardHtml)).toBe(true)
   })
 
-  it('ComplianceDashboard findAccessibilityViolations: main landmark present', () => {
-    // The ComplianceDashboard component itself doesn't need a nav landmark
-    // (it's a content page, not a navigation page). We verify the main landmark exists.
+  it('ComplianceDashboard has main landmark present (content page, nav is in layout)', () => {
+    // The ComplianceDashboard component renders as a content page nested inside MainLayout.
+    // The nav landmark lives in the parent layout, not in this component's HTML fragment.
+    // We verify only the main landmark, which this component owns.
     expect(hasMainLandmark(complianceDashboardHtml)).toBe(true)
   })
 

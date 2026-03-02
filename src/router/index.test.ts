@@ -122,16 +122,32 @@ describe('Router Authentication Guards', () => {
 // MVP Hardening — Canonical /launch/guided route guard behavior
 // ---------------------------------------------------------------------------
 
+import { isAuthRequired, isGuestAccessible, AUTH_REQUIRED_PATHS, GUEST_ACCESSIBLE_PATHS } from '../utils/authFirstHardening'
+
 describe('MVP Hardening — Canonical Route Guard', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.clearAllMocks()
   })
 
-  it('should classify /launch/guided as protected route requiring auth', () => {
-    // The router has requiresAuth: true for GuidedTokenLaunch
-    const guidedLaunchRequiresAuth = true
-    expect(guidedLaunchRequiresAuth).toBe(true)
+  it('AUTH_REQUIRED_PATHS includes /launch/guided (mirrors router requiresAuth meta)', () => {
+    // The authFirstHardening AUTH_REQUIRED_PATHS array mirrors the router's requiresAuth meta.
+    // This verifies the router config indirectly through the shared contract.
+    // Note: direct router import is not used because the router guard setup
+    // (router.beforeEach) requires a browser environment and would fail in unit tests.
+    expect(AUTH_REQUIRED_PATHS).toContain('/launch/guided')
+  })
+
+  it('isAuthRequired /launch/guided returns true (mirrors router requiresAuth: true)', () => {
+    expect(isAuthRequired('/launch/guided')).toBe(true)
+  })
+
+  it('GUEST_ACCESSIBLE_PATHS includes / (mirrors router: Home has no requiresAuth)', () => {
+    expect(GUEST_ACCESSIBLE_PATHS).toContain('/')
+  })
+
+  it('isGuestAccessible / returns true (mirrors router: Home has no requiresAuth)', () => {
+    expect(isGuestAccessible('/')).toBe(true)
   })
 
   it('should store /launch/guided as redirect target for unauthenticated access', () => {
@@ -156,13 +172,6 @@ describe('MVP Hardening — Canonical Route Guard', () => {
     }))
     const hasSessionAfterLogin = !!localStorage.getItem('algorand_user')
     expect(hasSessionAfterLogin).toBe(true)
-  })
-
-  it('should allow /dashboard access without auth (exception route)', () => {
-    // Per router: TokenDashboard does not enforce auth redirect — shows empty state
-    localStorage.removeItem('algorand_user')
-    const dashboardIsException = true // router has special case for TokenDashboard
-    expect(dashboardIsException).toBe(true)
   })
 
   it('should NOT include /create in canonical token creation path', () => {
