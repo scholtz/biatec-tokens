@@ -1,3 +1,5 @@
+export const ANNUAL_DISCOUNT_PERCENT = 20
+
 export interface StripeProduct {
   id: string
   priceId: string
@@ -113,6 +115,104 @@ export const stripeProducts: StripeProduct[] = [
       'Legal documentation support'
     ],
     support: 'Dedicated support (4h response) + account manager'
+  },
+  // Annual plans (20% discount)
+  {
+    id: 'prod_basic_annual',
+    priceId: 'price_basic_annual',
+    name: 'Basic Plan',
+    description: 'Essential token creation for small teams',
+    mode: 'subscription',
+    price: 278.40,
+    currency: 'usd',
+    interval: 'year',
+    tier: 'basic',
+    tokenLimit: 10,
+    tokenStandards: ['ASA', 'ARC3', 'ARC19'],
+    networks: ['Algorand Testnet', 'VOI Testnet'],
+    features: [
+      'Up to 10 tokens per month',
+      'Basic token standards (ASA, ARC3, ARC19)',
+      'Testnet deployment only',
+      'Email support',
+      'Basic compliance templates'
+    ],
+    complianceFeatures: ['Basic MICA templates', 'Standard documentation'],
+    support: 'Email support (48h response)'
+  },
+  {
+    id: 'prod_professional_annual',
+    priceId: 'price_professional_annual',
+    name: 'Professional Plan',
+    description: 'Advanced features for growing businesses',
+    mode: 'subscription',
+    price: 950.40,
+    currency: 'usd',
+    interval: 'year',
+    tier: 'professional',
+    tokenLimit: 'unlimited',
+    tokenStandards: ['ASA', 'ARC3', 'ARC19', 'ARC69', 'ARC200', 'ERC20'],
+    networks: ['Algorand Mainnet', 'Algorand Testnet', 'VOI', 'Ethereum Sepolia', 'Arbitrum Sepolia'],
+    features: [
+      'Unlimited token creation',
+      'All AVM standards + ERC20',
+      'Mainnet and testnet deployment',
+      'Priority support',
+      'Advanced compliance tools',
+      'API access',
+      'Batch deployment'
+    ],
+    complianceFeatures: [
+      'Full MICA compliance suite',
+      'KYC/AML templates',
+      'Automated compliance monitoring',
+      'Audit trails'
+    ],
+    support: 'Priority support (24h response)'
+  },
+  {
+    id: 'prod_enterprise_annual',
+    priceId: 'price_enterprise_annual',
+    name: 'Enterprise Plan',
+    description: 'Complete solution for regulated issuance',
+    mode: 'subscription',
+    price: 2870.40,
+    currency: 'usd',
+    interval: 'year',
+    tier: 'enterprise',
+    tokenLimit: 'unlimited',
+    tokenStandards: ['ASA', 'ARC3', 'ARC19', 'ARC69', 'ARC200', 'ARC72', 'ERC20', 'ERC721'],
+    networks: [
+      'Algorand Mainnet',
+      'Algorand Testnet',
+      'VOI',
+      'Aramid',
+      'Ethereum Mainnet',
+      'Arbitrum',
+      'Base',
+      'All testnets'
+    ],
+    features: [
+      'Unlimited token creation',
+      'All token standards (AVM + EVM)',
+      'All networks including mainnet',
+      'Dedicated support',
+      'White-label options',
+      'Custom compliance workflows',
+      'Advanced API access',
+      'Batch deployment',
+      'Custom integrations'
+    ],
+    complianceFeatures: [
+      'Full MICA compliance suite',
+      'Advanced KYC/AML integration',
+      'Real-time compliance monitoring',
+      'Automated reporting',
+      'Custom compliance workflows',
+      'Regulatory audit support',
+      'Legal documentation support'
+    ],
+    support: 'Dedicated support (4h response) + account manager'
   }
 ]
 
@@ -122,4 +222,18 @@ export const getProductById = (id: string): StripeProduct | undefined => {
 
 export const getProductByPriceId = (priceId: string): StripeProduct | undefined => {
   return stripeProducts.find(product => product.priceId === priceId)
+}
+
+export const getProductByTierAndInterval = (
+  tier: 'basic' | 'professional' | 'enterprise',
+  interval: 'month' | 'year'
+): StripeProduct | undefined => {
+  return stripeProducts.find(p => p.tier === tier && p.interval === interval)
+}
+
+export const getMonthlyEquivalentPrice = (product: StripeProduct): number => {
+  if (product.interval === 'year') {
+    return product.price / 12
+  }
+  return product.price
 }

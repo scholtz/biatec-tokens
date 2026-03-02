@@ -53,6 +53,18 @@
             <div class="w-2 h-2 rounded-full bg-green-500"></div>
             <span class="text-xs font-medium text-green-700 dark:text-green-300">{{ subscriptionStore.currentProduct.name }}</span>
           </div>
+          <!-- Trial Status Badge -->
+          <div v-else-if="authStore.isAuthenticated && subscriptionStore.isInTrial" class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+            <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+            <span class="text-xs font-medium text-blue-700 dark:text-blue-300">
+              Trial · {{ subscriptionStore.trialDaysRemaining }}d left
+            </span>
+          </div>
+          <!-- Past Due Badge -->
+          <div v-else-if="authStore.isAuthenticated && subscriptionStore.subscription?.subscription_status === 'past_due'" class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-red-100 dark:bg-red-900/30">
+            <div class="w-2 h-2 rounded-full bg-red-500"></div>
+            <span class="text-xs font-medium text-red-700 dark:text-red-300">Past Due</span>
+          </div>
 
           <!-- Sign In Button (when not authenticated) -->
           <div v-if="!authStore.isAuthenticated">

@@ -505,6 +505,7 @@ describe('Subscription Store', () => {
         cancel_at_period_end: false,
         payment_method_brand: null,
         payment_method_last4: null,
+        trial_end: null,
       } as any
       
       const date = store.currentPeriodEnd
@@ -549,6 +550,7 @@ describe('Subscription Store', () => {
         cancel_at_period_end: false,
         payment_method_brand: null,
         payment_method_last4: null,
+        trial_end: null,
       }
       await store.cancelSubscription()
       expect(store.subscription?.cancel_at_period_end).toBe(true)
@@ -567,6 +569,7 @@ describe('Subscription Store', () => {
         cancel_at_period_end: false,
         payment_method_brand: null,
         payment_method_last4: null,
+        trial_end: null,
       }
       await store.cancelSubscription()
       expect(store.loading).toBe(false)
@@ -594,6 +597,7 @@ describe('Subscription Store', () => {
         cancel_at_period_end: true,
         payment_method_brand: null,
         payment_method_last4: null,
+        trial_end: null,
       }
       await store.reactivateSubscription()
       expect(store.subscription?.cancel_at_period_end).toBe(false)
@@ -612,6 +616,7 @@ describe('Subscription Store', () => {
         cancel_at_period_end: false,
         payment_method_brand: null,
         payment_method_last4: null,
+        trial_end: null,
       }
       await store.reactivateSubscription()
       expect(store.loading).toBe(false)
@@ -623,6 +628,164 @@ describe('Subscription Store', () => {
       await store.reactivateSubscription()
       expect(store.subscription).toBeNull()
       expect(store.loading).toBe(false)
+    })
+  })
+
+  describe('isInTrial computed', () => {
+    it('should return true when status is trialing and trial_end is in the future', () => {
+      const store = useSubscriptionStore()
+      const futureTimestamp = Math.floor(Date.now() / 1000) + 7 * 86400 // 7 days from now
+      store.subscription = {
+        customer_id: 'cus_trial',
+        subscription_id: null,
+        subscription_status: 'trialing',
+        price_id: null,
+        current_period_start: null,
+        current_period_end: null,
+        cancel_at_period_end: false,
+        payment_method_brand: null,
+        payment_method_last4: null,
+        trial_end: futureTimestamp,
+      }
+      expect(store.isInTrial).toBe(true)
+    })
+
+    it('should return false when status is not trialing', () => {
+      const store = useSubscriptionStore()
+      store.subscription = {
+        customer_id: 'cus_123',
+        subscription_id: 'sub_123',
+        subscription_status: 'active',
+        price_id: 'price_test_basic',
+        current_period_start: null,
+        current_period_end: null,
+        cancel_at_period_end: false,
+        payment_method_brand: null,
+        payment_method_last4: null,
+        trial_end: Math.floor(Date.now() / 1000) + 86400,
+      }
+      expect(store.isInTrial).toBe(false)
+    })
+
+    it('should return false when trial_end is in the past', () => {
+      const store = useSubscriptionStore()
+      const pastTimestamp = Math.floor(Date.now() / 1000) - 86400
+      store.subscription = {
+        customer_id: 'cus_trial',
+        subscription_id: null,
+        subscription_status: 'trialing',
+        price_id: null,
+        current_period_start: null,
+        current_period_end: null,
+        cancel_at_period_end: false,
+        payment_method_brand: null,
+        payment_method_last4: null,
+        trial_end: pastTimestamp,
+      }
+      expect(store.isInTrial).toBe(false)
+    })
+
+    it('should return false when subscription is null', () => {
+      const store = useSubscriptionStore()
+      store.subscription = null
+      expect(store.isInTrial).toBe(false)
+    })
+  })
+
+  describe('trialDaysRemaining computed', () => {
+    it('should return correct days remaining when in trial', () => {
+      const store = useSubscriptionStore()
+      const daysAhead = 10
+      const trialEnd = Math.floor(Date.now() / 1000) + daysAhead * 86400
+      store.subscription = {
+        customer_id: 'cus_trial',
+        subscription_id: null,
+        subscription_status: 'trialing',
+        price_id: null,
+        current_period_start: null,
+        current_period_end: null,
+        cancel_at_period_end: false,
+        payment_method_brand: null,
+        payment_method_last4: null,
+        trial_end: trialEnd,
+      }
+      // Allow 1 day variance due to millisecond timing
+      expect(store.trialDaysRemaining).toBeGreaterThanOrEqual(daysAhead - 1)
+      expect(store.trialDaysRemaining).toBeLessThanOrEqual(daysAhead + 1)
+    })
+
+    it('should return 0 when not in trial', () => {
+      const store = useSubscriptionStore()
+      store.subscription = null
+      expect(store.trialDaysRemaining).toBe(0)
+    })
+  })
+
+  describe('validateCoupon', () => {
+    it('should return valid result for a known coupon code', async () => {
+      const store = useSubscriptionStore()
+      const result = await store.validateCoupon('LAUNCH20')
+      expect(result.valid).toBe(true)
+      expect(result.discountPercent).toBe(20)
+      expect(store.appliedCoupon).not.toBeNull()
+    })
+
+    it('should return invalid result for an unknown coupon code', async () => {
+      const store = useSubscriptionStore()
+      const result = await store.validateCoupon('INVALID999')
+      expect(result.valid).toBe(false)
+      expect(store.appliedCoupon).toBeNull()
+    })
+
+    it('should be case-insensitive for coupon codes', async () => {
+      const store = useSubscriptionStore()
+      const result = await store.validateCoupon('launch20')
+      expect(result.valid).toBe(true)
+    })
+  })
+
+  describe('clearCoupon', () => {
+    it('should clear the applied coupon', async () => {
+      const store = useSubscriptionStore()
+      await store.validateCoupon('LAUNCH20')
+      expect(store.appliedCoupon).not.toBeNull()
+      store.clearCoupon()
+      expect(store.appliedCoupon).toBeNull()
+    })
+  })
+
+  describe('currentTier computed', () => {
+    it('should return null when no subscription', () => {
+      const store = useSubscriptionStore()
+      store.subscription = null
+      expect(store.currentTier).toBeNull()
+    })
+  })
+
+  describe('hasFeatureAccess', () => {
+    it('should return false when not active and not trialing', () => {
+      const store = useSubscriptionStore()
+      store.subscription = null
+      expect(store.hasFeatureAccess('basic')).toBe(false)
+    })
+
+    it('should return false when active but tier is lower than required', () => {
+      const store = useSubscriptionStore()
+      store.subscription = {
+        customer_id: 'cus_123',
+        subscription_id: 'sub_123',
+        subscription_status: 'active',
+        price_id: 'price_test_basic',
+        current_period_start: null,
+        current_period_end: null,
+        cancel_at_period_end: false,
+        payment_method_brand: null,
+        payment_method_last4: null,
+        trial_end: null,
+      }
+      // With price_test_basic, getProductByPriceId returns { tier: undefined }
+      // hasFeatureAccess('professional') should be false
+      expect(store.hasFeatureAccess('professional')).toBe(false)
     })
   })
 });

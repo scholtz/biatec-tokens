@@ -276,4 +276,193 @@ test.describe('Subscription & Billing Management', () => {
       expect(content).toContain('Payment Cancelled')
     })
   })
+
+  test.describe('Annual Billing Toggle', () => {
+    test('should display the billing interval toggle', async ({ page }) => {
+      await page.goto('/subscription/pricing')
+      await page.waitForLoadState('networkidle')
+
+      const toggle = page.locator('[data-testid="billing-toggle"]')
+      await expect(toggle).toBeVisible({ timeout: 15000 })
+    })
+
+    test('should display annual discount badge', async ({ page }) => {
+      await page.goto('/subscription/pricing')
+      await page.waitForLoadState('networkidle')
+
+      const badge = page.locator('[data-testid="annual-discount-badge"]')
+      await expect(badge).toBeVisible({ timeout: 15000 })
+      await expect(badge).toContainText('20%')
+    })
+
+    test('should show annual billing note when toggle is switched to annual', async ({ page }) => {
+      await page.goto('/subscription/pricing')
+      await page.waitForLoadState('networkidle')
+
+      const toggle = page.locator('[data-testid="billing-interval-toggle"]')
+      await toggle.click()
+      await page.waitForTimeout(500)
+
+      const annualNote = page.locator('[data-testid="basic-annual-note"]').first()
+      await expect(annualNote).toBeVisible({ timeout: 10000 })
+    })
+
+    test('should display lower monthly-equivalent price when annual is selected', async ({ page }) => {
+      await page.goto('/subscription/pricing')
+      await page.waitForLoadState('networkidle')
+
+      // Get monthly price
+      const monthlyPriceEl = page.locator('[data-testid="basic-price"]').first()
+      await expect(monthlyPriceEl).toBeVisible({ timeout: 15000 })
+      const monthlyText = await monthlyPriceEl.textContent()
+
+      // Switch to annual
+      const toggle = page.locator('[data-testid="billing-interval-toggle"]')
+      await toggle.click()
+      await page.waitForTimeout(500)
+
+      const annualPriceEl = page.locator('[data-testid="basic-price"]').first()
+      const annualText = await annualPriceEl.textContent()
+
+      // Annual price per month should be less than monthly price
+      const monthly = parseFloat(monthlyText?.replace('$', '') ?? '0')
+      const annual = parseFloat(annualText?.replace('$', '') ?? '0')
+      expect(annual).toBeLessThan(monthly)
+    })
+  })
+
+  test.describe('Coupon Code', () => {
+    test('should display coupon code input field', async ({ page }) => {
+      await page.goto('/subscription/pricing')
+      await page.waitForLoadState('networkidle')
+
+      const couponInput = page.locator('[data-testid="coupon-input"]')
+      await expect(couponInput).toBeVisible({ timeout: 15000 })
+    })
+
+    test('should show apply button for coupon', async ({ page }) => {
+      await page.goto('/subscription/pricing')
+      await page.waitForLoadState('networkidle')
+
+      const applyBtn = page.locator('[data-testid="coupon-apply-btn"]')
+      await expect(applyBtn).toBeVisible({ timeout: 15000 })
+    })
+
+    test('should apply a valid coupon code and show success message', async ({ page }) => {
+      await page.goto('/subscription/pricing')
+      await page.waitForLoadState('networkidle')
+
+      const couponInput = page.locator('[data-testid="coupon-input"]')
+      await couponInput.fill('LAUNCH20')
+
+      const applyBtn = page.locator('[data-testid="coupon-apply-btn"]')
+      await applyBtn.click()
+
+      // Wait for validation to complete
+      const message = page.locator('[data-testid="coupon-message"]')
+      await expect(message).toBeVisible({ timeout: 10000 })
+      const msgText = await message.textContent()
+      expect(msgText).toContain('20%')
+    })
+
+    test('should show error for invalid coupon code', async ({ page }) => {
+      await page.goto('/subscription/pricing')
+      await page.waitForLoadState('networkidle')
+
+      const couponInput = page.locator('[data-testid="coupon-input"]')
+      await couponInput.fill('BADCODE999')
+
+      const applyBtn = page.locator('[data-testid="coupon-apply-btn"]')
+      await applyBtn.click()
+
+      const message = page.locator('[data-testid="coupon-message"]')
+      await expect(message).toBeVisible({ timeout: 10000 })
+      const msgText = await message.textContent()
+      expect(msgText?.toLowerCase()).toContain('invalid')
+    })
+  })
+
+  test.describe('Trial Countdown Banner', () => {
+    test('should show trial banner for user in trial', async ({ page }) => {
+      // Set up trial subscription in localStorage
+      const trialEnd = Math.floor(Date.now() / 1000) + 10 * 86400 // 10 days from now
+      await page.addInitScript((args) => {
+        localStorage.setItem('algorand_user', args.user)
+        localStorage.setItem('subscription_cache', args.cache)
+      }, {
+        user: AUTH_USER,
+        cache: JSON.stringify({
+          customer_id: 'cus_trial',
+          subscription_id: 'sub_trial',
+          subscription_status: 'trialing',
+          price_id: 'price_basic_monthly',
+          current_period_start: null,
+          current_period_end: trialEnd,
+          cancel_at_period_end: false,
+          payment_method_brand: null,
+          payment_method_last4: null,
+          trial_end: trialEnd,
+        })
+      })
+
+      await page.goto('/dashboard')
+      await page.waitForLoadState('networkidle')
+      await page.waitForTimeout(5000)
+
+      const banner = page.locator('[data-testid="trial-countdown-banner"]')
+      await expect(banner).toBeVisible({ timeout: 20000 })
+    })
+
+    test('trial banner should show days remaining', async ({ page }) => {
+      const daysAhead = 7
+      const trialEnd = Math.floor(Date.now() / 1000) + daysAhead * 86400
+      await page.addInitScript((args) => {
+        localStorage.setItem('algorand_user', args.user)
+        localStorage.setItem('subscription_cache', args.cache)
+      }, {
+        user: AUTH_USER,
+        cache: JSON.stringify({
+          customer_id: 'cus_trial',
+          subscription_id: 'sub_trial',
+          subscription_status: 'trialing',
+          price_id: 'price_basic_monthly',
+          current_period_start: null,
+          current_period_end: trialEnd,
+          cancel_at_period_end: false,
+          payment_method_brand: null,
+          payment_method_last4: null,
+          trial_end: trialEnd,
+        })
+      })
+
+      await page.goto('/dashboard')
+      await page.waitForLoadState('networkidle')
+      await page.waitForTimeout(5000)
+
+      const banner = page.locator('[data-testid="trial-countdown-banner"]')
+      await expect(banner).toBeVisible({ timeout: 20000 })
+      const text = await banner.textContent()
+      expect(text).toContain('days left')
+    })
+  })
+
+  test.describe('Feature Gate Component', () => {
+    test('pricing page plan cards have data-testid attributes', async ({ page }) => {
+      await page.goto('/subscription/pricing')
+      await page.waitForLoadState('networkidle')
+
+      await expect(page.locator('[data-testid="plan-card-basic"]')).toBeVisible({ timeout: 15000 })
+      await expect(page.locator('[data-testid="plan-card-professional"]')).toBeVisible({ timeout: 15000 })
+      await expect(page.locator('[data-testid="plan-card-enterprise"]')).toBeVisible({ timeout: 15000 })
+    })
+
+    test('pricing page has select plan buttons', async ({ page }) => {
+      await page.goto('/subscription/pricing')
+      await page.waitForLoadState('networkidle')
+
+      await expect(page.locator('[data-testid="select-basic-btn"]')).toBeVisible({ timeout: 15000 })
+      await expect(page.locator('[data-testid="select-professional-btn"]')).toBeVisible({ timeout: 15000 })
+      await expect(page.locator('[data-testid="select-enterprise-btn"]')).toBeVisible({ timeout: 15000 })
+    })
+  })
 })

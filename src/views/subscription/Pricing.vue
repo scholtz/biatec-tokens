@@ -14,6 +14,72 @@
           </p>
         </div>
 
+        <!-- Billing Interval Toggle -->
+        <div class="flex items-center justify-center gap-4 mb-8" data-testid="billing-toggle">
+          <span :class="billingInterval === 'month' ? 'text-white font-semibold' : 'text-gray-400'" class="text-sm">Monthly</span>
+          <button
+            @click="toggleBillingInterval"
+            class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+            :class="billingInterval === 'year' ? 'bg-blue-600' : 'bg-gray-600'"
+            role="switch"
+            :aria-checked="billingInterval === 'year'"
+            aria-label="Toggle annual billing"
+            data-testid="billing-interval-toggle"
+          >
+            <span
+              class="inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform"
+              :class="billingInterval === 'year' ? 'translate-x-6' : 'translate-x-1'"
+            />
+          </button>
+          <span :class="billingInterval === 'year' ? 'text-white font-semibold' : 'text-gray-400'" class="text-sm">
+            Annual
+            <Badge variant="success" size="sm" class="ml-1.5" data-testid="annual-discount-badge">Save 20%</Badge>
+          </span>
+        </div>
+
+        <!-- Coupon Code -->
+        <div class="flex justify-center mb-8">
+          <div class="flex items-center gap-2 w-full max-w-sm" data-testid="coupon-section">
+            <input
+              v-model="couponInput"
+              type="text"
+              placeholder="Coupon code"
+              class="flex-1 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              :class="couponStatus === 'valid' ? 'border-green-500' : couponStatus === 'invalid' ? 'border-red-500' : ''"
+              data-testid="coupon-input"
+              @keyup.enter="handleApplyCoupon"
+            />
+            <Button
+              @click="handleApplyCoupon"
+              variant="outline"
+              size="sm"
+              :loading="couponLoading"
+              :disabled="!couponInput.trim()"
+              data-testid="coupon-apply-btn"
+            >
+              Apply
+            </Button>
+            <button
+              v-if="couponStatus === 'valid'"
+              @click="handleClearCoupon"
+              class="text-gray-400 hover:text-white transition-colors"
+              aria-label="Remove coupon"
+              data-testid="coupon-clear-btn"
+            >
+              <XMarkIcon class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        <div class="flex justify-center -mt-5 mb-8" v-if="couponMessage">
+          <p
+            class="text-sm"
+            :class="couponStatus === 'valid' ? 'text-green-400' : 'text-red-400'"
+            data-testid="coupon-message"
+          >
+            {{ couponMessage }}
+          </p>
+        </div>
+
         <!-- Current Subscription Status -->
         <div v-if="authStore.isAuthenticated && subscriptionStore.subscription" class="mb-8">
           <Card variant="glass" padding="md">
@@ -65,13 +131,16 @@
         <!-- Pricing Cards - Three Tiers -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           <!-- Basic Plan -->
-          <Card variant="default" padding="lg" class="relative flex flex-col">
+          <Card variant="default" padding="lg" class="relative flex flex-col" data-testid="plan-card-basic">
             <div class="text-center mb-6">
               <h3 class="text-2xl font-bold text-white mb-2">Basic</h3>
-              <div class="mb-4">
-                <span class="text-5xl font-bold text-white">$29</span>
+              <div class="mb-1">
+                <span class="text-5xl font-bold text-white" data-testid="basic-price">${{ getDisplayPrice('basic') }}</span>
                 <span class="text-gray-400">/month</span>
               </div>
+              <p v-if="billingInterval === 'year'" class="text-sm text-green-400 mb-2" data-testid="basic-annual-note">
+                Billed ${{ getAnnualTotal('basic') }}/year
+              </p>
               <p class="text-gray-300">Essential tools for small teams</p>
             </div>
             
@@ -107,23 +176,27 @@
               full-width
               :loading="loading && selectedTier === 'basic'"
               :disabled="isCurrentPlan('basic')"
+              data-testid="select-basic-btn"
             >
               {{ getPlanButtonText('basic') }}
             </Button>
           </Card>
 
           <!-- Professional Plan - Most Popular -->
-          <Card variant="elevated" padding="lg" class="relative flex flex-col border-2 border-blue-500">
+          <Card variant="elevated" padding="lg" class="relative flex flex-col border-2 border-blue-500" data-testid="plan-card-professional">
             <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
               <Badge variant="info" size="lg" class="px-6 py-2">Most Popular</Badge>
             </div>
             
             <div class="text-center mb-6 mt-2">
               <h3 class="text-2xl font-bold text-white mb-2">Professional</h3>
-              <div class="mb-4">
-                <span class="text-5xl font-bold text-white">$99</span>
+              <div class="mb-1">
+                <span class="text-5xl font-bold text-white" data-testid="professional-price">${{ getDisplayPrice('professional') }}</span>
                 <span class="text-gray-400">/month</span>
               </div>
+              <p v-if="billingInterval === 'year'" class="text-sm text-green-400 mb-2" data-testid="professional-annual-note">
+                Billed ${{ getAnnualTotal('professional') }}/year
+              </p>
               <p class="text-gray-300">Advanced features for growing businesses</p>
             </div>
             
@@ -167,19 +240,23 @@
               full-width
               :loading="loading && selectedTier === 'professional'"
               :disabled="isCurrentPlan('professional')"
+              data-testid="select-professional-btn"
             >
               {{ getPlanButtonText('professional') }}
             </Button>
           </Card>
 
           <!-- Enterprise Plan -->
-          <Card variant="default" padding="lg" class="relative flex flex-col border border-purple-500/50">
+          <Card variant="default" padding="lg" class="relative flex flex-col border border-purple-500/50" data-testid="plan-card-enterprise">
             <div class="text-center mb-6">
               <h3 class="text-2xl font-bold text-white mb-2">Enterprise</h3>
-              <div class="mb-4">
-                <span class="text-5xl font-bold text-white">$299</span>
+              <div class="mb-1">
+                <span class="text-5xl font-bold text-white" data-testid="enterprise-price">${{ getDisplayPrice('enterprise') }}</span>
                 <span class="text-gray-400">/month</span>
               </div>
+              <p v-if="billingInterval === 'year'" class="text-sm text-green-400 mb-2" data-testid="enterprise-annual-note">
+                Billed ${{ getAnnualTotal('enterprise') }}/year
+              </p>
               <p class="text-gray-300">Complete solution for regulated issuance</p>
             </div>
             
@@ -227,6 +304,7 @@
               full-width
               :loading="loading && selectedTier === 'enterprise'"
               :disabled="isCurrentPlan('enterprise')"
+              data-testid="select-enterprise-btn"
             >
               {{ getPlanButtonText('enterprise') }}
             </Button>
@@ -398,7 +476,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useSubscriptionStore } from '../../stores/subscription'
 import { telemetryService } from '../../services/TelemetryService'
-import { stripeProducts } from '../../stripe-config'
+import { stripeProducts, ANNUAL_DISCOUNT_PERCENT, getProductByTierAndInterval } from '../../stripe-config'
 import Card from '../../components/ui/Card.vue'
 import Button from '../../components/ui/Button.vue'
 import Badge from '../../components/ui/Badge.vue'
@@ -417,6 +495,63 @@ const authStore = useAuthStore()
 const subscriptionStore = useSubscriptionStore()
 const loading = ref(false)
 const selectedTier = ref<string>('')
+const billingInterval = ref<'month' | 'year'>('month')
+const couponInput = ref('')
+const couponLoading = ref(false)
+const couponStatus = ref<'idle' | 'valid' | 'invalid'>('idle')
+const couponMessage = ref('')
+
+const toggleBillingInterval = () => {
+  billingInterval.value = billingInterval.value === 'month' ? 'year' : 'month'
+}
+
+const getDisplayPrice = (tier: 'basic' | 'professional' | 'enterprise'): string => {
+  const product = getProductByTierAndInterval(tier, billingInterval.value)
+  if (!product) {
+    // Fallback: compute from monthly
+    const monthly = getProductByTierAndInterval(tier, 'month')
+    if (!monthly) return '—'
+    const discounted = monthly.price * (1 - ANNUAL_DISCOUNT_PERCENT / 100)
+    return discounted.toFixed(2).replace('.00', '')
+  }
+  const monthlyEquiv = product.interval === 'year' ? product.price / 12 : product.price
+  return monthlyEquiv.toFixed(2).replace(/\.00$/, '')
+}
+
+const getAnnualTotal = (tier: 'basic' | 'professional' | 'enterprise'): string => {
+  const product = getProductByTierAndInterval(tier, 'year')
+  if (!product) return '—'
+  return product.price.toFixed(2).replace(/\.00$/, '')
+}
+
+const handleApplyCoupon = async () => {
+  const code = couponInput.value.trim()
+  if (!code) return
+
+  couponLoading.value = true
+  couponStatus.value = 'idle'
+  couponMessage.value = ''
+
+  try {
+    const result = await subscriptionStore.validateCoupon(code)
+    if (result.valid) {
+      couponStatus.value = 'valid'
+      couponMessage.value = result.message ?? `Coupon applied: ${result.discountPercent}% off`
+    } else {
+      couponStatus.value = 'invalid'
+      couponMessage.value = result.message ?? 'Invalid coupon code'
+    }
+  } finally {
+    couponLoading.value = false
+  }
+}
+
+const handleClearCoupon = () => {
+  couponInput.value = ''
+  couponStatus.value = 'idle'
+  couponMessage.value = ''
+  subscriptionStore.clearCoupon()
+}
 
 const comparisonFeatures = [
   { name: 'Monthly token limit', basic: '10 tokens', professional: 'Unlimited', enterprise: 'Unlimited' },
@@ -518,7 +653,11 @@ const handleSelectPlan = async (tier: string) => {
     return
   }
 
-  const product = stripeProducts.find(p => p.tier === tier)
+  const product = getProductByTierAndInterval(
+    tier as 'basic' | 'professional' | 'enterprise',
+    billingInterval.value
+  ) ?? stripeProducts.find(p => p.tier === tier && p.interval === 'month')
+
   if (!product) {
     console.error('Product not found for tier:', tier)
     return
@@ -537,8 +676,9 @@ const handleSelectPlan = async (tier: string) => {
       source: 'pricing_page_enhanced'
     })
     
-    // Create checkout session (currently mocked)
-    await subscriptionStore.createCheckoutSession(product.priceId, 'subscription')
+    // Create checkout session with optional coupon
+    const couponCode = subscriptionStore.appliedCoupon?.code
+    await subscriptionStore.createCheckoutSession(product.priceId, 'subscription', couponCode)
   } finally {
     loading.value = false
     selectedTier.value = ''
