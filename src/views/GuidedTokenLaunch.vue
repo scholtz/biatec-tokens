@@ -478,7 +478,7 @@ const handleSubmit = async () => {
       network: form.selectedTemplate?.network,
       templateSelected: !!form.selectedTemplate,
       organizationVerified: !!form.organizationProfile?.companyName,
-      complianceComplete: completedSteps.value.length >= 4,
+      complianceComplete: completedSteps.value >= 4,
     })
     if (!preflight.passed) {
       console.warn('[Preflight] Advisory check failed (proceeding to backend validation):', preflight.summary)

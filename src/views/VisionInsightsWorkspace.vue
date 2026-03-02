@@ -150,6 +150,30 @@
           />
         </section>
 
+        <!-- Platform Trust Score -->
+        <section>
+          <h2 class="text-xl font-semibold text-white mb-4">Platform Trust Score</h2>
+          <Card variant="glass" padding="md">
+            <div class="flex items-center gap-6">
+              <div class="text-center">
+                <div class="text-4xl font-bold" :class="platformTrustScore.colorClass">
+                  {{ platformTrustScore.score }}
+                </div>
+                <div class="text-sm text-gray-400 mt-1">/ 100</div>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-base font-semibold text-white">{{ platformTrustScore.label }}</span>
+                  <span class="text-xs px-2 py-0.5 rounded-full bg-white/10 text-gray-300">
+                    {{ platformTrustScore.verifiedSignalCount }}/{{ platformTrustScore.totalSignalCount }} signals verified
+                  </span>
+                </div>
+                <p class="text-sm text-gray-400">{{ platformTrustScore.description }}</p>
+              </div>
+            </div>
+          </Card>
+        </section>
+
         <!-- Cohort Analysis -->
         <section>
           <h2 class="text-xl font-semibold text-white mb-4">Wallet Segment Analysis</h2>
