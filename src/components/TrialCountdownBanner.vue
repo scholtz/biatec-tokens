@@ -8,7 +8,7 @@
     leave-to-class="opacity-0 -translate-y-2"
   >
     <div
-      v-if="subscriptionStore.isInTrial"
+      v-if="subscriptionStore.isInTrial && !dismissed"
       class="w-full px-4 py-2.5 flex items-center justify-between gap-4 text-sm"
       :class="bannerClass"
       data-testid="trial-countdown-banner"
@@ -30,7 +30,7 @@
           Add Payment Method
         </router-link>
         <button
-          @click="dismissed = true"
+          @click="dismissBanner"
           class="ml-2 opacity-70 hover:opacity-100 transition-opacity"
           aria-label="Dismiss trial banner"
           data-testid="trial-banner-dismiss"
@@ -48,7 +48,31 @@ import { useSubscriptionStore } from '../stores/subscription'
 import { ClockIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 const subscriptionStore = useSubscriptionStore()
-const dismissed = ref(false)
+
+// Persist dismissed state per session so banner reappears on next login
+const DISMISSED_KEY = 'trial_banner_dismissed_until'
+const isDismissedInSession = (): boolean => {
+  try {
+    const until = sessionStorage.getItem(DISMISSED_KEY)
+    return !!until && new Date(until) > new Date()
+  } catch {
+    return false
+  }
+}
+
+const dismissed = ref(isDismissedInSession())
+
+const dismissBanner = () => {
+  dismissed.value = true
+  try {
+    // Dismiss until end of day so it can reappear next day if still in trial
+    const endOfDay = new Date()
+    endOfDay.setHours(23, 59, 59, 999)
+    sessionStorage.setItem(DISMISSED_KEY, endOfDay.toISOString())
+  } catch {
+    // sessionStorage may not be available in all environments
+  }
+}
 
 const daysRemaining = computed(() => subscriptionStore.trialDaysRemaining)
 

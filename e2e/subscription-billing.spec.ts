@@ -12,7 +12,7 @@
  * Issue: Implement Subscription & Billing Management UI
  */
 
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
 const AUTH_USER = JSON.stringify({
   address: 'TESTADDRESS123',
@@ -20,6 +20,31 @@ const AUTH_USER = JSON.stringify({
   email: 'user@example.com',
   isConnected: true,
 })
+
+const setupTrialSubscription = async (page: Page, daysAhead: number) => {
+  const trialEnd = Math.floor(Date.now() / 1000) + daysAhead * 86400
+  await page.addInitScript(
+    (args) => {
+      localStorage.setItem('algorand_user', args.user)
+      localStorage.setItem('subscription_cache', args.cache)
+    },
+    {
+      user: AUTH_USER,
+      cache: JSON.stringify({
+        customer_id: 'cus_trial',
+        subscription_id: 'sub_trial',
+        subscription_status: 'trialing',
+        price_id: 'price_basic_monthly',
+        current_period_start: null,
+        current_period_end: trialEnd,
+        cancel_at_period_end: false,
+        payment_method_brand: null,
+        payment_method_last4: null,
+        trial_end: trialEnd,
+      }),
+    }
+  )
+}
 
 test.describe('Subscription & Billing Management', () => {
   test.beforeEach(async ({ page }) => {
@@ -384,26 +409,7 @@ test.describe('Subscription & Billing Management', () => {
 
   test.describe('Trial Countdown Banner', () => {
     test('should show trial banner for user in trial', async ({ page }) => {
-      // Set up trial subscription in localStorage
-      const trialEnd = Math.floor(Date.now() / 1000) + 10 * 86400 // 10 days from now
-      await page.addInitScript((args) => {
-        localStorage.setItem('algorand_user', args.user)
-        localStorage.setItem('subscription_cache', args.cache)
-      }, {
-        user: AUTH_USER,
-        cache: JSON.stringify({
-          customer_id: 'cus_trial',
-          subscription_id: 'sub_trial',
-          subscription_status: 'trialing',
-          price_id: 'price_basic_monthly',
-          current_period_start: null,
-          current_period_end: trialEnd,
-          cancel_at_period_end: false,
-          payment_method_brand: null,
-          payment_method_last4: null,
-          trial_end: trialEnd,
-        })
-      })
+      await setupTrialSubscription(page, 10)
 
       await page.goto('/dashboard')
       await page.waitForLoadState('networkidle')
@@ -414,26 +420,7 @@ test.describe('Subscription & Billing Management', () => {
     })
 
     test('trial banner should show days remaining', async ({ page }) => {
-      const daysAhead = 7
-      const trialEnd = Math.floor(Date.now() / 1000) + daysAhead * 86400
-      await page.addInitScript((args) => {
-        localStorage.setItem('algorand_user', args.user)
-        localStorage.setItem('subscription_cache', args.cache)
-      }, {
-        user: AUTH_USER,
-        cache: JSON.stringify({
-          customer_id: 'cus_trial',
-          subscription_id: 'sub_trial',
-          subscription_status: 'trialing',
-          price_id: 'price_basic_monthly',
-          current_period_start: null,
-          current_period_end: trialEnd,
-          cancel_at_period_end: false,
-          payment_method_brand: null,
-          payment_method_last4: null,
-          trial_end: trialEnd,
-        })
-      })
+      await setupTrialSubscription(page, 7)
 
       await page.goto('/dashboard')
       await page.waitForLoadState('networkidle')

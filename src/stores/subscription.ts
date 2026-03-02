@@ -34,6 +34,8 @@ export interface CouponResult {
   message?: string
 }
 
+const TIER_ORDER: Record<string, number> = { basic: 1, professional: 2, enterprise: 3 }
+
 export const useSubscriptionStore = defineStore('subscription', () => {
   const subscription = ref<SubscriptionData | null>(null)
   const loading = ref(false)
@@ -89,9 +91,8 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   })
 
   const hasFeatureAccess = (requiredTier: 'basic' | 'professional' | 'enterprise'): boolean => {
-    const tierOrder: Record<string, number> = { basic: 1, professional: 2, enterprise: 3 }
-    const userTierLevel = tierOrder[currentTier.value ?? ''] ?? 0
-    const requiredLevel = tierOrder[requiredTier] ?? 1
+    const userTierLevel = TIER_ORDER[currentTier.value ?? ''] ?? 0
+    const requiredLevel = TIER_ORDER[requiredTier] ?? 1
     return (isActive.value || isInTrial.value) && userTierLevel >= requiredLevel
   }
 
@@ -216,7 +217,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
   }
 
   const validateCoupon = async (code: string): Promise<CouponResult> => {
-    // In a real app, this would validate against /api/subscriptions/coupons/:code
+    // TODO: Replace with real API call to /api/subscriptions/coupons/:code
     await new Promise(resolve => setTimeout(resolve, 500))
     
     // Mock coupon validation
