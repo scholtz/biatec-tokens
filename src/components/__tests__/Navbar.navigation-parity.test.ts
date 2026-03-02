@@ -54,16 +54,16 @@ describe("Navigation Parity - Single Source of Truth", () => {
     expect(dashItem?.routeName).toBe("TokenDashboard");
   });
 
-  it("should include Marketplace", () => {
-    const marketItem = NAV_ITEMS.find((item) => item.path === "/marketplace");
-    expect(marketItem).toBeDefined();
-    expect(marketItem?.routeName).toBe("Marketplace");
+  it("should include Compliance", () => {
+    const complianceItem = NAV_ITEMS.find((item) => item.path === "/compliance/setup");
+    expect(complianceItem).toBeDefined();
+    expect(complianceItem?.routeName).toBe("ComplianceSetupWorkspace");
   });
 
-  it("should include Attestations", () => {
-    const attestItem = NAV_ITEMS.find((item) => item.path === "/attestations");
-    expect(attestItem).toBeDefined();
-    expect(attestItem?.routeName).toBe("AttestationsDashboard");
+  it("should include Pricing", () => {
+    const pricingItem = NAV_ITEMS.find((item) => item.path === "/subscription/pricing");
+    expect(pricingItem).toBeDefined();
+    expect(pricingItem?.routeName).toBe("Pricing");
   });
 
   it("should include Settings", () => {

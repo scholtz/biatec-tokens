@@ -182,8 +182,9 @@ describe("Auth-First Route Guard Logic", () => {
 
   it("should redirect all protected auth-first NAV_ITEMS routes when unauthenticated", () => {
     // All nav items that require auth should redirect when user is not logged in
+    // Public routes (/, /subscription/pricing) are excluded from the auth-guard check
     const protectedPaths = NAV_ITEMS.filter(
-      (item) => item.path !== "/" && item.path !== "/marketplace" && item.path !== "/subscription/pricing",
+      (item) => item.path !== "/" && item.path !== "/subscription/pricing",
     ).map((item) => item.path);
 
     for (const path of protectedPaths) {

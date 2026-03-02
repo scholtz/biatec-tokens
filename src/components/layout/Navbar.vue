@@ -194,16 +194,14 @@ import {
   ChevronDownIcon,
   ArrowRightOnRectangleIcon,
   CurrencyDollarIcon,
-  ChartPieIcon,
   RocketLaunchIcon,
   ShieldCheckIcon,
   CommandLineIcon,
-  BriefcaseIcon,
-  BuildingOffice2Icon,
-  SparklesIcon,
 } from "@heroicons/vue/24/outline";
+import type { FunctionalComponent, SVGAttributes } from "vue";
 import EmailAuthModal from "../EmailAuthModal.vue";
 import { useAuthStore } from "../../stores/auth";
+import { NAV_ITEMS } from "../../constants/navItems";
 
 const route = useRoute();
 const router = useRouter();
@@ -215,19 +213,23 @@ const showMobileMenu = ref(false);
 const showUserMenu = ref(false);
 const showAuthModal = ref(false);
 
-const navigationItems = [
-  { name: "Home", path: "/", icon: HomeIcon },
-  { name: "Launchpad", path: "/launchpad", icon: SparklesIcon },
-  { name: "Operations", path: "/operations", icon: BuildingOffice2Icon },
-  { name: "Cockpit", path: "/cockpit", icon: CommandLineIcon },
-  { name: "Guided Launch", path: "/launch/guided", icon: RocketLaunchIcon },
-  { name: "Compliance", path: "/compliance/setup", icon: ShieldCheckIcon },
-  { name: "Dashboard", path: "/dashboard", icon: ChartBarIcon },
-  { name: "Portfolio", path: "/portfolio", icon: BriefcaseIcon },
-  { name: "Insights", path: "/insights", icon: ChartPieIcon },
-  { name: "Pricing", path: "/subscription/pricing", icon: CurrencyDollarIcon },
-  { name: "Settings", path: "/settings", icon: Cog6ToothIcon },
-];
+/** Icon mapping for canonical nav items — kept local so navItems.ts stays dependency-free. */
+const NAV_ICONS: Record<string, FunctionalComponent<SVGAttributes>> = {
+  "/": HomeIcon,
+  "/launch/guided": RocketLaunchIcon,
+  "/dashboard": ChartBarIcon,
+  "/cockpit": CommandLineIcon,
+  "/compliance/setup": ShieldCheckIcon,
+  "/subscription/pricing": CurrencyDollarIcon,
+  "/settings": Cog6ToothIcon,
+};
+
+/** Canonical navigation items derived from single source of truth (navItems.ts). */
+const navigationItems = NAV_ITEMS.map((item) => ({
+  name: item.label,
+  path: item.path,
+  icon: NAV_ICONS[item.path] ?? HomeIcon,
+}));
 
 const isActiveRoute = (path: string) => {
   return route.path === path;

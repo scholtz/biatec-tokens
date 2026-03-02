@@ -18,11 +18,10 @@ describe('Navbar - Navigation Parity', () => {
     history: createWebHistory(),
     routes: [
       { path: '/', name: 'Home', component: { template: '<div>Home</div>' } },
-      { path: '/cockpit', name: 'Cockpit', component: { template: '<div>Cockpit</div>' } },
+      { path: '/cockpit', name: 'LifecycleCockpit', component: { template: '<div>Cockpit</div>' } },
       { path: '/launch/guided', name: 'GuidedTokenLaunch', component: { template: '<div>Guided</div>' } },
       { path: '/compliance/setup', name: 'ComplianceSetupWorkspace', component: { template: '<div>Compliance</div>' } },
       { path: '/dashboard', name: 'TokenDashboard', component: { template: '<div>Dashboard</div>' } },
-      { path: '/insights', name: 'VisionInsightsWorkspace', component: { template: '<div>Insights</div>' } },
       { path: '/subscription/pricing', name: 'Pricing', component: { template: '<div>Pricing</div>' } },
       { path: '/settings', name: 'Settings', component: { template: '<div>Settings</div>' } }
     ]
@@ -75,7 +74,6 @@ describe('Navbar - Navigation Parity', () => {
       'Guided Launch', // canonical create flow entry (not legacy /create)
       'Compliance',
       'Dashboard',
-      'Insights',
       'Pricing',
       'Settings'
     ]
