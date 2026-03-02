@@ -35,42 +35,50 @@ test.describe('Improvement 1: Launch Preflight Validator in Guided Token Launch'
   test('Guided Token Launch page loads and shows the launch wizard', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000)
 
-    // Heading confirms the page loaded
+    // Semantic wait: heading visible proves auth store initialized + component mounted
     const heading = page.getByRole('heading', { name: /guided token launch/i }).first()
-    const hasHeading = await heading.isVisible({ timeout: 30000 }).catch(() => false)
+    const hasHeading = await heading.isVisible({ timeout: 45000 }).catch(() => false)
     expect(hasHeading).toBe(true)
   })
 
   test('Guided Token Launch contains a progress indicator', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000)
+
+    // Semantic wait: page heading must appear before checking progress indicator
+    const heading = page.getByRole('heading', { name: /guided token launch/i }).first()
+    await heading.waitFor({ state: 'visible', timeout: 45000 }).catch(() => null)
 
     // Progress bar or step indicator must be present (validates wizard structure)
     const progressEl = page
       .locator('[role="progressbar"], [data-testid="issuance-progress-bar"], .rounded-full')
       .first()
-    const hasProgress = await progressEl.isVisible({ timeout: 30000 }).catch(() => false)
+    const hasProgress = await progressEl.isVisible({ timeout: 15000 }).catch(() => false)
     expect(hasProgress).toBe(true)
   })
 
   test('Guided Token Launch shows step navigation controls', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000)
+
+    // Semantic wait: page heading must appear before checking buttons
+    const heading = page.getByRole('heading', { name: /guided token launch/i }).first()
+    await heading.waitFor({ state: 'visible', timeout: 45000 }).catch(() => null)
 
     // At least one button should be visible in the wizard
     const button = page.getByRole('button').first()
-    const hasButton = await button.isVisible({ timeout: 30000 }).catch(() => false)
+    const hasButton = await button.isVisible({ timeout: 15000 }).catch(() => false)
     expect(hasButton).toBe(true)
   })
 
   test('Guided Token Launch has no wallet connector UI', async ({ page }) => {
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000)
+
+    // Semantic wait: page heading confirms content is loaded before text assertion
+    const heading = page.getByRole('heading', { name: /guided token launch/i }).first()
+    await heading.waitFor({ state: 'visible', timeout: 45000 }).catch(() => null)
 
     const bodyText = await page.locator('body').innerText()
     expect(bodyText).not.toMatch(/connect wallet/i)
@@ -84,17 +92,20 @@ test.describe('Improvement 2: Trust Score Calculator in Vision Insights Workspac
   test('Vision Insights Workspace page loads successfully', async ({ page }) => {
     await page.goto('/insights')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000)
 
+    // Semantic wait: heading visible proves component mounted
     const heading = page.getByRole('heading', { name: /vision insights workspace/i }).first()
-    const hasHeading = await heading.isVisible({ timeout: 20000 }).catch(() => false)
+    const hasHeading = await heading.isVisible({ timeout: 30000 }).catch(() => false)
     expect(hasHeading).toBe(true)
   })
 
   test('Vision Insights Workspace renders metrics or loading/error state', async ({ page }) => {
     await page.goto('/insights')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000)
+
+    // Semantic wait: heading proves component mounted before checking sub-elements
+    const heading = page.getByRole('heading', { name: /vision insights workspace/i }).first()
+    await heading.waitFor({ state: 'visible', timeout: 30000 }).catch(() => null)
 
     // The page must show one of: metrics grid, loading spinner, or error state
     const metricsSection = page.locator('[data-testid="metrics-grid"], .grid').first()
@@ -111,7 +122,10 @@ test.describe('Improvement 2: Trust Score Calculator in Vision Insights Workspac
   test('Vision Insights Workspace has export functionality', async ({ page }) => {
     await page.goto('/insights')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000)
+
+    // Semantic wait: heading proves component mounted before checking buttons
+    const heading = page.getByRole('heading', { name: /vision insights workspace/i }).first()
+    await heading.waitFor({ state: 'visible', timeout: 30000 }).catch(() => null)
 
     const exportButton = page.getByRole('button', { name: /export/i }).first()
     const hasExport = await exportButton.isVisible({ timeout: 15000 }).catch(() => false)
@@ -121,7 +135,10 @@ test.describe('Improvement 2: Trust Score Calculator in Vision Insights Workspac
   test('Vision Insights Workspace has no wallet connector UI', async ({ page }) => {
     await page.goto('/insights')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
+
+    // Semantic wait: heading proves page is loaded before text assertion
+    const heading = page.getByRole('heading', { name: /vision insights workspace/i }).first()
+    await heading.waitFor({ state: 'visible', timeout: 30000 }).catch(() => null)
 
     const bodyText = await page.locator('body').innerText()
     expect(bodyText).not.toMatch(/connect wallet/i)
@@ -134,17 +151,20 @@ test.describe('Improvement 3: Wallet Activation Checkpoint in Wallet Activation 
   test('Wallet Activation Journey page loads with progress indicator', async ({ page }) => {
     await page.goto('/activation/wallet')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000)
 
+    // Semantic wait: heading visible proves auth store initialized + component mounted
     const heading = page.getByRole('heading', { name: /wallet activation journey/i }).first()
-    const hasHeading = await heading.isVisible({ timeout: 30000 }).catch(() => false)
+    const hasHeading = await heading.isVisible({ timeout: 45000 }).catch(() => false)
     expect(hasHeading).toBe(true)
   })
 
   test('Wallet Activation Journey shows first step content', async ({ page }) => {
     await page.goto('/activation/wallet')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000)
+
+    // Semantic wait: page heading must appear before checking step content
+    const heading = page.getByRole('heading', { name: /wallet activation journey/i }).first()
+    await heading.waitFor({ state: 'visible', timeout: 45000 }).catch(() => null)
 
     // Step 1 heading or welcome content should be visible
     const welcomeEl = page.getByText(/welcome|token journey|step 1/i).first()
@@ -155,7 +175,10 @@ test.describe('Improvement 3: Wallet Activation Checkpoint in Wallet Activation 
   test('Wallet Activation checkpoint is saved in localStorage after step advance', async ({ page }) => {
     await page.goto('/activation/wallet')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000)
+
+    // Semantic wait: page must be loaded before interacting with buttons
+    const heading = page.getByRole('heading', { name: /wallet activation journey/i }).first()
+    await heading.waitFor({ state: 'visible', timeout: 45000 }).catch(() => null)
 
     // Click the Next/Continue button to advance to step 2
     const nextBtn = page.getByRole('button', { name: /next|continue|get started/i }).first()
@@ -163,7 +186,11 @@ test.describe('Improvement 3: Wallet Activation Checkpoint in Wallet Activation 
 
     if (hasNext) {
       await nextBtn.click()
-      await page.waitForTimeout(1500)
+      // Semantic wait: wait for localStorage update via polling (no arbitrary timeout)
+      await page.waitForFunction(
+        () => localStorage.getItem('wallet_activation_checkpoint_wallet_activation') !== null,
+        { timeout: 10000 },
+      ).catch(() => null)
 
       // Verify checkpoint was saved in localStorage
       const checkpoint = await page.evaluate(() =>
@@ -204,18 +231,20 @@ test.describe('Improvement 3: Wallet Activation Checkpoint in Wallet Activation 
 
     await page.goto('/activation/wallet')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000)
 
-    // Page should have loaded (with or without the resume — step 2 indicator may appear)
+    // Semantic wait: heading proves page mounted correctly
     const heading = page.getByRole('heading', { name: /wallet activation journey/i }).first()
-    const hasHeading = await heading.isVisible({ timeout: 30000 }).catch(() => false)
+    const hasHeading = await heading.isVisible({ timeout: 45000 }).catch(() => false)
     expect(hasHeading).toBe(true)
   })
 
   test('Wallet Activation Journey has no wallet connector UI', async ({ page }) => {
     await page.goto('/activation/wallet')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
+
+    // Semantic wait: heading proves page loaded before text assertion
+    const heading = page.getByRole('heading', { name: /wallet activation journey/i }).first()
+    await heading.waitFor({ state: 'visible', timeout: 45000 }).catch(() => null)
 
     const bodyText = await page.locator('body').innerText()
     expect(bodyText).not.toMatch(/WalletConnect/i)
@@ -229,7 +258,10 @@ test.describe('All improvements: auth-first and email-only compliance', () => {
   test('home page does not show wallet connector controls', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
+
+    // Semantic wait: home page h1 proves component mounted before text check
+    const h1 = page.locator('h1').first()
+    await h1.waitFor({ state: 'visible', timeout: 20000 }).catch(() => null)
 
     const bodyText = await page.locator('body').innerText()
     expect(bodyText).not.toMatch(/connect wallet/i)
@@ -240,11 +272,10 @@ test.describe('All improvements: auth-first and email-only compliance', () => {
   test('navigation contains expected authenticated routes', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000)
 
-    // Guided Launch link should be accessible after auth
+    // Semantic wait: nav link proves layout is rendered
     const guidedLink = page.getByRole('link', { name: /guided launch/i }).first()
-    const hasLink = await guidedLink.isVisible({ timeout: 15000 }).catch(() => false)
+    const hasLink = await guidedLink.isVisible({ timeout: 20000 }).catch(() => false)
     expect(hasLink).toBe(true)
   })
 })

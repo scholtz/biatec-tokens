@@ -7,35 +7,14 @@
  * - Home page exposes interoperability entry points
  * - No wallet connector UI is present (email/password only per roadmap)
  * - Compatibility messaging is deterministic and informative
+ *
+ * Auth model: email/password only — no wallet connectors.
+ * Session seeding: withAuth() from e2e/helpers/auth.ts — validates ARC76 contract.
+ * Zero waitForTimeout() — all waits use semantic readiness assertions.
  */
 
 import { test, expect } from '@playwright/test'
-
-// ─── Shared setup ─────────────────────────────────────────────────────────────
-
-const suppressBrowserErrors = (page: import('@playwright/test').Page) => {
-  page.on('console', msg => {
-    if (msg.type() === 'error') {
-      console.log(`[suppressed console error] ${msg.text()}`)
-    }
-  })
-  page.on('pageerror', error => {
-    console.log(`[suppressed page error] ${error.message}`)
-  })
-}
-
-const authenticatedInitScript = () => {
-  localStorage.setItem(
-    'algorand_user',
-    JSON.stringify({
-      address: 'INTEROP_TEST_ALGORAND_ADDRESS_1234567890',
-      name: 'Interop Test User',
-      email: 'interop@example.com',
-      provisioningStatus: 'active',
-      canDeploy: true,
-    }),
-  )
-}
+import { withAuth, suppressBrowserErrors } from './helpers/auth'
 
 // ─── Token Standards View ─────────────────────────────────────────────────────
 
@@ -85,18 +64,21 @@ test.describe('Token Standards View — Interoperability', () => {
 test.describe('Wallet Activation Journey — Auth-First', () => {
   test.beforeEach(async ({ page }) => {
     suppressBrowserErrors(page)
-    await page.addInitScript(authenticatedInitScript)
+    // Use canonical withAuth() helper — validates ARC76 contract before seeding
+    await withAuth(page, {
+      address: 'INTEROP_TEST_ALGORAND_ADDRESS_1234567890',
+      email: 'interop@example.com',
+      isConnected: true,
+    })
     await page.goto('/activation/wallet')
     await page.waitForLoadState('networkidle')
-    // Allow auth store and component to initialize
-    await page.waitForTimeout(5000)
   })
 
   test('should load the wallet activation journey page', async ({ page }) => {
     const heading = page
       .getByRole('heading', { name: /Wallet Activation Journey/i })
       .first()
-    await expect(heading).toBeVisible({ timeout: 30000 })
+    await expect(heading).toBeVisible({ timeout: 45000 })
   })
 
   test('should show step progress indicator', async ({ page }) => {
@@ -197,7 +179,8 @@ test.describe('Roadmap Alignment — No Wallet Connector Surfaces', () => {
     const btnVisible = await signInBtn.isVisible({ timeout: 5000 }).catch(() => false)
     if (btnVisible) {
       await signInBtn.click()
-      await page.waitForTimeout(1000)
+      // Semantic wait: email input visible proves modal is open
+      await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 10000 }).catch(() => null)
     }
 
     const bodyText = await page.locator('body').innerText()
