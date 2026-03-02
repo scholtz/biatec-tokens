@@ -472,12 +472,11 @@ const handleSubmit = async () => {
     // issues for observability; the store's submitLaunch handles final server-side
     // validation and will surface errors from the backend if any remain.
     const preflight = validatePreflightChecks({
-      tokenName: form.tokenIntent?.tokenName,
-      tokenSymbol: form.tokenIntent?.tokenSymbol?.toUpperCase(),
-      totalSupply: form.tokenIntent?.totalSupply,
+      tokenName: form.selectedTemplate?.name,
+      totalSupply: form.tokenEconomics?.totalSupply !== undefined ? Number(form.tokenEconomics.totalSupply) : undefined,
       network: form.selectedTemplate?.network,
       templateSelected: !!form.selectedTemplate,
-      organizationVerified: !!form.organizationProfile?.companyName,
+      organizationVerified: !!form.organizationProfile?.organizationName,
       complianceComplete: completedSteps.value >= 4,
     })
     if (!preflight.passed) {
