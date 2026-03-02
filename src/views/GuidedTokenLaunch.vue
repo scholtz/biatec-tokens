@@ -288,6 +288,25 @@
               </li>
             </ul>
           </div>
+
+          <!-- Post-deployment actionable guidance from tokenDeploymentNextSteps -->
+          <div
+            v-if="deploymentNextStepsResult.nextSteps.length"
+            class="space-y-2 border-t border-gray-700 pt-3"
+            data-testid="deployment-next-steps"
+          >
+            <h4 class="font-semibold text-white text-sm">Recommended Actions:</h4>
+            <ul class="space-y-1">
+              <li
+                v-for="step in deploymentNextStepsResult.nextSteps.slice(0, 3)"
+                :key="step.id"
+                class="text-sm text-gray-300 flex items-start gap-2"
+              >
+                <span class="mt-0.5 text-blue-400 shrink-0">›</span>
+                <span>{{ step.label }} — {{ step.description }}</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </template>
       <template #footer>
@@ -328,6 +347,7 @@ import { competitiveTelemetryService } from '../services/CompetitiveTelemetrySer
 import { getLaunchErrorMessage, classifyLaunchError } from '../utils/launchErrorMessages'
 import { ISSUANCE_TEST_IDS, consumeIssuanceReturnPath } from '../utils/authFirstIssuanceWorkspace'
 import { validatePreflightChecks } from '../utils/launchPreflightValidator'
+import { getDeploymentNextSteps } from '../utils/tokenDeploymentNextSteps'
 
 // Lazy load step components
 import OrganizationProfileStep from '../components/guidedLaunch/steps/OrganizationProfileStep.vue'
@@ -346,6 +366,7 @@ const authStore = useAuthStore()
 const isSaving = ref(false)
 const showSuccessModal = ref(false)
 const submissionResponse = ref<LaunchSubmissionResponse | null>(null)
+const deploymentNextStepsResult = ref(getDeploymentNextSteps('success'))
 
 // Computed from store
 const currentStep = computed(() => guidedLaunchStore.currentStep)
@@ -486,6 +507,17 @@ const handleSubmit = async () => {
     const response = await guidedLaunchStore.submitLaunch(userEmail)
     submissionResponse.value = response
     showSuccessModal.value = true
+
+    // Build post-deployment next steps guidance for the success modal.
+    // The utility handles ARC1400 → RWA classification internally.
+    const isRWA = form.tokenIntent?.tokenPurpose === 'rwa'
+    deploymentNextStepsResult.value = getDeploymentNextSteps('success', {
+      tokenName: form.selectedTemplate?.name,
+      tokenStandard: form.selectedTemplate?.id,
+      network: form.selectedTemplate?.network,
+      complianceComplete: completedSteps.value >= 4,
+      isRWA,
+    })
     
     // Track successful journey completion
     competitiveTelemetryService.completeJourney('token_creation', true, {
