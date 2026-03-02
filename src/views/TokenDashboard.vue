@@ -87,7 +87,7 @@
                 <i class="pi pi-sync mr-2"></i>
                 Refresh
               </button>
-              <router-link to="/create" class="btn-primary px-4 py-2 rounded-lg text-gray-900 dark:text-white font-medium flex items-center space-x-2">
+              <router-link to="/launch/guided" class="btn-primary px-4 py-2 rounded-lg text-gray-900 dark:text-white font-medium flex items-center space-x-2">
                 <i class="pi pi-plus"></i>
                 <span>Create Token</span>
               </router-link>
@@ -130,7 +130,7 @@
             <p class="text-gray-300 mb-6">
               {{ tokens.length === 0 ? "Create your first token to get started" : "No tokens match your current filters" }}
             </p>
-            <router-link to="/create" class="btn-primary px-6 py-3 rounded-xl text-gray-900 dark:text-white font-medium inline-flex items-center space-x-2">
+            <router-link to="/launch/guided" class="btn-primary px-6 py-3 rounded-xl text-gray-900 dark:text-white font-medium inline-flex items-center space-x-2">
               <i class="pi pi-plus"></i>
               <span>Create Token</span>
             </router-link>

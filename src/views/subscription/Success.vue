@@ -22,7 +22,7 @@
             </Button>
             
             <Button
-              @click="$router.push('/create')"
+              @click="$router.push('/launch/guided')"
               variant="outline"
               size="lg"
               full-width

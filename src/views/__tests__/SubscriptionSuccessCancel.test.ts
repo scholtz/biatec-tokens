@@ -30,6 +30,7 @@ const router = createRouter({
     { path: '/subscription/pricing', name: 'Pricing', component: { template: '<div>Pricing</div>' } },
     { path: '/dashboard', name: 'TokenDashboard', component: { template: '<div>Dashboard</div>' } },
     { path: '/create', name: 'TokenCreator', component: { template: '<div>Create</div>' } },
+    { path: '/launch/guided', name: 'GuidedTokenLaunch', component: { template: '<div>Guided Launch</div>' } },
     { path: '/', name: 'Home', component: { template: '<div>Home</div>' } },
   ],
 })

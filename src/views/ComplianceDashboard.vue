@@ -4,8 +4,8 @@
       <div class="max-w-7xl mx-auto">
         <!-- Header -->
         <div class="mb-8">
-          <button @click="$router.back()" class="mb-4 text-gray-400 hover:text-white transition-colors flex items-center space-x-2">
-            <i class="pi pi-arrow-left"></i>
+          <button @click="$router.back()" class="mb-4 text-gray-400 hover:text-white transition-colors flex items-center space-x-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded" aria-label="Go back">
+            <i class="pi pi-arrow-left" aria-hidden="true"></i>
             <span>Back</span>
           </button>
 

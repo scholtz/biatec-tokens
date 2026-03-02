@@ -168,9 +168,10 @@ const handleEmailSignup = () => {
 
 const handleCreateToken = () => {
   if (authStore.isAuthenticated) {
-    router.push("/create");
+    // Canonical auth-first guided launch — per business-owner-roadmap.md
+    router.push("/launch/guided");
   } else {
-    localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, "/create");
+    localStorage.setItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH, "/launch/guided");
     showAuthModal.value = true;
   }
 };
@@ -198,8 +199,8 @@ const handleAuthComplete = () => {
     localStorage.removeItem(AUTH_STORAGE_KEYS.REDIRECT_AFTER_AUTH);
     router.push(redirectPath);
   } else {
-    // Default to create token page after authentication
-    router.push("/create");
+    // Default to canonical guided launch after authentication
+    router.push("/launch/guided");
   }
 };
 
