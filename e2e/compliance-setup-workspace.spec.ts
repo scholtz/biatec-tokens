@@ -1,33 +1,28 @@
 /**
  * E2E tests for Compliance Setup Workspace
- * 
+ *
+ * Critical journey spec: uses `loginWithCredentials()` which validates the
+ * real backend auth contract when a backend is available, and falls back to
+ * ARC76-contract-validated localStorage seeding in CI without a live backend.
+ *
  * Tests the complete user journey through compliance configuration workflow.
  * Email/password authentication only - no wallet connectors.
  */
 
 import { test, expect } from '@playwright/test'
+import { loginWithCredentials, suppressBrowserErrors } from './helpers/auth'
 
 test.describe('Compliance Setup Workspace', () => {
   test.beforeEach(async ({ page }) => {
-    // Suppress browser console/page errors for mock environment
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed - mock environment): ${msg.text()}`)
-      }
-    })
-    
-    page.on('pageerror', error => {
-      console.log(`Page error (suppressed - mock environment): ${error.message}`)
-    })
-    
-    // Set up authenticated user with email/password (no wallet)
-    await page.addInitScript(() => {
-      localStorage.setItem('algorand_user', JSON.stringify({
-        address: 'test-user-address',
-        email: 'test@example.com',
-        isConnected: true,
-      }))
-    })
+    // Use centralized auth helper: attempts real backend login, falls back to
+    // ARC76-contract-validated localStorage seeding when backend is unavailable.
+    // This is the canonical auth pattern for critical journey specs (AC2).
+    suppressBrowserErrors(page)
+
+    // Critical journey: loginWithCredentials() attempts real backend auth
+    // (POST /api/auth/login). Falls back to localStorage seeding when backend
+    // is unreachable, keeping CI green without a live backend service.
+    await loginWithCredentials(page, 'compliance-setup@example.com')
   })
 
   // ============================================================================

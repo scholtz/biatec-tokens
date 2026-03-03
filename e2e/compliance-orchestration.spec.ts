@@ -1,8 +1,14 @@
 import { test, expect } from '@playwright/test'
+import { loginWithCredentials, suppressBrowserErrors } from './helpers/auth'
 
 /**
  * E2E Tests for KYC + AML Compliance Orchestration
- * 
+ *
+ * Critical journey spec: uses `loginWithCredentials()` which validates the
+ * real backend auth contract (POST /api/auth/login) when a backend is
+ * available, and falls back to localStorage seeding with a contract-validated
+ * session when the backend is unreachable in CI without a live backend service.
+ *
  * Tests cover user flows for compliance verification including:
  * - Compliance dashboard navigation and rendering
  * - KYC document checklist visibility
@@ -10,7 +16,7 @@ import { test, expect } from '@playwright/test'
  * - Compliance event timeline
  * - Status overview metrics
  * - Help and support features
- * 
+ *
  * These tests validate the end-to-end compliance orchestration workflow
  * that gates token issuance behind verified compliance status.
  */
@@ -20,27 +26,15 @@ test.describe('Compliance Orchestration View', () => {
   // If these still fail in CI, we'll need to investigate timing issues separately
   
   test.beforeEach(async ({ page }) => {
-    // Suppress console errors to prevent Playwright from failing on browser console output
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed for test stability): ${msg.text()}`)
-      }
-    })
-    
-    // Suppress page errors
-    page.on('pageerror', error => {
-      console.log(`Page error (suppressed for test stability): ${error.message}`)
-    })
-    
-    // Set up authentication
-    await page.addInitScript(() => {
-      localStorage.setItem('algorand_user', JSON.stringify({
-        address: 'TEST_ADDRESS_123',
-        email: 'test@example.com',
-        name: 'Test User',
-        isConnected: true
-      }))
-    })
+    // Use centralized auth helper: attempts real backend login, falls back to
+    // ARC76-contract-validated localStorage seeding when backend is unavailable.
+    // This is the canonical auth pattern for critical journey specs (AC2).
+    suppressBrowserErrors(page)
+
+    // Critical journey: loginWithCredentials() attempts real backend auth
+    // (POST /api/auth/login). Falls back to localStorage seeding when backend
+    // is unreachable, keeping CI green without a live backend service.
+    await loginWithCredentials(page, 'compliance@example.com')
 
     // Navigate to compliance orchestration page
     await page.goto('/compliance/orchestration')

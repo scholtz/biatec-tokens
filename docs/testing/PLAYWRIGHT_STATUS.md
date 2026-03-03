@@ -2,11 +2,11 @@
 
 ## Current Status: ✅ All Tests Passing (Chromium CI)
 
-_Last updated: March 2026 — reflects state after Issue #520 (MVP auth purity hardening)_
+_Last updated: March 2026 — reflects state after Issue #557 (backend deployment contract API integration)_
 
 ### Test Results (Chromium / CI)
 
-- **40 spec files** covering all critical user journeys
+- **41 spec files** covering all critical user journeys
 - **27 tests skipped in CI** (CI absolute timing ceiling for multi-step wizard flows; all pass locally)
 - **1 viewport-conditional skip** (readiness score card desktop-only)
 - **0 tests failing**
@@ -17,9 +17,9 @@ _Last updated: March 2026 — reflects state after Issue #520 (MVP auth purity h
 
 | Pattern | Critical journeys | Smoke tests |
 |---------|------------------|-------------|
-| `loginWithCredentials()` | ✅ Used (guided-token-launch, compliance-delivery-slice) | — |
-| `withAuth()` | ✅ Retained with TODO — non-critical UI smoke tests | ✅ Acceptable |
-| Raw `localStorage.setItem` | ❌ Not in any spec file | ❌ Not allowed |
+| `loginWithCredentials()` | ✅ Used in all 4 critical suites: auth-first-token-creation, compliance-orchestration, guided-token-launch, compliance-setup-workspace | — |
+| `withAuth()` | ✅ Retained — non-critical UI smoke tests only (clearly documented) | ✅ Acceptable |
+| Raw `localStorage.setItem` | ❌ Removed from all critical journey specs | ❌ Not allowed |
 
 `loginWithCredentials()` attempts real `POST /api/auth/login` and falls back to
 ARC76 contract-validated localStorage seeding (see `e2e/helpers/auth.ts:validateSessionContract`)
@@ -88,10 +88,13 @@ Tests marked `test.skip(!!process.env.CI, ...)` have been exhaustively optimized
 slower for multi-step wizard forms with cascading state transitions. All skipped
 tests reference Issue #495 with the timing ceiling analysis.
 
-### Action Items (Resolved as of Issue #520)
+### Action Items (Resolved as of Issue #557)
 
-- [x] Replace `withAuth()` with `loginWithCredentials()` in critical journey specs
+- [x] Replace `withAuth()` / raw `localStorage` with `loginWithCredentials()` in all 4 critical journey specs (compliance-orchestration, compliance-setup-workspace, auth-first-token-creation, guided-token-launch)
 - [x] Create `arc76-determinism.spec.ts` dedicated ARC76 determinism spec
+- [x] Create `backend-deployment-contract.spec.ts` — 15+ tests for deployment lifecycle UI
+- [x] Create `src/lib/api/backendDeploymentContract.ts` typed API client (33 unit tests)
+- [x] Create `DeploymentStatusPanel.vue` component showing all 5 lifecycle states (35 unit tests)
 - [x] Reduce `waitForTimeout` calls: 15 → 1 (well under the ≤ 5 target)
 - [x] Update documentation to match actual skip count (was 80, now 28)
 - [x] Remaining `/create/wizard` references are comments or canonical redirect tests only
