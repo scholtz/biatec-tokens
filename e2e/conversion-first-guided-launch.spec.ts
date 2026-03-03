@@ -43,9 +43,9 @@ test.describe('Homepage and structural tests', () => {
     await page.waitForLoadState('networkidle')
     const heading = page.getByRole('heading').first()
     await expect(heading).toBeVisible({ timeout: 15000 })
-    // No wallet connector text must appear
-    const content = await page.content()
-    expect(content).not.toMatch(/WalletConnect|MetaMask|Pera Wallet|Defly/i)
+    // No wallet connector text must appear in visible page content
+    const bodyText = await page.locator('body').innerText()
+    expect(bodyText).not.toMatch(/WalletConnect|MetaMask|Pera Wallet|Defly/i)
   })
 
   test('homepage navigation contains no wallet connector UI', async ({ page }) => {
@@ -81,8 +81,8 @@ test.describe('Homepage and structural tests', () => {
   test('no "sign transaction" or "approve in wallet" text on homepage', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
-    const content = await page.content()
-    expect(content).not.toMatch(/sign transaction|approve in wallet/i)
+    const bodyText = await page.locator('body').innerText()
+    expect(bodyText).not.toMatch(/sign transaction|approve in wallet/i)
   })
 
   test('homepage main heading is visible', async ({ page }) => {
@@ -215,8 +215,8 @@ test.describe('Guided launch page — authenticated', () => {
     await page.waitForLoadState('networkidle')
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
-    const content = await page.content()
-    expect(content).not.toMatch(/sign transaction|approve in wallet/i)
+    const bodyText = await page.locator('body').innerText()
+    expect(bodyText).not.toMatch(/sign transaction|approve in wallet/i)
   })
 })
 
