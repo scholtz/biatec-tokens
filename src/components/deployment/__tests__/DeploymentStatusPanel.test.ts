@@ -21,6 +21,7 @@ import type { DeploymentLifecycleState } from '../../../lib/api/backendDeploymen
 
 function mountPanel(props: {
   state: DeploymentLifecycleState
+  previousState?: DeploymentLifecycleState
   isIdempotentReplay?: boolean
   assetId?: string
   errorGuidance?: string
@@ -195,13 +196,27 @@ describe('DeploymentStatusPanel — Failed state', () => {
     expect(errorEl.text()).not.toContain('DeriveAddressMismatch')
   })
 
-  it('does not mark lifecycle steps as completed when Failed', () => {
+  it('does not mark lifecycle steps as completed when Failed with no previousState', () => {
     const wrapper = mountPanel({ state: 'Failed' })
-    // All steps remain in pending/default state
+    // All steps remain in pending/default state when no previousState
     const steps = wrapper.findAll('[data-testid^="step-"]')
     for (const step of steps) {
       expect(step.html()).not.toContain('bg-green-500')
     }
+  })
+
+  it('shows completed steps up to previousState when Failed', () => {
+    // If deployment failed after Confirmed, Pending→Validated→Submitted→Confirmed show green
+    const wrapper = mountPanel({ state: 'Failed', previousState: 'Confirmed', errorGuidance: 'Failed at confirmation.' })
+    const confirmedStep = wrapper.find('[data-testid="step-confirmed"]')
+    const pendingStep = wrapper.find('[data-testid="step-pending"]')
+    // Confirmed and earlier steps (which previousState = Confirmed has passed) should be green
+    expect(pendingStep.html()).toContain('bg-green-500')
+    // The Completed step is beyond previousState, so should not be green
+    const completedStep = wrapper.find('[data-testid="step-completed"]')
+    expect(completedStep.html()).not.toContain('bg-green-500')
+    // confirmedStep itself: STATE_ORDER[Confirmed]=4, STATE_ORDER[Confirmed]=4, 4 >= 4 → true
+    expect(confirmedStep.html()).toContain('bg-green-500')
   })
 })
 

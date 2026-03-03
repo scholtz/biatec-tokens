@@ -167,6 +167,8 @@ import type { DeploymentLifecycleState } from '../../lib/api/backendDeploymentCo
 interface Props {
   /** Current deployment lifecycle state */
   state: DeploymentLifecycleState
+  /** Previous state before failure — used to show completed steps leading up to failure */
+  previousState?: DeploymentLifecycleState
   /** True when this response is an idempotency replay */
   isIdempotentReplay?: boolean
   /** Asset ID of the deployed token (shown on Completed) */
@@ -178,6 +180,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  previousState: undefined,
   isIdempotentReplay: false,
   assetId: undefined,
   errorGuidance: undefined,
@@ -271,7 +274,13 @@ const iconContainerClass = computed((): string => {
 
 /** Returns true when a step is fully completed (current state has passed it) */
 function isStepCompleted(stepState: DeploymentLifecycleState): boolean {
-  if (props.state === 'Failed') return false
+  if (props.state === 'Failed') {
+    // Show completed steps based on previousState so users can see how far
+    // the deployment got before it failed (e.g. Failed after Confirmed shows
+    // Pending → Validated → Submitted → Confirmed all as green)
+    if (!props.previousState) return false
+    return STATE_ORDER[props.previousState] >= STATE_ORDER[stepState]
+  }
   return STATE_ORDER[props.state] > STATE_ORDER[stepState]
 }
 

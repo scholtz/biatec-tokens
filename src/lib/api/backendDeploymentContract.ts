@@ -248,13 +248,22 @@ export function getUserGuidance(errorCode: DeploymentErrorCode | string): string
 /**
  * Generates a UUID v4 idempotency key for a new deployment initiation.
  * Each call to `initiateDeployment` should use a freshly generated key.
+ *
+ * **Cryptographic note**: Uses `crypto.randomUUID()` (CSPRNG) when available
+ * (all modern browsers and Node 14.17+). The Math.random() fallback below is
+ * **not** cryptographically secure and should only be reached in legacy
+ * environments (e.g. very old Node.js without Web Crypto). In production the
+ * CSPRNG path is always taken. If you need strong idempotency guarantees in a
+ * legacy environment, generate keys server-side instead.
  */
 export function generateIdempotencyKey(): string {
   // Use crypto.randomUUID() when available (modern browsers + Node 14.17+)
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID()
   }
-  // Fallback: construct RFC 4122 v4 UUID manually
+  // Fallback: construct RFC 4122 v4 UUID manually.
+  // WARNING: Math.random() is NOT cryptographically secure.
+  // This path is only reached in legacy environments without Web Crypto.
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0
     const v = c === 'x' ? r : (r & 0x3) | 0x8
