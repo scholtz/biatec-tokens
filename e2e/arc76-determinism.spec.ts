@@ -125,6 +125,8 @@ test.describe('ARC76 Determinism: same credentials → same address', () => {
     // cryptographically provable with a live backend (set API_BASE_URL to enable).
     // In mock mode, both fall back to a stub address — we document this gap:
     // TODO: assert sessionA.address !== sessionB.address once /api/arc76/derive is stable in CI.
+  })
+})
 
 // ---------------------------------------------------------------------------
 // Section 2: Invalid session rejection — auth guard detects bad sessions
