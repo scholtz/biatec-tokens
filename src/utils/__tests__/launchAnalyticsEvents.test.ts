@@ -202,8 +202,8 @@ describe('buildRiskAcknowledgedPayload', () => {
   })
 })
 
-describe('LaunchAnalyticsEventName type guard', () => {
-  it('is a valid type (compile-time check via usage)', () => {
+describe('LaunchAnalyticsEventName type (compile-time usage)', () => {
+  it('can be assigned from LAUNCH_ANALYTICS_EVENTS values', () => {
     const event: LaunchAnalyticsEventName = LAUNCH_ANALYTICS_EVENTS.STEP_ENTERED
     expect(typeof event).toBe('string')
   })
