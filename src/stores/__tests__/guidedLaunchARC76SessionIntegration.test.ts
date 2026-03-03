@@ -211,7 +211,7 @@ describe('parseAndValidateSession', () => {
     expect(result?.isConnected).toBe(true)
   })
 
-  it('returns null for a disconnected session JSON (isConnected=false fails struct? No — struct is valid)', () => {
+  it('returns null for a disconnected session JSON (structurally valid, isConnected=false passes contract)', () => {
     // isConnected=false is structurally valid, so parseAndValidateSession returns the object
     const raw = JSON.stringify({ address: 'A', email: 'b@b.com', isConnected: false })
     const result = parseAndValidateSession(raw)

@@ -387,8 +387,11 @@ describe('GuidedLaunch store — draft resilience', () => {
   })
 
   it('loadDraft returns false for draft with wrong version', () => {
+    // Use a version string that is intentionally different from the store's current '1.0'
+    // If the store version ever changes, update this constant too.
+    const OUTDATED_DRAFT_VERSION = '0.1'
     const oldDraft = {
-      version: '0.1',  // mismatched version
+      version: OUTDATED_DRAFT_VERSION,
       form: {
         createdAt: new Date().toISOString(),
         lastModified: new Date().toISOString(),
