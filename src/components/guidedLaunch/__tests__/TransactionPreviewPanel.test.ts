@@ -161,4 +161,100 @@ describe('TransactionPreviewPanel', () => {
     await wrapper.vm.$nextTick()
     expect(wrapper.find('[data-testid="risk-ack-error"]').exists()).toBe(false)
   })
+
+  // ── Additional coverage ────────────────────────────────────────────────────
+
+  it('three individual fee rows are visible (deployment, compliance, network)', () => {
+    const wrapper = mountPanel()
+    expect(wrapper.find('[data-testid="fee-deployment"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="fee-compliance"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="fee-network"]').exists()).toBe(true)
+  })
+
+  it('total fee row has data-testid fee-total', () => {
+    const wrapper = mountPanel()
+    expect(wrapper.find('[data-testid="fee-total"]').exists()).toBe(true)
+  })
+
+  it('total fee row text contains ALGO', () => {
+    const wrapper = mountPanel()
+    expect(wrapper.find('[data-testid="fee-total"]').text()).toContain('ALGO')
+  })
+
+  it('token summary grid shows all 4 summary cells', () => {
+    const wrapper = mountPanel()
+    expect(wrapper.find('[data-testid="summary-token-name"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="summary-token-standard"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="summary-network"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="summary-total-supply"]').exists()).toBe(true)
+  })
+
+  it('totalSupply=0 renders "0" in supply cell', () => {
+    const wrapper = mountPanel({ totalSupply: 0 })
+    expect(wrapper.find('[data-testid="summary-total-supply"]').text()).toBe('0')
+  })
+
+  it('totalSupply=1000000 renders localized number in supply cell', () => {
+    const wrapper = mountPanel({ totalSupply: 1_000_000 })
+    const text = wrapper.find('[data-testid="summary-total-supply"]').text()
+    // Number.toLocaleString may use commas or periods depending on locale; just check "1" and "000" are present
+    expect(text).toContain('1')
+    expect(text).toContain('000')
+  })
+
+  it('tokenName="" renders em dash in token name cell', () => {
+    const wrapper = mountPanel({ tokenName: '' })
+    expect(wrapper.find('[data-testid="summary-token-name"]').text()).toBe('—')
+  })
+
+  it('network="" renders em dash in network cell', () => {
+    const wrapper = mountPanel({ network: '' })
+    expect(wrapper.find('[data-testid="summary-network"]').text()).toBe('—')
+  })
+
+  it('risk ack error is NOT shown initially', () => {
+    const wrapper = mountPanel()
+    expect(wrapper.find('[data-testid="risk-ack-error"]').exists()).toBe(false)
+  })
+
+  it('validate() with unchecked box: returns false AND showAckError becomes true', async () => {
+    const wrapper = mountPanel()
+    const vm = wrapper.vm as unknown as { validate: () => boolean }
+    const result = vm.validate()
+    await wrapper.vm.$nextTick()
+    expect(result).toBe(false)
+    expect(wrapper.find('[data-testid="risk-ack-error"]').exists()).toBe(true)
+  })
+
+  it('validate() with checked box (acknowledged=true): returns true', () => {
+    const wrapper = mountPanel({ acknowledged: true })
+    const vm = wrapper.vm as unknown as { validate: () => boolean }
+    expect(vm.validate()).toBe(true)
+  })
+
+  it('checkbox has id attribute for label association', () => {
+    const wrapper = mountPanel()
+    const checkbox = wrapper.find('[data-testid="risk-acknowledgment-checkbox"]')
+    expect(checkbox.attributes('id')).toBeTruthy()
+  })
+
+  it('label has for attribute pointing to checkbox id', () => {
+    const wrapper = mountPanel()
+    const checkbox = wrapper.find('[data-testid="risk-acknowledgment-checkbox"]')
+    const checkboxId = checkbox.attributes('id')
+    const label = wrapper.find(`label[for="${checkboxId}"]`)
+    expect(label.exists()).toBe(true)
+  })
+
+  it('checkbox has type=checkbox', () => {
+    const wrapper = mountPanel()
+    const checkbox = wrapper.find('[data-testid="risk-acknowledgment-checkbox"]')
+    expect(checkbox.attributes('type')).toBe('checkbox')
+  })
+
+  it('checkbox has aria-describedby attribute for accessibility hint', () => {
+    const wrapper = mountPanel()
+    const checkbox = wrapper.find('[data-testid="risk-acknowledgment-checkbox"]')
+    expect(checkbox.attributes('aria-describedby')).toBeTruthy()
+  })
 })
