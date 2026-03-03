@@ -31,6 +31,13 @@ import {
   markSubmissionFailed,
 } from '../utils/issuanceIdempotency'
 import { runPolicyGuardrails } from '../utils/policyGuardrails'
+import {
+  startLifecycleSession,
+  emitLifecycleEvent,
+  buildStepEnteredMeta,
+  buildValidationFailedMeta,
+  buildSubmissionFailedMeta,
+} from '../utils/launchLifecycleObserver'
 
 const DRAFT_STORAGE_KEY = 'biatec_guided_launch_draft'
 const DRAFT_VERSION = '1.0'
@@ -178,10 +185,12 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
   // Actions
   const initializeTelemetry = (userId: string) => {
     launchTelemetryService.initialize(userId)
+    startLifecycleSession()
   }
 
   const startFlow = (referrer?: string, source?: string) => {
     launchTelemetryService.trackFlowStarted({ referrer, source })
+    emitLifecycleEvent('session_started', { metadata: { referrer, source } })
   }
 
   const loadDraft = (): boolean => {
@@ -211,6 +220,10 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
         parsed.form.lastModified,
         daysSince
       )
+      emitLifecycleEvent('draft_restored', {
+        draftId: parsed.form.draftId,
+        metadata: { daysSince },
+      })
 
       return true
     } catch (error) {
@@ -241,6 +254,7 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
         completedSteps.value,
         totalSteps.value
       )
+      emitLifecycleEvent('draft_saved', { draftId: currentForm.value.draftId })
 
       return true
     } catch (error) {
@@ -302,6 +316,11 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
       const step = stepStatuses.value[stepIndex]
       if (step) {
         launchTelemetryService.trackStepStarted(step.id, step.title, stepIndex)
+        emitLifecycleEvent('step_entered', {
+          draftId: currentForm.value.draftId,
+          stepId: step.id,
+          metadata: buildStepEnteredMeta(stepIndex, totalSteps.value, hasDraftLoaded.value),
+        })
       }
       
       saveDraft()
@@ -325,6 +344,10 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
         // TODO: Implement actual time tracking - store step start timestamp and calculate duration
         const timeSpentSeconds = 0
         launchTelemetryService.trackStepCompleted(step.id, step.title, stepIndex, timeSpentSeconds)
+        emitLifecycleEvent('step_validated', {
+          draftId: currentForm.value.draftId,
+          stepId: step.id,
+        })
       } else {
         launchTelemetryService.trackValidationFailed(
           step.id,
@@ -332,6 +355,14 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
           validation.errors,
           validation.warnings
         )
+        emitLifecycleEvent('validation_failed', {
+          draftId: currentForm.value.draftId,
+          stepId: step.id,
+          metadata: buildValidationFailedMeta(
+            validation.errors.map((_, i) => `field_${i}`),
+            'VALIDATION_FAILED',
+          ),
+        })
       }
 
       saveDraft()
@@ -386,6 +417,10 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
     if (!idempotencyCheck.isSafeToSubmit) {
       // Return the previously-stored successful submission without re-executing
       const existing = idempotencyCheck.existingRecord
+      emitLifecycleEvent('idempotency_blocked', {
+        draftId,
+        metadata: { existingSubmissionId: existing?.serverSubmissionId },
+      })
       return {
         success: true,
         submissionId: existing?.serverSubmissionId ?? currentForm.value.submissionId ?? '',
@@ -404,6 +439,7 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
 
     // Record attempt before network call so partial failures are tracked
     recordSubmissionAttempt(idempotencyKey, draftId)
+    emitLifecycleEvent('submission_started', { draftId })
 
     try {
       const submission: LaunchSubmission = {
@@ -463,6 +499,10 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
         mockResponse.tokenId || '',
         timeToCompleteSeconds
       )
+      emitLifecycleEvent('submission_succeeded', {
+        draftId,
+        metadata: { submissionId: mockResponse.submissionId },
+      })
 
       return mockResponse
     } catch (error) {
@@ -479,6 +519,10 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
         currentForm.value.submissionError,
         true
       )
+      emitLifecycleEvent('submission_failed', {
+        draftId,
+        metadata: buildSubmissionFailedMeta('SUBMISSION_FAILED', true, 1),
+      })
 
       throw error
     } finally {
