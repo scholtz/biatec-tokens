@@ -65,6 +65,17 @@
       </div>
     </Card>
 
+    <!-- Transaction Preview Panel -->
+    <TransactionPreviewPanel
+      ref="txPreviewRef"
+      v-model:acknowledged="riskAcknowledged"
+      :token-name="formData.selectedTemplate?.name ?? ''"
+      :token-standard="formData.selectedTemplate?.standard ?? ''"
+      :network="formData.selectedTemplate?.network ?? ''"
+      :total-supply="Number(formData.tokenEconomics?.totalSupply ?? 0)"
+      data-testid="review-transaction-preview"
+    />
+
     <!-- Submit Button -->
     <div class="pt-6 border-t border-gray-700">
       <Button
@@ -78,7 +89,7 @@
         <CheckIcon class="w-5 h-5 mr-2" />
         {{ isSubmitting ? 'Submitting...' : 'Submit Token Launch' }}
       </Button>
-      <p v-if="!canSubmit" class="mt-3 text-center text-sm text-red-400">
+      <p v-if="props.readinessScore.blockers.length > 0" class="mt-3 text-center text-sm text-red-400">
         Please resolve all blockers before submitting
       </p>
     </div>
@@ -86,11 +97,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import type { ReadinessScore, GuidedLaunchForm } from '../../../types/guidedLaunch'
 import Card from '../../ui/Card.vue'
 import Button from '../../ui/Button.vue'
 import Badge from '../../ui/Badge.vue'
+import TransactionPreviewPanel from '../TransactionPreviewPanel.vue'
 import { CheckIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
@@ -101,9 +113,13 @@ const props = defineProps<{
 
 const emit = defineEmits<{ submit: [] }>()
 
-const canSubmit = computed(() => props.readinessScore.blockers.length === 0)
+const txPreviewRef = ref<InstanceType<typeof TransactionPreviewPanel> | null>(null)
+const riskAcknowledged = ref(false)
+
+const canSubmit = computed(() => props.readinessScore.blockers.length === 0 && riskAcknowledged.value)
 
 const handleSubmit = () => {
+  if (!txPreviewRef.value?.validate()) return
   if (canSubmit.value) {
     emit('submit')
   }
