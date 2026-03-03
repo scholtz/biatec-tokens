@@ -207,7 +207,15 @@ export const useAuthStore = defineStore("auth", () => {
     try {
       const savedSession = localStorage.getItem("arc76_session");
       session.value = savedSession || "";
-      isConnected.value = !!savedSession;
+      // Only update isConnected based on ARC76 session when not already authenticated
+      // via the algorand_user flow (email/password). Prevents restoreARC76Session from
+      // clearing auth state for users who authenticated via algorand_user but don't have
+      // a separate arc76_session key stored (e.g. in E2E tests and browser-only sessions).
+      if (savedSession) {
+        isConnected.value = true;
+      } else if (!user.value) {
+        isConnected.value = false;
+      }
       const savedEmail = localStorage.getItem("arc76_email");
       arc76email.value = savedEmail;
       const savedAccount = localStorage.getItem("arc76_account");

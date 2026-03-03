@@ -438,6 +438,33 @@ describe('Auth Store', () => {
       expect(authStore.session).toBe('my-session')
       expect(authStore.arc76email).toBe('test@example.com')
     })
+
+    it('should not clear isConnected when user is already authenticated via algorand_user', async () => {
+      // Simulate the state after authStore.initialize() has run with algorand_user in localStorage:
+      // user.value is set, isConnected.value is true, but arc76_session is absent.
+      const authStore = useAuthStore()
+      authStore.isConnected = true
+      authStore.user = { address: 'TESTADDR', email: 'test@example.com', isConnected: true } as any
+
+      // arc76_session is NOT in localStorage (typical for email/password-only auth in E2E tests)
+      localStorage.removeItem('arc76_session')
+
+      await authStore.restoreARC76Session()
+
+      // isConnected must remain true — user is authenticated via algorand_user
+      expect(authStore.isConnected).toBe(true)
+      expect(authStore.isAuthenticated).toBe(true)
+    })
+
+    it('should set isConnected to false when no arc76_session and no user', async () => {
+      const authStore = useAuthStore()
+      // Neither arc76_session nor algorand_user is set
+      localStorage.removeItem('arc76_session')
+
+      await authStore.restoreARC76Session()
+
+      expect(authStore.isConnected).toBe(false)
+    })
   })
 
   describe('refreshProvisioningStatus', () => {
