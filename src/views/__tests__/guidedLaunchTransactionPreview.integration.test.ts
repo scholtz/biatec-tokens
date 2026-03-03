@@ -68,9 +68,9 @@ const mountStep = (
         Badge: { template: '<span><slot /></span>' },
         TransactionPreviewPanel: {
           name: 'TransactionPreviewPanel',
-          // No explicit props so bindings fall through as DOM attributes (allows assertion on values)
-          template: '<div data-testid="tx-preview-panel-stub"></div>',
+          props: ['tokenName', 'tokenStandard', 'network', 'totalSupply', 'acknowledged'],
           emits: ['update:acknowledged'],
+          template: '<div data-testid="tx-preview-panel-stub"></div>',
         },
       },
     },
@@ -110,11 +110,10 @@ describe('ReviewSubmitStep with TransactionPreviewPanel integration', () => {
 
   it('panel receives tokenName from formData selectedTemplate (prop passed to component)', () => {
     const wrapper = mountStep(makeScore(), makeForm())
-    // The stub renders with the testid from the parent template (Vue attribute inheritance)
-    const panelEl = wrapper.find('[data-testid="review-transaction-preview"]')
-    expect(panelEl.exists()).toBe(true)
-    // Verify the token-name prop is passed through (rendered as attribute by stub)
-    expect(panelEl.attributes('token-name')).toBe('ARC3 Token')
+    // Verify the TransactionPreviewPanel receives the tokenName prop from formData
+    const panel = wrapper.findComponent({ name: 'TransactionPreviewPanel' })
+    expect(panel.exists()).toBe(true)
+    expect(panel.props('tokenName')).toBe('ARC3 Token')
   })
 
   it('shows "Please resolve all blockers" message when there are blockers', () => {

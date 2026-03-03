@@ -137,16 +137,11 @@ const emit = defineEmits<{
   'update:acknowledged': [value: boolean]
 }>()
 
-// Fee constants (mock estimates — real values come from backend at submission)
-const DEPLOYMENT_FEE = '0.001 ALGO'
-const COMPLIANCE_FEE = '0.001 ALGO'
-const NETWORK_FEE = '0.001 ALGO'
-const TOTAL_FEE = '0.003 ALGO'
-
-const deploymentFee = DEPLOYMENT_FEE
-const complianceFee = COMPLIANCE_FEE
-const networkFee = NETWORK_FEE
-const totalFee = TOTAL_FEE
+// Fee estimates (mock values — real values come from backend at submission)
+const deploymentFee = '0.001 ALGO'
+const complianceFee = '0.001 ALGO'
+const networkFee = '0.001 ALGO'
+const totalFee = '0.003 ALGO'
 
 const internalAcknowledged = ref(props.acknowledged)
 const showAckError = ref(false)

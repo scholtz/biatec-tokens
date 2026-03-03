@@ -122,11 +122,18 @@ describe('buildStepCompletedPayload', () => {
 })
 
 describe('buildValidationFailedPayload', () => {
+  beforeEach(() => vi.spyOn(Date, 'now').mockReturnValue(1700000000000))
+  afterEach(() => vi.restoreAllMocks())
+
   it('returns stepId, fieldIds and errorCount', () => {
     const payload = buildValidationFailedPayload('economics', ['totalSupply', 'decimals'], 2)
     expect(payload.stepId).toBe('economics')
     expect(payload.fieldIds).toEqual(['totalSupply', 'decimals'])
     expect(payload.errorCount).toBe(2)
+  })
+
+  it('includes timestamp', () => {
+    expect(buildValidationFailedPayload('step', [], 0).timestamp).toBe(1700000000000)
   })
 
   it('handles empty fieldIds array', () => {
@@ -137,22 +144,39 @@ describe('buildValidationFailedPayload', () => {
 })
 
 describe('buildDraftSavedPayload', () => {
+  beforeEach(() => vi.spyOn(Date, 'now').mockReturnValue(1700000000000))
+  afterEach(() => vi.restoreAllMocks())
+
   it('returns stepId', () => {
     const payload = buildDraftSavedPayload('template-selection')
     expect(payload.stepId).toBe('template-selection')
   })
+
+  it('includes timestamp', () => {
+    expect(buildDraftSavedPayload('step').timestamp).toBe(1700000000000)
+  })
 })
 
 describe('buildLaunchSucceededPayload', () => {
+  beforeEach(() => vi.spyOn(Date, 'now').mockReturnValue(1700000000000))
+  afterEach(() => vi.restoreAllMocks())
+
   it('returns submissionId, template and network', () => {
     const payload = buildLaunchSucceededPayload('sub-123', 'ARC3', 'algorand')
     expect(payload.submissionId).toBe('sub-123')
     expect(payload.template).toBe('ARC3')
     expect(payload.network).toBe('algorand')
   })
+
+  it('includes timestamp', () => {
+    expect(buildLaunchSucceededPayload('sub-1', 'ARC3', 'algorand').timestamp).toBe(1700000000000)
+  })
 })
 
 describe('buildLaunchCancelledPayload', () => {
+  beforeEach(() => vi.spyOn(Date, 'now').mockReturnValue(1700000000000))
+  afterEach(() => vi.restoreAllMocks())
+
   it('uses user_initiated reason by default', () => {
     const payload = buildLaunchCancelledPayload('review')
     expect(payload.reason).toBe('user_initiated')
@@ -162,17 +186,31 @@ describe('buildLaunchCancelledPayload', () => {
     const payload = buildLaunchCancelledPayload('review', 'back_navigation')
     expect(payload.reason).toBe('back_navigation')
   })
+
+  it('includes timestamp', () => {
+    expect(buildLaunchCancelledPayload('review').timestamp).toBe(1700000000000)
+  })
 })
 
 describe('buildLaunchFailedPayload', () => {
+  beforeEach(() => vi.spyOn(Date, 'now').mockReturnValue(1700000000000))
+  afterEach(() => vi.restoreAllMocks())
+
   it('returns error and stepId', () => {
     const payload = buildLaunchFailedPayload('Submission timeout', 'review-submit')
     expect(payload.error).toBe('Submission timeout')
     expect(payload.stepId).toBe('review-submit')
   })
+
+  it('includes timestamp', () => {
+    expect(buildLaunchFailedPayload('err', 'step').timestamp).toBe(1700000000000)
+  })
 })
 
 describe('buildPreflightCheckedPayload', () => {
+  beforeEach(() => vi.spyOn(Date, 'now').mockReturnValue(1700000000000))
+  afterEach(() => vi.restoreAllMocks())
+
   it('returns passed, blockerCount, warningCount', () => {
     const payload = buildPreflightCheckedPayload(true, 0, 2)
     expect(payload.passed).toBe(true)
@@ -183,22 +221,40 @@ describe('buildPreflightCheckedPayload', () => {
   it('returns false when failed', () => {
     expect(buildPreflightCheckedPayload(false, 3, 0).passed).toBe(false)
   })
+
+  it('includes timestamp', () => {
+    expect(buildPreflightCheckedPayload(true, 0, 0).timestamp).toBe(1700000000000)
+  })
 })
 
 describe('buildTransactionPreviewOpenedPayload', () => {
+  beforeEach(() => vi.spyOn(Date, 'now').mockReturnValue(1700000000000))
+  afterEach(() => vi.restoreAllMocks())
+
   it('returns tokenName, tokenStandard, network', () => {
     const payload = buildTransactionPreviewOpenedPayload('MyToken', 'ARC3', 'algorand')
     expect(payload.tokenName).toBe('MyToken')
     expect(payload.tokenStandard).toBe('ARC3')
     expect(payload.network).toBe('algorand')
   })
+
+  it('includes timestamp', () => {
+    expect(buildTransactionPreviewOpenedPayload('T', 'ARC3', 'algorand').timestamp).toBe(1700000000000)
+  })
 })
 
 describe('buildRiskAcknowledgedPayload', () => {
+  beforeEach(() => vi.spyOn(Date, 'now').mockReturnValue(1700000000000))
+  afterEach(() => vi.restoreAllMocks())
+
   it('returns tokenName and network', () => {
     const payload = buildRiskAcknowledgedPayload('Biatec Token', 'algorand-testnet')
     expect(payload.tokenName).toBe('Biatec Token')
     expect(payload.network).toBe('algorand-testnet')
+  })
+
+  it('includes timestamp', () => {
+    expect(buildRiskAcknowledgedPayload('T', 'algorand').timestamp).toBe(1700000000000)
   })
 })
 
