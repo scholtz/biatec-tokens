@@ -243,15 +243,12 @@ test.describe('Failure path B — session loss recovery', () => {
 
     // Accept: either the URL encodes auth intent (showAuth=true) OR the homepage is shown
     const url = page.url()
-    const isOnHome = url.endsWith('/') || url.match(/\/$/)
+    const isOnHome = url.endsWith('/') || !!url.match(/\/$/)
     const isOnAuth = url.includes('showAuth') || url.includes('login')
 
-    // Neither blank nor a 404
-    const statusCode = await page.evaluate(() => {
-      const metaNotFound = document.querySelector('meta[name="status"]')
-      return metaNotFound ? parseInt(metaNotFound.getAttribute('content') ?? '200') : 200
-    })
-    expect(statusCode).not.toBe(404)
+    // Neither blank nor still on the protected route without auth
+    const bodyText = await page.locator('body').innerText()
+    expect(bodyText.trim().length).toBeGreaterThan(10)
     expect(isOnHome || isOnAuth || !url.includes('/launch/guided')).toBe(true)
   })
 

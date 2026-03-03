@@ -359,7 +359,11 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
           draftId: currentForm.value.draftId,
           stepId: step.id,
           metadata: buildValidationFailedMeta(
-            validation.errors.map((_, i) => `field_${i}`),
+            // Use the first 5 words of each error as a human-readable field
+            // descriptor. The errors array contains plain strings (e.g.
+            // "Organization name is required") — there are no structured
+            // field IDs in the current ValidationResult type.
+            validation.errors.map(e => e.slice(0, 40).replace(/\s+/g, '_').toLowerCase()),
             'VALIDATION_FAILED',
           ),
         })

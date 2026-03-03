@@ -41,6 +41,8 @@
           :class="stageColour(stage)"
           aria-hidden="true"
         />
+        <!-- Visually hidden status for screen readers so colour is not the only indicator -->
+        <span class="sr-only">{{ stageStatusLabel(stage) }}</span>
 
         <!-- Name + count -->
         <div class="flex-1 min-w-0">
@@ -186,6 +188,17 @@ function stageColour(stage: (typeof stages.value)[number]): string {
     if (rate > 0.05) return 'bg-yellow-400'
   }
   return 'bg-blue-400'
+}
+
+/** Screen-reader label for stage status (ensures colour is not the only indicator). */
+function stageStatusLabel(stage: (typeof stages.value)[number]): string {
+  if (stage.isFinal) return 'completed'
+  if (stage.failures != null && stage.count > 0) {
+    const rate = stage.failures / stage.count
+    if (rate > 0.2) return 'high failure rate'
+    if (rate > 0.05) return 'moderate failure rate'
+  }
+  return 'in progress'
 }
 
 function barColour(stage: (typeof stages.value)[number]): string {

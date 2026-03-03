@@ -79,6 +79,11 @@ let _sessionId: string | null = null
 /**
  * Initialise (or reset) the lifecycle session.
  * Returns the new session ID.
+ *
+ * Session IDs use Math.random() intentionally: they are for analytics and
+ * debug tracing only, not for cryptographic purposes. The timestamp prefix
+ * ensures ordering; the random suffix avoids collisions in the same
+ * millisecond within a single session context.
  */
 export function startLifecycleSession(sessionId?: string): string {
   _sessionId = sessionId ?? `launch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
@@ -152,6 +157,10 @@ export function emitLifecycleEvent(
     draftId: opts.draftId,
     stepId: opts.stepId,
     timestamp: Date.now(),
+    // Correlation IDs use Math.random() intentionally: they are for analytics
+    // correlation and debug tracing only — not for cryptographic purposes.
+    // The combination of timestamp + random suffix provides sufficient uniqueness
+    // for session-scoped event correlation in a single-tab context.
     correlationId: opts.correlationId ?? `corr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     metadata: opts.metadata,
   }
@@ -160,7 +169,10 @@ export function emitLifecycleEvent(
     try {
       observer(event)
     } catch {
-      // Observers must not crash the emit loop.
+      // Observer exceptions are intentionally swallowed to prevent one
+      // misbehaving observer from crashing the emit loop. In a production
+      // deployment, wrap observers with structured error logging at the
+      // call site (e.g., registerLifecycleObserver(withErrorLogging(myFn))).
     }
   }
 

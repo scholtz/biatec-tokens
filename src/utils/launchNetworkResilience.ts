@@ -132,7 +132,9 @@ export async function withRetry<T>(
   onRetry?: (attemptNumber: number, delayMs: number, error: Error) => void,
 ): Promise<RetryOutcome<T>> {
   const startTime = Date.now()
-  let lastError: Error = new Error('Unknown error')
+  // Defensive initialisation: lastError is always set before it is read
+  // because every loop iteration either returns or assigns a caught error.
+  let lastError: Error = new Error('withRetry: no attempts were made (maxAttempts must be ≥ 1)')
 
   for (let attempt = 1; attempt <= config.maxAttempts; attempt++) {
     try {
