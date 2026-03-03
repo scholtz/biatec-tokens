@@ -109,9 +109,8 @@ test.describe('AC #1: Canonical route clarity', () => {
     )
 
     // Legacy wizard heading must never appear
-    const wizardHeading = page.getByRole('heading', { name: /token creation wizard/i })
-    const isVisible = await wizardHeading.isVisible().catch(() => false)
-    expect(isVisible).toBe(false)
+    const wizardHeadingCount = await page.getByRole('heading', { name: /token creation wizard/i }).count()
+    expect(wizardHeadingCount).toBe(0)
   })
 
   test('authenticated user accessing /launch/guided sees guided launch page', async ({ page }) => {

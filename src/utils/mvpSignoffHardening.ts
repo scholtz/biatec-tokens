@@ -155,7 +155,7 @@ export interface SignoffSessionShape {
  *   - Non-empty address:    +25 pts
  *   - Valid email format:   +25 pts
  *   - isConnected === true: +25 pts
- *   - Address ≥ 32 chars:   +25 pts (Algorand addresses are 58 chars)
+ *   - Address ≥ 58 chars:   +25 pts (Algorand addresses are 58 base32 characters)
  *
  * @param session - Raw session object (may be null for unauthenticated state).
  * @param pattern - The bootstrap pattern used to populate the session.
@@ -180,10 +180,10 @@ export function assessAuthSessionConfidence(
   // Address completeness
   if (typeof session.address === 'string' && session.address.length > 0) {
     score += 25;
-    if (session.address.length >= 32) {
+    if (session.address.length >= 58) {
       score += 25;
     } else {
-      findings.push(`address is present but short (${session.address.length} chars < 32).`);
+      findings.push(`address is present but short (${session.address.length} chars < 58 — Algorand addresses are 58 base32 characters).`);
     }
   } else {
     findings.push('address is missing or empty.');

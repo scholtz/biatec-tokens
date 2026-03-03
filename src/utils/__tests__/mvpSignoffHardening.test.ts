@@ -503,7 +503,7 @@ describe('computeSignoffReadiness', () => {
       newSkipCount: 0,
     });
     expect(result.ready).toBe(false);
-    expect(result.score).toBe(20); // only new_skip_count = 0 passes (not scored)
+    expect(result.score).toBe(20); // only newSkipCount = 0 passes (+20 pts); all other 4 dimensions blocked
     expect(result.blockers.length).toBeGreaterThanOrEqual(3);
   });
 });
