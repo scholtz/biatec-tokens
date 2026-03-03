@@ -24,13 +24,6 @@ import {
   buildRiskAcknowledgedPayload,
 } from '../src/utils/launchAnalyticsEvents'
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-async function setupAuth(page: import('@playwright/test').Page): Promise<void> {
-  suppressBrowserErrors(page)
-  await withAuth(page)
-}
-
 // ─── Suite 1: Homepage and structural tests (no auth required) ────────────────
 
 test.describe('Homepage and structural tests', () => {
@@ -154,7 +147,8 @@ test.describe('Analytics event constants — structural stability', () => {
 
 test.describe('Guided launch page — authenticated', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page)
+    suppressBrowserErrors(page)
+    await withAuth(page)
   })
 
   test('guided launch page has h1 heading', async ({ page }) => {
