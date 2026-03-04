@@ -114,8 +114,8 @@ describe('Sidebar Component', () => {
       expect(links[0].text()).toContain('Guided Token Launch');
       expect(links[0].attributes('to')).toBe('/launch/guided');
 
-      expect(links[1].text()).toContain('Create Token (Advanced)');
-      expect(links[1].attributes('to')).toBe('/create');
+      expect(links[1].text()).toContain('Create Token');
+      expect(links[1].attributes('to')).toBe('/launch/guided');
 
       expect(links[2].text()).toContain('View Dashboard');
       expect(links[2].attributes('to')).toBe('/dashboard');

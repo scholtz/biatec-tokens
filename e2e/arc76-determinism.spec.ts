@@ -26,12 +26,18 @@
  *   2. The `loginWithCredentials()` helper will automatically use real backend auth.
  *   3. The fallback mock assertions in Section 2 can be removed.
  *
+ * ## Issue #553 Additional Coverage (MVP blocker: backend-verified deterministic ARC76 auth)
+ *
+ * Section 4 (new): Relogin/refresh continuity — same account address after re-auth
+ * Section 5 (new): Invalid session scenario — explicit error handling and recovery behavior
+ *
  * Roadmap: https://raw.githubusercontent.com/scholtz/biatec-tokens/refs/heads/main/business-owner-roadmap.md
  * Issue: #520 — MVP auth purity: eliminate withAuth() localStorage patterns
+ * Issue: #553 — MVP blocker: backend-verified deterministic ARC76 auth in canonical frontend journeys
  */
 
 import { test, expect, chromium } from '@playwright/test'
-import { loginWithCredentials, suppressBrowserErrors } from './helpers/auth'
+import { loginWithCredentials, withAuth, clearAuthScript, suppressBrowserErrors } from './helpers/auth'
 
 // ---------------------------------------------------------------------------
 // Section 1: Browser-level determinism — same credentials → same address
@@ -125,6 +131,8 @@ test.describe('ARC76 Determinism: same credentials → same address', () => {
     // cryptographically provable with a live backend (set API_BASE_URL to enable).
     // In mock mode, both fall back to a stub address — we document this gap:
     // TODO: assert sessionA.address !== sessionB.address once /api/arc76/derive is stable in CI.
+  })
+})
 
 // ---------------------------------------------------------------------------
 // Section 2: Invalid session rejection — auth guard detects bad sessions
@@ -319,4 +327,228 @@ test.describe('ARC76 Backend Derivation Assertions (API-level)', () => {
       }
     },
   )
+})
+
+// ---------------------------------------------------------------------------
+// Section 4: Relogin/refresh continuity — AC #2 from Issue #553
+//
+// "Relogin/refresh continuity showing stable account-linked state."
+// The same user identity must appear consistently after re-authentication.
+// ---------------------------------------------------------------------------
+
+test.describe('ARC76 Determinism: relogin and refresh continuity', () => {
+  test.beforeEach(async ({ page }) => {
+    suppressBrowserErrors(page)
+  })
+
+  test('session address persists after page reload (refresh continuity)', async ({ page }) => {
+    // AC #2: After authentication, the same account address must survive a page reload.
+    await loginWithCredentials(page)
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+
+    const addressBefore = await page.evaluate(() => {
+      const raw = localStorage.getItem('algorand_user')
+      return raw ? JSON.parse(raw).address : null
+    })
+    expect(addressBefore).toBeTruthy()
+
+    await page.reload()
+    await page.waitForLoadState('networkidle')
+
+    const addressAfter = await page.evaluate(() => {
+      const raw = localStorage.getItem('algorand_user')
+      return raw ? JSON.parse(raw).address : null
+    })
+
+    expect(addressAfter).toBeTruthy()
+    // Refresh must not change the identity — same address before and after
+    expect(addressAfter).toBe(addressBefore)
+  })
+
+  test('session email identity is consistent after page reload', async ({ page }) => {
+    await loginWithCredentials(page)
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+
+    const emailBefore = await page.evaluate(() => {
+      const raw = localStorage.getItem('algorand_user')
+      return raw ? JSON.parse(raw).email : null
+    })
+    expect(emailBefore).toBeTruthy()
+
+    await page.reload()
+    await page.waitForLoadState('networkidle')
+
+    const emailAfter = await page.evaluate(() => {
+      const raw = localStorage.getItem('algorand_user')
+      return raw ? JSON.parse(raw).email : null
+    })
+
+    expect(emailAfter).toBe(emailBefore)
+  })
+
+  test('session address is stable across two sequential logins with the same credentials', async ({ page }) => {
+    // AC #3: Same credentials → same derived address across re-authentication.
+    await loginWithCredentials(page)
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+
+    const address1 = await page.evaluate(() => {
+      const raw = localStorage.getItem('algorand_user')
+      return raw ? JSON.parse(raw).address : null
+    })
+
+    // Simulate logout by clearing session
+    await page.evaluate(() => localStorage.removeItem('algorand_user'))
+
+    // Re-authenticate with the same credentials
+    await loginWithCredentials(page)
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+
+    const address2 = await page.evaluate(() => {
+      const raw = localStorage.getItem('algorand_user')
+      return raw ? JSON.parse(raw).address : null
+    })
+
+    expect(address1).toBeTruthy()
+    expect(address2).toBeTruthy()
+    // ARC76 determinism: same credentials → same address on re-login
+    expect(address1).toBe(address2)
+  })
+
+  test('authenticated user session survives reload and isConnected remains true', async ({ page }) => {
+    await withAuth(page)
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+
+    await page.reload()
+    await page.waitForLoadState('networkidle')
+
+    const session = await page.evaluate(() => {
+      const raw = localStorage.getItem('algorand_user')
+      return raw ? JSON.parse(raw) : null
+    })
+    expect(session).not.toBeNull()
+    // isConnected must remain true after reload — session is durable
+    expect(session.isConnected).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Section 5: Invalid session → explicit error handling and recovery
+//
+// AC #4 from Issue #553: "Invalid/expired session path is covered and returns
+// explicit contract error with expected frontend handling."
+// ---------------------------------------------------------------------------
+
+test.describe('ARC76 Determinism: invalid session explicit error handling and recovery', () => {
+  test.beforeEach(async ({ page }) => {
+    suppressBrowserErrors(page)
+  })
+
+  test('session with missing address field is rejected (not silently accepted)', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'algorand_user',
+        JSON.stringify({
+          // address intentionally absent — violates ARC76 session contract
+          email: 'missing-address@arc76-recovery.io',
+          isConnected: true,
+        }),
+      )
+    })
+
+    await page.goto('/launch/guided')
+    await page.waitForLoadState('networkidle')
+
+    await page.waitForFunction(
+      () => {
+        const url = window.location.href
+        const emailInput = document.querySelector("input[type='email']")
+        return !url.includes('/launch/guided') || emailInput !== null
+      },
+      { timeout: 15000 },
+    ).catch((_e) => {
+      // Intentionally silent: if waitForFunction times out, the redirect may have
+      // already happened synchronously. The subsequent URL/emailVisible assertions
+      // will verify the correct outcome regardless of this path being taken.
+      console.log('[arc76-determinism] waitForFunction timed out: redirect likely fired synchronously')
+    })
+
+    const url = page.url()
+    const emailVisible = await page.locator("input[type='email']").first().isVisible().catch(() => false)
+
+    // Contract violation must be rejected — not silently pass
+    expect(url.includes('showAuth=true') || emailVisible || !url.includes('/launch/guided')).toBe(true)
+  })
+
+  test('session with isConnected:false is rejected (expired session recovery path)', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'algorand_user',
+        JSON.stringify({
+          address: 'VALID_ADDRESS_BUT_SESSION_EXPIRED_ARC76_TEST_00000000000',
+          email: 'expired-session@arc76-recovery.io',
+          isConnected: false, // expired/disconnected
+        }),
+      )
+    })
+
+    await page.goto('/launch/guided')
+    await page.waitForLoadState('networkidle')
+
+    await page.waitForFunction(
+      () => {
+        const url = window.location.href
+        const emailInput = document.querySelector("input[type='email']")
+        return !url.includes('/launch/guided') || emailInput !== null
+      },
+      { timeout: 15000 },
+    ).catch((_e) => {
+      // Intentionally silent: guard may fire synchronously before waitForFunction runs.
+      // The URL/emailVisible assertions below confirm the correct outcome.
+      console.log('[arc76-determinism] waitForFunction timed out: guard likely fired synchronously')
+    })
+
+    const url = page.url()
+    const emailVisible = await page.locator("input[type='email']").first().isVisible().catch(() => false)
+
+    // Expired session must be rejected — user must re-authenticate
+    expect(url.includes('showAuth=true') || emailVisible || !url.includes('/launch/guided')).toBe(true)
+  })
+
+  test('home page is accessible after clearing an invalid session (recovery path works)', async ({ page }) => {
+    await clearAuthScript(page)
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+
+    // Home page must load without errors even when unauthenticated
+    const homeHeadingVisible = await page
+      .getByRole('heading', { level: 1 })
+      .first()
+      .isVisible({ timeout: 15000 })
+      .catch(() => false)
+
+    expect(homeHeadingVisible).toBe(true)
+  })
+
+  test('guest accessing home page sees sign-in affordance (recovery entry point exists)', async ({ page }) => {
+    // After session expiry, the user must find the sign-in entry point
+    await clearAuthScript(page)
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+
+    await page.waitForFunction(
+      () => document.querySelector('nav') !== null,
+      { timeout: 10000 },
+    )
+
+    const signInButton = page.getByRole('button', { name: /sign in/i }).first()
+    const signInVisible = await signInButton.isVisible({ timeout: 10000 }).catch(() => false)
+
+    // Sign In button must be present — this is the recovery entry point
+    expect(signInVisible).toBe(true)
+  })
 })

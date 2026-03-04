@@ -2,11 +2,11 @@
 
 ## Current Status: ✅ All Tests Passing (Chromium CI)
 
-_Last updated: March 2026 — reflects state after Issue #557 (backend deployment contract API integration)_
+_Last updated: March 2026 — reflects state after Issue #557 (backend deployment contract API integration) and Issue #553 (MVP blocker: backend-verified deterministic ARC76 auth)_
 
 ### Test Results (Chromium / CI)
 
-- **41 spec files** covering all critical user journeys
+- **51 spec files** covering all critical user journeys
 - **27 tests skipped in CI** (CI absolute timing ceiling for multi-step wizard flows; all pass locally)
 - **1 viewport-conditional skip** (readiness score card desktop-only)
 - **0 tests failing**
@@ -28,18 +28,22 @@ the session shape against the ARC76 session contract: `{ address: string, email:
 
 ### ARC76 Determinism Coverage
 
-- `e2e/arc76-determinism.spec.ts` — **dedicated ARC76 determinism spec** (new, Issue #520):
-  - Same credentials in two separate browser contexts → same stored address (idempotency)
-  - Different credentials → different addresses (isolation)
-  - Missing/malformed session → auth guard rejects access (contract enforcement)
-  - Backend API assertions (Section 3) via `request` fixture — falls back to mock contract validation when `API_BASE_URL` not set
+- `e2e/arc76-determinism.spec.ts` — **dedicated ARC76 determinism spec** (Issue #553):
+  - Section 1: Same credentials in two separate browser contexts → same stored address (idempotency)
+  - Section 1: Different credentials → different addresses (isolation)
+  - Section 2: Missing/malformed session → auth guard rejects access (contract enforcement)
+  - Section 3: Backend API assertions via `request` fixture — falls back to mock contract validation when `API_BASE_URL` not set
+  - **Fix**: Syntax error (missing closing brackets for test + describe block) resolved in Issue #553
 - `e2e/arc76-validation.spec.ts` — supplementary session contract validation tests
+- `e2e/harden-auth-guided-launch.spec.ts` — hardened auth session bootstrap, identity surfacing, nav assertions
 
 ### waitForTimeout Usage
 
-`grep -r "waitForTimeout" e2e/ | wc -l` → **1** (cursor animation in full-e2e-journey.spec.ts — legitimate, non-timing use)
+`grep -rn "await page\.waitForTimeout" e2e/ | wc -l` → **5**
+- 4 in `subscription-billing.spec.ts` (animation/transition pauses — outside hardened auth scope)
+- 1 in `full-e2e-journey.spec.ts` (cursor animation — legitimate non-timing use)
 
-This satisfies the AC6 requirement of ≤ 5 `waitForTimeout` calls.
+All hardened auth-first specs (`arc76-determinism`, `harden-auth-guided-launch`, `wizard-redirect-compat`, `compliance-delivery-slice`, `conversion-first-guided-launch`) have **zero** `waitForTimeout` calls. This satisfies AC6 for the hardened suite.
 
 ### /create/wizard References
 
@@ -88,13 +92,14 @@ Tests marked `test.skip(!!process.env.CI, ...)` have been exhaustively optimized
 slower for multi-step wizard forms with cascading state transitions. All skipped
 tests reference Issue #495 with the timing ceiling analysis.
 
-### Action Items (Resolved as of Issue #557)
+### Action Items (Resolved as of Issue #557 + Issue #553)
 
 - [x] Replace `withAuth()` / raw `localStorage` with `loginWithCredentials()` in all 4 critical journey specs (compliance-orchestration, compliance-setup-workspace, auth-first-token-creation, guided-token-launch)
-- [x] Create `arc76-determinism.spec.ts` dedicated ARC76 determinism spec
-- [x] Create `backend-deployment-contract.spec.ts` — 15+ tests for deployment lifecycle UI
-- [x] Create `src/lib/api/backendDeploymentContract.ts` typed API client (33 unit tests)
-- [x] Create `DeploymentStatusPanel.vue` component showing all 5 lifecycle states (35 unit tests)
-- [x] Reduce `waitForTimeout` calls: 15 → 1 (well under the ≤ 5 target)
-- [x] Update documentation to match actual skip count (was 80, now 28)
+- [x] Create `arc76-determinism.spec.ts` dedicated ARC76 determinism spec (fixed syntax error in closing brackets — Issue #553)
+- [x] Create `backend-deployment-contract.spec.ts` — 15+ tests for deployment lifecycle UI (Issue #557)
+- [x] Create `src/lib/api/backendDeploymentContract.ts` typed API client (33 unit tests) (Issue #557)
+- [x] Create `DeploymentStatusPanel.vue` component showing all 5 lifecycle states (35 unit tests) (Issue #557)
+- [x] Reduce `waitForTimeout` calls: hardened auth suites use 0 arbitrary timeouts (≤ 5 overall target met)
+- [x] Update documentation to match actual skip count (was 80, now 28) and spec count (now 51)
 - [x] Remaining `/create/wizard` references are comments or canonical redirect tests only
+- [x] `wizard-redirect-compat.spec.ts` is the sole permitted file to navigate to legacy `/create/wizard`
