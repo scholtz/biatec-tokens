@@ -9,13 +9,16 @@ import type {
 
 /**
  * Custom Playwright reporter that provides detailed test execution summary.
- * 
- * This reporter logs test execution status and ensures proper exit codes:
+ *
+ * Deterministic exit code policy:
  * - Exit code 1 when tests actually fail (failedCount > 0)
- * - Exit code 0 when all tests pass, even if browser console errors occur
- * 
- * Browser console errors are suppressed per-test via beforeEach hooks.
- * Only actual test failures should cause CI failures.
+ * - Playwright's own exit code is preserved in all cases
+ * - Browser console errors are suppressed per-test via suppressBrowserErrors()
+ *   in each spec's beforeEach — NOT masked via process.exitCode override here.
+ *
+ * Per copilot instructions: process.exitCode forcing is PROHIBITED because it
+ * masks real failures and makes debugging impossible. Use suppressBrowserErrors()
+ * in test beforeEach hooks instead of hiding exit codes here.
  */
 class CustomReporter implements Reporter {
   private testCount = 0;
@@ -23,22 +26,11 @@ class CustomReporter implements Reporter {
   private failedCount = 0;
   private skippedCount = 0;
 
-  onBegin(config: FullConfig, suite: Suite) {
+  onBegin(_config: FullConfig, suite: Suite) {
     console.log(`\n[CustomReporter] Starting test run with ${suite.allTests().length} tests`);
-    
-    // Install exit hook to force exit code 0 when all tests pass
-    // This runs AFTER process.exit() is called but BEFORE actual termination
-    process.on('exit', (code) => {
-      if (this.failedCount === 0) {
-        // All tests passed - force exit code 0 even if Playwright reports "failed" status
-        // This happens when browser console errors occur but tests themselves pass
-        process.exitCode = 0;
-      }
-      // If failedCount > 0, let the original exit code stand (typically 1)
-    });
   }
 
-  onTestBegin(test: TestCase, result: TestResult) {
+  onTestBegin(_test: TestCase, _result: TestResult) {
     this.testCount++;
   }
 
@@ -58,18 +50,18 @@ class CustomReporter implements Reporter {
 
   onEnd(result: FullResult) {
     console.log(`\n[CustomReporter] Test run completed with status: ${result.status}`);
-    console.log(`[CustomReporter] Summary: ${this.passedCount} passed, ${this.failedCount} failed, ${this.skippedCount} skipped`);
-    
+    console.log(
+      `[CustomReporter] Summary: ${this.passedCount} passed, ${this.failedCount} failed, ${this.skippedCount} skipped`,
+    );
+
     if (this.failedCount > 0) {
-      console.log(`[CustomReporter] ⚠️ ${this.failedCount} test(s) failed - exit code will reflect failures`);
-      // Exit code 1 is correct - actual test failures occurred
+      console.log(
+        `[CustomReporter] ⚠️ ${this.failedCount} test(s) failed — exit code 1 (deterministic CI)`,
+      );
     } else {
-      console.log(`[CustomReporter] ✅ All tests passed`);
-      // Force exit code 0 when all tests pass, even if Playwright reports "failed" status
-      // This happens when browser console errors occur but tests themselves pass
-      // Per CI stability requirements: only actual test failures should cause CI failures
-      process.exitCode = 0;
+      console.log(`[CustomReporter] ✅ All tests passed or skipped`);
     }
+    // Do NOT set process.exitCode — Playwright's exit code is the source of truth.
   }
 }
 
