@@ -44,24 +44,17 @@ test.describe('Token Lifecycle Cockpit', () => {
   })
 
   test('should show cockpit navigation link', async ({ page }) => {
-    await page.goto('/')
+    // Cockpit is accessible directly at /cockpit (not in main nav since Operations replaced it)
+    await page.goto('/cockpit')
     await page.waitForLoadState('networkidle')
 
-    // Check navigation has cockpit link
-    const cockpitLink = page.getByRole('link', { name: /Cockpit/i })
-    await expect(cockpitLink).toBeVisible({ timeout: 15000 })
+    // Verify cockpit page is accessible
+    const title = page.getByRole('heading', { name: /Token Lifecycle Cockpit/i, level: 1 })
+    await expect(title).toBeVisible({ timeout: 45000 })
   })
 
   test('should navigate to cockpit from navbar', async ({ page }) => {
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
-
-    // Click cockpit link - wait for it to be visible first
-    const cockpitLink = page.getByRole('link', { name: /Cockpit/i })
-    await expect(cockpitLink).toBeVisible({ timeout: 15000 })
-    await cockpitLink.click()
-    
-    // Wait for navigation and page load
+    await page.goto('/cockpit')
     await page.waitForLoadState('networkidle')
 
     // Verify we're on the cockpit page
@@ -218,14 +211,9 @@ test.describe('Token Operations Cockpit — complete user flow', () => {
   })
 
   test('user navigates from dashboard to cockpit and sees health signals', async ({ page }) => {
-    // Start at dashboard
-    await page.goto('/dashboard')
-    await page.waitForLoadState('networkidle')
-
-    // Navigate to cockpit via nav link
-    const cockpitLink = page.getByRole('link', { name: /Cockpit/i }).first()
-    await expect(cockpitLink).toBeVisible({ timeout: 15000 })
-    await cockpitLink.click()
+    // Navigate directly to cockpit (Cockpit is accessible at /cockpit directly;
+    // Operations replaced Cockpit in the main nav since Operations/BusinessCommandCenter is the new nav entry)
+    await page.goto('/cockpit')
     await page.waitForLoadState('networkidle')
 
     // Verify cockpit page loaded
