@@ -30,6 +30,8 @@ test.describe('Compliance Setup Workspace', () => {
   // ============================================================================
 
   test('should navigate to compliance setup workspace and display main elements', async ({ page }) => {
+    // beforeEach loginWithCredentials() adds ~5s backend timeout + 60s visibility assertion → needs 90s budget
+    test.setTimeout(90000)
     // Previously skipped in CI due to arbitrary waitForTimeout(10000) eating budget.
     // Refactored: removed arbitrary wait, use semantic waits with explicit timeouts.
     // Follows the same pattern as passing auth-first-token-creation.spec.ts tests.
@@ -249,6 +251,8 @@ test.describe('Compliance Setup Workspace', () => {
   // ============================================================================
 
   test('should block progression without required fields filled', async ({ page }) => {
+    // beforeEach loginWithCredentials() adds ~5s backend timeout + 60s visibility assertion → needs 90s budget
+    test.setTimeout(90000)
     // CI-stable: checks the initial disabled state of the Continue button before any
     // fields are filled. This requires only page load + component mount, which the
     // first test in this suite already proves is achievable within 60s in CI.

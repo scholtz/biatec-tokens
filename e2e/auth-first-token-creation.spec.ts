@@ -82,6 +82,8 @@ test.describe('Auth-First Token Creation Journey', () => {
   })
 
   test('should allow authenticated user to access guided token launch', async ({ page }) => {
+    // loginWithCredentials() adds ~5s backend timeout + 60s visibility assertion → needs 90s budget
+    test.setTimeout(90000)
     // Use canonical auth helper — validates ARC76 session contract before seeding
     await loginWithCredentials(page, AUTH_FIRST_TEST_EMAIL)
     
@@ -99,6 +101,8 @@ test.describe('Auth-First Token Creation Journey', () => {
   })
 
   test('should allow authenticated user to access advanced token creation', async ({ page }) => {
+    // loginWithCredentials() adds ~5s backend timeout + 60s visibility assertion → needs 90s budget
+    test.setTimeout(90000)
     // Use canonical auth helper — validates ARC76 session contract before seeding
     await loginWithCredentials(page, AUTH_FIRST_TEST_EMAIL)
     
@@ -112,6 +116,8 @@ test.describe('Auth-First Token Creation Journey', () => {
   })
 
   test('should not display wallet/network UI elements in top navigation', async ({ page }) => {
+    // loginWithCredentials() adds ~5s backend timeout + 60s visibility assertion → needs 90s budget
+    test.setTimeout(90000)
     // Use canonical auth helper — validates ARC76 session contract before seeding
     await loginWithCredentials(page, AUTH_FIRST_TEST_EMAIL)
     
@@ -159,6 +165,8 @@ test.describe('Auth-First Token Creation Journey', () => {
   })
 
   test('should maintain auth state across navigation', async ({ page }) => {
+    // loginWithCredentials() adds ~5s backend timeout + 60s visibility assertions → needs 90s budget
+    test.setTimeout(90000)
     // Use loginWithCredentials for critical journey — validates backend auth contract
     await loginWithCredentials(page, 'auth-persist@example.com')
     
@@ -184,6 +192,8 @@ test.describe('Auth-First Token Creation Journey', () => {
   })
 
   test('should display compliance gating when accessing token creation', async ({ page }) => {
+    // loginWithCredentials() adds ~5s backend timeout + 60s visibility assertion → needs 90s budget
+    test.setTimeout(90000)
     // Use loginWithCredentials for critical journey — validates backend auth contract
     await loginWithCredentials(page, 'compliance@example.com')
     
