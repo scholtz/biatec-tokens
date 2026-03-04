@@ -219,7 +219,8 @@ describe('No-wallet policy × NAV_ITEMS integration', () => {
   })
 
   it('no NAV_ITEM path contains wallet-era route patterns', () => {
-    const walletPathPatterns = [/wallet/i, /connect/i, /metamask/i, /pera/i, /defly/i]
+    // Use word-boundary patterns to avoid false positives (e.g., "pera" inside "operations")
+    const walletPathPatterns = [/wallet/i, /connect/i, /metamask/i, /\bpera\b/i, /\bdefly\b/i]
     for (const item of NAV_ITEMS) {
       for (const pattern of walletPathPatterns) {
         expect(
@@ -285,8 +286,8 @@ describe('Route-set completeness and consistency', () => {
 
   it('NAV_ITEMS paths are a subset of all auth-gated + non-gated routes (no ghost routes)', () => {
     const allAuthGated = new Set([...LAUNCH_AUTH_REQUIRED_ROUTES, ...COMPLIANCE_AUTH_GATED_ROUTES])
-    // Public routes that do NOT require auth
-    const knownPublicPaths = ['/', '/dashboard', '/subscription/pricing', '/settings', '/cockpit']
+    // Known routes not covered by the LAUNCH/COMPLIANCE constants (public or auth-gated)
+    const knownPublicPaths = ['/', '/dashboard', '/subscription/pricing', '/settings', '/cockpit', '/operations', '/portfolio']
 
     for (const item of NAV_ITEMS) {
       const isPublic = knownPublicPaths.includes(item.path)

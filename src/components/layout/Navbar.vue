@@ -197,6 +197,8 @@ import {
   RocketLaunchIcon,
   ShieldCheckIcon,
   CommandLineIcon,
+  BuildingOfficeIcon,
+  CubeIcon,
 } from "@heroicons/vue/24/outline";
 import type { FunctionalComponent, SVGAttributes } from "vue";
 import EmailAuthModal from "../EmailAuthModal.vue";
@@ -218,6 +220,8 @@ const NAV_ICONS: Record<string, FunctionalComponent<SVGAttributes>> = {
   "/": HomeIcon,
   "/launch/guided": RocketLaunchIcon,
   "/dashboard": ChartBarIcon,
+  "/portfolio": CubeIcon,
+  "/operations": BuildingOfficeIcon,
   "/cockpit": CommandLineIcon,
   "/compliance/setup": ShieldCheckIcon,
   "/subscription/pricing": CurrencyDollarIcon,

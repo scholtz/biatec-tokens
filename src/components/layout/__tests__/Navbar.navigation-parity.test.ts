@@ -18,7 +18,8 @@ describe('Navbar - Navigation Parity', () => {
     history: createWebHistory(),
     routes: [
       { path: '/', name: 'Home', component: { template: '<div>Home</div>' } },
-      { path: '/cockpit', name: 'LifecycleCockpit', component: { template: '<div>Cockpit</div>' } },
+      { path: '/operations', name: 'BusinessCommandCenter', component: { template: '<div>Operations</div>' } },
+      { path: '/portfolio', name: 'PortfolioIntelligence', component: { template: '<div>Portfolio</div>' } },
       { path: '/launch/guided', name: 'GuidedTokenLaunch', component: { template: '<div>Guided</div>' } },
       { path: '/compliance/setup', name: 'ComplianceSetupWorkspace', component: { template: '<div>Compliance</div>' } },
       { path: '/dashboard', name: 'TokenDashboard', component: { template: '<div>Dashboard</div>' } },
@@ -50,7 +51,7 @@ describe('Navbar - Navigation Parity', () => {
     
     // All nav items should be present (rendered for both desktop and mobile)
     expect(html).toContain('Home')
-    expect(html).toContain('Cockpit')
+    expect(html).toContain('Operations')
     expect(html).toContain('Guided Launch')
   })
 
@@ -70,7 +71,8 @@ describe('Navbar - Navigation Parity', () => {
     // Critical MVP destinations (from AC #3) - canonical auth-first guided launch as create entry
     const criticalDestinations = [
       'Home',
-      'Cockpit',
+      'Operations',
+      'Portfolio',
       'Guided Launch', // canonical create flow entry (not legacy /create)
       'Compliance',
       'Dashboard',
@@ -119,7 +121,7 @@ describe('Navbar - Navigation Parity', () => {
     
     // Check that critical items are accessible (present in component)
     expect(html).toContain('Home')
-    expect(html).toContain('Cockpit')
+    expect(html).toContain('Operations')
     expect(html).toContain('Guided Launch')
     expect(html).toContain('Compliance')
   })
