@@ -734,6 +734,72 @@ else console.log('OK: no false positives in nav text');
 - ❌ Add new nav labels without scanning E2E wallet-pattern regexes for false positives
 - ❌ Use broad `connect.*wallet|wallet.*connect` patterns — these match product copy like "No wallet needed to get started—connect one later when you're ready." Use specific brand names only: `/WalletConnect|MetaMask|\bPera\b|Defly/i`
 
+### 7h. Global Playwright Timeout Must Cover Cold-Start Browser Context Overhead (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 4, 2026 (PR #566) 🚨**
+
+**Violation**: Global Playwright timeout was set to 30s (`timeout: 30000`). This caused 4 spec files to consistently fail on their FIRST attempt (no retry trace created yet) because browser cold-start + auth store initialization + Vue component mount takes 35–55s in CI — exceeding the 30s limit. Tests then passed on retry (warm worker), but Playwright marked `FullResult.status = 'failed'` causing exit code 1.
+
+**Root Cause Diagnostic** (how to confirm this pattern):
+1. Download the Playwright HTML report artifact from the failing CI run
+2. Look for `.zip` trace files in `playwright-report/data/` — each `.zip` = one retried test
+3. Read `0-trace.stacks` inside each zip to identify which spec file the trace belongs to
+4. If 4+ spec files have retry traces but reporter shows "0 failed" — this is the cold-start pattern
+
+**Confirmed files affected by 30s cold-start timeout** (resolved in commit 6a5a921):
+- `auth-first-token-creation.spec.ts`
+- `accessibility-conversion-hardening.spec.ts`
+- `accessibility-first-launch.spec.ts`
+- `guided-launch-hardening.spec.ts`
+
+**Correct Playwright Configuration**:
+```typescript
+// playwright.config.ts
+export default defineConfig({
+  timeout: 60000, // 60s per test — covers cold-start + auth init + Vue mount overhead
+  // ...
+})
+```
+
+**Per-Test Override for loginWithCredentials() + Long Assertions**:
+When a test combines `loginWithCredentials()` (5s backend timeout) with `toBeVisible({ timeout: 60000 })`, the test needs 90s:
+```typescript
+test('auth-dependent test with long assertion', async ({ page }) => {
+  // loginWithCredentials() adds ~5s backend timeout + 60s visibility assertion → needs 90s budget
+  test.setTimeout(90000)
+  await loginWithCredentials(page, email)
+  await page.goto('/protected-route')
+  await page.waitForLoadState('networkidle')
+  await expect(heading).toBeVisible({ timeout: 60000 })
+})
+```
+
+**Quick Diagnostic** (run locally to confirm cold-start theory):
+```bash
+# Count retry trace zips in playwright-report/data/
+ls /tmp/playwright-report/data/*.zip | wc -l
+# If count = X, then X tests were retried (failed attempt 0, passed attempt 1)
+
+# Identify which spec files had retries:
+for z in /tmp/playwright-report/data/*.zip; do
+  tmpdir="/tmp/trace_$(basename $z .zip)"
+  mkdir -p "$tmpdir" && unzip -o "$z" -d "$tmpdir" > /dev/null 2>&1
+  python3 -c "
+import json
+with open('$tmpdir/0-trace.stacks') as f:
+  d = json.loads(f.readline())
+for p in d.get('files', []):
+  if 'spec.ts' in p: print(p.split('/')[-1])
+"
+done
+```
+
+**Never Again**:
+- ❌ Set global Playwright `timeout` below 60s — cold-start takes 35–55s in CI
+- ❌ Use `toBeVisible({ timeout: 60000 })` in a test with only 60s global budget — add `test.setTimeout(90000)`
+- ❌ Use `loginWithCredentials()` in a test without accounting for the 5s backend connection timeout
+- ❌ Treat "0 failed, X passed" as a CI success signal — check `FullResult.status` in reporter output
+
 ### 7g. Body Text Wallet Assertions Must Use Specific Brands, Not Broad Patterns (MANDATORY) 🆕
 
 **🚨 CRITICAL PAST VIOLATION - March 4, 2026 (PR #566) 🚨**
