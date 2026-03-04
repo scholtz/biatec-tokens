@@ -691,6 +691,48 @@ console.log('length:', MOCK_A.length, 'passes >= 58?', MOCK_A.length >= 58);
 - ❌ Skip the brace-count check after writing a new spec file
 - ❌ Trust indentation to indicate correct brace nesting (count them explicitly)
 
+### 7e. Wallet-Pattern Regex Must Use Word Boundaries for "Pera" (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 4, 2026 (PR #554) 🚨**
+
+**Violation**: Copilot used `/WalletConnect|MetaMask|Pera|Defly/i` in E2E wallet-pattern assertions. After "Operations" was added to the nav, this regex matched "o**pera**tions" via the bare `/Pera/i` alternative (case-insensitive), causing 3 false-positive failures: `homepage navigation contains no wallet connector UI` in `conversion-first-guided-launch.spec.ts`.
+
+**Root Cause**:
+- Nav text: `"...Portfolio Operations Compliance..."` — "Operations" contains the substring "pera"
+- `/Pera/i` matches "pera" anywhere without word boundaries
+- Same root cause was previously fixed in unit test files (`.test.ts`) but E2E spec files were not fully audited
+
+**Correct Pattern** (MANDATORY for all wallet-pattern assertions):
+```typescript
+// ❌ WRONG - /Pera/i matches "operations" as substring
+expect(navText).not.toMatch(/WalletConnect|MetaMask|Pera|Defly/i)
+
+// ✅ CORRECT - \bPera\b requires word boundary, won't match "operations"
+expect(navText).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
+
+// ✅ ALSO CORRECT - "Pera Wallet" requires a space after "Pera"
+expect(navText).not.toMatch(/WalletConnect|MetaMask|Pera Wallet|Defly/i)
+// or
+expect(navText).not.toMatch(/WalletConnect|MetaMask|Pera.*Wallet|Defly/i)
+```
+
+**Pre-Commit Check** for any wallet-pattern regex:
+```bash
+# Test that the regex does NOT match known nav labels
+node -e "
+const nav = 'Home Guided Launch Dashboard Portfolio Operations Compliance Pricing Settings';
+const pattern = /WalletConnect|MetaMask|\bPera\b|Defly/i;
+const m = nav.match(pattern);
+if (m) { console.error('FALSE POSITIVE:', m[0]); process.exit(1); }
+else console.log('OK: no false positives in nav text');
+"
+```
+
+**Never Again**:
+- ❌ Write `/Pera/i` without `\b` word boundaries in wallet pattern assertions
+- ❌ Audit only `.test.ts` files — always check E2E `.spec.ts` files too
+- ❌ Add new nav labels without scanning E2E wallet-pattern regexes for false positives
+
 ### 8. Feature Accessibility (MANDATORY FOR NEW ROUTES)
 - [ ] **Navigation Link Required**: If implementing new route, MUST add navigation link
   - ❌ **Past Violation**: Guided launch implemented but not accessible from navbar

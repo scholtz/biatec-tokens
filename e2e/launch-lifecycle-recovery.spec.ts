@@ -110,7 +110,7 @@ test.describe('Happy path — authenticated guided launch', () => {
 
     const nav = page.getByRole('navigation').first()
     const navText = await nav.textContent().catch(() => '')
-    expect(navText).not.toMatch(/WalletConnect|Pera|Defly|MetaMask/i)
+    expect(navText).not.toMatch(/WalletConnect|\bPera\b|Defly|MetaMask/i)
   })
 })
 

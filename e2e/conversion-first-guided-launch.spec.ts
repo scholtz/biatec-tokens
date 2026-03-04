@@ -54,7 +54,7 @@ test.describe('Homepage and structural tests', () => {
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
     const navText = await nav.textContent().catch(() => '')
-    expect(navText).not.toMatch(/WalletConnect|MetaMask|Pera|Defly/i)
+    expect(navText).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
   })
 
   test('guided launch route exists (either page or auth redirect)', async ({ page }) => {
