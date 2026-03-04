@@ -116,6 +116,7 @@ test.describe("AC #2: Navigation contract — guest and auth state", () => {
   test("authenticated user sees their email in the user menu area (not wallet address)", async ({
     page,
   }) => {
+    test.setTimeout(90000) // waitForFunction(30s) + nav overhead; belt-and-suspenders after globalSetup warmup
     suppressBrowserErrors(page);
     // Seed with a known email so we can assert it appears
     await withAuth(page, {
@@ -130,7 +131,7 @@ test.describe("AC #2: Navigation contract — guest and auth state", () => {
     await page.waitForFunction(
       () =>
         document.body.innerText.includes("hardening-test@biatec.io"),
-      { timeout: 30000 }
+      { timeout: 45000 }  // Increased from 30s: cold Vue hydration can take 25-30s in CI
     );
 
     const bodyText = await page.locator("body").innerText();

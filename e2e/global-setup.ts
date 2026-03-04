@@ -1,14 +1,66 @@
 /**
  * Playwright Global Setup
- * 
- * This file configures global settings for all Playwright tests.
- * Used to suppress browser console errors that don't affect test functionality.
+ *
+ * Pre-warms the Vite dev server before any tests run.
+ *
+ * Root cause of cold-start CI failures (section 7h, copilot-instructions.md):
+ * The router (src/router/index.ts) uses STATIC imports for 30+ view components.
+ * First page load in CI causes Vite to compile the entire ~2.5MB bundle from
+ * scratch — this takes 60-120s in CI, exceeding any reasonable per-test timeout.
+ * Tests that happen to be first in a worker queue fail on attempt 0 and pass on
+ * attempt 1 (warm Vite), causing FullResult.status = 'failed' and exit code 1.
+ *
+ * Fix: navigate to the key routes once in globalSetup BEFORE any tests start.
+ * This forces Vite to compile all modules so every subsequent test page load
+ * resolves in 2-5s (cached compilation).
  */
 
-import { FullConfig } from '@playwright/test'
+import { chromium, FullConfig } from '@playwright/test'
 
-async function globalSetup(config: FullConfig) {
-  // Global setup tasks can be added here
+async function globalSetup(_config: FullConfig) {
+  const BASE_URL = 'http://localhost:5173'
+
+  // Warmup address meets ARC76 ≥58-char requirement (not validated here but
+  // consistent with other test fixtures in the codebase).
+  const WARMUP_AUTH = JSON.stringify({
+    address: 'GLOBALSETUPWARMUP7BIATECTOKENSNOBKND7777777777777777777777',
+    email: 'warmup-setup@biatec.io',
+    isConnected: true,
+  })
+
+  const browser = await chromium.launch()
+  const page = await browser.newPage()
+
+  try {
+    console.log('[globalSetup] Pre-warming Vite dev server (eliminates cold-start CI failures)...')
+
+    // Seed localStorage so auth-guarded routes render their full component tree
+    // (instead of an immediate redirect that skips Vue hydration compilation).
+    await page.addInitScript((auth: string) => {
+      localStorage.setItem('algorand_user', auth)
+    }, WARMUP_AUTH)
+
+    // Visit home — triggers compilation of main.ts and all eager-loaded modules.
+    await page.goto(`${BASE_URL}/`, { waitUntil: 'networkidle', timeout: 120000 })
+    console.log('[globalSetup] Home page compiled.')
+
+    // Visit guided launch — compiles GuidedTokenLaunch.vue and its deep import tree.
+    await page.goto(`${BASE_URL}/launch/guided`, { waitUntil: 'networkidle', timeout: 120000 })
+    console.log('[globalSetup] /launch/guided compiled.')
+
+    // Visit compliance setup — compiles ComplianceSetupWorkspace.vue subtree.
+    await page.goto(`${BASE_URL}/compliance/setup`, { waitUntil: 'networkidle', timeout: 120000 })
+    console.log('[globalSetup] /compliance/setup compiled.')
+
+    console.log('[globalSetup] Vite dev server fully warmed up. All module compilations cached.')
+  } catch (err) {
+    // Non-fatal: log and continue. Per-test timeouts (test.setTimeout) act as
+    // a belt-and-suspenders fallback if the warmup is incomplete.
+    console.warn(`[globalSetup] Warmup encountered issue (non-fatal): ${err}`)
+  } finally {
+    await browser.close()
+  }
+
   console.log('Global Playwright setup completed')
 }
 

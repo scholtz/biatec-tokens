@@ -419,6 +419,7 @@ test.describe('No wallet connector UI — email/password only', () => {
   })
 
   test('guided launch page shows email/password authentication only', async ({ page }) => {
+    test.setTimeout(90000) // may hit cold Vite worker if globalSetup warmup incomplete
     await clearAuthScript(page)
     await page.goto('/')
     await page.waitForLoadState('networkidle')

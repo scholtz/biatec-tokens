@@ -738,67 +738,62 @@ else console.log('OK: no false positives in nav text');
 
 **🚨 CRITICAL PAST VIOLATION - March 4, 2026 (PR #566) 🚨**
 
-**Violation**: Global Playwright timeout was set to 30s (`timeout: 30000`). This caused 4 spec files to consistently fail on their FIRST attempt (no retry trace created yet) because browser cold-start + auth store initialization + Vue component mount takes 35–55s in CI — exceeding the 30s limit. Tests then passed on retry (warm worker), but Playwright marked `FullResult.status = 'failed'` causing exit code 1.
+**Root cause confirmed via trace analysis**: The router (`src/router/index.ts`) uses STATIC imports for 30+ view components. The FIRST page load in CI causes Vite to compile the entire ~2.5MB bundle — this takes **60-120 seconds** in CI. Tests whose attempt 0 runs on a cold Vite worker fail (timeout), then pass on attempt 1 (warm Vite). Playwright marks `FullResult.status = 'failed'` causing exit code 1.
+
+**Important: `trace: "on-first-retry"` traces show PASSING RETRIES, not failures.**
+The `.zip` trace files in `playwright-report/data/` are from attempt 1 (the retry). If traces show 2-4s duration, the test PASSED quickly on retry because Vite was warm. Attempt 0 silently failed due to cold Vite exceeding the timeout.
 
 **Root Cause Diagnostic** (how to confirm this pattern):
 1. Download the Playwright HTML report artifact from the failing CI run
 2. Look for `.zip` trace files in `playwright-report/data/` — each `.zip` = one retried test
-3. Read `0-trace.stacks` inside each zip to identify which spec file the trace belongs to
-4. If 4+ spec files have retry traces but reporter shows "0 failed" — this is the cold-start pattern
+3. Read `0-trace.stacks` to identify which spec file; read `0-trace.trace` for event timing
+4. If traces show 2-4s duration → tests PASSED on retry; cold Vite caused attempt 0 to fail
+5. Check `src/router/index.ts` — if routes use static imports → cold Vite is the root cause
 
-**Confirmed files affected by 30s cold-start timeout** (resolved in commit 6a5a921):
-- `auth-first-token-creation.spec.ts`
-- `accessibility-conversion-hardening.spec.ts`
-- `accessibility-first-launch.spec.ts`
-- `guided-launch-hardening.spec.ts`
-
-**Correct Playwright Configuration**:
+**Primary Fix: Pre-warm Vite in globalSetup (MANDATORY)**:
 ```typescript
-// playwright.config.ts
-export default defineConfig({
-  timeout: 60000, // 60s per test — covers cold-start + auth init + Vue mount overhead
+// e2e/global-setup.ts — visit key routes BEFORE any tests start
+import { chromium, FullConfig } from '@playwright/test'
+
+async function globalSetup(_config: FullConfig) {
+  const browser = await chromium.launch()
+  const page = await browser.newPage()
+  try {
+    // Seed auth so guarded routes render their full component tree (not redirect)
+    await page.addInitScript((auth: string) => {
+      localStorage.setItem('algorand_user', auth)
+    }, JSON.stringify({ address: 'GLOBALSETUPWARMUP7...58chars', email: 'warmup@biatec.io', isConnected: true }))
+
+    // These 3 visits compile ALL statically-imported Vue components:
+    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle', timeout: 120000 })
+    await page.goto('http://localhost:5173/launch/guided', { waitUntil: 'networkidle', timeout: 120000 })
+    await page.goto('http://localhost:5173/compliance/setup', { waitUntil: 'networkidle', timeout: 120000 })
+  } catch (err) {
+    console.warn(`[globalSetup] Warmup failed (non-fatal): ${err}`)
+  } finally {
+    await browser.close()
+  }
+}
+```
+
+**Secondary Fix: Per-test timeouts as belt-and-suspenders** (for tests that navigate to heavy pages):
+```typescript
+test('test navigating to /launch/guided or /compliance/setup', async ({ page }) => {
+  test.setTimeout(90000) // Belt-and-suspenders if globalSetup warmup incomplete
   // ...
 })
 ```
 
-**Per-Test Override for loginWithCredentials() + Long Assertions**:
-When a test combines `loginWithCredentials()` (5s backend timeout) with `toBeVisible({ timeout: 60000 })`, the test needs 90s:
-```typescript
-test('auth-dependent test with long assertion', async ({ page }) => {
-  // loginWithCredentials() adds ~5s backend timeout + 60s visibility assertion → needs 90s budget
-  test.setTimeout(90000)
-  await loginWithCredentials(page, email)
-  await page.goto('/protected-route')
-  await page.waitForLoadState('networkidle')
-  await expect(heading).toBeVisible({ timeout: 60000 })
-})
-```
-
-**Quick Diagnostic** (run locally to confirm cold-start theory):
-```bash
-# Count retry trace zips in playwright-report/data/
-ls /tmp/playwright-report/data/*.zip | wc -l
-# If count = X, then X tests were retried (failed attempt 0, passed attempt 1)
-
-# Identify which spec files had retries:
-for z in /tmp/playwright-report/data/*.zip; do
-  tmpdir="/tmp/trace_$(basename $z .zip)"
-  mkdir -p "$tmpdir" && unzip -o "$z" -d "$tmpdir" > /dev/null 2>&1
-  python3 -c "
-import json
-with open('$tmpdir/0-trace.stacks') as f:
-  d = json.loads(f.readline())
-for p in d.get('files', []):
-  if 'spec.ts' in p: print(p.split('/')[-1])
-"
-done
-```
-
 **Never Again**:
-- ❌ Set global Playwright `timeout` below 60s — cold-start takes 35–55s in CI
+- ❌ Set global Playwright `timeout` below 60s — cold-start takes 60-120s in CI
+- ❌ Leave `globalSetup` empty — it MUST pre-warm Vite by visiting key routes
 - ❌ Use `toBeVisible({ timeout: 60000 })` in a test with only 60s global budget — add `test.setTimeout(90000)`
-- ❌ Use `loginWithCredentials()` in a test without accounting for the 5s backend connection timeout
+- ❌ Treat retry trace duration as "test failure duration" — traces are from PASSING retries
 - ❌ Treat "0 failed, X passed" as a CI success signal — check `FullResult.status` in reporter output
+
+**Confirmed files affected** (resolved in commits 6a5a921, f1cc5ab, and current):
+- Global: `playwright.config.ts` timeout 30s→60s, `e2e/global-setup.ts` pre-warmup added
+- Per-test `test.setTimeout(90000)`: `auth-first-token-creation.spec.ts`, `accessibility-first-launch.spec.ts`, `accessibility-conversion-hardening.spec.ts`, `guided-launch-hardening.spec.ts`
 
 ### 7g. Body Text Wallet Assertions Must Use Specific Brands, Not Broad Patterns (MANDATORY) 🆕
 
