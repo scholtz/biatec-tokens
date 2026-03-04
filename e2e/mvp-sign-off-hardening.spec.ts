@@ -36,7 +36,6 @@
 
 import { test, expect } from '@playwright/test'
 import {
-  withAuth,
   loginWithCredentials,
   suppressBrowserErrors,
   clearAuthScript,
@@ -80,38 +79,7 @@ test.describe('AC #1: Canonical route clarity', () => {
     }
   })
 
-  test('/create/wizard redirects to /launch/guided (redirect-compat: authenticated)', async ({
-    page,
-  }) => {
-    await withAuth(page)
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    // Semantic wait: URL must resolve away from legacy path
-    await page.waitForFunction(
-      () => !window.location.pathname.includes('/create/wizard'),
-      { timeout: 20000 },
-    )
-
-    const url = page.url()
-    expect(url).not.toContain('/create/wizard')
-    expect(url).toContain('/launch/guided')
-  })
-
-  test('/create/wizard does not render legacy wizard UI after redirect', async ({ page }) => {
-    await withAuth(page)
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    await page.waitForFunction(
-      () => !window.location.pathname.includes('/create/wizard'),
-      { timeout: 20000 },
-    )
-
-    // Legacy wizard heading must never appear
-    const wizardHeadingCount = await page.getByRole('heading', { name: /token creation wizard/i }).count()
-    expect(wizardHeadingCount).toBe(0)
-  })
+  // Redirect-compatibility tests for /create/wizard consolidated in wizard-redirect-compat.spec.ts
 
   test('authenticated user accessing /launch/guided sees guided launch page', async ({ page }) => {
     await loginWithCredentials(page)

@@ -36,7 +36,6 @@
 import { test, expect } from '@playwright/test'
 import {
   loginWithCredentials,
-  withAuth,
   suppressBrowserErrors,
   clearAuthScript,
 } from './helpers/auth'
@@ -62,52 +61,6 @@ test.describe('AC #1: Canonical routing — /launch/guided is the token creation
     const href = await guidedLaunchLink.getAttribute('href')
     expect(href).toContain('/launch/guided')
     expect(href).not.toContain('/create/wizard')
-  })
-
-  test('/create/wizard redirects to /launch/guided (redirect-compatibility)', async ({
-    page,
-  }) => {
-    await withAuth(page)
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    // Semantic wait: URL must leave the wizard path
-    await page.waitForFunction(
-      () => !window.location.pathname.includes('/create/wizard'),
-      { timeout: 20000 },
-    )
-
-    expect(page.url()).toContain('/launch/guided')
-  })
-
-  test('unauthenticated /create/wizard redirects without rendering wizard UI', async ({
-    page,
-  }) => {
-    await clearAuthScript(page)
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    // Semantic wait: router redirect must have fired — expect home or guided launch
-    await page.waitForFunction(
-      () => {
-        const path = window.location.pathname
-        const url = window.location.href
-        // Unauthenticated users are redirected to home with showAuth=true
-        // Authenticated users are redirected to /launch/guided
-        return (
-          path === '/' ||
-          url.includes('showAuth=true') ||
-          path.includes('/launch/guided') ||
-          path.includes('/launch/')
-        )
-      },
-      { timeout: 20000 },
-    )
-
-    // No wizard heading should be present (wizard UI must not render)
-    const wizardHeading = page.getByRole('heading', { name: /token creation wizard/i })
-    const isVisible = await wizardHeading.isVisible().catch(() => false)
-    expect(isVisible).toBe(false)
   })
 
   test('home page CTA routes authenticated user to /launch/guided', async ({ page }) => {

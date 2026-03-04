@@ -85,15 +85,7 @@ test.describe('AC #1: Canonical flow — /launch/guided as primary creation entr
     await expect(createLinks).toHaveCount(0)
   })
 
-  test('/create/wizard redirects to /launch/guided (compatibility redirect)', async ({
-    page,
-  }) => {
-    await withAuth(page)
-    await page.goto('/create/wizard')
-
-    // Wait for either URL change or redirect signal
-    await expect(page).toHaveURL(/\/launch\/guided/, { timeout: 15000 })
-  })
+  // Redirect-compatibility test for /create/wizard consolidated in wizard-redirect-compat.spec.ts
 
   test('authenticated user sees Guided Launch as the primary create CTA in navigation', async ({
     page,

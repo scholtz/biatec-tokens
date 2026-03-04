@@ -109,46 +109,8 @@ test.describe('AC #1: Guided Launch is canonical token creation entry', () => {
 
 // ---------------------------------------------------------------------------
 // AC #2: /create/wizard redirect compatibility
+// Redirect-compatibility tests consolidated in wizard-redirect-compat.spec.ts
 // ---------------------------------------------------------------------------
-
-test.describe('AC #2: /create/wizard redirect compatibility', () => {
-  test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
-  })
-
-  test('authenticated /create/wizard redirects to /launch/guided', async ({ page }) => {
-    await withAuth(page)
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    // Semantic wait: wizard path must be left before timeout
-    await page.waitForFunction(
-      () => !window.location.pathname.includes('/create/wizard'),
-      { timeout: 20000 },
-    )
-
-    expect(page.url()).toContain('/launch/guided')
-  })
-
-  test('unauthenticated /create/wizard redirects without showing wizard UI', async ({
-    page,
-  }) => {
-    await clearAuthScript(page)
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    // Wizard must leave its own route — either to home or to /launch/guided
-    await page.waitForFunction(
-      () => !window.location.pathname.includes('/create/wizard'),
-      { timeout: 20000 },
-    )
-
-    // Legacy wizard UI heading must not appear
-    const wizardHeading = page.getByRole('heading', { name: /token creation wizard/i })
-    const visible = await wizardHeading.isVisible().catch(() => false)
-    expect(visible).toBe(false)
-  })
-})
 
 // ---------------------------------------------------------------------------
 // AC #3 + #4: Backend-verified auth — contract-validated session identity

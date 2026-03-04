@@ -2,16 +2,16 @@
 
 ## Current Status: ✅ All Tests Passing (Chromium CI)
 
-_Last updated: March 2026 — reflects state after Issue #557 (backend deployment contract API integration) and Issue #553 (MVP blocker: backend-verified deterministic ARC76 auth)_
+_Last updated: March 2026 — reflects state after Issue #559 (E2E CI stability: TokenDetail back-button fix, `/create/wizard` redirect test consolidation, semantic wait migration)_
 
 ### Test Results (Chromium / CI)
 
 - **51 spec files** covering all critical user journeys
-- **27 tests skipped in CI** (CI absolute timing ceiling for multi-step wizard flows; all pass locally)
+- **20 tests skipped in CI** (CI absolute timing ceiling for multi-step wizard flows; all pass locally)
 - **1 viewport-conditional skip** (readiness score card desktop-only)
-- **0 tests failing**
+- **0 tests failing** (root cause: TokenDetail `router.back()` with no history — fixed in Issue #559)
 
-`grep -r "test\.skip(" e2e/ | wc -l` → **28** (27 conditional CI skips + 1 Firefox skip)
+`grep -r "test\.skip(" e2e/ | wc -l` → **22** (20 conditional CI skips + 1 Firefox skip + 1 viewport skip)
 
 ### Auth Pattern Status
 
@@ -39,11 +39,11 @@ the session shape against the ARC76 session contract: `{ address: string, email:
 
 ### waitForTimeout Usage
 
-`grep -rn "await page\.waitForTimeout" e2e/ | wc -l` → **5**
-- 4 in `subscription-billing.spec.ts` (animation/transition pauses — outside hardened auth scope)
-- 1 in `full-e2e-journey.spec.ts` (cursor animation — legitimate non-timing use)
+`grep -rn "await page\.waitForTimeout" e2e/ | wc -l` → **1**
+- 1 in `full-e2e-journey.spec.ts` (cursor animation between steps — legitimate non-timing use; inside animated mouse-move helper)
 
-All hardened auth-first specs (`arc76-determinism`, `harden-auth-guided-launch`, `wizard-redirect-compat`, `compliance-delivery-slice`, `conversion-first-guided-launch`) have **zero** `waitForTimeout` calls. This satisfies AC6 for the hardened suite.
+All other specs use semantic waits (`waitForFunction`, `expect(locator).toBeVisible()`, `waitForLoadState`).
+Issue #559 migrated 6 arbitrary `waitForTimeout` calls to semantic waits (subscription-billing: 4, backend-deployment-contract: 2).
 
 ### /create/wizard References
 
@@ -54,15 +54,26 @@ All remaining `/create/wizard` references in spec files are:
 
 `grep -r "goto.*create/wizard" e2e/` → **3 results** (all in wizard-redirect-compat.spec.ts — expected)
 
+Issue #559 removed 9 duplicate redirect-compat `goto('/create/wizard')` calls from 5 spec files
+(mvp-signoff-readiness, frontend-mvp-hardening, mvp-hardening-canonical-launch, canonical-launch-aa-hardening, mvp-sign-off-hardening) — all were duplicates of tests already in `wizard-redirect-compat.spec.ts`.
+
+### Root Cause Analysis: CI Failure Run #1366 (March 4, 2026)
+
+**Failing test**: `should handle back button navigation` in `e2e/token-detail-view.spec.ts`
+
+**Root cause**: `TokenDetail.vue` used `$router.back()` as the back button handler. When the test navigated directly to `/tokens/mock-token-123` (no browser history), `router.back()` did nothing and the URL stayed at the token detail page. The test assertion `expect(url).not.toContain('/tokens/mock-token-123')` then failed.
+
+**Fix**: Changed `TokenDetail.vue` back button to `goBack()` function that uses `router.push('/dashboard')` as fallback when `window.history.length <= 1`. This is both the correct UX behavior (never trap users on a detail page with no history) and makes the test pass deterministically.
+
 ### Test Coverage Areas
 
 - ✅ Auth-first routing and redirect guards (30+ tests)
 - ✅ Guided Token Launch flow — token creation critical path (20+ tests)
 - ✅ Compliance delivery slice — pipeline step validation (25+ tests)
-- ✅ ARC76 determinism — idempotency, isolation, contract enforcement (new, 8 tests)
+- ✅ ARC76 determinism — idempotency, isolation, contract enforcement (8 tests)
 - ✅ Portfolio, launchpad, and discovery flows (40+ tests)
 - ✅ Accessibility (WCAG 2.1 AA) and navigation parity (20+ tests)
-- ✅ Wizard redirect compatibility (3 tests)
+- ✅ Wizard redirect compatibility (3 tests — canonical file only)
 - ✅ Business command center and subscription billing (15+ tests)
 - ✅ No-wallet-connector assertions across all critical routes
 
@@ -92,14 +103,16 @@ Tests marked `test.skip(!!process.env.CI, ...)` have been exhaustively optimized
 slower for multi-step wizard forms with cascading state transitions. All skipped
 tests reference Issue #495 with the timing ceiling analysis.
 
-### Action Items (Resolved as of Issue #557 + Issue #553)
+### Action Items (Resolved as of Issue #559 + Issue #557 + Issue #553)
 
+- [x] Fix TokenDetail `router.back()` to fallback to `/dashboard` when no browser history (Issue #559)
+- [x] Consolidate all `/create/wizard` redirect tests to `wizard-redirect-compat.spec.ts` only — removed 9 duplicates from 5 spec files (Issue #559)
+- [x] Reduce `waitForTimeout` calls from 7 to 1 — only legitimate cursor animation remains (Issue #559)
 - [x] Replace `withAuth()` / raw `localStorage` with `loginWithCredentials()` in all 4 critical journey specs (compliance-orchestration, compliance-setup-workspace, auth-first-token-creation, guided-token-launch)
 - [x] Create `arc76-determinism.spec.ts` dedicated ARC76 determinism spec (fixed syntax error in closing brackets — Issue #553)
 - [x] Create `backend-deployment-contract.spec.ts` — 15+ tests for deployment lifecycle UI (Issue #557)
 - [x] Create `src/lib/api/backendDeploymentContract.ts` typed API client (33 unit tests) (Issue #557)
 - [x] Create `DeploymentStatusPanel.vue` component showing all 5 lifecycle states (35 unit tests) (Issue #557)
-- [x] Reduce `waitForTimeout` calls: hardened auth suites use 0 arbitrary timeouts (≤ 5 overall target met)
-- [x] Update documentation to match actual skip count (was 80, now 28) and spec count (now 51)
+- [x] Update documentation to match actual skip count and spec count
 - [x] Remaining `/create/wizard` references are comments or canonical redirect tests only
 - [x] `wizard-redirect-compat.spec.ts` is the sole permitted file to navigate to legacy `/create/wizard`

@@ -4,7 +4,7 @@
       <div class="max-w-7xl mx-auto">
         <!-- Header with Back Button -->
         <div class="mb-8">
-          <button @click="$router.back()" class="mb-4 text-gray-400 hover:text-white transition-colors flex items-center space-x-2">
+          <button @click="goBack()" class="mb-4 text-gray-400 hover:text-white transition-colors flex items-center space-x-2">
             <i class="pi pi-arrow-left"></i>
             <span>Back to Dashboard</span>
           </button>
@@ -364,7 +364,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useTokenStore } from "../stores/tokens";
 import MainLayout from "../layout/MainLayout.vue";
 import WhitelistManagement from "../components/WhitelistManagement.vue";
@@ -377,7 +377,16 @@ import { isAlgorandBasedToken, calculateComplianceScore, getDefaultNetwork } fro
 import { getMicaClassificationLabel } from "../utils/mica-compliance";
 
 const route = useRoute();
+const router = useRouter();
 const tokenStore = useTokenStore();
+
+function goBack() {
+  if (window.history.length > 1) {
+    router.back();
+  } else {
+    router.push('/dashboard');
+  }
+}
 
 const tokenId = computed(() => route.params.id as string);
 const token = computed(() => tokenStore.tokens.find((t) => t.id === tokenId.value));

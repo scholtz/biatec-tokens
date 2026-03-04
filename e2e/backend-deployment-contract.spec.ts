@@ -315,7 +315,16 @@ test.describe('Deployment route: auth-first protection', () => {
 
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(3000)
+
+    // Semantic wait: auth guard fires after route initialization
+    await page.waitForFunction(
+      () => {
+        const url = window.location.href
+        return !url.includes('/launch/guided') || url.includes('showAuth=true') ||
+          !!document.querySelector('form input[type="email"]')
+      },
+      { timeout: 20000 },
+    )
 
     // Auth guard must redirect unauthenticated users — they should not see deployment UI
     const url = page.url()
@@ -334,7 +343,9 @@ test.describe('Deployment route: auth-first protection', () => {
 
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(5000)
+
+    // Semantic wait: page must resolve to a valid route (not 404)
+    await expect(page.locator('body')).not.toContainText('404', { timeout: 20000 })
 
     // Page should load (not redirect to login)
     const url = page.url()

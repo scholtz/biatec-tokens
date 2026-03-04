@@ -92,39 +92,7 @@ test.describe('AC #1: Canonical routing', () => {
     expect(href).toContain('/launch/guided')
   })
 
-  test('legacy /create/wizard redirects to /launch/guided', async ({ page }) => {
-    await withAuth(page)
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    await page.waitForFunction(
-      () => !window.location.pathname.includes('/create/wizard'),
-      { timeout: 20000 },
-    )
-
-    expect(page.url()).toContain('/launch/guided')
-  })
-
-  test('/create/wizard redirect works for unauthenticated users (no wizard UI rendered)', async ({
-    page,
-  }) => {
-    await clearAuthScript(page)
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
-
-    await page.waitForFunction(
-      () => {
-        const path = window.location.pathname
-        return !path.includes('/create/wizard')
-      },
-      { timeout: 20000 },
-    )
-
-    // Wizard UI must not be rendered
-    const wizardHeading = page.getByRole('heading', { name: /token creation wizard/i })
-    const isVisible = await wizardHeading.isVisible().catch(() => false)
-    expect(isVisible).toBe(false)
-  })
+  // Redirect-compatibility tests for /create/wizard consolidated in wizard-redirect-compat.spec.ts
 
   test('no wallet connector UI in main navigation', async ({ page }) => {
     await page.goto('/')

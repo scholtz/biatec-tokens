@@ -326,7 +326,6 @@ test.describe('Subscription & Billing Management', () => {
 
       const toggle = page.locator('[data-testid="billing-interval-toggle"]')
       await toggle.click()
-      await page.waitForTimeout(500)
 
       const annualNote = page.locator('[data-testid="basic-annual-note"]').first()
       await expect(annualNote).toBeVisible({ timeout: 10000 })
@@ -344,7 +343,6 @@ test.describe('Subscription & Billing Management', () => {
       // Switch to annual
       const toggle = page.locator('[data-testid="billing-interval-toggle"]')
       await toggle.click()
-      await page.waitForTimeout(500)
 
       const annualPriceEl = page.locator('[data-testid="basic-price"]').first()
       const annualText = await annualPriceEl.textContent()
@@ -413,10 +411,9 @@ test.describe('Subscription & Billing Management', () => {
 
       await page.goto('/dashboard')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(5000)
 
       const banner = page.locator('[data-testid="trial-countdown-banner"]')
-      await expect(banner).toBeVisible({ timeout: 20000 })
+      await expect(banner).toBeVisible({ timeout: 25000 })
     })
 
     test('trial banner should show days remaining', async ({ page }) => {
@@ -424,10 +421,9 @@ test.describe('Subscription & Billing Management', () => {
 
       await page.goto('/dashboard')
       await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(5000)
 
       const banner = page.locator('[data-testid="trial-countdown-banner"]')
-      await expect(banner).toBeVisible({ timeout: 20000 })
+      await expect(banner).toBeVisible({ timeout: 25000 })
       const text = await banner.textContent()
       expect(text).toContain('days left')
     })
