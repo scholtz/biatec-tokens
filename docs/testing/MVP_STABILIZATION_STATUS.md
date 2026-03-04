@@ -31,12 +31,14 @@ auditable record of acceptance criteria, test coverage, and CI hygiene metrics.
 | Metric | Before (base: `649c57c` — last stable main commit) | After (this PR) | Delta |
 |--------|-----------------|-----------------|-------|
 | `process.exitCode` forcing in custom-reporter | ✅ Present (masking) | ✅ Removed | -2 occurrences |
+| Unit tests for custom-reporter reflecting new policy | 6 tests (old behavior) | 9 tests (deterministic policy) | +3 tests |
 | CI-only `test.skip` in `compliance-setup-workspace.spec.ts` | 14 | 13 | -1 (converted to CI-stable) |
 | Skip justifications missing owner/follow-up | 14 | 0 | All updated |
 | Actual `await page.waitForTimeout()` calls in specs | 1 (full-e2e-journey, allowed) | 1 (unchanged) | 0 |
 | `mvp-stabilization.spec.ts` CI skips | n/a (new file) | 0 | n/a |
+| False-positive wallet pattern (`connect.*wallet`) | n/a | 0 (removed from spec) | -1 |
 
-**Net reduction:** 1 `test.skip` removed from compliance-setup-workspace (progressed from CI-skip to CI-stable using semantic wait pattern), exit code forcing eliminated.
+**Net reduction:** 1 `test.skip` removed from compliance-setup-workspace (progressed from CI-skip to CI-stable using semantic wait pattern), exit code forcing eliminated, false-positive wallet regex corrected.
 
 ---
 
@@ -46,8 +48,8 @@ Current state (run locally on branch):
 
 ```
 Test Files  289 passed (289)
-     Tests  9088 passed | 25 skipped (9113)
-  Duration  138.65s
+     Tests  9090 passed | 25 skipped (9115)
+  Duration  131s
 ```
 
 All 289 test files passing. Coverage thresholds met:

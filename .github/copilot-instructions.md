@@ -732,6 +732,52 @@ else console.log('OK: no false positives in nav text');
 - ❌ Write `/Pera/i` without `\b` word boundaries in wallet pattern assertions
 - ❌ Audit only `.test.ts` files — always check E2E `.spec.ts` files too
 - ❌ Add new nav labels without scanning E2E wallet-pattern regexes for false positives
+- ❌ Use broad `connect.*wallet|wallet.*connect` patterns — these match product copy like "No wallet needed to get started—connect one later when you're ready." Use specific brand names only: `/WalletConnect|MetaMask|\bPera\b|Defly/i`
+
+### 7g. Body Text Wallet Assertions Must Use Specific Brands, Not Broad Patterns (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 4, 2026 (PR #566) 🚨**
+
+**Violation**: Copilot used `/connect.*wallet|wallet.*connect/i` in an E2E body text assertion (`page.locator('body').innerText()`). This broad pattern matched legitimate product copy: "No wallet needed to get started—connect one later when you're ready." causing 3 CI failures (1 test × 3 retries).
+
+**Root Cause**:
+- Pattern `wallet.*connect` matches "wallet" appearing anywhere before "connect" in the same string
+- Product copy often legitimately mentions wallets in informational/negative contexts ("no wallet needed")
+- The pattern was too broad — it tested for semantic proximity of two words without requiring they form a specific UI call-to-action
+
+**Correct Pattern** (MANDATORY for body text wallet assertions):
+```typescript
+// ❌ WRONG - too broad, matches informational product copy
+expect(bodyText).not.toMatch(/connect.*wallet|wallet.*connect/i)
+// Matches: "No wallet needed to get started—connect one later when you're ready."
+
+// ✅ CORRECT - specific brand names only, won't match informational copy
+expect(navText).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
+// Does NOT match: "No wallet needed to get started—connect one later when you're ready."
+
+// ✅ ALSO CORRECT - for E2E nav assertions, always use getNavText(page)
+const navText = await getNavText(page)
+expect(navText).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
+```
+
+**Pre-Commit Check** for body text assertions:
+```bash
+node -e "
+const bodyText = 'No wallet needed to get started—connect one later when you are ready.';
+const badPattern = /connect.*wallet|wallet.*connect/i;
+const goodPattern = /WalletConnect|MetaMask|\bPera\b|Defly/i;
+const falsePositive = badPattern.test(bodyText);
+const correctResult = goodPattern.test(bodyText);
+if (falsePositive) { console.error('BAD pattern false-positives on product copy'); process.exit(1); }
+if (correctResult) { console.error('GOOD pattern also false-positives - investigate'); process.exit(1); }
+console.log('OK: patterns are correct');
+"
+```
+
+**Never Again**:
+- ❌ Use `connect.*wallet` or `wallet.*connect` in body text assertions — matches product copy
+- ❌ Check `page.locator('body').innerText()` for wallet patterns — use `getNavText(page)` instead
+- ❌ Skip the pre-commit regex test when writing new wallet assertions
 
 ### 7f. API Client + UI Component Integration Tests Are Mandatory (MANDATORY) 🆕
 
