@@ -646,6 +646,51 @@ console.log('length:', MOCK_A.length, 'passes >= 58?', MOCK_A.length >= 58);
 - ❌ Push new E2E tests without running them locally first
 - ❌ Trust that a "comment says 58 chars" without verifying the actual string length
 
+### 7d. Syntax Validation for New E2E Spec Files (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 3, 2026 (PR #554) 🚨**
+
+**Violation**: Copilot committed `arc76-determinism.spec.ts` with an unbalanced brace structure — the second test inside the first `test.describe()` block was missing its `})` closing bracket, and the outer `test.describe` was also missing its `})`. This silently dropped Section 1's second test and the entire describe block from CI.
+
+**Root Cause**:
+- New E2E test file written without running `node -e "... brace check ..."` before committing
+- No local syntax validation step before `report_progress`
+- The missing brackets caused a runtime parse failure not caught until code review
+
+**Correct Approach for EVERY New E2E Spec File**:
+1. **BRACE COUNT CHECK**: After writing, always verify balanced braces:
+   ```bash
+   node -e "
+   const fs = require('fs');
+   const code = fs.readFileSync('e2e/my-spec.spec.ts', 'utf8');
+   const open = (code.match(/\{/g)||[]).length;
+   const close = (code.match(/\}/g)||[]).length;
+   console.log('Open:', open, 'Close:', close, 'Diff:', open - close);
+   // Diff must be 0
+   "
+   ```
+2. **DESCRIBE/TEST COUNT**: Verify the number of `test.describe()` calls matches expected:
+   ```bash
+   grep -c "test.describe(" e2e/my-spec.spec.ts  # should match your plan
+   grep -c "test('" e2e/my-spec.spec.ts          # should match planned test count
+   ```
+3. **TYPESCRIPT PARSE TEST**: Quick TS parse check before committing:
+   ```bash
+   node --input-type=module < <(echo "import * as f from './e2e/my-spec.spec.ts'") 2>&1 | head -5
+   ```
+4. **NEVER commit a spec file that wasn't run locally first** — use `npx playwright test e2e/my-spec.spec.ts --headed=false` in CI simulation.
+
+**Minimum Quality Bar for E2E Spec Files Before Committing**:
+- [ ] Brace count diff = 0
+- [ ] `test.describe` count matches planned sections
+- [ ] `test(` count matches planned test count
+- [ ] TypeScript parses without syntax errors (check via `npx tsc --noEmit e2e/my-spec.spec.ts`)
+
+**Never Again**:
+- ❌ Commit a spec file with unbalanced braces
+- ❌ Skip the brace-count check after writing a new spec file
+- ❌ Trust indentation to indicate correct brace nesting (count them explicitly)
+
 ### 8. Feature Accessibility (MANDATORY FOR NEW ROUTES)
 - [ ] **Navigation Link Required**: If implementing new route, MUST add navigation link
   - ❌ **Past Violation**: Guided launch implemented but not accessible from navbar
