@@ -733,7 +733,68 @@ else console.log('OK: no false positives in nav text');
 - ❌ Audit only `.test.ts` files — always check E2E `.spec.ts` files too
 - ❌ Add new nav labels without scanning E2E wallet-pattern regexes for false positives
 
-### 8. Feature Accessibility (MANDATORY FOR NEW ROUTES)
+### 7f. API Client + UI Component Integration Tests Are Mandatory (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 4, 2026 (PR #558) 🚨**
+
+**Violation**: Copilot delivered a typed API client (`backendDeploymentContract.ts`) and a UI component (`DeploymentStatusPanel.vue`) with separate unit tests, but did NOT deliver integration tests proving the API client's response shapes correctly flow into the component's props. Product owner requirement #3 explicitly asked for "integration tests for deployment status wiring."
+
+**What Went Wrong**:
+- API client had 33 unit tests + component had 36 unit tests = 69 tests total
+- But NO test verified the wiring between them: that `result.data.state` from the client maps correctly to `props.state` on the component
+- No test verified that `userGuidance` from the client reaches the component without raw error codes
+- No test verified that `isIdempotentReplay` from the client flows to the component's replay notice
+- Product owner correctly identified this as an incomplete integration
+
+**Correct Approach When Delivering API Client + UI Component Together**:
+1. **ALWAYS create an integration test file** `src/__tests__/integration/<Feature>.integration.test.ts`
+2. **Minimum 10+ integration tests** covering:
+   - Each terminal state (Completed, Failed) produces correct component rendering
+   - Error guidance from client reaches component with no raw error codes
+   - All discriminated union props (idempotency replay, audit trail URL, previousState) wire correctly
+   - State machine transitions (e.g., Pending → Validated → Submitted) produce accurate step indicators
+   - 4xx error responses from client fallback correctly to component error state
+3. **File naming convention**: `src/__tests__/integration/<Feature>Wiring.integration.test.ts`
+
+**Integration Test Pattern** (required for any API client + component pair):
+```typescript
+// src/__tests__/integration/BackendDeploymentStatusWiring.integration.test.ts
+import { mount } from '@vue/test-utils'
+import MyComponent from '../../components/MyComponent.vue'
+import { MyApiClient } from '../../lib/api/myApiClient'
+
+it('API response state flows correctly to component rendering', async () => {
+  vi.stubGlobal('fetch', makeFetchOk({ state: 'Completed', assetId: '12345' }))
+  const client = new MyApiClient('http://localhost:5000')
+  const result = await client.getStatus('dep-001', 'bearer-token')
+  expect(result.ok).toBe(true)
+  if (!result.ok) return
+
+  // Verify the wiring: API data → component props → rendered output
+  const wrapper = mount(MyComponent, {
+    props: { state: result.data.state, assetId: result.data.assetId },
+  })
+  expect(wrapper.find('[data-testid="lifecycle-label"]').text()).toContain('Deployment complete')
+})
+```
+
+**Coverage Requirement for API Client Files**:
+- New `src/lib/api/*.ts` files must achieve **≥90% branch coverage** (not just 70%)
+- API clients have discrete, testable error paths — every 4xx response code, null body, and network failure must be covered
+- Run `npx vitest run --coverage path/to/file.test.ts` and verify before committing
+
+**Red Flags This Pattern Is Repeating**:
+- ✅ PR has separate unit tests for API client AND component but no integration test file
+- ✅ No test in `src/__tests__/integration/` for the new feature area
+- ✅ API client branch coverage < 90% (4xx fallback paths, null body, exhausted polling)
+- ✅ No test verifying error messages from client reach the component without raw error codes
+
+**Never Again**:
+- ❌ Deliver API client + UI component without an integration test proving wiring
+- ❌ Stop at unit tests without testing how data flows between the layers
+- ❌ Allow API client branch coverage below 90% when error paths are clearly testable
+
+
 - [ ] **Navigation Link Required**: If implementing new route, MUST add navigation link
   - ❌ **Past Violation**: Guided launch implemented but not accessible from navbar
   - ✅ **Solution**: Add link to `src/components/layout/Navbar.vue` with appropriate icon

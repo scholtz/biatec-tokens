@@ -387,6 +387,45 @@ describe('BackendDeploymentContractClient.getDeploymentStatus', () => {
       expect(result.data.error?.errorCode).toBe('ContractDeploymentFailed')
     }
   })
+
+  it('returns ok:false with normalised error on 4xx response', async () => {
+    // Covers line 436: normaliseError(body) when body is an error object
+    vi.stubGlobal('fetch', makeFetchError(404, {
+      errorCode: 'SessionExpired',
+      userGuidance: 'Your session has expired. Please log in again.',
+    }))
+
+    const result = await client.getDeploymentStatus(DEPLOYMENT_ID, BEARER)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error.errorCode).toBe('SessionExpired')
+      expect(result.error.userGuidance).toContain('session')
+    }
+  })
+
+  it('returns ok:false with fallback error code when 4xx body is null', async () => {
+    // Covers line 367: normaliseError when body is null/non-object — fallback code path
+    vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.reject(new Error('No body')),
+    })
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve(null),  // null body → fallback path
+    }))
+
+    const result = await client.getDeploymentStatus(DEPLOYMENT_ID, BEARER)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      // Falls back to UnknownError when body is null
+      expect(result.error.errorCode).toBe('UnknownError')
+      expect(result.error.userGuidance).toBeTruthy()
+    }
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -476,6 +515,30 @@ describe('BackendDeploymentContractClient.validateDeployment', () => {
     expect(result.ok).toBe(false)
     if (!result.ok) {
       expect(result.error.errorCode).toBe('NetworkUnavailable')
+    }
+  })
+
+  it('returns ok:false with ValidationFailed on 4xx response', async () => {
+    // Covers line 475: normaliseError(body, 'ValidationFailed') in !response.ok branch
+    vi.stubGlobal('fetch', makeFetchError(422, {
+      errorCode: 'ValidationFailed',
+      userGuidance: 'Token parameters did not pass server-side validation.',
+    }))
+
+    const result = await client.validateDeployment({
+      tokenName: 'Bad',
+      tokenSymbol: 'BAD',
+      totalSupply: '-1',
+      decimals: 0,
+      standard: 'ASA',
+      network: 'algorand-mainnet',
+      bearerToken: BEARER,
+    })
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error.errorCode).toBe('ValidationFailed')
+      expect(result.error.userGuidance).toBeTruthy()
     }
   })
 })
@@ -666,6 +729,33 @@ describe('BackendDeploymentContractClient.pollUntilTerminal', () => {
     expect(result.ok).toBe(false)
     if (!result.ok) {
       expect(result.error.errorCode).toBe('NetworkUnavailable')
+    }
+  })
+
+  it('returns final status after exhausting maxAttempts without reaching terminal state', async () => {
+    // Covers line 566: the exhausted-attempts path that calls getDeploymentStatus one final time
+    const pendingBody: DeploymentStatusResponse = {
+      deploymentId: DEPLOYMENT_ID,
+      state: 'Pending',
+      updatedAt: '2026-03-01T00:00:00Z',
+    }
+    // Never reaches terminal — always returns Pending
+    vi.stubGlobal('fetch', makeFetchOk(pendingBody))
+
+    const singleAttemptConfig: PollingConfig = {
+      initialDelayMs: 1,
+      maxDelayMs: 1,
+      maxAttempts: 2, // 2 attempts without terminal → exhausts, falls to final check
+      backoffFactor: 1,
+    }
+    const resultPromise = client.pollUntilTerminal(DEPLOYMENT_ID, BEARER, undefined, singleAttemptConfig)
+    await vi.runAllTimersAsync()
+    const result = await resultPromise
+
+    // After exhausting attempts, final getDeploymentStatus is called and its result returned
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.data.state).toBe('Pending')
     }
   })
 })
