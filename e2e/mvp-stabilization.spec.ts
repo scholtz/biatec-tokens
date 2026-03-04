@@ -138,6 +138,10 @@ test.describe('AC #2: Critical-path reliability — guided launch entry', () => 
   })
 
   test('authenticated user reaches /launch/guided and sees page heading', async ({ page }) => {
+    // Increase test timeout: loginWithCredentials attempts the backend API (5s network timeout
+    // as configured in auth.ts line ~205) before falling back to localStorage seeding, then
+    // page load + auth store initialization + Vue component mount can total 40-60s in CI.
+    test.setTimeout(90000)
     await loginWithCredentials(page, 'e2e-mvp-stable@biatec.io')
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
@@ -148,6 +152,8 @@ test.describe('AC #2: Critical-path reliability — guided launch entry', () => 
   })
 
   test('guided launch page has step indicator / progress stepper visible', async ({ page }) => {
+    // Increase test timeout: auth init + page load + component mount can take 40-60s in CI.
+    test.setTimeout(90000)
     await withAuth(page)
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
@@ -169,6 +175,8 @@ test.describe('AC #2: Critical-path reliability — guided launch entry', () => 
   })
 
   test('compliance orchestration page loads for authenticated user', async ({ page }) => {
+    // Increase test timeout: auth init + page load can take 40-60s in CI.
+    test.setTimeout(90000)
     await loginWithCredentials(page, 'e2e-compliance@biatec.io')
     await page.goto('/compliance/orchestration')
     await page.waitForLoadState('networkidle')
@@ -178,6 +186,8 @@ test.describe('AC #2: Critical-path reliability — guided launch entry', () => 
   })
 
   test('compliance setup workspace page loads for authenticated user', async ({ page }) => {
+    // Increase test timeout: auth init + page load can take 40-60s in CI.
+    test.setTimeout(90000)
     await loginWithCredentials(page, 'e2e-compliance@biatec.io')
     await page.goto('/compliance/setup')
     await page.waitForLoadState('networkidle')
@@ -202,6 +212,8 @@ test.describe('AC #3: CI sign-off evidence', () => {
   })
 
   test('guided launch route responds for authenticated users in CI', async ({ page }) => {
+    // Increase test timeout: auth init + page load + heading visibility can take 40-60s in CI.
+    test.setTimeout(90000)
     await withAuth(page)
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
@@ -241,6 +253,8 @@ test.describe('AC #4 + AC #6: No wallet UI; email/password authentication only',
   })
 
   test('guided launch page body contains no wallet connector text', async ({ page }) => {
+    // Increase test timeout: auth init + page load + heading visibility can take 40-60s in CI.
+    test.setTimeout(90000)
     await withAuth(page)
     await page.goto('/launch/guided')
     await page.waitForLoadState('networkidle')
@@ -254,6 +268,8 @@ test.describe('AC #4 + AC #6: No wallet UI; email/password authentication only',
   })
 
   test('compliance setup workspace has no wallet connector UI', async ({ page }) => {
+    // Increase test timeout: auth init + page load + heading visibility can take 40-60s in CI.
+    test.setTimeout(90000)
     await withAuth(page)
     await page.goto('/compliance/setup')
     await page.waitForLoadState('networkidle')
@@ -381,6 +397,8 @@ test.describe('Spec hygiene — zero waitForTimeout, zero CI-only skips', () => 
     // This test doubles as a hygiene check: proves the spec uses deterministic
     // route assertions rather than arbitrary timing. The guided launch route must
     // respond with a non-empty HTML page (not a 404 or blank body).
+    // Increase test timeout: auth init + page load can take 40-60s in CI.
+    test.setTimeout(90000)
     suppressBrowserErrors(page)
     await withAuth(page)
     await page.goto('/launch/guided')

@@ -37,9 +37,9 @@ class CustomReporter implements Reporter {
   onTestEnd(test: TestCase, result: TestResult) {
     if (result.status === 'passed') {
       this.passedCount++;
-    } else if (result.status === 'failed') {
+    } else if (result.status === 'failed' || result.status === 'timedout' || result.status === 'interrupted') {
       this.failedCount++;
-      console.log(`[CustomReporter] Test FAILED: ${test.title}`);
+      console.log(`[CustomReporter] Test FAILED (${result.status}): ${test.title}`);
       if (result.error) {
         console.log(`[CustomReporter] Error: ${result.error.message}`);
       }

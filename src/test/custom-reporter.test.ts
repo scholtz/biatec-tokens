@@ -4,14 +4,19 @@
  * These tests prove that the reporter:
  * 1. Does NOT register a process.on('exit') hook (no exit code masking)
  * 2. Does NOT override process.exitCode (Playwright is authoritative)
- * 3. Correctly counts passed/failed/skipped tests for accurate summaries
+ * 3. Correctly counts passed/failed/skipped/timedout tests for accurate summaries
  * 4. Logs informative summaries for CI visibility
+ * 5. Counts 'timedout' and 'interrupted' tests as failures (not as passed/skipped)
  *
  * Background: A previous version of this reporter forced process.exitCode = 0
  * when all tests passed, masking non-test failures from CI. That pattern has
  * been removed. Browser console errors are now suppressed per-spec via
  * suppressBrowserErrors() in each spec's beforeEach hook, not at the reporter
- * level. Only actual test failures cause exit code 1.
+ * level. Only actual test failures (including timeouts) cause exit code 1.
+ *
+ * CRITICAL: The reporter must count 'timedout' as a failure. If it only counts
+ * 'failed', timed-out tests will show as "0 failed" even though Playwright
+ * exits with code 1 — hiding the root cause from CI logs.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -38,9 +43,9 @@ function createDeterministicReporter(): ReporterInstance {
     onTestEnd(test: TestCase, result: TestResult) {
       if (result.status === 'passed') {
         this.passedCount++
-      } else if (result.status === 'failed') {
+      } else if (result.status === 'failed' || result.status === 'timedout' || result.status === 'interrupted') {
         this.failedCount++
-        console.log(`[CustomReporter] Test FAILED: ${test.title}`)
+        console.log(`[CustomReporter] Test FAILED (${result.status}): ${test.title}`)
         if (result.error) {
           console.log(`[CustomReporter] Error: ${result.error.message}`)
         }
@@ -181,7 +186,7 @@ describe('CustomReporter Exit Code Handling', () => {
 
     // Each failure should be logged individually
     const failureLogs = consoleSpy.mock.calls.filter(args =>
-      String(args[0]).includes('Test FAILED:'),
+      String(args[0]).includes('Test FAILED'),
     )
     expect(failureLogs).toHaveLength(3)
   })
@@ -210,6 +215,77 @@ describe('CustomReporter Exit Code Handling', () => {
     expect(String(summaryCall![0])).toContain('2 passed')
     expect(String(summaryCall![0])).toContain('0 failed')
     expect(String(summaryCall![0])).toContain('2 skipped')
+  })
+
+  it('counts "timedout" tests as failures (not as passed or skipped)', () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+    const mockConfig = {} as FullConfig
+    const mockSuite = { allTests: () => [] } as Suite
+    const timedoutResult = { status: 'timedout' as const }
+    const mockFullResult = { status: 'failed' as const } as FullResult
+
+    reporter.onBegin(mockConfig, mockSuite)
+    reporter.onTestEnd({ title: 'auth test timed out' } as TestCase, timedoutResult)
+    reporter.onEnd(mockFullResult)
+
+    // Timedout test must appear as a failure in the summary
+    const summaryCall = consoleSpy.mock.calls.find(args =>
+      String(args[0]).includes('[CustomReporter] Summary:'),
+    )
+    expect(summaryCall).toBeDefined()
+    expect(String(summaryCall![0])).toContain('1 failed')
+    expect(String(summaryCall![0])).toContain('0 passed')
+
+    // Must log the timedout test so CI logs are actionable
+    const timedoutLog = consoleSpy.mock.calls.find(args =>
+      String(args[0]).includes('auth test timed out'),
+    )
+    expect(timedoutLog).toBeDefined()
+  })
+
+  it('counts "interrupted" tests as failures', () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+    const mockConfig = {} as FullConfig
+    const mockSuite = { allTests: () => [] } as Suite
+    const interruptedResult = { status: 'interrupted' as const }
+    const mockFullResult = { status: 'failed' as const } as FullResult
+
+    reporter.onBegin(mockConfig, mockSuite)
+    reporter.onTestEnd({ title: 'interrupted test' } as TestCase, interruptedResult)
+    reporter.onEnd(mockFullResult)
+
+    const summaryCall = consoleSpy.mock.calls.find(args =>
+      String(args[0]).includes('[CustomReporter] Summary:'),
+    )
+    expect(summaryCall).toBeDefined()
+    expect(String(summaryCall![0])).toContain('1 failed')
+  })
+
+  it('counts mixed failed, timedout, and passed tests correctly', () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+    const mockConfig = {} as FullConfig
+    const mockSuite = { allTests: () => [] } as Suite
+    const mockFullResult = { status: 'failed' as const } as FullResult
+
+    reporter.onBegin(mockConfig, mockSuite)
+    // 3 passed, 2 failed, 1 timedout, 1 skipped
+    for (let _i = 0; _i < 3; _i++) reporter.onTestEnd({} as TestCase, { status: 'passed' as const })
+    for (let _i = 0; _i < 2; _i++) reporter.onTestEnd({ title: `failed-${_i}` } as TestCase, { status: 'failed' as const })
+    reporter.onTestEnd({ title: 'timed-out-test' } as TestCase, { status: 'timedout' as const })
+    reporter.onTestEnd({} as TestCase, { status: 'skipped' as const })
+    reporter.onEnd(mockFullResult)
+
+    const summaryCall = consoleSpy.mock.calls.find(args =>
+      String(args[0]).includes('[CustomReporter] Summary:'),
+    )
+    expect(summaryCall).toBeDefined()
+    // timedout counts as failed, so total failures = 2 + 1 = 3
+    expect(String(summaryCall![0])).toContain('3 passed')
+    expect(String(summaryCall![0])).toContain('3 failed')
+    expect(String(summaryCall![0])).toContain('1 skipped')
   })
 
   it('logs ✅ summary message when no failures occur', () => {
@@ -260,14 +336,27 @@ describe('CustomReporter Deterministic Policy', () => {
     /**
      * CURRENT POLICY (deterministic):
      *
-     * Reporter records pass/fail/skip counts for CI log visibility.
+     * Reporter records pass/fail/skip/timedout counts for CI log visibility.
      * Reporter does NOT modify process.exitCode.
      * Reporter does NOT register process.on('exit') hooks.
      *
+     * COUNTING RULES:
+     * - 'passed'      → passedCount++
+     * - 'failed'      → failedCount++ (test assertion failure)
+     * - 'timedout'    → failedCount++ (test exceeded timeout — THIS IS A FAILURE)
+     * - 'interrupted' → failedCount++ (test was aborted — THIS IS A FAILURE)
+     * - 'skipped'     → skippedCount++
+     *
+     * WHY timedout counts as failure:
+     * - A timedout test indicates a real problem (slow auth init, CI environment issue)
+     * - Playwright already marks the full run as 'failed' when any test times out
+     * - The reporter must surface timedout tests in logs so engineers can find root cause
+     * - Hiding timeouts behind "0 failed" masks the real CI signal
+     *
      * CONSEQUENCE:
-     * - Test failures → Playwright sets exit code 1 → CI fails  ✅
-     * - All tests pass, browser console errors → Playwright may set exit code 1 → CI fails
-     *   (handle via suppressBrowserErrors() in each spec's beforeEach, not in reporter)
+     * - Test failures or timeouts → Playwright sets exit code 1 → CI fails  ✅
+     * - All tests pass → reporter shows "N passed, 0 failed" → CI passes    ✅
+     * - Browser console errors → suppressed per-spec via suppressBrowserErrors()
      *
      * WHY this is correct:
      * - Masking exit codes hides real failures and makes debugging impossible
@@ -276,6 +365,9 @@ describe('CustomReporter Deterministic Policy', () => {
      *
      * PREVIOUS (incorrect) pattern — NEVER restore this:
      *   process.on('exit', () => { if (failedCount === 0) process.exitCode = 0 })
+     *
+     * PREVIOUS (incorrect) counting — NEVER restore this:
+     *   if (result.status === 'failed') { failedCount++ } // missed 'timedout'!
      */
     expect(true).toBe(true)
   })
