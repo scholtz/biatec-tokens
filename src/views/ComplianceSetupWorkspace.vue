@@ -23,16 +23,20 @@
               {{ completedSteps }}
             </div>
             <div>
-              <h2 class="text-xl font-semibold text-white">
+              <h3 class="text-xl font-semibold text-white">
                 {{ completedSteps }} of {{ totalSteps }} Steps Complete
-              </h2>
+              </h3>
               <p class="text-gray-400">{{ progressPercentage }}% done</p>
             </div>
           </div>
 
           <!-- Readiness Score (shown after first step) -->
           <div v-if="currentStepIndex > 0" class="text-right">
-            <div class="text-3xl font-bold" :class="readinessScoreColor" aria-label="Readiness score: {{ readiness.readinessScore }} percent">
+            <div
+              class="text-3xl font-bold"
+              :class="readinessScoreColor"
+              :aria-label="`Readiness score: ${readiness.readinessScore} percent`"
+            >
               {{ readiness.readinessScore }}%
             </div>
             <p class="text-sm text-gray-400">Readiness Score</p>

@@ -30,8 +30,10 @@ All full-page views that do **not** use `MainLayout` must define their own skip 
 <main id="main-content" role="main" ...>
 ```
 
-Views that **do** use `MainLayout` or `src/layout/MainLayout.vue` inherit `id="main-content"`
-automatically from the layout's `<main>` element.
+Views that **do** use `src/components/layout/MainLayout.vue` (via `import MainLayout from "../components/layout/MainLayout.vue"`)
+or `src/layout/MainLayout.vue` (via `import MainLayout from "../layout/MainLayout.vue"`)
+inherit `id="main-content"` automatically from the layout's `<main>` element. Both layout
+variants include this target.
 
 ### 2. Focus Indicators (SC 2.4.7)
 

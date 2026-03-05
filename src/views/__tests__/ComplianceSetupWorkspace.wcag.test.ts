@@ -108,14 +108,16 @@ describe('ComplianceSetupWorkspace — WCAG AA Accessibility', () => {
 
   it('step buttons have aria-label (SC 4.1.2)', () => {
     const wrapper = mountWorkspace()
-    // Step navigation buttons are inside the nav
+    // Step navigation buttons are inside the nav landmark
     const stepNav = wrapper.find('nav[aria-label*="steps"]')
-    if (stepNav.exists()) {
-      const buttons = stepNav.findAll('button')
-      buttons.forEach(btn => {
-        expect(btn.attributes('aria-label')).toBeDefined()
-      })
-    }
+    // The nav landmark must exist
+    expect(stepNav.exists()).toBe(true)
+    // Every button inside the step nav must have an aria-label
+    const buttons = stepNav.findAll('button')
+    expect(buttons.length).toBeGreaterThan(0)
+    buttons.forEach(btn => {
+      expect(btn.attributes('aria-label')).toBeDefined()
+    })
   })
 
   // ── Keyboard accessibility ────────────────────────────────────────────────
