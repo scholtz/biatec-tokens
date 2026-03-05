@@ -419,6 +419,7 @@ test.describe('No wallet connector UI — email/password only', () => {
   })
 
   test('guided launch page shows email/password authentication only', async ({ page }) => {
+    test.setTimeout(90000) // auth + navigation + modal interaction can exceed 60s global budget in CI
     await clearAuthScript(page)
     await page.goto('/')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI

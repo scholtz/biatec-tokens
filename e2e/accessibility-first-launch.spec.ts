@@ -278,6 +278,7 @@ test.describe('Semantic HTML — accessibility attributes on critical surfaces',
 
 test.describe('Compliance setup workspace — non-wallet accessibility', () => {
   test('compliance setup page loads without wallet-connect language', async ({ page }) => {
+    test.setTimeout(90000) // auth store init + compliance page navigation can exceed 60s global budget in CI
     await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 

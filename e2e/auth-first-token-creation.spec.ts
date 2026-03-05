@@ -116,6 +116,7 @@ test.describe('Auth-First Token Creation Journey', () => {
   })
 
   test('should not display wallet/network UI elements in top navigation', async ({ page }) => {
+    test.setTimeout(90000) // loginWithCredentials (5s HTTP) + /launch/guided navigation + 45s toBeVisible exceeds 60s budget in CI
     // Use canonical auth helper — validates ARC76 session contract before seeding
     await loginWithCredentials(page, AUTH_FIRST_TEST_EMAIL)
     
