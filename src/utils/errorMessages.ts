@@ -1,5 +1,5 @@
 /**
- * User-friendly error message utility — WCAG / UX hardening (Issue #<current>)
+ * User-friendly error message utility — WCAG / UX hardening
  *
  * AC6: No user-facing error message exposes raw stack traces, internal codes, or framework
  *      exception text.
@@ -80,7 +80,7 @@ const ERROR_MAP: Array<{
       "Our service is experiencing difficulties. Our team has been notified. Please try again in a few minutes or contact support if the issue continues.",
   },
   {
-    pattern: /timeout|timed? out/i,
+    pattern: /timeout|timed?\s*out/i,
     title: "Request timed out",
     detail:
       "The operation took longer than expected. Please check your connection and try again.",

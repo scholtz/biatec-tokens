@@ -126,6 +126,16 @@ describe("errorMessages – toUserMessage", () => {
       expect(msg.title).toBe("Request timed out");
       expect(hasNextStep(msg)).toBe(true);
     });
+
+    it("maps RequestTimedOut (no-space variant) to timed out", () => {
+      const msg = toUserMessage(new Error("RequestTimedOut"));
+      expect(msg.title).toBe("Request timed out");
+    });
+
+    it("maps timeout keyword", () => {
+      const msg = toUserMessage(new Error("connection timeout"));
+      expect(msg.title).toBe("Request timed out");
+    });
   });
 
   describe("auth / token errors", () => {

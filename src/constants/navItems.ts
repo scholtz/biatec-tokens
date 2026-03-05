@@ -8,8 +8,10 @@
  *
  * WCAG AC5: top-level count is ≤7 to reduce cognitive load.
  * "Pricing" is intentionally excluded from the primary nav — it is already accessible via the
- * user-account dropdown (Settings menu) so enterprise users are not overloaded with marketing
- * links in the primary task bar. This satisfies AC5 (7 or fewer top-level items).
+ * user-account dropdown (the "Subscription" link shown when authenticated) so enterprise users
+ * are not overloaded with marketing links in the primary task bar. Pricing is still reachable
+ * at /subscription/pricing for unauthenticated users who navigate directly.
+ * This satisfies AC5 (7 or fewer top-level items).
  */
 export const NAV_ITEMS = [
   { label: "Home", path: "/", routeName: "Home" },
