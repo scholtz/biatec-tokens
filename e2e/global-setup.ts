@@ -41,15 +41,20 @@ async function globalSetup(_config: FullConfig) {
     }, WARMUP_AUTH)
 
     // Visit home — triggers compilation of main.ts and all eager-loaded modules.
-    await page.goto(`${BASE_URL}/`, { waitUntil: 'networkidle', timeout: 120000 })
+    // CRITICAL: Use 'load' NOT 'networkidle' — Vite HMR SSE keeps a persistent
+    // Server-Sent Events connection open, preventing networkidle from completing.
+    // networkidle requires 500ms of zero network activity; SSE ensures this never
+    // happens. Using 'networkidle' here means the warmup ALWAYS hangs until the
+    // 120s timeout fires, the error is caught silently, and Vite is never warmed.
+    await page.goto(`${BASE_URL}/`, { waitUntil: 'load', timeout: 120000 })
     console.log('[globalSetup] Home page compiled.')
 
     // Visit guided launch — compiles GuidedTokenLaunch.vue and its deep import tree.
-    await page.goto(`${BASE_URL}/launch/guided`, { waitUntil: 'networkidle', timeout: 120000 })
+    await page.goto(`${BASE_URL}/launch/guided`, { waitUntil: 'load', timeout: 120000 })
     console.log('[globalSetup] /launch/guided compiled.')
 
     // Visit compliance setup — compiles ComplianceSetupWorkspace.vue subtree.
-    await page.goto(`${BASE_URL}/compliance/setup`, { waitUntil: 'networkidle', timeout: 120000 })
+    await page.goto(`${BASE_URL}/compliance/setup`, { waitUntil: 'load', timeout: 120000 })
     console.log('[globalSetup] /compliance/setup compiled.')
 
     console.log('[globalSetup] Vite dev server fully warmed up. All module compilations cached.')

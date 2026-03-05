@@ -765,9 +765,12 @@ async function globalSetup(_config: FullConfig) {
     }, JSON.stringify({ address: 'GLOBALSETUPWARMUP7...58chars', email: 'warmup@biatec.io', isConnected: true }))
 
     // These 3 visits compile ALL statically-imported Vue components:
-    await page.goto('http://localhost:5173/', { waitUntil: 'networkidle', timeout: 120000 })
-    await page.goto('http://localhost:5173/launch/guided', { waitUntil: 'networkidle', timeout: 120000 })
-    await page.goto('http://localhost:5173/compliance/setup', { waitUntil: 'networkidle', timeout: 120000 })
+    // CRITICAL: Use 'load' NOT 'networkidle' — Vite HMR SSE keeps a persistent
+    // SSE connection, preventing networkidle from EVER completing. Using 'networkidle'
+    // means the warmup silently fails (120s timeout → caught exception → Vite never warmed).
+    await page.goto('http://localhost:5173/', { waitUntil: 'load', timeout: 120000 })
+    await page.goto('http://localhost:5173/launch/guided', { waitUntil: 'load', timeout: 120000 })
+    await page.goto('http://localhost:5173/compliance/setup', { waitUntil: 'load', timeout: 120000 })
   } catch (err) {
     console.warn(`[globalSetup] Warmup failed (non-fatal): ${err}`)
   } finally {
@@ -787,6 +790,7 @@ test('test navigating to /launch/guided or /compliance/setup', async ({ page }) 
 **Never Again**:
 - ❌ Set global Playwright `timeout` below 60s — cold-start takes 60-120s in CI
 - ❌ Leave `globalSetup` empty — it MUST pre-warm Vite by visiting key routes
+- ❌ Use `waitUntil: 'networkidle'` in `globalSetup` `page.goto()` calls — Vite HMR SSE blocks networkidle, the warmup silently times out and Vite is NEVER warmed (see section 7i)
 - ❌ Use `toBeVisible({ timeout: 60000 })` in a test with only 60s global budget — add `test.setTimeout(90000)`
 - ❌ Treat retry trace duration as "test failure duration" — traces are from PASSING retries
 - ❌ Treat "0 failed, X passed" as a CI success signal — check `FullResult.status` in reporter output
