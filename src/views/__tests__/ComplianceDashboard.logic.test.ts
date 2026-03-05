@@ -21,16 +21,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createMemoryHistory } from 'vue-router'
 import ComplianceDashboard from '../ComplianceDashboard.vue'
 
+// Route path matches actual router (src/router/index.ts): /compliance/:id?
 const makeRouter = () =>
   createRouter({
-    history: createWebHistory(),
+    history: createMemoryHistory(),
     routes: [
       { path: '/', name: 'Home', component: { template: '<div />' } },
-      { path: '/compliance', name: 'Compliance', component: { template: '<div />' } },
-      { path: '/compliance/dashboard/:id?', name: 'ComplianceDashboard', component: { template: '<div />' } },
+      { path: '/compliance/:id?', name: 'ComplianceDashboard', component: { template: '<div />' } },
       { path: '/settings', name: 'Settings', component: { template: '<div />' } },
       { path: '/subscription/pricing', name: 'Pricing', component: { template: '<div />' } },
     ],
@@ -67,7 +67,7 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-const mountDashboard = async (routePath = '/compliance/dashboard/token-123', opts: Record<string, unknown> = {}) => {
+const mountDashboard = async (routePath = '/compliance/token-123', opts: Record<string, unknown> = {}) => {
   await router.push(routePath)
   await router.isReady()
   return shallowMount(ComplianceDashboard, {
@@ -152,7 +152,7 @@ describe('issueSeverityClass', () => {
 // ---------------------------------------------------------------------------
 describe('tokenId computed', () => {
   it('reads token ID from route.params.id', async () => {
-    await router.push('/compliance/dashboard/my-token-abc')
+    await router.push('/compliance/my-token-abc')
     await router.isReady()
     const wrapper = shallowMount(ComplianceDashboard, {
       global: {
@@ -202,7 +202,7 @@ describe('selectedNetwork computed', () => {
   })
 
   it('reads network from route.query.network', async () => {
-    await router.push('/compliance/dashboard/tok-1?network=Aramid')
+    await router.push('/compliance/tok-1?network=Aramid')
     await router.isReady()
     const wrapper = shallowMount(ComplianceDashboard, {
       global: {
@@ -242,7 +242,7 @@ describe('loadComplianceStatus', () => {
       whitelistEnabled: true,
       whitelistCount: 5,
     })
-    const wrapper = await mountDashboard('/compliance/dashboard/tok-1')
+    const wrapper = await mountDashboard('/compliance/tok-1')
     await new Promise(r => setTimeout(r, 50))
     expect(complianceService.getComplianceStatus).toHaveBeenCalledWith('tok-1', 'VOI')
     const vm = wrapper.vm as unknown as { complianceStatus: { whitelistCount: number } | null }
@@ -252,7 +252,7 @@ describe('loadComplianceStatus', () => {
   it('sets fallback complianceStatus on API error', async () => {
     const { complianceService } = await import('../../services/ComplianceService')
     vi.spyOn(complianceService, 'getComplianceStatus').mockRejectedValue(new Error('API error'))
-    const wrapper = await mountDashboard('/compliance/dashboard/tok-err')
+    const wrapper = await mountDashboard('/compliance/tok-err')
     await new Promise(r => setTimeout(r, 50))
     const vm = wrapper.vm as unknown as { complianceStatus: { tokenId: string; whitelistEnabled: boolean } | null }
     expect(vm.complianceStatus).not.toBeNull()
@@ -268,7 +268,7 @@ describe('loadComplianceStatus', () => {
       whitelistEnabled: false,
       whitelistCount: 0,
     })
-    const wrapper = await mountDashboard('/compliance/dashboard/tok-2')
+    const wrapper = await mountDashboard('/compliance/tok-2')
     await new Promise(r => setTimeout(r, 50))
     const vm = wrapper.vm as unknown as { isLoadingStatus: boolean }
     expect(vm.isLoadingStatus).toBe(false)

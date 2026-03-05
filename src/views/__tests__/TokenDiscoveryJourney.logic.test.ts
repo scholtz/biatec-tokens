@@ -18,9 +18,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { shallowMount } from '@vue/test-utils'
+import { shallowMount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createMemoryHistory } from 'vue-router'
 import TokenDiscoveryJourney from '../TokenDiscoveryJourney.vue'
 
 vi.mock('../../services/analytics', () => ({
@@ -40,12 +40,12 @@ vi.mock('../../services/CompetitiveTelemetryService', () => ({
 
 const makeRouter = () =>
   createRouter({
-    history: createWebHistory(),
+    history: createMemoryHistory(),
     routes: [
       { path: '/', name: 'Home', component: { template: '<div />' } },
-      { path: '/discovery', name: 'Discovery', component: { template: '<div />' } },
+      { path: '/discovery/journey', name: 'TokenDiscoveryJourney', component: { template: '<div />' } },
       { path: '/token-standards', name: 'TokenStandards', component: { template: '<div />' } },
-      { path: '/launch/guided', name: 'GuidedLaunch', component: { template: '<div />' } },
+      { path: '/launch/guided', name: 'GuidedTokenLaunch', component: { template: '<div />' } },
     ],
   })
 
@@ -74,7 +74,7 @@ beforeEach(() => {
 })
 
 const mountJourney = async (isAuthenticated = false) => {
-  await router.push('/discovery')
+  await router.push('/discovery/journey')
   await router.isReady()
   return shallowMount(TokenDiscoveryJourney, {
     global: {
@@ -189,14 +189,14 @@ describe('handleCategorySelect', () => {
 // handleOpportunitySelect
 // ---------------------------------------------------------------------------
 describe('handleOpportunitySelect', () => {
-  it('navigates to TokenStandards with highlight query param', async () => {
+  it('navigates to token-standards with highlight query param', async () => {
     const wrapper = await mountJourney()
     const vm = wrapper.vm as unknown as {
       handleOpportunitySelect: (opp: { id: string; standard: string; rwaScore: number }) => void
     }
     vm.handleOpportunitySelect({ id: 'rwa_security', standard: 'ARC1400', rwaScore: 100 })
-    await wrapper.vm.$nextTick()
-    expect(router.currentRoute.value.name).toBe('TokenStandards')
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/token-standards')
     expect(router.currentRoute.value.query.highlight).toBe('ARC1400')
   })
 })
@@ -205,12 +205,12 @@ describe('handleOpportunitySelect', () => {
 // handleCompareStandards
 // ---------------------------------------------------------------------------
 describe('handleCompareStandards', () => {
-  it('navigates to TokenStandards', async () => {
+  it('navigates to token-standards', async () => {
     const wrapper = await mountJourney()
     const vm = wrapper.vm as unknown as { handleCompareStandards: () => void }
     vm.handleCompareStandards()
-    await wrapper.vm.$nextTick()
-    expect(router.currentRoute.value.name).toBe('TokenStandards')
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/token-standards')
   })
 })
 
@@ -218,22 +218,22 @@ describe('handleCompareStandards', () => {
 // handleStartActivation
 // ---------------------------------------------------------------------------
 describe('handleStartActivation', () => {
-  it('navigates to GuidedLaunch when authenticated', async () => {
+  it('navigates to guided launch when authenticated', async () => {
     const wrapper = await mountJourney(true)
     const vm = wrapper.vm as unknown as { handleStartActivation: () => void }
     vm.handleStartActivation()
-    await wrapper.vm.$nextTick()
-    expect(router.currentRoute.value.name).toBe('GuidedLaunch')
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/launch/guided')
   })
 
   it('does not navigate when not authenticated', async () => {
     const wrapper = await mountJourney(false)
-    const startRoute = router.currentRoute.value.name
+    const startPath = router.currentRoute.value.path
     const vm = wrapper.vm as unknown as { handleStartActivation: () => void }
     vm.handleStartActivation()
-    await wrapper.vm.$nextTick()
+    await flushPromises()
     // Should remain on the same page
-    expect(router.currentRoute.value.name).toBe(startRoute)
+    expect(router.currentRoute.value.path).toBe(startPath)
   })
 })
 

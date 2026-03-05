@@ -197,7 +197,7 @@ const handleOpportunitySelect = (opportunity: Opportunity) => {
 
   // Navigate to standards comparison with selected standard highlighted
   router.push({
-    name: 'TokenStandards',
+    path: '/token-standards',
     query: { highlight: opportunity.standard },
   });
 };
@@ -217,7 +217,7 @@ const handleCompareStandards = () => {
     selectedCategory: selectedCategory.value,
   });
 
-  router.push({ name: 'TokenStandards' });
+  router.push({ path: '/token-standards' });
 };
 
 const handleStartActivation = () => {
@@ -239,7 +239,7 @@ const handleStartActivation = () => {
     selectedCategory: selectedCategory.value,
   });
 
-  router.push({ name: 'GuidedLaunch' });
+  router.push({ path: '/launch/guided' });
 };
 
 const loadOpportunities = () => {
