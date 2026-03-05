@@ -2,7 +2,7 @@
   <aside class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:pt-16 lg:bg-white lg:dark:bg-gray-900 lg:border-r lg:border-gray-200 lg:dark:border-gray-800">
     <div class="flex-1 flex flex-col min-h-0 pt-6">
       <div class="flex-1 flex flex-col overflow-y-auto">
-        <nav class="px-4 space-y-1">
+        <nav class="px-4 space-y-1" aria-label="Sidebar navigation">
           <div class="mb-6">
             <h3 class="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quick Actions</h3>
             <div class="mt-3 space-y-1">

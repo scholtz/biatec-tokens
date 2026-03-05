@@ -25,7 +25,7 @@ test.describe("Navigation Parity and WCAG AA", () => {
 
   test("should show main navigation on home page", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Nav should be present
     const nav = page.getByRole("navigation", { name: /main navigation/i });
@@ -34,7 +34,7 @@ test.describe("Navigation Parity and WCAG AA", () => {
 
   test("should include Guided Launch as canonical create flow entry in desktop nav (AC #4)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Guided Launch should appear in nav (not a bare "Create" link to legacy /create)
     const guidedLaunchLink = page.getByRole("link", { name: /guided launch/i });
@@ -43,7 +43,7 @@ test.describe("Navigation Parity and WCAG AA", () => {
 
   test("should NOT show wallet connector UI in navigation (business roadmap)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // AC6 (Issue #495): Use nav-component locator instead of broad page.content() check.
     // This deterministically asserts the top navigation contains no wallet connector UI.
@@ -62,10 +62,10 @@ test.describe("Navigation Parity and WCAG AA", () => {
   test("should have Sign In button for unauthenticated users", async ({ page }) => {
     // Clear auth
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await page.evaluate(() => localStorage.clear());
     await page.reload();
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Sign In should be visible (use first() to avoid strict-mode violation when both
     // desktop and mobile buttons are in DOM simultaneously)
@@ -75,7 +75,7 @@ test.describe("Navigation Parity and WCAG AA", () => {
 
   test("should have accessible mobile menu button with aria-label (AC #2)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Mobile menu button should have aria-label for screen readers
     const mobileMenuButton = page.locator('button[aria-label*="navigation menu"]');
@@ -97,7 +97,7 @@ test.describe("Navigation Parity and WCAG AA", () => {
     });
 
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Find and click Guided Launch in nav
     const guidedLaunchLink = page.getByRole("link", { name: /guided launch/i }).first();
@@ -110,7 +110,7 @@ test.describe("Navigation Parity and WCAG AA", () => {
 
   test("should have nav role and aria-label on navigation element (AC #2)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Navigation element should have proper ARIA role and label
     const nav = page.locator('nav[aria-label]');
@@ -119,7 +119,7 @@ test.describe("Navigation Parity and WCAG AA", () => {
 
   test("desktop and mobile nav should expose same destinations (AC #3)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // AC6 (Issue #495): Use nav-component locators instead of page.content() string check.
     // Both desktop and mobile nav render from the same navigation array.

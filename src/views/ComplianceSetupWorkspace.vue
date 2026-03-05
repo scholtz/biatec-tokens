@@ -1,5 +1,5 @@
 <template>
-  <div class="compliance-setup-workspace min-h-screen py-8 px-4">
+  <main id="main-content" role="main" class="compliance-setup-workspace min-h-screen py-8 px-4">
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="text-center mb-8">
@@ -16,36 +16,46 @@
       <div class="glass-effect rounded-2xl p-6 mb-8 shadow-lg border border-white/10">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-3">
-            <div class="w-16 h-16 rounded-full bg-gradient-to-br from-biatec-accent to-purple-400 flex items-center justify-center text-2xl font-bold text-gray-900">
+            <div
+              class="w-16 h-16 rounded-full bg-gradient-to-br from-biatec-accent to-purple-400 flex items-center justify-center text-2xl font-bold text-gray-900"
+              aria-hidden="true"
+            >
               {{ completedSteps }}
             </div>
             <div>
-              <h3 class="text-xl font-semibold text-white">
+              <h2 class="text-xl font-semibold text-white">
                 {{ completedSteps }} of {{ totalSteps }} Steps Complete
-              </h3>
+              </h2>
               <p class="text-gray-400">{{ progressPercentage }}% done</p>
             </div>
           </div>
 
           <!-- Readiness Score (shown after first step) -->
           <div v-if="currentStepIndex > 0" class="text-right">
-            <div class="text-3xl font-bold" :class="readinessScoreColor">
+            <div class="text-3xl font-bold" :class="readinessScoreColor" aria-label="Readiness score: {{ readiness.readinessScore }} percent">
               {{ readiness.readinessScore }}%
             </div>
             <p class="text-sm text-gray-400">Readiness Score</p>
           </div>
         </div>
 
-        <!-- Progress Bar -->
-        <div class="w-full bg-gray-700 rounded-full h-3">
+        <!-- Progress Bar — WCAG 2.1 AA: role="progressbar" with aria-valuenow/min/max -->
+        <div
+          class="w-full bg-gray-700 rounded-full h-3"
+          role="progressbar"
+          :aria-valuenow="progressPercentage"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          :aria-label="`Compliance setup progress: ${progressPercentage}% complete`"
+        >
           <div
             class="bg-gradient-to-r from-biatec-accent to-purple-400 h-3 rounded-full transition-all duration-500"
             :style="{ width: `${progressPercentage}%` }"
           ></div>
         </div>
 
-        <!-- Step Indicators -->
-        <div class="flex items-center justify-between mt-6">
+        <!-- Step Indicators — WCAG: nav landmark with descriptive aria-label -->
+        <nav aria-label="Compliance setup steps" class="flex items-center justify-between mt-6">
           <div
             v-for="(step, index) in steps"
             :key="step.id"
@@ -54,6 +64,9 @@
             <button
               @click="goToStep(index)"
               :disabled="!canNavigateToStep(index)"
+              :aria-label="`${step.isComplete ? 'Completed: ' : ''}Step ${index + 1}: ${step.title}${currentStepIndex === index ? ' (current)' : ''}`"
+              :aria-current="currentStepIndex === index ? 'step' : undefined"
+              class="focus:outline-none focus-visible:ring-2 focus-visible:ring-biatec-accent focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
               :class="[
                 'w-12 h-12 rounded-full flex items-center justify-center font-semibold text-lg transition-all duration-300 mb-2',
                 currentStepIndex === index
@@ -68,12 +81,14 @@
               <i
                 v-if="step.isComplete && currentStepIndex !== index"
                 class="pi pi-check"
+                aria-hidden="true"
               ></i>
               <i
                 v-else-if="step.status === 'blocked'"
                 class="pi pi-exclamation-triangle"
+                aria-hidden="true"
               ></i>
-              <span v-else>{{ index + 1 }}</span>
+              <span v-else aria-hidden="true">{{ index + 1 }}</span>
             </button>
             <span
               :class="[
@@ -90,10 +105,10 @@
               {{ step.title }}
             </span>
           </div>
-        </div>
+        </nav>
 
         <!-- Mobile Current Step Title -->
-        <div class="lg:hidden text-center mt-4">
+        <div class="lg:hidden text-center mt-4" aria-live="polite">
           <span class="text-sm font-medium text-biatec-accent">
             {{ currentStep?.title }}
           </span>
@@ -132,13 +147,14 @@
       </div>
 
       <!-- Navigation Buttons -->
-      <div class="flex items-center justify-between gap-4">
+      <div class="flex items-center justify-between gap-4" role="group" aria-label="Step navigation">
         <button
           v-if="currentStepIndex > 0"
           @click="previousStep"
-          class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+          aria-label="Go to previous step"
+          class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-biatec-accent focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
         >
-          <i class="pi pi-arrow-left"></i>
+          <i class="pi pi-arrow-left" aria-hidden="true"></i>
           Previous
         </button>
         <div v-else class="w-32"></div>
@@ -146,9 +162,10 @@
         <div class="flex gap-3">
           <button
             @click="saveDraft"
-            class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+            aria-label="Save progress"
+            class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-biatec-accent focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
           >
-            <i class="pi pi-save"></i>
+            <i class="pi pi-save" aria-hidden="true"></i>
             Save Progress
           </button>
 
@@ -156,24 +173,27 @@
             v-if="!isLastStep"
             @click="nextStep"
             :disabled="!canProceedToNext"
+            :aria-disabled="!canProceedToNext"
+            aria-label="Continue to next step"
             :class="[
-              'px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2',
+              'px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-biatec-accent focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900',
               canProceedToNext
                 ? 'bg-biatec-accent hover:bg-biatec-accent/90 text-gray-900'
                 : 'bg-gray-700 text-gray-500 cursor-not-allowed',
             ]"
           >
             Continue
-            <i class="pi pi-arrow-right"></i>
+            <i class="pi pi-arrow-right" aria-hidden="true"></i>
           </button>
 
           <button
             v-else-if="isLastStep && readiness.isReadyForDeploy"
             @click="completeSetup"
             :disabled="setupStore.isSubmitting"
-            class="px-8 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2"
+            aria-label="Complete compliance setup"
+            class="px-8 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-300 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
           >
-            <i class="pi pi-check-circle"></i>
+            <i class="pi pi-check-circle" aria-hidden="true"></i>
             {{ setupStore.isSubmitting ? 'Submitting...' : 'Complete Setup' }}
           </button>
         </div>
@@ -237,7 +257,7 @@
         </div>
       </div>
     </Modal>
-  </div>
+  </main>
 </template>
 
 <script setup lang="ts">

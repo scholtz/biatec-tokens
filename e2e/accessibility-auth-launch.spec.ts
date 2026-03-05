@@ -16,7 +16,7 @@
  * Follows existing project E2E patterns:
  * - Console error suppression in beforeEach
  * - addInitScript for auth setup before navigation
- * - waitForLoadState('networkidle') + explicit visibility timeouts
+ * - waitForLoadState('load') + explicit visibility timeouts (never 'networkidle' — Vite HMR SSE blocks it)
  * - .first() for elements present in both desktop and mobile nav
  *
  * Related: e2e/trustworthy-operations-ux.spec.ts (nav/landmark coverage)
@@ -52,14 +52,14 @@ test.describe("Accessibility: Auth Flow", () => {
 
   test("home page has a document title for screen readers", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     const title = await page.title();
     expect(title.length).toBeGreaterThan(0);
   });
 
   test("home page has h1 heading at the top level", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Page must have exactly one h1 (or at least one) for screen reader orientation
     const h1Count = await page.locator("h1").count();
@@ -70,7 +70,7 @@ test.describe("Accessibility: Auth Flow", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Trigger auth modal via Sign In button
     const signInButton = page.getByRole("button", { name: /sign in/i }).first();
@@ -115,7 +115,7 @@ test.describe("Accessibility: Auth Flow", () => {
 
   test("Sign In modal email input has accessible label or aria-label", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const signInButton = page.getByRole("button", { name: /sign in/i }).first();
     await signInButton.click();
@@ -152,7 +152,7 @@ test.describe("Accessibility: Auth Flow", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Focus the first element and start tabbing
     await page.keyboard.press("Tab");
@@ -208,14 +208,14 @@ test.describe("Accessibility: Guided Launch Form", () => {
 
   test("guided launch page has document title", async ({ page }) => {
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     const title = await page.title();
     expect(title.length).toBeGreaterThan(0);
   });
 
   test("guided launch page has h1 heading (screen reader orientation)", async ({ page }) => {
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const heading = page.getByRole("heading", { name: /guided token launch/i, level: 1 });
     await expect(heading).toBeVisible({ timeout: 60000 });
@@ -223,7 +223,7 @@ test.describe("Accessibility: Guided Launch Form", () => {
 
   test("guided launch organization name input has accessible label", async ({ page }) => {
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Wait for form to be available
     const heading = page.getByRole("heading", { name: /guided token launch/i, level: 1 });
@@ -256,7 +256,7 @@ test.describe("Accessibility: Guided Launch Form", () => {
 
   test("guided launch form inputs are keyboard accessible (Tab order)", async ({ page }) => {
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const heading = page.getByRole("heading", { name: /guided token launch/i, level: 1 });
     await expect(heading).toBeVisible({ timeout: 60000 });
@@ -289,7 +289,7 @@ test.describe("Accessibility: Guided Launch Form", () => {
 
   test("guided launch page should not expose wallet connector concepts", async ({ page }) => {
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const heading = page.getByRole("heading", { name: /guided token launch/i, level: 1 });
     await expect(heading).toBeVisible({ timeout: 60000 });
@@ -308,7 +308,7 @@ test.describe("Accessibility: Guided Launch Form", () => {
     page,
   }) => {
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const heading = page.getByRole("heading", { name: /guided token launch/i, level: 1 });
     await expect(heading).toBeVisible({ timeout: 60000 });
@@ -342,11 +342,11 @@ test.describe("Accessibility: Auth-First Redirect", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await page.evaluate(() => localStorage.clear());
 
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Wait for redirect to complete
     await page.waitForFunction(
