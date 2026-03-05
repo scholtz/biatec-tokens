@@ -60,7 +60,7 @@ test.describe('Compliance Setup Workspace', () => {
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: multi-field form with async validations — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
     await page.goto('/compliance/setup', { timeout: 30000 })
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Wait for jurisdiction step heading
     const jurisdictionHeading = page.getByRole('heading', { name: /Jurisdiction & Distribution Policy/i, level: 2 })
@@ -102,7 +102,7 @@ test.describe('Compliance Setup Workspace', () => {
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: 2-step wizard state transitions — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
     await page.goto('/compliance/setup', { timeout: 30000 })
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Complete jurisdiction step first
     const countrySelect = page.locator('select').first()
@@ -144,7 +144,7 @@ test.describe('Compliance Setup Workspace', () => {
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: 3-step wizard cumulative transitions — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
     await page.goto('/compliance/setup', { timeout: 30000 })
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Complete jurisdiction step
     const countrySelect = page.locator('select').first()
@@ -193,7 +193,7 @@ test.describe('Compliance Setup Workspace', () => {
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: full 5-step wizard with readiness calculation — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
     await page.goto('/compliance/setup', { timeout: 30000 })
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Complete all steps
     // Step 1: Jurisdiction
@@ -281,7 +281,7 @@ test.describe('Compliance Setup Workspace', () => {
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: complex form validation with warnings — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
     await page.goto('/compliance/setup', { timeout: 30000 })
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Fill basic fields
     const countrySelect = page.locator('select').first()
@@ -324,7 +324,7 @@ test.describe('Compliance Setup Workspace', () => {
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: 4-step wizard incomplete state — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
     await page.goto('/compliance/setup', { timeout: 30000 })
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Complete only first step minimally
     const countrySelect = page.locator('select').first()
@@ -381,7 +381,7 @@ test.describe('Compliance Setup Workspace', () => {
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: 5-step wizard navigation state — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
     await page.goto('/compliance/setup', { timeout: 30000 })
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Complete all steps to reach summary
     const countrySelect = page.locator('select').first()
@@ -432,7 +432,7 @@ test.describe('Compliance Setup Workspace', () => {
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: draft persistence with page reload — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
     await page.goto('/compliance/setup', { timeout: 30000 })
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Fill some form data
     const countrySelect = page.locator('select').first()
@@ -449,7 +449,7 @@ test.describe('Compliance Setup Workspace', () => {
     
     // Reload page
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Verify data persisted
     const reloadedCountrySelect = page.locator('select').first()
@@ -465,7 +465,7 @@ test.describe('Compliance Setup Workspace', () => {
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: multi-step draft reload simulation — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
     await page.goto('/compliance/setup', { timeout: 30000 })
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Complete first step
     const countrySelect = page.locator('select').first()
@@ -499,7 +499,7 @@ test.describe('Compliance Setup Workspace', () => {
     
     // Simulate browser close by reloading
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Should show we're on step 2 or show progress
     const progressText = page.getByText(/1 of 5 Steps Complete/i).or(page.getByText(/2 of 5 Steps Complete/i))
@@ -513,7 +513,7 @@ test.describe('Compliance Setup Workspace', () => {
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: draft clear with localStorage ops — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
     await page.goto('/compliance/setup', { timeout: 30000 })
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Fill some data
     const countrySelect = page.locator('select').first()
@@ -549,7 +549,7 @@ test.describe('Compliance Setup Workspace', () => {
       })
       
       await page.reload()
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
       
       // Verify we're back at step 1 with no data
       const resetCountrySelect = page.locator('select').first()
@@ -570,7 +570,7 @@ test.describe('Compliance Setup Workspace', () => {
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: 2-step wizard navigation buttons — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
     await page.goto('/compliance/setup', { timeout: 30000 })
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Complete first step
     const countrySelect = page.locator('select').first()
@@ -611,7 +611,7 @@ test.describe('Compliance Setup Workspace', () => {
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: 2-step wizard Previous button — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
     await page.goto('/compliance/setup', { timeout: 30000 })
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Complete first step to enable next
     const countrySelect = page.locator('select').first()
@@ -650,7 +650,7 @@ test.describe('Compliance Setup Workspace', () => {
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: full wizard with summary navigation — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
     await page.goto('/compliance/setup', { timeout: 30000 })
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Quick complete all steps to reach summary
     const countrySelect = page.locator('select').first()

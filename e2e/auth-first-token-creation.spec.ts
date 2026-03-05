@@ -88,8 +88,8 @@ test.describe('Auth-First Token Creation Journey', () => {
     await loginWithCredentials(page, AUTH_FIRST_TEST_EMAIL)
     
     // Navigate to guided launch
-    await page.goto('/launch/guided')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/launch/guided', { timeout: 30000 }) // Explicit timeout prevents test.setTimeout(90000) from overriding navigationTimeout
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Semantic wait: Wait for the actual page title to appear (proves auth store loaded + component mounted)
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -107,8 +107,8 @@ test.describe('Auth-First Token Creation Journey', () => {
     await loginWithCredentials(page, AUTH_FIRST_TEST_EMAIL)
     
     // Navigate to advanced creation
-    await page.goto('/create')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/create', { timeout: 30000 }) // Explicit timeout prevents test.setTimeout(90000) from overriding navigationTimeout
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Semantic wait: Wait for the actual page heading (proves page loaded successfully after auth)
     const heading = page.getByRole('heading', { level: 1 }).first()
@@ -120,8 +120,8 @@ test.describe('Auth-First Token Creation Journey', () => {
     // Use canonical auth helper — validates ARC76 session contract before seeding
     await loginWithCredentials(page, AUTH_FIRST_TEST_EMAIL)
     
-    await page.goto('/launch/guided')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/launch/guided', { timeout: 30000 }) // Explicit timeout prevents test.setTimeout(90000) from overriding navigationTimeout
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Semantic wait: Wait for page title (proves page loaded)
     // Use 'load' (not 'networkidle') — Vite HMR SSE keeps a persistent connection
@@ -172,16 +172,16 @@ test.describe('Auth-First Token Creation Journey', () => {
     await loginWithCredentials(page, 'auth-persist@example.com')
     
     // Navigate to guided launch
-    await page.goto('/launch/guided')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/launch/guided', { timeout: 30000 }) // Explicit timeout prevents test.setTimeout(90000) from overriding navigationTimeout
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Semantic wait: Wait for page title
     const title1 = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(title1).toBeVisible({ timeout: 60000 })
     
     // Navigate to dashboard
-    await page.goto('/dashboard')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/dashboard', { timeout: 30000 }) // Explicit timeout prevents test.setTimeout(90000) from overriding navigationTimeout
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Semantic wait: Should still be authenticated (page should load, not redirect to login)
     const heading = page.getByRole('heading', { level: 1 }).first()
@@ -199,8 +199,8 @@ test.describe('Auth-First Token Creation Journey', () => {
     await loginWithCredentials(page, 'compliance@example.com')
     
     // Navigate to guided launch
-    await page.goto('/launch/guided')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/launch/guided', { timeout: 30000 }) // Explicit timeout prevents test.setTimeout(90000) from overriding navigationTimeout
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Semantic wait: Page should load (compliance gating may be shown or wizard may be accessible)
     const title = page.getByRole('heading', { level: 1 }).first()
