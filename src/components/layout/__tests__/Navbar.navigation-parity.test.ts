@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createPinia, setActivePinia } from 'pinia'
 import Navbar from '../Navbar.vue'
+import { NAV_ITEMS } from '../../../constants/navItems'
 
 /**
  * Navigation Parity Tests
@@ -69,6 +70,7 @@ describe('Navbar - Navigation Parity', () => {
     const html = wrapper.html()
     
     // Critical MVP destinations (from AC #3) - canonical auth-first guided launch as create entry
+    // AC5: Pricing has been moved to the user-account dropdown — top-level nav is ≤7 items.
     const criticalDestinations = [
       'Home',
       'Operations',
@@ -76,7 +78,6 @@ describe('Navbar - Navigation Parity', () => {
       'Guided Launch', // canonical create flow entry (not legacy /create)
       'Compliance',
       'Dashboard',
-      'Pricing',
       'Settings'
     ]
 
@@ -203,5 +204,26 @@ describe('Navbar - Navigation Parity', () => {
     
     // Should show "Sign In" for unauthenticated users
     expect(html).toMatch(/Sign\s+In/i)
+  })
+
+  it('should have 7 or fewer top-level navigation items (AC5)', () => {
+    // AC5: Top-level navigation count is ≤7. Pricing removed from primary nav.
+    expect(NAV_ITEMS.length).toBeLessThanOrEqual(7)
+    expect(NAV_ITEMS.length).toBeGreaterThan(0)
+  })
+
+  it('should NOT include Pricing in top-level nav items (AC5 — moved to user dropdown)', () => {
+    // Pricing is accessible via the user account dropdown, not the primary nav bar.
+    // This keeps cognitive load low for enterprise users during core workflows.
+    const paths = NAV_ITEMS.map((item) => item.path)
+    expect(paths).not.toContain('/subscription/pricing')
+  })
+
+  it('should include all 7 canonical nav destinations', () => {
+    const paths = NAV_ITEMS.map((item) => item.path)
+    const required = ['/', '/launch/guided', '/dashboard', '/portfolio', '/operations', '/compliance/setup', '/settings']
+    required.forEach(p => {
+      expect(paths).toContain(p)
+    })
   })
 })

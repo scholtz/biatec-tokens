@@ -193,7 +193,6 @@ import {
   XMarkIcon,
   ChevronDownIcon,
   ArrowRightOnRectangleIcon,
-  CurrencyDollarIcon,
   RocketLaunchIcon,
   ShieldCheckIcon,
   CommandLineIcon,
@@ -224,7 +223,6 @@ const NAV_ICONS: Record<string, FunctionalComponent<SVGAttributes>> = {
   "/operations": BuildingOfficeIcon,
   "/cockpit": CommandLineIcon,
   "/compliance/setup": ShieldCheckIcon,
-  "/subscription/pricing": CurrencyDollarIcon,
   "/settings": Cog6ToothIcon,
 };
 

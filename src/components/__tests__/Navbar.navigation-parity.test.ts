@@ -60,10 +60,11 @@ describe("Navigation Parity - Single Source of Truth", () => {
     expect(complianceItem?.routeName).toBe("ComplianceSetupWorkspace");
   });
 
-  it("should include Pricing", () => {
+  it("should NOT include Pricing in top-level nav items (AC5 — moved to user account dropdown)", () => {
+    // Pricing is accessible via the user account dropdown (Settings menu), not the primary nav bar.
+    // This satisfies AC5: ≤7 top-level navigation items to reduce cognitive load for enterprise users.
     const pricingItem = NAV_ITEMS.find((item) => item.path === "/subscription/pricing");
-    expect(pricingItem).toBeDefined();
-    expect(pricingItem?.routeName).toBe("Pricing");
+    expect(pricingItem).toBeUndefined();
   });
 
   it("should include Settings", () => {
@@ -87,5 +88,11 @@ describe("Navigation Parity - Single Source of Truth", () => {
     const desktopItemCount = NAV_ITEMS.length;
     const mobileItemCount = NAV_ITEMS.length;
     expect(desktopItemCount).toBe(mobileItemCount);
+  });
+
+  it("should have 7 or fewer top-level navigation items (AC5)", () => {
+    // AC5: Top-level navigation count is ≤7 to reduce cognitive load.
+    expect(NAV_ITEMS.length).toBeLessThanOrEqual(7);
+    expect(NAV_ITEMS.length).toBeGreaterThan(0);
   });
 });

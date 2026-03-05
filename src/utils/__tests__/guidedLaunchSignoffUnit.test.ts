@@ -145,10 +145,10 @@ describe('AC #2: Navigation consistency and canonical route mapping', () => {
     expect(comp!.routeName).toBe('ComplianceSetupWorkspace')
   })
 
-  it('NAV_ITEMS includes Pricing at /subscription/pricing', () => {
+  it('NAV_ITEMS does NOT include Pricing at /subscription/pricing (AC5 — moved to user dropdown)', () => {
+    // AC5: ≤7 top-level navigation items. Pricing is accessible via the user account dropdown.
     const pricing = NAV_ITEMS.find(i => i.path === '/subscription/pricing')
-    expect(pricing).toBeDefined()
-    expect(pricing!.routeName).toBe('Pricing')
+    expect(pricing).toBeUndefined()
   })
 
   it('NAV_ITEMS includes Settings at /settings', () => {

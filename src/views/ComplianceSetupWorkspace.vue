@@ -26,7 +26,7 @@
               <h3 class="text-xl font-semibold text-white">
                 {{ completedSteps }} of {{ totalSteps }} Steps Complete
               </h3>
-              <p class="text-gray-400">{{ progressPercentage }}% done</p>
+              <p class="text-gray-600 dark:text-gray-400">{{ progressPercentage }}% done</p>
             </div>
           </div>
 
@@ -39,7 +39,7 @@
             >
               {{ readiness.readinessScore }}%
             </div>
-            <p class="text-sm text-gray-400">Readiness Score</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Readiness Score</p>
           </div>
         </div>
 
@@ -204,7 +204,7 @@
       </div>
 
       <!-- Help Text -->
-      <div class="mt-6 text-center text-gray-400 text-sm">
+      <div class="mt-6 text-center text-gray-600 dark:text-gray-400 text-sm">
         <p>
           Your progress is automatically saved. You can return anytime to complete the setup.
         </p>
