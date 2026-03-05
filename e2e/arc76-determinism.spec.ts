@@ -60,7 +60,7 @@ test.describe('ARC76 Determinism: same credentials → same address', () => {
     // Bootstrap auth in context A
     await loginWithCredentials(pageA)
     await pageA.goto('/')
-    await pageA.waitForLoadState('networkidle')
+    await pageA.waitForLoadState('load')
 
     const addressA = await pageA.evaluate(() => {
       const raw = localStorage.getItem('algorand_user')
@@ -70,7 +70,7 @@ test.describe('ARC76 Determinism: same credentials → same address', () => {
     // Bootstrap auth in context B with the same credentials
     await loginWithCredentials(pageB)
     await pageB.goto('/')
-    await pageB.waitForLoadState('networkidle')
+    await pageB.waitForLoadState('load')
 
     const addressB = await pageB.evaluate(() => {
       const raw = localStorage.getItem('algorand_user')
@@ -99,7 +99,7 @@ test.describe('ARC76 Determinism: same credentials → same address', () => {
     // Seed different emails so the ARC76 derivation produces different addresses
     await loginWithCredentials(pageA, 'user-alpha@arc76-determinism.io')
     await pageA.goto('/')
-    await pageA.waitForLoadState('networkidle')
+    await pageA.waitForLoadState('load')
 
     const sessionA = await pageA.evaluate(() => {
       const raw = localStorage.getItem('algorand_user')
@@ -108,7 +108,7 @@ test.describe('ARC76 Determinism: same credentials → same address', () => {
 
     await loginWithCredentials(pageB, 'user-beta@arc76-determinism.io')
     await pageB.goto('/')
-    await pageB.waitForLoadState('networkidle')
+    await pageB.waitForLoadState('load')
 
     const sessionB = await pageB.evaluate(() => {
       const raw = localStorage.getItem('algorand_user')
@@ -152,7 +152,7 @@ test.describe('ARC76 Determinism: invalid session is rejected', () => {
     })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: give auth guard time to redirect
     await page.waitForFunction(
@@ -187,7 +187,7 @@ test.describe('ARC76 Determinism: invalid session is rejected', () => {
     })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await page.waitForFunction(
       () => !window.location.pathname.includes('/launch/guided') || document.querySelector('[data-testid]') !== null,
@@ -345,7 +345,7 @@ test.describe('ARC76 Determinism: relogin and refresh continuity', () => {
     // AC #2: After authentication, the same account address must survive a page reload.
     await loginWithCredentials(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const addressBefore = await page.evaluate(() => {
       const raw = localStorage.getItem('algorand_user')
@@ -354,7 +354,7 @@ test.describe('ARC76 Determinism: relogin and refresh continuity', () => {
     expect(addressBefore).toBeTruthy()
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const addressAfter = await page.evaluate(() => {
       const raw = localStorage.getItem('algorand_user')
@@ -369,7 +369,7 @@ test.describe('ARC76 Determinism: relogin and refresh continuity', () => {
   test('session email identity is consistent after page reload', async ({ page }) => {
     await loginWithCredentials(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const emailBefore = await page.evaluate(() => {
       const raw = localStorage.getItem('algorand_user')
@@ -378,7 +378,7 @@ test.describe('ARC76 Determinism: relogin and refresh continuity', () => {
     expect(emailBefore).toBeTruthy()
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const emailAfter = await page.evaluate(() => {
       const raw = localStorage.getItem('algorand_user')
@@ -392,7 +392,7 @@ test.describe('ARC76 Determinism: relogin and refresh continuity', () => {
     // AC #3: Same credentials → same derived address across re-authentication.
     await loginWithCredentials(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const address1 = await page.evaluate(() => {
       const raw = localStorage.getItem('algorand_user')
@@ -405,7 +405,7 @@ test.describe('ARC76 Determinism: relogin and refresh continuity', () => {
     // Re-authenticate with the same credentials
     await loginWithCredentials(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const address2 = await page.evaluate(() => {
       const raw = localStorage.getItem('algorand_user')
@@ -421,10 +421,10 @@ test.describe('ARC76 Determinism: relogin and refresh continuity', () => {
   test('authenticated user session survives reload and isConnected remains true', async ({ page }) => {
     await withAuth(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const session = await page.evaluate(() => {
       const raw = localStorage.getItem('algorand_user')
@@ -461,7 +461,7 @@ test.describe('ARC76 Determinism: invalid session explicit error handling and re
     })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await page.waitForFunction(
       () => {
@@ -497,7 +497,7 @@ test.describe('ARC76 Determinism: invalid session explicit error handling and re
     })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await page.waitForFunction(
       () => {
@@ -522,7 +522,7 @@ test.describe('ARC76 Determinism: invalid session explicit error handling and re
   test('home page is accessible after clearing an invalid session (recovery path works)', async ({ page }) => {
     await clearAuthScript(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Home page must load without errors even when unauthenticated
     const homeHeadingVisible = await page
@@ -538,7 +538,7 @@ test.describe('ARC76 Determinism: invalid session explicit error handling and re
     // After session expiry, the user must find the sign-in entry point
     await clearAuthScript(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await page.waitForFunction(
       () => document.querySelector('nav') !== null,

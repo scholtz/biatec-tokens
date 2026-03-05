@@ -42,7 +42,7 @@ test.describe('Happy path — authenticated guided launch', () => {
 
   test('authenticated user reaches the guided launch page', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
@@ -50,7 +50,7 @@ test.describe('Happy path — authenticated guided launch', () => {
 
   test('page has a main landmark for accessibility', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
@@ -61,7 +61,7 @@ test.describe('Happy path — authenticated guided launch', () => {
 
   test('progress indicator is present on the guided launch page', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
@@ -79,7 +79,7 @@ test.describe('Happy path — authenticated guided launch', () => {
 
   test('page has no wallet connector UI (roadmap: email/password only)', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
@@ -91,7 +91,7 @@ test.describe('Happy path — authenticated guided launch', () => {
 
   test('page displays the launch heading with email/password branding', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
@@ -103,7 +103,7 @@ test.describe('Happy path — authenticated guided launch', () => {
 
   test('navigation does not expose wallet artifacts in authenticated state', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
@@ -124,7 +124,7 @@ test.describe('Failure path A — validation and form observability', () => {
 
   test('form inputs are labelled (validation messages will be attributed correctly)', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
@@ -145,7 +145,7 @@ test.describe('Failure path A — validation and form observability', () => {
 
   test('no opaque error state on initial load — page renders step content', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
@@ -163,7 +163,7 @@ test.describe('Failure path A — validation and form observability', () => {
 
   test('error banner region has role=alert for screen reader announcement', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
@@ -181,7 +181,7 @@ test.describe('Failure path A — validation and form observability', () => {
 
   test('step indicator describes flow position to users', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
@@ -208,7 +208,7 @@ test.describe('Failure path B — session loss recovery', () => {
   test('unauthenticated access to /launch/guided is redirected to auth', async ({ page }) => {
     await clearAuthScript(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Flexible: the system must either redirect URL OR show auth prompt
     const url = page.url()
@@ -229,7 +229,7 @@ test.describe('Failure path B — session loss recovery', () => {
   test('after session loss the user is not left on a blank page', async ({ page }) => {
     await clearAuthScript(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Page must have content — not a blank white screen
     const bodyText = await page.locator('body').innerText()
@@ -239,7 +239,7 @@ test.describe('Failure path B — session loss recovery', () => {
   test('auth redirect from /launch/guided preserves the route intent in URL', async ({ page }) => {
     await clearAuthScript(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Accept: either the URL encodes auth intent (showAuth=true) OR the homepage is shown
     const url = page.url()
@@ -255,7 +255,7 @@ test.describe('Failure path B — session loss recovery', () => {
   test('homepage is accessible to unauthenticated users (recovery entry point)', async ({ page }) => {
     await clearAuthScript(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading').first()
     await expect(heading).toBeVisible({ timeout: 15000 })
@@ -264,7 +264,7 @@ test.describe('Failure path B — session loss recovery', () => {
   test('homepage sign-in entry point is discoverable after session loss', async ({ page }) => {
     await clearAuthScript(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // User must be able to find a way to re-authenticate
     const bodyText = await page.locator('body').innerText()
@@ -288,7 +288,7 @@ test.describe('Observable lifecycle — structural anchors', () => {
 
   test('guided launch page has data-testid anchors for automation', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
@@ -300,7 +300,7 @@ test.describe('Observable lifecycle — structural anchors', () => {
 
   test('progress bar has correct ARIA attributes', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
@@ -318,7 +318,7 @@ test.describe('Observable lifecycle — structural anchors', () => {
 
   test('no "sign transaction" or blockchain jargon visible to user', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
@@ -329,7 +329,7 @@ test.describe('Observable lifecycle — structural anchors', () => {
 
   test('page title communicates Biatec or Token context', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const title = await page.title()
     expect(title).toMatch(/biatec|token/i)

@@ -46,7 +46,7 @@ test.describe('AC #1: Canonical routing', () => {
     page,
   }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Guided Launch must be present as the canonical token creation entry in nav
     const guidedLaunchLink = page.getByRole('link', { name: /guided launch/i }).first()
@@ -61,7 +61,7 @@ test.describe('AC #1: Canonical routing', () => {
   }) => {
     await withAuth(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Wait for authenticated CTA buttons to appear
     const createBtn = page.getByRole('button', { name: /create your first token/i }).first()
@@ -82,7 +82,7 @@ test.describe('AC #1: Canonical routing', () => {
   }) => {
     await withAuth(page)
     await page.goto('/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Find the Create Token link in the dashboard header
     const createTokenLink = page.getByRole('link', { name: /create token/i }).first()
@@ -96,7 +96,7 @@ test.describe('AC #1: Canonical routing', () => {
 
   test('no wallet connector UI in main navigation', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Use nav-text helper to avoid false positives from compiled JS bundles
     const navText = await getNavText(page)
@@ -119,21 +119,21 @@ test.describe('AC #2: Accessibility hardening', () => {
 
   test('home page has document title for screen readers', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const title = await page.title()
     expect(title.length).toBeGreaterThan(0)
   })
 
   test('home page has at least one h1 heading', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const h1Count = await page.locator('h1').count()
     expect(h1Count).toBeGreaterThanOrEqual(1)
   })
 
   test('skip-to-content link is present in navigation', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Skip link must be present in DOM (sr-only by default, visible on focus)
     const skipLink = page.getByRole('link', { name: /skip to main content/i })
@@ -143,7 +143,7 @@ test.describe('AC #2: Accessibility hardening', () => {
 
   test('main navigation has accessible aria-label', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation', { name: /main navigation/i })
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -152,7 +152,7 @@ test.describe('AC #2: Accessibility hardening', () => {
   test('guided launch page has h1 and main landmark', async ({ page }) => {
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 30000 })
@@ -165,7 +165,7 @@ test.describe('AC #2: Accessibility hardening', () => {
   test('guided launch step indicator has ARIA navigation role', async ({ page }) => {
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Step indicator must use role="navigation" with aria-label
     const stepNav = page.getByRole('navigation', { name: /issuance progress steps/i })
@@ -175,7 +175,7 @@ test.describe('AC #2: Accessibility hardening', () => {
   test('compliance dashboard back button has accessible aria-label', async ({ page }) => {
     await withAuth(page)
     await page.goto('/compliance/setup')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Compliance views must have accessible back navigation
     const mainHeading = page.getByRole('heading', { level: 1 })
@@ -197,7 +197,7 @@ test.describe('AC #3: Auth/session determinism', () => {
   }) => {
     await clearAuthScript(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: URL must leave the protected path OR auth prompt must appear
     await page.waitForFunction(
@@ -226,7 +226,7 @@ test.describe('AC #3: Auth/session determinism', () => {
     // withAuth validates ARC76 contract before seeding localStorage
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Must stay on guided launch — not redirected away
     await page.waitForFunction(
@@ -242,7 +242,7 @@ test.describe('AC #3: Auth/session determinism', () => {
   }) => {
     await withAuth(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Check that session in localStorage is structurally valid
     const sessionRaw = await page.evaluate(() => localStorage.getItem('algorand_user'))
@@ -262,7 +262,7 @@ test.describe('AC #3: Auth/session determinism', () => {
     // Per router: TokenDashboard has requiresAuth but router allows it with no redirect
     await clearAuthScript(page)
     await page.goto('/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Must not crash — page loads successfully
     const title = await page.title()
@@ -281,7 +281,7 @@ test.describe('AC #4: Quality gates — no wallet UI on critical paths', () => {
 
   test('home page body text does not contain wallet connector UI', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Use innerText on body to avoid compiled-bundle false positives
     const bodyText = await page.locator('body').innerText()
@@ -295,7 +295,7 @@ test.describe('AC #4: Quality gates — no wallet UI on critical paths', () => {
   }) => {
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait for page content
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
@@ -311,7 +311,7 @@ test.describe('AC #4: Quality gates — no wallet UI on critical paths', () => {
   }) => {
     await withAuth(page)
     await page.goto('/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const bodyText = await page.locator('body').innerText()
     expect(bodyText).not.toMatch(/WalletConnect/i)

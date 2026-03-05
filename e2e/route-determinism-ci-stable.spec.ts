@@ -41,7 +41,7 @@ test.describe("AC #1 + #4: Guest homepage — auth-first entry and no wallet sta
 
   test("guest homepage loads and shows Sign In button (semantic wait)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Semantic wait: Sign In button must be present and visible
     const signInButton = page.getByRole("button", { name: /sign in/i }).first();
@@ -50,7 +50,7 @@ test.describe("AC #1 + #4: Guest homepage — auth-first entry and no wallet sta
 
   test("guest homepage contains no wallet/network status text (AC #4)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Wait for page to settle
     await page.waitForFunction(() => document.readyState === "complete", { timeout: 10000 });
@@ -72,7 +72,7 @@ test.describe("AC #1 + #4: Guest homepage — auth-first entry and no wallet sta
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Semantic wait: Sign In button with correct role
     const signInButton = page.getByRole("button", { name: /sign in/i }).first();
@@ -98,11 +98,11 @@ test.describe("AC #1: Protected routes redirect unauthenticated users", () => {
   }) => {
     // Ensure no auth state
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await page.evaluate(() => localStorage.clear());
 
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // AC #10: Semantic wait — no waitForTimeout()
     // Wait until either auth redirect OR auth modal is visible in DOM
@@ -128,11 +128,11 @@ test.describe("AC #1: Protected routes redirect unauthenticated users", () => {
 
   test("/cockpit redirects guest to auth flow (semantic wait)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await page.evaluate(() => localStorage.clear());
 
     await page.goto("/cockpit");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     await page.waitForFunction(
       () => {
@@ -148,11 +148,11 @@ test.describe("AC #1: Protected routes redirect unauthenticated users", () => {
 
   test("/create redirects guest to auth flow (semantic wait)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await page.evaluate(() => localStorage.clear());
 
     await page.goto("/create");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     await page.waitForFunction(
       () => {
@@ -186,7 +186,7 @@ test.describe("AC #5: Authenticated nav includes canonical creation entry", () =
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Semantic wait: navigation is rendered
     // Note: NAV_ITEMS label is "Guided Launch" in Navbar; canonical path is /launch/guided
@@ -204,7 +204,7 @@ test.describe("AC #5: Authenticated nav includes canonical creation entry", () =
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     await page.waitForFunction(() => document.readyState === "complete", { timeout: 10000 });
 
@@ -228,7 +228,7 @@ test.describe("AC #7 + #8: Accessibility — keyboard navigation and ARIA roles"
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Start keyboard navigation from page body
     await page.keyboard.press("Tab");
@@ -241,7 +241,7 @@ test.describe("AC #7 + #8: Accessibility — keyboard navigation and ARIA roles"
 
   test("nav landmark has navigation role for screen readers (AC #7)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Semantic wait: nav element rendered
     await page.waitForFunction(
@@ -256,7 +256,7 @@ test.describe("AC #7 + #8: Accessibility — keyboard navigation and ARIA roles"
 
   test("Sign In button is focusable and accessible via keyboard (AC #8)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const signInButton = page.getByRole("button", { name: /sign in/i }).first();
     await expect(signInButton).toBeVisible({ timeout: 15000 });
@@ -273,7 +273,7 @@ test.describe("AC #7 + #8: Accessibility — keyboard navigation and ARIA roles"
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Title must be non-empty for WCAG 2.4.2 Page Titled
     const title = await page.title();
@@ -293,7 +293,7 @@ test.describe("AC #11: CI stability — summary validation of spec quality", () 
 
   test("home route loads successfully in CI environment (smoke test)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // The page must have a visible heading (proves React/Vue hydrated correctly)
     const anyHeading = page.getByRole("heading").first();
@@ -302,7 +302,7 @@ test.describe("AC #11: CI stability — summary validation of spec quality", () 
 
   test("token-standards public route loads without auth (guest-accessible)", async ({ page }) => {
     await page.goto("/token-standards");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Semantic: page has a heading, meaning route resolved correctly
     const anyHeading = page.getByRole("heading").first();
@@ -311,7 +311,7 @@ test.describe("AC #11: CI stability — summary validation of spec quality", () 
 
   test("marketplace public route loads without auth (guest-accessible)", async ({ page }) => {
     await page.goto("/marketplace");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const anyHeading = page.getByRole("heading").first();
     await expect(anyHeading).toBeVisible({ timeout: 20000 });

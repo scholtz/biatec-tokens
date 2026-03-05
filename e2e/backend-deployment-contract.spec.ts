@@ -69,7 +69,7 @@ test.describe('DeploymentStatusPanel: lifecycle states', () => {
 
   test('Pending state — panel renders with "Preparing deployment" label', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Inject a DeploymentStatusPanel directly into the DOM to test UI contract
     // This is valid for component-level E2E validation without a live backend
@@ -92,7 +92,7 @@ test.describe('DeploymentStatusPanel: lifecycle states', () => {
 
   test('Completed state — panel renders with "Deployment complete" label', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await page.evaluate(() => {
       const panel = document.createElement('div')
@@ -118,7 +118,7 @@ test.describe('DeploymentStatusPanel: lifecycle states', () => {
 
   test('Failed state — panel renders with "Deployment failed" label and error guidance', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const userGuidance = 'Your session has expired. Please sign in again to continue.'
 
@@ -147,7 +147,7 @@ test.describe('DeploymentStatusPanel: lifecycle states', () => {
 
   test('Validated state — panel renders with "Parameters validated" label', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await page.evaluate(() => {
       const panel = document.createElement('div')
@@ -166,7 +166,7 @@ test.describe('DeploymentStatusPanel: lifecycle states', () => {
 
   test('Submitted state — panel renders with "Transaction submitted" label', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await page.evaluate(() => {
       const panel = document.createElement('div')
@@ -196,7 +196,7 @@ test.describe('DeploymentStatusPanel: idempotency replay', () => {
 
   test('shows idempotency replay notice when token already deployed', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await page.evaluate(() => {
       const panel = document.createElement('div')
@@ -221,7 +221,7 @@ test.describe('DeploymentStatusPanel: idempotency replay', () => {
 
   test('does NOT show idempotency replay notice for fresh deployment', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await page.evaluate(() => {
       const panel = document.createElement('div')
@@ -253,7 +253,7 @@ test.describe('DeploymentStatusPanel: compliance audit trail', () => {
 
   test('audit trail link is accessible from deployment success view', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const auditUrl = 'https://api.tokens.biatec.io/api/v1/backend-deployment-contract/audit/dep-uuid-1'
 
@@ -282,7 +282,7 @@ test.describe('DeploymentStatusPanel: compliance audit trail', () => {
 
   test('audit trail link is NOT shown during in-progress deployment', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await page.evaluate(() => {
       const panel = document.createElement('div')
@@ -314,7 +314,7 @@ test.describe('Deployment route: auth-first protection', () => {
     })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: auth guard fires after route initialization
     await page.waitForFunction(
@@ -342,7 +342,7 @@ test.describe('Deployment route: auth-first protection', () => {
     await loginWithCredentials(page)
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: page must resolve to a valid route (not 404)
     await expect(page.locator('body')).not.toContainText('404', { timeout: 20000 })
@@ -367,7 +367,7 @@ test.describe('Deployment routes: no wallet connector UI', () => {
 
   test('home page does not show wallet connector buttons', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Use body innerText (not page.content which includes JS bundle strings)
     const navText = await page.locator('nav').first().innerText().catch(() => '')
@@ -377,7 +377,7 @@ test.describe('Deployment routes: no wallet connector UI', () => {
 
   test('dashboard does not expose wallet connect affordances', async ({ page }) => {
     await page.goto('/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const bodyText = await page.locator('body').innerText().catch(() => '')
     expect(bodyText).not.toContain('Connect Wallet')
@@ -397,7 +397,7 @@ test.describe('Deployment errors: user guidance without raw codes', () => {
 
   test('error guidance message does not contain raw error code strings', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const rawCodes = [
       'DeriveAddressMismatch',
@@ -430,7 +430,7 @@ test.describe('Deployment errors: user guidance without raw codes', () => {
 
   test('DeriveAddressMismatch is surfaced as readable guidance, not a raw code', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Simulate what the API client maps DeriveAddressMismatch to
     const mappedGuidance =
@@ -463,7 +463,7 @@ test.describe('DeploymentStatusPanel: accessibility', () => {
 
   test('deployment status panel has role="region" and aria-label', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await page.evaluate(() => {
       const panel = document.createElement('div')
@@ -482,7 +482,7 @@ test.describe('DeploymentStatusPanel: accessibility', () => {
 
   test('error guidance and replay notices use role="alert"', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await page.evaluate(() => {
       const errEl = document.createElement('div')

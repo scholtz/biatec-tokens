@@ -29,7 +29,7 @@
  *     suppressBrowserErrors(page)
  *     await withAuth(page)
  *     await page.goto('/launch/guided')
- *     await page.waitForLoadState('networkidle')
+ *     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE blocks networkidle
  *   })
  *
  * Canonical route: /launch/guided
@@ -360,7 +360,7 @@ export async function getNavText(page: Page): Promise<string> {
 
 /**
  * Full beforeEach setup helper: suppresses errors, seeds auth, and navigates
- * to the given route, waiting for networkidle.
+ * to the given route, waiting for 'load' (not networkidle — Vite HMR SSE blocks networkidle).
  *
  * Example:
  *   test.beforeEach(async ({ page }) => {

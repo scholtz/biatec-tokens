@@ -53,7 +53,7 @@ test.describe('AC #1: Canonical routing — /launch/guided is the token creation
     page,
   }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const guidedLaunchLink = page.getByRole('link', { name: /guided launch/i }).first()
     await expect(guidedLaunchLink).toBeVisible({ timeout: 15000 })
@@ -67,7 +67,7 @@ test.describe('AC #1: Canonical routing — /launch/guided is the token creation
     // Use loginWithCredentials for critical journey: backend-realistic auth bootstrap
     await loginWithCredentials(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const createBtn = page.getByRole('button', { name: /create your first token/i }).first()
     await expect(createBtn).toBeVisible({ timeout: 20000 })
@@ -98,7 +98,7 @@ test.describe('AC #2: Backend-verified auth bootstrap for critical journeys', ()
     // loginWithCredentials: real backend if API_BASE_URL set, ARC76-validated fallback in CI
     await loginWithCredentials(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Verify the seeded session meets the ARC76 contract
     const sessionRaw = await page.evaluate(() => localStorage.getItem('algorand_user'))
@@ -118,7 +118,7 @@ test.describe('AC #2: Backend-verified auth bootstrap for critical journeys', ()
     // Critical journey: token launch requires backend-verified session
     await loginWithCredentials(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: heading proves auth guard passed and component mounted
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
@@ -134,7 +134,7 @@ test.describe('AC #2: Backend-verified auth bootstrap for critical journeys', ()
     // Critical journey: compliance setup requires backend-verified session
     await loginWithCredentials(page)
     await page.goto('/compliance/setup')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: page must load (not redirect to auth)
     await page.waitForFunction(
@@ -153,7 +153,7 @@ test.describe('AC #2: Backend-verified auth bootstrap for critical journeys', ()
     // AC #3: Deterministic — repeated same-credential login produces same identity
     await loginWithCredentials(page, 'e2e-test@biatec.io')
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const session1 = JSON.parse((await page.evaluate(() => localStorage.getItem('algorand_user')))!)
 
@@ -161,7 +161,7 @@ test.describe('AC #2: Backend-verified auth bootstrap for critical journeys', ()
     await page.evaluate(() => localStorage.removeItem('algorand_user'))
     await loginWithCredentials(page, 'e2e-test@biatec.io')
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const session2Raw = await page.evaluate(() => localStorage.getItem('algorand_user'))
     expect(session2Raw).not.toBeNull()
@@ -186,7 +186,7 @@ test.describe('AC #3: Deterministic behavior — invalid/expired session handlin
   test('unauthenticated access to /launch/guided triggers auth redirect', async ({ page }) => {
     await clearAuthScript(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: must redirect OR show auth prompt
     await page.waitForFunction(
@@ -210,7 +210,7 @@ test.describe('AC #3: Deterministic behavior — invalid/expired session handlin
     // Per router: TokenDashboard has requiresAuth but special-cased to allow no-redirect
     await clearAuthScript(page)
     await page.goto('/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Must not crash — page loads successfully without auth
     const title = await page.title()
@@ -220,7 +220,7 @@ test.describe('AC #3: Deterministic behavior — invalid/expired session handlin
   test('unauthenticated access to /compliance/:id triggers auth redirect', async ({ page }) => {
     await clearAuthScript(page)
     await page.goto('/compliance/abc123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: must leave compliance path OR show auth modal
     await page.waitForFunction(
@@ -251,7 +251,7 @@ test.describe('AC #5: No wallet connector UI on any tested route', () => {
 
   test('home page body does not contain wallet connector text', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: h1 proves page is loaded
     const h1 = page.locator('h1').first()
@@ -267,7 +267,7 @@ test.describe('AC #5: No wallet connector UI on any tested route', () => {
   test('guided launch page body does not contain wallet connector text', async ({ page }) => {
     await loginWithCredentials(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: heading confirms page loaded
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
@@ -281,7 +281,7 @@ test.describe('AC #5: No wallet connector UI on any tested route', () => {
   test('compliance setup page body does not contain wallet connector text', async ({ page }) => {
     await loginWithCredentials(page)
     await page.goto('/compliance/setup')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await page.waitForFunction(
       () => window.location.pathname.includes('/compliance/setup'),
@@ -298,7 +298,7 @@ test.describe('AC #5: No wallet connector UI on any tested route', () => {
 
   test('main navigation has accessible aria-label', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation', { name: /main navigation/i })
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -306,7 +306,7 @@ test.describe('AC #5: No wallet connector UI on any tested route', () => {
 
   test('skip-to-main-content link is in DOM for keyboard users', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Skip link must be present (sr-only by default, visible on focus)
     const skipLink = page.getByRole('link', { name: /skip to main content/i })

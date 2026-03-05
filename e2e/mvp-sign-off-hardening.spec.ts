@@ -55,7 +55,7 @@ test.describe('AC #1: Canonical route clarity', () => {
     page,
   }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const guidedLink = page.getByRole('link', { name: /guided launch/i }).first()
     await expect(guidedLink).toBeVisible({ timeout: 15000 })
@@ -66,7 +66,7 @@ test.describe('AC #1: Canonical route clarity', () => {
 
   test('primary navigation does NOT expose /create/wizard as a link target', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // All links in DOM should not point to the deprecated wizard path
     const allLinks = page.getByRole('link')
@@ -84,7 +84,7 @@ test.describe('AC #1: Canonical route clarity', () => {
   test('authenticated user accessing /launch/guided sees guided launch page', async ({ page }) => {
     await loginWithCredentials(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Canonical route must render the guided launch heading
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
@@ -109,7 +109,7 @@ test.describe('AC #2: Auth and session confidence', () => {
     // Either way, the resulting localStorage session must be ARC76-valid.
     await loginWithCredentials(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const raw = await page.evaluate(() => localStorage.getItem('algorand_user'))
     expect(raw).not.toBeNull()
@@ -129,7 +129,7 @@ test.describe('AC #2: Auth and session confidence', () => {
     // addInitScript seeds localStorage on page load, so we need a page.goto after each call.
     await loginWithCredentials(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const raw1 = await page.evaluate(() => localStorage.getItem('algorand_user'))
     const session1 = JSON.parse(raw1!)
@@ -137,7 +137,7 @@ test.describe('AC #2: Auth and session confidence', () => {
     // Re-seed with a fresh loginWithCredentials call — must navigate to let addInitScript run
     await loginWithCredentials(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const raw2 = await page.evaluate(() => localStorage.getItem('algorand_user'))
     const session2 = JSON.parse(raw2!)
@@ -162,7 +162,7 @@ test.describe('AC #2: Auth and session confidence', () => {
     })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: either redirected away from /launch/guided OR auth prompt visible
     await page.waitForFunction(
@@ -191,7 +191,7 @@ test.describe('AC #2: Auth and session confidence', () => {
   test('unauthenticated access to /launch/guided triggers auth redirect', async ({ page }) => {
     await clearAuthScript(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: redirect away from protected route OR auth form appears
     await page.waitForFunction(
@@ -215,7 +215,7 @@ test.describe('AC #2: Auth and session confidence', () => {
   test('navigation text does not contain wallet connector labels after auth', async ({ page }) => {
     await loginWithCredentials(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const navText = await getNavText(page)
     expect(navText).not.toMatch(/WalletConnect/i)
@@ -237,7 +237,7 @@ test.describe('AC #3: Accessibility baseline', () => {
 
   test('home page has navigation landmark (WCAG 2.4.1)', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeAttached({ timeout: 10000 })
@@ -245,7 +245,7 @@ test.describe('AC #3: Accessibility baseline', () => {
 
   test('home page has main content landmark (WCAG 1.3.1)', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const main = page.getByRole('main')
     await expect(main).toBeAttached({ timeout: 10000 })
@@ -253,7 +253,7 @@ test.describe('AC #3: Accessibility baseline', () => {
 
   test('home page has at least one h1 heading (WCAG 1.3.1)', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1Count = await page.locator('h1').count()
     expect(h1Count).toBeGreaterThanOrEqual(1)
@@ -263,7 +263,7 @@ test.describe('AC #3: Accessibility baseline', () => {
     page,
   }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const skipLink = page.getByRole('link', { name: /skip to main content/i })
     const count = await skipLink.count()
@@ -275,7 +275,7 @@ test.describe('AC #3: Accessibility baseline', () => {
   }) => {
     await loginWithCredentials(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Wait for page to render
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
@@ -290,7 +290,7 @@ test.describe('AC #3: Accessibility baseline', () => {
   }) => {
     await loginWithCredentials(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 30000 })
@@ -298,7 +298,7 @@ test.describe('AC #3: Accessibility baseline', () => {
 
   test('primary CTA on home page is a keyboard-accessible button or link', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // The primary CTA must be a button or link (keyboard-activatable elements)
     const cta =
@@ -322,7 +322,7 @@ test.describe('AC #3: Accessibility baseline', () => {
 
   test('home page visible body text contains no wallet connector UI', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const bodyText = await page.locator('body').innerText()
     expect(bodyText).not.toMatch(/WalletConnect/i)
@@ -345,7 +345,7 @@ test.describe('AC #4 + AC #5: Quality and CI gates', () => {
     // Proof: this test passes in CI without any fixed delays.
     // All waits in this file use waitForFunction, expect().toBeVisible, or waitForLoadState.
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const title = await page.title()
     expect(title.length).toBeGreaterThan(0)
   })
@@ -353,7 +353,7 @@ test.describe('AC #4 + AC #5: Quality and CI gates', () => {
   test('guided launch page body text contains no wallet connector UI', async ({ page }) => {
     await loginWithCredentials(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 30000 })
@@ -366,7 +366,7 @@ test.describe('AC #4 + AC #5: Quality and CI gates', () => {
   test('compliance setup page renders without wallet connector UI', async ({ page }) => {
     await loginWithCredentials(page)
     await page.goto('/compliance/setup')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: page title or main heading appears
     const mainHeading = page.getByRole('heading', { level: 1 }).first()

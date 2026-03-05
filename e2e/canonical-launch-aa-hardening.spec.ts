@@ -53,7 +53,7 @@ test.describe('AC #1: Canonical flow — /launch/guided as primary creation entr
 
   test('navigation contains a link pointing to /launch/guided', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -67,7 +67,7 @@ test.describe('AC #1: Canonical flow — /launch/guided as primary creation entr
 
   test('navigation does NOT expose /create/wizard as a user-facing link', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // /create/wizard is redirect-only — should not appear as a navigation link
     const wizardLinks = page.getByRole('link', { name: /wizard/i })
@@ -78,7 +78,7 @@ test.describe('AC #1: Canonical flow — /launch/guided as primary creation entr
     page,
   }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // The old /create route must not be a primary navigation destination
     const createLinks = page.getByRole('link', { name: /^create$/i })
@@ -93,7 +93,7 @@ test.describe('AC #1: Canonical flow — /launch/guided as primary creation entr
     await withAuth(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation').first()
     const guidedLaunchLink = nav.getByRole('link', { name: /guided launch/i }).first()
@@ -115,7 +115,7 @@ test.describe('AC #2: Navigation consistency — parity, skip-to-content, ARIA',
 
   test('main navigation has accessible role and label', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Navigation must have aria-label for screen-reader landmark identification
     const nav = page.getByRole('navigation', { name: /main navigation/i })
@@ -124,7 +124,7 @@ test.describe('AC #2: Navigation consistency — parity, skip-to-content, ARIA',
 
   test('skip-to-content link is present in the DOM (WCAG 2.1 AA)', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Skip-to-content link must exist for keyboard-only navigation (WCAG 2.4.1)
     const skipLink = page.locator('a[href="#main-content"]')
@@ -137,7 +137,7 @@ test.describe('AC #2: Navigation consistency — parity, skip-to-content, ARIA',
 
   test('skip-to-content link href matches main landmark id', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const skipLink = page.locator('a[href="#main-content"]')
     const href = await skipLink.getAttribute('href')
@@ -149,7 +149,7 @@ test.describe('AC #2: Navigation consistency — parity, skip-to-content, ARIA',
 
   test('mobile menu button has accessible aria-label (WCAG 4.1.2)', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // The mobile hamburger button must have an aria-label for screen readers
     const mobileMenuButton = page.locator('button[aria-label*="navigation menu"]')
@@ -160,7 +160,7 @@ test.describe('AC #2: Navigation consistency — parity, skip-to-content, ARIA',
     page,
   }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Core routes that must be reachable from the navigation
     const coreRoutes = ['/launch/guided', '/dashboard', '/compliance/setup', '/settings']
@@ -179,7 +179,7 @@ test.describe('AC #2: Navigation consistency — parity, skip-to-content, ARIA',
 
   test('theme toggle button has accessible aria-label (WCAG 4.1.2)', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Theme toggle must have an accessible label describing its action
     const themeButton = page.locator('button[aria-label*="mode"]')
@@ -200,7 +200,7 @@ test.describe('AC #3: Auth/session correctness — protected routes and redirect
     await withAuth(page)
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // With a valid session the router must not redirect away from /launch/guided
     const url = page.url()
@@ -215,7 +215,7 @@ test.describe('AC #3: Auth/session correctness — protected routes and redirect
     await withAuth(page)
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const sessionRaw = await page.evaluate(() => localStorage.getItem('algorand_user'))
     expect(sessionRaw).toBeTruthy()
@@ -230,7 +230,7 @@ test.describe('AC #3: Auth/session correctness — protected routes and redirect
     await clearAuthScript(page)
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Router guard must redirect unauthenticated users.
     // The redirect URL includes showAuth=true OR an auth form is visible.
@@ -260,7 +260,7 @@ test.describe('AC #3: Auth/session correctness — protected routes and redirect
     await clearAuthScript(page)
 
     await page.goto('/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // /dashboard shows an empty state to guests — it must not hard-redirect
     const url = page.url()
@@ -275,14 +275,14 @@ test.describe('AC #3: Auth/session correctness — protected routes and redirect
     await withAuth(page, user)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const session1 = JSON.parse(
       (await page.evaluate(() => localStorage.getItem('algorand_user'))) ?? '{}',
     )
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const session2 = JSON.parse(
       (await page.evaluate(() => localStorage.getItem('algorand_user'))) ?? '{}',
@@ -300,7 +300,7 @@ test.describe('AC #3: Auth/session correctness — protected routes and redirect
     await clearAuthScript(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Use getNavText helper — avoids false positives from compiled JS bundle strings.
     // Pattern checks here mirror FORBIDDEN_WALLET_PATTERNS (containsWalletTerminology)
@@ -326,7 +326,7 @@ test.describe('AC #4: Accessibility quality — ARIA, focus, landmarks', () => {
 
   test('home page has a main landmark (#main-content)', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // WCAG 1.3.6 / 2.4.1: Main landmark must be identifiable
     const mainLandmark = page.locator('main, [role="main"]').first()
@@ -335,7 +335,7 @@ test.describe('AC #4: Accessibility quality — ARIA, focus, landmarks', () => {
 
   test('interactive elements have focus-visible styles in critical paths', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Tab to the first interactive element and verify focus styles are applied
     await page.keyboard.press('Tab')
@@ -349,7 +349,7 @@ test.describe('AC #4: Accessibility quality — ARIA, focus, landmarks', () => {
 
   test('skip-to-content link becomes visible on focus (WCAG 2.4.1)', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // The skip-to-content link uses sr-only by default; focus:not-sr-only makes it visible
     const skipLink = page.locator('a[href="#main-content"]')
@@ -366,7 +366,7 @@ test.describe('AC #4: Accessibility quality — ARIA, focus, landmarks', () => {
 
   test('navigation links have aria-current="page" for active route', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // At least one nav link should carry aria-current="page" for the active route
     const activeLinkCount = await page.locator('[aria-current="page"]').count()
@@ -377,7 +377,7 @@ test.describe('AC #4: Accessibility quality — ARIA, focus, landmarks', () => {
     await clearAuthScript(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Sign In must use a <button> (or role="button") so screen readers announce it correctly
     // Use .first() to handle dual desktop/mobile DOM instances
@@ -389,7 +389,7 @@ test.describe('AC #4: Accessibility quality — ARIA, focus, landmarks', () => {
     await withAuth(page)
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // The page must have an h1 landmark heading
     const h1 = page.getByRole('heading', { level: 1 }).first()
@@ -402,7 +402,7 @@ test.describe('AC #4: Accessibility quality — ARIA, focus, landmarks', () => {
     await clearAuthScript(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Note: these pattern checks mirror FORBIDDEN_WALLET_PATTERNS from canonicalLaunchWorkspace.ts
     // but are expressed inline here because E2E tests cannot import from src/ TypeScript modules.
@@ -424,7 +424,7 @@ test.describe('AC #5: Test quality evidence — deterministic, CI-stable asserti
 
   test('home page title is deterministic on load (no timing dependency)', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Title must load without arbitrary waits
     const title = await page.title()
@@ -436,7 +436,7 @@ test.describe('AC #5: Test quality evidence — deterministic, CI-stable asserti
     page,
   }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Navigation must be visible without any waitForTimeout
     const nav = page.getByRole('navigation').first()
@@ -445,7 +445,7 @@ test.describe('AC #5: Test quality evidence — deterministic, CI-stable asserti
 
   test('Guided Launch link resolves without hard waits', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Canonical nav entry must be visible using only semantic waits
     const guidedLink = page.getByRole('link', { name: /guided launch/i }).first()
@@ -458,7 +458,7 @@ test.describe('AC #5: Test quality evidence — deterministic, CI-stable asserti
     // Seeded before navigation → available when app initialises
     await withAuth(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const sessionRaw = await page.evaluate(() => localStorage.getItem('algorand_user'))
     expect(sessionRaw).toBeTruthy()
@@ -472,7 +472,7 @@ test.describe('AC #5: Test quality evidence — deterministic, CI-stable asserti
     await clearAuthScript(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const sessionRaw = await page.evaluate(() => localStorage.getItem('algorand_user'))
     expect(sessionRaw).toBeNull()

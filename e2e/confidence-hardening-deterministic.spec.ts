@@ -66,7 +66,7 @@ test.describe('Canonical launch route — navigation and visibility', () => {
 
   test('navigation contains a Guided Launch link pointing to /launch/guided', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -81,7 +81,7 @@ test.describe('Canonical launch route — navigation and visibility', () => {
 
   test('navigation does NOT expose /create/wizard as a primary link', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -94,7 +94,7 @@ test.describe('Canonical launch route — navigation and visibility', () => {
 
   test('navigation does NOT contain wallet/network terminology for guest users', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -114,7 +114,7 @@ test.describe('Canonical launch route — navigation and visibility', () => {
 
   test('home page has <main> landmark for accessibility', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const main = page.getByRole('main').first()
     await expect(main).toBeVisible({ timeout: 15000 })
@@ -122,7 +122,7 @@ test.describe('Canonical launch route — navigation and visibility', () => {
 
   test('home page has <nav> landmark for accessibility', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -144,7 +144,7 @@ test.describe('Auth session bootstrap — contract-validated, not raw strings', 
     await bootstrapHardenedSession(page)
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic readiness signal: wait for page heading to appear
     const heading = page.getByRole('heading', { level: 1 }).first()
@@ -159,7 +159,7 @@ test.describe('Auth session bootstrap — contract-validated, not raw strings', 
     await bootstrapHardenedSession(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -173,7 +173,7 @@ test.describe('Auth session bootstrap — contract-validated, not raw strings', 
     await bootstrapHardenedSession(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -200,7 +200,7 @@ test.describe('Auth session bootstrap — contract-validated, not raw strings', 
     })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Wait for auth guard to process
     await page.waitForFunction(
@@ -234,7 +234,7 @@ test.describe('Top navigation — deterministic state for guest and authenticate
     await clearHardenedSession(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -254,7 +254,7 @@ test.describe('Top navigation — deterministic state for guest and authenticate
     await clearHardenedSession(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -272,7 +272,7 @@ test.describe('Top navigation — deterministic state for guest and authenticate
     await bootstrapHardenedSession(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -287,7 +287,7 @@ test.describe('Top navigation — deterministic state for guest and authenticate
     await bootstrapHardenedSession(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -309,7 +309,7 @@ test.describe('Accessibility — keyboard traversal and ARIA landmarks', () => {
     await clearHardenedSession(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -320,7 +320,7 @@ test.describe('Accessibility — keyboard traversal and ARIA landmarks', () => {
     await clearHardenedSession(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const main = page.getByRole('main').first()
     await expect(main).toBeVisible({ timeout: 15000 })
@@ -331,7 +331,7 @@ test.describe('Accessibility — keyboard traversal and ARIA landmarks', () => {
     await clearHardenedSession(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Tab through the page — within first 20 tabs, a sign-in element must receive focus
     let foundSignIn = false
@@ -357,7 +357,7 @@ test.describe('Accessibility — keyboard traversal and ARIA landmarks', () => {
     await clearHardenedSession(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Tab to the first focusable element in the nav
     await page.keyboard.press('Tab')
@@ -393,7 +393,7 @@ test.describe('Canonical flow integrity — deprecated routes are not primary ta
 
   test('home page does not contain /create/wizard as a CTA href', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const pageHtml = await page.content()
     // The deprecated wizard path must not appear as a link destination
@@ -403,7 +403,7 @@ test.describe('Canonical flow integrity — deprecated routes are not primary ta
 
   test('page title is present and non-empty', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const title = await page.title()
     expect(title).toBeTruthy()
@@ -412,7 +412,7 @@ test.describe('Canonical flow integrity — deprecated routes are not primary ta
 
   test('root route renders main content landmark', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const main = page.getByRole('main').first()
     await expect(main).toBeVisible({ timeout: 15000 })
@@ -420,7 +420,7 @@ test.describe('Canonical flow integrity — deprecated routes are not primary ta
 
   test('pricing/subscription page is accessible to guests', async ({ page }) => {
     await page.goto('/subscription/pricing')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Guest-accessible route must render without auth redirect — confirm URL didn't change
     const url = page.url()

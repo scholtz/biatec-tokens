@@ -41,11 +41,11 @@ test.describe("AC #1: Auth-first routing (all token creation entry points)", () 
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await page.evaluate(() => localStorage.clear());
 
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Semantic wait: wait until auth redirect evidence is in DOM (no waitForTimeout)
     await page.waitForFunction(
@@ -68,11 +68,11 @@ test.describe("AC #1: Auth-first routing (all token creation entry points)", () 
 
   test("guest accessing /create is redirected (semantic wait)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await page.evaluate(() => localStorage.clear());
 
     await page.goto("/create");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     await page.waitForFunction(
       () => {
@@ -88,11 +88,11 @@ test.describe("AC #1: Auth-first routing (all token creation entry points)", () 
 
   test("guest accessing /cockpit is redirected (semantic wait)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await page.evaluate(() => localStorage.clear());
 
     await page.goto("/cockpit");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     await page.waitForFunction(
       () => {
@@ -112,7 +112,7 @@ test.describe("AC #1: Auth-first routing (all token creation entry points)", () 
     await withAuth(page);
 
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Semantic wait: heading proves page mounted and auth store initialized
     const heading = page.getByRole("heading", { name: /guided token launch/i, level: 1 });
@@ -125,11 +125,11 @@ test.describe("AC #1: Auth-first routing (all token creation entry points)", () 
 
   test("redirect destination is stored in localStorage before auth redirect", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await page.evaluate(() => localStorage.clear());
 
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Semantic wait for redirect
     await page.waitForFunction(
@@ -166,10 +166,10 @@ test.describe("AC #2: Guest nav — no wallet states, deterministic Sign In", ()
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await page.evaluate(() => localStorage.clear());
     await page.reload();
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Semantic: wait for nav element — proves component mounted
     await page.waitForFunction(() => document.querySelector("nav") !== null, { timeout: 10000 });
@@ -181,7 +181,7 @@ test.describe("AC #2: Guest nav — no wallet states, deterministic Sign In", ()
 
   test("guest nav contains NO wallet/network status text", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Use shared getNavText() helper — waits for nav to appear and returns its textContent.
     // Avoids false positives from compiled JS bundles that embed third-party wallet strings.
@@ -213,7 +213,7 @@ test.describe("AC #2: Guest nav — no wallet states, deterministic Sign In", ()
 
   test("guest nav includes Guided Launch as canonical create entry", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Semantic wait: nav renders
     await page.waitForFunction(() => document.querySelector("nav") !== null, { timeout: 10000 });
@@ -244,7 +244,7 @@ test.describe("AC #4: WCAG 2.1 AA accessibility baseline", () => {
 
   test("home page has document title (screen reader orientation)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const title = await page.title();
     expect(title.length).toBeGreaterThan(0);
@@ -252,7 +252,7 @@ test.describe("AC #4: WCAG 2.1 AA accessibility baseline", () => {
 
   test("home page has at least one h1 heading (heading hierarchy)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     await page.waitForFunction(() => document.querySelector("h1") !== null, { timeout: 10000 });
     const h1Count = await page.locator("h1").count();
@@ -261,7 +261,7 @@ test.describe("AC #4: WCAG 2.1 AA accessibility baseline", () => {
 
   test("home page interactive controls are keyboard-reachable via Tab", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Semantic wait: nav renders
     await page.waitForFunction(() => document.querySelector("nav") !== null, { timeout: 10000 });
@@ -286,7 +286,7 @@ test.describe("AC #4: WCAG 2.1 AA accessibility baseline", () => {
     await withAuth(page);
 
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const heading = page.getByRole("heading", { name: /guided token launch/i, level: 1 });
     await expect(heading).toBeVisible({ timeout: 60000 });
@@ -294,7 +294,7 @@ test.describe("AC #4: WCAG 2.1 AA accessibility baseline", () => {
 
   test("Sign In button has accessible text (not icon-only)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await page.evaluate(() => localStorage.clear());
 
     await page.waitForFunction(
@@ -326,7 +326,7 @@ test.describe("AC #5: User-oriented error messages", () => {
     await withAuth(page);
 
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const heading = page.getByRole("heading", { name: /guided token launch/i, level: 1 });
     await expect(heading).toBeVisible({ timeout: 60000 });
@@ -346,7 +346,7 @@ test.describe("AC #5: User-oriented error messages", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     await page.waitForFunction(() => document.querySelector("nav") !== null, { timeout: 10000 });
 
@@ -362,6 +362,6 @@ test.describe("AC #5: User-oriented error messages", () => {
 // ---------------------------------------------------------------------------
 // NOTE: All waits above use:
 //   - page.waitForFunction() with DOM/URL readiness conditions
-//   - page.waitForLoadState('networkidle')
+//   - page.waitForLoadState('load')
 //   - expect(locator).toBeVisible({ timeout: N })
 // This satisfies AC #6: no sleep-based synchronization.

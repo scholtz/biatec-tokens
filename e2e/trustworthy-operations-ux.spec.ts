@@ -13,7 +13,7 @@
  *
  * E2E test patterns:
  * - Auth setup via addInitScript (before navigation to avoid race conditions)
- * - waitForLoadState('networkidle') + explicit visibility checks
+ * - waitForLoadState('load') + explicit visibility checks
  * - Console error suppression to prevent Playwright exit-code-1 failures
  * - .first() used for elements that appear in both desktop and mobile nav
  */
@@ -68,7 +68,7 @@ test.describe("Trustworthy Operations UX v1", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // At least one heading should be visible
     const firstHeading = page.getByRole("heading", { level: 1 }).first();
@@ -81,7 +81,7 @@ test.describe("Trustworthy Operations UX v1", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Tab to the sign-in button (or use keyboard focus)
     const signInButton = page.getByRole("button", { name: /sign in/i }).first();
@@ -98,7 +98,7 @@ test.describe("Trustworthy Operations UX v1", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Theme toggle should have aria-label for screen readers
     const themeButton = page.locator("button[aria-label*='mode']");
@@ -113,7 +113,7 @@ test.describe("Trustworthy Operations UX v1", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Mobile menu button exists in DOM (may be hidden at desktop width)
     const mobileMenuButton = page.locator("button[aria-label*='navigation menu']");
@@ -124,7 +124,7 @@ test.describe("Trustworthy Operations UX v1", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const guidedLaunchLink = page.getByRole("link", { name: /guided launch/i });
     await expect(guidedLaunchLink.first()).toBeVisible({ timeout: 15000 });
@@ -134,7 +134,7 @@ test.describe("Trustworthy Operations UX v1", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const content = await page.content();
 
@@ -152,7 +152,7 @@ test.describe("Trustworthy Operations UX v1", () => {
     // Simulate mobile viewport
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Core destinations that must be reachable on mobile
     const pageContent = await page.content();
@@ -171,11 +171,11 @@ test.describe("Trustworthy Operations UX v1", () => {
   }) => {
     // Navigate without auth
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await page.evaluate(() => localStorage.clear());
 
     await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Either stays at dashboard (which shows sign-in) or redirects with showAuth
     const url = page.url();
@@ -202,7 +202,7 @@ test.describe("Trustworthy Operations UX v1", () => {
     });
 
     await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Should be on dashboard — verify key UI elements are visible
     const pageContent = await page.content();
@@ -228,7 +228,7 @@ test.describe("Trustworthy Operations UX v1", () => {
     });
 
     await page.goto("/compliance");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const pageContent = await page.content();
     expect(pageContent.toLowerCase()).toMatch(/compliance/i);
@@ -249,7 +249,7 @@ test.describe("Trustworthy Operations UX v1", () => {
     });
 
     await page.goto("/compliance/whitelists");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Should remain on whitelists route (deep link preserved)
     const url = page.url();
@@ -264,7 +264,7 @@ test.describe("Trustworthy Operations UX v1", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const content = await page.content();
 
@@ -290,7 +290,7 @@ test.describe("Trustworthy Operations UX v1", () => {
     });
 
     await page.goto("/settings");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const pageContent = await page.content();
     expect(pageContent.toLowerCase()).toMatch(/settings|preference/i);
@@ -315,7 +315,7 @@ test.describe("Trustworthy Operations UX v1", () => {
     });
 
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const heading = page
       .getByRole("heading", { name: /guided token launch/i, level: 1 })
@@ -342,7 +342,7 @@ test.describe("Trustworthy Operations UX v1", () => {
     });
 
     await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const content = await page.content();
     expect(content).not.toMatch(/WalletConnect/i);
@@ -358,7 +358,7 @@ test.describe("Trustworthy Operations UX v1", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Press Tab several times and confirm focus moves to interactive elements
     await page.keyboard.press("Tab");

@@ -46,7 +46,7 @@ test.describe('Canonical issuance route — /launch/guided is the primary entry'
 
   test('authenticated user can navigate to /launch/guided', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Verify the page loaded — look for a main region or heading
     const main = page.getByRole('main')
@@ -55,7 +55,7 @@ test.describe('Canonical issuance route — /launch/guided is the primary entry'
 
   test('page title or heading is present on /launch/guided', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // The page should have a heading
     const heading = page.getByRole('heading', { level: 1 })
@@ -64,7 +64,7 @@ test.describe('Canonical issuance route — /launch/guided is the primary entry'
 
   test('/launch/guided page does not show wallet-era messaging', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { level: 1 })
     await expect(heading).toBeVisible({ timeout: 45000 })
@@ -99,7 +99,7 @@ test.describe('Auth guard — unauthenticated access to issuance workspace', () 
 
   test('unauthenticated visit to /launch/guided triggers auth redirect', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Either: URL changes to include showAuth query param
     // Or: auth modal/form appears
@@ -117,7 +117,7 @@ test.describe('Auth guard — unauthenticated access to issuance workspace', () 
 
   test('unauthenticated visit does not load the workspace step indicator', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // The workspace shell with the step indicator should not be accessible
     const stepIndicator = page.locator('[data-testid="issuance-step-indicator"]')
@@ -141,7 +141,7 @@ test.describe('Wallet-free language — issuance workspace uses auth-first termi
 
   test('navigation does not show wallet connection status', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -156,7 +156,7 @@ test.describe('Wallet-free language — issuance workspace uses auth-first termi
 
   test('/launch/guided page language is non-crypto-native', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { level: 1 })
     await expect(heading).toBeVisible({ timeout: 45000 })
@@ -187,7 +187,7 @@ test.describe('Issuance workspace — step titles and progress visible', () => {
 
   test('/launch/guided shows progress indicator or step structure', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Wait for the page to fully load
     const heading = page.getByRole('heading', { level: 1 })
@@ -214,7 +214,7 @@ test.describe('Issuance workspace — step titles and progress visible', () => {
 
   test('/launch/guided shows authentication confirmation — email/password context', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { level: 1 })
     await expect(heading).toBeVisible({ timeout: 45000 })
@@ -245,7 +245,7 @@ test.describe('Accessibility — keyboard navigation and ARIA labels', () => {
 
   test('/launch/guided has accessible heading structure', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 45000 })
@@ -259,7 +259,7 @@ test.describe('Accessibility — keyboard navigation and ARIA labels', () => {
 
   test('/launch/guided has at least one button element', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { level: 1 })
     await expect(heading).toBeVisible({ timeout: 45000 })
@@ -271,7 +271,7 @@ test.describe('Accessibility — keyboard navigation and ARIA labels', () => {
 
   test('/launch/guided main content region is accessible', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const main = page.getByRole('main')
     await expect(main).toBeVisible({ timeout: 45000 })
@@ -290,7 +290,7 @@ test.describe('Legacy /create route — compatibility', () => {
 
   test('/create route loads without error', async ({ page }) => {
     await page.goto('/create')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Page should load — either the create page or a redirect
     const main = page.getByRole('main')
@@ -309,7 +309,7 @@ test.describe('Home page — auth-first CTA points to issuance workspace', () =>
 
   test('home page loads without wallet connector UI', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -323,7 +323,7 @@ test.describe('Home page — auth-first CTA points to issuance workspace', () =>
 
   test('home page has sign-in related element for email/password auth', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: Sign In button proves email/password auth-first model
     const signInButton = page.getByRole('button', { name: /sign in/i }).first()

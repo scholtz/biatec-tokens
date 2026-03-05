@@ -53,7 +53,7 @@ test.describe('AC #1: Contract-validated session bootstrap', () => {
     // before seeding. Any deviation from the ARC76 contract throws immediately.
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Contract evidence: session is present and well-formed in localStorage
     const sessionRaw = await page.evaluate(() => localStorage.getItem('algorand_user'))
@@ -73,7 +73,7 @@ test.describe('AC #1: Contract-validated session bootstrap', () => {
     // AC #1: Contract-validated session enables protected route access
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: h1 heading proves auth store initialized + component mounted
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
@@ -89,7 +89,7 @@ test.describe('AC #1: Contract-validated session bootstrap', () => {
       name: 'Hardening Test User',
     })
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const session = await page.evaluate(() => {
       const raw = localStorage.getItem('algorand_user')
@@ -123,7 +123,7 @@ test.describe('AC #2: Backend-derived identity surfaced in authenticated UI', ()
     })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -150,7 +150,7 @@ test.describe('AC #2: Backend-derived identity surfaced in authenticated UI', ()
     // Navigate to multiple protected views and verify identity is constant
     for (const route of ['/launch/guided', '/dashboard']) {
       await page.goto(route)
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       // Semantic wait: any heading proves the page has rendered (not just network settled)
       const anyHeading = page.getByRole('heading').first()
@@ -183,7 +183,7 @@ test.describe('AC #4: Top-nav — deterministic component-level assertions', () 
     // AC #4: Use role/name selector — not page.content() — for nav assertions.
     // .first() is required because Navbar renders both desktop and mobile variants.
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: nav landmark present
     await page.waitForFunction(() => document.querySelector('nav') !== null, { timeout: 10000 })
@@ -196,7 +196,7 @@ test.describe('AC #4: Top-nav — deterministic component-level assertions', () 
     // AC #4 + AC #5: Component-level assertion — textContent() of the nav element
     // excludes compiled bundle strings that appear in page.content().
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await page.waitForFunction(() => document.querySelector('nav') !== null, { timeout: 10000 })
 
     const nav = page.getByRole('navigation').first()
@@ -213,7 +213,7 @@ test.describe('AC #4: Top-nav — deterministic component-level assertions', () 
     // Uses role/href assertion — not page.content() scan.
     await withAuth(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: nav is rendered
     await page.waitForFunction(() => document.querySelector('nav') !== null, { timeout: 10000 })
@@ -232,7 +232,7 @@ test.describe('AC #4: Top-nav — deterministic component-level assertions', () 
     // AC #4 + AC #5: Even authenticated users must not see wallet status in nav
     await withAuth(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await page.waitForFunction(() => document.querySelector('nav') !== null, { timeout: 10000 })
 
@@ -257,7 +257,7 @@ test.describe('AC #5: Wallet/network UI absent in auth-first issuance flow', () 
   test('guided launch workspace nav contains no wallet connector buttons', async ({ page }) => {
     // AC #5: No wallet connector UI in the canonical issuance flow
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -273,7 +273,7 @@ test.describe('AC #5: Wallet/network UI absent in auth-first issuance flow', () 
   test('guided launch nav shows no wallet/network status text', async ({ page }) => {
     // AC #5: Nav-component assertion — top-nav must not expose wallet status
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -292,7 +292,7 @@ test.describe('AC #5: Wallet/network UI absent in auth-first issuance flow', () 
 // ---------------------------------------------------------------------------
 // NOTE: All waits in this spec use ONLY:
 //   - page.waitForFunction() with DOM/URL/state readiness conditions
-//   - page.waitForLoadState('networkidle')
+//   - page.waitForLoadState('load')
 //   - expect(locator).toBeVisible({ timeout: N })
 // No waitForTimeout() calls exist in this file. This is AC #6 compliance.
 
@@ -303,7 +303,7 @@ test.describe('AC #6: Semantic waits compliance — no waitForTimeout', () => {
 
   test('home page loads with semantic nav readiness check', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic: nav element presence is the readiness signal (not a sleep)
     await page.waitForFunction(() => document.querySelector('nav') !== null, { timeout: 10000 })
@@ -315,7 +315,7 @@ test.describe('AC #6: Semantic waits compliance — no waitForTimeout', () => {
   test('guided launch page loads with heading as readiness anchor', async ({ page }) => {
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic: the h1 heading is the authoritative "page is ready" signal
     // (proves auth store initialized + component mounted + template rendered)
@@ -336,7 +336,7 @@ test.describe('Route guard — unauthenticated users are redirected', () => {
 
   test('guest accessing /launch/guided is redirected to auth flow', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: router guard completes one of three valid auth signals:
     //   1. URL query param `showAuth=true`  — router redirected to home with auth modal trigger

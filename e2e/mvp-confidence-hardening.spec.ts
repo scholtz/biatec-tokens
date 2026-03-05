@@ -137,7 +137,7 @@ test.describe('AC #1: Canonical guided launch flow', () => {
     // Business risk: if the canonical launch page doesn't render for authenticated users,
     // token creation is blocked — direct revenue impact.
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: page heading proves auth store initialised + component mounted
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -146,7 +146,7 @@ test.describe('AC #1: Canonical guided launch flow', () => {
 
   test('guided launch page shows step progress tracker', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -158,7 +158,7 @@ test.describe('AC #1: Canonical guided launch flow', () => {
 
   test('guided launch page has Organization Profile step as first step', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -171,7 +171,7 @@ test.describe('AC #1: Canonical guided launch flow', () => {
   test('guided launch page does not expose wallet connector UI', async ({ page }) => {
     // Business risk: wallet UI would confuse non-crypto users and undermine MVP positioning.
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -188,7 +188,7 @@ test.describe('AC #1: Canonical guided launch flow', () => {
 
   test('guided launch page references email/password authentication', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -211,11 +211,11 @@ test.describe('AC #2: Auth bootstrap validates session contract', () => {
   test('guest user is redirected away from /launch/guided', async ({ page }) => {
     // Business risk: unauthenticated access bypasses subscription gating.
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await clearSessionInPage(page)
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: either URL shows showAuth=true OR email input is visible
     await page.waitForFunction(
@@ -240,7 +240,7 @@ test.describe('AC #2: Auth bootstrap validates session contract', () => {
     await bootstrapExpiredSession(page)
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Give auth guard time to evaluate the session
     await page.waitForFunction(
@@ -266,7 +266,7 @@ test.describe('AC #2: Auth bootstrap validates session contract', () => {
     await bootstrapValidSession(page)
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -293,7 +293,7 @@ test.describe('AC #2: Auth bootstrap validates session contract', () => {
     })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -327,7 +327,7 @@ test.describe('AC #2: Auth bootstrap validates session contract', () => {
     })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -350,10 +350,10 @@ test.describe('AC #3: Top navigation state is deterministic', () => {
   test('guest nav shows Sign In button and no wallet/network UI', async ({ page }) => {
     // Business risk: wallet UI in guest nav would confuse non-crypto users.
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await clearSessionInPage(page)
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: nav must be present before we inspect its content
     const nav = page.locator('nav[aria-label="Main navigation"]').first()
@@ -377,10 +377,10 @@ test.describe('AC #3: Top navigation state is deterministic', () => {
 
   test('guest nav does not show user profile or sign out option', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await clearSessionInPage(page)
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.locator('nav[aria-label="Main navigation"]').first()
     await expect(nav).toBeVisible({ timeout: 30000 })
@@ -394,7 +394,7 @@ test.describe('AC #3: Top navigation state is deterministic', () => {
     await bootstrapValidSession(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.locator('nav[aria-label="Main navigation"]').first()
     await expect(nav).toBeVisible({ timeout: 30000 })
@@ -416,7 +416,7 @@ test.describe('AC #3: Top navigation state is deterministic', () => {
     // Business risk: if mobile nav is missing entry points, mobile users can't start the flow.
     await page.setViewportSize({ width: 375, height: 812 })
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.locator('nav[aria-label="Main navigation"]').first()
     await expect(nav).toBeVisible({ timeout: 30000 })
@@ -450,7 +450,7 @@ test.describe('AC #4: Deterministic step access via draft injection', () => {
     await injectDraftAtStep(page, 0, { submissionError: 'SUBMISSION_FAILED' })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -489,7 +489,7 @@ test.describe('AC #4: Deterministic step access via draft injection', () => {
     })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -513,7 +513,7 @@ test.describe('AC #4: Deterministic step access via draft injection', () => {
     await injectDraftAtStep(page, 0, { submissionError: 'SUBMISSION_FAILED' })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -543,7 +543,7 @@ test.describe('AC #5: Save draft — deterministic localStorage contract', () =>
 
   test('typing organization name auto-saves draft to localStorage', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })

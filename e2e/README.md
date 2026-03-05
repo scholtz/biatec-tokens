@@ -436,11 +436,11 @@ await expect(element).toBeVisible({ timeout: 10000 });
 ### Flaky Tests
 
 1. Add proper waits for async operations
-2. Use `page.waitForLoadState('networkidle')`
-3. Avoid hard-coded `page.waitForTimeout()` where possible
+2. Use `page.waitForLoadState('load')` — **NEVER** `'networkidle'` (Vite HMR SSE blocks it indefinitely in CI)
+3. Avoid hard-coded `page.waitForTimeout()` — use `expect(element).toBeVisible()` instead
 4. Use retry logic for assertions
-5. For auth-required routes in CI, increase initial wait to 10000ms
-6. Use generous visibility timeouts (45000ms) for CI environments
+5. For auth-required routes in CI, use `test.setTimeout(90000)` and explicit 30s timeouts on `goto()`
+6. Use generous visibility timeouts (45000ms) for auth-guarded routes in CI environments
 
 ### Auth Store Initialization in CI
 
@@ -448,8 +448,64 @@ Auth-required routes need extra time in CI:
 - Auth store initializes async in main.ts
 - Component then mounts and renders
 - Total CI time: 5-10 seconds minimum
-- Use pattern: `await page.waitForTimeout(10000)` after navigation
-- Then check for specific visible element with 45000ms timeout
+- Use `test.setTimeout(90000)` for tests with auth-required routes
+- Use explicit timeout on `goto({ timeout: 30000 })` and `waitForLoadState('load', { timeout: 30000 })`
+- Then check for specific visible element with 45000ms timeout:
+  ```typescript
+  const heading = page.getByRole('heading', { name: /Expected Title/i, level: 1 })
+  await expect(heading).toBeVisible({ timeout: 45000 })
+  ```
+- **DO NOT** use `page.waitForTimeout()` for auth initialization
+
+## Deterministic Testing Guidelines
+
+### Critical Patterns (ALWAYS use)
+
+```typescript
+// ✅ CORRECT: Semantic wait after navigation
+await page.goto('/route')
+await page.waitForLoadState('load')  // 'load' not 'networkidle'!
+const heading = page.getByRole('heading', { name: /Page Title/i })
+await expect(heading).toBeVisible({ timeout: 20000 })
+
+// ✅ CORRECT: Auth-required route with proper budget
+test('auth-required page', async ({ page }) => {
+  test.setTimeout(90000)
+  await withAuth(page)
+  await page.goto('/launch/guided', { timeout: 30000 })
+  await page.waitForLoadState('load', { timeout: 30000 })
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 45000 })
+})
+
+// ✅ CORRECT: Wallet pattern check uses word boundary for Pera
+const navText = await getNavText(page)
+expect(navText).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
+```
+
+### Anti-Patterns (NEVER use)
+
+```typescript
+// ❌ WRONG: networkidle is blocked by Vite HMR SSE in CI
+await page.waitForLoadState('networkidle')
+
+// ❌ WRONG: arbitrary timeout
+await page.waitForTimeout(5000)
+
+// ❌ WRONG: bare /Pera/i matches "Operations" as substring
+expect(navText).not.toMatch(/Pera/i)
+
+// ❌ WRONG: broad wallet pattern matches product copy
+expect(bodyText).not.toMatch(/connect.*wallet|wallet.*connect/i)
+```
+
+### Timeout Budget Rule
+
+When using `test.setTimeout(90000)`, the sum of all action timeouts must be < 90s:
+- `goto({ timeout: 15000 })` — Vite pre-warmed in CI: 2-5s actual, 15s budget
+- `waitForLoadState('load', { timeout: 10000 })` — fires quickly: 10s budget
+- `toBeVisible({ timeout: 30000 })` — element may need time: 30s budget
+- `textContent({ timeout: 10000 })` — MUST have explicit timeout: 10s budget
+- Total: 65s < 90s ✓
 
 ## Resources
 

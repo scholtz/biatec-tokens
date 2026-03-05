@@ -80,11 +80,11 @@ test.describe("AC #1: Token creation entry points enforce auth gating", () => {
     // Business risk: if /launch/guided is accessible without auth, unauthenticated
     // users can start token creation without a subscription — direct revenue risk.
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await page.evaluate(() => localStorage.clear());
 
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Semantic wait: either URL shows showAuth=true OR email input is visible
     await page.waitForFunction(
@@ -108,11 +108,11 @@ test.describe("AC #1: Token creation entry points enforce auth gating", () => {
   test("/create redirects guest to auth flow (no waitForTimeout)", async ({ page }) => {
     // Business risk: unguarded /create allows anonymous token creation.
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await page.evaluate(() => localStorage.clear());
 
     await page.goto("/create");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     await page.waitForFunction(
       () => {
@@ -132,11 +132,11 @@ test.describe("AC #1: Token creation entry points enforce auth gating", () => {
     // Business risk: unauthenticated compliance access exposes sensitive
     // regulatory workflows and violates GDPR data minimization.
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await page.evaluate(() => localStorage.clear());
 
     await page.goto("/compliance/setup");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     await page.waitForFunction(
       () => {
@@ -173,7 +173,7 @@ test.describe("AC #3: Top navigation — no wallet/network state for unauthentic
     // Business risk: "Not connected" confuses email/password users who don't
     // have wallets — directly damages first-impression conversion.
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // getNavText() waits for nav and returns nav.textContent() — avoids compiled-bundle false positives
     const navText = await getNavText(page);
@@ -184,7 +184,7 @@ test.describe("AC #3: Top navigation — no wallet/network state for unauthentic
     // Business risk: wallet connector names in marketing pages create
     // incorrect expectations that a crypto wallet is needed.
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // body.innerText() checks only rendered visible text — not compiled JS bundle content.
     const bodyText = await page.locator("body").innerText().catch(() => "");
@@ -195,7 +195,7 @@ test.describe("AC #3: Top navigation — no wallet/network state for unauthentic
     // Business risk: if Sign In is absent, guest users have no clear path to
     // authentication — kills conversion funnel at first touchpoint.
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const signInBtn = page.getByRole("button", { name: /sign in/i }).first();
     await expect(signInBtn).toBeVisible({ timeout: 15000 });
@@ -206,7 +206,7 @@ test.describe("AC #3: Top navigation — no wallet/network state for unauthentic
   }) => {
     await withAuth(page);
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // getNavText() waits for nav and returns textContent — avoids compiled-bundle false positives
     const navText = await getNavText(page);
@@ -229,7 +229,7 @@ test.describe("AC #4: Accessibility — keyboard navigation and ARIA compliance"
     // Business risk: missing nav landmark prevents screen reader users from
     // skipping to content — WCAG 2.4.1 bypass-blocks failure.
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     await page.waitForFunction(
       () => document.querySelector("nav") !== null,
@@ -244,7 +244,7 @@ test.describe("AC #4: Accessibility — keyboard navigation and ARIA compliance"
     // Business risk: empty page title fails WCAG 2.4.2 — AT users cannot
     // orient themselves; also SEO risk.
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const title = await page.title();
     expect(title.length).toBeGreaterThan(0);
@@ -254,7 +254,7 @@ test.describe("AC #4: Accessibility — keyboard navigation and ARIA compliance"
     // Business risk: if Sign In is not keyboard-reachable, keyboard-only users
     // cannot authenticate — full product inaccessibility for this user group.
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const signInBtn = page.getByRole("button", { name: /sign in/i }).first();
     await expect(signInBtn).toBeVisible({ timeout: 15000 });
@@ -270,7 +270,7 @@ test.describe("AC #4: Accessibility — keyboard navigation and ARIA compliance"
     // Business risk: keyboard navigation failure blocks AT users from
     // navigating — WCAG 2.1.1 Level A failure excludes entire user cohort.
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     await page.keyboard.press("Tab");
 
@@ -283,7 +283,7 @@ test.describe("AC #4: Accessibility — keyboard navigation and ARIA compliance"
     // Business risk: incorrect roles prevent screen readers from announcing
     // the element correctly — AT users cannot trigger authentication.
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const signInBtn = page.getByRole("button", { name: /sign in/i }).first();
     await expect(signInBtn).toBeVisible({ timeout: 15000 });
@@ -307,7 +307,7 @@ test.describe("AC #5: CI stability — smoke tests with semantic waits only", ()
   }) => {
     // AC #5: zero waitForTimeout() in this spec validates the CI stability contract.
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const heading = page.getByRole("heading").first();
     await expect(heading).toBeVisible({ timeout: 20000 });
@@ -317,7 +317,7 @@ test.describe("AC #5: CI stability — smoke tests with semantic waits only", ()
     page,
   }) => {
     await page.goto("/token-standards");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const heading = page.getByRole("heading").first();
     await expect(heading).toBeVisible({ timeout: 20000 });
@@ -327,7 +327,7 @@ test.describe("AC #5: CI stability — smoke tests with semantic waits only", ()
     page,
   }) => {
     await page.goto("/marketplace");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const heading = page.getByRole("heading").first();
     await expect(heading).toBeVisible({ timeout: 20000 });
@@ -337,7 +337,7 @@ test.describe("AC #5: CI stability — smoke tests with semantic waits only", ()
     page,
   }) => {
     await page.goto("/enterprise-guide");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const heading = page.getByRole("heading").first();
     await expect(heading).toBeVisible({ timeout: 20000 });
@@ -361,7 +361,7 @@ test.describe("AC #6: Failure paths — expired session shows user guidance", ()
     await withExpiredSession(page);
 
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Semantic wait: either redirected to home with auth param, OR auth modal visible
     await page.waitForFunction(
@@ -392,11 +392,11 @@ test.describe("AC #6: Failure paths — expired session shows user guidance", ()
     // Business risk: if clearing localStorage leaves the page in a broken state,
     // users who explicitly sign out face a broken homepage.
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
     await page.evaluate(() => localStorage.clear());
 
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const heading = page.getByRole("heading").first();
     await expect(heading).toBeVisible({ timeout: 20000 });
@@ -417,7 +417,7 @@ test.describe("AC #8: No regression — authenticated user flows", () => {
     // Business risk: if auth state breaks the navbar, authenticated users
     // cannot navigate — regression that blocks all post-login workflows.
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     await page.waitForFunction(
       () => document.querySelector("nav") !== null,
@@ -434,7 +434,7 @@ test.describe("AC #8: No regression — authenticated user flows", () => {
     // Business risk: if Guided Launch disappears from nav for auth users,
     // the primary token creation CTA is missing — direct revenue impact.
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     const guidedLaunchLink = page
       .getByRole("link", { name: /guided launch/i })
@@ -449,7 +449,7 @@ test.describe("AC #8: No regression — authenticated user flows", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // getNavText() waits for nav and returns textContent — avoids compiled-bundle false positives
     const navText = await getNavText(page);
@@ -462,7 +462,7 @@ test.describe("AC #8: No regression — authenticated user flows", () => {
     // Business risk: showing Sign In to authenticated users creates confusing
     // dual-auth state UI — users may attempt to sign in again, breaking session.
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
     // Wait for page to fully hydrate with auth state
     await page.waitForFunction(

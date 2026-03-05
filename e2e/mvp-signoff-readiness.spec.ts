@@ -38,7 +38,7 @@ test.describe('AC #1: Guided Launch is canonical token creation entry', () => {
 
   test('Guided Launch link is in navigation and points to /launch/guided', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const guidedLink = page.getByRole('link', { name: /guided launch/i }).first()
     await expect(guidedLink).toBeVisible({ timeout: 15000 })
@@ -49,7 +49,7 @@ test.describe('AC #1: Guided Launch is canonical token creation entry', () => {
 
   test('navigation does NOT contain a /create link as primary entry', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // The legacy /create route must not appear as a navigation link
     const createLink = page.getByRole('link', { name: /^create$/i })
@@ -60,7 +60,7 @@ test.describe('AC #1: Guided Launch is canonical token creation entry', () => {
   test('home page CTA routes to /launch/guided when authenticated', async ({ page }) => {
     await withAuth(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Check there is a CTA that navigates to guided launch
     const guidedOrCTA = page.getByRole('link', { name: /create.*token|guided launch/i }).first()
@@ -94,7 +94,7 @@ test.describe('AC #1: Guided Launch is canonical token creation entry', () => {
   }) => {
     await withAuth(page)
     await page.goto('/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // The dashboard header Create Token link must point to canonical route.
     // Use exact text to avoid matching "Create Token (Advanced)" sidebar link.
@@ -125,7 +125,7 @@ test.describe('AC #3 + #4: Auth session contract and determinism', () => {
     // AC #3: withAuth validates the ARC76 contract before seeding localStorage
     await withAuth(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const raw = await page.evaluate(() => localStorage.getItem('algorand_user'))
     expect(raw).not.toBeNull()
@@ -146,14 +146,14 @@ test.describe('AC #3 + #4: Auth session contract and determinism', () => {
     // AC #4: deterministic auth — repeated session bootstrap → same identity
     await withAuth(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const raw1 = await page.evaluate(() => localStorage.getItem('algorand_user'))
     const session1 = JSON.parse(raw1!)
 
     // Navigate away and back — session must remain unchanged
     await page.goto('/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const raw2 = await page.evaluate(() => localStorage.getItem('algorand_user'))
     const session2 = JSON.parse(raw2!)
@@ -166,7 +166,7 @@ test.describe('AC #3 + #4: Auth session contract and determinism', () => {
   test('authenticated user can access /launch/guided without redirect', async ({ page }) => {
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Must stay on guided launch
     await page.waitForFunction(
@@ -192,7 +192,7 @@ test.describe('AC #5: Invalid/expired session user guidance', () => {
   }) => {
     await clearAuthScript(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: either URL has showAuth=true OR an email input is present
     await page.waitForFunction(
@@ -232,7 +232,7 @@ test.describe('AC #5: Invalid/expired session user guidance', () => {
     })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: URL must leave guided launch OR show auth prompt
     await page.waitForFunction(
@@ -263,7 +263,7 @@ test.describe('AC #5: Invalid/expired session user guidance', () => {
   }) => {
     await clearAuthScript(page)
     await page.goto('/compliance/setup')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Must be redirected away from the compliance route
     await page.waitForFunction(
@@ -304,7 +304,7 @@ test.describe('AC #9: Accessibility baseline for critical paths', () => {
 
   test('home page has valid page title (screen-reader required)', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const title = await page.title()
     expect(title.trim().length).toBeGreaterThan(0)
@@ -315,7 +315,7 @@ test.describe('AC #9: Accessibility baseline for critical paths', () => {
 
   test('home page has at least one h1 heading (WCAG 1.3.1)', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1s = await page.locator('h1').count()
     expect(h1s).toBeGreaterThanOrEqual(1)
@@ -325,7 +325,7 @@ test.describe('AC #9: Accessibility baseline for critical paths', () => {
     page,
   }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Skip link must be in DOM (sr-only means screen readers find it)
     const skipLink = page.getByRole('link', { name: /skip to main content/i })
@@ -335,7 +335,7 @@ test.describe('AC #9: Accessibility baseline for critical paths', () => {
 
   test('main navigation has aria-label (WCAG 2.4.6 landmark labels)', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Navigation landmark must have an aria-label so screen readers can identify it
     const nav = page.getByRole('navigation', { name: /main navigation/i })
@@ -345,7 +345,7 @@ test.describe('AC #9: Accessibility baseline for critical paths', () => {
   test('guided launch page has main landmark with id="main-content"', async ({ page }) => {
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 30000 })
@@ -357,7 +357,7 @@ test.describe('AC #9: Accessibility baseline for critical paths', () => {
 
   test('home page navigation text contains no wallet connector labels', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Use nav text helper to avoid compiled JS bundle false positives
     const navText = await getNavText(page)
@@ -370,7 +370,7 @@ test.describe('AC #9: Accessibility baseline for critical paths', () => {
 
   test('home page body text contains no wallet connector UI elements', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const bodyText = await page.locator('body').innerText()
     expect(bodyText).not.toMatch(/WalletConnect/i)
@@ -380,7 +380,7 @@ test.describe('AC #9: Accessibility baseline for critical paths', () => {
   test('guided launch page body text contains no wallet connector UI', async ({ page }) => {
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: page must be loaded before checking body text
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
@@ -405,7 +405,7 @@ test.describe('AC #6 + #7: Quality gates proof', () => {
     // The existence of this passing test without a timeout error proves it.
     suppressBrowserErrors(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const title = await page.title()
     expect(title.length).toBeGreaterThan(0)

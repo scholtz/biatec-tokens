@@ -30,7 +30,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should display compliance dashboard page title', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Check page title
     await expect(page).toHaveTitle(/Biatec/i);
@@ -41,7 +41,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should display overview tab as default', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Check that Overview tab is visible and active
     const overviewTab = page.getByRole('button', { name: /overview/i });
@@ -52,7 +52,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should display MICA Readiness Panel on overview tab', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Wait for MICA Readiness Panel to load
     const micaHeading = page.getByRole('heading', { name: 'MICA Readiness', level: 2 });
@@ -68,7 +68,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should display Audit Trail Summary Panel on overview tab', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Wait longer for panels to load with async mock data (2 seconds)
     
@@ -87,7 +87,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should display Whitelist Status Panel on overview tab', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Wait for Whitelist Status Panel
     const whitelistHeading = page.getByRole('heading', { name: 'Whitelist Status', level: 2 });
@@ -103,7 +103,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should display Compliance Reports Panel on overview tab', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Wait for Reports Panel
     const reportsHeading = page.getByRole('heading', { name: 'Compliance Reports', level: 2 });
@@ -115,7 +115,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should display Compliance Alerts Panel on overview tab', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Wait for data to load
     
@@ -133,7 +133,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should navigate between tabs', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Click on Audit Log tab (use first() to avoid strict mode violations)
     const auditLogTab = page.getByRole('button', { name: /Audit Log/i }).first();
@@ -152,7 +152,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should handle MICA panel refresh button click', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Wait for MICA panel to load
     const refreshButton = page.getByRole('button', { name: /Refresh MICA readiness data/i });
@@ -171,7 +171,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should handle audit trail CSV export button click', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Wait for panels to load
     
@@ -192,7 +192,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should navigate to full audit log when view button clicked', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Wait longer for audit panel to fully load with data (2 seconds)
     
@@ -220,7 +220,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should navigate to whitelist management when manage button clicked', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Wait for whitelist panel
     const manageButton = page.getByRole('button', { name: /Manage whitelist/i }).first();
@@ -235,7 +235,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should expand and collapse MICA article details', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Wait for MICA panel to load with data
     
@@ -265,7 +265,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should display all five key panels in grid layout', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Verify all 5 panels are present
     const micaPanel = page.getByRole('heading', { name: 'MICA Readiness', level: 2 });
@@ -282,7 +282,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should not display any wallet connector prompts', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Check that no wallet-related text appears
     const pageContent = await page.textContent('body');
@@ -295,7 +295,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should be accessible with proper ARIA labels', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Check for proper ARIA labels on interactive elements
     await expect(page.getByRole('button', { name: /Refresh MICA readiness data/i })).toBeVisible({ timeout: 10000 });
@@ -306,7 +306,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should use semantic HTML headings', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Check for h1
     const h1 = page.getByRole('heading', { name: 'Compliance Dashboard', level: 1 });
@@ -318,7 +318,7 @@ test.describe('Compliance Dashboard 1.0', () => {
   });
 
   test('should be responsive on different screen sizes', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Test desktop viewport (default)
     await expect(page.getByRole('heading', { name: 'MICA Readiness', level: 2 })).toBeVisible({ timeout: 10000 });
