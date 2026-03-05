@@ -854,6 +854,67 @@ await expect(heading).toBeVisible({ timeout: 60000 }) // This IS the semantic wa
 - ❌ Use `'timedout'` (lowercase) in reporter status checks — Playwright uses `'timedOut'` (capital O)!
 - ❌ Assume `navigationTimeout: 30000` caps `waitForLoadState` inside 90s test — verify the timeout chain
 
+### 7j. Cumulative Timeout Budget Must Stay Below test.setTimeout() Value (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 5, 2026 (PR #566 continuation) 🚨**
+
+**Violation**: 3 tests in `test.setTimeout(90000)` consistently timed out at exactly 90s on all 3 retry attempts. Root cause: `textContent()`, `click()`, and `innerText()` calls WITHOUT explicit timeouts inside `test.setTimeout(90000)` tests inherit the test budget (90s) as their action timeout. When combined with other steps that each have 30s explicit timeouts, the cumulative MAXIMUM exceeded 90s.
+
+**Example pattern that caused the failure**:
+```typescript
+// ❌ WRONG — cumulative max = 5+30+30+45+90 = 200s > 90s budget
+test.setTimeout(90000)
+await loginWithCredentials(page) // 5s HTTP timeout
+await page.goto('/route', { timeout: 30000 }) // max 30s
+await page.waitForLoadState('load', { timeout: 30000 }) // max 30s
+await expect(heading).toBeVisible({ timeout: 45000 }) // max 45s
+const navText = await getNavText(page) // textContent() with NO timeout = inherits 90s!
+```
+
+**Root cause**: When `test.setTimeout(90000)` is active, ALL actions without explicit timeouts inherit 90s as their action timeout:
+- `locator.click()` — no timeout → waits 90s if element doesn't respond
+- `locator.textContent()` — no timeout → waits 90s if element not found
+- `locator.innerText()` — no timeout → waits 90s if element not found
+
+Even with `navigationTimeout: 30000` set globally, this does NOT apply to action methods.
+
+**Correct Pattern**:
+```typescript
+// ✅ CORRECT — cumulative max = 5+15+10+30+20 = 80s < 90s budget
+test.setTimeout(90000)
+await loginWithCredentials(page) // 5s HTTP timeout (fallback to localStorage)
+await page.goto('/route', { timeout: 15000 }) // Vite pre-warmed: 15s sufficient
+await page.waitForLoadState('load', { timeout: 10000 }) // Vite pre-warmed: 10s sufficient
+await expect(heading).toBeVisible({ timeout: 30000 }) // Reduced: fits budget
+const nav = page.getByRole('navigation').first()
+const navText = await nav.textContent({ timeout: 10000 }).catch(() => '') // EXPLICIT timeout!
+
+// Also applies to click():
+await button.click({ timeout: 5000 }) // If button isVisible() confirmed, 5s is enough
+```
+
+**Budget Calculation Rule** (MANDATORY before committing tests with test.setTimeout):
+```
+SUM of all max timeouts < test.setTimeout value
+= loginWithCredentials(5) + goto(15) + waitForLoadState(10) + toBeVisible(30) + textContent(10) + other_actions(5)
+= 75s < 90s ✓
+
+For tests with 2 navigation sequences:
+= loginWithCredentials(5) + goto1(10) + load1(8) + visible1(20) + goto2(10) + load2(8) + visible2(20)
+= 81s < 90s ✓
+```
+
+**Key guidelines**:
+1. Since `globalSetup` pre-warms Vite, page.goto() and waitForLoadState() complete in 2-5s, not 15-30s. Use 15s/10s timeouts (not 30s) for these operations in test.setTimeout(90000) tests.
+2. toBeVisible() timeout: use 20-30s (not 60s) since Vite is pre-warmed.
+3. ALWAYS add explicit `{ timeout: N }` to ALL `click()`, `textContent()`, `innerText()`, `innerHTML()` calls in test.setTimeout(90000) tests.
+
+**Never Again**:
+- ❌ Use `textContent()`, `click()`, or `innerText()` without explicit timeout in test.setTimeout(90000) tests
+- ❌ Use `{ timeout: 30000 }` on goto/waitForLoadState when test has multiple navigation sequences — use 10-15s
+- ❌ Use `toBeVisible({ timeout: 60000 })` in test.setTimeout(90000) tests — use 20-30s with pre-warmed Vite
+- ❌ Skip the budget calculation — always sum all max timeouts and verify < test.setTimeout
+
 ### 7g. Body Text Wallet Assertions Must Use Specific Brands, Not Broad Patterns (MANDATORY) 🆕
 
 **🚨 CRITICAL PAST VIOLATION - March 4, 2026 (PR #566) 🚨**

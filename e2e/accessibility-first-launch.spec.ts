@@ -282,15 +282,15 @@ test.describe('Compliance setup workspace — non-wallet accessibility', () => {
     await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
-    await page.goto('/compliance/setup', { timeout: 30000 }) // Explicit timeout prevents test.setTimeout(90000) from overriding navigationTimeout
-    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/compliance/setup', { timeout: 15000 }) // Vite pre-warmed by globalSetup — 15s sufficient; 30s pushed cumulative max =90s (at limit)
+    await page.waitForLoadState('load', { timeout: 10000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const h1 = page.getByRole('heading', { level: 1 }).first()
-    await expect(h1).toBeVisible({ timeout: 30000 })
+    await expect(h1).toBeVisible({ timeout: 20000 })
 
     // AC6 (Issue #495): Use nav-component assertion
     const nav = page.getByRole('navigation').first()
-    const navContent = await nav.textContent().catch(() => '')
+    const navContent = await nav.textContent({ timeout: 10000 }).catch(() => '')
     expect(navContent).not.toMatch(/connect\s+wallet/i)
     expect(navContent).not.toMatch(/wallet\s+required/i)
   })

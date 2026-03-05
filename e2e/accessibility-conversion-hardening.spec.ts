@@ -421,15 +421,15 @@ test.describe('No wallet connector UI — email/password only', () => {
   test('guided launch page shows email/password authentication only', async ({ page }) => {
     test.setTimeout(90000) // auth + navigation + modal interaction can exceed 60s global budget in CI
     await clearAuthScript(page)
-    await page.goto('/', { timeout: 30000 }) // Explicit timeout prevents test.setTimeout(90000) from overriding navigationTimeout
-    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/', { timeout: 15000 }) // Vite pre-warmed by globalSetup — 15s sufficient; 30s pushed cumulative max >90s
+    await page.waitForLoadState('load', { timeout: 10000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // If a Sign In modal or form is present, it should be email/password only
     const signInBtn = page.getByRole('button', { name: /sign\s*in/i }).first()
     const isVisible = await signInBtn.isVisible().catch(() => false)
 
     if (isVisible) {
-      await signInBtn.click()
+      await signInBtn.click({ timeout: 5000 }) // Explicit timeout prevents inheriting 90s test budget as action timeout
       // Modal/form should appear with email field
       const emailField = page.getByLabel(/email/i).first()
       const hasEmailField = await emailField.isVisible({ timeout: 5000 }).catch(() => false)
@@ -437,7 +437,7 @@ test.describe('No wallet connector UI — email/password only', () => {
       if (hasEmailField) {
         // Verify no wallet connector options in the auth form
         const authForm = page.getByRole('dialog').first()
-        const formText = await authForm.textContent().catch(() => '')
+        const formText = await authForm.textContent({ timeout: 5000 }).catch(() => '') // Explicit timeout prevents 90s hang
         expect(formText).not.toMatch(/WalletConnect/i)
         expect(formText).not.toMatch(/MetaMask/i)
         expect(formText).not.toMatch(/Connect.*Wallet/i)

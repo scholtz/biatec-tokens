@@ -354,7 +354,8 @@ export async function getNavText(page: Page): Promise<string> {
   await page.waitForFunction(() => document.querySelector('nav') !== null, { timeout: 10000 }).catch(() => {
     // If nav never appears, return empty string — caller assertion will handle it
   })
-  return page.getByRole('navigation').first().textContent().catch(() => '')
+  // Explicit 10s timeout prevents textContent() from inheriting test.setTimeout(90000) as action timeout
+  return page.getByRole('navigation').first().textContent({ timeout: 10000 }).catch(() => '')
 }
 
 /**
