@@ -1021,6 +1021,66 @@ it('API response state flows correctly to component rendering', async () => {
 - ❌ Stop at unit tests without testing how data flows between the layers
 - ❌ Allow API client branch coverage below 90% when error paths are clearly testable
 
+### 7k. Adding `aria-label` to nav Elements Breaks Existing E2E `nav[aria-label]` Count Assertions (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 5, 2026 (PR #564) 🚨**
+
+**Violation**: Copilot added `aria-label="Sidebar navigation"` to `Sidebar.vue`'s `<nav>` element as part of WCAG accessibility improvements. This was CORRECT for accessibility, but BROKE 3 existing E2E tests that asserted `nav[aria-label]` count = 1 globally on the page. The home page renders both `Navbar.vue` (primary nav) and `Sidebar.vue` (secondary nav) simultaneously, so there were now 2 `nav[aria-label]` elements.
+
+**CI Result**: 3 test × 3 retries = 9 failures. All failures were "expect(locator).toHaveCount(expected) — unexpected value '2'".
+
+**Root Cause**:
+- `Navbar.vue` already had `<nav aria-label="Main navigation">` 
+- `Sidebar.vue` did NOT have an aria-label (hidden from AT but rendered in DOM)
+- Adding `aria-label="Sidebar navigation"` to Sidebar was CORRECT per WCAG — but created a second `nav[aria-label]` element on every page that uses `MainLayout`
+- Three pre-existing E2E tests were checking `nav[aria-label]` count = 1 (assuming only one nav would ever have an aria-label)
+- Copilot did not grep for `nav\[aria-label\]` count assertions before adding the aria-label
+
+**Correct Approach — MANDATORY Before Adding aria-label to ANY nav Element**:
+
+1. **Grep for existing E2E count assertions on nav[aria-label]**:
+   ```bash
+   grep -rn 'nav\[aria-label\]' e2e/ --include="*.spec.ts"
+   # If any test has: await expect(page.locator("nav[aria-label]")).toHaveCount(1)
+   # → That test WILL break when you add a second nav[aria-label] to any shared layout component
+   ```
+
+2. **Update those tests to use the SPECIFIC label value**:
+   ```typescript
+   // ❌ WRONG — breaks when a second nav[aria-label] is added to the page
+   const nav = page.locator('nav[aria-label]');
+   await expect(nav).toHaveCount(1);
+
+   // ✅ CORRECT — scope to the specific landmark label
+   const nav = page.locator('nav[aria-label="Main navigation"]');
+   await expect(nav).toHaveCount(1);
+   ```
+
+3. **Add a unit test to the component file proving the aria-label**:
+   ```typescript
+   it('sidebar nav has aria-label for landmark disambiguation (WCAG SC 2.4.3)', () => {
+     const nav = wrapper.find('nav');
+     expect(nav.attributes('aria-label')).toBe('Sidebar navigation');
+   });
+   ```
+
+4. **Run the E2E tests that reference nav[aria-label] before pushing**:
+   ```bash
+   # Run affected specs BEFORE committing to catch count regressions
+   npx playwright test e2e/navigation-parity-wcag.spec.ts e2e/trustworthy-operations-ux.spec.ts e2e/auth-first-confidence-hardening.spec.ts --reporter=list 2>&1 | grep -E 'PASS|FAIL'
+   ```
+
+**Prevention Checklist** (MANDATORY before adding aria-label to any `<nav>` in a shared layout):
+- [ ] `grep -rn 'nav\[aria-label\]' e2e/ --include="*.spec.ts"` — find all assertions
+- [ ] Update any `.toHaveCount(1)` assertions to use `nav[aria-label="Specific Label"]`
+- [ ] Add unit test to the component proving the new aria-label value
+- [ ] Run the affected E2E spec files locally (or check CI logs match)
+
+**Never Again**:
+- ❌ Add `aria-label` to a `<nav>` in a shared layout without grepping for count assertions
+- ❌ Assert `nav[aria-label]` count globally — always use the specific label value
+- ❌ Push accessibility changes without verifying E2E tests that check landmark counts
+
 
 - [ ] **Navigation Link Required**: If implementing new route, MUST add navigation link
   - ❌ **Past Violation**: Guided launch implemented but not accessible from navbar

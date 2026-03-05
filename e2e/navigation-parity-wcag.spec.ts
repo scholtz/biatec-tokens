@@ -112,8 +112,10 @@ test.describe("Navigation Parity and WCAG AA", () => {
     await page.goto("/");
     await page.waitForLoadState("load");
 
-    // Navigation element should have proper ARIA role and label
-    const nav = page.locator('nav[aria-label]');
+    // Primary navigation element should have proper ARIA role and label.
+    // Note: the sidebar renders a second nav[aria-label="Sidebar navigation"] on wide viewports,
+    // so we assert against the specific "Main navigation" label (not count=1 on all nav[aria-label]).
+    const nav = page.locator('nav[aria-label="Main navigation"]');
     await expect(nav).toHaveCount(1);
   });
 

@@ -336,5 +336,22 @@ describe('Sidebar Component', () => {
       expect(nav.classes()).toContain('px-4');
       expect(nav.classes()).toContain('space-y-1');
     });
+
+    it('sidebar nav has aria-label for landmark disambiguation (WCAG SC 2.4.3)', () => {
+      const wrapper = mount(Sidebar, {
+        global: {
+          plugins: [router, pinia],
+          components: {
+            'router-link': RouterLinkStub,
+            Badge,
+          },
+        },
+      });
+
+      const nav = wrapper.find('nav');
+      expect(nav.exists()).toBe(true);
+      // aria-label distinguishes sidebar nav from the primary "Main navigation" landmark
+      expect(nav.attributes('aria-label')).toBe('Sidebar navigation');
+    });
   });
 });

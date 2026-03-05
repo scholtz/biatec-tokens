@@ -198,14 +198,16 @@ test.describe("AC #2: Guest nav — no wallet states, deterministic Sign In", ()
 
   test("guest nav navigation landmark has aria-label (WCAG 2.1 AA)", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
-    // Semantic wait for nav mount
-    await page.waitForFunction(() => document.querySelector("nav[aria-label]") !== null, {
+    // Semantic wait for primary nav mount
+    await page.waitForFunction(() => document.querySelector('nav[aria-label="Main navigation"]') !== null, {
       timeout: 10000,
     });
 
-    const nav = page.locator("nav[aria-label]");
+    // The sidebar also carries nav[aria-label="Sidebar navigation"] on wide viewports.
+    // Assert specifically that the primary "Main navigation" landmark appears exactly once.
+    const nav = page.locator('nav[aria-label="Main navigation"]');
     await expect(nav).toHaveCount(1);
   });
 

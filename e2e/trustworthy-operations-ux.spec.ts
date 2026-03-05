@@ -51,10 +51,12 @@ test.describe("Trustworthy Operations UX v1", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load");
 
-    // nav element with aria-label or role="navigation" with label
-    const nav = page.locator("nav[aria-label]");
+    // Primary nav landmark must carry the "Main navigation" aria-label.
+    // The sidebar renders a second nav[aria-label="Sidebar navigation"] on wider viewports,
+    // so we scope the assertion to the specific landmark label.
+    const nav = page.locator('nav[aria-label="Main navigation"]');
     await expect(nav).toHaveCount(1);
 
     const label = await nav.getAttribute("aria-label");
