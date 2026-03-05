@@ -230,13 +230,21 @@ test.describe("AC #7 + #8: Accessibility — keyboard navigation and ARIA roles"
     await page.goto("/");
     await page.waitForLoadState("load");
 
+    // Click body first to give the page keyboard focus in headless CI.
+    // Without this, keyboard events have no effect (page lacks browser focus).
+    await page.locator("body").click();
+
     // Start keyboard navigation from page body
     await page.keyboard.press("Tab");
 
-    // First or early Tab should focus a visible interactive element
-    const focusedElement = page.locator(":focus");
-    const isFocused = await focusedElement.count().then((c) => c > 0);
-    expect(isFocused).toBe(true);
+    // Use document.activeElement via evaluate — more reliable than CSS :focus
+    // in headless mode where the :focus selector can return 0 even when an
+    // element is focused (focus pseudo-class is not always reflected synchronously).
+    const hasFocusedElement = await page.evaluate(() => {
+      const active = document.activeElement;
+      return active !== null && active !== document.body && active !== document.documentElement;
+    });
+    expect(hasFocusedElement, "A focusable element must receive keyboard focus after Tab").toBe(true);
   });
 
   test("nav landmark has navigation role for screen readers (AC #7)", async ({ page }) => {

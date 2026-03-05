@@ -1138,10 +1138,25 @@ expect(hasFocusedElement).toBe(true)
 - `page.locator(':focus')` uses Playwright's selector engine which may not reflect current focus state synchronously
 - `page.evaluate(() => document.activeElement)` reads the live DOM property which is always up-to-date
 
+**🚨 CRITICAL REPEAT VIOLATION - March 5, 2026 (route-determinism-ci-stable.spec.ts + auth-first-onboarding-closure.spec.ts) 🚨**
+
+**Violation**: Two MORE spec files had the same `keyboard.press('Tab')` without prior `body.click()` + `:focus` count > 0 assertion pattern, despite the fix in canonical-launch-aa-hardening.spec.ts being documented above. Both failed in CI (same run as the mvp-deterministic-journey timeout issue).
+
+**Root Cause**: The fix was only applied to the ONE file currently being authored. The pattern existed in at least 4 spec files. When fixing keyboard focus tests, always grep ALL spec files for the broken pattern before committing.
+
+**Pre-Commit Grep Check** (MANDATORY before committing any keyboard navigation fix):
+```bash
+# Find ALL instances of the broken pattern in spec files:
+grep -rn 'locator.*:focus.*count\|:focus.*count\|count.*:focus' e2e/ --include="*.spec.ts"
+# For each result: check if it asserts > 0 (not >= 0)
+# If > 0: fix ALL of them using body.click() + document.activeElement pattern
+```
+
 **Never Again**:
 - ❌ Call `keyboard.press('Tab')` without first clicking body/a focusable element in headless tests
 - ❌ Use `page.locator(':focus').count()` — use `page.evaluate(() => document.activeElement)` instead
 - ❌ Write keyboard navigation tests without verifying they pass in `headless: true` mode
+- ❌ Fix the pattern in ONE file without auditing ALL spec files for the same broken pattern
 
 - [ ] **Navigation Link Required**: If implementing new route, MUST add navigation link
   - ❌ **Past Violation**: Guided launch implemented but not accessible from navbar

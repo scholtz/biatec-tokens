@@ -272,11 +272,18 @@ test.describe("AC #4: Accessibility — keyboard navigation and ARIA compliance"
     await page.goto("/");
     await page.waitForLoadState("load");
 
+    // Click body first to give the page keyboard focus in headless CI.
+    // Without this, keyboard events have no effect (page lacks browser focus).
+    await page.locator("body").click();
     await page.keyboard.press("Tab");
 
-    const focused = page.locator(":focus");
-    const count = await focused.count();
-    expect(count).toBeGreaterThan(0);
+    // Use document.activeElement via evaluate — more reliable than CSS :focus
+    // in headless mode (focus pseudo-class is not always synchronously reflected).
+    const hasFocusedElement = await page.evaluate(() => {
+      const active = document.activeElement;
+      return active !== null && active !== document.body && active !== document.documentElement;
+    });
+    expect(hasFocusedElement, "A focusable element must receive keyboard focus after Tab").toBe(true);
   });
 
   test("Sign In button has role=button (WCAG 4.1.2 name/role/value)", async ({ page }) => {
