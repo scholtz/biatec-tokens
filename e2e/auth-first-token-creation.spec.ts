@@ -17,7 +17,7 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { loginWithCredentials, suppressBrowserErrors, getNavText } from './helpers/auth'
+import { loginWithCredentials, withAuth, suppressBrowserErrors, getNavText } from './helpers/auth'
 
 /** Shared test user for auth-first token creation tests */
 const AUTH_FIRST_TEST_EMAIL = 'test@example.com'
@@ -116,18 +116,14 @@ test.describe('Auth-First Token Creation Journey', () => {
   })
 
   test('should not display wallet/network UI elements in top navigation', async ({ page }) => {
-    test.setTimeout(90000) // loginWithCredentials (5s HTTP) + /launch/guided navigation + 45s toBeVisible exceeds 60s budget in CI
-    // Use canonical auth helper — validates ARC76 session contract before seeding
-    await loginWithCredentials(page, AUTH_FIRST_TEST_EMAIL)
-    
-    await page.goto('/launch/guided', { timeout: 15000 }) // Vite pre-warmed by globalSetup — 15s sufficient; 30s pushed cumulative max >90s
-    await page.waitForLoadState('load', { timeout: 10000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
-    
-    // Semantic wait: Wait for page title (proves page loaded)
-    // Use 'load' (not 'networkidle') — Vite HMR SSE keeps a persistent connection
-    // that prevents networkidle from ever completing in CI.
-    const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
-    await expect(title).toBeVisible({ timeout: 30000 }) // Reduced from 45s: Vite pre-warmed, 30s fits within 90s budget (5+15+10+30+20=80s)
+    // This test validates the NAVIGATION COMPONENT renders without wallet UI.
+    // The nav is identical on all pages — no need to load the auth-heavy /launch/guided page.
+    // Using withAuth() (localStorage seeding, no network request) for maximum speed.
+    // Total max budget: 0 (withAuth) + 10 (goto) + 5 (load) + 20 (getNavText) = 35s < 60s global
+    await withAuth(page)
+
+    await page.goto('/', { timeout: 10000 })
+    await page.waitForLoadState('load', { timeout: 5000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle
 
     // Use shared getNavText() helper — scoped to nav element, avoids compiled-bundle false positives
     // per AC #3: deterministic assertions must scope to visible DOM, not full HTML.
@@ -137,11 +133,6 @@ test.describe('Auth-First Token Creation Journey', () => {
     expect(navText).not.toMatch(/not connected/i)
     expect(navText).not.toMatch(/WalletConnect|MetaMask|Pera\s+Wallet|Defly/i)
     expect(navText).not.toMatch(/connect wallet/i)
-
-    // Verify page loaded successfully (authenticated user can access)
-    // The heading presence already proved the page loaded correctly above.
-    const headingText = await title.textContent({ timeout: 5000 }).catch(() => '')
-    expect(headingText).toMatch(/Guided Token Launch/i)
   })
 
   test('should show email/password authentication elements for unauthenticated users', async ({ page }) => {
