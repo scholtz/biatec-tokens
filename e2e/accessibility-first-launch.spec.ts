@@ -278,12 +278,11 @@ test.describe('Semantic HTML — accessibility attributes on critical surfaces',
 
 test.describe('Compliance setup workspace — non-wallet accessibility', () => {
   test('compliance setup page loads without wallet-connect language', async ({ page }) => {
-    test.setTimeout(90000) // /compliance/setup may need extra time on cold Vite worker (belt-and-suspenders after globalSetup warmup)
     await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
-    await page.goto('/compliance/setup', { timeout: 30000 }) // Explicit timeout prevents test.setTimeout(90000) from overriding navigationTimeout
-    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/compliance/setup')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const h1 = page.getByRole('heading', { level: 1 }).first()
     await expect(h1).toBeVisible({ timeout: 30000 })

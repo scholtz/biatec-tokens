@@ -116,19 +116,17 @@ test.describe('Auth-First Token Creation Journey', () => {
   })
 
   test('should not display wallet/network UI elements in top navigation', async ({ page }) => {
-    // loginWithCredentials() adds ~5s backend timeout + 60s visibility assertion → needs 90s budget
-    test.setTimeout(90000)
     // Use canonical auth helper — validates ARC76 session contract before seeding
     await loginWithCredentials(page, AUTH_FIRST_TEST_EMAIL)
     
-    await page.goto('/launch/guided', { timeout: 30000 }) // Explicit timeout prevents test.setTimeout(90000) from overriding navigationTimeout
-    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/launch/guided')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Semantic wait: Wait for page title (proves page loaded)
     // Use 'load' (not 'networkidle') — Vite HMR SSE keeps a persistent connection
     // that prevents networkidle from ever completing in CI.
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
-    await expect(title).toBeVisible({ timeout: 60000 }) // Increased timeout for CI
+    await expect(title).toBeVisible({ timeout: 45000 }) // Vite warm (globalSetup pre-warms) — fits within 60s global budget
 
     // Use shared getNavText() helper — scoped to nav element, avoids compiled-bundle false positives
     // per AC #3: deterministic assertions must scope to visible DOM, not full HTML.
