@@ -82,13 +82,14 @@ test.describe('Section 1: Canonical route contract', () => {
   test('authenticated user on /launch/guided sees the guided launch heading', async ({
     page,
   }) => {
+    // Timeout budget (Vite pre-warmed via globalSetup): goto(15s) + waitForLoad(10s) + toBeVisible(30s) = 55s < 90s
     test.setTimeout(90000)
     await withAuth(page)
-    await page.goto('/launch/guided', { timeout: 30000 })
-    await page.waitForLoadState('load', { timeout: 30000 })
+    await page.goto('/launch/guided', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
 
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
-    await expect(heading).toBeVisible({ timeout: 45000 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
 
     expect(page.url()).toContain('/launch/guided')
   })
@@ -251,26 +252,28 @@ test.describe('Section 3: Accessibility landmarks (WCAG 2.1 AA)', () => {
   test('guided launch page has main landmark with id="main-content" (skip-link target)', async ({
     page,
   }) => {
+    // Timeout budget (Vite pre-warmed via globalSetup): goto(15s) + waitForLoad(10s) + toBeVisible(30s) + attached(10s) = 65s < 90s
     test.setTimeout(90000)
     await withAuth(page)
-    await page.goto('/launch/guided', { timeout: 30000 })
-    await page.waitForLoadState('load', { timeout: 30000 })
+    await page.goto('/launch/guided', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
 
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
-    await expect(heading).toBeVisible({ timeout: 45000 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
 
     const mainContent = page.locator('#main-content')
     await expect(mainContent).toBeAttached({ timeout: 10000 })
   })
 
   test('compliance setup page has main landmark with id="main-content"', async ({ page }) => {
+    // Timeout budget (Vite pre-warmed via globalSetup): goto(15s) + waitForLoad(10s) + toBeVisible(30s) + attached(10s) = 65s < 90s
     test.setTimeout(90000)
     await withAuth(page)
-    await page.goto('/compliance/setup', { timeout: 30000 })
-    await page.waitForLoadState('load', { timeout: 30000 })
+    await page.goto('/compliance/setup', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
 
     const heading = page.getByRole('heading', { level: 1 }).first()
-    await expect(heading).toBeVisible({ timeout: 45000 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
 
     const mainContent = page.locator('#main-content')
     await expect(mainContent).toBeAttached({ timeout: 10000 })
@@ -306,26 +309,28 @@ test.describe('Section 4: No wallet connector UI', () => {
   })
 
   test('guided launch page has no wallet connector UI', async ({ page }) => {
+    // Timeout budget (Vite pre-warmed via globalSetup): goto(15s) + waitForLoad(10s) + toBeVisible(30s) = 55s < 90s
     test.setTimeout(90000)
     await withAuth(page)
-    await page.goto('/launch/guided', { timeout: 30000 })
-    await page.waitForLoadState('load', { timeout: 30000 })
+    await page.goto('/launch/guided', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
 
     const heading = page.getByRole('heading', { name: /guided token launch/i, level: 1 })
-    await expect(heading).toBeVisible({ timeout: 45000 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
 
     const navText = await getNavText(page)
     expect(navText).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
   })
 
   test('compliance setup page has no wallet connector UI', async ({ page }) => {
+    // Timeout budget (Vite pre-warmed via globalSetup): goto(15s) + waitForLoad(10s) + toBeVisible(30s) = 55s < 90s
     test.setTimeout(90000)
     await withAuth(page)
-    await page.goto('/compliance/setup', { timeout: 30000 })
-    await page.waitForLoadState('load', { timeout: 30000 })
+    await page.goto('/compliance/setup', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
 
     const heading = page.getByRole('heading', { level: 1 }).first()
-    await expect(heading).toBeVisible({ timeout: 45000 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
 
     const navText = await getNavText(page)
     expect(navText).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)

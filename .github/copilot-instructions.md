@@ -909,13 +909,36 @@ For tests with 2 navigation sequences:
 2. toBeVisible() timeout: use 20-30s (not 60s) since Vite is pre-warmed.
 3. ALWAYS add explicit `{ timeout: N }` to ALL `click()`, `textContent()`, `innerText()`, `innerHTML()` calls in test.setTimeout(90000) tests.
 
+**🚨 CRITICAL REPEAT VIOLATION - March 5, 2026 (PR #566 mvp-deterministic-journey.spec.ts) 🚨**
+
+**Violation**: Copilot wrote NEW E2E tests with `{ timeout: 30000 }` on `page.goto()`, `{ timeout: 30000 }` on `page.waitForLoadState()`, and `{ timeout: 45000 }` on `expect().toBeVisible()` inside `test.setTimeout(90000)`. Cumulative budget = 30+30+45 = 105s > 90s. Five tests had this over-budget pattern; the "guided launch page has no wallet connector UI" test timed out on ALL 3 retries (15 CI attempts wasted across the 5 tests). This violated the existing Section 7j guidelines that were already documented.
+
+**Root Cause**: When writing new `test.setTimeout(90000)` tests from scratch, the WRONG pattern (`goto(30s)+load(30s)+visible(45s)`) was copy-pasted from old tests that predated the 7j guidelines, instead of using the correct pattern (`goto(15s)+load(10s)+visible(30s)`) that appears in fixed tests.
+
+**Pre-Commit Mandatory Check** (before committing ANY new `test.setTimeout(90000)` test):
+```bash
+# Calculate budget for EACH new test:
+node -e "
+const goto = 15000;        // Vite pre-warmed (globalSetup): use 15s NOT 30s
+const load = 10000;        // Vite pre-warmed (globalSetup): use 10s NOT 30s
+const visible = 30000;     // Use 30s NOT 45s
+const budget = 90000;
+const sum = goto + load + visible;
+// For tests with additional operations (e.g. attached, textContent), add those too
+console.log('Budget used:', sum + 'ms / ' + budget + 'ms', sum < budget ? '✓' : '✗ OVER BUDGET');
+"
+# Must output: ✓ (NOT ✗ OVER BUDGET)
+# For tests with 2 navigations or extra operations (e.g. attached(10s)):
+# goto(15)+load(10)+visible(30)+attached(10) = 65s — still < 90s ✓
+# goto1(10)+load1(8)+visible1(20)+goto2(10)+load2(8)+visible2(20) = 76s < 90s ✓
+```
+
 **Never Again**:
 - ❌ Use `textContent()`, `click()`, or `innerText()` without explicit timeout in test.setTimeout(90000) tests
-- ❌ Use `{ timeout: 30000 }` on goto/waitForLoadState when test has multiple navigation sequences — use 10-15s
-- ❌ Use `toBeVisible({ timeout: 60000 })` in test.setTimeout(90000) tests — use 20-30s with pre-warmed Vite
+- ❌ Use `{ timeout: 30000 }` on goto/waitForLoadState — use 10-15s (Vite is pre-warmed in CI)
+- ❌ Use `{ timeout: 45000 }` on toBeVisible in test.setTimeout(90000) tests — use 20-30s
 - ❌ Skip the budget calculation — always sum all max timeouts and verify < test.setTimeout
 
-### 7g. Body Text Wallet Assertions Must Use Specific Brands, Not Broad Patterns (MANDATORY) 🆕
 
 **🚨 CRITICAL PAST VIOLATION - March 4, 2026 (PR #566) 🚨**
 
@@ -1081,6 +1104,44 @@ it('API response state flows correctly to component rendering', async () => {
 - ❌ Assert `nav[aria-label]` count globally — always use the specific label value
 - ❌ Push accessibility changes without verifying E2E tests that check landmark counts
 
+### 7l. `keyboard.press('Tab')` Does Not Focus Elements in Headless CI Without Prior Click (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 5, 2026 (PR #566 canonical-launch-aa-hardening.spec.ts) 🚨**
+
+**Violation**: Copilot wrote an E2E test that did `page.keyboard.press('Tab')` immediately after `page.waitForLoadState('load')`, then checked `page.locator(':focus').count() > 0`. In headless CI the count was always 0 — the test failed on every run.
+
+**Root Cause**: In headless Chromium/Playwright, `keyboard.press('Tab')` only moves focus if the browser window/page already has keyboard focus. After `page.goto()` + `waitForLoadState()`, the page has rendered DOM but does NOT automatically have keyboard focus in headless mode. The `:focus` CSS selector also has synchronization issues — it may return stale results.
+
+**Correct Approach** (MANDATORY for any test that uses `keyboard.press` to test focus navigation):
+```typescript
+// ❌ WRONG — Tab has no effect without prior focus in headless CI
+await page.goto('/')
+await page.waitForLoadState('load')
+await page.keyboard.press('Tab')
+const count = await page.locator(':focus').count()
+expect(count).toBeGreaterThan(0) // FAILS: count is always 0 in headless
+
+// ✅ CORRECT — click body first to give page keyboard focus, then use evaluate()
+await page.goto('/')
+await page.waitForLoadState('load')
+await page.locator('body').click()   // Gives the page window focus
+await page.keyboard.press('Tab')    // Now Tab actually moves focus
+const hasFocusedElement = await page.evaluate(() => {
+  const active = document.activeElement
+  return active !== null && active !== document.body && active !== document.documentElement
+})
+// document.activeElement is synchronous and reliable in headless
+expect(hasFocusedElement).toBe(true)
+```
+
+**Why `document.activeElement` instead of CSS `:focus`?**
+- `page.locator(':focus')` uses Playwright's selector engine which may not reflect current focus state synchronously
+- `page.evaluate(() => document.activeElement)` reads the live DOM property which is always up-to-date
+
+**Never Again**:
+- ❌ Call `keyboard.press('Tab')` without first clicking body/a focusable element in headless tests
+- ❌ Use `page.locator(':focus').count()` — use `page.evaluate(() => document.activeElement)` instead
+- ❌ Write keyboard navigation tests without verifying they pass in `headless: true` mode
 
 - [ ] **Navigation Link Required**: If implementing new route, MUST add navigation link
   - ❌ **Past Violation**: Guided launch implemented but not accessible from navbar

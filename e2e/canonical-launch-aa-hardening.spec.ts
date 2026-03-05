@@ -337,14 +337,19 @@ test.describe('AC #4: Accessibility quality — ARIA, focus, landmarks', () => {
     await page.goto('/')
     await page.waitForLoadState('load')
 
-    // Tab to the first interactive element and verify focus styles are applied
+    // Click body first to ensure the page has browser focus in headless CI.
+    // Without this, keyboard events are not delivered and :focus stays empty.
+    await page.locator('body').click()
     await page.keyboard.press('Tab')
 
-    const focusedElement = page.locator(':focus')
-    const count = await focusedElement.count()
-
-    // At least one element must receive focus on first Tab
-    expect(count).toBeGreaterThan(0)
+    // Use document.activeElement via evaluate — more reliable than CSS :focus
+    // in headless mode where the :focus selector can return 0 even when an
+    // element is focused (focus pseudo-class is not always reflected synchronously).
+    const hasFocusedElement = await page.evaluate(() => {
+      const active = document.activeElement
+      return active !== null && active !== document.body && active !== document.documentElement
+    })
+    expect(hasFocusedElement, 'A focusable element must receive keyboard focus after Tab').toBe(true)
   })
 
   test('skip-to-content link becomes visible on focus (WCAG 2.4.1)', async ({ page }) => {
