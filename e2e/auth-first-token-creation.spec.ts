@@ -89,7 +89,7 @@ test.describe('Auth-First Token Creation Journey', () => {
     
     // Navigate to guided launch
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Semantic wait: Wait for the actual page title to appear (proves auth store loaded + component mounted)
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -108,7 +108,7 @@ test.describe('Auth-First Token Creation Journey', () => {
     
     // Navigate to advanced creation
     await page.goto('/create')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Semantic wait: Wait for the actual page heading (proves page loaded successfully after auth)
     const heading = page.getByRole('heading', { level: 1 }).first()
@@ -174,7 +174,7 @@ test.describe('Auth-First Token Creation Journey', () => {
     
     // Navigate to guided launch
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Semantic wait: Wait for page title
     const title1 = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -182,7 +182,7 @@ test.describe('Auth-First Token Creation Journey', () => {
     
     // Navigate to dashboard
     await page.goto('/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Semantic wait: Should still be authenticated (page should load, not redirect to login)
     const heading = page.getByRole('heading', { level: 1 }).first()
@@ -201,7 +201,7 @@ test.describe('Auth-First Token Creation Journey', () => {
     
     // Navigate to guided launch
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Semantic wait: Page should load (compliance gating may be shown or wizard may be accessible)
     const title = page.getByRole('heading', { level: 1 }).first()

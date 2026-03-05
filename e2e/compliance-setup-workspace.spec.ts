@@ -37,7 +37,7 @@ test.describe('Compliance Setup Workspace', () => {
     // Follows the same pattern as passing auth-first-token-creation.spec.ts tests.
     
     await page.goto('/compliance/setup')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Semantic wait: page title proves auth store initialized + component mounted
     // No arbitrary wait needed - addInitScript sets localStorage before navigation
@@ -259,7 +259,7 @@ test.describe('Compliance Setup Workspace', () => {
     // No CI skip needed — same semantic wait pattern as the first test.
     
     await page.goto('/compliance/setup')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Semantic wait: heading proves auth store initialized + component mounted
     const jurisdictionHeading = page.getByRole('heading', { name: /Jurisdiction & Distribution Policy/i, level: 2 })

@@ -826,22 +826,29 @@ await expect(heading).toBeVisible({ timeout: 60000 }) // This IS the semantic wa
 
 **Global Safety Net Added**: `playwright.config.ts` now has `navigationTimeout: 30000`. This caps ALL `waitForLoadState()` calls at 30s, preventing tests from hanging 60-90s. Any test that uses `networkidle` will fail quickly at 30s and retry.
 
+**CRITICAL DISCOVERY**: `navigationTimeout: 30000` does NOT reliably cap `waitForLoadState('networkidle')` in Playwright v1.58 when used inside `test.setTimeout(90000)`. The test-level timeout (90s) can fire BEFORE the navigation timeout, causing `status='timedOut'` instead of `status='failed'`. This has two consequences:
+1. The test times out at 90s on ALL 3 retry attempts (never passes) 
+2. The test has `status='timedOut'` (capital O) not `'failed'` — the reporter must check `'timedOut'` not `'timedout'` (lowercase)!
+
 **Affected Tests Fixed** (changed `networkidle` → `load`):
-- `e2e/auth-first-token-creation.spec.ts:118` (test.setTimeout(90000))
+- `e2e/auth-first-token-creation.spec.ts` lines 92, 111, 125, 177, 185, 204 (all test.setTimeout(90000) tests)
 - `e2e/accessibility-first-launch.spec.ts:280-303` (test.setTimeout(90000))
 - `e2e/accessibility-conversion-hardening.spec.ts:421` (test.setTimeout(90000))
 - `e2e/guided-launch-hardening.spec.ts:116` (test.setTimeout(90000))
+- `e2e/mvp-stabilization.spec.ts` lines 147, 159, 182, 193, 219, 260 (all test.setTimeout(90000) tests)
+- `e2e/compliance-setup-workspace.spec.ts` lines 40, 262 (all test.setTimeout(90000) tests)
 
 **Diagnostic Pattern** (how to identify this issue):
-1. Report shows `unexpected: 4, flaky: 0, ok: false` — tests fail ALL attempts (not just some)
-2. Test duration = exactly `test.setTimeout` value on every attempt
-3. Trace `.zip` files exist (collected on first retry, attempt 1) but cover only 2-5s of events
-4. The remaining test duration is spent in `waitForFunction`/`waitForLoadState` that never completes
+1. CI reporter shows "0 failed" but Playwright exits code 1 → suspect `'timedOut'` case bug in reporter
+2. Total tests count doesn't add up: e.g. "806 total, 783 passed, 19 skipped = 802 ≠ 806" → 4 tests unreported
+3. Report shows `unexpected: 4, flaky: 0, ok: false` — tests fail ALL attempts (not just some)
+4. Test duration = exactly `test.setTimeout` value on every attempt
 
 **Never Again**:
 - ❌ Use `waitForLoadState('networkidle')` in tests with `test.setTimeout(90000)` — use `'load'` instead
 - ❌ Trust that `networkidle` works reliably in CI — Vite HMR SSE makes it non-deterministic
-- ❌ Diagnose "test times out at exactly 90s" as a cold-start issue — check for SSE/networkidle first
+- ❌ Use `'timedout'` (lowercase) in reporter status checks — Playwright uses `'timedOut'` (capital O)!
+- ❌ Assume `navigationTimeout: 30000` caps `waitForLoadState` inside 90s test — verify the timeout chain
 
 ### 7g. Body Text Wallet Assertions Must Use Specific Brands, Not Broad Patterns (MANDATORY) 🆕
 

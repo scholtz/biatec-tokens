@@ -144,7 +144,7 @@ test.describe('AC #2: Critical-path reliability — guided launch entry', () => 
     test.setTimeout(90000)
     await loginWithCredentials(page, 'e2e-mvp-stable@biatec.io')
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Semantic wait: heading proves auth store init + component mounted
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -156,7 +156,7 @@ test.describe('AC #2: Critical-path reliability — guided launch entry', () => 
     test.setTimeout(90000)
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -179,7 +179,7 @@ test.describe('AC #2: Critical-path reliability — guided launch entry', () => 
     test.setTimeout(90000)
     await loginWithCredentials(page, 'e2e-compliance@biatec.io')
     await page.goto('/compliance/orchestration')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const heading = page.getByRole('heading', { name: /Compliance Verification/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -190,7 +190,7 @@ test.describe('AC #2: Critical-path reliability — guided launch entry', () => 
     test.setTimeout(90000)
     await loginWithCredentials(page, 'e2e-compliance@biatec.io')
     await page.goto('/compliance/setup')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const heading = page.getByRole('heading', { name: /Compliance Setup Workspace/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -216,7 +216,7 @@ test.describe('AC #3: CI sign-off evidence', () => {
     test.setTimeout(90000)
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const content = await page.content()
     expect(content.length).toBeGreaterThan(500)
@@ -257,7 +257,7 @@ test.describe('AC #4 + AC #6: No wallet UI; email/password authentication only',
     test.setTimeout(90000)
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -272,7 +272,7 @@ test.describe('AC #4 + AC #6: No wallet UI; email/password authentication only',
     test.setTimeout(90000)
     await withAuth(page)
     await page.goto('/compliance/setup')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const heading = page.getByRole('heading', { name: /Compliance Setup Workspace/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -402,7 +402,7 @@ test.describe('Spec hygiene — zero waitForTimeout, zero CI-only skips', () => 
     suppressBrowserErrors(page)
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const content = await page.content()
     // Valid page must have substantial HTML content (not an error/empty response)
