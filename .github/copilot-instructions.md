@@ -299,7 +299,7 @@ await page.waitForFunction(() => {
 
 **E2E Test Hardening Checklist**:
 1. ✅ Replace `waitForTimeout()` with `expect(element).toBeVisible()`
-2. ✅ Use `waitForLoadState('networkidle')` before assertions
+2. ✅ Use `waitForLoadState('load')` before assertions — NOT `'networkidle'` (Vite HMR SSE blocks it)
 3. ✅ Increase timeouts for CI (45-60s vs 10-15s locally)
 4. ✅ Use `waitForFunction()` for complex state checks
 5. ✅ Add explicit error messages to waits for debugging
@@ -790,10 +790,58 @@ test('test navigating to /launch/guided or /compliance/setup', async ({ page }) 
 - ❌ Use `toBeVisible({ timeout: 60000 })` in a test with only 60s global budget — add `test.setTimeout(90000)`
 - ❌ Treat retry trace duration as "test failure duration" — traces are from PASSING retries
 - ❌ Treat "0 failed, X passed" as a CI success signal — check `FullResult.status` in reporter output
+- ❌ Use `waitForLoadState('networkidle')` in tests with `test.setTimeout(90000)` — Vite HMR SSE blocks networkidle (see section 7i)
 
 **Confirmed files affected** (resolved in commits 6a5a921, f1cc5ab, and current):
-- Global: `playwright.config.ts` timeout 30s→60s, `e2e/global-setup.ts` pre-warmup added
-- Per-test `test.setTimeout(90000)`: `auth-first-token-creation.spec.ts`, `accessibility-first-launch.spec.ts`, `accessibility-conversion-hardening.spec.ts`, `guided-launch-hardening.spec.ts`
+- Global: `playwright.config.ts` timeout 30s→60s, `navigationTimeout: 30000`, `e2e/global-setup.ts` pre-warmup added
+- Per-test `test.setTimeout(90000)` + `waitForLoadState('load')`: `auth-first-token-creation.spec.ts:118`, `accessibility-first-launch.spec.ts:280`, `accessibility-conversion-hardening.spec.ts:421`, `guided-launch-hardening.spec.ts:116`
+
+### 7i. Vite HMR SSE Blocks `waitForLoadState('networkidle')` in CI (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 4, 2026 (PR #566 continuation) 🚨**
+
+**Violation**: 4 tests with `test.setTimeout(90000)` used `waitForLoadState('networkidle')` and timed out on ALL 3 attempts (90s × 3 = 270s wasted per test). Playwright report showed `status=timedOut, unexpected: 4` causing `FullResult.status='failed'` and exit code 1.
+
+**Root Cause**: Vite's HMR (Hot Module Replacement) dev server maintains a persistent SSE (Server-Sent Events) connection with every connected browser page. This open connection prevents `waitForLoadState('networkidle')` from completing because Playwright's networkidle requires **no network connections for 500ms**. With `test.setTimeout(90000)`, the navigation timeout inherits the 90s budget, causing each test to silently wait 90s before failing.
+
+**Why some tests with networkidle pass**: Tests with the global 60s timeout have `navigationTimeout: 30000` as a cap (now configured globally), fail at 30s, and succeed on retry when HMR is quieter. Tests with `test.setTimeout(90000)` previously had 90s cap, causing all 3 attempts to fail before HMR settled.
+
+**Correct Approach**:
+```typescript
+// ❌ WRONG - hangs indefinitely when Vite HMR SSE is active
+await page.goto('/launch/guided')
+await page.waitForLoadState('networkidle') // SSE connection = network always active = waits test.setTimeout
+
+// ✅ CORRECT - use 'load' (DOM + resources ready) or 'domcontentloaded'
+await page.goto('/launch/guided')
+await page.waitForLoadState('load') // Fires when JS/CSS/images loaded, ignores SSE connection
+// Then use explicit element wait:
+await expect(page.getByRole('heading', { name: /Expected Title/i })).toBeVisible({ timeout: 60000 })
+
+// ✅ ALSO CORRECT - rely on element assertion as the semantic wait (skip waitForLoadState entirely)
+await page.goto('/launch/guided')
+const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
+await expect(heading).toBeVisible({ timeout: 60000 }) // This IS the semantic wait
+```
+
+**Global Safety Net Added**: `playwright.config.ts` now has `navigationTimeout: 30000`. This caps ALL `waitForLoadState()` calls at 30s, preventing tests from hanging 60-90s. Any test that uses `networkidle` will fail quickly at 30s and retry.
+
+**Affected Tests Fixed** (changed `networkidle` → `load`):
+- `e2e/auth-first-token-creation.spec.ts:118` (test.setTimeout(90000))
+- `e2e/accessibility-first-launch.spec.ts:280-303` (test.setTimeout(90000))
+- `e2e/accessibility-conversion-hardening.spec.ts:421` (test.setTimeout(90000))
+- `e2e/guided-launch-hardening.spec.ts:116` (test.setTimeout(90000))
+
+**Diagnostic Pattern** (how to identify this issue):
+1. Report shows `unexpected: 4, flaky: 0, ok: false` — tests fail ALL attempts (not just some)
+2. Test duration = exactly `test.setTimeout` value on every attempt
+3. Trace `.zip` files exist (collected on first retry, attempt 1) but cover only 2-5s of events
+4. The remaining test duration is spent in `waitForFunction`/`waitForLoadState` that never completes
+
+**Never Again**:
+- ❌ Use `waitForLoadState('networkidle')` in tests with `test.setTimeout(90000)` — use `'load'` instead
+- ❌ Trust that `networkidle` works reliably in CI — Vite HMR SSE makes it non-deterministic
+- ❌ Diagnose "test times out at exactly 90s" as a cold-start issue — check for SSE/networkidle first
 
 ### 7g. Body Text Wallet Assertions Must Use Specific Brands, Not Broad Patterns (MANDATORY) 🆕
 
@@ -1144,26 +1192,26 @@ it('should show loading state', async () => {
 
 1. **Async Data Loading**: Components with async mock data need proper wait patterns
    - ❌ BAD: Checking elements immediately after page load (mock data hasn't loaded)
-   - ✅ GOOD: Wait for networkidle + explicit timeout + long visibility checks
+   - ✅ GOOD: Wait for `'load'` state + explicit element visibility check
+   - ❌ NEVER: Use `waitForLoadState('networkidle')` — Vite HMR SSE blocks networkidle indefinitely (see section 7i)
    
 2. **E2E Test Pattern**:
 ```typescript
-// Good: Wait for async data properly
+// ✅ CORRECT: Use 'load' (not 'networkidle') — Vite HMR SSE prevents networkidle
 test('should display element', async ({ page }) => {
   await page.goto('/route');
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(1500); // Let mock data load (500-800ms typical)
+  await page.waitForLoadState('load'); // SSE-safe; fires when DOM+JS ready
   
   const element = page.getByRole('button', { name: /Action/i });
-  await expect(element).toBeVisible({ timeout: 15000 }); // Long timeout for CI
+  await expect(element).toBeVisible({ timeout: 15000 }); // Semantic wait
 });
 
-// Bad: Check immediately (flaky in CI)
+// ❌ WRONG: networkidle hangs when Vite HMR SSE is active
 test('should display element', async ({ page }) => {
   await page.goto('/route');
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('networkidle'); // DANGEROUS: may hang 60-90s in CI
   const element = page.getByRole('button', { name: /Action/i });
-  await expect(element).toBeVisible(); // May fail if data still loading!
+  await expect(element).toBeVisible();
 });
 ```
 
@@ -1174,13 +1222,12 @@ test('should display element', async ({ page }) => {
    - ✅ GOOD: 10s wait, 45s timeouts (passes reliably in CI and locally)
    
 ```typescript
-// Pattern for auth-dependent routes (e.g., /launch/guided, /compliance/*, /tokens/*)
+// ✅ Pattern for auth-dependent routes (e.g., /launch/guided, /compliance/*, /tokens/*)
 test('should display auth-required page', async ({ page }) => {
   await page.goto('/launch/guided');
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(10000); // CI needs EXTRA time for auth store init + mount + render
+  await page.waitForLoadState('load'); // Use 'load' NOT 'networkidle' — Vite HMR SSE blocks networkidle
   
-  // Wait for SPECIFIC element that proves page loaded
+  // Wait for SPECIFIC element that proves page loaded (semantic wait)
   const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 });
   await expect(title).toBeVisible({ timeout: 45000 }); // Extra time for CI
   
@@ -1418,12 +1465,12 @@ For ALL protected routes and auth-required features:
 test('should redirect unauthenticated user to login', async ({ page }) => {
   // Clear auth state
   await page.goto('/')
-  await page.waitForLoadState('networkidle')
+  await page.waitForLoadState('load') // 'load' NOT 'networkidle' — Vite HMR SSE blocks networkidle
   await page.evaluate(() => localStorage.clear())
   
   // Try to access protected route
   await page.goto('/protected-route')
-  await page.waitForLoadState('networkidle')
+  await page.waitForLoadState('load')
   await page.waitForTimeout(5000) // Auth guard redirect
   
   // Flexible verification (CI-safe)
@@ -1446,10 +1493,9 @@ test('should allow authenticated user to access route', async ({ page }) => {
   
   // Navigate to protected route
   await page.goto('/protected-route')
-  await page.waitForLoadState('networkidle')
-  await page.waitForTimeout(10000) // CI: auth store init + mount
+  await page.waitForLoadState('load') // 'load' NOT 'networkidle' — SSE-safe
   
-  // Verify page loaded
+  // Verify page loaded (semantic wait — no arbitrary timeout needed)
   const heading = page.getByRole('heading', { name: /Expected Title/i, level: 1 })
   await expect(heading).toBeVisible({ timeout: 45000 }) // CI-safe timeout
 })
@@ -1458,10 +1504,10 @@ test('should allow authenticated user to access route', async ({ page }) => {
 ### E2E Quality Standards
 
 **Deterministic Waits (REQUIRED):**
-- Auth-required routes: 10s wait after navigation
+- Auth-required routes: element-based semantic waits (toBeVisible with 45s+ timeout)
 - Element visibility: 45s timeout minimum
 - NO brittle `waitForTimeout()` without justification
-- Use `waitForLoadState('networkidle')` before waits
+- Use `waitForLoadState('load')` — NOT `'networkidle'` (Vite HMR SSE makes networkidle non-deterministic in CI)
 
 **Product Alignment (REQUIRED):**
 - Verify NO wallet connector UI appears

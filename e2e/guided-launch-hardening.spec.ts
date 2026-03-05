@@ -125,7 +125,7 @@ test.describe("AC #2: Navigation contract — guest and auth state", () => {
       isConnected: true,
     });
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load"); // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Semantic wait: the user email should appear in the UI after auth store init
     await page.waitForFunction(

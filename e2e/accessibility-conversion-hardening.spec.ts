@@ -422,7 +422,7 @@ test.describe('No wallet connector UI — email/password only', () => {
     test.setTimeout(90000) // may hit cold Vite worker if globalSetup warmup incomplete
     await clearAuthScript(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // If a Sign In modal or form is present, it should be email/password only
     const signInBtn = page.getByRole('button', { name: /sign\s*in/i }).first()

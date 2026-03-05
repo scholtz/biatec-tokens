@@ -122,9 +122,11 @@ test.describe('Auth-First Token Creation Journey', () => {
     await loginWithCredentials(page, AUTH_FIRST_TEST_EMAIL)
     
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Semantic wait: Wait for page title (proves page loaded)
+    // Use 'load' (not 'networkidle') — Vite HMR SSE keeps a persistent connection
+    // that prevents networkidle from ever completing in CI.
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(title).toBeVisible({ timeout: 60000 }) // Increased timeout for CI
 

@@ -283,7 +283,7 @@ test.describe('Compliance setup workspace — non-wallet accessibility', () => {
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/compliance/setup')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const h1 = page.getByRole('heading', { level: 1 }).first()
     await expect(h1).toBeVisible({ timeout: 30000 })
@@ -300,7 +300,7 @@ test.describe('Compliance setup workspace — non-wallet accessibility', () => {
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/compliance/setup')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const h1 = page.getByRole('heading', { level: 1 }).first()
     await expect(h1).toBeVisible({ timeout: 30000 })
