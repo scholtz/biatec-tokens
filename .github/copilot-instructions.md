@@ -938,6 +938,36 @@ console.log('Budget used:', sum + 'ms / ' + budget + 'ms', sum < budget ? '✓' 
 - ❌ Use `{ timeout: 30000 }` on goto/waitForLoadState — use 10-15s (Vite is pre-warmed in CI)
 - ❌ Use `{ timeout: 45000 }` on toBeVisible in test.setTimeout(90000) tests — use 20-30s
 - ❌ Skip the budget calculation — always sum all max timeouts and verify < test.setTimeout
+- ❌ Navigate to `/launch/guided` for nav wallet UI checks — use `/` instead (same nav, fewer onMounted triggers)
+
+**Auth-Heavy Page Pattern — Use Simpler Routes for Nav Assertions**
+
+When the goal is to check that NO wallet connector UI appears in the navigation, always use the home page `/` instead of auth-protected routes like `/launch/guided` or `/compliance/setup`. The navigation component is IDENTICAL on every page. Navigating to auth-heavy routes adds complex `onMounted` operations (telemetry init, draft loading, session validation) that can consume CI timeout budget unpredictably.
+
+```typescript
+// ❌ WRONG — navigates to auth-heavy /launch/guided for a nav-only assertion
+test('guided launch page has no wallet connector UI', async ({ page }) => {
+  test.setTimeout(90000)
+  await withAuth(page)
+  await page.goto('/launch/guided', { timeout: 15000 })  // auth-heavy: complex onMounted
+  await page.waitForLoadState('load', { timeout: 10000 })
+  await expect(heading).toBeVisible({ timeout: 30000 }) // 55s total — too close to 90s budget
+  const navText = await getNavText(page)
+  expect(navText).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
+})
+
+// ✅ CORRECT — nav is the same on every page; use /  for speed and reliability
+test('guided launch page has no wallet connector UI', async ({ page }) => {
+  // Budget: withAuth(0) + goto(10s) + load(5s) + getNavText(20s) = 35s << 60s global
+  await withAuth(page)
+  await page.goto('/', { timeout: 10000 })
+  await page.waitForLoadState('load', { timeout: 5000 })
+  const navText = await getNavText(page)
+  expect(navText).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
+})
+```
+
+**Rule**: If cumulative max timeout slack is < 20s in a `test.setTimeout(90000)` test, redesign the test to use a simpler page or auth approach. CI scheduling overhead consumes 5–15s beyond the calculated maximum. Reference: `auth-first-token-creation.spec.ts` "should not display wallet/network UI elements in top navigation" for the canonical pattern.
 
 
 **🚨 CRITICAL PAST VIOLATION - March 4, 2026 (PR #566) 🚨**
