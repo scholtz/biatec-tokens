@@ -157,6 +157,12 @@ export async function withAuth(page: Page, user: AuthUser = DEFAULT_TEST_USER): 
   }
   await page.addInitScript((userData: AuthUser) => {
     localStorage.setItem('algorand_user', JSON.stringify(userData))
+    // Also set arc76_email so authStore.restoreARC76Session() can populate arc76email ref,
+    // which is displayed in the Navbar (authStore.arc76email). Without this, the email
+    // field in the Navbar would be null even though isAuthenticated is true.
+    if (userData.email) {
+      localStorage.setItem('arc76_email', userData.email)
+    }
   }, session)
 }
 
@@ -368,5 +374,5 @@ export async function setupAuthAndNavigate(
   suppressBrowserErrors(page)
   await withAuth(page, user)
   await page.goto(route)
-  await page.waitForLoadState('networkidle')
+  await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 }

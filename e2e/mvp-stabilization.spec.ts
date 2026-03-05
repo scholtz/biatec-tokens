@@ -39,7 +39,7 @@ test.describe('AC #1: Canonical route clarity', () => {
   })
 
   test('navigation bar exposes Guided Launch link pointing to /launch/guided', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
 
     const link = page.getByRole('link', { name: /guided launch/i }).first()
@@ -52,7 +52,7 @@ test.describe('AC #1: Canonical route clarity', () => {
     page,
   }) => {
     await withAuth(page)
-    await page.goto('/create/wizard')
+    await page.goto('/create/wizard', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
 
     // Semantic wait: URL must leave the deprecated path
@@ -68,7 +68,7 @@ test.describe('AC #1: Canonical route clarity', () => {
     page,
   }) => {
     await clearAuthScript(page)
-    await page.goto('/create/wizard')
+    await page.goto('/create/wizard', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
 
     await page.waitForFunction(
@@ -89,7 +89,7 @@ test.describe('AC #1: Canonical route clarity', () => {
     // This is a meta-test: proves the canonical route policy in running code.
     // The home CTA routes authenticated users to /launch/guided — not /create/wizard.
     await withAuth(page)
-    await page.goto('/')
+    await page.goto('/', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
 
     // Guided Launch nav link must be present and point to canonical path
@@ -112,7 +112,7 @@ test.describe('AC #2: Critical-path reliability — guided launch entry', () => 
     page,
   }) => {
     await clearAuthScript(page)
-    await page.goto('/launch/guided')
+    await page.goto('/launch/guided', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
 
     // Semantic wait: redirect OR auth form must be visible
@@ -143,8 +143,8 @@ test.describe('AC #2: Critical-path reliability — guided launch entry', () => 
     // page load + auth store initialization + Vue component mount can total 40-60s in CI.
     test.setTimeout(90000)
     await loginWithCredentials(page, 'e2e-mvp-stable@biatec.io')
-    await page.goto('/launch/guided')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/launch/guided', { timeout: 30000 })
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Semantic wait: heading proves auth store init + component mounted
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -155,8 +155,8 @@ test.describe('AC #2: Critical-path reliability — guided launch entry', () => 
     // Increase test timeout: auth init + page load + component mount can take 40-60s in CI.
     test.setTimeout(90000)
     await withAuth(page)
-    await page.goto('/launch/guided')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/launch/guided', { timeout: 30000 })
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -178,8 +178,8 @@ test.describe('AC #2: Critical-path reliability — guided launch entry', () => 
     // Increase test timeout: auth init + page load can take 40-60s in CI.
     test.setTimeout(90000)
     await loginWithCredentials(page, 'e2e-compliance@biatec.io')
-    await page.goto('/compliance/orchestration')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/compliance/orchestration', { timeout: 30000 })
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const heading = page.getByRole('heading', { name: /Compliance Verification/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -189,8 +189,8 @@ test.describe('AC #2: Critical-path reliability — guided launch entry', () => 
     // Increase test timeout: auth init + page load can take 40-60s in CI.
     test.setTimeout(90000)
     await loginWithCredentials(page, 'e2e-compliance@biatec.io')
-    await page.goto('/compliance/setup')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/compliance/setup', { timeout: 30000 })
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const heading = page.getByRole('heading', { name: /Compliance Setup Workspace/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -205,7 +205,7 @@ test.describe('AC #3: CI sign-off evidence', () => {
   })
 
   test('homepage loads and has Biatec branding', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
     const title = await page.title()
     expect(title).toMatch(/biatec|token/i)
@@ -215,8 +215,8 @@ test.describe('AC #3: CI sign-off evidence', () => {
     // Increase test timeout: auth init + page load + heading visibility can take 40-60s in CI.
     test.setTimeout(90000)
     await withAuth(page)
-    await page.goto('/launch/guided')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/launch/guided', { timeout: 30000 })
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const content = await page.content()
     expect(content.length).toBeGreaterThan(500)
@@ -228,7 +228,7 @@ test.describe('AC #3: CI sign-off evidence', () => {
 
   test('compliance dashboard route responds for authenticated users in CI', async ({ page }) => {
     await withAuth(page)
-    await page.goto('/compliance')
+    await page.goto('/compliance', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
 
     const content = await page.content()
@@ -244,7 +244,7 @@ test.describe('AC #4 + AC #6: No wallet UI; email/password authentication only',
   })
 
   test('homepage navigation contains no wallet connector UI (AC #6)', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
 
     const navText = await getNavText(page)
@@ -256,8 +256,8 @@ test.describe('AC #4 + AC #6: No wallet UI; email/password authentication only',
     // Increase test timeout: auth init + page load + heading visibility can take 40-60s in CI.
     test.setTimeout(90000)
     await withAuth(page)
-    await page.goto('/launch/guided')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/launch/guided', { timeout: 30000 })
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -271,8 +271,8 @@ test.describe('AC #4 + AC #6: No wallet UI; email/password authentication only',
     // Increase test timeout: auth init + page load + heading visibility can take 40-60s in CI.
     test.setTimeout(90000)
     await withAuth(page)
-    await page.goto('/compliance/setup')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/compliance/setup', { timeout: 30000 })
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const heading = page.getByRole('heading', { name: /Compliance Setup Workspace/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -284,7 +284,7 @@ test.describe('AC #4 + AC #6: No wallet UI; email/password authentication only',
   test('homepage shows Sign In (email/password) button, not wallet connect button', async ({
     page,
   }) => {
-    await page.goto('/')
+    await page.goto('/', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
 
     // Sign In button must be present for unauthenticated users
@@ -313,7 +313,7 @@ test.describe('AC #5: Route consistency and canonical path integrity', () => {
     page,
   }) => {
     await clearAuthScript(page)
-    await page.goto('/create')
+    await page.goto('/create', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
 
     // Unauthenticated access should be redirected
@@ -334,7 +334,7 @@ test.describe('AC #5: Route consistency and canonical path integrity', () => {
 
   test('authenticated CTA on home page routes to /launch/guided', async ({ page }) => {
     await withAuth(page)
-    await page.goto('/')
+    await page.goto('/', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
 
     // Check for a CTA link that routes to canonical path
@@ -370,7 +370,7 @@ test.describe('AC #5: Route consistency and canonical path integrity', () => {
   test('all primary navigation links on homepage lead to valid routes (not 404)', async ({
     page,
   }) => {
-    await page.goto('/')
+    await page.goto('/', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
 
     const nav = page.getByRole('navigation').first()
@@ -401,8 +401,8 @@ test.describe('Spec hygiene — zero waitForTimeout, zero CI-only skips', () => 
     test.setTimeout(90000)
     suppressBrowserErrors(page)
     await withAuth(page)
-    await page.goto('/launch/guided')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/launch/guided', { timeout: 30000 })
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const content = await page.content()
     // Valid page must have substantial HTML content (not an error/empty response)

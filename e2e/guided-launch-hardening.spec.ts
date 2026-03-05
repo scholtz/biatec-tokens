@@ -34,7 +34,7 @@ async function setupAuthenticatedGuidedLaunch(
   suppressBrowserErrors(page);
   await withAuth(page);
   await page.goto("/launch/guided");
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("load") // "load" not "networkidle" — Vite HMR SSE prevents networkidle in CI
 }
 
 // ---------------------------------------------------------------------------
@@ -50,7 +50,7 @@ test.describe("AC #1: Canonical route enforcement", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load") // "load" not "networkidle" — Vite HMR SSE prevents networkidle in CI
 
     // The nav must contain a link to /launch/guided (canonical create CTA)
     const guidedLaunchLink = page.getByRole("link", { name: /guided launch/i }).first();
@@ -64,7 +64,7 @@ test.describe("AC #1: Canonical route enforcement", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load") // "load" not "networkidle" — Vite HMR SSE prevents networkidle in CI
 
     // Primary nav must not expose /create/wizard as a link
     const wizardLinks = page.locator('a[href*="/create/wizard"]');
@@ -87,7 +87,7 @@ test.describe("AC #2: Navigation contract — guest and auth state", () => {
     suppressBrowserErrors(page);
     await clearAuthScript(page);
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load") // "load" not "networkidle" — Vite HMR SSE prevents networkidle in CI
 
     // Semantic wait: Sign In button must become visible
     const signInButton = page.getByRole("button", { name: /sign in/i }).first();
@@ -106,7 +106,7 @@ test.describe("AC #2: Navigation contract — guest and auth state", () => {
     suppressBrowserErrors(page);
     await clearAuthScript(page);
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load") // "load" not "networkidle" — Vite HMR SSE prevents networkidle in CI
 
     // Use innerText (not page.content) to avoid matching compiled JS bundles
     const bodyText = await page.locator("body").innerText();
@@ -124,15 +124,13 @@ test.describe("AC #2: Navigation contract — guest and auth state", () => {
       email: "hardening-test@biatec.io",
       isConnected: true,
     });
-    await page.goto("/");
-    await page.waitForLoadState("load"); // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto("/", { timeout: 30000 }); // Explicit timeout prevents test.setTimeout(90000) from overriding navigationTimeout
+    await page.waitForLoadState("load", { timeout: 30000 }); // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
-    // Semantic wait: the user email should appear in the UI after auth store init
-    await page.waitForFunction(
-      () =>
-        document.body.innerText.includes("hardening-test@biatec.io"),
-      { timeout: 45000 }  // Increased from 30s: cold Vue hydration can take 25-30s in CI
-    );
+    // Semantic wait: the user email should appear in the UI after auth store init.
+    // withAuth now sets arc76_email so restoreARC76Session() properly populates arc76email ref in Navbar.
+    const emailLocator = page.getByText("hardening-test@biatec.io").first()
+    await expect(emailLocator).toBeVisible({ timeout: 30000 })
 
     const bodyText = await page.locator("body").innerText();
     expect(bodyText).toContain("hardening-test@biatec.io");
@@ -155,7 +153,7 @@ test.describe("AC #3: Route guard and post-login redirect consistency", () => {
   }) => {
     await clearAuthScript(page);
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load") // "load" not "networkidle" — Vite HMR SSE prevents networkidle in CI
 
     // Semantic wait: auth evidence must appear
     await page.waitForFunction(
@@ -196,7 +194,7 @@ test.describe("AC #3: Route guard and post-login redirect consistency", () => {
   }) => {
     await clearAuthScript(page);
     await page.goto("/cockpit");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load") // "load" not "networkidle" — Vite HMR SSE prevents networkidle in CI
 
     await page.waitForFunction(
       () => {
@@ -225,7 +223,7 @@ test.describe("AC #4: Accessibility — ARIA roles, heading hierarchy", () => {
     page,
   }) => {
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load") // "load" not "networkidle" — Vite HMR SSE prevents networkidle in CI
 
     const h1 = page.getByRole("heading", {
       name: /guided token launch/i,
@@ -238,7 +236,7 @@ test.describe("AC #4: Accessibility — ARIA roles, heading hierarchy", () => {
     page,
   }) => {
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load") // "load" not "networkidle" — Vite HMR SSE prevents networkidle in CI
 
     const main = page.getByRole("main");
     await expect(main).toBeVisible({ timeout: 45000 });
@@ -248,7 +246,7 @@ test.describe("AC #4: Accessibility — ARIA roles, heading hierarchy", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load") // "load" not "networkidle" — Vite HMR SSE prevents networkidle in CI
 
     const nav = page.getByRole("navigation", { name: /main navigation/i });
     await expect(nav).toBeVisible({ timeout: 15000 });
@@ -258,7 +256,7 @@ test.describe("AC #4: Accessibility — ARIA roles, heading hierarchy", () => {
     page,
   }) => {
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load") // "load" not "networkidle" — Vite HMR SSE prevents networkidle in CI
 
     // Wait for main content
     await expect(page.getByRole("main")).toBeVisible({ timeout: 45000 });
@@ -284,7 +282,7 @@ test.describe("AC #4: Accessibility — ARIA roles, heading hierarchy", () => {
 
   test("step indicator navigation region is accessible", async ({ page }) => {
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load") // "load" not "networkidle" — Vite HMR SSE prevents networkidle in CI
 
     // Main must be visible first
     await expect(page.getByRole("main")).toBeVisible({ timeout: 45000 });
@@ -311,7 +309,7 @@ test.describe("AC #5: Error messaging — user guidance (no raw technical leakag
   }) => {
     await clearAuthScript(page);
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load") // "load" not "networkidle" — Vite HMR SSE prevents networkidle in CI
 
     const bodyText = await page.locator("body").innerText();
 
@@ -329,7 +327,7 @@ test.describe("AC #5: Error messaging — user guidance (no raw technical leakag
   }) => {
     await withAuth(page);
     await page.goto("/launch/guided");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("load") // "load" not "networkidle" — Vite HMR SSE prevents networkidle in CI
 
     // Wait for page to fully load
     await expect(

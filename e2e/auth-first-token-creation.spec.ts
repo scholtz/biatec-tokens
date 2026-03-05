@@ -30,12 +30,12 @@ test.describe('Auth-First Token Creation Journey', () => {
   test('should redirect unauthenticated user to login when accessing /launch/guided', async ({ page }) => {
     // Clear any existing auth
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     await page.evaluate(() => localStorage.clear())
     
     // Try to access protected route
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Wait for auth guard redirect - check for URL param OR visible form
     // Semantic wait: check multiple conditions that prove redirect happened
@@ -58,12 +58,12 @@ test.describe('Auth-First Token Creation Journey', () => {
   test('should redirect unauthenticated user to login when accessing /create', async ({ page }) => {
     // Clear any existing auth
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     await page.evaluate(() => localStorage.clear())
     
     // Try to access protected route
     await page.goto('/create')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Wait for auth guard redirect - semantic wait for redirect evidence
     await page.waitForFunction(() => {
@@ -121,8 +121,8 @@ test.describe('Auth-First Token Creation Journey', () => {
     // Use canonical auth helper — validates ARC76 session contract before seeding
     await loginWithCredentials(page, AUTH_FIRST_TEST_EMAIL)
     
-    await page.goto('/launch/guided')
-    await page.waitForLoadState('load')
+    await page.goto('/launch/guided', { timeout: 30000 }) // Explicit timeout prevents test.setTimeout(90000) from overriding navigationTimeout
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Semantic wait: Wait for page title (proves page loaded)
     // Use 'load' (not 'networkidle') — Vite HMR SSE keeps a persistent connection
@@ -148,10 +148,10 @@ test.describe('Auth-First Token Creation Journey', () => {
   test('should show email/password authentication elements for unauthenticated users', async ({ page }) => {
     // Clear auth
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     await page.evaluate(() => localStorage.clear())
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Semantic wait: Wait for Sign In button to appear
     const signInButton = page.getByRole('button', { name: /sign in/i }).first()

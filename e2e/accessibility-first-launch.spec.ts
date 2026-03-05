@@ -40,7 +40,7 @@ test.describe('Canonical launch route — navigation and visibility', () => {
     page.on('pageerror', err => console.log('[page error]', err.message))
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // "Guided Launch" is the canonical nav label for the token creation entry point
     const nav = page.getByRole('navigation').first()
@@ -58,7 +58,7 @@ test.describe('Canonical launch route — navigation and visibility', () => {
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Primary navigation should not expose /create/wizard as a user-facing link
     const wizardLinks = page.getByRole('link', { name: /wizard/i })
@@ -70,7 +70,7 @@ test.describe('Canonical launch route — navigation and visibility', () => {
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -92,7 +92,7 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // AC6 (Issue #495): Use nav-component assertion for wallet text checks.
     const nav = page.getByRole('navigation').first()
@@ -118,7 +118,7 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // AC6 (Issue #495): Use nav-component assertion
     const nav = page.getByRole('navigation').first()
@@ -134,7 +134,7 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Check nav element only
     const nav = page.getByRole('navigation').first()
@@ -149,7 +149,7 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Wait for page to load (semantic wait on heading)
     const heading = page.getByRole('heading', { name: /guided token launch/i }).first()
@@ -180,7 +180,7 @@ test.describe('Keyboard navigation — primary launch CTA', () => {
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Press Tab multiple times to navigate through interactive elements
     for (let i = 0; i < 15; i++) {
@@ -201,7 +201,7 @@ test.describe('Keyboard navigation — primary launch CTA', () => {
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Sign in button (or link) should be accessible
     const signInEl = page
@@ -222,7 +222,7 @@ test.describe('Semantic HTML — accessibility attributes on critical surfaces',
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const h1 = page.getByRole('heading', { level: 1 }).first()
     await expect(h1).toBeVisible({ timeout: 30000 })
@@ -233,7 +233,7 @@ test.describe('Semantic HTML — accessibility attributes on critical surfaces',
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Confirm alert role is present in the DOM (may not be visible when no errors)
     // This checks that the template wiring exists and the attribute is correct
@@ -249,7 +249,7 @@ test.describe('Semantic HTML — accessibility attributes on critical surfaces',
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/compliance/setup')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const h1 = page.getByRole('heading', { level: 1 }).first()
     await expect(h1).toBeVisible({ timeout: 30000 })
@@ -260,7 +260,7 @@ test.describe('Semantic HTML — accessibility attributes on critical surfaces',
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const heading = page.getByRole('heading', { name: /guided token launch/i }).first()
     await expect(heading).toBeVisible({ timeout: 30000 })
@@ -282,8 +282,8 @@ test.describe('Compliance setup workspace — non-wallet accessibility', () => {
     await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
-    await page.goto('/compliance/setup')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/compliance/setup', { timeout: 30000 }) // Explicit timeout prevents test.setTimeout(90000) from overriding navigationTimeout
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const h1 = page.getByRole('heading', { level: 1 }).first()
     await expect(h1).toBeVisible({ timeout: 30000 })
@@ -322,7 +322,7 @@ test.describe('Auth-first routing — launch and compliance routes', () => {
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const url = page.url()
     const validRedirect =
@@ -336,7 +336,7 @@ test.describe('Auth-first routing — launch and compliance routes', () => {
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/compliance/setup')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const url = page.url()
     const validRedirect =
@@ -350,7 +350,7 @@ test.describe('Auth-first routing — launch and compliance routes', () => {
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const heading = page.getByRole('heading', { name: /guided token launch/i }).first()
     await expect(heading).toBeVisible({ timeout: 30000 })
@@ -361,7 +361,7 @@ test.describe('Auth-first routing — launch and compliance routes', () => {
     page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/compliance/setup')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const heading = page.getByRole('heading', { level: 1 }).first()
     await expect(heading).toBeVisible({ timeout: 30000 })

@@ -36,8 +36,8 @@ test.describe('Compliance Setup Workspace', () => {
     // Refactored: removed arbitrary wait, use semantic waits with explicit timeouts.
     // Follows the same pattern as passing auth-first-token-creation.spec.ts tests.
     
-    await page.goto('/compliance/setup')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/compliance/setup', { timeout: 30000 })
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Semantic wait: page title proves auth store initialized + component mounted
     // No arbitrary wait needed - addInitScript sets localStorage before navigation
@@ -59,7 +59,7 @@ test.describe('Compliance Setup Workspace', () => {
     // CI environment 10-20x slower than local for complex multi-field forms
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: multi-field form with async validations — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
-    await page.goto('/compliance/setup')
+    await page.goto('/compliance/setup', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
     
     // Wait for jurisdiction step heading
@@ -101,7 +101,7 @@ test.describe('Compliance Setup Workspace', () => {
     // CI environment 10-20x slower than local for multi-step flows
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: 2-step wizard state transitions — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
-    await page.goto('/compliance/setup')
+    await page.goto('/compliance/setup', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
     
     // Complete jurisdiction step first
@@ -143,7 +143,7 @@ test.describe('Compliance Setup Workspace', () => {
     // CI environment 10-20x slower than local for multi-step flows
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: 3-step wizard cumulative transitions — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
-    await page.goto('/compliance/setup')
+    await page.goto('/compliance/setup', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
     
     // Complete jurisdiction step
@@ -192,7 +192,7 @@ test.describe('Compliance Setup Workspace', () => {
     // CI environment 10-20x slower than local for complex multi-step flows
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: full 5-step wizard with readiness calculation — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
-    await page.goto('/compliance/setup')
+    await page.goto('/compliance/setup', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
     
     // Complete all steps
@@ -258,8 +258,8 @@ test.describe('Compliance Setup Workspace', () => {
     // first test in this suite already proves is achievable within 60s in CI.
     // No CI skip needed — same semantic wait pattern as the first test.
     
-    await page.goto('/compliance/setup')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/compliance/setup', { timeout: 30000 })
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
     
     // Semantic wait: heading proves auth store initialized + component mounted
     const jurisdictionHeading = page.getByRole('heading', { name: /Jurisdiction & Distribution Policy/i, level: 2 })
@@ -280,7 +280,7 @@ test.describe('Compliance Setup Workspace', () => {
     // CI environment 10-20x slower than local for complex validation logic
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: complex form validation with warnings — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
-    await page.goto('/compliance/setup')
+    await page.goto('/compliance/setup', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
     
     // Fill basic fields
@@ -323,7 +323,7 @@ test.describe('Compliance Setup Workspace', () => {
     // CI environment 10-20x slower than local for multi-step state calculations
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: 4-step wizard incomplete state — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
-    await page.goto('/compliance/setup')
+    await page.goto('/compliance/setup', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
     
     // Complete only first step minimally
@@ -380,7 +380,7 @@ test.describe('Compliance Setup Workspace', () => {
     // CI environment 10-20x slower than local for complex wizard state management
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: 5-step wizard navigation state — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
-    await page.goto('/compliance/setup')
+    await page.goto('/compliance/setup', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
     
     // Complete all steps to reach summary
@@ -431,7 +431,7 @@ test.describe('Compliance Setup Workspace', () => {
     // CI environment 10-20x slower than local for localStorage + page reload + rehydration
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: draft persistence with page reload — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
-    await page.goto('/compliance/setup')
+    await page.goto('/compliance/setup', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
     
     // Fill some form data
@@ -464,7 +464,7 @@ test.describe('Compliance Setup Workspace', () => {
     // CI environment 10-20x slower than local for multi-step state persistence
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: multi-step draft reload simulation — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
-    await page.goto('/compliance/setup')
+    await page.goto('/compliance/setup', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
     
     // Complete first step
@@ -512,7 +512,7 @@ test.describe('Compliance Setup Workspace', () => {
     // CI environment 10-20x slower than local for state management operations
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: draft clear with localStorage ops — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
-    await page.goto('/compliance/setup')
+    await page.goto('/compliance/setup', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
     
     // Fill some data
@@ -569,7 +569,7 @@ test.describe('Compliance Setup Workspace', () => {
     // CI environment 10-20x slower than local for wizard state management
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: 2-step wizard navigation buttons — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
-    await page.goto('/compliance/setup')
+    await page.goto('/compliance/setup', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
     
     // Complete first step
@@ -610,7 +610,7 @@ test.describe('Compliance Setup Workspace', () => {
     // CI environment 10-20x slower than local for step transitions
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: 2-step wizard Previous button — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
-    await page.goto('/compliance/setup')
+    await page.goto('/compliance/setup', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
     
     // Complete first step to enable next
@@ -649,7 +649,7 @@ test.describe('Compliance Setup Workspace', () => {
     // CI environment 10-20x slower than local for full wizard flows
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: full wizard with summary navigation — 10+ optimization attempts. Owner: compliance-ux. Follow-up: MVP stabilization issue')
     
-    await page.goto('/compliance/setup')
+    await page.goto('/compliance/setup', { timeout: 30000 })
     await page.waitForLoadState('networkidle')
     
     // Quick complete all steps to reach summary

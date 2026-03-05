@@ -62,7 +62,7 @@ test.describe('Landmark and semantic structure', () => {
 
   test('home page has a main landmark with id="main-content"', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const main = page.getByRole('main')
     await expect(main).toBeVisible({ timeout: 15000 })
@@ -73,7 +73,7 @@ test.describe('Landmark and semantic structure', () => {
 
   test('home page has a navigation landmark', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
@@ -81,7 +81,7 @@ test.describe('Landmark and semantic structure', () => {
 
   test('home page has a banner landmark (header)', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // The top <header> or role="banner" element must be present
     const banner = page.getByRole('banner')
@@ -91,7 +91,7 @@ test.describe('Landmark and semantic structure', () => {
   test('guided launch page has a main landmark with id="main-content"', async ({ page }) => {
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const main = page.getByRole('main')
     await expect(main).toBeVisible({ timeout: 15000 })
@@ -102,7 +102,7 @@ test.describe('Landmark and semantic structure', () => {
 
   test('skip-to-content link is present at page start', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // The skip-to-content link should be in the DOM (may be visually hidden until focused)
     const skipLink = page.locator('a[href="#main-content"]').first()
@@ -124,7 +124,7 @@ test.describe('Keyboard navigation', () => {
     page,
   }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Start tab navigation from the body
     await page.keyboard.press('Tab')
@@ -158,7 +158,7 @@ test.describe('Keyboard navigation', () => {
 
   test('all nav links are keyboard-reachable with Tab', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Get all nav links that should be reachable
     const nav = page.getByRole('navigation').first()
@@ -172,7 +172,7 @@ test.describe('Keyboard navigation', () => {
   test('keyboard Tab should reach the Sign In button on home page', async ({ page }) => {
     await clearAuthScript(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     let found = false
     for (let i = 0; i < 20 && !found; i++) {
@@ -211,7 +211,7 @@ test.describe('Error presentation — role="alert" and what/why/how structure', 
 
   test('any visible error containers on home use role="alert" or aria-live', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // If error containers are present, they should use role="alert"
     const alertElements = page.locator('[role="alert"]')
@@ -233,7 +233,7 @@ test.describe('Error presentation — role="alert" and what/why/how structure', 
   }) => {
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Check any error messages on the page do not contain raw technical internals
     const errorElements = page.locator('[role="alert"], .error-message, [data-testid*="error"]')
@@ -262,7 +262,7 @@ test.describe('Focus visibility', () => {
   test('Sign In button shows visible focus outline when tabbed to', async ({ page }) => {
     await clearAuthScript(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Tab until Sign In button is focused
     let signInFocused = false
@@ -295,7 +295,7 @@ test.describe('Focus visibility', () => {
   test('interactive controls in guided launch are tab-reachable', async ({ page }) => {
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Press Tab several times and verify focus moves between elements
     const focusedElements: string[] = []
@@ -327,7 +327,7 @@ test.describe('Navigation parity — desktop and mobile equivalence', () => {
   test('Guided Launch link is present in navigation for desktop viewport', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 })
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const nav = page.getByRole('navigation').first()
     const guidedLaunchLink = nav.getByRole('link', { name: /guided launch/i }).first()
@@ -337,7 +337,7 @@ test.describe('Navigation parity — desktop and mobile equivalence', () => {
   test('primary nav destinations are accessible at mobile viewport', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Nav element must be present even on mobile
     const nav = page.getByRole('navigation').first()
@@ -356,7 +356,7 @@ test.describe('Navigation parity — desktop and mobile equivalence', () => {
 
   test('navigation aria-label is present for screen reader orientation', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // The main navigation should have an accessible label
     const nav = page.getByRole('navigation').first()
@@ -369,7 +369,7 @@ test.describe('Navigation parity — desktop and mobile equivalence', () => {
 
   test('navigation includes at most 7 top-level items (cognitive load)', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Per NAV_ITEMS constant: max 7 items for cognitive load reduction
     const nav = page.getByRole('navigation').first()
@@ -395,7 +395,7 @@ test.describe('No wallet connector UI — email/password only', () => {
   test('navigation contains no wallet connector text for guest user', async ({ page }) => {
     await clearAuthScript(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const navText = await getNavText(page)
     expect(navText).not.toMatch(/WalletConnect/i)
@@ -409,7 +409,7 @@ test.describe('No wallet connector UI — email/password only', () => {
   test('navigation contains no wallet connector text for authenticated user', async ({ page }) => {
     await withAuth(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const navText = await getNavText(page)
     expect(navText).not.toMatch(/WalletConnect/i)
@@ -421,8 +421,8 @@ test.describe('No wallet connector UI — email/password only', () => {
   test('guided launch page shows email/password authentication only', async ({ page }) => {
     test.setTimeout(90000) // may hit cold Vite worker if globalSetup warmup incomplete
     await clearAuthScript(page)
-    await page.goto('/')
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
+    await page.goto('/', { timeout: 30000 }) // Explicit timeout prevents test.setTimeout(90000) from overriding navigationTimeout
+    await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // If a Sign In modal or form is present, it should be email/password only
     const signInBtn = page.getByRole('button', { name: /sign\s*in/i }).first()
@@ -457,7 +457,7 @@ test.describe('Guided launch entry — canonical /launch/guided route', () => {
 
   test('Guided Launch nav link points to /launch/guided', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const nav = page.getByRole('navigation').first()
     const guidedLaunchLink = nav.getByRole('link', { name: /guided launch/i }).first()
@@ -470,7 +470,7 @@ test.describe('Guided launch entry — canonical /launch/guided route', () => {
   test('authenticated user can navigate to /launch/guided', async ({ page }) => {
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Either the launch page loads, or auth redirect occurs — both are valid
     const currentUrl = page.url()
@@ -485,7 +485,7 @@ test.describe('Guided launch entry — canonical /launch/guided route', () => {
   }) => {
     await clearAuthScript(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // After attempting to access protected route without auth,
     // user should either be redirected to home with auth prompt,
@@ -505,7 +505,7 @@ test.describe('Guided launch entry — canonical /launch/guided route', () => {
   }) => {
     await withAuth(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Page should have at least an h1 heading
     const h1Count = await page.locator('h1').count()
@@ -529,7 +529,7 @@ test.describe('Funnel observability — progress tracking during launch', () => 
 
   test('guided launch page has a step indicator or progress region', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const currentUrl = page.url()
     if (!currentUrl.includes('/launch/guided')) {
@@ -560,7 +560,7 @@ test.describe('Screen-reader announcements — aria-live regions', () => {
 
   test('home page has at least one aria-live region for dynamic updates', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // aria-live regions allow screen readers to announce dynamic content changes
     const ariaLiveElements = page.locator('[aria-live]')
@@ -576,7 +576,7 @@ test.describe('Screen-reader announcements — aria-live regions', () => {
     page,
   }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // Check that existing role="alert" elements (if any) are legitimate
     const alerts = page.locator('[role="alert"]')
@@ -607,7 +607,7 @@ test.describe('Skip navigation — skip-to-content link', () => {
 
   test('skip-to-content link href targets #main-content', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const skipLink = page.locator('a[href="#main-content"]').first()
     await expect(skipLink).toBeAttached({ timeout: 10000 })
@@ -618,7 +618,7 @@ test.describe('Skip navigation — skip-to-content link', () => {
 
   test('main-content anchor target exists in DOM', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const mainContent = page.locator('#main-content')
     await expect(mainContent).toBeAttached({ timeout: 10000 })
@@ -626,7 +626,7 @@ test.describe('Skip navigation — skip-to-content link', () => {
 
   test('skip-to-content link is in the accessibility tree', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     // The skip link should be present in the DOM (may be visually hidden until focused)
     const skipLink = page.locator('a[href="#main-content"]').first()
