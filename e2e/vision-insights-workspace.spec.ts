@@ -41,7 +41,7 @@ test.describe('Vision Insights Workspace', () => {
 
     // Navigate to insights workspace
     await page.goto('/insights')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
   })
 
   test('should load insights workspace successfully', async ({ page }) => {
@@ -259,7 +259,7 @@ test.describe('Vision Insights Workspace - Error Handling', () => {
   test('should require authentication', async ({ page }) => {
     // Navigate without auth
     await page.goto('/insights')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Should redirect to home or show auth requirement
     const currentUrl = page.url()

@@ -28,7 +28,7 @@ test.describe('Whitelist Management View', () => {
 
     // Navigate to whitelist management page
     await page.goto('/compliance/whitelists');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
   });
 
   test('should display Whitelist Management page with correct title', async ({ page }) => {
@@ -164,7 +164,7 @@ test.describe('Whitelist Management View', () => {
   test('should be accessible from sidebar navigation', async ({ page }) => {
     // Navigate to home first
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     // Find Whitelist Management link in sidebar
     const sidebarLink = page.getByRole('link', { name: /Whitelist Management/i });

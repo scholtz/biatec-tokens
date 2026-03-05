@@ -28,7 +28,7 @@ test.describe('Legacy /create/wizard redirect compatibility', () => {
     // AC: /create/wizard must redirect to canonical /launch/guided
     await withAuth(page)
     await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: URL must leave the deprecated path
     await page.waitForFunction(
@@ -46,7 +46,7 @@ test.describe('Legacy /create/wizard redirect compatibility', () => {
     // AC: legacy wizard UI component must never be served from the deprecated path
     await withAuth(page)
     await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await page.waitForFunction(
       () => !window.location.pathname.includes('/create/wizard'),
@@ -65,7 +65,7 @@ test.describe('Legacy /create/wizard redirect compatibility', () => {
     // AC: unauthenticated access must not render wizard UI regardless of auth state
     await clearAuthScript(page)
     await page.goto('/create/wizard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: redirect away from legacy path OR auth prompt appears
     await page.waitForFunction(

@@ -61,7 +61,7 @@ test.describe('Business Command Center', () => {
 
   test('should show Operations link in navbar', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const operationsLink = page.getByRole('link', { name: /Operations/i }).first()
     await expect(operationsLink).toBeVisible({ timeout: 15000 })
@@ -69,12 +69,12 @@ test.describe('Business Command Center', () => {
 
   test('should navigate to /operations from navbar Operations link', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const operationsLink = page.getByRole('link', { name: /Operations/i }).first()
     await expect(operationsLink).toBeVisible({ timeout: 15000 })
     await operationsLink.click()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await expect(page).toHaveURL(/\/operations/, { timeout: 15000 })
   })
@@ -85,7 +85,7 @@ test.describe('Business Command Center', () => {
     await clearAuthScript(page);
 
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: router guard fires one of three auth signals
     await page.waitForFunction(
@@ -110,7 +110,7 @@ test.describe('Business Command Center', () => {
 
   test('should redirect /operations/legacy to /operations', async ({ page }) => {
     await page.goto('/operations/legacy')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Either on /operations or redirected due to auth guard first
     const url = page.url()
@@ -125,7 +125,7 @@ test.describe('Business Command Center', () => {
 
   test('should display command center heading', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Operations Command Center/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 45000 })
@@ -133,7 +133,7 @@ test.describe('Business Command Center', () => {
 
   test('should display role selector', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const roleSelector = page.getByTestId('role-selector')
     await expect(roleSelector).toBeVisible({ timeout: 45000 })
@@ -141,7 +141,7 @@ test.describe('Business Command Center', () => {
 
   test('should display status overview section', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const statusOverview = page.getByTestId('status-overview')
     await expect(statusOverview).toBeVisible({ timeout: 45000 })
@@ -149,7 +149,7 @@ test.describe('Business Command Center', () => {
 
   test('should display status label', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const statusLabel = page.getByTestId('status-label')
     await expect(statusLabel).toBeVisible({ timeout: 45000 })
@@ -161,7 +161,7 @@ test.describe('Business Command Center', () => {
 
   test('should display priority cards section', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const section = page.getByTestId('priority-cards-section')
     await expect(section).toBeVisible({ timeout: 45000 })
@@ -169,7 +169,7 @@ test.describe('Business Command Center', () => {
 
   test('should display stakeholder communication section', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const section = page.getByTestId('stakeholder-section')
     await expect(section).toBeVisible({ timeout: 45000 })
@@ -177,7 +177,7 @@ test.describe('Business Command Center', () => {
 
   test('should display stakeholder subject and body template', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const subject = page.getByTestId('stakeholder-subject')
     await expect(subject).toBeVisible({ timeout: 45000 })
@@ -192,7 +192,7 @@ test.describe('Business Command Center', () => {
 
   test('should display deployment and compliance status cards', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const deploymentCard = page.getByTestId('deployment-status-card')
     await expect(deploymentCard).toBeVisible({ timeout: 45000 })
@@ -207,7 +207,7 @@ test.describe('Business Command Center', () => {
 
   test('should allow switching to compliance_manager role', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const roleSelector = page.getByTestId('role-selector')
     await expect(roleSelector).toBeVisible({ timeout: 45000 })
@@ -221,7 +221,7 @@ test.describe('Business Command Center', () => {
 
   test('should allow switching back to issuer_operator role', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const roleSelector = page.getByTestId('role-selector')
     await expect(roleSelector).toBeVisible({ timeout: 45000 })
@@ -239,7 +239,7 @@ test.describe('Business Command Center', () => {
 
   test('should expand a priority card when clicked', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Wait for at least one priority card to appear (default context has no tokens)
     const firstCardToggle = page.getByTestId('card-toggle-no_tokens_deployed')
@@ -255,7 +255,7 @@ test.describe('Business Command Center', () => {
 
   test('should show what/why/how content when card is expanded', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const firstCardToggle = page.getByTestId('card-toggle-no_tokens_deployed')
     await expect(firstCardToggle).toBeVisible({ timeout: 45000 })
@@ -274,7 +274,7 @@ test.describe('Business Command Center', () => {
 
   test('should show CTA button when card is expanded', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const firstCardToggle = page.getByTestId('card-toggle-no_tokens_deployed')
     await expect(firstCardToggle).toBeVisible({ timeout: 45000 })
@@ -287,7 +287,7 @@ test.describe('Business Command Center', () => {
 
   test('should collapse card when clicked again', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const toggle = page.getByTestId('card-toggle-no_tokens_deployed')
     await expect(toggle).toBeVisible({ timeout: 45000 })
@@ -308,7 +308,7 @@ test.describe('Business Command Center', () => {
 
   test('should display status filter dropdown', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const filter = page.getByTestId('status-filter')
     await expect(filter).toBeVisible({ timeout: 45000 })
@@ -316,7 +316,7 @@ test.describe('Business Command Center', () => {
 
   test('should change filter to action_required', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const filter = page.getByTestId('status-filter')
     await expect(filter).toBeVisible({ timeout: 45000 })
@@ -329,7 +329,7 @@ test.describe('Business Command Center', () => {
 
   test('should show empty state when filter has no matching cards', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Filter to 'clear' — default context has no clear cards
     const filter = page.getByTestId('status-filter')
@@ -347,7 +347,7 @@ test.describe('Business Command Center', () => {
 
   test('should have a skip-to-content link accessible by keyboard', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Tab to the skip link
     await page.keyboard.press('Tab')
@@ -360,7 +360,7 @@ test.describe('Business Command Center', () => {
 
   test('should allow keyboard navigation to role selector', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const roleSelector = page.getByTestId('role-selector')
     await expect(roleSelector).toBeVisible({ timeout: 45000 })
@@ -372,7 +372,7 @@ test.describe('Business Command Center', () => {
 
   test('should allow keyboard navigation to status filter', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const filter = page.getByTestId('status-filter')
     await expect(filter).toBeVisible({ timeout: 45000 })
@@ -383,7 +383,7 @@ test.describe('Business Command Center', () => {
 
   test('should allow keyboard activation of priority card toggle', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const toggle = page.getByTestId('card-toggle-no_tokens_deployed')
     await expect(toggle).toBeVisible({ timeout: 45000 })
@@ -402,7 +402,7 @@ test.describe('Business Command Center', () => {
 
   test('should not display wallet connection UI', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
 
     const content = await page.content()
@@ -416,7 +416,7 @@ test.describe('Business Command Center', () => {
 
   test('should not display "Not connected" wallet status', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const content = await page.content()
     // Wallet-era "Not connected" text must not appear in the command center
@@ -429,7 +429,7 @@ test.describe('Business Command Center', () => {
 
   test('should display copy button for stakeholder template', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const copyBtn = page.getByTestId('copy-stakeholder-btn')
     await expect(copyBtn).toBeVisible({ timeout: 45000 })
@@ -442,7 +442,7 @@ test.describe('Business Command Center', () => {
 
   test('should have main content landmark', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const main = page.getByRole('main')
     await expect(main).toBeVisible({ timeout: 45000 })
@@ -450,7 +450,7 @@ test.describe('Business Command Center', () => {
 
   test('should have navigation breadcrumb landmark', async ({ page }) => {
     await page.goto('/operations')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const nav = page.getByRole('navigation', { name: /Breadcrumb/i })
     await expect(nav).toBeVisible({ timeout: 45000 })

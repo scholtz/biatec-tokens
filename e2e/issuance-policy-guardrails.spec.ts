@@ -68,7 +68,7 @@ test.describe('Issuance workspace — primary route accessibility', () => {
 
   test('authenticated user can reach the guided token launch workspace', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -76,7 +76,7 @@ test.describe('Issuance workspace — primary route accessibility', () => {
 
   test('workspace renders step progress indicator', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Wait for the page to fully load
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -91,7 +91,7 @@ test.describe('Issuance workspace — primary route accessibility', () => {
 
   test('workspace shows first step form on arrival', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -119,7 +119,7 @@ test.describe('Issuance workspace — no wallet connector UI', () => {
 
   test('issuance workspace does not render wallet connector buttons', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -135,7 +135,7 @@ test.describe('Issuance workspace — no wallet connector UI', () => {
 
   test('issuance workspace describes email/password authentication', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -171,12 +171,12 @@ test.describe('Issuance workspace — auth-first routing guard', () => {
 
     // Clear any auth data
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await page.evaluate(() => localStorage.removeItem('algorand_user'))
 
     // Try to access protected route
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const url = page.url()
     const content = await page.content()
@@ -205,7 +205,7 @@ test.describe('Issuance workspace — error state accessibility', () => {
 
   test('error banner element has correct ARIA role when present', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -228,7 +228,7 @@ test.describe('Issuance workspace — error state accessibility', () => {
 
   test('workspace form fields are keyboard-accessible', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -253,7 +253,7 @@ test.describe('Issuance workspace — draft persistence UX', () => {
 
   test('save draft button appears after entering first step', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
@@ -286,14 +286,14 @@ test.describe('Issuance workspace — page reload resilience', () => {
     })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
 
     // Reload the page
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const headingAfterReload = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(headingAfterReload).toBeVisible({ timeout: 60000 })

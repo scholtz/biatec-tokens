@@ -16,7 +16,7 @@ test.describe('Token Standards View', () => {
 
     // Navigate to token standards page (public page, no auth required)
     await page.goto('/token-standards')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
   })
 
   test('should display token standards page correctly', async ({ page }) => {

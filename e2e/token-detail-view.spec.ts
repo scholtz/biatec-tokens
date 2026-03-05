@@ -30,7 +30,7 @@ test.describe('Token Detail View', () => {
   test('should display token detail page with back button', async ({ page }) => {
     // Navigate to a token detail page (using mock ID)
     await page.goto('/tokens/mock-token-123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Check for back button
     const backButton = page.getByRole('button', { name: /Back|Return/i })
@@ -40,7 +40,7 @@ test.describe('Token Detail View', () => {
 
   test('should display token name and symbol', async ({ page }) => {
     await page.goto('/tokens/mock-token-123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Look for token name heading (should be h1)
     const tokenHeading = page.getByRole('heading', { level: 1 }).first()
@@ -58,7 +58,7 @@ test.describe('Token Detail View', () => {
 
   test('should display token tabs navigation', async ({ page }) => {
     await page.goto('/tokens/mock-token-123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Check for tab navigation (Overview, Transactions, etc.)
     const tabNames = ['Overview', 'Transactions', 'Activity', 'Details']
@@ -78,7 +78,7 @@ test.describe('Token Detail View', () => {
 
   test('should display token details section', async ({ page }) => {
     await page.goto('/tokens/mock-token-123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Look for token detail fields
     const detailFields = ['Type', 'Supply', 'Decimals', 'Created', 'Asset ID', 'Contract Address']
@@ -98,7 +98,7 @@ test.describe('Token Detail View', () => {
 
   test('should display token status badge', async ({ page }) => {
     await page.goto('/tokens/mock-token-123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Look for status badge (Active, Pending, etc.)
     const statusBadge = page.locator('[class*="badge"], [class*="status"]').first()
@@ -108,7 +108,7 @@ test.describe('Token Detail View', () => {
 
   test('should display token image or icon', async ({ page }) => {
     await page.goto('/tokens/mock-token-123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Look for token image or icon
     const tokenImage = page.locator('img[alt*="token" i], img[alt*="icon" i]').first()
@@ -123,7 +123,7 @@ test.describe('Token Detail View', () => {
 
   test('should display token description if available', async ({ page }) => {
     await page.goto('/tokens/mock-token-123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Look for description section heading
     const descriptionHeading = page.getByRole('heading', { name: /Description/i })
@@ -133,7 +133,7 @@ test.describe('Token Detail View', () => {
 
   test('should display attributes for NFTs', async ({ page }) => {
     await page.goto('/tokens/mock-token-123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Look for attributes section (NFT-specific)
     const attributesHeading = page.getByRole('heading', { name: /Attributes|Properties|Traits/i })
@@ -143,7 +143,7 @@ test.describe('Token Detail View', () => {
 
   test('should support tab switching', async ({ page }) => {
     await page.goto('/tokens/mock-token-123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Try to click on a different tab
     const transactionsTab = page.getByRole('button', { name: /Transactions|Activity/i })
@@ -158,7 +158,7 @@ test.describe('Token Detail View', () => {
 
   test('should display compliance badge for VOI/Aramid tokens', async ({ page }) => {
     await page.goto('/tokens/mock-token-123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Look for on-chain compliance badge (VOI/Aramid specific)
     const complianceBadge = page.getByText(/Compliance|MICA|Verified/i).first()
@@ -168,7 +168,7 @@ test.describe('Token Detail View', () => {
 
   test('should display transaction ID if available', async ({ page }) => {
     await page.goto('/tokens/mock-token-123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Look for transaction ID field
     const txIdLabel = page.getByText(/Transaction ID|Txn ID|txId/i).first()
@@ -178,7 +178,7 @@ test.describe('Token Detail View', () => {
 
   test('should handle back button navigation', async ({ page }) => {
     await page.goto('/tokens/mock-token-123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Click back button
     const backButton = page.getByRole('button', { name: /Back/i })
@@ -199,7 +199,7 @@ test.describe('Token Detail View', () => {
     await page.setViewportSize({ width: 375, height: 667 })
     
     await page.goto('/tokens/mock-token-123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Check that content is visible on mobile
     const heading = page.getByRole('heading', { level: 1 }).first()
@@ -213,7 +213,7 @@ test.describe('Token Detail View', () => {
 
   test('should handle non-existent token gracefully', async ({ page }) => {
     await page.goto('/tokens/non-existent-token-999')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Should show error or not found message
     const errorMessage = page.getByText(/Not found|Error|Invalid|doesn't exist/i).first()
@@ -228,7 +228,7 @@ test.describe('Token Detail View', () => {
 
   test('should display contract address for EVM tokens', async ({ page }) => {
     await page.goto('/tokens/mock-token-123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Look for contract address (0x format for EVM)
     const contractAddress = page.getByText(/Contract Address|Address:/i).first()
@@ -238,7 +238,7 @@ test.describe('Token Detail View', () => {
 
   test('should display asset ID for Algorand tokens', async ({ page }) => {
     await page.goto('/tokens/mock-token-123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Look for asset ID (Algorand-specific)
     const assetId = page.getByText(/Asset ID|ASA ID/i).first()
@@ -248,7 +248,7 @@ test.describe('Token Detail View', () => {
 
   test('should support keyboard navigation', async ({ page }) => {
     await page.goto('/tokens/mock-token-123')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Tab through interactive elements
     await page.keyboard.press('Tab')

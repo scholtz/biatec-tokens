@@ -16,7 +16,7 @@ test.describe('Discovery Dashboard', () => {
 
     // Navigate to discovery dashboard (public page, no auth required)
     await page.goto('/discovery')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
   })
 
   test('should display discovery dashboard page correctly', async ({ page }) => {

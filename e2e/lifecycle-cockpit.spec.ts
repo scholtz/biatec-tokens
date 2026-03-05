@@ -33,7 +33,7 @@ test.describe('Token Lifecycle Cockpit', () => {
 
   test('should display cockpit page correctly', async ({ page }) => {
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Check page title - use longer timeout instead of arbitrary wait
     const title = page.getByRole('heading', { name: /Token Lifecycle Cockpit/i, level: 1 })
@@ -46,7 +46,7 @@ test.describe('Token Lifecycle Cockpit', () => {
   test('should show cockpit navigation link', async ({ page }) => {
     // Cockpit is accessible directly at /cockpit (not in main nav since Operations replaced it)
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Verify cockpit page is accessible
     const title = page.getByRole('heading', { name: /Token Lifecycle Cockpit/i, level: 1 })
@@ -55,7 +55,7 @@ test.describe('Token Lifecycle Cockpit', () => {
 
   test('should navigate to cockpit from navbar', async ({ page }) => {
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Verify we're on the cockpit page
     await expect(page).toHaveURL('/cockpit')
@@ -67,7 +67,7 @@ test.describe('Token Lifecycle Cockpit', () => {
 
   test('should display role selector', async ({ page }) => {
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Check role selector dropdown
     const roleSelect = page.locator('select')
@@ -83,7 +83,7 @@ test.describe('Token Lifecycle Cockpit', () => {
 
   test('should display readiness status widget', async ({ page }) => {
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Check for readiness widget - semantic wait instead of arbitrary timeout
     const readinessWidget = page.getByRole('heading', { name: /Launch Readiness/i })
@@ -95,7 +95,7 @@ test.describe('Token Lifecycle Cockpit', () => {
 
   test('should display guided actions widget', async ({ page }) => {
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Check for actions widget - semantic wait
     const actionsWidget = page.getByRole('heading', { name: /Guided Next Actions/i })
@@ -104,7 +104,7 @@ test.describe('Token Lifecycle Cockpit', () => {
 
   test('should display wallet diagnostics widget', async ({ page }) => {
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Check for diagnostics widget - semantic wait
     const diagnosticsWidget = page.getByRole('heading', { name: /Wallet Diagnostics/i })
@@ -113,7 +113,7 @@ test.describe('Token Lifecycle Cockpit', () => {
 
   test('should display risk indicators widget', async ({ page }) => {
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Check for risk widget - semantic wait
     const riskWidget = page.getByRole('heading', { name: /Lifecycle Risk Indicators/i })
@@ -122,7 +122,7 @@ test.describe('Token Lifecycle Cockpit', () => {
 
   test('should have refresh button', async ({ page }) => {
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Check for refresh button - semantic wait
     const refreshButton = page.getByRole('button', { name: /Refresh/i })
@@ -131,7 +131,7 @@ test.describe('Token Lifecycle Cockpit', () => {
 
   test('should show last updated timestamp', async ({ page }) => {
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Check for last updated text — use first() because multiple widgets show this label
     await expect(page.getByText(/Last updated:/i).first()).toBeVisible({ timeout: 45000 })
@@ -139,7 +139,7 @@ test.describe('Token Lifecycle Cockpit', () => {
 
   test('should change role and update visible widgets', async ({ page }) => {
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Initially as Issuer Admin, all widgets should be visible - semantic wait
     await expect(page.getByRole('heading', { name: /Launch Readiness/i })).toBeVisible({ timeout: 45000 })
@@ -214,7 +214,7 @@ test.describe('Token Operations Cockpit — complete user flow', () => {
     // Navigate directly to cockpit (Cockpit is accessible at /cockpit directly;
     // Operations replaced Cockpit in the main nav since Operations/BusinessCommandCenter is the new nav entry)
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Verify cockpit page loaded
     await expect(page).toHaveURL('/cockpit')
@@ -228,7 +228,7 @@ test.describe('Token Operations Cockpit — complete user flow', () => {
 
   test('user views activity timeline on the cockpit page', async ({ page }) => {
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Wait for cockpit to load
     const heading = page.getByRole('heading', { name: /Token Lifecycle Cockpit/i })
@@ -245,7 +245,7 @@ test.describe('Token Operations Cockpit — complete user flow', () => {
 
   test('user reviews guided actions and can follow a deep link', async ({ page }) => {
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Wait for page to load
     const heading = page.getByRole('heading', { name: /Token Lifecycle Cockpit/i })
@@ -258,7 +258,7 @@ test.describe('Token Operations Cockpit — complete user flow', () => {
 
   test('user can refresh cockpit data and timestamp updates', async ({ page }) => {
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Wait for initial load
     const heading = page.getByRole('heading', { name: /Token Lifecycle Cockpit/i })
@@ -276,7 +276,7 @@ test.describe('Token Operations Cockpit — complete user flow', () => {
 
   test('cockpit does not display wallet connector UI (business roadmap alignment)', async ({ page }) => {
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Token Lifecycle Cockpit/i })
     await expect(heading).toBeVisible({ timeout: 45000 })
@@ -296,7 +296,7 @@ test.describe('Token Operations Cockpit — complete user flow', () => {
 
   test('cockpit is accessible — semantic headings and landmarks present', async ({ page }) => {
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1.first()).toBeVisible({ timeout: 45000 })

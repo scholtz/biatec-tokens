@@ -26,12 +26,12 @@ test.describe('Compliance Dashboard - Auth-First Flow', () => {
   test('should redirect unauthenticated user from compliance dashboard to login', async ({ page }) => {
     // Clear auth state
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await page.evaluate(() => localStorage.clear())
     
     // Try to access compliance dashboard
     await page.goto('/compliance/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Semantic wait: Wait for auth guard redirect to complete
     await page.waitForFunction(() => {
@@ -58,7 +58,7 @@ test.describe('Compliance Dashboard - Auth-First Flow', () => {
 
     // Navigate to compliance dashboard
     await page.goto('/compliance/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Should display the dashboard - semantic wait replaces arbitrary 10s timeout
     const heading = page.getByRole('heading', { level: 1 }).first()
@@ -71,7 +71,7 @@ test.describe('Compliance Dashboard - Auth-First Flow', () => {
 
     // Navigate to compliance dashboard
     await page.goto('/compliance/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Wait for page to load - semantic wait
     const heading = page.getByRole('heading', { level: 1 }).first()
@@ -99,7 +99,7 @@ test.describe('Compliance Dashboard - Auth-First Flow', () => {
     
     // Start at compliance dashboard
     await page.goto('/compliance/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Verify compliance dashboard loaded - semantic wait
     const heading1 = page.getByRole('heading', { level: 1 }).first()
@@ -107,7 +107,7 @@ test.describe('Compliance Dashboard - Auth-First Flow', () => {
     
     // Navigate to main dashboard
     await page.goto('/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Should still be authenticated (page loads, not redirected) - semantic wait
     const heading2 = page.getByRole('heading', { level: 1 }).first()
@@ -124,7 +124,7 @@ test.describe('Compliance Dashboard - Auth-First Flow', () => {
 
     // Navigate to compliance dashboard
     await page.goto('/compliance/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Wait for page to load - semantic wait
     const heading = page.getByRole('heading', { level: 1 }).first()
@@ -154,12 +154,12 @@ test.describe('Compliance Orchestration - Auth-First Flow', () => {
   test('should redirect unauthenticated user from compliance orchestration to login', async ({ page }) => {
     // Clear auth state
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await page.evaluate(() => localStorage.clear())
     
     // Try to access compliance orchestration
     await page.goto('/compliance/orchestration')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Semantic wait: Wait for auth guard redirect to complete
     await page.waitForFunction(() => {
@@ -183,7 +183,7 @@ test.describe('Compliance Orchestration - Auth-First Flow', () => {
     
     // Navigate to compliance orchestration
     await page.goto('/compliance/orchestration')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Semantic wait: Wait for page heading to appear (proves page loaded)
     const heading = page.getByRole('heading', { level: 1 }).first()

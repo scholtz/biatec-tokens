@@ -33,14 +33,14 @@ test.describe('Homepage and structural tests', () => {
 
   test('homepage loads and has Biatec branding in title', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const title = await page.title()
     expect(title).toMatch(/biatec|token/i)
   })
 
   test('homepage has Sign In button (email/password auth, no wallet connector)', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const heading = page.getByRole('heading').first()
     await expect(heading).toBeVisible({ timeout: 15000 })
     // No wallet connector text must appear in visible page content
@@ -50,7 +50,7 @@ test.describe('Homepage and structural tests', () => {
 
   test('homepage navigation contains no wallet connector UI', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })
     const navText = await nav.textContent().catch(() => '')
@@ -59,7 +59,7 @@ test.describe('Homepage and structural tests', () => {
 
   test('guided launch route exists (either page or auth redirect)', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const url = page.url()
     expect(url).toBeTruthy()
     const content = await page.content()
@@ -69,7 +69,7 @@ test.describe('Homepage and structural tests', () => {
   test('unauthenticated /launch/guided redirects to auth or shows auth prompt', async ({ page }) => {
     await clearAuthScript(page)
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     // Flexible: URL may include showAuth param OR auth form is visible
     const url = page.url()
     const content = await page.content()
@@ -80,21 +80,21 @@ test.describe('Homepage and structural tests', () => {
 
   test('no "sign transaction" or "approve in wallet" text on homepage', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const bodyText = await page.locator('body').innerText()
     expect(bodyText).not.toMatch(/sign transaction|approve in wallet/i)
   })
 
   test('homepage main heading is visible', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const heading = page.getByRole('heading').first()
     await expect(heading).toBeVisible({ timeout: 15000 })
   })
 
   test('page title includes Biatec or Token branding', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const title = await page.title()
     expect(title).toMatch(/biatec|token/i)
   })
@@ -153,14 +153,14 @@ test.describe('Guided launch page — authenticated', () => {
 
   test('guided launch page has h1 heading', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
   })
 
   test('guided launch page has no wallet connector text', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
     const nav = page.getByRole('navigation').first()
@@ -170,7 +170,7 @@ test.describe('Guided launch page — authenticated', () => {
 
   test('guided launch page has progress indicator or step list', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
     // Either a progressbar or a list of steps must be present
@@ -182,7 +182,7 @@ test.describe('Guided launch page — authenticated', () => {
 
   test('guided launch page has a main landmark', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
     const main = page.getByRole('main')
@@ -192,7 +192,7 @@ test.describe('Guided launch page — authenticated', () => {
 
   test('organization profile form inputs are accessible (have labels)', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
     const inputs = page.locator('input[type="text"], input[type="email"]')
@@ -212,7 +212,7 @@ test.describe('Guided launch page — authenticated', () => {
 
   test('no "sign transaction" text on guided launch page', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeVisible({ timeout: 60000 })
     const bodyText = await page.locator('body').innerText()

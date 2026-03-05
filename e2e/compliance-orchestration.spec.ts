@@ -38,7 +38,7 @@ test.describe('Compliance Orchestration View', () => {
 
     // Navigate to compliance orchestration page
     await page.goto('/compliance/orchestration')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Wait for main heading to ensure page is fully loaded
     await page.getByRole('heading', { name: /Compliance Verification/i, level: 1 }).waitFor({ state: 'visible', timeout: 45000 })

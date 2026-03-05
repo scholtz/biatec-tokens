@@ -51,7 +51,7 @@ test.describe('Pipeline entry: unauthenticated user', () => {
     // No CI skip — clearAuthScript ensures auth is absent from the very first page load,
     // eliminating the auth-guard timing race that previously required skipping in CI.
     await page.goto('/launch/guided');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     // Semantic wait: router guard completes one of three valid auth signals:
     //   1. URL query param `showAuth=true`   — router redirected to home with auth trigger
@@ -78,7 +78,7 @@ test.describe('Pipeline entry: unauthenticated user', () => {
   test('guest accessing compliance setup is redirected to auth', async ({ page }) => {
     // No CI skip — same clearAuthScript fix applied here.
     await page.goto('/compliance/setup');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     await page.waitForFunction(
       () => {
@@ -103,7 +103,7 @@ test.describe('Pipeline entry: unauthenticated user', () => {
 
   test('homepage shows Sign In button (auth_required step is actionable)', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     const signIn = page.getByRole('button', { name: /sign in/i }).first();
     await expect(signIn).toBeVisible({ timeout: 15000 });
@@ -111,7 +111,7 @@ test.describe('Pipeline entry: unauthenticated user', () => {
 
   test('guest navigation contains no wallet connector text', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     // getNavText() waits for nav and returns textContent — avoids compiled-bundle false positives
     const navText = await getNavText(page);
@@ -135,7 +135,7 @@ test.describe('Pipeline: authenticated user access', () => {
     page,
   }) => {
     await page.goto('/launch/guided');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     // Semantic wait: page title heading must be present
     const heading = page.getByRole('heading', { level: 1 });
@@ -148,7 +148,7 @@ test.describe('Pipeline: authenticated user access', () => {
 
   test('authenticated user can reach compliance setup workspace', async ({ page }) => {
     await page.goto('/compliance/setup');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     // Semantic wait: any heading must appear on the compliance setup page
     const heading = page.getByRole('heading').first();
@@ -160,7 +160,7 @@ test.describe('Pipeline: authenticated user access', () => {
 
   test('authenticated user navigation contains no wallet connector text', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     // getNavText() waits for nav and returns textContent — avoids compiled-bundle false positives
     const navText = await getNavText(page);
@@ -172,7 +172,7 @@ test.describe('Pipeline: authenticated user access', () => {
     page,
   }) => {
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     // Semantic wait: any heading visible (dashboard is behind auth)
     const heading = page.getByRole('heading').first();
@@ -189,7 +189,7 @@ test.describe('Product alignment: email/password-only, backend deployment', () =
     page,
   }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     const signIn = page.getByRole('button', { name: /sign in/i }).first();
     await expect(signIn).toBeVisible({ timeout: 15000 });
@@ -203,7 +203,7 @@ test.describe('Product alignment: email/password-only, backend deployment', () =
   test('guided launch page (authenticated) shows no wallet-signing UI', async ({ page }) => {
     await loginWithCredentials(page);
     await page.goto('/launch/guided');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     const heading = page.getByRole('heading', { level: 1 });
     await expect(heading).toBeVisible({ timeout: 45000 });
@@ -252,7 +252,7 @@ test.describe('Accessibility: pipeline entry points', () => {
     page,
   }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     // Main landmark
     const main = page.getByRole('main');
@@ -266,7 +266,7 @@ test.describe('Accessibility: pipeline entry points', () => {
   test('guided launch (authenticated) has a main landmark', async ({ page }) => {
     await loginWithCredentials(page);
     await page.goto('/launch/guided');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
 
     const main = page.getByRole('main');
     await expect(main).toBeVisible({ timeout: 30000 });

@@ -18,14 +18,14 @@ test.describe('Portfolio Intelligence Layer', () => {
 
   test('should load portfolio intelligence page', async ({ page }) => {
     await page.goto('/portfolio')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const heading = page.getByRole('heading', { name: /Portfolio Intelligence/i })
     await expect(heading).toBeVisible({ timeout: 30000 })
   })
 
   test('should show portfolio summary section', async ({ page }) => {
     await page.goto('/portfolio')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await expect(page.getByRole('heading', { name: /Portfolio Intelligence/i })).toBeVisible({ timeout: 30000 })
     // Summary panel shows up after data loads
     const summaryRegion = page.getByRole('region', { name: /Portfolio Summary/i })
@@ -34,7 +34,7 @@ test.describe('Portfolio Intelligence Layer', () => {
 
   test('should show insights section', async ({ page }) => {
     await page.goto('/portfolio')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await expect(page.getByRole('heading', { name: /Portfolio Intelligence/i })).toBeVisible({ timeout: 30000 })
     const insightsHeading = page.getByRole('heading', { name: /Insights/i }).first()
     await expect(insightsHeading).toBeVisible({ timeout: 30000 })
@@ -42,7 +42,7 @@ test.describe('Portfolio Intelligence Layer', () => {
 
   test('should show watchlist section', async ({ page }) => {
     await page.goto('/portfolio')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await expect(page.getByRole('heading', { name: /Portfolio Intelligence/i })).toBeVisible({ timeout: 30000 })
     const watchlistHeading = page.getByRole('heading', { name: /Watchlist/i })
     await expect(watchlistHeading).toBeVisible({ timeout: 30000 })
@@ -54,7 +54,7 @@ test.describe('Portfolio Intelligence Layer', () => {
       localStorage.setItem('portfolio_onboarding_completed_v1', 'true')
     })
     await page.goto('/portfolio')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await expect(page.getByRole('heading', { name: /Portfolio Intelligence/i })).toBeVisible({ timeout: 30000 })
     // Click first "+ Add" button if available
     const addButton = page.locator('button').filter({ hasText: /\+ Add/i }).first()
@@ -79,7 +79,7 @@ test.describe('Portfolio Intelligence Layer', () => {
       localStorage.setItem('portfolio_onboarding_completed_v1', 'true')
     })
     await page.goto('/portfolio')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await expect(page.getByRole('heading', { name: /Portfolio Intelligence/i })).toBeVisible({ timeout: 30000 })
     const removeButton = page.locator('button[aria-label*="Remove USDC"]')
     await expect(removeButton).toBeVisible({ timeout: 15000 })
@@ -96,11 +96,11 @@ test.describe('Portfolio Intelligence Layer', () => {
       localStorage.setItem('portfolio_onboarding_completed_v1', 'true')
     })
     await page.goto('/portfolio')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await expect(page.getByRole('heading', { name: /Portfolio Intelligence/i })).toBeVisible({ timeout: 30000 })
     // Reload
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const usdcEntry = page.locator('text=USDC').first()
     await expect(usdcEntry).toBeVisible({ timeout: 30000 })
   })
@@ -108,7 +108,7 @@ test.describe('Portfolio Intelligence Layer', () => {
   test('should show onboarding walkthrough on first visit', async ({ page }) => {
     // No onboarding key → first visit
     await page.goto('/portfolio')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await expect(page.getByRole('heading', { name: /Portfolio Intelligence/i })).toBeVisible({ timeout: 30000 })
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible({ timeout: 15000 })
@@ -116,7 +116,7 @@ test.describe('Portfolio Intelligence Layer', () => {
 
   test('should skip onboarding walkthrough', async ({ page }) => {
     await page.goto('/portfolio')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const dialog = page.getByRole('dialog')
     const dialogVisible = await dialog.isVisible().catch(() => false)
     if (dialogVisible) {
@@ -130,7 +130,7 @@ test.describe('Portfolio Intelligence Layer', () => {
 
   test('should show portfolio navigation link in navbar', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const portfolioLink = page.getByRole('link', { name: /Portfolio/i }).first()
     await expect(portfolioLink).toBeVisible({ timeout: 15000 })
   })
@@ -139,10 +139,10 @@ test.describe('Portfolio Intelligence Layer', () => {
     // Skip in CI due to auth guard timing - passes 100% locally
     test.skip(!!process.env.CI, 'CI absolute timing ceiling: auth guard redirect requires extended wait in CI — see #495')
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await page.evaluate(() => localStorage.clear())
     await page.goto('/portfolio')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const url = page.url()
     const urlHasAuthParam = url.includes('showAuth=true')
     const authModalVisible = await page.locator('form').filter({ hasText: /email/i }).isVisible().catch(() => false)
@@ -151,7 +151,7 @@ test.describe('Portfolio Intelligence Layer', () => {
 
   test('should show insight cards', async ({ page }) => {
     await page.goto('/portfolio')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await expect(page.getByRole('heading', { name: /Portfolio Intelligence/i })).toBeVisible({ timeout: 30000 })
     // Insights should appear for mock data (has unusual movement, dormant holdings, low liquidity)
     const articles = page.locator('[role="article"]')
@@ -161,7 +161,7 @@ test.describe('Portfolio Intelligence Layer', () => {
 
   test('should handle keyboard navigation', async ({ page }) => {
     await page.goto('/portfolio')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await expect(page.getByRole('heading', { name: /Portfolio Intelligence/i })).toBeVisible({ timeout: 30000 })
     // Tab through interactive elements
     await page.keyboard.press('Tab')
@@ -173,7 +173,7 @@ test.describe('Portfolio Intelligence Layer', () => {
   test('should show mobile layout correctly', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
     await page.goto('/portfolio')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     const heading = page.getByRole('heading', { name: /Portfolio Intelligence/i })
     await expect(heading).toBeVisible({ timeout: 30000 })
   })
@@ -181,7 +181,7 @@ test.describe('Portfolio Intelligence Layer', () => {
   test('should display concentration risk insight', async ({ page }) => {
     // The mock data has WBTC at 3000/4500 = 66% → concentration risk
     await page.goto('/portfolio')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await expect(page.getByRole('heading', { name: /Portfolio Intelligence/i })).toBeVisible({ timeout: 30000 })
     // Check for Critical badge (concentration risk is critical)
     const criticalBadge = page.locator('text=Critical').first()

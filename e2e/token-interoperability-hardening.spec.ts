@@ -22,7 +22,7 @@ test.describe('Token Standards View — Interoperability', () => {
   test.beforeEach(async ({ page }) => {
     suppressBrowserErrors(page)
     await page.goto('/token-standards')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
   })
 
   test('should load the token standards page', async ({ page }) => {
@@ -71,7 +71,7 @@ test.describe('Wallet Activation Journey — Auth-First', () => {
       isConnected: true,
     })
     await page.goto('/activation/wallet')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
   })
 
   test('should load the wallet activation journey page', async ({ page }) => {
@@ -118,7 +118,7 @@ test.describe('Home Page — Interoperability CTAs', () => {
   test.beforeEach(async ({ page }) => {
     suppressBrowserErrors(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
   })
 
   test('should load home page without errors', async ({ page }) => {
@@ -163,7 +163,7 @@ test.describe('Roadmap Alignment — No Wallet Connector Surfaces', () => {
     test(`should not show wallet connector on ${route}`, async ({ page }) => {
       suppressBrowserErrors(page)
       await page.goto(route)
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
       const bodyText = await page.locator('body').innerText()
       expect(bodyText).not.toMatch(/WalletConnect|connect.*wallet/i)
     })
@@ -172,7 +172,7 @@ test.describe('Roadmap Alignment — No Wallet Connector Surfaces', () => {
   test('should display email/password authentication as primary auth method', async ({ page }) => {
     suppressBrowserErrors(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Trigger auth modal if available
     const signInBtn = page.getByRole('button', { name: /sign in/i }).first()

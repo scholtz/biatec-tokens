@@ -29,12 +29,12 @@ test.describe('Auth Error Scenarios - Negative Path Testing', () => {
   test('should redirect unauthenticated user trying to access protected route', async ({ page }) => {
     // Clear any existing auth
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await page.evaluate(() => localStorage.clear())
     
     // Try to access protected route without authentication
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Should redirect to home with auth modal trigger
     const url = page.url()
@@ -52,7 +52,7 @@ test.describe('Auth Error Scenarios - Negative Path Testing', () => {
   test('should redirect unauthenticated user from multiple protected routes', async ({ page }) => {
     // Clear auth
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await page.evaluate(() => localStorage.clear())
     
     // Test multiple protected routes
@@ -67,7 +67,7 @@ test.describe('Auth Error Scenarios - Negative Path Testing', () => {
     
     for (const route of protectedRoutes) {
       await page.goto(route)
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
       
       // Should redirect to home or show auth modal
       const url = page.url()
@@ -82,12 +82,12 @@ test.describe('Auth Error Scenarios - Negative Path Testing', () => {
   test('should maintain redirect target after authentication', async ({ page }) => {
     // Clear auth
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await page.evaluate(() => localStorage.clear())
     
     // Try to access protected route (should store redirect target)
     await page.goto('/cockpit')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Should be redirected to home
     const url = page.url()
@@ -108,10 +108,10 @@ test.describe('Auth Error Scenarios - Negative Path Testing', () => {
   test('should handle missing auth state gracefully', async ({ page }) => {
     // Navigate to home with NO auth state
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await page.evaluate(() => localStorage.clear())
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Page should load normally (show unauthenticated state)
     // Check for presence of Sign In button or similar
@@ -134,7 +134,7 @@ test.describe('Auth Error Scenarios - Negative Path Testing', () => {
     
     // Try to access protected route
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Should treat as unauthenticated and redirect
     const url = page.url()
@@ -157,7 +157,7 @@ test.describe('Auth Error Scenarios - Negative Path Testing', () => {
     
     // Try to access protected route
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Should either redirect OR show page (implementation dependent)
     // At minimum, page should load without crashing
@@ -181,7 +181,7 @@ test.describe('Auth Error Scenarios - Negative Path Testing', () => {
     
     // Try to access protected route
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // The router guard for GuidedTokenLaunch uses isIssuanceSessionValid() which
     // checks isConnected === true. With isConnected=false, the user is redirected
@@ -196,7 +196,7 @@ test.describe('Auth Error Scenarios - Negative Path Testing', () => {
   test('should clear auth state when accessing route with empty localStorage', async ({ page }) => {
     // Clear all localStorage
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await page.evaluate(() => localStorage.clear())
     
     // Verify localStorage is empty
@@ -208,7 +208,7 @@ test.describe('Auth Error Scenarios - Negative Path Testing', () => {
     
     // Try to access protected route
     await page.goto('/compliance/setup')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Should redirect
     const url = page.url()

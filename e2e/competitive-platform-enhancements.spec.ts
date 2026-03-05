@@ -34,7 +34,7 @@ test.beforeEach(async ({ page }) => {
 test.describe('Improvement 1: Launch Preflight Validator in Guided Token Launch', () => {
   test('Guided Token Launch page loads and shows the launch wizard', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: heading visible proves auth store initialized + component mounted
     const heading = page.getByRole('heading', { name: /guided token launch/i }).first()
@@ -44,7 +44,7 @@ test.describe('Improvement 1: Launch Preflight Validator in Guided Token Launch'
 
   test('Guided Token Launch contains a progress indicator', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: page heading must appear before checking progress indicator
     const heading = page.getByRole('heading', { name: /guided token launch/i }).first()
@@ -60,7 +60,7 @@ test.describe('Improvement 1: Launch Preflight Validator in Guided Token Launch'
 
   test('Guided Token Launch shows step navigation controls', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: page heading must appear before checking buttons
     const heading = page.getByRole('heading', { name: /guided token launch/i }).first()
@@ -74,7 +74,7 @@ test.describe('Improvement 1: Launch Preflight Validator in Guided Token Launch'
 
   test('Guided Token Launch has no wallet connector UI', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: page heading confirms content is loaded before text assertion
     const heading = page.getByRole('heading', { name: /guided token launch/i }).first()
@@ -91,7 +91,7 @@ test.describe('Improvement 1: Launch Preflight Validator in Guided Token Launch'
 test.describe('Improvement 2: Trust Score Calculator in Vision Insights Workspace', () => {
   test('Vision Insights Workspace page loads successfully', async ({ page }) => {
     await page.goto('/insights')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: heading visible proves component mounted
     const heading = page.getByRole('heading', { name: /vision insights workspace/i }).first()
@@ -101,7 +101,7 @@ test.describe('Improvement 2: Trust Score Calculator in Vision Insights Workspac
 
   test('Vision Insights Workspace renders metrics or loading/error state', async ({ page }) => {
     await page.goto('/insights')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: heading proves component mounted before checking sub-elements
     const heading = page.getByRole('heading', { name: /vision insights workspace/i }).first()
@@ -121,7 +121,7 @@ test.describe('Improvement 2: Trust Score Calculator in Vision Insights Workspac
 
   test('Vision Insights Workspace has export functionality', async ({ page }) => {
     await page.goto('/insights')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: heading proves component mounted before checking buttons
     const heading = page.getByRole('heading', { name: /vision insights workspace/i }).first()
@@ -134,7 +134,7 @@ test.describe('Improvement 2: Trust Score Calculator in Vision Insights Workspac
 
   test('Vision Insights Workspace has no wallet connector UI', async ({ page }) => {
     await page.goto('/insights')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: heading proves page is loaded before text assertion
     const heading = page.getByRole('heading', { name: /vision insights workspace/i }).first()
@@ -150,7 +150,7 @@ test.describe('Improvement 2: Trust Score Calculator in Vision Insights Workspac
 test.describe('Improvement 3: Wallet Activation Checkpoint in Wallet Activation Journey', () => {
   test('Wallet Activation Journey page loads with progress indicator', async ({ page }) => {
     await page.goto('/activation/wallet')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: heading visible proves auth store initialized + component mounted
     const heading = page.getByRole('heading', { name: /wallet activation journey/i }).first()
@@ -160,7 +160,7 @@ test.describe('Improvement 3: Wallet Activation Checkpoint in Wallet Activation 
 
   test('Wallet Activation Journey shows first step content', async ({ page }) => {
     await page.goto('/activation/wallet')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: page heading must appear before checking step content
     const heading = page.getByRole('heading', { name: /wallet activation journey/i }).first()
@@ -174,7 +174,7 @@ test.describe('Improvement 3: Wallet Activation Checkpoint in Wallet Activation 
 
   test('Wallet Activation checkpoint is saved in localStorage after step advance', async ({ page }) => {
     await page.goto('/activation/wallet')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: page must be loaded before interacting with buttons
     const heading = page.getByRole('heading', { name: /wallet activation journey/i }).first()
@@ -230,7 +230,7 @@ test.describe('Improvement 3: Wallet Activation Checkpoint in Wallet Activation 
     })
 
     await page.goto('/activation/wallet')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: heading proves page mounted correctly
     const heading = page.getByRole('heading', { name: /wallet activation journey/i }).first()
@@ -240,7 +240,7 @@ test.describe('Improvement 3: Wallet Activation Checkpoint in Wallet Activation 
 
   test('Wallet Activation Journey has no wallet connector UI', async ({ page }) => {
     await page.goto('/activation/wallet')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: heading proves page loaded before text assertion
     const heading = page.getByRole('heading', { name: /wallet activation journey/i }).first()
@@ -257,7 +257,7 @@ test.describe('Improvement 3: Wallet Activation Checkpoint in Wallet Activation 
 test.describe('All improvements: auth-first and email-only compliance', () => {
   test('home page does not show wallet connector controls', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: home page h1 proves component mounted before text check
     const h1 = page.locator('h1').first()
@@ -271,7 +271,7 @@ test.describe('All improvements: auth-first and email-only compliance', () => {
 
   test('navigation contains expected authenticated routes', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Semantic wait: nav link proves layout is rendered
     const guidedLink = page.getByRole('link', { name: /guided launch/i }).first()

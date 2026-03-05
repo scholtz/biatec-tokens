@@ -44,7 +44,7 @@ test.describe('Guided Portfolio Onboarding', () => {
 
   test('should display the portfolio onboarding page heading', async ({ page }) => {
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const heading = page.getByRole('heading', { name: /Portfolio Onboarding/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 45000 })
@@ -52,7 +52,7 @@ test.describe('Guided Portfolio Onboarding', () => {
 
   test('should show the guided next step module', async ({ page }) => {
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const region = page.getByRole('region', { name: /guided next step/i })
     await expect(region).toBeVisible({ timeout: 45000 })
@@ -60,7 +60,7 @@ test.describe('Guided Portfolio Onboarding', () => {
 
   test('should show the portfolio continuity panel', async ({ page }) => {
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const region = page.getByRole('region', { name: /portfolio continuity/i })
     await expect(region).toBeVisible({ timeout: 45000 })
@@ -68,7 +68,7 @@ test.describe('Guided Portfolio Onboarding', () => {
 
   test('should show the action readiness indicator', async ({ page }) => {
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const region = page.getByRole('region', { name: /action readiness/i })
     await expect(region).toBeVisible({ timeout: 45000 })
@@ -76,7 +76,7 @@ test.describe('Guided Portfolio Onboarding', () => {
 
   test('should display onboarding progress percentage', async ({ page }) => {
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Progress badge should show a % value
     const content = await page.content()
@@ -91,11 +91,11 @@ test.describe('Guided Portfolio Onboarding', () => {
 
     // Clear auth
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     await page.evaluate(() => localStorage.clear())
 
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Should be redirected
     const url = page.url()
@@ -108,21 +108,21 @@ test.describe('Guided Portfolio Onboarding', () => {
 
   test('should show "Your Next Step" header in guided module', async ({ page }) => {
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await expect(page.getByText(/Your Next Step/i).first()).toBeVisible({ timeout: 45000 })
   })
 
   test('should show "Portfolio Since Last Visit" header', async ({ page }) => {
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     await expect(page.getByText(/Portfolio Since Last Visit/i)).toBeVisible({ timeout: 45000 })
   })
 
   test('should show readiness checks count', async ({ page }) => {
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const content = await page.content()
     // Should show "X/5 checks passed" format
@@ -131,7 +131,7 @@ test.describe('Guided Portfolio Onboarding', () => {
 
   test('should show a sign-in step for new user', async ({ page }) => {
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const content = await page.content()
     expect(content).toContain('Sign In')
@@ -146,7 +146,7 @@ test.describe('Guided Portfolio Onboarding', () => {
     })
 
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const content = await page.content()
     // Either shows "First visit detected" or has deltas with changes
@@ -167,7 +167,7 @@ test.describe('Guided Portfolio Onboarding', () => {
     })
 
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Auth guard redirects unauthenticated user — we verify sign-in is exposed
     const url = page.url()
@@ -178,7 +178,7 @@ test.describe('Guided Portfolio Onboarding', () => {
 
   test('[Journey] authenticated user sees progress bar and can read next guided step', async ({ page }) => {
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Verify progress bar is present and readable
     const progressbar = page.getByRole('progressbar')
@@ -200,7 +200,7 @@ test.describe('Guided Portfolio Onboarding', () => {
 
   test('[Journey] onboarding page has link to guided token launch', async ({ page }) => {
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // The guided launch CTA or navigation to launch should be discoverable
     const content = await page.content()
@@ -212,7 +212,7 @@ test.describe('Guided Portfolio Onboarding', () => {
 
   test('[Failure Recovery] readiness checks show all passing when authenticated with valid state', async ({ page }) => {
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const content = await page.content()
     // With valid auth (set in beforeEach), readiness should show at least partial passing
@@ -221,7 +221,7 @@ test.describe('Guided Portfolio Onboarding', () => {
 
   test('[Failure Recovery] blocked steps display blockedReason text', async ({ page }) => {
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // The ActionReadinessIndicator surfaces blockers when conditions aren't met.
     // With an unauthenticated/pending test user at least the auth or provisioning
@@ -246,7 +246,7 @@ test.describe('Guided Portfolio Onboarding', () => {
     })
 
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const content = await page.content()
     // Should show delta indicators (Tokens Created, Deployed Tokens, Compliance Score)
@@ -259,7 +259,7 @@ test.describe('Guided Portfolio Onboarding', () => {
 
   test('should not show wallet connector UI', async ({ page }) => {
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const content = await page.content()
     expect(content).not.toMatch(/WalletConnect|MetaMask|Pera.*Wallet|Defly/i)
@@ -268,7 +268,7 @@ test.describe('Guided Portfolio Onboarding', () => {
 
   test('should have accessible progressbar element', async ({ page }) => {
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const progressbar = page.getByRole('progressbar')
     await expect(progressbar).toBeVisible({ timeout: 45000 })
@@ -280,7 +280,7 @@ test.describe('Guided Portfolio Onboarding', () => {
 
   test('should have accessible onboarding steps list', async ({ page }) => {
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const stepsList = page.getByRole('list', { name: /onboarding steps/i })
     await expect(stepsList).toBeVisible({ timeout: 45000 })
@@ -293,7 +293,7 @@ test.describe('Guided Portfolio Onboarding', () => {
     })
 
     await page.goto('/portfolio/onboarding')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Use waitForFunction to deterministically wait until snapshot is persisted
     await page.waitForFunction(

@@ -61,7 +61,7 @@ test.describe('Subscription & Billing Management', () => {
   test.describe('Pricing Page', () => {
     test('should display pricing page without authentication', async ({ page }) => {
       await page.goto('/subscription/pricing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const heading = page.getByRole('heading', { name: /Simple, Predictable Pricing/i })
       await expect(heading).toBeVisible({ timeout: 15000 })
@@ -69,7 +69,7 @@ test.describe('Subscription & Billing Management', () => {
 
     test('should display three pricing tiers', async ({ page }) => {
       await page.goto('/subscription/pricing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       await expect(page.getByRole('heading', { name: 'Basic', level: 3 }).first()).toBeVisible({ timeout: 15000 })
       await expect(page.getByRole('heading', { name: 'Professional', level: 3 }).first()).toBeVisible({ timeout: 15000 })
@@ -78,7 +78,7 @@ test.describe('Subscription & Billing Management', () => {
 
     test('should display price amounts', async ({ page }) => {
       await page.goto('/subscription/pricing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const content = await page.content()
       expect(content).toContain('$29')
@@ -88,7 +88,7 @@ test.describe('Subscription & Billing Management', () => {
 
     test('should show sign-in CTA for unauthenticated users', async ({ page }) => {
       await page.goto('/subscription/pricing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const signInBtn = page.getByRole('button', { name: /Sign In or Create Account/i }).first()
       await expect(signInBtn).toBeVisible({ timeout: 15000 })
@@ -96,7 +96,7 @@ test.describe('Subscription & Billing Management', () => {
 
     test('should not contain wallet connector UI', async ({ page }) => {
       await page.goto('/subscription/pricing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const content = await page.content()
       expect(content).not.toMatch(/WalletConnect|MetaMask|Pera.*Wallet|Defly/i)
@@ -105,7 +105,7 @@ test.describe('Subscription & Billing Management', () => {
 
     test('should show feature comparison table', async ({ page }) => {
       await page.goto('/subscription/pricing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const heading = page.getByRole('heading', { name: /Detailed Feature Comparison/i })
       await expect(heading).toBeVisible({ timeout: 15000 })
@@ -115,11 +115,11 @@ test.describe('Subscription & Billing Management', () => {
   test.describe('Subscription Management Page (auth required)', () => {
     test('should redirect unauthenticated user away from /account/subscription', async ({ page }) => {
       await page.goto('/')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
       await page.evaluate(() => localStorage.clear())
 
       await page.goto('/account/subscription')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       // Semantic wait: auth guard redirect completes when URL changes or auth form appears
       await page.waitForFunction(
@@ -144,7 +144,7 @@ test.describe('Subscription & Billing Management', () => {
       }, AUTH_USER)
 
       await page.goto('/account/subscription')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const heading = page.getByRole('heading', { name: /Subscription Management/i, level: 1 })
       await expect(heading).toBeVisible({ timeout: 45000 })
@@ -156,7 +156,7 @@ test.describe('Subscription & Billing Management', () => {
       }, AUTH_USER)
 
       await page.goto('/account/subscription')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const planCard = page.locator('[data-testid="current-plan-card"]')
       await expect(planCard).toBeVisible({ timeout: 45000 })
@@ -168,7 +168,7 @@ test.describe('Subscription & Billing Management', () => {
       }, AUTH_USER)
 
       await page.goto('/account/subscription')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const billingLink = page.locator('[data-testid="billing-history-link"]')
       await expect(billingLink).toBeVisible({ timeout: 45000 })
@@ -183,7 +183,7 @@ test.describe('Subscription & Billing Management', () => {
       }, AUTH_USER)
 
       await page.goto('/account/subscription')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const paymentCard = page.locator('[data-testid="payment-method-card"]')
       await expect(paymentCard).toBeVisible({ timeout: 45000 })
@@ -197,7 +197,7 @@ test.describe('Subscription & Billing Management', () => {
       }, AUTH_USER)
 
       await page.goto('/account/billing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const heading = page.getByRole('heading', { name: /Billing History/i, level: 1 })
       await expect(heading).toBeVisible({ timeout: 45000 })
@@ -209,7 +209,7 @@ test.describe('Subscription & Billing Management', () => {
       }, AUTH_USER)
 
       await page.goto('/account/billing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const invoiceList = page.locator('[data-testid="invoice-list"]')
       await expect(invoiceList).toBeVisible({ timeout: 45000 })
@@ -221,7 +221,7 @@ test.describe('Subscription & Billing Management', () => {
       }, AUTH_USER)
 
       await page.goto('/account/billing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const backBtn = page.locator('[data-testid="back-to-subscription-btn"]')
       await expect(backBtn).toBeVisible({ timeout: 45000 })
@@ -235,7 +235,7 @@ test.describe('Subscription & Billing Management', () => {
       }, AUTH_USER)
 
       await page.goto('/account/usage')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const heading = page.getByRole('heading', { name: /Usage & Limits/i, level: 1 })
       await expect(heading).toBeVisible({ timeout: 45000 })
@@ -247,7 +247,7 @@ test.describe('Subscription & Billing Management', () => {
       }, AUTH_USER)
 
       await page.goto('/account/usage')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const tokensCard = page.locator('[data-testid="tokens-usage-card"]')
       await expect(tokensCard).toBeVisible({ timeout: 45000 })
@@ -259,7 +259,7 @@ test.describe('Subscription & Billing Management', () => {
       }, AUTH_USER)
 
       await page.goto('/account/usage')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const apiCard = page.locator('[data-testid="api-usage-card"]')
       await expect(apiCard).toBeVisible({ timeout: 45000 })
@@ -271,7 +271,7 @@ test.describe('Subscription & Billing Management', () => {
       }, AUTH_USER)
 
       await page.goto('/account/usage')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const planSummary = page.locator('[data-testid="plan-summary"]')
       await expect(planSummary).toBeVisible({ timeout: 45000 })
@@ -285,7 +285,7 @@ test.describe('Subscription & Billing Management', () => {
       }, AUTH_USER)
 
       await page.goto('/subscription/success')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const content = await page.content()
       expect(content).toContain('Payment Successful')
@@ -295,7 +295,7 @@ test.describe('Subscription & Billing Management', () => {
   test.describe('Cancel Page', () => {
     test('should display cancel page when payment is cancelled', async ({ page }) => {
       await page.goto('/subscription/cancel')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const content = await page.content()
       expect(content).toContain('Payment Cancelled')
@@ -305,7 +305,7 @@ test.describe('Subscription & Billing Management', () => {
   test.describe('Annual Billing Toggle', () => {
     test('should display the billing interval toggle', async ({ page }) => {
       await page.goto('/subscription/pricing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const toggle = page.locator('[data-testid="billing-toggle"]')
       await expect(toggle).toBeVisible({ timeout: 15000 })
@@ -313,7 +313,7 @@ test.describe('Subscription & Billing Management', () => {
 
     test('should display annual discount badge', async ({ page }) => {
       await page.goto('/subscription/pricing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const badge = page.locator('[data-testid="annual-discount-badge"]')
       await expect(badge).toBeVisible({ timeout: 15000 })
@@ -322,7 +322,7 @@ test.describe('Subscription & Billing Management', () => {
 
     test('should show annual billing note when toggle is switched to annual', async ({ page }) => {
       await page.goto('/subscription/pricing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const toggle = page.locator('[data-testid="billing-interval-toggle"]')
       await toggle.click()
@@ -333,7 +333,7 @@ test.describe('Subscription & Billing Management', () => {
 
     test('should display lower monthly-equivalent price when annual is selected', async ({ page }) => {
       await page.goto('/subscription/pricing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       // Get monthly price
       const monthlyPriceEl = page.locator('[data-testid="basic-price"]').first()
@@ -357,7 +357,7 @@ test.describe('Subscription & Billing Management', () => {
   test.describe('Coupon Code', () => {
     test('should display coupon code input field', async ({ page }) => {
       await page.goto('/subscription/pricing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const couponInput = page.locator('[data-testid="coupon-input"]')
       await expect(couponInput).toBeVisible({ timeout: 15000 })
@@ -365,7 +365,7 @@ test.describe('Subscription & Billing Management', () => {
 
     test('should show apply button for coupon', async ({ page }) => {
       await page.goto('/subscription/pricing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const applyBtn = page.locator('[data-testid="coupon-apply-btn"]')
       await expect(applyBtn).toBeVisible({ timeout: 15000 })
@@ -373,7 +373,7 @@ test.describe('Subscription & Billing Management', () => {
 
     test('should apply a valid coupon code and show success message', async ({ page }) => {
       await page.goto('/subscription/pricing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const couponInput = page.locator('[data-testid="coupon-input"]')
       await couponInput.fill('LAUNCH20')
@@ -390,7 +390,7 @@ test.describe('Subscription & Billing Management', () => {
 
     test('should show error for invalid coupon code', async ({ page }) => {
       await page.goto('/subscription/pricing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const couponInput = page.locator('[data-testid="coupon-input"]')
       await couponInput.fill('BADCODE999')
@@ -410,7 +410,7 @@ test.describe('Subscription & Billing Management', () => {
       await setupTrialSubscription(page, 10)
 
       await page.goto('/dashboard')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const banner = page.locator('[data-testid="trial-countdown-banner"]')
       await expect(banner).toBeVisible({ timeout: 25000 })
@@ -420,7 +420,7 @@ test.describe('Subscription & Billing Management', () => {
       await setupTrialSubscription(page, 7)
 
       await page.goto('/dashboard')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       const banner = page.locator('[data-testid="trial-countdown-banner"]')
       await expect(banner).toBeVisible({ timeout: 25000 })
@@ -432,7 +432,7 @@ test.describe('Subscription & Billing Management', () => {
   test.describe('Feature Gate Component', () => {
     test('pricing page plan cards have data-testid attributes', async ({ page }) => {
       await page.goto('/subscription/pricing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       await expect(page.locator('[data-testid="plan-card-basic"]')).toBeVisible({ timeout: 15000 })
       await expect(page.locator('[data-testid="plan-card-professional"]')).toBeVisible({ timeout: 15000 })
@@ -441,7 +441,7 @@ test.describe('Subscription & Billing Management', () => {
 
     test('pricing page has select plan buttons', async ({ page }) => {
       await page.goto('/subscription/pricing')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
 
       await expect(page.locator('[data-testid="select-basic-btn"]')).toBeVisible({ timeout: 15000 })
       await expect(page.locator('[data-testid="select-professional-btn"]')).toBeVisible({ timeout: 15000 })

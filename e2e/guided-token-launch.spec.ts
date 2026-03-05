@@ -28,7 +28,7 @@ test.describe('Guided Token Launch Flow', () => {
 
   test('should display guided launch page correctly', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Semantic wait: Wait for SPECIFIC title text (not just any h1)
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -47,7 +47,7 @@ test.describe('Guided Token Launch Flow', () => {
 
   test('should show progress indicators', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Semantic wait: Wait for main heading first
     const mainTitle = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -64,7 +64,7 @@ test.describe('Guided Token Launch Flow', () => {
 
   test('should display organization profile step', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Semantic wait: Wait for page to be ready
     const mainTitle = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -91,7 +91,7 @@ test.describe('Guided Token Launch Flow', () => {
 
   test('should validate required fields on organization step', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Semantic wait: Wait for page to be ready
     const mainTitle = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -139,7 +139,7 @@ test.describe('Guided Token Launch Flow', () => {
 
   test('should navigate between steps', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Semantic wait: page heading proves auth store initialized + component mounted
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -191,7 +191,7 @@ test.describe('Guided Token Launch Flow', () => {
 
   test('should save draft functionality', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Semantic wait: Wait for page to be ready
     const mainTitle = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -227,7 +227,7 @@ test.describe('Guided Token Launch Flow', () => {
     test.skip(!!(viewport && viewport.width < 1024), 'Readiness score card only rendered on desktop viewports ≥1024px')
     
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Semantic wait: page heading proves page is ready before checking optional sidebar card
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -282,7 +282,7 @@ test.describe('Guided Token Launch Flow', () => {
     })
     
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Semantic wait for the page to be ready
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -345,7 +345,7 @@ test.describe('Guided Token Launch Flow', () => {
     })
     
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Semantic wait for the page to be ready
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -367,7 +367,7 @@ test.describe('Guided Token Launch Flow', () => {
 
   test('should ensure no wallet connector references in entire flow', async ({ page }) => {
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Semantic wait: Wait for page to be ready before checking content
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -419,7 +419,7 @@ test.describe('Guided Token Launch Flow', () => {
     })
     
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Semantic wait: Wait for page to be ready
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -490,7 +490,7 @@ test.describe('Guided Token Launch Flow', () => {
     })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(title).toBeVisible({ timeout: 60000 })
@@ -543,7 +543,7 @@ test.describe('Guided Token Launch Flow', () => {
     })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(title).toBeVisible({ timeout: 60000 })

@@ -40,7 +40,7 @@ test.describe('ARC76 Account Derivation Validation', () => {
     
     // Navigate to protected route
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Wait for page to load
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -55,7 +55,7 @@ test.describe('ARC76 Account Derivation Validation', () => {
     
     // Reload page
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Verify page still loads (auth persists)
     await expect(title).toBeVisible({ timeout: 45000 })
@@ -78,7 +78,7 @@ test.describe('ARC76 Account Derivation Validation', () => {
     
     // Start at guided launch
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     const guidedTitle = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(guidedTitle).toBeVisible({ timeout: 45000 })
@@ -90,7 +90,7 @@ test.describe('ARC76 Account Derivation Validation', () => {
     
     // Navigate to dashboard
     await page.goto('/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Verify we're on dashboard (not redirected to login)
     const url = page.url()
@@ -105,7 +105,7 @@ test.describe('ARC76 Account Derivation Validation', () => {
     
     // Navigate to settings
     await page.goto('/settings')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Verify we're on settings (not redirected to login)
     const url2 = page.url()
@@ -129,7 +129,7 @@ test.describe('ARC76 Account Derivation Validation', () => {
     
     // Navigate to any protected route
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Verify localStorage structure
     const authData = await page.evaluate(() => {
@@ -170,7 +170,7 @@ test.describe('ARC76 Account Derivation Validation', () => {
     
     for (const route of routes) {
       await page.goto(route)
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('load')
       
       // Verify auth state contains same email
       const email = await page.evaluate(() => {
@@ -194,7 +194,7 @@ test.describe('ARC76 Account Derivation Validation', () => {
     
     // Navigate to protected route
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Verify we're authenticated
     const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
@@ -207,7 +207,7 @@ test.describe('ARC76 Account Derivation Validation', () => {
     
     // Try to access protected route again
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
     
     // Should redirect to home with auth modal
     const url = page.url()
@@ -235,7 +235,7 @@ test.describe('ARC76 Account Derivation Validation', () => {
     })
 
     await page.goto('/launch/guided')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const authData = await page.evaluate(() => {
       const raw = localStorage.getItem('algorand_user')
@@ -260,7 +260,7 @@ test.describe('ARC76 Account Derivation Validation', () => {
     })
 
     await page.goto('/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     const storedEmail = await page.evaluate(() => {
       const raw = localStorage.getItem('algorand_user')
@@ -276,7 +276,7 @@ test.describe('ARC76 Account Derivation Validation', () => {
     await withAuth(page)
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Verify no wallet connector UI is present
     const walletConnectButton = page.getByRole('button', { name: /WalletConnect|Connect Wallet|Pera Wallet|Defly/i })
@@ -288,7 +288,7 @@ test.describe('ARC76 Account Derivation Validation', () => {
     // AC6 (Issue #495): Guest users must not see wallet/network status in top-nav.
     // Uses nav-component locator instead of broad page.content() check.
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('load')
 
     // Guest nav must not show wallet connection status
     const nav = page.getByRole('navigation').first()
