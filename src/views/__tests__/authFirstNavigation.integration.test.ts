@@ -101,9 +101,9 @@ describe('Auth-First Navigation Invariants Integration', () => {
 
   it('should include Guided Launch as the canonical create entry in nav items', () => {
     const state = deriveNavState(false);
-    const guidedLaunchItem = state.items.find((item) => item.path === '/launch/guided');
+    const guidedLaunchItem = state.items.find((item) => item.path === '/launch/workspace');
     expect(guidedLaunchItem).toBeDefined();
-    expect(guidedLaunchItem?.routeName).toBe('GuidedTokenLaunch');
+    expect(guidedLaunchItem?.routeName).toBe('GuidedLaunchWorkspace');
   });
 
   // ── Authenticated state invariants ────────────────────────────────────────
@@ -212,9 +212,9 @@ describe('Auth-First Navigation Invariants Integration', () => {
     expect(hasWizardPath).toBe(false);
   });
 
-  it('canonical create entry should point to /launch/guided not /create/wizard', () => {
+  it('canonical workspace entry should point to /launch/workspace not /create/wizard', () => {
     const createTokenItem = NAV_ITEMS.find((item) => item.label === 'Guided Launch');
-    expect(createTokenItem?.path).toBe('/launch/guided');
+    expect(createTokenItem?.path).toBe('/launch/workspace');
     expect(createTokenItem?.path).not.toBe('/create/wizard');
     expect(createTokenItem?.path).not.toBe('/create');
   });

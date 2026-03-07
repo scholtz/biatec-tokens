@@ -223,7 +223,7 @@ test.describe("AC #2: Guest nav — no wallet states, deterministic Sign In", ()
     await expect(guidedLaunchLink).toBeVisible({ timeout: 15000 });
 
     const href = await guidedLaunchLink.getAttribute("href");
-    expect(href).toContain("/launch/guided");
+    expect(href).toContain("/launch/workspace");
     expect(href).not.toContain("/create/wizard");
   });
 });

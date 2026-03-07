@@ -62,6 +62,7 @@ export const AUTH_REQUIRED_PATHS: ReadonlyArray<string> = [
   '/attestations',
   '/insights',
   '/launch/guided',
+  '/launch/workspace',
   '/cockpit',
   '/account/security',
   '/onboarding',
@@ -186,8 +187,8 @@ export function getGuestNavInvariants(): GuestNavInvariant[] {
     },
     {
       id: 'guided-launch-in-nav',
-      description: 'Guided Launch (canonical create entry) must be in nav items',
-      test: (state) => state.items.some((item) => item.path === '/launch/guided'),
+      description: 'Guided Launch (canonical workspace entry) must be in nav items',
+      test: (state) => state.items.some((item) => item.path === '/launch/workspace'),
     },
     {
       id: 'aria-label-present',

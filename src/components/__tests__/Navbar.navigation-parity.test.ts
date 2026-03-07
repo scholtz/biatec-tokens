@@ -22,11 +22,11 @@ describe("Navigation Parity - Single Source of Truth", () => {
     expect(NAV_ITEMS[0].path).toBe("/");
   });
 
-  it("should include Guided Launch pointing to /launch/guided (canonical auth-first flow)", () => {
+  it("should include Guided Launch pointing to /launch/workspace (canonical workspace entry)", () => {
     const createItem = NAV_ITEMS.find((item) => item.label === "Guided Launch");
     expect(createItem).toBeDefined();
-    expect(createItem?.path).toBe("/launch/guided");
-    expect(createItem?.routeName).toBe("GuidedTokenLaunch");
+    expect(createItem?.path).toBe("/launch/workspace");
+    expect(createItem?.routeName).toBe("GuidedLaunchWorkspace");
   });
 
   it("should NOT include legacy /create path as top-level nav destination", () => {

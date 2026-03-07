@@ -51,7 +51,7 @@ test.describe('AC #1: Canonical flow — /launch/guided as primary creation entr
     suppressBrowserErrors(page)
   })
 
-  test('navigation contains a link pointing to /launch/guided', async ({ page }) => {
+  test('navigation contains a link pointing to /launch/workspace', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('load')
 
@@ -62,7 +62,7 @@ test.describe('AC #1: Canonical flow — /launch/guided as primary creation entr
     await expect(guidedLaunchLink).toBeVisible({ timeout: 15000 })
 
     const href = await guidedLaunchLink.getAttribute('href')
-    expect(href).toContain('/launch/guided')
+    expect(href).toContain('/launch/workspace')
   })
 
   test('navigation does NOT expose /create/wizard as a user-facing link', async ({ page }) => {
@@ -100,7 +100,7 @@ test.describe('AC #1: Canonical flow — /launch/guided as primary creation entr
     await expect(guidedLaunchLink).toBeVisible({ timeout: 15000 })
 
     const href = await guidedLaunchLink.getAttribute('href')
-    expect(href).toContain('/launch/guided')
+    expect(href).toContain('/launch/workspace')
   })
 })
 

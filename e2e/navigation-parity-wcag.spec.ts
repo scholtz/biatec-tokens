@@ -83,7 +83,7 @@ test.describe("Navigation Parity and WCAG AA", () => {
     await expect(mobileMenuButton).toHaveCount(1);
   });
 
-  test("Guided Launch link should route to /launch/guided (canonical auth-first flow)", async ({ page }) => {
+  test("Guided Launch link should route to /launch/workspace (canonical workspace entry)", async ({ page }) => {
     // Set up authenticated session to avoid redirect
     await page.addInitScript(() => {
       localStorage.setItem(
@@ -105,7 +105,7 @@ test.describe("Navigation Parity and WCAG AA", () => {
 
     // Verify href points to canonical route
     const href = await guidedLaunchLink.getAttribute("href");
-    expect(href).toContain("/launch/guided");
+    expect(href).toContain("/launch/workspace");
   });
 
   test("should have nav role and aria-label on navigation element (AC #2)", async ({ page }) => {

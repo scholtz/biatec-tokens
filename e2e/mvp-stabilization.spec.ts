@@ -38,14 +38,14 @@ test.describe('AC #1: Canonical route clarity', () => {
     suppressBrowserErrors(page)
   })
 
-  test('navigation bar exposes Guided Launch link pointing to /launch/guided', async ({ page }) => {
+  test('navigation bar exposes Guided Launch link pointing to /launch/workspace', async ({ page }) => {
     await page.goto('/', { timeout: 30000 })
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
     const link = page.getByRole('link', { name: /guided launch/i }).first()
     await expect(link).toBeVisible({ timeout: 15000 })
     const href = await link.getAttribute('href')
-    expect(href).toContain('/launch/guided')
+    expect(href).toContain('/launch/workspace')
   })
 
   test('/create/wizard redirects away from the legacy path for authenticated users', async ({
@@ -96,7 +96,7 @@ test.describe('AC #1: Canonical route clarity', () => {
     const guidedLink = page.getByRole('link', { name: /guided launch/i }).first()
     await expect(guidedLink).toBeVisible({ timeout: 15000 })
     const href = await guidedLink.getAttribute('href')
-    expect(href).toContain('/launch/guided')
+    expect(href).toContain('/launch/workspace')
     expect(href).not.toContain('/create/wizard')
   })
 })
@@ -343,7 +343,7 @@ test.describe('AC #5: Route consistency and canonical path integrity', () => {
 
     if (linkVisible) {
       const href = await guidedLink.getAttribute('href')
-      expect(href).toContain('/launch/guided')
+      expect(href).toContain('/launch/workspace')
     } else {
       // CTA may be a button — clicking it must navigate to /launch/guided
       const ctaButton = page
@@ -362,7 +362,7 @@ test.describe('AC #5: Route consistency and canonical path integrity', () => {
         const navLink = page.getByRole('link', { name: /guided launch/i }).first()
         await expect(navLink).toBeVisible({ timeout: 15000 })
         const href = await navLink.getAttribute('href')
-        expect(href).toContain('/launch/guided')
+        expect(href).toContain('/launch/workspace')
       }
     }
   })

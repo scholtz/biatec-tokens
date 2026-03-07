@@ -449,7 +449,7 @@ test.describe("AC #8: No regression — authenticated user flows", () => {
     await expect(guidedLaunchLink).toBeVisible({ timeout: 20000 });
 
     const href = await guidedLaunchLink.getAttribute("href");
-    expect(href).toContain("/launch/guided");
+    expect(href).toContain("/launch/workspace");
   });
 
   test("authenticated homepage has no 'Not connected' text (wallet-era regression check)", async ({

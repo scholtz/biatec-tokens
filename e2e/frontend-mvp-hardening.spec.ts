@@ -49,7 +49,7 @@ test.describe('AC #1: Canonical routing — /launch/guided is the token creation
     suppressBrowserErrors(page)
   })
 
-  test('navigation bar Guided Launch link points to /launch/guided (not /create/wizard)', async ({
+  test('navigation bar Guided Launch link points to /launch/workspace (not /create/wizard)', async ({
     page,
   }) => {
     await page.goto('/')
@@ -59,7 +59,7 @@ test.describe('AC #1: Canonical routing — /launch/guided is the token creation
     await expect(guidedLaunchLink).toBeVisible({ timeout: 15000 })
 
     const href = await guidedLaunchLink.getAttribute('href')
-    expect(href).toContain('/launch/guided')
+    expect(href).toContain('/launch/workspace')
     expect(href).not.toContain('/create/wizard')
   })
 

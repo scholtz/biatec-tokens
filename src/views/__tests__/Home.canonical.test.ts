@@ -41,9 +41,10 @@ describe('Canonical routing contract (MVP Hardening AC #1)', () => {
 
   // ── NAV_ITEMS canonical entry ────────────────────────────────────────────
 
-  it('NAV_ITEMS contains Guided Launch entry at /launch/guided', () => {
+  it('NAV_ITEMS contains Guided Launch entry at /launch/workspace (workspace orchestration)', () => {
+    // The nav "Guided Launch" entry now points to the workspace orchestration layer
     const guidedLaunchItem = NAV_ITEMS.find(
-      item => item.path === CANONICAL_LAUNCH_PATH,
+      item => item.path === '/launch/workspace',
     )
     expect(guidedLaunchItem).toBeDefined()
     expect(guidedLaunchItem?.label).toMatch(/guided launch/i)
@@ -97,7 +98,7 @@ describe('Canonical routing contract (MVP Hardening AC #1)', () => {
   })
 
   it('Guided Launch nav item routeName matches the route definition name', () => {
-    const guidedLaunchItem = NAV_ITEMS.find(item => item.path === CANONICAL_LAUNCH_PATH)
-    expect(guidedLaunchItem?.routeName).toBe('GuidedTokenLaunch')
+    const guidedLaunchItem = NAV_ITEMS.find(item => item.path === '/launch/workspace')
+    expect(guidedLaunchItem?.routeName).toBe('GuidedLaunchWorkspace')
   })
 })

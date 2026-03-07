@@ -260,7 +260,7 @@ describe('Integration: NAV_ITEMS × buildLandmarkConfig (cognitive load and land
 
   it('NAV_ITEMS contains the canonical Guided Launch entry', () => {
     const guidedLaunchItems = NAV_ITEMS.filter(
-      (item) => item.path === CANONICAL_LAUNCH_DESTINATION,
+      (item) => item.path === '/launch/workspace',
     )
     expect(guidedLaunchItems).toHaveLength(1)
     expect(guidedLaunchItems[0].label).toBe('Guided Launch')
@@ -476,7 +476,7 @@ describe('Integration: canonicalLaunchWorkspace × buildLandmarkConfig (navigati
     // Roadmap: Guided Launch should be immediately after Home for discoverability
     // Position 0: Home, Position 1: Guided Launch (primary CTA)
     expect(NAV_ITEMS[1].label).toBe('Guided Launch')
-    expect(NAV_ITEMS[1].path).toBe(CANONICAL_LAUNCH_DESTINATION)
+    expect(NAV_ITEMS[1].path).toBe('/launch/workspace')
   })
 })
 

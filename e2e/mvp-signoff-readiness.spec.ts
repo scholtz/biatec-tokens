@@ -36,7 +36,7 @@ test.describe('AC #1: Guided Launch is canonical token creation entry', () => {
     suppressBrowserErrors(page)
   })
 
-  test('Guided Launch link is in navigation and points to /launch/guided', async ({ page }) => {
+  test('Guided Launch link is in navigation and points to /launch/workspace', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('load')
 
@@ -44,7 +44,7 @@ test.describe('AC #1: Guided Launch is canonical token creation entry', () => {
     await expect(guidedLink).toBeVisible({ timeout: 15000 })
 
     const href = await guidedLink.getAttribute('href')
-    expect(href).toContain('/launch/guided')
+    expect(href).toContain('/launch/workspace')
   })
 
   test('navigation does NOT contain a /create link as primary entry', async ({ page }) => {
@@ -57,34 +57,36 @@ test.describe('AC #1: Guided Launch is canonical token creation entry', () => {
     expect(count).toBe(0)
   })
 
-  test('home page CTA routes to /launch/guided when authenticated', async ({ page }) => {
+  test('home page CTA routes to /launch/workspace when authenticated', async ({ page }) => {
     await withAuth(page)
     await page.goto('/')
     await page.waitForLoadState('load')
 
-    // Check there is a CTA that navigates to guided launch
+    // Check there is a CTA that navigates to the workspace (entry point for guided launch)
     const guidedOrCTA = page.getByRole('link', { name: /create.*token|guided launch/i }).first()
     const visible = await guidedOrCTA.isVisible().catch(() => false)
 
     if (visible) {
       const href = await guidedOrCTA.getAttribute('href')
-      expect(href).toContain('/launch/guided')
+      // The "Guided Launch" nav link now points to /launch/workspace (orchestration layer)
+      // Other "Create Token" CTAs may still go to /launch/guided directly
+      expect(href).toMatch(/\/launch\/(workspace|guided)/)
     } else {
-      // If button-based CTA exists, verify it routes to /launch/guided on click
+      // If button-based CTA exists, verify it routes to a launch path on click
       const ctaBtn = page.getByRole('button', { name: /create.*token/i }).first()
       const btnVisible = await ctaBtn.isVisible().catch(() => false)
       if (btnVisible) {
         await ctaBtn.click()
         await page.waitForFunction(
-          () => window.location.pathname.includes('/launch/guided'),
+          () => window.location.pathname.includes('/launch/'),
           { timeout: 20000 },
         )
-        expect(page.url()).toContain('/launch/guided')
+        expect(page.url()).toMatch(/\/launch\//)
       } else {
         // At minimum the nav Guided Launch link is the canonical entry
         const navLink = page.getByRole('link', { name: /guided launch/i }).first()
         const navHref = await navLink.getAttribute('href')
-        expect(navHref).toContain('/launch/guided')
+        expect(navHref).toContain('/launch/workspace')
       }
     }
   })

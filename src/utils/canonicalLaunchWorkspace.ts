@@ -630,10 +630,10 @@ export function isValidLegacyRedirect(fromPath: string, toPath: string): boolean
 }
 
 /**
- * Returns true if a given path is the canonical launch route.
+ * Returns true if a given path is the canonical launch route or the workspace orchestration entry.
  */
 export function isCanonicalLaunchPath(path: string): boolean {
-  return path === CANONICAL_LAUNCH_DESTINATION;
+  return path === CANONICAL_LAUNCH_DESTINATION || path === '/launch/workspace';
 }
 
 // ---------------------------------------------------------------------------
@@ -663,6 +663,7 @@ export function isComplianceAuthGated(path: string): boolean {
  */
 export const LAUNCH_AUTH_REQUIRED_ROUTES: ReadonlyArray<string> = [
   '/launch/guided',
+  '/launch/workspace',
   '/create',
   '/create/batch',
 ];

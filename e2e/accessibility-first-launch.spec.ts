@@ -49,9 +49,9 @@ test.describe('Canonical launch route — navigation and visibility', () => {
     const guidedLaunchLink = nav.getByRole('link', { name: /guided launch/i }).first()
     await expect(guidedLaunchLink).toBeVisible({ timeout: 15000 })
 
-    // It must point to /launch/guided
+    // It must point to /launch/workspace (Guided Launch Workspace — orchestration layer)
     const href = await guidedLaunchLink.getAttribute('href')
-    expect(href).toContain('/launch/guided')
+    expect(href).toContain('/launch/workspace')
   })
 
   test('navigation does NOT contain legacy "wizard" or "create" as primary label', async ({ page }) => {
@@ -78,7 +78,7 @@ test.describe('Canonical launch route — navigation and visibility', () => {
     const guidedLaunchLink = nav.getByRole('link', { name: /guided launch/i }).first()
     await expect(guidedLaunchLink).toBeVisible({ timeout: 15000 })
     const href = await guidedLaunchLink.getAttribute('href')
-    expect(href).toContain('/launch/guided')
+    expect(href).toContain('/launch/workspace')
   })
 })
 

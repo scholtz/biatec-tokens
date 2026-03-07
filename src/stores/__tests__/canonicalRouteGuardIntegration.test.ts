@@ -37,8 +37,8 @@ import {
 // ---------------------------------------------------------------------------
 
 describe('NAV_ITEMS × canonical route authority', () => {
-  it('NAV_ITEMS contains exactly one entry for the canonical launch destination', () => {
-    const launchEntries = NAV_ITEMS.filter((item) => item.path === CANONICAL_LAUNCH_DESTINATION)
+  it('NAV_ITEMS contains exactly one entry for the workspace orchestration destination', () => {
+    const launchEntries = NAV_ITEMS.filter((item) => item.path === '/launch/workspace')
     expect(launchEntries).toHaveLength(1)
     expect(launchEntries[0].label).toBe('Guided Launch')
   })
@@ -198,8 +198,8 @@ describe('Legacy redirect × canonical path integration', () => {
     expect(wizardInNav).toBe(false)
   })
 
-  it('canonical destination is in NAV_ITEMS — users CAN navigate to guided launch', () => {
-    const guidedInNav = NAV_ITEMS.some((item) => item.path === CANONICAL_LAUNCH_DESTINATION)
+  it('canonical workspace entry is in NAV_ITEMS — users CAN navigate to guided launch via workspace', () => {
+    const guidedInNav = NAV_ITEMS.some((item) => item.path === '/launch/workspace')
     expect(guidedInNav).toBe(true)
   })
 })

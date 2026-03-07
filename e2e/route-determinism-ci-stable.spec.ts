@@ -182,14 +182,14 @@ test.describe("AC #5: Authenticated nav includes canonical creation entry", () =
     await withAuth(page);
   });
 
-  test("authenticated user sees 'Guided Launch' navigation link pointing to /launch/guided", async ({
+  test("authenticated user sees 'Guided Launch' navigation link pointing to /launch/workspace", async ({
     page,
   }) => {
     await page.goto("/");
     await page.waitForLoadState("load");
 
     // Semantic wait: navigation is rendered
-    // Note: NAV_ITEMS label is "Guided Launch" in Navbar; canonical path is /launch/guided
+    // Note: NAV_ITEMS label is "Guided Launch" in Navbar; canonical path is /launch/workspace (workspace orchestration layer)
     const createLink = page
       .getByRole("link", { name: /guided launch/i })
       .first();
@@ -197,7 +197,7 @@ test.describe("AC #5: Authenticated nav includes canonical creation entry", () =
 
     // Verify canonical path
     const href = await createLink.getAttribute("href");
-    expect(href).toContain("/launch/guided");
+    expect(href).toContain("/launch/workspace");
   });
 
   test("authenticated homepage has no 'Not connected' text (AC #4)", async ({

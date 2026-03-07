@@ -1,6 +1,8 @@
 /**
  * Canonical navigation items - single source of truth for desktop and mobile menus.
- * "Guided Launch" points to /launch/guided (canonical auth-first guided flow).
+ * "Guided Launch" points to /launch/workspace (the Guided Launch Workspace — the
+ * readiness/prerequisites/simulation control centre). From there, users proceed to
+ * /launch/guided (the token-parameter wizard) as an in-workspace action.
  * Any change here automatically applies to both desktop and mobile navigation.
  *
  * Ordered by non-technical user workflow:
@@ -15,7 +17,7 @@
  */
 export const NAV_ITEMS = [
   { label: "Home", path: "/", routeName: "Home" },
-  { label: "Guided Launch", path: "/launch/guided", routeName: "GuidedTokenLaunch" },
+  { label: "Guided Launch", path: "/launch/workspace", routeName: "GuidedLaunchWorkspace" },
   { label: "Dashboard", path: "/dashboard", routeName: "TokenDashboard" },
   { label: "Portfolio", path: "/portfolio", routeName: "PortfolioIntelligence" },
   { label: "Operations", path: "/operations", routeName: "BusinessCommandCenter" },

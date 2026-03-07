@@ -100,11 +100,11 @@ describe('MVP Hardening — Canonical CTA Routing (AC #1)', () => {
 
   // ── NAV_ITEMS contract ────────────────────────────────────────────────────
 
-  it('NAV_ITEMS Guided Launch entry points to /launch/guided (canonical)', () => {
-    const item = NAV_ITEMS.find(i => i.path === '/launch/guided')
+  it('NAV_ITEMS Guided Launch entry points to /launch/workspace (workspace orchestration)', () => {
+    const item = NAV_ITEMS.find(i => i.path === '/launch/workspace')
     expect(item).toBeDefined()
     expect(item?.label).toMatch(/guided launch/i)
-    expect(item?.routeName).toBe('GuidedTokenLaunch')
+    expect(item?.routeName).toBe('GuidedLaunchWorkspace')
   })
 
   it('NAV_ITEMS does not include a direct /create entry (legacy fragmentation removed)', () => {

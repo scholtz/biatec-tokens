@@ -143,7 +143,7 @@ test.describe('Keyboard navigation', () => {
         }
       })
       if (
-        focused?.href?.includes('/launch/guided') ||
+        focused?.href?.includes('/launch/workspace') ||
         /guided launch/i.test(focused?.text ?? '') ||
         /guided launch/i.test(focused?.ariaLabel ?? '')
       ) {
@@ -450,12 +450,12 @@ test.describe('No wallet connector UI — email/password only', () => {
 // 7. Guided launch entry — canonical route
 // ---------------------------------------------------------------------------
 
-test.describe('Guided launch entry — canonical /launch/guided route', () => {
+test.describe('Guided launch entry — canonical /launch/workspace route', () => {
   test.beforeEach(async ({ page }) => {
     suppressBrowserErrors(page)
   })
 
-  test('Guided Launch nav link points to /launch/guided', async ({ page }) => {
+  test('Guided Launch nav link points to /launch/workspace', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
@@ -464,7 +464,7 @@ test.describe('Guided launch entry — canonical /launch/guided route', () => {
     await expect(guidedLaunchLink).toBeVisible({ timeout: 15000 })
 
     const href = await guidedLaunchLink.getAttribute('href')
-    expect(href).toContain('/launch/guided')
+    expect(href).toContain('/launch/workspace')
   })
 
   test('authenticated user can navigate to /launch/guided', async ({ page }) => {

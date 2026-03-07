@@ -160,7 +160,7 @@ describe('authFirstHardening - navigation state derivation', () => {
 
   it('should include Guided Launch in nav items (canonical create entry)', () => {
     const state = deriveNavState(false);
-    const guidedLaunch = state.items.find((item) => item.path === '/launch/guided');
+    const guidedLaunch = state.items.find((item) => item.path === '/launch/workspace');
     expect(guidedLaunch).toBeDefined();
   });
 

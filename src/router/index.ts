@@ -20,6 +20,7 @@ import WhitelistsView from "../views/WhitelistsView.vue";
 import ComplianceOrchestrationView from "../views/ComplianceOrchestrationView.vue";
 import VisionInsightsWorkspace from "../views/VisionInsightsWorkspace.vue";
 import GuidedTokenLaunch from "../views/GuidedTokenLaunch.vue";
+import GuidedLaunchWorkspace from "../views/GuidedLaunchWorkspace.vue";
 import ComplianceSetupWorkspace from "../views/ComplianceSetupWorkspace.vue";
 import LifecycleCockpit from "../views/LifecycleCockpit.vue";
 import TokenDiscoveryJourney from "../views/TokenDiscoveryJourney.vue";
@@ -159,6 +160,13 @@ const router = createRouter({
       path: "/launch/guided",
       name: "GuidedTokenLaunch",
       component: GuidedTokenLaunch,
+      meta: { requiresAuth: true },
+    },
+    // Guided Launch Workspace — orchestration layer: readiness, prerequisites, simulation
+    {
+      path: "/launch/workspace",
+      name: "GuidedLaunchWorkspace",
+      component: GuidedLaunchWorkspace,
       meta: { requiresAuth: true },
     },
     // Lifecycle Cockpit

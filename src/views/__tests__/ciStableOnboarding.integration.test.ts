@@ -165,8 +165,8 @@ describe('Integration: AC #3 — /create/wizard canonical deprecation', () => {
     expect(wizardItem).toBeUndefined();
   });
 
-  it('/launch/guided IS the canonical creation entry (in NAV_ITEMS)', () => {
-    const guidedItem = NAV_ITEMS.find(item => item.path === '/launch/guided');
+  it('/launch/workspace IS the canonical workspace entry (in NAV_ITEMS)', () => {
+    const guidedItem = NAV_ITEMS.find(item => item.path === '/launch/workspace');
     expect(guidedItem).toBeDefined();
     expect(guidedItem?.label).toBeTruthy();
   });
@@ -212,7 +212,7 @@ describe('Integration: AC #4 — Guest nav has no wallet/network states', () => 
   it('guest nav has nav items including guided launch', () => {
     const state = deriveNavState(false);
     expect(state.items.length).toBeGreaterThan(0);
-    expect(state.items.some(i => i.path === '/launch/guided')).toBe(true);
+    expect(state.items.some(i => i.path === '/launch/workspace')).toBe(true);
   });
 
   it('guest nav aria-label is non-empty for accessibility', () => {
@@ -260,7 +260,7 @@ describe('Integration: AC #5 — Authenticated nav consistency', () => {
 
   it('authenticated state includes guided launch in nav items', () => {
     const state = deriveNavState(true);
-    expect(state.items.some(i => i.path === '/launch/guided')).toBe(true);
+    expect(state.items.some(i => i.path === '/launch/workspace')).toBe(true);
   });
 });
 

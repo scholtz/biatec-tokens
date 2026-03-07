@@ -187,7 +187,7 @@ describe('GuidedTokenLaunch - Navigation state (no wallet/network status for una
   it('NAV_ITEMS canonical create entry routes to auth-first guided launch, not wallet setup', async () => {
     const { NAV_ITEMS } = await import('../../constants/navItems')
     const createEntry = NAV_ITEMS.find(
-      (item) => item.path === '/launch/guided' || item.label?.includes('Create')
+      (item) => item.path === '/launch/workspace' || item.label?.includes('Guided Launch')
     )
     // The create entry must exist
     expect(createEntry).toBeDefined()

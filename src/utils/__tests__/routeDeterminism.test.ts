@@ -154,10 +154,10 @@ describe('AC #2/#3: /create/wizard is deprecated — redirects to /launch/guided
     expect(AUTH_REQUIRED_PATHS).toContain('/launch/guided');
   });
 
-  it('NAV_ITEMS canonical "Guided Launch" points to /launch/guided, not /create/wizard', () => {
+  it('NAV_ITEMS canonical "Guided Launch" points to /launch/workspace (workspace orchestration layer), not /create/wizard', () => {
     const createItem = NAV_ITEMS.find(item => item.label === 'Guided Launch');
     expect(createItem).toBeDefined();
-    expect(createItem?.path).toBe('/launch/guided');
+    expect(createItem?.path).toBe('/launch/workspace');
     expect(createItem?.path).not.toContain('wizard');
   });
 

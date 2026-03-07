@@ -51,7 +51,7 @@ test.describe('AC #1: Canonical route clarity', () => {
     suppressBrowserErrors(page)
   })
 
-  test('primary navigation exposes Guided Launch link pointing to /launch/guided', async ({
+  test('primary navigation exposes Guided Launch link pointing to /launch/workspace', async ({
     page,
   }) => {
     await page.goto('/')
@@ -61,7 +61,7 @@ test.describe('AC #1: Canonical route clarity', () => {
     await expect(guidedLink).toBeVisible({ timeout: 15000 })
 
     const href = await guidedLink.getAttribute('href')
-    expect(href).toContain('/launch/guided')
+    expect(href).toContain('/launch/workspace')
   })
 
   test('primary navigation does NOT expose /create/wizard as a link target', async ({ page }) => {

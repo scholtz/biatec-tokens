@@ -64,7 +64,7 @@ test.describe('Canonical launch route — navigation and visibility', () => {
     await clearHardenedSession(page)
   })
 
-  test('navigation contains a Guided Launch link pointing to /launch/guided', async ({ page }) => {
+  test('navigation contains a Guided Launch link pointing to /launch/workspace', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('load')
 
@@ -76,7 +76,7 @@ test.describe('Canonical launch route — navigation and visibility', () => {
     await expect(guidedLaunchLink).toBeVisible({ timeout: 15000 })
 
     const href = await guidedLaunchLink.getAttribute('href')
-    expect(href).toContain('/launch/guided')
+    expect(href).toContain('/launch/workspace')
   })
 
   test('navigation does NOT expose /create/wizard as a primary link', async ({ page }) => {

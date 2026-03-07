@@ -53,7 +53,7 @@ test.describe('AC #1: Canonical routing', () => {
     await expect(guidedLaunchLink).toBeVisible({ timeout: 15000 })
 
     const href = await guidedLaunchLink.getAttribute('href')
-    expect(href).toContain('/launch/guided')
+    expect(href).toContain('/launch/workspace')
   })
 
   test('authenticated user clicking "Create Your First Token" CTA is routed to /launch/guided', async ({

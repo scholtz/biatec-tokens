@@ -223,7 +223,7 @@ test.describe('AC #4: Top-nav — deterministic component-level assertions', () 
     await expect(guidedLink).toBeVisible({ timeout: 15000 })
 
     const href = await guidedLink.getAttribute('href')
-    expect(href).toContain('/launch/guided')
+    expect(href).toContain('/launch/workspace')
     // Must not reference legacy wizard path in nav link
     expect(href).not.toContain('/create/wizard')
   })

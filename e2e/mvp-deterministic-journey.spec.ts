@@ -44,7 +44,7 @@ test.describe('Section 1: Canonical route contract', () => {
     suppressBrowserErrors(page)
   })
 
-  test('primary navigation exposes Guided Launch link to /launch/guided', async ({ page }) => {
+  test('primary navigation exposes Guided Launch link to /launch/workspace', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('load')
 
@@ -52,7 +52,7 @@ test.describe('Section 1: Canonical route contract', () => {
     await expect(guidedLink).toBeVisible({ timeout: 15000 })
 
     const href = await guidedLink.getAttribute('href')
-    expect(href).toContain('/launch/guided')
+    expect(href).toContain('/launch/workspace')
   })
 
   test('no primary navigation link points to legacy /create/wizard', async ({ page }) => {

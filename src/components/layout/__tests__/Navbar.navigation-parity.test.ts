@@ -221,7 +221,7 @@ describe('Navbar - Navigation Parity', () => {
 
   it('should include all 7 canonical nav destinations', () => {
     const paths = NAV_ITEMS.map((item) => item.path)
-    const required = ['/', '/launch/guided', '/dashboard', '/portfolio', '/operations', '/compliance/setup', '/settings']
+    const required = ['/', '/launch/workspace', '/dashboard', '/portfolio', '/operations', '/compliance/setup', '/settings']
     required.forEach(p => {
       expect(paths).toContain(p)
     })

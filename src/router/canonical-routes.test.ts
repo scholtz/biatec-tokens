@@ -64,10 +64,10 @@ describe("Canonical Nav Routes - Router Alignment", () => {
     localStorage.clear();
   });
 
-  it("should define Guided Launch as canonical create entry in NAV_ITEMS", () => {
+  it("should define Guided Launch as canonical workspace entry in NAV_ITEMS", () => {
     const createEntry = NAV_ITEMS.find((item) => item.label === "Guided Launch");
-    expect(createEntry?.path).toBe("/launch/guided");
-    expect(createEntry?.routeName).toBe("GuidedTokenLaunch");
+    expect(createEntry?.path).toBe("/launch/workspace");
+    expect(createEntry?.routeName).toBe("GuidedLaunchWorkspace");
   });
 
   it("should store redirect path before auth redirect", () => {
@@ -94,8 +94,8 @@ describe("Canonical Nav Routes - Router Alignment", () => {
     const paths = NAV_ITEMS.map((item) => item.path);
     // Home is always required
     expect(paths).toContain("/");
-    // Auth-first create entry is required
-    expect(paths).toContain("/launch/guided");
+    // Auth-first guided launch workspace is required
+    expect(paths).toContain("/launch/workspace");
     // Dashboard is required
     expect(paths).toContain("/dashboard");
     // Settings is required

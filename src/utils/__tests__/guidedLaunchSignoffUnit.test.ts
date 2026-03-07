@@ -53,11 +53,11 @@ import {
 // ---------------------------------------------------------------------------
 
 describe('AC #1: Canonical flow invariants', () => {
-  it('NAV_ITEMS contains "Guided Launch" pointing to /launch/guided', () => {
+  it('NAV_ITEMS contains "Guided Launch" pointing to /launch/workspace', () => {
     const item = NAV_ITEMS.find(i => i.label === 'Guided Launch')
     expect(item).toBeDefined()
-    expect(item!.path).toBe('/launch/guided')
-    expect(item!.routeName).toBe('GuidedTokenLaunch')
+    expect(item!.path).toBe('/launch/workspace')
+    expect(item!.routeName).toBe('GuidedLaunchWorkspace')
   })
 
   it('NAV_ITEMS does NOT contain a path to /create/wizard', () => {

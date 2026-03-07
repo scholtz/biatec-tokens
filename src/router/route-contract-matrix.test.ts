@@ -30,6 +30,7 @@ const PROTECTED_ROUTES = [
   { path: '/attestations', name: 'AttestationsDashboard' },
   { path: '/insights', name: 'VisionInsightsWorkspace' },
   { path: '/launch/guided', name: 'GuidedTokenLaunch (canonical create)' },
+  { path: '/launch/workspace', name: 'GuidedLaunchWorkspace (workspace orchestration)' },
   { path: '/cockpit', name: 'LifecycleCockpit' },
   { path: '/account/security', name: 'AccountSecurity' },
   { path: '/onboarding', name: 'OnboardingFlow' },
@@ -196,8 +197,8 @@ describe('Route Contract Matrix', () => {
 
   // ── Summary matrix assertion ──────────────────────────────────────────────
   describe('Complete route contract summary', () => {
-    it('should cover all 17 protected routes in the matrix', () => {
-      expect(PROTECTED_ROUTES.length).toBe(17)
+    it('should cover all 18 protected routes in the matrix', () => {
+      expect(PROTECTED_ROUTES.length).toBe(18)
     })
 
     it('should cover all 8 public routes in the matrix', () => {
