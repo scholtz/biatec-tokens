@@ -352,7 +352,9 @@ export function buildInitialSimulationState(): SimulationState {
 
 /**
  * Derives the simulation state from the current checklist.
- * The simulation can only start when 'legal_confirmations' is complete.
+ * The simulation can only start when the 'launch_simulation' checklist item
+ * is unlocked (available or in_progress), meaning its dependencies are all
+ * complete. This avoids hardcoding specific prerequisite item IDs.
  */
 export function deriveSimulationState(
   items: WorkspaceChecklistItem[],
@@ -361,8 +363,12 @@ export function deriveSimulationState(
   remediationSteps?: string[],
   lastRunAt?: string,
 ): SimulationState {
-  const legalItem = items.find((i) => i.id === 'legal_confirmations');
-  const canStart = legalItem?.status === 'complete' && currentPhase === 'idle';
+  const simulationItem = items.find((i) => i.id === 'launch_simulation');
+  // canStart when the simulation item is unlocked and the phase is idle
+  const canStart =
+    simulationItem !== undefined &&
+    (simulationItem.status === 'available' || simulationItem.status === 'in_progress') &&
+    currentPhase === 'idle';
   return {
     phase: currentPhase,
     estimatedDurationLabel: 'approx. 30 seconds',

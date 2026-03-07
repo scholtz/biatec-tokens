@@ -522,6 +522,7 @@ import {
   type WorkspaceChecklistItem,
   type ChecklistItemStatus,
   type SimulationState,
+  type WorkspaceAnalyticsEventPayload,
 } from '../utils/guidedLaunchWorkspace';
 
 // ---------------------------------------------------------------------------
@@ -769,7 +770,7 @@ function formatSimulationTime(iso: string): string {
 // Analytics (fire-and-forget; no PII)
 // ---------------------------------------------------------------------------
 
-function emitAnalytics(payload: ReturnType<typeof buildWorkspaceEnteredEvent>): void {
+function emitAnalytics(payload: WorkspaceAnalyticsEventPayload): void {
   // In production this would route to the telemetry service.
   // Here we emit a custom DOM event so integration tests can assert on it.
   try {

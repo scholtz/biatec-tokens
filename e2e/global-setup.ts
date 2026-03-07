@@ -53,6 +53,10 @@ async function globalSetup(_config: FullConfig) {
     await page.goto(`${BASE_URL}/launch/guided`, { waitUntil: 'load', timeout: 120000 })
     console.log('[globalSetup] /launch/guided compiled.')
 
+    // Visit guided launch workspace — compiles GuidedLaunchWorkspace.vue.
+    await page.goto(`${BASE_URL}/launch/workspace`, { waitUntil: 'load', timeout: 120000 })
+    console.log('[globalSetup] /launch/workspace compiled.')
+
     // Visit compliance setup — compiles ComplianceSetupWorkspace.vue subtree.
     await page.goto(`${BASE_URL}/compliance/setup`, { waitUntil: 'load', timeout: 120000 })
     console.log('[globalSetup] /compliance/setup compiled.')

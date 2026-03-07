@@ -374,13 +374,13 @@ describe('buildInitialSimulationState', () => {
 describe('deriveSimulationState', () => {
   const baseItems = buildDefaultWorkspaceChecklist();
 
-  it('canStart is false when legal_confirmations is not complete', () => {
+  it('canStart is false when launch_simulation item is still locked (prerequisites not met)', () => {
     const items = deriveChecklistStatuses(baseItems, new Set(), new Set(), new Set());
     const sim = deriveSimulationState(items, 'idle');
     expect(sim.canStart).toBe(false);
   });
 
-  it('canStart is true when legal_confirmations is complete and phase is idle', () => {
+  it('canStart is true when launch_simulation item is available (all prerequisites met) and phase is idle', () => {
     const completed = new Set([
       'account_setup',
       'compliance_configuration',
