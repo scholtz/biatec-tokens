@@ -1188,6 +1188,68 @@ grep -rn 'locator.*:focus.*count\|:focus.*count\|count.*:focus' e2e/ --include="
 - ❌ Write keyboard navigation tests without verifying they pass in `headless: true` mode
 - ❌ Fix the pattern in ONE file without auditing ALL spec files for the same broken pattern
 
+### 7m. New View Components Must Have ≥80% Function Coverage Before PR Submission (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 7, 2026 (PR #[this PR]) 🚨**
+
+**Violation**: `GuidedLaunchWorkspace.vue` was submitted with only 64.51% function coverage. The following functions had zero test coverage:
+- `markItemComplete` — advances checklist and emits analytics
+- `handleCtaClick` — emits analytics on CTA click  
+- `resetSimulation` — clears simulation state and removes item from completed
+- `formatSimulationTime` — formats ISO timestamp to locale string (with error fallback)
+- Simulation success/failed UI states (template branches for `phase === 'success'` and `phase === 'failed'`)
+- `persistState` / `loadPersistedState` error branches (corrupt localStorage)
+
+**Root Cause**: The existing `.test.ts` file covered rendering/WCAG but did not cover interaction handlers. No `.logic.test.ts` file was added alongside the view, which is the established pattern for new views.
+
+**Correct Approach**:
+1. **ALWAYS create a `.logic.test.ts` alongside every new view** — pair `MyView.vue` with both `MyView.test.ts` (WCAG/rendering) AND `MyView.logic.test.ts` (interaction logic/state transitions)
+2. **Cover ALL exported/public functions in the `<script setup>` block** — check function coverage before committing
+3. **Cover template branches for all `v-if/v-else-if` states** — simulation success, simulation failed, blocked banner, locked item card
+4. **localStorage error paths** — always test with `null`, valid JSON, and corrupt JSON
+
+**Pre-Commit Function Coverage Check** (MANDATORY for new view components):
+```bash
+# Run coverage for the specific view file:
+npx vitest run --coverage src/views/__tests__/MyView*.test.ts 2>&1 | grep "MyView.vue"
+# Requirement: Functions ≥80%, Branches ≥80%, Statements ≥80%
+# If below threshold → add MyView.logic.test.ts covering missing functions
+```
+
+**Pattern for interaction logic tests** (based on GuidedLaunchWorkspace.logic.test.ts):
+```typescript
+// Cover simulation state transitions with fake timers:
+vi.useFakeTimers()
+await btn.trigger('click')
+vi.advanceTimersByTime(2000)
+await nextTick()
+// Assert success/failed state rendered
+
+// Cover localStorage persistence:
+localStorageStub.getItem.mockReturnValue('NOT_VALID_JSON:::')
+const wrapper = await mountWorkspace()
+expect(wrapper.exists()).toBe(true) // Should not throw
+
+// Cover analytics events:
+const events: CustomEvent[] = []
+window.addEventListener('workspace:analytics', handler)
+await mountWorkspace()
+expect(events.map(e => e.detail?.eventName)).toContain('workspace_entered')
+```
+
+**Minimum test file structure for new views with interaction logic**:
+```
+src/views/MyView.vue
+src/views/__tests__/MyView.test.ts        ← rendering, WCAG, AC mapping
+src/views/__tests__/MyView.logic.test.ts  ← interaction handlers, state machine, persistence, analytics
+```
+
+**Never Again**:
+- ❌ Submit new view with `.test.ts` only when view has `onMounted`, timers, localStorage, or event handlers
+- ❌ Skip coverage check for function coverage (not just line/statement coverage)
+- ❌ Leave simulation success/failed UI states untested (they are distinct template branches)
+- ❌ Skip testing localStorage error fallback paths (corrupt data causes silent errors)
+
 - [ ] **Navigation Link Required**: If implementing new route, MUST add navigation link
   - ❌ **Past Violation**: Guided launch implemented but not accessible from navbar
   - ✅ **Solution**: Add link to `src/components/layout/Navbar.vue` with appropriate icon
