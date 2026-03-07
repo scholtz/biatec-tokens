@@ -128,14 +128,15 @@ describe('GuidedLaunchWorkspace — selectItem: available item', () => {
 
   it('clicking an item emits analytics event', async () => {
     const events: CustomEvent[] = []
-    window.addEventListener('workspace:analytics', (e) => events.push(e as CustomEvent))
+    const handler = (e: Event) => events.push(e as CustomEvent)
+    window.addEventListener('workspace:analytics', handler)
     const wrapper = await mountWorkspace()
     const items = wrapper.findAll('[data-testid="checklist-item"]')
     if (items.length > 0) {
       await items[0].trigger('click')
       await nextTick()
     }
-    window.removeEventListener('workspace:analytics', (e) => events.push(e as CustomEvent))
+    window.removeEventListener('workspace:analytics', handler)
     expect(events.length).toBeGreaterThanOrEqual(1)
   })
 })
@@ -209,14 +210,15 @@ describe('GuidedLaunchWorkspace — markItemComplete', () => {
 
   it('mark-complete emits checklist_item_completed analytics event', async () => {
     const events: CustomEvent[] = []
-    window.addEventListener('workspace:analytics', (e) => events.push(e as CustomEvent))
+    const handler = (e: Event) => events.push(e as CustomEvent)
+    window.addEventListener('workspace:analytics', handler)
     const wrapper = await mountWorkspace()
     const btn = wrapper.find('[data-testid="mark-complete-btn"]')
     if (btn.exists()) {
       await btn.trigger('click')
       await nextTick()
     }
-    window.removeEventListener('workspace:analytics', (e) => events.push(e as CustomEvent))
+    window.removeEventListener('workspace:analytics', handler)
     // At minimum mount event should have fired
     expect(events.length).toBeGreaterThanOrEqual(1)
   })
@@ -241,6 +243,27 @@ describe('GuidedLaunchWorkspace — handleCtaClick', () => {
       if (link.exists()) {
         expect(link.text().trim().length).toBeGreaterThan(0)
       }
+    }
+  })
+
+  it('clicking the CTA link dispatches a workspace:analytics event', async () => {
+    const events: CustomEvent[] = []
+    const handler = (e: Event) => events.push(e as CustomEvent)
+    window.addEventListener('workspace:analytics', handler)
+    const wrapper = await mountWorkspace()
+    // Find the CTA anchor (data-testid starts with "cta-")
+    const ctaLink = wrapper.find('[data-testid^="cta-"]')
+    if (ctaLink.exists()) {
+      await ctaLink.trigger('click')
+      await nextTick()
+    }
+    window.removeEventListener('workspace:analytics', handler)
+    // At minimum the workspace_entered event fires on mount
+    expect(events.length).toBeGreaterThanOrEqual(1)
+    // If the CTA link was present, checklist_item_started should also be dispatched
+    if (ctaLink.exists()) {
+      const names = events.map((e) => e.detail?.eventName)
+      expect(names).toContain('checklist_item_started')
     }
   })
 })

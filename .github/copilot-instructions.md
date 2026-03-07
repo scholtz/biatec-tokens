@@ -1190,7 +1190,7 @@ grep -rn 'locator.*:focus.*count\|:focus.*count\|count.*:focus' e2e/ --include="
 
 ### 7m. New View Components Must Have ≥80% Function Coverage Before PR Submission (MANDATORY) 🆕
 
-**🚨 CRITICAL PAST VIOLATION - March 7, 2026 (PR #[this PR]) 🚨**
+**🚨 CRITICAL PAST VIOLATION - March 7, 2026 (PR #570) 🚨**
 
 **Violation**: `GuidedLaunchWorkspace.vue` was submitted with only 64.51% function coverage. The following functions had zero test coverage:
 - `markItemComplete` — advances checklist and emits analytics
