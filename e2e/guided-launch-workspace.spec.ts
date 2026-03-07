@@ -57,7 +57,15 @@ test.describe('AC #1: Workspace route and nav entry', () => {
     // Attempt to access workspace without auth
     await page.goto('/launch/workspace')
     await page.waitForLoadState('load')
-    await page.waitForTimeout(3000)
+    // Semantic wait: wait for either a redirect or auth form to appear
+    await page.waitForFunction(
+      () => !window.location.pathname.includes('/launch/workspace') || !!document.querySelector('form'),
+      { timeout: 8000 }
+    ).catch(() => {
+      // Intentional: the waitForFunction condition may timeout if the router
+      // completed its redirect before this function even started polling (race-free
+      // because the subsequent URL/form assertions catch both scenarios).
+    })
 
     // Should be redirected or show auth prompt
     const url = page.url()
@@ -181,9 +189,8 @@ test.describe('AC #3: Checklist prerequisite cards', () => {
     await expect(firstBtn).toBeVisible({ timeout: 10000 })
     await expect(firstBtn).toBeEnabled()
     await firstBtn.click({ timeout: 10000 })
-    await page.waitForTimeout(500)
 
-    // Active item title should update
+    // Semantic wait: active item title should update (replaces arbitrary waitForTimeout)
     const title = page.locator('[data-testid="active-item-title"]')
     await expect(title).toBeVisible({ timeout: 10000 })
     const text = await title.textContent({ timeout: 5000 })
@@ -221,9 +228,8 @@ test.describe('AC #4: Blocked task messaging', () => {
       const isDisabled = await btn.isDisabled().catch(() => false)
       if (isDisabled) {
         await btn.click({ force: true, timeout: 5000 })
-        await page.waitForTimeout(500)
 
-        // Locked item card should be shown
+        // Semantic wait: locked or active card appears (replaces arbitrary waitForTimeout)
         const lockedCard = page.locator('[data-testid="locked-item-card"]')
         const activeCard = page.locator('[data-testid="active-item-card"]')
         const lockedNote = page.locator('[data-testid="locked-reason-note"]')
@@ -288,9 +294,15 @@ test.describe('AC #5: Simulation panel', () => {
     if (startBtnEnabled) {
       // Prerequisites are complete — start is available
       await startBtn.click({ timeout: 10000 })
-      await page.waitForTimeout(1000)
 
-      // After clicking, expect running or success or failed phase
+      // Semantic wait: simulation state should change (replaces arbitrary waitForTimeout)
+      await page.waitForFunction(
+        () => {
+          const html = document.documentElement.innerHTML
+          return /simulation-running|simulation-success|simulation-failed|running|complete/i.test(html)
+        },
+        { timeout: 8000 }
+      ).catch(() => {/* if simulation doesn't update in time, still check content */})
       const html = await page.content()
       expect(html).toMatch(/simulation-running|simulation-success|simulation-failed|running|complete/i)
     } else {
@@ -351,7 +363,8 @@ test.describe('AC #6: WCAG AA accessibility', () => {
     // Click body first to ensure keyboard focus is active (required in headless CI)
     await page.locator('body').click()
     await page.keyboard.press('Tab')
-    await page.waitForTimeout(200)
+    // Use document.activeElement (synchronous DOM property) instead of :focus locator
+    // to reliably detect focused element in headless mode (section 7l)
 
     const hasFocusedElement = await page.evaluate(() => {
       const active = document.activeElement
