@@ -46,18 +46,19 @@ test.describe("AC #1: Canonical route enforcement", () => {
     suppressBrowserErrors(page);
   });
 
-  test("home page navigation contains link to /launch/guided as canonical token creation entry", async ({
+  test("home page navigation contains link to /launch/workspace as the guided launch entry", async ({
     page,
   }) => {
     await page.goto("/");
     await page.waitForLoadState("load") // "load" not "networkidle" — Vite HMR SSE prevents networkidle in CI
 
-    // The nav must contain a link to /launch/guided (canonical create CTA)
+    // The nav "Guided Launch" entry now points to /launch/workspace (workspace hub).
+    // /launch/guided is reachable from within the workspace, but the primary nav link is /launch/workspace.
     const guidedLaunchLink = page.getByRole("link", { name: /guided launch/i }).first();
     await expect(guidedLaunchLink).toBeVisible({ timeout: 15000 });
 
     const href = await guidedLaunchLink.getAttribute("href");
-    expect(href).toContain("/launch/guided");
+    expect(href).toContain("/launch/workspace");
   });
 
   test("nav does NOT contain /create/wizard as a primary link", async ({

@@ -174,18 +174,20 @@ test.describe('AC #3: Checklist prerequisite cards', () => {
   test('clicking a checklist item updates the active task panel', async ({ page }) => {
     const items = page.locator('[data-testid="checklist-item"]')
     await expect(items.first()).toBeVisible({ timeout: 15000 })
-    const count = await items.count()
 
-    if (count >= 2) {
-      await items.nth(1).locator('button').click({ timeout: 5000 })
-      await page.waitForTimeout(500)
+    // Click the FIRST item — it's always 'available' (account_setup has no dependencies).
+    // Items from index 1+ may be locked (disabled buttons); clicking them would cause a timeout.
+    const firstBtn = items.nth(0).locator('button').first()
+    await expect(firstBtn).toBeVisible({ timeout: 10000 })
+    await expect(firstBtn).toBeEnabled()
+    await firstBtn.click({ timeout: 10000 })
+    await page.waitForTimeout(500)
 
-      // Active item title should update
-      const title = page.locator('[data-testid="active-item-title"]')
-      await expect(title).toBeVisible({ timeout: 10000 })
-      const text = await title.textContent({ timeout: 5000 })
-      expect((text ?? '').trim().length).toBeGreaterThan(0)
-    }
+    // Active item title should update
+    const title = page.locator('[data-testid="active-item-title"]')
+    await expect(title).toBeVisible({ timeout: 10000 })
+    const text = await title.textContent({ timeout: 5000 })
+    expect((text ?? '').trim().length).toBeGreaterThan(0)
   })
 })
 
@@ -279,17 +281,21 @@ test.describe('AC #5: Simulation panel', () => {
 
   test('clicking start simulation button updates simulation state', async ({ page }) => {
     const startBtn = page.locator('[data-testid="start-simulation-btn"]')
-    const startBtnVisible = await startBtn.isVisible().catch(() => false)
+    // isVisible() returns true even when disabled (button is in DOM but has :disabled attribute).
+    // Use isEnabled() to correctly detect when prerequisites are met and clicking is allowed.
+    const startBtnEnabled = await startBtn.isEnabled().catch(() => false)
 
-    if (startBtnVisible) {
-      await startBtn.click({ timeout: 5000 })
+    if (startBtnEnabled) {
+      // Prerequisites are complete — start is available
+      await startBtn.click({ timeout: 10000 })
       await page.waitForTimeout(1000)
 
       // After clicking, expect running or success or failed phase
       const html = await page.content()
       expect(html).toMatch(/simulation-running|simulation-success|simulation-failed|running|complete/i)
     } else {
-      // Gated notice is shown — prerequisites incomplete
+      // Button is disabled — prerequisites incomplete (default state when no items completed).
+      // The gated notice should be visible.
       const gated = page.locator('[data-testid="simulation-gated-notice"]')
       await expect(gated).toBeVisible({ timeout: 10000 })
     }
