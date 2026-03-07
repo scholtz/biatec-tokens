@@ -222,6 +222,7 @@ const NAV_ICONS: Record<string, FunctionalComponent<SVGAttributes>> = {
   "/portfolio": CubeIcon,
   "/operations": BuildingOfficeIcon,
   "/cockpit": CommandLineIcon,
+  "/compliance/launch": ShieldCheckIcon,
   "/compliance/setup": ShieldCheckIcon,
   "/settings": Cog6ToothIcon,
 };

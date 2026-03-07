@@ -61,6 +61,10 @@ async function globalSetup(_config: FullConfig) {
     await page.goto(`${BASE_URL}/compliance/setup`, { waitUntil: 'load', timeout: 120000 })
     console.log('[globalSetup] /compliance/setup compiled.')
 
+    // Visit compliance launch console — compiles ComplianceLaunchConsole.vue.
+    await page.goto(`${BASE_URL}/compliance/launch`, { waitUntil: 'load', timeout: 120000 })
+    console.log('[globalSetup] /compliance/launch compiled.')
+
     console.log('[globalSetup] Vite dev server fully warmed up. All module compilations cached.')
   } catch (err) {
     // Non-fatal: log and continue. Per-test timeouts (test.setTimeout) act as

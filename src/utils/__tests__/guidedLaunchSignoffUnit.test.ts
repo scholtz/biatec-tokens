@@ -139,10 +139,10 @@ describe('AC #2: Navigation consistency and canonical route mapping', () => {
     expect(dash!.routeName).toBe('TokenDashboard')
   })
 
-  it('NAV_ITEMS includes Compliance at /compliance/setup', () => {
-    const comp = NAV_ITEMS.find(i => i.path === '/compliance/setup')
+  it('NAV_ITEMS includes Compliance at /compliance/launch', () => {
+    const comp = NAV_ITEMS.find(i => i.path === '/compliance/launch')
     expect(comp).toBeDefined()
-    expect(comp!.routeName).toBe('ComplianceSetupWorkspace')
+    expect(comp!.routeName).toBe('ComplianceLaunchConsole')
   })
 
   it('NAV_ITEMS does NOT include Pricing at /subscription/pricing (AC5 — moved to user dropdown)', () => {

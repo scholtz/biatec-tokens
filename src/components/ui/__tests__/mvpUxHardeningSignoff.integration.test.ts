@@ -41,6 +41,7 @@ const makeRouter = () =>
       { path: '/launch/guided', name: 'GuidedTokenLaunch', component: { template: '<div />' } },
       { path: '/dashboard', name: 'TokenDashboard', component: { template: '<div />' } },
       { path: '/compliance/setup', name: 'ComplianceSetupWorkspace', component: { template: '<div />' } },
+      { path: '/compliance/launch', name: 'ComplianceLaunchConsole', component: { template: '<div />' } },
       { path: '/settings', name: 'Settings', component: { template: '<div />' } },
       { path: '/portfolio', name: 'PortfolioIntelligence', component: { template: '<div />' } },
       { path: '/operations', name: 'BusinessCommandCenter', component: { template: '<div />' } },
@@ -190,7 +191,7 @@ describe('AC #3: Navigation parity — NAV_ITEMS is single source of truth', () 
       '/dashboard',
       '/portfolio',
       '/operations',
-      '/compliance/setup',
+      '/compliance/launch',
       '/settings',
     ]
     for (const path of required) {

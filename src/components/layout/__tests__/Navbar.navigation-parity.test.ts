@@ -23,6 +23,7 @@ describe('Navbar - Navigation Parity', () => {
       { path: '/portfolio', name: 'PortfolioIntelligence', component: { template: '<div>Portfolio</div>' } },
       { path: '/launch/guided', name: 'GuidedTokenLaunch', component: { template: '<div>Guided</div>' } },
       { path: '/compliance/setup', name: 'ComplianceSetupWorkspace', component: { template: '<div>Compliance</div>' } },
+      { path: '/compliance/launch', name: 'ComplianceLaunchConsole', component: { template: '<div>Compliance Launch</div>' } },
       { path: '/dashboard', name: 'TokenDashboard', component: { template: '<div>Dashboard</div>' } },
       { path: '/subscription/pricing', name: 'Pricing', component: { template: '<div>Pricing</div>' } },
       { path: '/settings', name: 'Settings', component: { template: '<div>Settings</div>' } }
@@ -221,7 +222,7 @@ describe('Navbar - Navigation Parity', () => {
 
   it('should include all 7 canonical nav destinations', () => {
     const paths = NAV_ITEMS.map((item) => item.path)
-    const required = ['/', '/launch/workspace', '/dashboard', '/portfolio', '/operations', '/compliance/setup', '/settings']
+    const required = ['/', '/launch/workspace', '/dashboard', '/portfolio', '/operations', '/compliance/launch', '/settings']
     required.forEach(p => {
       expect(paths).toContain(p)
     })

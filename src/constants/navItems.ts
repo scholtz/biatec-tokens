@@ -21,7 +21,7 @@ export const NAV_ITEMS = [
   { label: "Dashboard", path: "/dashboard", routeName: "TokenDashboard" },
   { label: "Portfolio", path: "/portfolio", routeName: "PortfolioIntelligence" },
   { label: "Operations", path: "/operations", routeName: "BusinessCommandCenter" },
-  { label: "Compliance", path: "/compliance/setup", routeName: "ComplianceSetupWorkspace" },
+  { label: "Compliance", path: "/compliance/launch", routeName: "ComplianceLaunchConsole" },
   { label: "Settings", path: "/settings", routeName: "Settings" },
 ] as const;
 

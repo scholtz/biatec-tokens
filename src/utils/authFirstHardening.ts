@@ -59,6 +59,7 @@ export const AUTH_REQUIRED_PATHS: ReadonlyArray<string> = [
   '/compliance-monitoring',
   '/compliance/whitelists',
   '/compliance/setup',
+  '/compliance/launch',
   '/attestations',
   '/insights',
   '/launch/guided',

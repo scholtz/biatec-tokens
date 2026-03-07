@@ -22,6 +22,7 @@ import VisionInsightsWorkspace from "../views/VisionInsightsWorkspace.vue";
 import GuidedTokenLaunch from "../views/GuidedTokenLaunch.vue";
 import GuidedLaunchWorkspace from "../views/GuidedLaunchWorkspace.vue";
 import ComplianceSetupWorkspace from "../views/ComplianceSetupWorkspace.vue";
+import ComplianceLaunchConsole from "../views/ComplianceLaunchConsole.vue";
 import LifecycleCockpit from "../views/LifecycleCockpit.vue";
 import TokenDiscoveryJourney from "../views/TokenDiscoveryJourney.vue";
 import WalletActivationJourney from "../views/WalletActivationJourney.vue";
@@ -141,6 +142,13 @@ const router = createRouter({
       path: "/compliance/setup",
       name: "ComplianceSetupWorkspace",
       component: ComplianceSetupWorkspace,
+      meta: { requiresAuth: true },
+    },
+    // Compliance Launch Console — single orchestration page for regulated token issuance
+    {
+      path: "/compliance/launch",
+      name: "ComplianceLaunchConsole",
+      component: ComplianceLaunchConsole,
       meta: { requiresAuth: true },
     },
     {

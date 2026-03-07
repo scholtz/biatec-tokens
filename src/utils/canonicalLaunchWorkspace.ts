@@ -645,6 +645,7 @@ export function isCanonicalLaunchPath(path: string): boolean {
  * Used to assert consistent compliance setup behaviour across the router configuration.
  */
 export const COMPLIANCE_AUTH_GATED_ROUTES: ReadonlyArray<string> = [
+  '/compliance/launch',
   '/compliance/setup',
   '/compliance/orchestration',
   '/compliance-monitoring',

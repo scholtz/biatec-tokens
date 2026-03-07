@@ -55,9 +55,9 @@ describe("Navigation Parity - Single Source of Truth", () => {
   });
 
   it("should include Compliance", () => {
-    const complianceItem = NAV_ITEMS.find((item) => item.path === "/compliance/setup");
+    const complianceItem = NAV_ITEMS.find((item) => item.path === "/compliance/launch");
     expect(complianceItem).toBeDefined();
-    expect(complianceItem?.routeName).toBe("ComplianceSetupWorkspace");
+    expect(complianceItem?.routeName).toBe("ComplianceLaunchConsole");
   });
 
   it("should NOT include Pricing in top-level nav items (AC5 — moved to user account dropdown)", () => {
