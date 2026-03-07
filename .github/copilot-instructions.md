@@ -1250,6 +1250,87 @@ src/views/__tests__/MyView.logic.test.ts  ← interaction handlers, state machin
 - ❌ Leave simulation success/failed UI states untested (they are distinct template branches)
 - ❌ Skip testing localStorage error fallback paths (corrupt data causes silent errors)
 
+### 7n. View Helper Functions and @click Handlers on router-link Must All Be Branch-Covered (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 7, 2026 (PR #585) 🚨**
+
+**Violation**: `ComplianceLaunchConsole.vue` was submitted with 73.77% branch coverage (below the 80% threshold). The following were never invoked in tests:
+- `handlePrimaryCta()` — the `@click` handler on the primary CTA button
+- `emitDomainAnalytics(domain)` — the `@click` on `<router-link>` for domain setup links
+- `emitBlockerAnalytics(domain, blocker)` — the `@click` on `<router-link>` for blocker remediation links
+- `blockerCardClass('high')` and `blockerLinkClass('high')` — the 'high' severity branch of view helper functions
+- A dead `case 'medium'` in `blockerCardClass` that the store could never produce (removed as dead code)
+
+**Root Cause**:
+1. **`@click` on `<router-link>` is invisible without expansion**: The domain detail panel is collapsed by default. Tests that only mount and scan initial HTML never see the expanded state, so router-link @click handlers are never fired.
+2. **Helper functions used in `:class` bindings need one test per return-value branch**: `blockerCardClass` and `blockerLinkClass` are called via `:class="blockerCardClass(blocker.severity)"`. They are never directly called in tests — only triggered when a blocker with the matching severity is rendered. A test that only renders 'critical' severity blockers will never reach the 'high' or 'medium' branches.
+3. **Router navigation tested with `wrapper.vm.$router` not `router` object**: Spying on a `router` variable after mount does not intercept because `useRouter()` returns an injected proxy. Set up the spy before mounting (on `router.push`) OR use `router.isReady()` + `router.currentRoute.value.path` after trigger to verify navigation.
+
+**Correct Approach — MANDATORY Before Committing a New View**:
+
+```bash
+# 1. Run per-file coverage to find uncovered branches:
+node_modules/.bin/vitest run --coverage src/views/__tests__/MyView*.test.ts 2>&1 | grep "MyView.vue"
+# Requirement: % Branch ≥80%, % Funcs ≥80%, % Stmts ≥80%
+
+# 2. For every @click handler not covered:
+#    - Find the element in the template (including expanded/conditional sections)
+#    - Add a test that expands the panel (click header) THEN clicks the router-link or button
+#    - Verify the handler fired (via analytics event, router.currentRoute, or DOM change)
+
+# 3. For every :class="helperFn(value)" binding:
+#    - Identify all DISTINCT return values the function can produce
+#    - Ensure there is a test case that triggers each return-value branch
+#    - Remove dead branches the store can never produce (simplify switch → if/if/return)
+```
+
+**Router navigation test pattern** (use `router.currentRoute` not `router.push` spy):
+```typescript
+it('clicking primary CTA routes to /compliance/setup', async () => {
+  const router = makeRouter()
+  const wrapper = mount(MyView, {
+    global: { plugins: [createTestingPinia({ createSpy: vi.fn, initialState }), router] }
+  })
+  await router.isReady()
+  await nextTick()
+  await wrapper.find('[data-testid="primary-cta-button"]').trigger('click')
+  await router.isReady()
+  await nextTick()
+  expect(router.currentRoute.value.path).toBe('/expected/path')
+})
+```
+
+**:class helper function coverage checklist** (MANDATORY for each function that maps severity/status to CSS):
+```typescript
+// For a function like:
+function blockerCardClass(severity: 'critical' | 'high' | 'medium' | 'low'): string {
+  if (severity === 'critical') return '...'
+  if (severity === 'high') return '...'
+  return '...'  // medium / low fallback
+}
+// You MUST have test cases that render:
+// (a) a blocker with severity='critical' → covers first branch
+// (b) a blocker with severity='high'     → covers second branch
+// (c) No third case needed: the final return is the else/fallback and is always hit
+//     when neither (a) nor (b) applies — but only if you have a test where neither condition is true
+```
+
+**Pre-Commit Branch Coverage Check** (MANDATORY for new views):
+```bash
+node_modules/.bin/vitest run --coverage \
+  src/views/__tests__/MyView.test.ts \
+  src/views/__tests__/MyView.logic.test.ts 2>&1 | grep "MyView.vue"
+# Must show: % Branch ≥80%
+# If not: identify uncovered lines in "Uncovered Line #s" column and add targeted tests
+```
+
+**Never Again**:
+- ❌ Submit a view without checking the "% Branch" column in the coverage report
+- ❌ Assume `@click` on `<router-link>` inside a collapsed panel is tested — it is NOT visible until expanded
+- ❌ Leave helper functions (`:class="fn()"`) with cases that are never triggered by any test
+- ❌ Keep dead switch cases that the underlying store/data can never produce — replace switch with if/if/return
+- ❌ Spy on `router.push` from outside the component after mounting — use `router.currentRoute.value.path` instead
+
 - [ ] **Navigation Link Required**: If implementing new route, MUST add navigation link
   - ❌ **Past Violation**: Guided launch implemented but not accessible from navbar
   - ✅ **Solution**: Add link to `src/components/layout/Navbar.vue` with appropriate icon

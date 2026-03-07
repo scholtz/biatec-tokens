@@ -582,27 +582,15 @@ function domainExpandBorderClass(status: DomainStatus): string {
 }
 
 function blockerCardClass(severity: BlockerDetail['severity']): string {
-  switch (severity) {
-    case 'critical':
-      return 'bg-red-950/50 border-red-800/60'
-    case 'high':
-      return 'bg-orange-950/50 border-orange-800/60'
-    case 'medium':
-      return 'bg-yellow-950/50 border-yellow-800/60'
-    default:
-      return 'bg-gray-800/50 border-gray-700/60'
-  }
+  if (severity === 'critical') return 'bg-red-950/50 border-red-800/60'
+  if (severity === 'high') return 'bg-orange-950/50 border-orange-800/60'
+  return 'bg-yellow-950/50 border-yellow-800/60'
 }
 
 function blockerLinkClass(severity: BlockerDetail['severity']): string {
-  switch (severity) {
-    case 'critical':
-      return 'bg-red-600/20 hover:bg-red-600/30 border border-red-700/50 text-red-300 focus-visible:ring-red-400'
-    case 'high':
-      return 'bg-orange-600/20 hover:bg-orange-600/30 border border-orange-700/50 text-orange-300 focus-visible:ring-orange-400'
-    default:
-      return 'bg-yellow-600/20 hover:bg-yellow-600/30 border border-yellow-700/50 text-yellow-300 focus-visible:ring-yellow-400'
-  }
+  if (severity === 'critical') return 'bg-red-600/20 hover:bg-red-600/30 border border-red-700/50 text-red-300 focus-visible:ring-red-400'
+  if (severity === 'high') return 'bg-orange-600/20 hover:bg-orange-600/30 border border-orange-700/50 text-orange-300 focus-visible:ring-orange-400'
+  return 'bg-yellow-600/20 hover:bg-yellow-600/30 border border-yellow-700/50 text-yellow-300 focus-visible:ring-yellow-400'
 }
 
 // ---------------------------------------------------------------------------
