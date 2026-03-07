@@ -364,6 +364,29 @@ describe('deriveReadinessModel — blocker enrichment', () => {
     expect(blocker.how).toBeTruthy()
     expect(blocker.deepLink).toContain('/compliance')
   })
+
+  it('uses hardcoded fallback text when rawTitle and rawDescription are empty strings', () => {
+    const steps = [makeStep('unknown_step')]
+    const assessment = makeAssessment({
+      isReadyForDeploy: false,
+      blockers: [{
+        id: 'blocker_unknown_step_no_title',
+        severity: 'low',
+        category: 'unknown_step' as any,
+        title: '',       // empty title → should use fallback 'Compliance requirement not met'
+        description: '', // empty description → should use fallback 'This issue must be resolved...'
+        remediationSteps: [],
+        relatedStepId: 'unknown_step',
+        canAutoResolve: false,
+      }],
+    })
+    const model = deriveReadinessModel(steps, assessment)
+    const blocker = model.domains[0].blockers[0]
+    expect(blocker.what).toBe('Compliance requirement not met')
+    expect(blocker.why).toBe('This issue must be resolved before the token can be deployed.')
+    expect(blocker.how).toBeTruthy()
+    expect(blocker.deepLink).toContain('/compliance/setup')
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -467,5 +490,176 @@ describe('label constants', () => {
     expect(DOMAIN_STATUS_LABELS.needs_attention).toBeTruthy()
     expect(DOMAIN_STATUS_LABELS.ready).toBeTruthy()
     expect(DOMAIN_STATUS_LABELS.blocked).toBeTruthy()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Specific enrichment pattern branches (non-_incomplete blocker IDs)
+// These test lines 161, 173, 185, 197 in complianceLaunchReadiness.ts —
+// reached only when a blocker ID contains the keyword WITHOUT '_incomplete'.
+// ---------------------------------------------------------------------------
+
+describe('deriveReadinessModel — specific enrichment patterns (non-_incomplete IDs)', () => {
+  it('enriches a jurisdiction blocker with jurisdiction-specific guidance (non-_incomplete id)', () => {
+    const steps = [makeStep('jurisdiction')]
+    const assessment = makeAssessment({
+      isReadyForDeploy: false,
+      blockers: [{
+        id: 'blocker_jurisdiction_country_missing',
+        severity: 'critical',
+        category: 'jurisdiction' as any,
+        title: 'Issuer country not set',
+        description: 'Must set before deploy',
+        remediationSteps: [],
+        relatedStepId: 'jurisdiction',
+        canAutoResolve: false,
+      }],
+    })
+    const model = deriveReadinessModel(steps, assessment)
+    const blocker = model.domains[0].blockers[0]
+    expect(blocker.deepLink).toContain('jurisdiction')
+    expect(blocker.why).toMatch(/jurisdiction/i)
+    expect(blocker.how).toMatch(/jurisdiction/i)
+  })
+
+  it('enriches a whitelist blocker with whitelist-specific guidance (non-_incomplete id)', () => {
+    const steps = [makeStep('whitelist')]
+    const assessment = makeAssessment({
+      isReadyForDeploy: false,
+      blockers: [{
+        id: 'blocker_whitelist_export_pending',
+        severity: 'high',
+        category: 'whitelist' as any,
+        title: 'Whitelist export pending',
+        description: 'Must export before deploy',
+        remediationSteps: [],
+        relatedStepId: 'whitelist',
+        canAutoResolve: false,
+      }],
+    })
+    const model = deriveReadinessModel(steps, assessment)
+    const blocker = model.domains[0].blockers[0]
+    expect(blocker.deepLink).toContain('whitelist')
+    expect(blocker.why).toMatch(/whitelist/i)
+    expect(blocker.how).toMatch(/whitelist/i)
+  })
+
+  it('enriches a kyc blocker with KYC-specific guidance (non-_incomplete id)', () => {
+    const steps = [makeStep('kyc_aml')]
+    const assessment = makeAssessment({
+      isReadyForDeploy: false,
+      blockers: [{
+        id: 'blocker_kyc_provider_not_configured',
+        severity: 'critical',
+        category: 'kyc_aml' as any,
+        title: 'KYC provider missing',
+        description: 'Must configure provider',
+        remediationSteps: [],
+        relatedStepId: 'kyc_aml',
+        canAutoResolve: false,
+      }],
+    })
+    const model = deriveReadinessModel(steps, assessment)
+    const blocker = model.domains[0].blockers[0]
+    expect(blocker.deepLink).toContain('kyc')
+    expect(blocker.why).toMatch(/kyc/i)
+    expect(blocker.how).toMatch(/kyc/i)
+  })
+
+  it('enriches an aml blocker with KYC-specific guidance (aml keyword variant)', () => {
+    const steps = [makeStep('kyc_aml')]
+    const assessment = makeAssessment({
+      isReadyForDeploy: false,
+      blockers: [{
+        id: 'blocker_aml_screening_missing',
+        severity: 'high',
+        category: 'kyc_aml' as any,
+        title: 'AML screening not configured',
+        description: 'AML required before deploy',
+        remediationSteps: [],
+        relatedStepId: 'kyc_aml',
+        canAutoResolve: false,
+      }],
+    })
+    const model = deriveReadinessModel(steps, assessment)
+    const blocker = model.domains[0].blockers[0]
+    expect(blocker.deepLink).toContain('kyc')
+    expect(blocker.why).toMatch(/kyc|aml/i)
+  })
+
+  it('enriches an attestation blocker with attestation-specific guidance (non-_incomplete id)', () => {
+    const steps = [makeStep('attestation')]
+    const assessment = makeAssessment({
+      isReadyForDeploy: false,
+      blockers: [{
+        id: 'blocker_attestation_doc_missing',
+        severity: 'critical',
+        category: 'attestation' as any,
+        title: 'Attestation document missing',
+        description: 'Must upload docs',
+        remediationSteps: [],
+        relatedStepId: 'attestation',
+        canAutoResolve: false,
+      }],
+    })
+    const model = deriveReadinessModel(steps, assessment)
+    const blocker = model.domains[0].blockers[0]
+    expect(blocker.deepLink).toContain('attestation')
+    expect(blocker.why).toMatch(/attestation|disclosure/i)
+    expect(blocker.how).toMatch(/attestation/i)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// blockerSeverityCardClass / blockerSeverityLinkClass
+// ---------------------------------------------------------------------------
+
+import { blockerSeverityCardClass, blockerSeverityLinkClass } from '../complianceLaunchReadiness'
+
+describe('blockerSeverityCardClass', () => {
+  it('returns red card class for critical severity', () => {
+    expect(blockerSeverityCardClass('critical')).toContain('bg-red-950')
+    expect(blockerSeverityCardClass('critical')).toContain('border-red-800')
+  })
+
+  it('returns orange card class for high severity', () => {
+    expect(blockerSeverityCardClass('high')).toContain('bg-orange-950')
+    expect(blockerSeverityCardClass('high')).toContain('border-orange-800')
+  })
+
+  it('returns yellow card class for medium severity (fallback)', () => {
+    expect(blockerSeverityCardClass('medium')).toContain('bg-yellow-950')
+    expect(blockerSeverityCardClass('medium')).toContain('border-yellow-800')
+  })
+
+  it('returns yellow card class for low severity (fallback)', () => {
+    expect(blockerSeverityCardClass('low')).toContain('bg-yellow-950')
+    expect(blockerSeverityCardClass('low')).toContain('border-yellow-800')
+  })
+})
+
+describe('blockerSeverityLinkClass', () => {
+  it('returns red link class for critical severity', () => {
+    const cls = blockerSeverityLinkClass('critical')
+    expect(cls).toContain('text-red-300')
+    expect(cls).toContain('border-red-700')
+  })
+
+  it('returns orange link class for high severity', () => {
+    const cls = blockerSeverityLinkClass('high')
+    expect(cls).toContain('text-orange-300')
+    expect(cls).toContain('border-orange-700')
+  })
+
+  it('returns yellow link class for medium severity (fallback)', () => {
+    const cls = blockerSeverityLinkClass('medium')
+    expect(cls).toContain('text-yellow-300')
+    expect(cls).toContain('border-yellow-700')
+  })
+
+  it('returns yellow link class for low severity (fallback)', () => {
+    const cls = blockerSeverityLinkClass('low')
+    expect(cls).toContain('text-yellow-300')
+    expect(cls).toContain('border-yellow-700')
   })
 })

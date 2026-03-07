@@ -361,3 +361,22 @@ export const DOMAIN_STATUS_LABELS: Record<DomainStatus, string> = {
   ready: 'Ready',
   blocked: 'Blocked',
 }
+
+// ---------------------------------------------------------------------------
+// Severity-to-CSS helpers (exported so they can be unit-tested directly)
+// ---------------------------------------------------------------------------
+
+/** Returns Tailwind card background/border classes for a blocker by severity. */
+export function blockerSeverityCardClass(severity: BlockerDetail['severity']): string {
+  if (severity === 'critical') return 'bg-red-950/50 border-red-800/60'
+  if (severity === 'high') return 'bg-orange-950/50 border-orange-800/60'
+  return 'bg-yellow-950/50 border-yellow-800/60'
+}
+
+/** Returns Tailwind link/button classes for a blocker action by severity. */
+export function blockerSeverityLinkClass(severity: BlockerDetail['severity']): string {
+  if (severity === 'critical') return 'bg-red-600/20 hover:bg-red-600/30 border border-red-700/50 text-red-300 focus-visible:ring-red-400'
+  if (severity === 'high') return 'bg-orange-600/20 hover:bg-orange-600/30 border border-orange-700/50 text-orange-300 focus-visible:ring-orange-400'
+  return 'bg-yellow-600/20 hover:bg-yellow-600/30 border border-yellow-700/50 text-yellow-300 focus-visible:ring-yellow-400'
+}
+

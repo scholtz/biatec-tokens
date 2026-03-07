@@ -408,6 +408,8 @@ import {
   PRIMARY_ACTION_LABELS,
   GATE_STATE_LABELS,
   DOMAIN_STATUS_LABELS,
+  blockerSeverityCardClass,
+  blockerSeverityLinkClass,
 } from '../utils/complianceLaunchReadiness'
 import type {
   LaunchReadinessDomain,
@@ -582,15 +584,11 @@ function domainExpandBorderClass(status: DomainStatus): string {
 }
 
 function blockerCardClass(severity: BlockerDetail['severity']): string {
-  if (severity === 'critical') return 'bg-red-950/50 border-red-800/60'
-  if (severity === 'high') return 'bg-orange-950/50 border-orange-800/60'
-  return 'bg-yellow-950/50 border-yellow-800/60'
+  return blockerSeverityCardClass(severity)
 }
 
 function blockerLinkClass(severity: BlockerDetail['severity']): string {
-  if (severity === 'critical') return 'bg-red-600/20 hover:bg-red-600/30 border border-red-700/50 text-red-300 focus-visible:ring-red-400'
-  if (severity === 'high') return 'bg-orange-600/20 hover:bg-orange-600/30 border border-orange-700/50 text-orange-300 focus-visible:ring-orange-400'
-  return 'bg-yellow-600/20 hover:bg-yellow-600/30 border border-yellow-700/50 text-yellow-300 focus-visible:ring-yellow-400'
+  return blockerSeverityLinkClass(severity)
 }
 
 // ---------------------------------------------------------------------------
