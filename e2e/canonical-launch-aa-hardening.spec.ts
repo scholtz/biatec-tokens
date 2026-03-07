@@ -165,7 +165,9 @@ test.describe('AC #2: Navigation consistency — parity, skip-to-content, ARIA',
     // Core routes that must be reachable from the navigation
     // Note: nav entry for "Guided Launch" now points to /launch/workspace (workspace hub).
     // /launch/guided remains accessible from within the workspace but is not a nav link.
-    const coreRoutes = ['/launch/workspace', '/dashboard', '/compliance/setup', '/settings']
+    // Compliance nav item points to /compliance/launch (Compliance Launch Console);
+    // /compliance/setup is a backward-compat route still accessible but not the nav entry.
+    const coreRoutes = ['/launch/workspace', '/dashboard', '/compliance/launch', '/settings']
 
     const nav = page.getByRole('navigation').first()
     await expect(nav).toBeVisible({ timeout: 15000 })

@@ -365,6 +365,29 @@ describe('deriveReadinessModel — blocker enrichment', () => {
     expect(blocker.deepLink).toContain('/compliance')
   })
 
+  it('uses DOMAIN_META["summary"] fallback when _incomplete blocker has unrecognised stepId', () => {
+    const steps = [makeStep('unknown_domain_xyz')]
+    const assessment = makeAssessment({
+      isReadyForDeploy: false,
+      blockers: [{
+        id: 'blocker_unknown_domain_xyz_incomplete',
+        severity: 'critical',
+        category: 'unknown_domain_xyz' as any,
+        title: 'Unknown step incomplete',
+        description: 'Must fix this',
+        remediationSteps: [],
+        relatedStepId: 'unknown_domain_xyz',
+        canAutoResolve: false,
+      }],
+    })
+    const model = deriveReadinessModel(steps, assessment)
+    const blocker = model.domains[0].blockers[0]
+    expect(blocker.what).toMatch(/not completed/i)
+    // DOMAIN_META fallback is 'summary' → deepLink contains 'summary'
+    expect(blocker.deepLink).toContain('compliance')
+    expect(blocker.severity).toBe('critical')
+  })
+
   it('uses hardcoded fallback text when rawTitle and rawDescription are empty strings', () => {
     const steps = [makeStep('unknown_step')]
     const assessment = makeAssessment({
