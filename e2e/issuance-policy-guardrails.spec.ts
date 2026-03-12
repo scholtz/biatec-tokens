@@ -200,19 +200,20 @@ test.describe('Issuance workspace — error state accessibility', () => {
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
 
-    // If an error banner is present, it must have role="alert"
-    const alertBanners = page.locator('[role="alert"]')
-    const alertCount = await alertBanners.count()
+    // WCAG 4.1.3: aria-live regions use v-show (not v-if) so screen readers can
+    // subscribe before any error fires. The element is always in the DOM.
+    const alertBanner = page.locator('[data-testid="issuance-error-banner"]')
+    await expect(alertBanner).toBeAttached() // Always in DOM (v-show pattern for WCAG 4.1.3)
+    expect(await alertBanner.getAttribute('role')).toBe('alert')
+    expect(await alertBanner.getAttribute('aria-live')).toBe('assertive')
 
-    // There should be zero alerts on initial load (no errors yet)
-    // If an alert does appear, it must have accessible content
-    if (alertCount > 0) {
-      const firstAlert = alertBanners.first()
-      await expect(firstAlert).toBeVisible()
-      const alertText = await firstAlert.textContent()
-      expect(alertText?.length).toBeGreaterThan(0)
+    // On initial load there is no error, so banner is hidden — not visible
+    // If somehow visible, content must be non-empty
+    const isAlertVisible = await alertBanner.isVisible()
+    if (isAlertVisible) {
+      const alertText = await alertBanner.textContent()
+      expect(alertText?.trim().length).toBeGreaterThan(0)
     }
-    // Page is valid when heading rendered successfully (already verified above)
   })
 
   test('workspace form fields are keyboard-accessible', async ({ page }) => {
