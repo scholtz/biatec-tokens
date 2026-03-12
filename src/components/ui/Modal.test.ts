@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import Modal from './Modal.vue';
@@ -179,6 +179,14 @@ describe('Modal Component', () => {
     // Modal uses <Teleport to="body"> so Vue Test Utils' wrapper.find() does NOT
     // search the teleported content.  Use document.body.querySelector() instead and
     // unmount after each test to keep document.body clean between test runs.
+    //
+    // IMPORTANT: Vue Test Utils' unmount() with Teleport may not synchronously remove
+    // content from document.body in happy-dom.  The beforeEach cleanup ensures each test
+    // starts with a clean document.body regardless of previous test state.
+    beforeEach(() => {
+      // Remove any stale teleported modal content left from a previous test's unmount
+      document.body.querySelectorAll('[role="dialog"], [role="presentation"]').forEach(el => el.remove())
+    })
 
     it('dialog container has role="dialog" when visible (SC 4.1.2)', () => {
       const wrapper = mount(Modal, { props: { show: true }, attachTo: document.body })
