@@ -243,7 +243,10 @@ describe('GuidedTokenLaunch — data-testid anchors (ISSUANCE_TEST_IDS)', () => 
 
   it('error banner is absent when no submission error', async () => {
     const wrapper = await mountView()
-    expect(wrapper.find('[data-testid="issuance-error-banner"]').exists()).toBe(false)
+    // With v-show (WCAG 4.1.3: aria-live region always in DOM), element exists but is hidden
+    const banner = wrapper.find('[data-testid="issuance-error-banner"]')
+    expect(banner.exists()).toBe(true)
+    expect(banner.element.style.display).toBe('none')
   })
 
   it('back button appears and save-draft button appears when step > 0', async () => {
@@ -434,7 +437,10 @@ describe('GuidedTokenLaunch — error banner rendering', () => {
     await wrapper.find('button[aria-label="Dismiss error"]').trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('[data-testid="issuance-error-banner"]').exists()).toBe(false)
+    // With v-show (WCAG 4.1.3: aria-live region always in DOM), element still exists but hidden
+    const banner = wrapper.find('[data-testid="issuance-error-banner"]')
+    expect(banner.exists()).toBe(true)
+    expect(banner.element.style.display).toBe('none')
   })
 })
 

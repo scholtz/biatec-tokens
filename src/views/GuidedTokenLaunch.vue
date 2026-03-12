@@ -19,32 +19,32 @@
         </p>
       </div>
 
-      <!-- Error Banner: shown when submission or step-level errors occur -->
+      <!-- Error Banner: always in DOM for aria-live region subscription (WCAG 4.1.3), shown via v-show -->
       <div
-        v-if="submissionErrorMessage"
+        v-show="submissionErrorMessage"
         role="alert"
         aria-live="assertive"
         :data-testid="ISSUANCE_TEST_IDS.ERROR_BANNER"
         class="mb-6 rounded-lg border p-4 flex items-start gap-3"
-        :class="submissionErrorMessage.severity === 'error'
+        :class="submissionErrorMessage?.severity === 'error'
           ? 'bg-red-900/30 border-red-700/50'
-          : submissionErrorMessage.severity === 'warning'
+          : submissionErrorMessage?.severity === 'warning'
           ? 'bg-yellow-900/30 border-yellow-700/50'
           : 'bg-blue-900/30 border-blue-700/50'"
       >
         <ExclamationTriangleIcon
           class="w-5 h-5 flex-shrink-0 mt-0.5"
-          :class="submissionErrorMessage.severity === 'error'
+          :class="submissionErrorMessage?.severity === 'error'
             ? 'text-red-400'
-            : submissionErrorMessage.severity === 'warning'
+            : submissionErrorMessage?.severity === 'warning'
             ? 'text-yellow-400'
             : 'text-blue-400'"
           aria-hidden="true"
         />
         <div class="flex-1 min-w-0">
-          <p class="font-semibold text-white">{{ submissionErrorMessage.title }}</p>
-          <p class="text-sm text-gray-300 mt-0.5">{{ submissionErrorMessage.description }}</p>
-          <p class="text-sm text-gray-400 mt-1">{{ submissionErrorMessage.action }}</p>
+          <p class="font-semibold text-white">{{ submissionErrorMessage?.title }}</p>
+          <p class="text-sm text-gray-300 mt-0.5">{{ submissionErrorMessage?.description }}</p>
+          <p class="text-sm text-gray-400 mt-1">{{ submissionErrorMessage?.action }}</p>
         </div>
         <button
           @click="clearSubmissionError"
