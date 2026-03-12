@@ -25,7 +25,7 @@
       </option>
     </select>
     <p v-if="error" :id="`${selectId}-error`" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ error }}</p>
-    <p v-else-if="hint" :id="`${selectId}-hint`" class="text-sm text-gray-500 dark:text-gray-400">{{ hint }}</p>
+    <p v-else-if="hint" :id="`${selectId}-hint`" class="text-sm text-gray-600 dark:text-gray-400">{{ hint }}</p>
   </div>
 </template>
 

@@ -5,7 +5,7 @@
         <!-- Header -->
         <div class="mb-8">
           <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">Token Dashboard</h1>
-          <p class="text-gray-300 text-lg">Monitor and manage your deployed tokens</p>
+          <p class="text-gray-600 dark:text-gray-300 text-lg">Monitor and manage your deployed tokens</p>
         </div>
 
         <!-- MICA Readiness Summary -->
@@ -14,52 +14,55 @@
         </div>
 
         <!-- Stats Cards -->
+        <!-- WCAG SC 1.4.3: text-gray-600 (#4b5563) on white = 7.0:1 — passes AA and AAA -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div class="glass-effect rounded-xl p-6">
             <div class="flex items-center justify-between mb-2">
-              <h3 class="text-sm font-medium text-gray-400">Total Tokens</h3>
-              <i class="pi pi-chart-line text-biatec-accent"></i>
+              <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Tokens</h3>
+              <!-- WCAG SC 1.1.1: decorative icon font — hidden from assistive tech -->
+              <i class="pi pi-chart-line text-biatec-accent" aria-hidden="true"></i>
             </div>
             <div class="text-3xl font-bold text-gray-900 dark:text-white">{{ totalTokens }}</div>
-            <div class="text-sm text-gray-400 mt-1">Across all standards</div>
+            <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Across all standards</div>
           </div>
 
           <div class="glass-effect rounded-xl p-6">
             <div class="flex items-center justify-between mb-2">
-              <h3 class="text-sm font-medium text-gray-400">Deployed</h3>
-              <i class="pi pi-check-circle text-green-400"></i>
+              <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">Deployed</h3>
+              <i class="pi pi-check-circle text-green-400" aria-hidden="true"></i>
             </div>
             <div class="text-3xl font-bold text-gray-900 dark:text-white">{{ deployedTokens }}</div>
-            <div class="text-sm text-gray-400 mt-1">Successfully deployed</div>
+            <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Successfully deployed</div>
           </div>
 
           <div class="glass-effect rounded-xl p-6">
             <div class="flex items-center justify-between mb-2">
-              <h3 class="text-sm font-medium text-gray-400">Deploying</h3>
-              <i class="pi pi-spin pi-spinner text-yellow-400"></i>
+              <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">Deploying</h3>
+              <i class="pi pi-spin pi-spinner text-yellow-400" aria-hidden="true"></i>
             </div>
             <div class="text-3xl font-bold text-gray-900 dark:text-white">{{ deployingTokens }}</div>
-            <div class="text-sm text-gray-400 mt-1">In progress</div>
+            <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">In progress</div>
           </div>
 
-          <div class="glass-effect rounded-xl p-6 cursor-pointer hover:border-biatec-accent/50 transition-colors" @click="navigateToCompliance">
+          <div class="glass-effect rounded-xl p-6 cursor-pointer hover:border-biatec-accent/50 transition-colors" @click="navigateToCompliance" role="button" :aria-label="`MICA Compliance status: Enterprise. Click to manage compliance.`" tabindex="0" @keydown.enter="navigateToCompliance" @keydown.space.prevent="navigateToCompliance">
             <div class="flex items-center justify-between mb-2">
-              <h3 class="text-sm font-medium text-gray-400">MICA Compliance</h3>
-              <i class="pi pi-shield-check text-biatec-accent"></i>
+              <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">MICA Compliance</h3>
+              <i class="pi pi-shield-check text-biatec-accent" aria-hidden="true"></i>
             </div>
             <div class="text-2xl font-bold text-gray-900 dark:text-white">Enterprise</div>
             <div class="text-sm text-biatec-accent mt-1 flex items-center gap-1">
               Manage Compliance
-              <i class="pi pi-arrow-right text-xs"></i>
+              <i class="pi pi-arrow-right text-xs" aria-hidden="true"></i>
             </div>
           </div>
         </div>
 
         <!-- Filters and Actions -->
+        <!-- WCAG SC 4.1.2: selects must have accessible names via aria-label -->
         <div class="glass-effect rounded-xl p-6 mb-8">
           <div class="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
             <div class="flex items-center space-x-4">
-              <select v-model="selectedStandardFilter" class="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-biatec-accent">
+              <select v-model="selectedStandardFilter" aria-label="Filter by token standard" class="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-biatec-accent focus-visible:ring-2 focus-visible:ring-blue-500">
                 <option value="">All Standards</option>
                 <option value="ASA">ASA</option>
                 <option value="ARC3FT">ARC3 FT</option>
@@ -73,7 +76,7 @@
                 <option value="ERC721">ERC721</option>
               </select>
 
-              <select v-model="selectedStatusFilter" class="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-biatec-accent">
+              <select v-model="selectedStatusFilter" aria-label="Filter by deployment status" class="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-biatec-accent focus-visible:ring-2 focus-visible:ring-blue-500">
                 <option value="">All Status</option>
                 <option value="created">Created</option>
                 <option value="deploying">Deploying</option>
@@ -83,12 +86,13 @@
             </div>
 
             <div class="flex items-center space-x-4">
-              <button @click="refreshTokens" class="px-4 py-2 bg-biatec-accent/20 text-biatec-accent rounded-lg hover:bg-biatec-accent/30 transition-colors">
-                <i class="pi pi-sync mr-2"></i>
+              <button @click="refreshTokens" aria-label="Refresh token list" class="px-4 py-2 bg-biatec-accent/20 text-biatec-accent rounded-lg hover:bg-biatec-accent/30 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                <!-- WCAG SC 1.1.1: decorative icon hidden from AT; button aria-label provides accessible name -->
+                <i class="pi pi-sync mr-2" aria-hidden="true"></i>
                 Refresh
               </button>
-              <router-link to="/launch/guided" class="btn-primary px-4 py-2 rounded-lg text-gray-900 dark:text-white font-medium flex items-center space-x-2">
-                <i class="pi pi-plus"></i>
+              <router-link to="/launch/guided" class="btn-primary px-4 py-2 rounded-lg text-gray-900 dark:text-white font-medium flex items-center space-x-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                <i class="pi pi-plus" aria-hidden="true"></i>
                 <span>Create Token</span>
               </router-link>
             </div>
@@ -96,22 +100,24 @@
         </div>
 
         <!-- Loading State -->
+        <!-- WCAG SC 4.1.3: role="status" announces loading state to screen readers -->
         <div v-if="isLoading" class="text-center py-12" data-testid="token-dashboard-loading">
-          <div class="glass-effect rounded-xl p-12 max-w-md mx-auto">
-            <i class="pi pi-spin pi-spinner text-5xl text-biatec-accent mb-6"></i>
+          <div class="glass-effect rounded-xl p-12 max-w-md mx-auto" role="status" aria-live="polite" aria-label="Loading tokens">
+            <i class="pi pi-spin pi-spinner text-5xl text-biatec-accent mb-6" aria-hidden="true"></i>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Loading tokens…</h3>
-            <p class="text-gray-400">Fetching your token portfolio</p>
+            <p class="text-gray-600 dark:text-gray-400">Fetching your token portfolio</p>
           </div>
         </div>
 
         <!-- Error State -->
+        <!-- WCAG SC 4.1.3: role="alert" announces error state assertively to screen readers -->
         <div v-else-if="loadError" class="text-center py-12" data-testid="token-dashboard-error">
-          <div class="glass-effect rounded-xl p-12 max-w-md mx-auto border border-red-500/30">
-            <i class="pi pi-exclamation-circle text-5xl text-red-400 mb-6"></i>
+          <div class="glass-effect rounded-xl p-12 max-w-md mx-auto border border-red-500/30" role="alert">
+            <i class="pi pi-exclamation-circle text-5xl text-red-400 mb-6" aria-hidden="true"></i>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Unable to load tokens</h3>
-            <p class="text-gray-400 mb-6">{{ loadError }}</p>
-            <button @click="retryLoad" class="btn-primary px-6 py-3 rounded-xl text-gray-900 dark:text-white font-medium inline-flex items-center space-x-2">
-              <i class="pi pi-refresh"></i>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">{{ loadError }}</p>
+            <button @click="retryLoad" class="btn-primary px-6 py-3 rounded-xl text-gray-900 dark:text-white font-medium inline-flex items-center space-x-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+              <i class="pi pi-refresh" aria-hidden="true"></i>
               <span>Try again</span>
             </button>
           </div>
@@ -125,13 +131,13 @@
         <!-- Empty State -->
         <div v-else class="text-center py-12" data-testid="token-dashboard-empty">
           <div class="glass-effect rounded-xl p-12 max-w-md mx-auto">
-            <i class="pi pi-coins text-6xl text-gray-400 mb-6"></i>
+            <i class="pi pi-coins text-6xl text-gray-400 mb-6" aria-hidden="true"></i>
             <h3 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">No Tokens Found</h3>
-            <p class="text-gray-300 mb-6">
+            <p class="text-gray-600 dark:text-gray-400 mb-6">
               {{ tokens.length === 0 ? "Create your first token to get started" : "No tokens match your current filters" }}
             </p>
-            <router-link to="/launch/guided" class="btn-primary px-6 py-3 rounded-xl text-gray-900 dark:text-white font-medium inline-flex items-center space-x-2">
-              <i class="pi pi-plus"></i>
+            <router-link to="/launch/guided" class="btn-primary px-6 py-3 rounded-xl text-gray-900 dark:text-white font-medium inline-flex items-center space-x-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+              <i class="pi pi-plus" aria-hidden="true"></i>
               <span>Create Token</span>
             </router-link>
           </div>

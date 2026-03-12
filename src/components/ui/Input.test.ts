@@ -72,8 +72,7 @@ describe('Input Component', () => {
     });
     
     expect(wrapper.text()).toContain('Enter a valid email address');
-    expect(wrapper.find('p.text-gray-500').exists()).toBe(true);
-  });
+    expect(wrapper.find('p.text-gray-600').exists()).toBe(true);  });
 
   it('should not display hint when error is present', () => {
     const wrapper = mount(Input, {
