@@ -107,7 +107,8 @@ describe('Select Component', () => {
     });
     
     expect(wrapper.text()).toContain('Choose the best option');
-    expect(wrapper.find('p.text-gray-600').exists()).toBe(true);  });
+    expect(wrapper.find('p.text-gray-600').exists()).toBe(true);
+  });
 
   it('should not display hint when error is present', () => {
     const wrapper = mount(Select, {

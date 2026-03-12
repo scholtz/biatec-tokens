@@ -44,7 +44,7 @@
             <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">In progress</div>
           </div>
 
-          <div class="glass-effect rounded-xl p-6 cursor-pointer hover:border-biatec-accent/50 transition-colors" @click="navigateToCompliance" role="button" :aria-label="`MICA Compliance status: Enterprise. Click to manage compliance.`" tabindex="0" @keydown.enter="navigateToCompliance" @keydown.space.prevent="navigateToCompliance">
+          <div class="glass-effect rounded-xl p-6 cursor-pointer hover:border-biatec-accent/50 transition-colors" @click="navigateToCompliance" role="button" aria-label="MICA Compliance status: Enterprise. Click to manage compliance." tabindex="0" @keydown.enter="navigateToCompliance" @keydown.space.prevent="navigateToCompliance">
             <div class="flex items-center justify-between mb-2">
               <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">MICA Compliance</h3>
               <i class="pi pi-shield-check text-biatec-accent" aria-hidden="true"></i>
