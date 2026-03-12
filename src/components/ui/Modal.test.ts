@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
+import { nextTick } from 'vue';
 import Modal from './Modal.vue';
 
 describe('Modal Component', () => {
@@ -237,11 +238,14 @@ describe('Modal Component', () => {
 
     it('emits close when Escape key is pressed on the outer wrapper (keyboard trap SC 2.1.2)', async () => {
       const wrapper = mount(Modal, { props: { show: true }, attachTo: document.body })
-      // The Escape handler lives on the outer div (role="presentation") which is
-      // also teleported — reach it via document.body
+      // Teleport and Transition need a Vue tick to render into document.body
+      await nextTick()
       const outer = document.body.querySelector('[role="presentation"]') as HTMLElement | null
-      outer?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-      await new Promise<void>((r) => setTimeout(r, 0))
+      // Outer presentation div MUST exist in DOM when show=true
+      expect(outer).not.toBeNull()
+      // Dispatch Escape key — Vue @keydown.esc handler calls closeModal → emit('close')
+      outer!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+      await nextTick()
       expect(wrapper.emitted('close')).toBeTruthy()
       wrapper.unmount()
     })
