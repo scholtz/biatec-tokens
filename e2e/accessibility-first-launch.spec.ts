@@ -28,17 +28,18 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { withAuth, clearAuthScript } from './helpers/auth'
+import { withAuth, clearAuthScript, suppressBrowserErrors } from './helpers/auth'
 
 // ---------------------------------------------------------------------------
 // Suite: Canonical launch route visibility
 // ---------------------------------------------------------------------------
 
 test.describe('Canonical launch route — navigation and visibility', () => {
-  test('navigation contains a link pointing to /launch/guided', async ({ page }) => {
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
-    page.on('pageerror', err => console.log('[page error]', err.message))
+  test.beforeEach(async ({ page }) => {
+    suppressBrowserErrors(page)
+  })
 
+  test('navigation contains a link pointing to /launch/guided', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
@@ -55,8 +56,6 @@ test.describe('Canonical launch route — navigation and visibility', () => {
   })
 
   test('navigation does NOT contain legacy "wizard" or "create" as primary label', async ({ page }) => {
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
-
     await page.goto('/')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
@@ -67,7 +66,6 @@ test.describe('Canonical launch route — navigation and visibility', () => {
 
   test('authenticated user nav contains link to /launch/guided', async ({ page }) => {
     await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
@@ -87,9 +85,12 @@ test.describe('Canonical launch route — navigation and visibility', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('Non-wallet terminology — guest and authenticated surfaces', () => {
+  test.beforeEach(async ({ page }) => {
+    suppressBrowserErrors(page)
+  })
+
   test('home page contains no wallet-connect language for guest user', async ({ page }) => {
     await clearAuthScript(page)
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
@@ -115,7 +116,6 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
 
   test('home page contains no wallet-connect language for authenticated user', async ({ page }) => {
     await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
@@ -131,7 +131,6 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
 
   test('navigation bar does not contain wallet connect text for guest', async ({ page }) => {
     await clearAuthScript(page)
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
@@ -146,7 +145,6 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
 
   test('guided launch page contains no wallet-connect language', async ({ page }) => {
     await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
@@ -175,9 +173,12 @@ test.describe('Non-wallet terminology — guest and authenticated surfaces', () 
 // ---------------------------------------------------------------------------
 
 test.describe('Keyboard navigation — primary launch CTA', () => {
+  test.beforeEach(async ({ page }) => {
+    suppressBrowserErrors(page)
+  })
+
   test('Tab navigation can reach the Create Token link in navigation', async ({ page }) => {
     await clearAuthScript(page)
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
@@ -198,7 +199,6 @@ test.describe('Keyboard navigation — primary launch CTA', () => {
 
   test('Sign in button is focusable and has an accessible label', async ({ page }) => {
     await clearAuthScript(page)
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
@@ -217,9 +217,12 @@ test.describe('Keyboard navigation — primary launch CTA', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('Semantic HTML — accessibility attributes on critical surfaces', () => {
+  test.beforeEach(async ({ page }) => {
+    suppressBrowserErrors(page)
+  })
+
   test('guided launch page has a level-1 heading', async ({ page }) => {
     await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
@@ -230,23 +233,34 @@ test.describe('Semantic HTML — accessibility attributes on critical surfaces',
 
   test('guided launch page error banner uses role="alert" when an error is present', async ({ page }) => {
     await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
 
-    // Confirm alert role is present in the DOM (may not be visible when no errors)
-    // This checks that the template wiring exists and the attribute is correct
-    const alertElements = page.locator('[role="alert"]')
-    // Alert elements exist in DOM for reactive error handling — count may be 0 when no errors shown
-    const alertCount = await alertElements.count()
-    // At minimum the structure should support alerts (count is 0 when no errors shown, which is correct)
-    expect(alertCount).toBeGreaterThanOrEqual(0)
+    // Confirm the page has rendered (semantic wait already passed above for /launch/guided)
+    // Check that the template supports role="alert" — either it's in the DOM or the page
+    // renders an error-capable structure (the heading confirms a full render)
+    const h1 = page.getByRole('heading', { level: 1 }).first()
+    await expect(h1).toBeVisible({ timeout: 30000 })
+
+    // role="alert" containers may be conditionally rendered; verify structural support
+    // by confirming the page HTML includes the alert pattern OR the heading is present (above)
+    const pageHasAlertSupport = await page.evaluate(() => {
+      return (
+        document.querySelector('[role="alert"]') !== null ||
+        document.querySelector('.error-banner') !== null ||
+        document.querySelector('[aria-live="assertive"]') !== null
+      )
+    })
+    // Alert support is structural — passes when no error is active (count = 0 is expected)
+    // GuidedTokenLaunch.vue has role="alert" + aria-live="assertive" baked into the template.
+    // Verify the rendered HTML includes that attribute (template wiring exists in source).
+    const renderedHTML = await page.content()
+    expect(renderedHTML).toContain('role="alert"') // template wires role="alert" even before errors fire
   })
 
   test('compliance setup workspace has a level-1 heading', async ({ page }) => {
     await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/compliance/setup')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
@@ -257,7 +271,6 @@ test.describe('Semantic HTML — accessibility attributes on critical surfaces',
 
   test('guided launch step indicators have descriptive text', async ({ page }) => {
     await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
@@ -277,10 +290,13 @@ test.describe('Semantic HTML — accessibility attributes on critical surfaces',
 // ---------------------------------------------------------------------------
 
 test.describe('Compliance setup workspace — non-wallet accessibility', () => {
+  test.beforeEach(async ({ page }) => {
+    suppressBrowserErrors(page)
+  })
+
   test('compliance setup page loads without wallet-connect language', async ({ page }) => {
     test.setTimeout(90000) // auth store init + compliance page navigation can exceed 60s global budget in CI
     await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/compliance/setup', { timeout: 15000 }) // Vite pre-warmed by globalSetup — 15s sufficient; 30s pushed cumulative max =90s (at limit)
     await page.waitForLoadState('load', { timeout: 10000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
@@ -297,7 +313,6 @@ test.describe('Compliance setup workspace — non-wallet accessibility', () => {
 
   test('compliance page is accessible via keyboard Tab from navigation', async ({ page }) => {
     await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/compliance/setup')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
@@ -305,10 +320,10 @@ test.describe('Compliance setup workspace — non-wallet accessibility', () => {
     const h1 = page.getByRole('heading', { level: 1 }).first()
     await expect(h1).toBeVisible({ timeout: 30000 })
 
-    // Verify the main content region has focusable elements
+    // Verify the main content region has focusable elements (≥1 expected on any rendered page)
     const buttons = page.getByRole('button')
     const buttonCount = await buttons.count()
-    expect(buttonCount).toBeGreaterThanOrEqual(0)
+    expect(buttonCount).toBeGreaterThanOrEqual(1)
   })
 })
 
@@ -317,9 +332,12 @@ test.describe('Compliance setup workspace — non-wallet accessibility', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('Auth-first routing — launch and compliance routes', () => {
+  test.beforeEach(async ({ page }) => {
+    suppressBrowserErrors(page)
+  })
+
   test('unauthenticated access to /launch/guided redirects appropriately', async ({ page }) => {
     await clearAuthScript(page)
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
@@ -333,7 +351,6 @@ test.describe('Auth-first routing — launch and compliance routes', () => {
 
   test('unauthenticated access to /compliance/setup redirects appropriately', async ({ page }) => {
     await clearAuthScript(page)
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/compliance/setup')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
@@ -347,7 +364,6 @@ test.describe('Auth-first routing — launch and compliance routes', () => {
 
   test('authenticated user can access /launch/guided', async ({ page }) => {
     await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/launch/guided')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
@@ -358,7 +374,6 @@ test.describe('Auth-first routing — launch and compliance routes', () => {
 
   test('authenticated user can access /compliance/setup', async ({ page }) => {
     await withAuth(page, { address: 'A11Y_LAUNCH_TEST_ADDRESS', email: 'a11y-launch@biatec.io', isConnected: true })
-    page.on('console', msg => { if (msg.type() === 'error') console.log('[browser error]', msg.text()) })
 
     await page.goto('/compliance/setup')
     await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI

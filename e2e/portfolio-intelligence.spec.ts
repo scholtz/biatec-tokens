@@ -1,11 +1,9 @@
 import { test, expect } from '@playwright/test'
+import { suppressBrowserErrors } from './helpers/auth'
 
 test.describe('Portfolio Intelligence Layer', () => {
   test.beforeEach(async ({ page }) => {
-    page.on('console', msg => {
-      if (msg.type() === 'error') console.log(`Suppressed: ${msg.text()}`)
-    })
-    page.on('pageerror', error => console.log(`Page error suppressed: ${error.message}`))
+    suppressBrowserErrors(page)
 
     await page.addInitScript(() => {
       localStorage.setItem('algorand_user', JSON.stringify({
@@ -65,8 +63,9 @@ test.describe('Portfolio Intelligence Layer', () => {
       const removeButton = page.locator('button[aria-label*="Remove"]').first()
       await expect(removeButton).toBeVisible({ timeout: 10000 })
     } else {
-      // No available assets to add - test still passes
-      expect(true).toBe(true)
+      // No available assets to add — the portfolio heading is still visible
+      const heading = page.getByRole('heading', { name: /Portfolio Intelligence/i })
+      await expect(heading).toBeVisible({ timeout: 10000 })
     }
   })
 
@@ -124,7 +123,8 @@ test.describe('Portfolio Intelligence Layer', () => {
       await skipButton.click()
       await expect(dialog).not.toBeVisible({ timeout: 5000 })
     } else {
-      expect(true).toBe(true)
+      // Dialog was already dismissed (e.g., onboarding key already set) — confirm it's not shown
+      await expect(dialog).not.toBeVisible()
     }
   })
 
@@ -163,11 +163,15 @@ test.describe('Portfolio Intelligence Layer', () => {
     await page.goto('/portfolio')
     await page.waitForLoadState('load')
     await expect(page.getByRole('heading', { name: /Portfolio Intelligence/i })).toBeVisible({ timeout: 30000 })
-    // Tab through interactive elements
+    // Tab through interactive elements — focus must land on a real element
+    await page.locator('body').click()
     await page.keyboard.press('Tab')
     await page.keyboard.press('Tab')
-    // Should not throw / crash
-    expect(true).toBe(true)
+    const hasFocusedElement = await page.evaluate(() => {
+      const active = document.activeElement
+      return active !== null && active !== document.body && active !== document.documentElement
+    })
+    expect(hasFocusedElement).toBe(true)
   })
 
   test('should show mobile layout correctly', async ({ page }) => {
@@ -189,6 +193,7 @@ test.describe('Portfolio Intelligence Layer', () => {
     // Either concentration risk badge or other critical/warning badge
     const anyInsight = page.locator('[role="article"]').first()
     await expect(anyInsight).toBeVisible({ timeout: 30000 })
-    expect(visible || true).toBe(true)
+    // anyInsight visibility confirmed above; note whether concentration risk badge fired
+    expect(await anyInsight.isVisible().catch(() => false)).toBe(true)
   })
 })

@@ -24,6 +24,7 @@
  */
 
 import { test, expect } from "@playwright/test";
+import { suppressBrowserErrors } from "./helpers/auth";
 
 // ---------------------------------------------------------------------------
 // Shared auth fixture (email/password only – no wallet)
@@ -36,14 +37,7 @@ const authUser = JSON.stringify({
 
 test.describe("Accessibility: Auth Flow", () => {
   test.beforeEach(async ({ page }) => {
-    page.on("console", (msg) => {
-      if (msg.type() === "error") {
-        console.log(`[a11y suppressed] ${msg.text()}`);
-      }
-    });
-    page.on("pageerror", (error) => {
-      console.log(`[a11y suppressed pageerror] ${error.message}`);
-    });
+    suppressBrowserErrors(page);
   });
 
   // --------------------------------------------------------------------------
@@ -143,8 +137,12 @@ test.describe("Accessibility: Auth Flow", () => {
 
       expect(hasLabel || hasPlaceholder).toBe(true);
     } else {
-      // No form = auth modal not opened or inline, still a pass
-      expect(true).toBe(true);
+      // Auth form not visible — verify page rendered with any sign-in affordance (input or button)
+      const emailInput = page.locator("input[type='email']").first()
+      const signInButton = page.getByRole("button", { name: /sign in/i }).first()
+      const hasAuthAffordance = await emailInput.isVisible().catch(() => false)
+        || await signInButton.isVisible().catch(() => false)
+      expect(hasAuthAffordance).toBe(true)
     }
   });
 
@@ -184,14 +182,7 @@ test.describe("Accessibility: Auth Flow", () => {
 
 test.describe("Accessibility: Guided Launch Form", () => {
   test.beforeEach(async ({ page }) => {
-    page.on("console", (msg) => {
-      if (msg.type() === "error") {
-        console.log(`[a11y suppressed] ${msg.text()}`);
-      }
-    });
-    page.on("pageerror", (error) => {
-      console.log(`[a11y suppressed pageerror] ${error.message}`);
-    });
+    suppressBrowserErrors(page);
 
     // Authenticate before navigation (auth-first pattern)
     await page.addInitScript(() => {
@@ -249,12 +240,15 @@ test.describe("Accessibility: Guided Launch Form", () => {
       // Accept label, aria-label, aria-labelledby, or placeholder as accessible indicator
       expect(hasLabel || !!ariaLabel || !!ariaLabelledby || !!placeholder).toBe(true);
     } else {
-      // Form may be behind auth or loading state — still pass
-      expect(true).toBe(true);
+      // Form may be behind auth or loading state — heading was already confirmed visible above
+      const heading = page.getByRole("heading", { name: /guided token launch/i, level: 1 });
+      await expect(heading).toBeVisible({ timeout: 10000 });
     }
   });
 
-  test("guided launch form inputs are keyboard accessible (Tab order)", async ({ page }) => {
+  test("guided launch form inputs are keyboard accessible (Tab order)", async ({
+    page,
+  }) => {
     await page.goto("/launch/guided");
     await page.waitForLoadState("load");
 
@@ -283,7 +277,14 @@ test.describe("Accessibility: Guided Launch Form", () => {
       expect(activeEl.tag).not.toBe("BODY");
       expect(activeEl.tag).not.toBe("HTML");
     } else {
-      expect(true).toBe(true);
+      // First input not immediately visible — use body.click() + Tab + activeElement check
+      await page.locator("body").click();
+      await page.keyboard.press("Tab");
+      const hasFocusedElement = await page.evaluate(() => {
+        const active = document.activeElement;
+        return active !== null && active !== document.body && active !== document.documentElement;
+      });
+      expect(hasFocusedElement).toBe(true);
     }
   });
 
@@ -328,14 +329,7 @@ test.describe("Accessibility: Guided Launch Form", () => {
 
 test.describe("Accessibility: Auth-First Redirect", () => {
   test.beforeEach(async ({ page }) => {
-    page.on("console", (msg) => {
-      if (msg.type() === "error") {
-        console.log(`[a11y suppressed] ${msg.text()}`);
-      }
-    });
-    page.on("pageerror", (error) => {
-      console.log(`[a11y suppressed pageerror] ${error.message}`);
-    });
+    suppressBrowserErrors(page);
   });
 
   test("unauthenticated access to /launch/guided shows auth UI (not a blank screen)", async ({

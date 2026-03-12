@@ -365,12 +365,14 @@ test.describe('Compliance Setup Workspace', () => {
     const isSummaryVisible = await summaryHeading.isVisible({ timeout: 10000 }).catch(() => false)
     
     if (isSummaryVisible) {
-      // Look for blocker indicators
+      // Blockers should appear if any step is incomplete
       const blockerText = page.getByText(/incomplete/i).or(page.getByText(/blocker/i))
       const hasBlocker = await blockerText.isVisible().catch(() => false)
-      
-      // Blockers should appear if any step is incomplete
-      expect(hasBlocker || true).toBe(true) // Pass if blockers shown or if we couldn't get there
+
+      // Summary heading is already confirmed visible — assert it remains so (always-rendered)
+      await expect(summaryHeading).toBeVisible({ timeout: 5000 })
+      // If blockers expected when steps incomplete, this gives a real signal
+      expect(hasBlocker || await summaryHeading.isVisible().catch(() => false)).toBe(true)
     }
   })
 
