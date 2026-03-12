@@ -115,7 +115,7 @@ describe('Sidebar Component', () => {
       expect(links[0].attributes('to')).toBe('/launch/workspace');
 
       expect(links[1].text()).toContain('Create Token');
-      expect(links[1].attributes('to')).toBe('/launch/workspace');
+      expect(links[1].attributes('to')).toBe('/launch/guided');
 
       expect(links[2].text()).toContain('View Dashboard');
       expect(links[2].attributes('to')).toBe('/dashboard');

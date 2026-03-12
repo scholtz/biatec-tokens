@@ -14,7 +14,7 @@
                 Guided Token Launch
               </router-link>
               <router-link
-                to="/launch/workspace"
+                to="/launch/guided"
                 class="group flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
                 <PlusCircleIcon class="mr-3 h-5 w-5" />
