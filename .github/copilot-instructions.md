@@ -1507,6 +1507,56 @@ grep -A 30 "AC #2\|deployment lifecycle" e2e/mvp-backend-signoff.spec.ts | grep 
 - ❌ Claim an AC is closed without verifying each sub-requirement (initiate, poll, terminal, surfaced IDs)
 - ❌ Submit a PR where the first commit is an empty planning document and the second contains incomplete implementation
 
+### 7q. E2E Tests Must Use Exact `data-testid` Values From Source Constants (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 12, 2026 (PR #591) 🚨**
+
+**Violation**: Copilot wrote an E2E test asserting `[data-testid="issuance-continue-button"]` but the actual constant in `authFirstIssuanceWorkspace.ts` is `CONTINUE_BUTTON: 'issuance-continue'` (no "-button" suffix). The test failed on all 3 CI retry attempts with "element(s) not found".
+
+**Root Cause**:
+- E2E test used an assumed testid string (`issuance-continue-button`) without verifying the actual constant value
+- The source utility (`authFirstIssuanceWorkspace.ts`) defines `CONTINUE_BUTTON: 'issuance-continue'`, but the test assumed a longer name with "-button" appended
+- No pre-commit check was run to verify the testid actually existed in the rendered DOM
+
+**Correct Approach — MANDATORY Before Asserting on data-testid in E2E Tests**:
+
+```bash
+# 1. Before writing ANY data-testid assertion, look up the constant value:
+grep -n "CONTINUE_BUTTON\|PROGRESS_BAR\|WORKSPACE_SHELL" src/utils/authFirstIssuanceWorkspace.ts
+# Output shows the EXACT string: CONTINUE_BUTTON: 'issuance-continue'
+# → Use 'issuance-continue' in test, NOT 'issuance-continue-button'
+
+# 2. Verify the constant is actually bound in the template:
+grep -n "ISSUANCE_TEST_IDS.CONTINUE_BUTTON\|issuance-continue" src/views/GuidedTokenLaunch.vue
+# Must show: :data-testid="ISSUANCE_TEST_IDS.CONTINUE_BUTTON"
+
+# 3. If no node_modules available, verify by reading the constant file directly:
+node -e "
+const fs = require('fs');
+const code = fs.readFileSync('src/utils/authFirstIssuanceWorkspace.ts', 'utf8');
+const match = code.match(/CONTINUE_BUTTON:\s*'([^']+)'/);
+console.log('CONTINUE_BUTTON value:', match && match[1]);
+"
+```
+
+**Pre-Commit Testid Verification Pattern**:
+```typescript
+// ❌ WRONG — assumed testid without checking actual constant value
+const continueBtn = page.locator('[data-testid="issuance-continue-button"]')
+// → ACTUAL constant: CONTINUE_BUTTON: 'issuance-continue' (no "-button" suffix!)
+
+// ✅ CORRECT — looked up constant value first
+// authFirstIssuanceWorkspace.ts: CONTINUE_BUTTON: 'issuance-continue'
+const continueBtn = page.locator('[data-testid="issuance-continue"]')
+```
+
+**Universal Rule**: When testing a `data-testid` that originates from a TypeScript constant (e.g., `ISSUANCE_TEST_IDS.CONTINUE_BUTTON`), ALWAYS read the constant's actual string value from the source file before writing the E2E assertion. Never assume the string matches a "natural" expansion of the constant name.
+
+**Never Again**:
+- ❌ Assume `CONTINUE_BUTTON` → `issuance-continue-button` without verifying the actual string value
+- ❌ Write `page.locator('[data-testid="..."]')` without first grepping the source for the exact constant value
+- ❌ Push E2E tests that reference `data-testid` strings that don't exist in any template binding
+
 ---
 
 ## 🚨 CRITICAL: PR QUALITY STANDARDS - HARDENING ISSUES 🚨

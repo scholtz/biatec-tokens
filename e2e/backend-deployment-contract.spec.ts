@@ -597,7 +597,7 @@ test.describe('Deployment entry point: real Vue pipeline navigation', () => {
     await expect(progressBar).toBeAttached({ timeout: 10000 })
 
     // Continue button (first step CTA) must be reachable — proves interactive form renders
-    const continueBtn = page.locator('[data-testid="issuance-continue-button"]')
+    const continueBtn = page.locator('[data-testid="issuance-continue"]')
     await expect(continueBtn).toBeAttached({ timeout: 10000 })
   })
 
