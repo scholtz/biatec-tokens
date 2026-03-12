@@ -1392,12 +1392,27 @@ suppressBrowserErrors(page)
 
 **Scope awareness**: When a roadmap or issue NAMES SPECIFIC FILES for cleanup, those files MUST be addressed in the same PR. Addressing only new files while leaving named existing files untouched is an incomplete delivery.
 
+**Assertion strength calibration**: When replacing `expect(true).toBe(true)` with real assertions, verify the app's ACTUAL behavior for the edge case BEFORE writing the assertion. If the app shows a blank layout for non-existent tokens (no error, no redirect), then `expect(hasError || isRedirected).toBe(true)` is OVER-STRICT and fails in CI. Use a targeted always-rendered layout element as the third condition:
+```typescript
+// ✅ CORRECT — find a UI element that is ALWAYS rendered by the view/layout
+const backButton = page.getByRole('button', { name: /Back to Dashboard/i })
+const layoutLoaded = await backButton.isVisible({ timeout: 10000 }).catch(() => false)
+expect(hasError || isRedirected || layoutLoaded).toBe(true)
+
+// ❌ OVER-STRICT — fails if app renders blank/empty state (not always a bug)
+expect(hasError || isRedirected).toBe(true)
+
+// ❌ TOO WEAK — bodyText.length > 100 matches almost any rendered page
+expect(hasError || isRedirected || bodyText.length > 100).toBe(true)
+```
+
 **Never Again**:
 - ❌ Leave `expect(true).toBe(true)` in any E2E spec file
 - ❌ Leave `expect(x || true).toBe(true)` patterns (always-true regardless of x)
 - ❌ Leave `expect(count).toBeGreaterThanOrEqual(0)` for counts (always passes)
 - ❌ Leave inline `page.on('console',...)` suppressors in spec files (use `suppressBrowserErrors()`)
 - ❌ Ignore named spec files in a roadmap when those files require cleanup
+- ❌ Replace always-true assertions with over-strict ones that assume app behavior without verifying what the app actually renders — use a targeted always-rendered layout element as graceful fallback
 
 - [ ] **Navigation Link Required**: If implementing new route, MUST add navigation link
   - ❌ **Past Violation**: Guided launch implemented but not accessible from navbar
