@@ -9,18 +9,10 @@
  */
 
 import { test, expect } from '@playwright/test'
-
-test.describe('Token Portfolio Clarity', () => {
+import { suppressBrowserErrors } from './helpers/auth' () => {
   test.beforeEach(async ({ page }) => {
     // Suppress console errors to prevent Playwright from failing on browser console output
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed): ${msg.text()}`)
-      }
-    })
-    page.on('pageerror', error => {
-      console.log(`Page error (suppressed): ${error.message}`)
-    })
+    suppressBrowserErrors(page)
 
     // Authenticate with a mock user
     await page.addInitScript(() => {
@@ -183,14 +175,7 @@ test.describe('Token Portfolio Clarity', () => {
 
 test.describe('Wallet Connection State clarity', () => {
   test.beforeEach(async ({ page }) => {
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed): ${msg.text()}`)
-      }
-    })
-    page.on('pageerror', error => {
-      console.log(`Page error (suppressed): ${error.message}`)
-    })
+    suppressBrowserErrors(page)
   })
 
   test('unauthenticated user should see a sign-in prompt on the home page', async ({ page }) => {

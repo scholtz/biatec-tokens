@@ -11,19 +11,10 @@
  */
 
 import { test, expect } from '@playwright/test'
-
-test.describe('Auth Error Scenarios - Negative Path Testing', () => {
+import { suppressBrowserErrors } from './helpers/auth' - Negative Path Testing', () => {
   test.beforeEach(async ({ page }) => {
     // Suppress browser console/page errors for mock environment
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed - mock environment): ${msg.text()}`)
-      }
-    })
-    
-    page.on('pageerror', error => {
-      console.log(`Page error (suppressed - mock environment): ${error.message}`)
-    })
+    suppressBrowserErrors(page)
   })
 
   test('should redirect unauthenticated user trying to access protected route', async ({ page }) => {

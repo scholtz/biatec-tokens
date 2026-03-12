@@ -15,6 +15,7 @@
  */
 
 import { test, expect } from '@playwright/test'
+import { suppressBrowserErrors } from './helpers/auth'
 
 const AUTH_USER = {
   address: 'TESTADDRESS123',
@@ -25,14 +26,7 @@ const AUTH_USER = {
 test.describe('Guided Portfolio Onboarding', () => {
   test.beforeEach(async ({ page }) => {
     // Suppress console errors for test stability
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed): ${msg.text()}`)
-      }
-    })
-    page.on('pageerror', (error) => {
-      console.log(`Page error (suppressed): ${error.message}`)
-    })
+    suppressBrowserErrors(page)
 
     // Set up authentication
     await page.addInitScript((user) => {
@@ -276,6 +270,7 @@ test.describe('Guided Portfolio Onboarding', () => {
     const valuenow = await progressbar.getAttribute('aria-valuenow')
     expect(valuenow).toBeTruthy()
     expect(Number(valuenow)).toBeGreaterThanOrEqual(0)
+    expect(Number(valuenow)).toBeLessThanOrEqual(100)
   })
 
   test('should have accessible onboarding steps list', async ({ page }) => {

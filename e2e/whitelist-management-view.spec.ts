@@ -1,18 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { suppressBrowserErrors } from './helpers/auth'
 
 test.describe('Whitelist Management View', () => {
   test.beforeEach(async ({ page }) => {
     // Suppress console errors to prevent Playwright from failing on browser console output
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed for test stability): ${msg.text()}`)
-      }
-    })
-    
-    // Suppress page errors
-    page.on('pageerror', error => {
-      console.log(`Page error (suppressed for test stability): ${error.message}`)
-    })
+    suppressBrowserErrors(page)
     
     // Set up authenticated session with wallet-free auth
     await page.addInitScript(() => {

@@ -22,7 +22,7 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { clearAuthScript } from './helpers/auth'
+import { clearAuthScript, suppressBrowserErrors } from './helpers/auth'
 
 // ---------------------------------------------------------------------------
 // Shared test setup
@@ -43,14 +43,7 @@ function setupAuth(page: Parameters<typeof test>[1] extends (...args: infer A) =
 test.describe('Business Command Center', () => {
   test.beforeEach(async ({ page }) => {
     // Suppress browser console errors to keep test output clean
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        console.log(`[E2E suppressed error]: ${msg.text()}`)
-      }
-    })
-    page.on('pageerror', (error) => {
-      console.log(`[E2E suppressed page error]: ${error.message}`)
-    })
+    suppressBrowserErrors(page)
 
     await setupAuth(page)
   })

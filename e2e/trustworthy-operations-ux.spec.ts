@@ -19,6 +19,7 @@
  */
 
 import { test, expect } from "@playwright/test";
+import { suppressBrowserErrors } from './helpers/auth'
 
 // ---------------------------------------------------------------------------
 // Shared setup
@@ -33,14 +34,7 @@ const authUser = JSON.stringify({
 test.describe("Trustworthy Operations UX v1", () => {
   test.beforeEach(async ({ page }) => {
     // Suppress console errors for test stability
-    page.on("console", (msg) => {
-      if (msg.type() === "error") {
-        console.log(`[E2E suppressed] ${msg.text()}`);
-      }
-    });
-    page.on("pageerror", (error) => {
-      console.log(`[E2E suppressed pageerror] ${error.message}`);
-    });
+    suppressBrowserErrors(page)
   });
 
   // ---------------------------------------------------------------------------

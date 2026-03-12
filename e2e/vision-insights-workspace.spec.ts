@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { suppressBrowserErrors } from './helpers/auth'
 
 /**
  * E2E Tests for Vision Insights Workspace
@@ -20,15 +21,7 @@ import { test, expect } from '@playwright/test'
 test.describe('Vision Insights Workspace', () => {
   test.beforeEach(async ({ page }) => {
     // Suppress console errors for test stability
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed): ${msg.text()}`)
-      }
-    })
-    
-    page.on('pageerror', error => {
-      console.log(`Page error (suppressed): ${error.message}`)
-    })
+    suppressBrowserErrors(page)
     
     // Set up authentication
     await page.addInitScript(() => {
@@ -101,8 +94,10 @@ test.describe('Vision Insights Workspace', () => {
     // Check for Competitor Benchmarks section - use flexible assertion for async rendering
     const benchmarkHeading = page.getByRole('heading', { name: /Competitor Benchmarks/i })
     const isVisible = await benchmarkHeading.isVisible({ timeout: 20000 }).catch(() => false)
-    // Flexible assertion to handle async data loading in CI
-    expect(isVisible || true).toBe(true)
+    // If benchmark section not loaded yet, verify the page at minimum has a main heading
+    const insightsHeading = page.getByRole('heading', { name: /insights/i }).first()
+    const insightsVisible = await insightsHeading.isVisible({ timeout: 5000 }).catch(() => false)
+    expect(isVisible || insightsVisible).toBe(true)
   })
 
   test('should display scenario planning section', async ({ page }) => {
@@ -247,13 +242,15 @@ test.describe('Vision Insights Workspace - Error Handling', () => {
     })
 
     await page.goto('/insights')
+    await page.waitForLoadState('load')
     
     // Loading indicator should appear briefly
     const loadingText = page.getByText(/Loading insights/i)
     const loadingVisible = await loadingText.isVisible({ timeout: 2000 }).catch(() => false)
     
-    // Either loading was visible or content loaded fast
-    expect(true).toBe(true) // Test passes if no errors occurred
+    // Either loading was visible or the page has rendered content (loaded fast)
+    const h1Count = await page.locator('h1').count()
+    expect(loadingVisible || h1Count > 0).toBe(true)
   })
 
   test('should require authentication', async ({ page }) => {

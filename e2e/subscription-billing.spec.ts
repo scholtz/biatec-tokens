@@ -13,6 +13,7 @@
  */
 
 import { test, expect, type Page } from '@playwright/test'
+import { suppressBrowserErrors } from './helpers/auth'
 
 const AUTH_USER = JSON.stringify({
   address: 'TESTADDRESS123',
@@ -48,14 +49,7 @@ const setupTrialSubscription = async (page: Page, daysAhead: number) => {
 
 test.describe('Subscription & Billing Management', () => {
   test.beforeEach(async ({ page }) => {
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        console.log(`[E2E suppressed error]: ${msg.text()}`)
-      }
-    })
-    page.on('pageerror', (error) => {
-      console.log(`[E2E suppressed page error]: ${error.message}`)
-    })
+    suppressBrowserErrors(page)
   })
 
   test.describe('Pricing Page', () => {

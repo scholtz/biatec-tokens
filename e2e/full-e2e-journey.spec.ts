@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { createCursor } from "ghost-cursor-playwright";
+import { suppressBrowserErrors } from './helpers/auth'
 
 /**
  * Animates cursor movement to a target position over 2 seconds
@@ -30,16 +31,7 @@ async function animateCursorTo(page: any, targetX: number, targetY: number, curr
 test.describe("Full E2E User Journey", () => {
   test.beforeEach(async ({ page, browserName }) => {
     // Suppress console errors to prevent Playwright from failing on browser console output
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed for test stability): ${msg.text()}`)
-      }
-    })
-    
-    // Suppress page errors
-    page.on('pageerror', error => {
-      console.log(`Page error (suppressed for test stability): ${error.message}`)
-    })
+    suppressBrowserErrors(page)
     
     // Skip Firefox due to persistent networkidle timeout issues
     test.skip(browserName === "firefox", "Firefox has persistent networkidle timeout issues");

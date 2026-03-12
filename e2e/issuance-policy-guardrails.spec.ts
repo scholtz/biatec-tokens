@@ -27,8 +27,7 @@
  */
 
 import { test, expect } from '@playwright/test'
-
-// ---------------------------------------------------------------------------
+import { suppressBrowserErrors } from './helpers/auth'----------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -45,24 +44,13 @@ async function bootstrapAuthSession(page: import('@playwright/test').Page) {
   })
 }
 
-function suppressPageErrors(page: import('@playwright/test').Page) {
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') {
-      console.log(`[browser-console-error] ${msg.text()}`)
-    }
-  })
-  page.on('pageerror', (err) => {
-    console.log(`[browser-pageerror] ${err.message}`)
-  })
-}
-
 // ---------------------------------------------------------------------------
 // AC #1 — Workspace loads and is accessible
 // ---------------------------------------------------------------------------
 
 test.describe('Issuance workspace — primary route accessibility', () => {
   test.beforeEach(async ({ page }) => {
-    suppressPageErrors(page)
+    suppressBrowserErrors(page)
     await bootstrapAuthSession(page)
   })
 
@@ -113,7 +101,7 @@ test.describe('Issuance workspace — primary route accessibility', () => {
 
 test.describe('Issuance workspace — no wallet connector UI', () => {
   test.beforeEach(async ({ page }) => {
-    suppressPageErrors(page)
+    suppressBrowserErrors(page)
     await bootstrapAuthSession(page)
   })
 
@@ -156,7 +144,7 @@ test.describe('Issuance workspace — no wallet connector UI', () => {
 
 test.describe('Issuance workspace — auth-first routing guard', () => {
   test.beforeEach(async ({ page }) => {
-    suppressPageErrors(page)
+    suppressBrowserErrors(page)
   })
 
   test('unauthenticated user cannot silently access the issuance workspace', async ({
@@ -199,7 +187,7 @@ test.describe('Issuance workspace — auth-first routing guard', () => {
 
 test.describe('Issuance workspace — error state accessibility', () => {
   test.beforeEach(async ({ page }) => {
-    suppressPageErrors(page)
+    suppressBrowserErrors(page)
     await bootstrapAuthSession(page)
   })
 
@@ -222,8 +210,9 @@ test.describe('Issuance workspace — error state accessibility', () => {
       const alertText = await firstAlert.textContent()
       expect(alertText?.length).toBeGreaterThan(0)
     }
-    // Either way the page is valid
-    expect(true).toBe(true)
+    // Page is valid when heading rendered successfully
+    const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 60000 })
   })
 
   test('workspace form fields are keyboard-accessible', async ({ page }) => {
@@ -247,7 +236,7 @@ test.describe('Issuance workspace — error state accessibility', () => {
 
 test.describe('Issuance workspace — draft persistence UX', () => {
   test.beforeEach(async ({ page }) => {
-    suppressPageErrors(page)
+    suppressBrowserErrors(page)
     await bootstrapAuthSession(page)
   })
 
@@ -275,7 +264,7 @@ test.describe('Issuance workspace — draft persistence UX', () => {
 
 test.describe('Issuance workspace — page reload resilience', () => {
   test.beforeEach(async ({ page }) => {
-    suppressPageErrors(page)
+    suppressBrowserErrors(page)
     await bootstrapAuthSession(page)
   })
 

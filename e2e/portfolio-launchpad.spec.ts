@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { suppressBrowserErrors } from './helpers/auth'
 
 /**
  * E2E tests for the Portfolio Launchpad feature.
@@ -12,10 +13,7 @@ import { test, expect } from '@playwright/test'
 test.describe('Portfolio Launchpad', () => {
   test.beforeEach(async ({ page }) => {
     // Suppress browser console errors to avoid Playwright exit code 1
-    page.on('console', msg => {
-      if (msg.type() === 'error') console.log(`Suppressed console error: ${msg.text()}`)
-    })
-    page.on('pageerror', error => console.log(`Page error suppressed: ${error.message}`))
+    suppressBrowserErrors(page)
   })
 
   // ── Page load & discovery stage ────────────────────────────────────────────
