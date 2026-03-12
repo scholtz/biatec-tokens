@@ -335,7 +335,10 @@ export function getBackendBaseUrl(): string {
  * @param page      - Playwright Page instance
  * @param email     - Optional override for TEST_USER_EMAIL
  * @param password  - Optional override for TEST_USER_PASSWORD
- * @throws Error if backend is unavailable, returns non-200, or contract fails
+ * @throws Error if backend is unavailable, returns non-200, or contract fails.
+ *         Network errors are caught-and-rethrown with a clearer diagnostic message
+ *         that includes the endpoint URL and the original network error detail.
+ *         This is intentional re-throwing, NOT error swallowing.
  */
 export async function loginWithCredentialsStrict(
   page: Page,
@@ -346,8 +349,9 @@ export async function loginWithCredentialsStrict(
   const resolvedPassword = password ?? process.env.TEST_USER_PASSWORD ?? ''
   const apiBaseUrl = getBackendBaseUrl()
 
-  // Strict mode: no try/catch — network errors surface directly as test failures.
-  // This ensures the test FAILS (not silently passes) when the backend is unavailable.
+  // Strict mode: network errors are caught ONLY to rethrow with a richer diagnostic
+  // message that includes the endpoint URL. This is intentional re-throwing,
+  // NOT error swallowing — the test still fails loudly if the backend is unavailable.
   const response = await page.request
     .post(`${apiBaseUrl}/api/auth/login`, {
       data: { email: resolvedEmail, password: resolvedPassword },
@@ -479,10 +483,16 @@ export function suppressBrowserErrors(page: Page): void {
  * Unlike the broad suppressor, this function will NOT swallow genuine application
  * errors, so regressions surface as test failures rather than being silently masked.
  *
- * Suppressed patterns (all verified CI-safe):
- *   - Vite HMR connection messages (`[vite]`)
- *   - Vue devtools/warning messages in dev mode
- *   - Browser extension interference patterns (extensions inject scripts)
+ * Suppressed patterns (all verified CI-safe with explicit justification):
+ *   - Vite HMR connection messages (`[vite]`): build-tool noise, not app behavior
+ *   - Vue devtools/warning messages in dev mode: framework warnings, not errors
+ *   - Browser suggestion messages: browser-injected hints, not our code
+ *   - CORS dev-mode noise from test infrastructure: not present in production
+ *
+ * Intentionally NOT suppressed (surface as failures):
+ *   - Content Security Policy violations — can indicate security issues
+ *   - Application-level JavaScript errors
+ *   - API response errors visible in console
  *
  * Any page error that does NOT match these patterns will be logged to stdout
  * but will NOT be re-thrown (Playwright surfaces page errors automatically
@@ -494,14 +504,16 @@ export function suppressBrowserErrors(page: Page): void {
  */
 export function suppressBrowserErrorsNarrow(page: Page): void {
   // These are known CI-safe console error patterns that do not indicate
-  // application regressions. Document each pattern's justification:
+  // application regressions. Each pattern has an explicit justification:
   const SAFE_CONSOLE_PATTERNS: RegExp[] = [
-    /\[vite\]/i, // Vite HMR hot-module replacement messages
-    /vue warn/i, // Vue framework warnings in dev mode (not errors)
-    /download the react devtools/i, // Browser suggestion (not our code)
-    /content security policy/i, // CSP violation in dev mode (not prod concern)
-    /cross-origin/i, // CORS dev-mode noise from test infrastructure
+    /\[vite\]/i, // Vite HMR hot-module replacement messages (build tool noise)
+    /vue warn/i, // Vue framework warnings in dev mode (not errors, not prod behavior)
+    /download the react devtools/i, // Browser hint injection (not our code)
+    /cross-origin/i, // CORS dev-mode noise from local test infrastructure (not prod)
   ]
+  // Note: Content Security Policy violations are intentionally NOT in the safe list.
+  // CSP violations can indicate security issues (insecure resource loading, potential XSS).
+  // If a CSP violation appears in a blocker spec, it should fail the test.
 
   page.on('console', msg => {
     if (msg.type() === 'error') {

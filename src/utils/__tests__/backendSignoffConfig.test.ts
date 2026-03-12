@@ -159,6 +159,35 @@ describe('isSignoffFullyConfigured', () => {
     ).toBe(true)
   })
 
+  it('does NOT incorrectly flag non-localhost domain that contains the word "localhost"', () => {
+    // URL parsing uses hostname, not string search — "my-localhost-server.com" is NOT localhost
+    expect(
+      isSignoffFullyConfigured({
+        BIATEC_STRICT_BACKEND: 'true',
+        API_BASE_URL: 'https://my-localhost-server.com',
+      }),
+    ).toBe(true)
+  })
+
+  it('does NOT incorrectly flag URL whose path contains "127.0.0.1"', () => {
+    // URL parsing uses hostname, not string search — path segment is not the host
+    expect(
+      isSignoffFullyConfigured({
+        BIATEC_STRICT_BACKEND: 'true',
+        API_BASE_URL: 'https://api.example.com/endpoint/127.0.0.1/data',
+      }),
+    ).toBe(true)
+  })
+
+  it('returns false for malformed URL when strict mode is active', () => {
+    expect(
+      isSignoffFullyConfigured({
+        BIATEC_STRICT_BACKEND: 'true',
+        API_BASE_URL: 'not-a-valid-url',
+      }),
+    ).toBe(false)
+  })
+
   it('returns false when both are absent', () => {
     expect(isSignoffFullyConfigured({})).toBe(false)
   })

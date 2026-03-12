@@ -57,6 +57,9 @@ export interface BackendSignoffConfig {
  * environment (CI staging with a live backend). When strict mode is active,
  * sign-off specs run against real backend endpoints instead of seeded state.
  *
+ * Case-sensitive: only the exact lowercase string `'true'` enables strict mode.
+ * Values like `'TRUE'`, `'1'`, `'yes'` are NOT treated as enabling strict mode.
+ *
  * @param env - Environment variables map (defaults to process.env for production use)
  */
 export function isStrictBackendMode(env: Record<string, string | undefined> = process.env): boolean {
@@ -89,14 +92,25 @@ export function getSignoffTestEmail(env: Record<string, string | undefined> = pr
  * A localhost URL is considered "not fully configured" because it indicates
  * a local development setup rather than a CI staging environment.
  *
+ * Uses `URL.hostname` parsing for accurate host extraction — avoids false
+ * positives from `String.includes()` which would incorrectly flag URLs like
+ * `https://my-localhost-server.com` or paths containing `127.0.0.1`.
+ *
  * @param env - Environment variables map (defaults to process.env for production use)
  */
 export function isSignoffFullyConfigured(
   env: Record<string, string | undefined> = process.env,
 ): boolean {
   if (!isStrictBackendMode(env)) return false
-  const url = getBackendBaseUrl(env)
-  return !url.includes('localhost') && !url.includes('127.0.0.1')
+  const rawUrl = getBackendBaseUrl(env)
+  let hostname: string
+  try {
+    hostname = new URL(rawUrl).hostname
+  } catch {
+    // If URL is malformed, treat as not configured
+    return false
+  }
+  return hostname !== 'localhost' && hostname !== '127.0.0.1'
 }
 
 /**

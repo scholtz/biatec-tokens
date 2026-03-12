@@ -245,6 +245,10 @@ test.describe('AC #3: Real deployment lifecycle — backend-driven status progre
     expect(authResponse.ok()).toBe(true)
 
     const authBody = await authResponse.json()
+    // Bearer token property name check: the backend API contract may use any of these
+    // standard property names for the access token. We check all common conventions
+    // because the backend API may not yet be finalised on a single property name.
+    // Once the backend API is stable, this should be simplified to check only one.
     const bearerToken =
       authBody.token || authBody.accessToken || authBody.access_token || authBody.sessionToken
     const hasAuthToken = typeof bearerToken === 'string' && bearerToken.length > 0

@@ -527,6 +527,13 @@ test.describe('DeploymentStatusPanel: accessibility', () => {
 // These tests only run when BIATEC_STRICT_BACKEND=true and API_BASE_URL is live.
 // ===========================================================================
 
+/**
+ * Deployment states defined by the backend API contract.
+ * Used in response shape assertions for the strict sign-off lane.
+ * If the backend adds new states, update this list.
+ */
+const VALID_DEPLOYMENT_STATES = ['Pending', 'Validated', 'Submitted', 'Completed', 'Failed'] as const
+
 test.describe('Strict deployment sign-off — real backend contract verification', () => {
   test('deployment contract endpoint is reachable and returns structured response', async ({
     page,
@@ -601,13 +608,11 @@ test.describe('Strict deployment sign-off — real backend contract verification
     if (Array.isArray(body)) {
       for (const record of body) {
         if (record.state !== undefined) {
-          const validStates = ['Pending', 'Validated', 'Submitted', 'Completed', 'Failed']
-          expect(validStates).toContain(record.state)
+          expect(VALID_DEPLOYMENT_STATES).toContain(record.state)
         }
       }
     } else if (body.state !== undefined) {
-      const validStates = ['Pending', 'Validated', 'Submitted', 'Completed', 'Failed']
-      expect(validStates).toContain(body.state)
+      expect(VALID_DEPLOYMENT_STATES).toContain(body.state)
     }
   })
 
