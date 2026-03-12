@@ -9,18 +9,11 @@
  */
 
 import { test, expect } from "@playwright/test";
+import { suppressBrowserErrors } from "./helpers/auth";
 
 test.describe("Navigation Parity and WCAG AA", () => {
   test.beforeEach(async ({ page }) => {
-    // Suppress console errors to prevent Playwright from failing on browser console output
-    page.on("console", (msg) => {
-      if (msg.type() === "error") {
-        console.log(`Browser console error (suppressed for test stability): ${msg.text()}`);
-      }
-    });
-    page.on("pageerror", (error) => {
-      console.log(`Page error (suppressed for test stability): ${error.message}`);
-    });
+    suppressBrowserErrors(page);
   });
 
   test("should show main navigation on home page", async ({ page }) => {
@@ -123,19 +116,19 @@ test.describe("Navigation Parity and WCAG AA", () => {
     await page.goto("/");
     await page.waitForLoadState("load");
 
-    // AC6 (Issue #495): Use nav-component locators instead of page.content() string check.
-    // Both desktop and mobile nav render from the same navigation array.
-    const nav = page.getByRole("navigation").first();
+    // Both desktop and mobile nav render from the same navigationItems array (single source of truth).
+    // Verify the primary navigation element is present and visible.
+    const nav = page.getByRole("navigation", { name: /main navigation/i });
     await expect(nav).toBeVisible({ timeout: 10000 });
 
-    // These key destinations should appear in the navigation
-    const expectedItems = ["Home", "Guided Launch", "Dashboard", "Compliance", "Settings"];
-    for (const item of expectedItems) {
-      const link = nav.getByText(item, { exact: false }).first();
-      // Check within nav element for the destination (may be in desktop or mobile slot)
-      const found = await link.isVisible().catch(() => false);
-      // Some items may be in mobile-only slots; use flexible assertion
-      expect(found || true).toBe(true);
-    }
+    // The nav must contain a link to the canonical create flow entry (Guided Launch).
+    // Both desktop and mobile slots share the same navigationItems array, so if the
+    // nav element is visible and contains these items, parity is confirmed.
+    const guidedLaunchLink = nav.getByRole("link", { name: /guided launch/i }).first();
+    await expect(guidedLaunchLink).toBeVisible({ timeout: 10000 });
+
+    // Dashboard must also be present as a core enterprise destination.
+    const dashboardLink = nav.getByRole("link", { name: /dashboard/i }).first();
+    await expect(dashboardLink).toBeVisible({ timeout: 10000 });
   });
 });

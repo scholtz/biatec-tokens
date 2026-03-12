@@ -70,16 +70,23 @@
           <div v-if="!authStore.isAuthenticated">
             <button
               @click="handleSignInClick"
-              class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white transition-colors"
+              aria-label="Sign in to your account"
+              class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             >
-              <ArrowRightOnRectangleIcon class="w-5 h-5" />
+              <ArrowRightOnRectangleIcon class="w-5 h-5" aria-hidden="true" />
               <span>Sign In</span>
             </button>
           </div>
 
           <!-- User Menu -->
           <div v-else class="relative">
-            <button @click="showUserMenu = !showUserMenu" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <button
+              @click="showUserMenu = !showUserMenu"
+              class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+              :aria-expanded="showUserMenu"
+              aria-haspopup="menu"
+              :aria-label="`User account menu for ${authStore.arc76email || 'account'}`"
+            >
               <div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <span class="text-white text-sm font-medium">
                   {{ authStore.account.charAt(0).toUpperCase() }}
@@ -89,7 +96,7 @@
                 <p class="text-sm font-medium text-gray-900 dark:text-white">{{ authStore.arc76email }}</p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatAddress(authStore.account) }}</p>
               </div>
-              <ChevronDownIcon class="w-4 h-4 text-gray-500" />
+              <ChevronDownIcon class="w-4 h-4 text-gray-500" aria-hidden="true" />
             </button>
 
             <!-- User Dropdown -->
@@ -101,27 +108,32 @@
               leave-from-class="transform scale-100 opacity-100"
               leave-to-class="transform scale-95 opacity-0"
             >
-              <div v-if="showUserMenu" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1">
-                <div class="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+              <div
+                v-if="showUserMenu"
+                role="menu"
+                aria-label="User account options"
+                class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1"
+              >
+                <div class="px-4 py-2 border-b border-gray-200 dark:border-gray-700" role="none">
                   <p class="text-sm font-medium text-gray-900 dark:text-white">{{ authStore.arc76email }}</p>
                   <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatAddress(authStore.account) }}</p>
                 </div>
-                <router-link to="/account/security" @click="showUserMenu = false" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                <router-link to="/account/security" @click="showUserMenu = false" role="menuitem" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500">
                   Security Center
                 </router-link>
-                <router-link to="/subscription/pricing" @click="showUserMenu = false" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                <router-link to="/subscription/pricing" @click="showUserMenu = false" role="menuitem" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500">
                   Subscription
                 </router-link>
-                <router-link to="/account/billing" @click="showUserMenu = false" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                <router-link to="/account/billing" @click="showUserMenu = false" role="menuitem" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500">
                   Billing History
                 </router-link>
-                <router-link to="/account/usage" @click="showUserMenu = false" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
-                  Usage & Limits
+                <router-link to="/account/usage" @click="showUserMenu = false" role="menuitem" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500">
+                  Usage &amp; Limits
                 </router-link>
-                <router-link to="/settings" @click="showUserMenu = false" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                <router-link to="/settings" @click="showUserMenu = false" role="menuitem" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500">
                   Settings
                 </router-link>
-                <button @click="handleSignOut" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">Sign Out</button>
+                <button @click="handleSignOut" role="menuitem" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500">Sign Out</button>
               </div>
             </Transition>
           </div>
@@ -218,6 +230,7 @@ const showAuthModal = ref(false);
 const NAV_ICONS: Record<string, FunctionalComponent<SVGAttributes>> = {
   "/": HomeIcon,
   "/launch/guided": RocketLaunchIcon,
+  "/launch/workspace": RocketLaunchIcon,
   "/dashboard": ChartBarIcon,
   "/portfolio": CubeIcon,
   "/operations": BuildingOfficeIcon,
