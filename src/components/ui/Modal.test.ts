@@ -245,6 +245,7 @@ describe('Modal Component', () => {
       // Vue 3 stores all event listeners on el._vei (Vue Event Internals).
       // Confirming that _vei.onKeydown is present proves @keydown.esc="closeModal" compiled
       // and was registered on this element — which is what SC 2.1.2 requires.
+      // NOTE: _vei is a private Vue 3 API; review if upgrading to Vue 4+.
       const vei = (outer as any)._vei
       expect(vei?.onKeydown).toBeTruthy()
       wrapper.unmount()

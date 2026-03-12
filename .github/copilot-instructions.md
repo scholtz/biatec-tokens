@@ -1598,6 +1598,7 @@ This two-part approach gives FULL confidence:
 - `onKeydown` is set when `addEventListener('keydown', ...)` is called by Vue's runtime
 - It is NOT set when no `@keydown` handler is present
 - If `_vei.onKeydown` is truthy, the handler IS registered and WILL fire in real browsers
+- **IMPORTANT**: `_vei` is a private Vue 3 internal API — review when upgrading to Vue 4+
 
 **Never Again**:
 - ❌ Use `element.dispatchEvent(new KeyboardEvent(...))` to test Vue `@keydown.esc` on teleported elements
