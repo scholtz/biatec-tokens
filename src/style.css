@@ -159,9 +159,25 @@ body {
   animation: float 3s ease-in-out infinite;
 }
 
-/* Focus styles */
+/* Focus styles — WCAG 2.1 SC 2.4.7 (Focus Visible) */
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
+}
+
+/*
+ * Global enhanced focus-visible ring (WCAG 2.1 AA SC 2.4.7).
+ * Applied to interactive elements when user navigates by keyboard.
+ * Respects prefers-reduced-motion by not animating the ring.
+ * Supplements Tailwind's focus-visible: utilities on individual elements.
+ */
+:focus-visible {
+  outline: 2px solid #2563eb; /* blue-600 — 4.5:1 contrast on white (WCAG AA) */
+  outline-offset: 2px;
+}
+
+/* Suppress default :focus ring for mouse/touch users (visible only on keyboard navigation) */
+:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* Utility classes */
