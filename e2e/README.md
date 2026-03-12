@@ -220,17 +220,89 @@ npm run test:e2e:report
 | Isolated UI / component | ❌ NO — localStorage seeding | `withAuth()` | Most other spec files |
 | Guest / unauthenticated | ❌ NO — no auth | `clearAuthScript()` | Various |
 
+## What Blocker-Grade Playwright Evidence Now Proves
+
+This section states precisely what a green CI run — with the strict sign-off lane
+active — demonstrates about the product. It is the authoritative record for product,
+engineering, and enterprise stakeholder review.
+
+### Strict sign-off lane (`BIATEC_STRICT_BACKEND=true`)
+
+When `BIATEC_STRICT_BACKEND=true` and `API_BASE_URL` points to a live staging backend,
+the following claims are proven by machine-verifiable E2E evidence:
+
+| Claim | Spec file | AC |
+|---|---|---|
+| Email/password login produces a valid ARC76 session via real HTTP — no localStorage fallback | `mvp-backend-signoff.spec.ts` | AC #1 + AC #2 |
+| Wrong credentials are correctly rejected by the backend (not just frontend validation) | `mvp-backend-signoff.spec.ts` | AC #2 |
+| A real backend session allows access to `/launch/guided` (route guard accepts real token) | `mvp-backend-signoff.spec.ts` | AC #1 |
+| Navigation for an authenticated user shows no wallet connector UI | `mvp-backend-signoff.spec.ts` | Roadmap |
+| Unauthenticated access to `/launch/guided` is redirected even after strict auth cleared | `mvp-backend-signoff.spec.ts` | AC #1 |
+| POST `/initiate` returns a `deploymentId` — backend accepts the deployment request | `mvp-backend-signoff.spec.ts` + `backend-deployment-contract.spec.ts` | AC #3 |
+| GET `/status/{id}` returns valid lifecycle state transitions — polling works | `mvp-backend-signoff.spec.ts` + `backend-deployment-contract.spec.ts` | AC #3 |
+| Terminal `Completed` state surfaces `assetId`; `Failed` state surfaces `userGuidance` | `mvp-backend-signoff.spec.ts` + `backend-deployment-contract.spec.ts` | AC #3 |
+| POST `/validate` (dry-run) returns `isDeterministicAddress` — validate endpoint works | `mvp-backend-signoff.spec.ts` + `backend-deployment-contract.spec.ts` | AC #3 |
+| Error responses contain structured guidance and no raw stack traces | `mvp-backend-signoff.spec.ts` + `backend-deployment-contract.spec.ts` | AC #5 |
+
+### Permissive lane (standard CI — no live backend required)
+
+When running in the standard CI lane (no `BIATEC_STRICT_BACKEND`), the following claims
+are proven through the permissive lane. These are meaningful for developer iteration and
+pre-merge validation, but are NOT sufficient alone for enterprise sign-off:
+
+| Claim | How it is tested | Limitation |
+|---|---|---|
+| Authenticated users see the Guided Launch form with progress bar and step indicator | Real Vue route navigation (`/launch/guided`) in `backend-deployment-contract.spec.ts` Suite 8 | Permissive lane only — auth is seeded via `loginWithCredentials()` (falls back to localStorage when no live backend). Does NOT require `BIATEC_STRICT_BACKEND=true`. |
+| DeploymentStatusPanel data-testid anchors, role/aria attributes conform to contract | DOM injection in `backend-deployment-contract.spec.ts` Suites 1–3, 6–7 | Does NOT prove Vue component maps backend response shapes to DOM correctly |
+| Component-level mapping (backend response → Vue props → DOM) is validated | Unit tests: `src/__tests__/DeploymentStatusPanel.test.ts` + `src/__tests__/integration/BackendDeploymentStatusWiring.integration.test.ts` | E2E layer delegates this to unit/integration tests |
+| `/create/wizard` redirects to `/launch/guided` | `wizard-redirect-compat.spec.ts` | — |
+| Protected routes reject unauthenticated users | Multiple blocker specs | Relies on localStorage seeding for auth state verification |
+| No wallet connector UI appears in navigation | Multiple blocker specs + `backend-deployment-contract.spec.ts` | Uses seeded auth |
+| Auth errors surface user-friendly messages, not raw codes | Multiple blocker specs | — |
+
+### What this distinction means for stakeholder reviews
+
+**For product sign-off**: A green CI run with `BIATEC_STRICT_BACKEND=true` is required.
+The permissive lane alone is not sufficient because it can pass even if the real backend
+auth or deployment endpoints are broken.
+
+**For development iteration**: The permissive lane is the right feedback loop. It covers
+UI contract regressions, route guard behavior, accessibility, and component rendering
+without requiring a live backend — keeping CI fast and developer-friendly.
+
+**For enterprise demos**: Use the strict sign-off lane output. It proves the actual
+email/password flow, real token deployment lifecycle acceptance, and the absence of
+wallet-connector UI in a way that is verifiable by non-technical stakeholders.
+
+### What still depends on non-blocker test strategy
+
+The following areas are currently covered by permissive lane, unit tests, or manual
+verification — NOT by the strict E2E sign-off lane:
+
+- **Full wizard form completion** through the UI with real form submission is not yet
+  tested E2E. The strict lane validates API endpoint shapes; it does not navigate through
+  the multi-step form UI.
+- **Real-time status polling** (SSE/WebSocket push from backend to UI) is not covered.
+- **Rollback and retry flows** are not covered in any lane.
+- **Compliance evidence upload** through the UI is not covered.
+- **Payment and subscription flows** are tested permissively; no strict backend lane exists.
+
 ### What is currently mocked
 
 1. **Auth** — In permissive lane (standard CI): all E2E tests seed a validated session
    object into localStorage (`withAuth()` or `loginWithCredentials()` fallback). No real
    HTTP auth request is made unless `API_BASE_URL` resolves to a live backend.
 
-2. **Deployment lifecycle** — `backend-deployment-contract.spec.ts` permissive lane injects
-   HTML elements into the page DOM to validate the `DeploymentStatusPanel` UI contract.
-   This is a UI contract test, not a real deployment end-to-end test.
+2. **DeploymentStatusPanel component UI** — `backend-deployment-contract.spec.ts` Suites 1–3
+   and 6–7 inject HTML elements into the page DOM to validate the component's data-testid
+   anchors and ARIA attributes. These are UI contract tests, not integration tests.
+   The actual Vue rendering pipeline for these states is validated by unit/integration tests.
 
-3. **Compliance flows** — Compliance spec tests validate the UI contract using component-
+3. **Real page navigation** — Suite 8 of `backend-deployment-contract.spec.ts` navigates to
+   `/launch/guided` through the real Vue router and renders the real GuidedTokenLaunch
+   component. This is NOT DOM injection — it exercises the actual application pipeline.
+
+4. **Compliance flows** — Compliance spec tests validate the UI contract using component-
    rendered state. Backend API calls are not made in CI without a live backend.
 
 ### What requires a live backend (strict sign-off)
@@ -239,6 +311,8 @@ npm run test:e2e:report
    pointing to a live staging backend. All tests in this file skip without these env vars.
 
 2. The deployment strict lane in `backend-deployment-contract.spec.ts` — same guards.
+   These tests now cover the full lifecycle journey (initiate → poll → terminal state)
+   rather than shallow endpoint reachability.
 
 ### Known gaps (follow-up work)
 
@@ -260,7 +334,7 @@ Tests are organized by feature:
 - `mvp-deterministic-journey.spec.ts` - MVP journey determinism and canonical routes
 - `mvp-confidence-hardening.spec.ts` - Auth/deployment confidence hardening
 - `mvp-signoff-readiness.spec.ts` - Sign-off readiness: canonical flow, auth contract, accessibility
-- `backend-deployment-contract.spec.ts` - Deployment lifecycle UI contract (permissive lane) + strict lane
+- `backend-deployment-contract.spec.ts` - Deployment entry-point navigation (real Vue pipeline) + UI contract (DOM injection) + strict lifecycle lane (initiate→poll→terminal)
 
 **Auth-first journey:**
 - `auth-first-token-creation.spec.ts` - Auth-first journey and route guards (MVP critical)
