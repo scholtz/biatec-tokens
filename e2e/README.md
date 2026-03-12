@@ -229,20 +229,30 @@ engineering, and enterprise stakeholder review.
 ### Strict sign-off lane (`BIATEC_STRICT_BACKEND=true`)
 
 When `BIATEC_STRICT_BACKEND=true` and `API_BASE_URL` points to a live staging backend,
-the following claims are proven by machine-verifiable E2E evidence:
+the following claims are proven by machine-verifiable E2E evidence. All assertions are
+**fail-closed** — there are no permissive early-return paths. Missing evidence fails the gate loudly.
 
-| Claim | Spec file | AC |
+| Claim | Spec file | Fail behavior if missing |
 |---|---|---|
-| Email/password login produces a valid ARC76 session via real HTTP — no localStorage fallback | `mvp-backend-signoff.spec.ts` | AC #1 + AC #2 |
-| Wrong credentials are correctly rejected by the backend (not just frontend validation) | `mvp-backend-signoff.spec.ts` | AC #2 |
-| A real backend session allows access to `/launch/guided` (route guard accepts real token) | `mvp-backend-signoff.spec.ts` | AC #1 |
-| Navigation for an authenticated user shows no wallet connector UI | `mvp-backend-signoff.spec.ts` | Roadmap |
-| Unauthenticated access to `/launch/guided` is redirected even after strict auth cleared | `mvp-backend-signoff.spec.ts` | AC #1 |
-| POST `/initiate` returns a `deploymentId` — backend accepts the deployment request | `mvp-backend-signoff.spec.ts` + `backend-deployment-contract.spec.ts` | AC #3 |
-| GET `/status/{id}` returns valid lifecycle state transitions — polling works | `mvp-backend-signoff.spec.ts` + `backend-deployment-contract.spec.ts` | AC #3 |
-| Terminal `Completed` state surfaces `assetId`; `Failed` state surfaces `userGuidance` | `mvp-backend-signoff.spec.ts` + `backend-deployment-contract.spec.ts` | AC #3 |
-| POST `/validate` (dry-run) returns `isDeterministicAddress` — validate endpoint works | `mvp-backend-signoff.spec.ts` + `backend-deployment-contract.spec.ts` | AC #3 |
-| Error responses contain structured guidance and no raw stack traces | `mvp-backend-signoff.spec.ts` + `backend-deployment-contract.spec.ts` | AC #5 |
+| Email/password login produces a valid ARC76 session via real HTTP — no localStorage fallback | `mvp-backend-signoff.spec.ts` | `loginWithCredentialsStrict()` throws — test fails immediately |
+| Wrong credentials are correctly rejected by the backend (not just frontend validation) | `mvp-backend-signoff.spec.ts` | `expect(response.ok()).toBe(false)` fails if backend accepts bad creds |
+| A real backend session allows access to `/launch/guided` (route guard accepts real token) | `mvp-backend-signoff.spec.ts` | `expect(heading).toBeVisible()` fails if page not rendered |
+| Navigation for an authenticated user shows no wallet connector UI | `mvp-backend-signoff.spec.ts` | Wallet brand regex assertion fails |
+| Unauthenticated access to `/launch/guided` is redirected even after strict auth cleared | `mvp-backend-signoff.spec.ts` | `expect(redirectedAway || authFormVisible).toBe(true)` fails |
+| Bearer token is present in auth response (required for deployment API calls) | `mvp-backend-signoff.spec.ts` | `[STRICT SIGN-OFF FAILURE]` — test fails if auth response missing token field |
+| POST `/initiate` endpoint is reachable and returns `deploymentId` | `mvp-backend-signoff.spec.ts` | `[STRICT SIGN-OFF FAILURE]` — network error or non-200/201/409 response fails test |
+| GET `/status/{id}` returns valid lifecycle state immediately after initiation | `mvp-backend-signoff.spec.ts` | `[STRICT SIGN-OFF FAILURE]` — status endpoint unreachable fails test |
+| Terminal state (`Completed` or `Failed`) is reached within the 60s polling window | `mvp-backend-signoff.spec.ts` | `[STRICT SIGN-OFF FAILURE]` — terminal not reached fails test |
+| `Completed` terminal state surfaces `assetId` (authoritative on-chain evidence) | `mvp-backend-signoff.spec.ts` | `[STRICT SIGN-OFF FAILURE]` — missing assetId fails test |
+| `Failed` terminal state surfaces `userGuidance` (actionable operator messaging) | `mvp-backend-signoff.spec.ts` | `[STRICT SIGN-OFF FAILURE]` — missing guidance fails test |
+| POST `/validate` endpoint is reachable and returns `isDeterministicAddress` | `mvp-backend-signoff.spec.ts` | `[STRICT SIGN-OFF FAILURE]` — endpoint unreachable or missing field fails test |
+| POST `/validate` returns `isValid` boolean | `mvp-backend-signoff.spec.ts` | `[STRICT SIGN-OFF FAILURE]` — missing field fails test |
+| User email from real backend session matches the sign-off account (no placeholder) | `mvp-backend-signoff.spec.ts` | `expect(session.email).toBe(expectedEmail)` fails |
+| Canonical routes (`/launch/guided`, `/compliance/setup`) render after real backend auth | `mvp-backend-signoff.spec.ts` | `expect(headingVisible).toBe(true)` fails |
+
+**Note on failure message format:** Any assertion prefixed with `[STRICT SIGN-OFF FAILURE]`
+in the Playwright output indicates a release blocker — not a flaky test or environment noise.
+See the workflow artifact `strict-signoff-report-<run-id>` for traces and screenshots.
 
 ### Permissive lane (standard CI — no live backend required)
 
@@ -524,6 +534,40 @@ Runs on push to `main` (for sign-off-related files) and on manual `workflow_disp
 - **Auth model**: `loginWithCredentialsStrict()` — throws if backend unavailable; no localStorage fallback
 - **Purpose**: Release-readiness evidence. Proves the real critical path works against a live backend.
 - **Spec file**: `e2e/mvp-backend-signoff.spec.ts`
+- **Fail behavior**: **Fail-closed** — no permissive early-return paths. Every required backend
+  endpoint must be reachable, every response must include required lifecycle fields, and terminal
+  state must be reached within the polling window. Silent "skip gracefully" paths have been removed.
+
+#### Fail-Closed Behavior
+
+All assertions in `mvp-backend-signoff.spec.ts` that enforce release sign-off requirements use
+the prefix `[STRICT SIGN-OFF FAILURE]` in their failure message. This makes it easy to identify
+genuine release-gate failures in CI artifacts and logs:
+
+```
+[STRICT SIGN-OFF FAILURE] /initiate endpoint unreachable at https://staging.biatec.io/...
+[STRICT SIGN-OFF FAILURE] /initiate returned HTTP 400. Expected 200, 201, or 409.
+[STRICT SIGN-OFF FAILURE] /initiate response missing required 'deploymentId' field.
+[STRICT SIGN-OFF FAILURE] Deployment did not reach a terminal state within the 60s polling window.
+[STRICT SIGN-OFF FAILURE] 'Completed' state is missing required 'assetId' field.
+[STRICT SIGN-OFF FAILURE] 'Failed' state is missing the required 'error' object.
+[STRICT SIGN-OFF FAILURE] /validate endpoint unreachable.
+[STRICT SIGN-OFF FAILURE] /validate response missing required 'isDeterministicAddress' field.
+```
+
+If a test contains this prefix in its failure output, it is a release blocker — not a flaky test.
+
+#### Environment Contract for the Strict Lane
+
+The following environment variables are required for the strict lane to run. If any are missing,
+the `strict-signoff.yml` workflow **fails at the prerequisites step** (not silently at test time):
+
+| Variable | Source | Description |
+|---|---|---|
+| `BIATEC_STRICT_BACKEND` | Hardcoded `true` in workflow | Activates `loginWithCredentialsStrict()` and disables all localStorage fallbacks |
+| `API_BASE_URL` | `SIGNOFF_API_BASE_URL` secret or `workflow_dispatch` input | Live staging backend URL — must NOT be localhost or empty |
+| `TEST_USER_EMAIL` | `SIGNOFF_TEST_EMAIL` secret or `workflow_dispatch` input | Email of a provisioned sign-off test account |
+| `TEST_USER_PASSWORD` | `SIGNOFF_TEST_PASSWORD` secret | Password for the sign-off test account |
 
 Required repository secrets:
 
@@ -532,6 +576,16 @@ Required repository secrets:
 | `SIGNOFF_API_BASE_URL` | Live staging backend URL (e.g. `https://staging.biatec.io`) |
 | `SIGNOFF_TEST_EMAIL` | Email of a provisioned sign-off test account |
 | `SIGNOFF_TEST_PASSWORD` | Password for the sign-off test account |
+
+**Backend readiness requirements:** The sign-off backend must have these API endpoints deployed:
+- `POST /api/auth/login` — returns `{ address, email, token }` (or `accessToken`/`access_token`)
+- `POST /api/v1/backend-deployment-contract/initiate` — returns `{ deploymentId, state }`
+- `GET /api/v1/backend-deployment-contract/status/{id}` — returns `{ deploymentId, state, assetId?, error? }`
+- `POST /api/v1/backend-deployment-contract/validate` — returns `{ isValid, isDeterministicAddress }`
+
+**Polling window:** The terminal-state test polls up to 12 attempts × 5s = 60 seconds.
+If the deployment does not reach `Completed` or `Failed` within this window, the test fails.
+This is a feature, not a bug — slow backends are a release quality issue.
 
 To run the strict lane locally:
 

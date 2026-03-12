@@ -2,7 +2,8 @@
  * MVP Backend Sign-off Lane — Strict Real-Backend Playwright Evidence
  *
  * This is the strict sign-off suite for AC #1, AC #2, and AC #3 of the
- * "Close MVP sign-off gap with real-backend Playwright evidence" issue.
+ * "Close MVP sign-off gap with real-backend Playwright evidence" issue, and
+ * the "Enforce strict real-backend release sign-off" hardening issue.
  *
  * ## What makes this spec different from other sign-off specs
  *
@@ -14,9 +15,19 @@
  * 2. **No broad error suppression** — This spec does NOT call
  *    `suppressBrowserErrors()`. Genuine application errors surface as failures.
  *
- * 3. **Real backend deployment lifecycle** — When `API_BASE_URL` is set to a
+ * 3. **No permissive early-return paths** — Every test that requires backend
+ *    connectivity FAILS loudly (with `[STRICT SIGN-OFF FAILURE]` prefix) when
+ *    the endpoint is unreachable, returns unexpected status codes, or returns
+ *    responses missing required lifecycle evidence fields. There are no
+ *    `return` statements that skip assertions silently.
+ *
+ * 4. **Real backend deployment lifecycle** — When `API_BASE_URL` is set to a
  *    live staging backend, the deployment lifecycle tests hit real endpoints
  *    and assert on actual backend response shapes.
+ *
+ * 5. **Terminal state is required** — The terminal-state test fails if the
+ *    deployment does not reach Completed or Failed within the 60s polling
+ *    window. "Still in progress" is not acceptable as release evidence.
  *
  * ## When these tests run
  *
@@ -28,6 +39,13 @@
  *   BIATEC_STRICT_BACKEND=true API_BASE_URL=https://staging.biatec.io \
  *   TEST_USER_EMAIL=signoff@biatec.io TEST_USER_PASSWORD=<secret> \
  *   npx playwright test e2e/mvp-backend-signoff.spec.ts
+ *
+ * ## Failure message format
+ *
+ * Every assertion that enforces release sign-off requirements uses the prefix
+ * `[STRICT SIGN-OFF FAILURE]` in its failure message. This makes it easy to
+ * distinguish genuine release-gate failures from flaky test failures in CI
+ * artifacts and logs.
  *
  * ## Acceptance Criteria covered
  *
@@ -41,6 +59,7 @@
  *   AC #3 — The deployment sign-off test covers a real create-token/deployment
  *            lifecycle, including request acceptance, visible status progression,
  *            and a terminal success or failure state derived from backend responses.
+ *            Early-return branches that skip lifecycle evidence have been removed.
  *
  * ## What is still mocked / what remains open
  *
@@ -56,7 +75,7 @@
  * Auth model:   Email/password only — no wallet connectors.
  * Auth helper:  loginWithCredentialsStrict() — FAILS if backend unavailable.
  * Waits:        Semantic only (expect().toBeVisible, waitForFunction, waitForLoadState).
- *               Zero arbitrary waitForTimeout().
+ *               Zero arbitrary waitForTimeout() in assertion paths.
  * Roadmap: https://raw.githubusercontent.com/scholtz/biatec-tokens/refs/heads/main/business-owner-roadmap.md
  */
 
@@ -251,32 +270,40 @@ test.describe('AC #3: Real deployment lifecycle — backend-driven status progre
     // Once the backend API is stable, this should be simplified to check only one.
     const bearerToken =
       authBody.token || authBody.accessToken || authBody.access_token || authBody.sessionToken
-    const hasAuthToken = typeof bearerToken === 'string' && bearerToken.length > 0
 
-    // If we have a bearer token, verify the deployment status endpoint is reachable
-    if (hasAuthToken) {
-      const statusResponse = await page.request
-        .get(`${apiBaseUrl}/api/v1/backend-deployment-contract`, {
-          headers: { Authorization: `Bearer ${bearerToken}` },
-          timeout: 10000,
-        })
-        .catch(() => null)
+    // STRICT MODE: Bearer token MUST be present — cannot proceed without it.
+    // If missing, the backend auth response does not meet the deployment contract.
+    expect(
+      typeof bearerToken === 'string' && bearerToken.length > 0,
+      `[STRICT SIGN-OFF FAILURE] Auth response is missing a bearer token field. ` +
+        `Auth response keys: ${Object.keys(authBody ?? {}).join(', ')}. ` +
+        `Expected one of: token, accessToken, access_token, sessionToken.`,
+    ).toBe(true)
 
-      // Either the endpoint is reachable (200/404 — 404 means no deployments yet)
-      // or it returns an auth error (401/403 — endpoint exists but access denied without a deployment ID)
-      // What matters is that the request reaches the backend, not that there are deployments
-      if (statusResponse !== null) {
-        expect([200, 201, 400, 401, 403, 404, 405]).toContain(statusResponse.status())
-        console.log(
-          `[mvp-backend-signoff] Deployment endpoint reachable — HTTP ${statusResponse.status()}`,
+    // STRICT MODE: Deployment status endpoint MUST be reachable — no silent skips.
+    const statusResponse = await page.request
+      .get(`${apiBaseUrl}/api/v1/backend-deployment-contract`, {
+        headers: { Authorization: `Bearer ${bearerToken}` },
+        timeout: 10000,
+      })
+      .catch((networkError: unknown) => {
+        const msg = networkError instanceof Error ? networkError.message : String(networkError)
+        throw new Error(
+          `[STRICT SIGN-OFF FAILURE] Deployment contract endpoint unreachable at ` +
+            `${apiBaseUrl}/api/v1/backend-deployment-contract. Network error: ${msg}`,
         )
-      }
-    } else {
-      console.log(
-        '[mvp-backend-signoff] Bearer token not in auth response — skipping deployment endpoint check. ' +
-          `Auth response keys: ${Object.keys(authBody).join(', ')}`,
-      )
-    }
+      })
+
+    // Endpoint must respond — 200/404 (no deployments yet) or 401/403 (auth gating) are all
+    // evidence that the backend is live and the route exists.
+    expect(
+      [200, 201, 400, 401, 403, 404, 405],
+      `[STRICT SIGN-OFF FAILURE] Deployment contract endpoint returned unexpected HTTP ${statusResponse.status()}. ` +
+        `Expected one of 200, 201, 400, 401, 403, 404, 405 — any of these proves the backend is reachable.`,
+    ).toContain(statusResponse.status())
+    console.log(
+      `[mvp-backend-signoff] Deployment endpoint reachable — HTTP ${statusResponse.status()}`,
+    )
   })
 
   test('guided launch page renders deployment status UI in auth-first context', async ({
@@ -346,6 +373,7 @@ test.describe('AC #3: Real deployment lifecycle — backend-driven status progre
     // Submit a token deployment initiation request
     // Uses a unique idempotency key to prevent duplicate deployments across test runs
     const idempotencyKey = `signoff-test-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    // STRICT MODE: /initiate MUST be reachable — network failure is a hard release blocker.
     const initiateResponse = await page.request
       .post(`${apiBaseUrl}/api/v1/backend-deployment-contract/initiate`, {
         headers: {
@@ -364,45 +392,42 @@ test.describe('AC #3: Real deployment lifecycle — backend-driven status progre
         },
         timeout: 15000,
       })
-      .catch(() => null)
+      .catch((networkError: unknown) => {
+        const msg = networkError instanceof Error ? networkError.message : String(networkError)
+        throw new Error(
+          `[STRICT SIGN-OFF FAILURE] /initiate endpoint unreachable at ` +
+            `${apiBaseUrl}/api/v1/backend-deployment-contract/initiate. ` +
+            `The strict sign-off lane requires a live backend with this endpoint deployed. ` +
+            `Network error: ${msg}`,
+        )
+      })
 
-    if (initiateResponse === null) {
-      // Endpoint not reachable — environment issue, not an app bug; log and skip gracefully
-      console.log('[mvp-backend-signoff] /initiate endpoint not reachable — backend may not be fully deployed yet')
-      return
-    }
-
-    // The backend MUST return 200/201 for a valid initiation, or 409 for idempotency replay
-    const validInitiateStatuses = [200, 201, 400, 409, 422]
-    expect(validInitiateStatuses).toContain(initiateResponse.status())
-
-    if (!initiateResponse.ok()) {
-      // For 400/422 validation errors, the backend must still return structured error guidance
-      // (not raw stack traces or internal error codes)
-      const errorBody = await initiateResponse.json().catch(() => null)
-      if (errorBody !== null) {
-        // Error response must follow the deployment contract error schema
-        const hasUserGuidance =
-          typeof errorBody?.userGuidance === 'string' ||
-          typeof errorBody?.message === 'string' ||
-          Array.isArray(errorBody?.errors) ||
-          Array.isArray(errorBody?.validationErrors)
-        expect(hasUserGuidance).toBe(true)
-        // Must not contain raw stack trace fragments
-        const errorStr = JSON.stringify(errorBody)
-        expect(errorStr).not.toMatch(/at\s+\w+.*:\d+:\d+/m) // stack trace lines
-      }
-      console.log(`[mvp-backend-signoff] Initiate returned ${initiateResponse.status()}: ${JSON.stringify(errorBody)}`)
-      return
-    }
+    // STRICT MODE: 200/201 (success) or 409 (idempotency replay) are the only acceptable statuses.
+    // 400/422 (validation errors) indicate invalid sign-off test parameters or a backend regression — both are release blockers.
+    expect(
+      [200, 201, 409],
+      `[STRICT SIGN-OFF FAILURE] /initiate returned HTTP ${initiateResponse.status()} with non-successful status. ` +
+        `Expected HTTP 200, 201 (accepted), or 409 (idempotency replay). ` +
+        `A 400/422 response indicates the sign-off test parameters were rejected by the backend — ` +
+        `either the test data is invalid or the backend has a regression. Both are release blockers.`,
+    ).toContain(initiateResponse.status())
 
     const initiateBody = await initiateResponse.json().catch(() => null)
-    expect(initiateBody).not.toBeNull()
+    // STRICT MODE: Response body MUST be parseable JSON.
+    expect(
+      initiateBody,
+      '[STRICT SIGN-OFF FAILURE] /initiate response body could not be parsed as JSON.',
+    ).not.toBeNull()
 
-    // Core AC #2 assertion: the backend MUST return a deploymentId for status polling
+    // Core AC #3 assertion: the backend MUST return a deploymentId for status polling.
+    // Without a deploymentId, subsequent lifecycle evidence cannot be obtained.
     const deploymentId = initiateBody?.deploymentId
-    expect(typeof deploymentId).toBe('string')
-    expect(deploymentId.length).toBeGreaterThan(0)
+    expect(
+      typeof deploymentId === 'string' && deploymentId.length > 0,
+      `[STRICT SIGN-OFF FAILURE] /initiate response missing required 'deploymentId' field. ` +
+        `Response keys: ${initiateBody ? Object.keys(initiateBody).join(', ') : '<empty>'}. ` +
+        `The deploymentId is required for status polling and lifecycle evidence.`,
+    ).toBe(true)
 
     // The initial state must be one of the valid lifecycle states
     const VALID_STATES = ['Pending', 'Validated', 'Submitted', 'Confirmed', 'Completed', 'Failed']
@@ -412,28 +437,45 @@ test.describe('AC #3: Real deployment lifecycle — backend-driven status progre
 
     console.log(`[mvp-backend-signoff] Deployment initiated — ID: ${deploymentId}, state: ${initiateBody?.state}`)
 
-    // AC #2: Poll status endpoint and verify progression
+    // STRICT MODE: Status endpoint MUST be reachable immediately after initiation.
+    // This is the first lifecycle poll — proves the backend tracks the deployment.
     const statusResponse = await page.request
       .get(`${apiBaseUrl}/api/v1/backend-deployment-contract/status/${deploymentId}`, {
         headers: { Authorization: `Bearer ${bearerToken}` },
         timeout: 10000,
       })
-      .catch(() => null)
+      .catch((networkError: unknown) => {
+        const msg = networkError instanceof Error ? networkError.message : String(networkError)
+        throw new Error(
+          `[STRICT SIGN-OFF FAILURE] Status endpoint unreachable after initiation. ` +
+            `Cannot poll lifecycle state for deploymentId=${deploymentId}. ` +
+            `Network error: ${msg}`,
+        )
+      })
 
-    if (statusResponse !== null && statusResponse.ok()) {
-      const statusBody = await statusResponse.json().catch(() => null)
-      expect(statusBody).not.toBeNull()
+    expect(
+      statusResponse.ok(),
+      `[STRICT SIGN-OFF FAILURE] Status endpoint returned HTTP ${statusResponse.status()} for ` +
+        `deploymentId=${deploymentId}. Expected HTTP 200 — backend must be able to track initiated deployments.`,
+    ).toBe(true)
 
-      // deploymentId must be echoed back for reference
-      expect(statusBody?.deploymentId).toBe(deploymentId)
+    const statusBody = await statusResponse.json().catch(() => null)
+    expect(
+      statusBody,
+      '[STRICT SIGN-OFF FAILURE] Status endpoint returned non-JSON body.',
+    ).not.toBeNull()
 
-      // State must be a valid lifecycle state
-      if (statusBody?.state !== undefined) {
-        expect(VALID_STATES).toContain(statusBody.state)
-      }
+    // deploymentId must be echoed back for reference — proves backend tracks the correct deployment
+    expect(statusBody?.deploymentId).toBe(deploymentId)
 
-      console.log(`[mvp-backend-signoff] Deployment status polled — ID: ${deploymentId}, state: ${statusBody?.state}`)
-    }
+    // State must be a valid lifecycle state
+    expect(
+      VALID_STATES,
+      `[STRICT SIGN-OFF FAILURE] Status response state '${statusBody?.state}' is not a valid lifecycle state. ` +
+        `Expected one of: ${VALID_STATES.join(', ')}.`,
+    ).toContain(statusBody?.state)
+
+    console.log(`[mvp-backend-signoff] Deployment status polled — ID: ${deploymentId}, state: ${statusBody?.state}`)
   })
 
   test('deployment lifecycle — terminal state surfaced correctly (success or failure)', async ({
@@ -464,6 +506,8 @@ test.describe('AC #3: Real deployment lifecycle — backend-driven status progre
     // Use a stable idempotency key across runs — will return existing deployment on replay
     const stableIdempotencyKey = `signoff-terminal-${process.env.TEST_USER_EMAIL ?? 'e2e-test@biatec.io'}-stable-v1`
 
+    // STRICT MODE: /initiate MUST succeed for the terminal state test.
+    // A network failure or non-successful response is a hard release blocker.
     const initiateResponse = await page.request
       .post(`${apiBaseUrl}/api/v1/backend-deployment-contract/initiate`, {
         headers: {
@@ -482,27 +526,44 @@ test.describe('AC #3: Real deployment lifecycle — backend-driven status progre
         },
         timeout: 15000,
       })
-      .catch(() => null)
+      .catch((networkError: unknown) => {
+        const msg = networkError instanceof Error ? networkError.message : String(networkError)
+        throw new Error(
+          `[STRICT SIGN-OFF FAILURE] /initiate endpoint unreachable during terminal state test. ` +
+            `Network error: ${msg}`,
+        )
+      })
 
-    if (initiateResponse === null || !initiateResponse.ok()) {
-      console.log('[mvp-backend-signoff] Terminal state test — /initiate not available; skipping polling assertions')
-      return
-    }
+    expect(
+      [200, 201, 409],
+      `[STRICT SIGN-OFF FAILURE] /initiate returned HTTP ${initiateResponse.status()} in terminal state test. ` +
+        `Expected 200, 201 (accepted), or 409 (idempotency replay). ` +
+        `Cannot obtain terminal lifecycle evidence without a successfully initiated deployment.`,
+    ).toContain(initiateResponse.status())
 
     const initiateBody = await initiateResponse.json().catch(() => null)
-    const deploymentId = initiateBody?.deploymentId
-    if (!deploymentId) {
-      console.log('[mvp-backend-signoff] Terminal state test — no deploymentId returned; skipping')
-      return
-    }
+    expect(
+      initiateBody,
+      '[STRICT SIGN-OFF FAILURE] /initiate response body could not be parsed as JSON in terminal state test.',
+    ).not.toBeNull()
 
-    // AC #2: Poll for terminal state — allows up to 30s for progression
+    const deploymentId = initiateBody?.deploymentId
+    // STRICT MODE: deploymentId is REQUIRED — cannot poll for terminal state without it.
+    expect(
+      typeof deploymentId === 'string' && deploymentId.length > 0,
+      `[STRICT SIGN-OFF FAILURE] /initiate response missing 'deploymentId' in terminal state test. ` +
+        `Response keys: ${initiateBody ? Object.keys(initiateBody).join(', ') : '<empty>'}. ` +
+        `Terminal state evidence requires a valid deploymentId for polling.`,
+    ).toBe(true)
+
+    // AC #3: Poll for terminal state — allows up to 60s (12 attempts × 5s) for progression.
+    // Increased from 30s to allow for slower staging backend processing times.
     const TERMINAL_STATES = ['Completed', 'Failed']
     const VALID_STATES = ['Pending', 'Validated', 'Submitted', 'Confirmed', 'Completed', 'Failed']
     let finalState: string | undefined = initiateBody?.state
     let finalBody: Record<string, unknown> | null = null
 
-    for (let attempt = 0; attempt < 6; attempt++) {
+    for (let attempt = 0; attempt < 12; attempt++) {
       // Check status first (before waiting), then wait — allows fast completion to succeed immediately
       const statusResponse = await page.request
         .get(`${apiBaseUrl}/api/v1/backend-deployment-contract/status/${deploymentId}`, {
@@ -528,34 +589,53 @@ test.describe('AC #3: Real deployment lifecycle — backend-driven status progre
         if (finalState !== undefined && TERMINAL_STATES.includes(finalState)) break
       }
 
-      if (attempt < 5) await page.waitForTimeout(5000) // wait 5s between attempts (skip on last)
+      if (attempt < 11) await page.waitForTimeout(5000) // wait 5s between attempts (skip on last)
     }
 
-    // Assert that if we have a terminal state, it surfaces expected identifiers
+    // STRICT MODE: Terminal state MUST be reached within the polling window.
+    // If the backend is too slow to reach terminal state in 60s, that is a release quality issue.
+    expect(
+      finalState !== undefined && TERMINAL_STATES.includes(finalState),
+      `[STRICT SIGN-OFF FAILURE] Deployment did not reach a terminal state within the 60s polling window. ` +
+        `Final observed state: '${finalState ?? '<unknown>'}'. ` +
+        `Expected one of: ${TERMINAL_STATES.join(', ')}. ` +
+        `This indicates either backend processing is too slow or the deployment is stuck — both are release blockers.`,
+    ).toBe(true)
+
+    // Assert that the terminal state surfaces expected authoritative identifiers
     if (finalState === 'Completed') {
-      // Success: asset ID must be surfaced
+      // Success: asset ID MUST be surfaced — this is the authoritative deployment evidence
       const assetId = finalBody?.assetId
-      expect(typeof assetId === 'string' || typeof assetId === 'number').toBe(true)
-      expect(String(assetId).length).toBeGreaterThan(0)
+      expect(
+        typeof assetId === 'string' || typeof assetId === 'number',
+        `[STRICT SIGN-OFF FAILURE] 'Completed' state is missing required 'assetId' field. ` +
+          `Response keys: ${finalBody ? Object.keys(finalBody).join(', ') : '<empty>'}. ` +
+          `The assetId is the authoritative evidence that the token was deployed on-chain.`,
+      ).toBe(true)
+      expect(
+        String(assetId).length,
+        '[STRICT SIGN-OFF FAILURE] assetId must be non-empty.',
+      ).toBeGreaterThan(0)
       console.log(`[mvp-backend-signoff] Deployment completed — assetId: ${assetId}`)
     } else if (finalState === 'Failed') {
-      // Failure: user guidance must be present (no raw error codes shown to users)
+      // Failure: user guidance MUST be present — operators must receive actionable failure messaging
       const error = finalBody?.error as Record<string, unknown> | undefined
-      if (error !== undefined) {
-        expect(typeof error.userGuidance).toBe('string')
-        expect((error.userGuidance as string).length).toBeGreaterThan(0)
-        // Must not contain raw exception/stack info (specific file:line:col pattern)
-        expect(error.userGuidance as string).not.toMatch(/^\s*at\s+\w+.*:\d+:\d+/m)
-        console.log(`[mvp-backend-signoff] Deployment failed with guidance: ${error.userGuidance}`)
-      }
-    } else {
-      // Still in progress or unknown — log but don't fail
-      // The test proves the lifecycle can be initiated and polled; terminal assertion
-      // requires sufficient backend processing time which varies by environment.
-      console.log(`[mvp-backend-signoff] State after polling: ${finalState} — terminal not reached in 30s window`)
-      if (finalState !== undefined) {
-        expect(VALID_STATES).toContain(finalState)
-      }
+      expect(
+        error !== undefined,
+        `[STRICT SIGN-OFF FAILURE] 'Failed' state is missing the required 'error' object. ` +
+          `Operators must receive explicit failure messaging — not a silent failure.`,
+      ).toBe(true)
+      // error is guaranteed non-undefined here (assertion above ensures it)
+      const checkedError = error as Record<string, unknown>
+      expect(
+        typeof checkedError.userGuidance === 'string' && (checkedError.userGuidance as string).length > 0,
+        `[STRICT SIGN-OFF FAILURE] Failed deployment error object is missing 'userGuidance' field. ` +
+          `Error keys: ${Object.keys(checkedError).join(', ')}. ` +
+          `Operators need actionable guidance when a deployment fails — raw error codes are unacceptable.`,
+      ).toBe(true)
+      // Must not contain raw exception/stack info
+      expect(checkedError.userGuidance as string).not.toMatch(/^\s*at\s+\w+.*:\d+:\d+/m)
+      console.log(`[mvp-backend-signoff] Deployment failed with guidance: ${checkedError.userGuidance}`)
     }
   })
 
@@ -583,7 +663,8 @@ test.describe('AC #3: Real deployment lifecycle — backend-driven status progre
       authBody.token || authBody.accessToken || authBody.access_token || authBody.sessionToken
     expect(typeof bearerToken).toBe('string')
 
-    // Submit a dry-run validation (no on-chain side effects)
+    // STRICT MODE: /validate MUST be reachable — it is required lifecycle evidence.
+    // A network failure or non-OK response is a hard release blocker.
     const validateResponse = await page.request
       .post(`${apiBaseUrl}/api/v1/backend-deployment-contract/validate`, {
         headers: {
@@ -601,25 +682,53 @@ test.describe('AC #3: Real deployment lifecycle — backend-driven status progre
         },
         timeout: 10000,
       })
-      .catch(() => null)
+      .catch((networkError: unknown) => {
+        const msg = networkError instanceof Error ? networkError.message : String(networkError)
+        throw new Error(
+          `[STRICT SIGN-OFF FAILURE] /validate endpoint unreachable at ` +
+            `${apiBaseUrl}/api/v1/backend-deployment-contract/validate. ` +
+            `Dry-run validation is required lifecycle evidence for release sign-off. ` +
+            `Network error: ${msg}`,
+        )
+      })
 
-    if (validateResponse === null || !validateResponse.ok()) {
-      console.log('[mvp-backend-signoff] /validate endpoint not reachable or returned non-OK; skipping')
-      return
-    }
+    expect(
+      validateResponse.ok(),
+      `[STRICT SIGN-OFF FAILURE] /validate returned HTTP ${validateResponse.status()}. ` +
+        `Expected HTTP 200 — validate endpoint must return a validation result for sign-off parameters.`,
+    ).toBe(true)
 
     const validateBody = await validateResponse.json().catch(() => null)
-    expect(validateBody).not.toBeNull()
+    // STRICT MODE: Response body MUST be parseable JSON.
+    expect(
+      validateBody,
+      '[STRICT SIGN-OFF FAILURE] /validate response body could not be parsed as JSON.',
+    ).not.toBeNull()
 
-    // isDeterministicAddress proves ARC76 derivation is working in the backend
-    if (validateBody?.isDeterministicAddress !== undefined) {
-      expect(typeof validateBody.isDeterministicAddress).toBe('boolean')
-    }
+    // isDeterministicAddress proves ARC76 derivation is working in the backend.
+    // This field is REQUIRED for lifecycle evidence — it is the on-chain proof.
+    expect(
+      validateBody?.isDeterministicAddress !== undefined,
+      `[STRICT SIGN-OFF FAILURE] /validate response missing required 'isDeterministicAddress' field. ` +
+        `Response keys: ${validateBody ? Object.keys(validateBody).join(', ') : '<empty>'}. ` +
+        `isDeterministicAddress is the ARC76 address derivation proof — required for deployment sign-off.`,
+    ).toBe(true)
+    expect(
+      typeof validateBody.isDeterministicAddress,
+      '[STRICT SIGN-OFF FAILURE] isDeterministicAddress must be a boolean.',
+    ).toBe('boolean')
 
-    // isValid tells us whether the parameters are deployable
-    if (validateBody?.isValid !== undefined) {
-      expect(typeof validateBody.isValid).toBe('boolean')
-    }
+    // isValid tells us whether the parameters are deployable — must be returned.
+    expect(
+      validateBody?.isValid !== undefined,
+      `[STRICT SIGN-OFF FAILURE] /validate response missing required 'isValid' field. ` +
+        `Response keys: ${validateBody ? Object.keys(validateBody).join(', ') : '<empty>'}. ` +
+        `isValid is required to confirm the deployment parameters meet backend validation rules.`,
+    ).toBe(true)
+    expect(
+      typeof validateBody.isValid,
+      '[STRICT SIGN-OFF FAILURE] isValid must be a boolean.',
+    ).toBe('boolean')
 
     console.log(`[mvp-backend-signoff] Validate response — isValid: ${validateBody?.isValid}, isDeterministicAddress: ${validateBody?.isDeterministicAddress}`)
   })
