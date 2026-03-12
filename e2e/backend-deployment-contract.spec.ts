@@ -51,7 +51,13 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { loginWithCredentials, suppressBrowserErrors, isStrictBackendMode, getBackendBaseUrl } from './helpers/auth'
+import {
+  loginWithCredentials,
+  loginWithCredentialsStrict,
+  suppressBrowserErrorsNarrow,
+  isStrictBackendMode,
+  getBackendBaseUrl,
+} from './helpers/auth'
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -68,11 +74,12 @@ const LIFECYCLE_LABEL_TESTID = '[data-testid="lifecycle-label"]'
 // ---------------------------------------------------------------------------
 
 /**
- * Permissive auth setup: seeds auth and suppresses CI noise.
+ * Permissive auth setup: seeds auth and suppresses known CI noise only.
+ * Uses narrow suppressor (AC #4 compliance) — genuine app errors still surface.
  * Used for the DOM-injection (UI contract) lane which does not require a live backend.
  */
 async function setupAuthAndNavigateToDashboard(page: Parameters<typeof loginWithCredentials>[0]) {
-  suppressBrowserErrors(page)
+  suppressBrowserErrorsNarrow(page)
   await loginWithCredentials(page)
 }
 
@@ -209,7 +216,7 @@ test.describe('DeploymentStatusPanel: lifecycle states', () => {
 
 test.describe('DeploymentStatusPanel: idempotency replay', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
     await loginWithCredentials(page)
   })
 
@@ -266,7 +273,7 @@ test.describe('DeploymentStatusPanel: idempotency replay', () => {
 
 test.describe('DeploymentStatusPanel: compliance audit trail', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
     await loginWithCredentials(page)
   })
 
@@ -357,7 +364,7 @@ test.describe('Deployment route: auth-first protection', () => {
   })
 
   test('authenticated user can access the guided launch route', async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
     await loginWithCredentials(page)
 
     await page.goto('/launch/guided')
@@ -368,8 +375,8 @@ test.describe('Deployment route: auth-first protection', () => {
 
     // Page should load (not redirect to login)
     const url = page.url()
-    // URL may have changed due to auth-first routing, but should not be a plain 404
-    expect(url).toBeTruthy()
+    // URL must be a real application route (not empty or a plain 404)
+    expect(url).toContain('localhost')
     expect(url).not.toContain('/404')
   })
 })
@@ -380,7 +387,7 @@ test.describe('Deployment route: auth-first protection', () => {
 
 test.describe('Deployment routes: no wallet connector UI', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
     await loginWithCredentials(page)
   })
 
@@ -410,7 +417,7 @@ test.describe('Deployment routes: no wallet connector UI', () => {
 
 test.describe('Deployment errors: user guidance without raw codes', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
     await loginWithCredentials(page)
   })
 
@@ -476,7 +483,7 @@ test.describe('Deployment errors: user guidance without raw codes', () => {
 
 test.describe('DeploymentStatusPanel: accessibility', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
     await loginWithCredentials(page)
   })
 
@@ -496,7 +503,8 @@ test.describe('DeploymentStatusPanel: accessibility', () => {
     const panel = page.locator(DEPLOYMENT_STATUS_PANEL_TESTID)
     await expect(panel).toBeVisible({ timeout: 5000 })
     expect(await panel.getAttribute('role')).toBe('region')
-    expect(await panel.getAttribute('aria-label')).toBeTruthy()
+    // aria-label must describe the deployment state — not empty
+    expect(await panel.getAttribute('aria-label')).toMatch(/deployment/i)
   })
 
   test('error guidance and replay notices use role="alert"', async ({ page }) => {
@@ -545,8 +553,8 @@ test.describe('Strict deployment sign-off — real backend contract verification
         'DOM-injection tests above cover permissive CI coverage.',
     )
 
-    suppressBrowserErrors(page)
-    await loginWithCredentials(page)
+    // Strict lane: NO error suppression — genuine app errors must surface as failures
+    await loginWithCredentialsStrict(page)
 
     const apiBaseUrl = getBackendBaseUrl()
 
@@ -579,8 +587,8 @@ test.describe('Strict deployment sign-off — real backend contract verification
       'Strict deployment sign-off requires BIATEC_STRICT_BACKEND=true.',
     )
 
-    suppressBrowserErrors(page)
-    await loginWithCredentials(page)
+    // Strict lane: NO error suppression — genuine app errors must surface as failures
+    await loginWithCredentialsStrict(page)
 
     const apiBaseUrl = getBackendBaseUrl()
 
@@ -622,8 +630,8 @@ test.describe('Strict deployment sign-off — real backend contract verification
       'Strict deployment sign-off requires BIATEC_STRICT_BACKEND=true.',
     )
 
-    suppressBrowserErrors(page)
-    await loginWithCredentials(page)
+    // Strict lane: NO error suppression — genuine app errors must surface as failures
+    await loginWithCredentialsStrict(page)
 
     await page.goto('/')
     await page.waitForLoadState('load')

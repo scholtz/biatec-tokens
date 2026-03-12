@@ -15,7 +15,7 @@
  * - Zero test.skip(!!process.env.CI, ...) for MVP-critical path assertions.
  * - Semantic waits only (waitForFunction, expect().toBeVisible, waitForLoadState).
  * - loginWithCredentials() for critical journey auth (falls back to localStorage seeding in CI).
- * - suppressBrowserErrors() in beforeEach to avoid console-error false positives.
+ * - suppressBrowserErrorsNarrow() in beforeEach — only suppresses known benign CI noise (AC #4 compliance).
  * - All tests are deterministic: same inputs → same results across CI and local.
  *
  * Roadmap: https://raw.githubusercontent.com/scholtz/biatec-tokens/refs/heads/main/business-owner-roadmap.md
@@ -26,7 +26,7 @@ import { test, expect } from '@playwright/test'
 import {
   withAuth,
   loginWithCredentials,
-  suppressBrowserErrors,
+  suppressBrowserErrorsNarrow,
   clearAuthScript,
   getNavText,
 } from './helpers/auth'
@@ -35,7 +35,7 @@ import {
 
 test.describe('AC #1: Canonical route clarity', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('navigation bar exposes Guided Launch link pointing to /launch/workspace', async ({ page }) => {
@@ -74,7 +74,7 @@ test.describe('AC #1: Canonical route clarity', () => {
 
 test.describe('AC #2: Critical-path reliability — guided launch entry', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('unauthenticated access to /launch/guided triggers auth redirect (semantic wait)', async ({
@@ -170,7 +170,7 @@ test.describe('AC #2: Critical-path reliability — guided launch entry', () => 
 
 test.describe('AC #3: CI sign-off evidence', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('homepage loads and has Biatec branding', async ({ page }) => {
@@ -209,7 +209,7 @@ test.describe('AC #3: CI sign-off evidence', () => {
 
 test.describe('AC #4 + AC #6: No wallet UI; email/password authentication only', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('homepage navigation contains no wallet connector UI (AC #6)', async ({ page }) => {
@@ -275,7 +275,7 @@ test.describe('AC #4 + AC #6: No wallet UI; email/password authentication only',
 
 test.describe('AC #5: Route consistency and canonical path integrity', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('/create route requires auth and routes to token creator (not legacy wizard)', async ({
@@ -368,7 +368,7 @@ test.describe('Spec hygiene — zero waitForTimeout, zero CI-only skips', () => 
     // respond with a non-empty HTML page (not a 404 or blank body).
     // Increase test timeout: auth init + page load can take 40-60s in CI.
     test.setTimeout(90000)
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
     await withAuth(page)
     await page.goto('/launch/guided', { timeout: 30000 })
     await page.waitForLoadState('load', { timeout: 30000 }) // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI

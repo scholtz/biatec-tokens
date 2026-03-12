@@ -103,7 +103,7 @@ Tests marked `test.skip(!!process.env.CI, ...)` have been exhaustively optimized
 slower for multi-step wizard forms with cascading state transitions. All skipped
 tests reference Issue #495 with the timing ceiling analysis.
 
-### Action Items (Resolved as of Issue #559 + Issue #557 + Issue #553)
+### Action Items (Resolved as of Issue #559 + Issue #557 + Issue #553 + Issue #588)
 
 - [x] Fix TokenDetail `router.back()` to fallback to `/dashboard` when no browser history (Issue #559)
 - [x] Consolidate all `/create/wizard` redirect tests to `wizard-redirect-compat.spec.ts` only — removed 9 duplicates from 5 spec files (Issue #559)
@@ -116,3 +116,18 @@ tests reference Issue #495 with the timing ceiling analysis.
 - [x] Update documentation to match actual skip count and spec count
 - [x] Remaining `/create/wizard` references are comments or canonical redirect tests only
 - [x] `wizard-redirect-compat.spec.ts` is the sole permitted file to navigate to legacy `/create/wizard`
+- [x] **AC #1**: `mvp-backend-signoff.spec.ts` — strict sign-off lane using `loginWithCredentialsStrict()` that FAILS if backend unavailable (Issue #588)
+- [x] **AC #2**: `backend-deployment-contract.spec.ts` strict lane upgraded — uses `loginWithCredentialsStrict()` instead of fallback `loginWithCredentials()` (Issue #588)
+- [x] **AC #3**: No direct `goto('/create/wizard')` calls outside `wizard-redirect-compat.spec.ts` — confirmed clean (Issue #588)
+- [x] **AC #4**: `backend-deployment-contract.spec.ts`, `mvp-signoff-readiness.spec.ts`, `mvp-stabilization.spec.ts`, `mvp-deterministic-journey.spec.ts` switched from broad `suppressBrowserErrors()` to narrow `suppressBrowserErrorsNarrow()` — real app errors now surface as failures in blocker specs (Issue #588)
+- [x] **AC #5**: Two low-signal `toBeTruthy()` assertions in `backend-deployment-contract.spec.ts` replaced with meaningful assertions (`toContain('localhost')`, `toMatch(/deployment/i)`) (Issue #588)
+- [x] **AC #6**: Helper two-tier model documented in `e2e/helpers/auth.ts` and `e2e/README.md` — strict vs permissive lane distinction is clear (Issue #588)
+- [x] **AC #7**: Documentation updated to reflect actual blocker status (Issue #588)
+
+### Remaining Open Items (as of March 2026)
+
+- Full wizard form completion through the UI with real form submission is not yet tested E2E (backend-only concern for staging environment).
+- Real-time deployment status polling (SSE/WebSocket) is not covered.
+- Rollback and retry flows are not covered.
+- Full deployment wizard lifecycle (request → status progression → terminal state) requires a live staging backend (`BIATEC_STRICT_BACKEND=true` + `API_BASE_URL`). The strict lane tests in `mvp-backend-signoff.spec.ts` and `backend-deployment-contract.spec.ts` are ready to run against a live backend when available.
+

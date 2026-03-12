@@ -25,7 +25,7 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { withAuth, suppressBrowserErrors, clearAuthScript, getNavText } from './helpers/auth'
+import { withAuth, suppressBrowserErrorsNarrow, clearAuthScript, getNavText } from './helpers/auth'
 
 // ---------------------------------------------------------------------------
 // AC #1: Guided Launch is the only primary token creation entry
@@ -33,7 +33,7 @@ import { withAuth, suppressBrowserErrors, clearAuthScript, getNavText } from './
 
 test.describe('AC #1: Guided Launch is canonical token creation entry', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('Guided Launch link is in navigation and points to /launch/workspace', async ({ page }) => {
@@ -120,7 +120,7 @@ test.describe('AC #1: Guided Launch is canonical token creation entry', () => {
 
 test.describe('AC #3 + #4: Auth session contract and determinism', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('withAuth seeds a structurally valid ARC76 session in localStorage', async ({ page }) => {
@@ -186,7 +186,7 @@ test.describe('AC #3 + #4: Auth session contract and determinism', () => {
 
 test.describe('AC #5: Invalid/expired session user guidance', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('unauthenticated /launch/guided triggers auth redirect (explicit guidance check)', async ({
@@ -301,7 +301,7 @@ test.describe('AC #5: Invalid/expired session user guidance', () => {
 
 test.describe('AC #9: Accessibility baseline for critical paths', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('home page has valid page title (screen-reader required)', async ({ page }) => {
@@ -405,7 +405,7 @@ test.describe('AC #6 + #7: Quality gates proof', () => {
     // This test proves the spec itself is hygienically authored.
     // All waits in this file use waitForFunction / expect().toBeVisible / waitForLoadState.
     // The existence of this passing test without a timeout error proves it.
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
     await page.goto('/')
     await page.waitForLoadState('load')
 

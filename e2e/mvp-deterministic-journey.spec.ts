@@ -30,7 +30,7 @@
 import { test, expect } from '@playwright/test'
 import {
   withAuth,
-  suppressBrowserErrors,
+  suppressBrowserErrorsNarrow,
   clearAuthScript,
   getNavText,
 } from './helpers/auth'
@@ -41,7 +41,7 @@ import {
 
 test.describe('Section 1: Canonical route contract', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('primary navigation exposes Guided Launch link to /launch/workspace', async ({ page }) => {
@@ -94,7 +94,7 @@ test.describe('Section 1: Canonical route contract', () => {
 
 test.describe('Section 2: Auth-first guard contract', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('unauthenticated user redirected from /launch/guided', async ({ page }) => {
@@ -206,7 +206,7 @@ test.describe('Section 2: Auth-first guard contract', () => {
 
 test.describe('Section 3: Accessibility landmarks (WCAG 2.1 AA)', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('home page has navigation landmark', async ({ page }) => {
@@ -279,7 +279,7 @@ test.describe('Section 3: Accessibility landmarks (WCAG 2.1 AA)', () => {
 
 test.describe('Section 4: No wallet connector UI', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('home page navigation has no wallet connector labels', async ({ page }) => {
@@ -337,7 +337,7 @@ test.describe('Section 4: No wallet connector UI', () => {
 
 test.describe('Section 5: Mobile viewport parity', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('home page renders primary CTA on mobile viewport', async ({ page }) => {
@@ -371,7 +371,7 @@ test.describe('Section 5: Mobile viewport parity', () => {
 
 test.describe('Section 6: Test hygiene and CI readiness', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('spec uses semantic waits (no arbitrary waitForTimeout calls)', async ({ page }) => {

@@ -135,11 +135,22 @@ All tests in `mvp-backend-signoff.spec.ts` skip with a clear message. Standard C
 |---|---|---|
 | `suppressBrowserErrors()` | Permissive tests (isolated UI, component validation) | ALL browser console errors and page errors |
 | `suppressBrowserErrorsNarrow()` | Blocker-facing sign-off specs | Only known CI-safe patterns (Vite HMR, Vue devtools warnings) |
-| _(none)_ | `mvp-backend-signoff.spec.ts` strict lane | Nothing — all errors surface as failures |
+| _(none)_ | `mvp-backend-signoff.spec.ts` strict lane + strict lane tests in `backend-deployment-contract.spec.ts` | Nothing — all errors surface as failures |
 
-**AC #5 compliance:** Blocker-facing suites (`mvp-sign-off-hardening.spec.ts`) use
-`suppressBrowserErrorsNarrow()` instead of the broad suppressor. This ensures genuine
-application regressions surface as test failures rather than being silently masked.
+**AC #4 compliance:** All blocker-facing suites use `suppressBrowserErrorsNarrow()` instead of the
+broad suppressor. This ensures genuine application regressions surface as test failures rather than
+being silently masked.
+
+**Blocker-facing suites using narrow suppressor** (as of Issue #588):
+- `mvp-sign-off-hardening.spec.ts` ✅
+- `mvp-signoff-readiness.spec.ts` ✅
+- `mvp-stabilization.spec.ts` ✅
+- `mvp-deterministic-journey.spec.ts` ✅
+- `backend-deployment-contract.spec.ts` (permissive lane) ✅
+
+**Strict lane (no suppressor at all):**
+- `mvp-backend-signoff.spec.ts` — strict auth sign-off tests
+- `backend-deployment-contract.spec.ts` — strict deployment contract tests
 
 ### Clearing Auth State
 
@@ -204,8 +215,8 @@ npm run test:e2e:report
 
 | Test category | Backend required? | How auth is done | File(s) |
 |---|---|---|---|
-| **Strict sign-off lane** | ✅ YES — fails if backend unavailable | `loginWithCredentialsStrict()` | `mvp-backend-signoff.spec.ts` |
-| Critical journey (blocker spec) | Optional — falls back | `loginWithCredentials()` | `mvp-sign-off-hardening.spec.ts`, `mvp-stabilization.spec.ts` |
+| **Strict sign-off lane** | ✅ YES — fails if backend unavailable | `loginWithCredentialsStrict()` | `mvp-backend-signoff.spec.ts`, strict lane in `backend-deployment-contract.spec.ts` |
+| Critical journey (blocker spec) | Optional — falls back | `loginWithCredentials()` | `mvp-sign-off-hardening.spec.ts`, `mvp-stabilization.spec.ts`, `mvp-signoff-readiness.spec.ts`, `mvp-deterministic-journey.spec.ts` |
 | Isolated UI / component | ❌ NO — localStorage seeding | `withAuth()` | Most other spec files |
 | Guest / unauthenticated | ❌ NO — no auth | `clearAuthScript()` | Various |
 
