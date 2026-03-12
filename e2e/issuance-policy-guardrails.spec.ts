@@ -202,18 +202,16 @@ test.describe('Issuance workspace — error state accessibility', () => {
 
     // WCAG 4.1.3: aria-live regions use v-show (not v-if) so screen readers can
     // subscribe before any error fires. The element is always in the DOM.
+    // GuidedTokenLaunch.vue template: <div v-show="submissionErrorMessage" role="alert"
+    //   aria-live="assertive" :data-testid="ISSUANCE_TEST_IDS.ERROR_BANNER" ...>
     const alertBanner = page.locator('[data-testid="issuance-error-banner"]')
     await expect(alertBanner).toBeAttached() // Always in DOM (v-show pattern for WCAG 4.1.3)
     expect(await alertBanner.getAttribute('role')).toBe('alert')
     expect(await alertBanner.getAttribute('aria-live')).toBe('assertive')
 
-    // On initial load there is no error, so banner is hidden — not visible
-    // If somehow visible, content must be non-empty
-    const isAlertVisible = await alertBanner.isVisible()
-    if (isAlertVisible) {
-      const alertText = await alertBanner.textContent()
-      expect(alertText?.trim().length).toBeGreaterThan(0)
-    }
+    // On initial load there is no error — the banner must be hidden (not visible)
+    // This is the correct WCAG 4.1.3 state: present in DOM but not displayed until an error fires
+    await expect(alertBanner).not.toBeVisible()
   })
 
   test('workspace form fields are keyboard-accessible', async ({ page }) => {
