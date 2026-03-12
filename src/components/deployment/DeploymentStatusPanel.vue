@@ -77,9 +77,11 @@
       </span>
     </div>
 
-    <!-- Error: user guidance (no raw error codes exposed) -->
+    <!-- Error: user guidance (no raw error codes exposed).
+         Always shows when state === 'Failed' — uses backend-provided guidance
+         when available, otherwise falls back to a generic actionable message. -->
     <div
-      v-if="errorGuidance"
+      v-if="state === 'Failed'"
       class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg text-sm text-red-700 dark:text-red-300"
       role="alert"
       data-testid="error-guidance"
@@ -87,7 +89,7 @@
       <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
       </svg>
-      <span>{{ errorGuidance }}</span>
+      <span data-testid="error-guidance-text">{{ displayedErrorGuidance }}</span>
     </div>
 
     <!-- Progress steps: lifecycle pipeline -->
@@ -152,6 +154,19 @@
         </svg>
         View compliance audit trail
       </a>
+    </div>
+
+    <!-- Completed without asset ID: backend confirmation pending.
+         Prevents misleading silence when deployment is confirmed but assetId
+         has not yet been relayed to the frontend. -->
+    <div
+      v-else-if="state === 'Completed' && !assetId"
+      class="pt-2 border-t border-gray-200 dark:border-gray-700"
+      data-testid="success-section-pending-asset"
+    >
+      <p class="text-xs text-gray-500 dark:text-gray-400" data-testid="pending-asset-message">
+        Your token has been deployed. Visit your dashboard to view the deployment details and your asset ID.
+      </p>
     </div>
   </div>
 </template>
@@ -246,8 +261,23 @@ const lifecycleDescription = computed((): string => {
     case 'Completed':
       return 'Your token has been successfully deployed.'
     case 'Failed':
-      return props.errorGuidance ?? 'An error occurred during deployment.'
+      return 'The deployment could not be completed. Review the error details below.'
   }
+})
+
+/**
+ * Error guidance shown in the prominent error-guidance box when state === 'Failed'.
+ * Uses backend-provided guidance when available; falls back to a generic actionable
+ * message so the user always has a next step — even if the backend returned no detail.
+ *
+ * This prevents the misleading pattern of showing "Deployment failed" with no
+ * actionable context (the blocker identified in the strict sign-off lane review).
+ */
+const displayedErrorGuidance = computed((): string => {
+  return (
+    props.errorGuidance ??
+    'An unexpected error occurred during deployment. Please check your dashboard for details or contact support if the issue persists.'
+  )
 })
 
 const panelClass = computed((): string => {

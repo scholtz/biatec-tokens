@@ -135,9 +135,18 @@ describe('DeploymentStatusPanel — Completed state', () => {
     expect(wrapper.find('[data-testid="asset-id"]').text()).toBe('12345678')
   })
 
-  it('does not show success section when no assetId', () => {
+  it('shows pending-asset guidance when Completed but no assetId (avoids silent state)', () => {
+    // When state is Completed but assetId has not been returned, the panel must
+    // guide the user to the dashboard rather than silently hiding all status info.
+    // This prevents the "Deployment complete" label from implying the user can
+    // find their token without any indication of where to look.
     const wrapper = mountPanel({ state: 'Completed' })
     expect(wrapper.find('[data-testid="success-section"]').exists()).toBe(false)
+    const pendingAsset = wrapper.find('[data-testid="success-section-pending-asset"]')
+    expect(pendingAsset.exists()).toBe(true)
+    const msg = wrapper.find('[data-testid="pending-asset-message"]').text()
+    expect(msg.trim().length).toBeGreaterThan(0)
+    expect(msg.toLowerCase()).toMatch(/dashboard|details|asset id/)
   })
 
   it('shows audit trail link when auditTrailUrl provided', () => {
@@ -185,7 +194,7 @@ describe('DeploymentStatusPanel — Failed state', () => {
     expect(wrapper.find('[data-testid="icon-completed"]').exists()).toBe(false)
   })
 
-  it('shows user-friendly error guidance (no raw error codes)', () => {
+  it('shows user-friendly error guidance (no raw error codes) when errorGuidance is provided', () => {
     const guidance = 'Your session has expired. Please sign in again to continue.'
     const wrapper = mountPanel({ state: 'Failed', errorGuidance: guidance })
     const errorEl = wrapper.find('[data-testid="error-guidance"]')
@@ -194,6 +203,21 @@ describe('DeploymentStatusPanel — Failed state', () => {
     // Must not contain raw error code strings
     expect(errorEl.text()).not.toContain('SessionExpired')
     expect(errorEl.text()).not.toContain('DeriveAddressMismatch')
+  })
+
+  it('shows fallback error guidance when errorGuidance prop is absent (negative-path honesty)', () => {
+    // When backend provides no errorGuidance, the panel must still show actionable content.
+    // Silence here (empty error box) would be misleading — the user needs a next step.
+    const wrapper = mountPanel({ state: 'Failed' })
+    const errorEl = wrapper.find('[data-testid="error-guidance"]')
+    expect(errorEl.exists()).toBe(true)
+    const guidanceText = wrapper.find('[data-testid="error-guidance-text"]').text()
+    expect(guidanceText.trim().length).toBeGreaterThan(0)
+    // Fallback message must suggest a concrete action (dashboard or support)
+    expect(guidanceText.toLowerCase()).toMatch(/dashboard|support|contact|try again/)
+    // Must not be a raw error code
+    expect(guidanceText).not.toMatch(/^error$/i)
+    expect(guidanceText).not.toContain('undefined')
   })
 
   it('does not mark lifecycle steps as completed when Failed with no previousState', () => {
@@ -263,8 +287,15 @@ describe('DeploymentStatusPanel — accessibility', () => {
     expect(ariaLabel).toContain('Deployment complete')
   })
 
-  it('error guidance has role="alert"', () => {
+  it('error guidance has role="alert" (with explicit errorGuidance)', () => {
     const wrapper = mountPanel({ state: 'Failed', errorGuidance: 'Something went wrong.' })
+    expect(wrapper.find('[data-testid="error-guidance"]').attributes('role')).toBe('alert')
+  })
+
+  it('error guidance has role="alert" even when no errorGuidance prop provided (fallback message)', () => {
+    // The error-guidance alert must always show on Failed state so screen readers
+    // announce the failure — relying on lifecycleLabel alone is insufficient for AT.
+    const wrapper = mountPanel({ state: 'Failed' })
     expect(wrapper.find('[data-testid="error-guidance"]').attributes('role')).toBe('alert')
   })
 
