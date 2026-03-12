@@ -1434,6 +1434,79 @@ const navigationItems = [
 ]
 ```
 
+### 7p. Strict Backend E2E Tests Must Cover Full Lifecycle (Not Just Reachability) (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 12, 2026 (PR #588) 🚨**
+
+**Violation**: Copilot submitted a PR claiming AC #2 ("real backend-driven deployment lifecycle verification") was addressed, but the strict lane tests in `backend-deployment-contract.spec.ts` only checked endpoint reachability (`[200, 201, 400, 401, 403, 404]`). They did NOT cover:
+- Initiating a deployment via POST and receiving a `deploymentId` (request acceptance)
+- Polling the status endpoint with the `deploymentId` (status progression)
+- Verifying surfaced identifiers in the response
+- Handling terminal states (`Completed` with `assetId`, or `Failed` with `userGuidance`)
+
+**Root Cause**:
+- Treated "strict lane exists" as equivalent to "full lifecycle verified"
+- Added reachability probes (`/api/v1/backend-deployment-contract`) but not lifecycle tests (`/initiate` → `/status/{id}`)
+- The first `report_progress` commit was empty (Initial plan), and the PO commented before the second commit was visible — but the second commit still lacked lifecycle depth
+
+**Correct Approach for Strict Backend Sign-Off Tests**:
+```
+AC #2 = Full lifecycle proof, not just endpoint reachability:
+1. POST /api/v1/backend-deployment-contract/initiate — assert deploymentId returned
+2. GET  /api/v1/backend-deployment-contract/status/{id} — assert state transitions
+3. Poll for terminal state — assert assetId (Completed) or userGuidance (Failed)
+4. POST /api/v1/backend-deployment-contract/validate — assert isDeterministicAddress
+```
+
+**Pattern for Comprehensive Lifecycle Test**:
+```typescript
+// ✅ CORRECT — covers the full lifecycle
+test('deployment lifecycle — initiate request and receive accepted deploymentId', async ({ page }) => {
+  const skipReason = requireStrictBackend() // returns undefined or skip message
+  test.skip(skipReason !== undefined, skipReason ?? '')
+  await loginWithCredentialsStrict(page) // hard-fail if backend unavailable
+
+  // Step 1: Auth to get bearer token
+  const authBody = await getAuthBody(page, apiBaseUrl)
+  const bearerToken = authBody.token || authBody.accessToken || authBody.access_token
+
+  // Step 2: Initiate deployment
+  const initiateResponse = await page.request.post(`${apiBaseUrl}/api/v1/backend-deployment-contract/initiate`, {
+    headers: { Authorization: `Bearer ${bearerToken}` },
+    data: { idempotencyKey: uniqueKey, tokenName: '...', ... },
+  })
+  expect([200, 201, 409]).toContain(initiateResponse.status()) // 409=idempotent replay
+
+  // Step 3: Assert deploymentId returned
+  const body = await initiateResponse.json()
+  expect(typeof body.deploymentId).toBe('string')
+
+  // Step 4: Poll status with deploymentId
+  const statusBody = await pollStatus(page, apiBaseUrl, bearerToken, body.deploymentId)
+  expect(VALID_STATES).toContain(statusBody.state)
+
+  // Step 5: If terminal — assert lifecycle identifiers
+  if (statusBody.state === 'Completed') {
+    expect(String(statusBody.assetId).length).toBeGreaterThan(0)
+  } else if (statusBody.state === 'Failed') {
+    expect(typeof statusBody.error.userGuidance).toBe('string')
+  }
+})
+```
+
+**Pre-Commit Check for Strict Lane Tests**:
+```bash
+# Verify the strict lane covers all lifecycle stages, not just reachability:
+grep -A 30 "AC #2\|deployment lifecycle" e2e/mvp-backend-signoff.spec.ts | grep -c "initiate\|/status/\|deploymentId\|assetId\|userGuidance"
+# Must return >= 4 (all 4 lifecycle stages represented)
+```
+
+**Never Again**:
+- ❌ Submit AC "backend deployment lifecycle" with only endpoint reachability checks
+- ❌ Skip `report_progress` until the full AC scope is implemented (don't push empty initial plans)
+- ❌ Claim an AC is closed without verifying each sub-requirement (initiate, poll, terminal, surfaced IDs)
+- ❌ Submit a PR where the first commit is an empty planning document and the second contains incomplete implementation
+
 ---
 
 ## 🚨 CRITICAL: PR QUALITY STANDARDS - HARDENING ISSUES 🚨

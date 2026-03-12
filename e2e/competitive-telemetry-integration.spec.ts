@@ -99,11 +99,10 @@ test.describe('Token Creation Journey Tracking', () => {
     // Simulate user abandonment by navigating away
     await page.goto('/dashboard')
     await page.waitForLoadState('load')
-    
-    // Verify navigation succeeded
+
+    // Verify navigation succeeded (URL changed away from /launch/guided)
     // (Abandonment tracking fires in onBeforeUnmount)
-    const dashboardElement = await page.locator('text=/dashboard/i').first().isVisible().catch(() => false)
-    expect(dashboardElement || true).toBeTruthy()
+    expect(page.url()).not.toContain('/launch/guided')
   })
 })
 
