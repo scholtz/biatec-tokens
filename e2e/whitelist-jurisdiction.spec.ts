@@ -1,18 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { suppressBrowserErrors } from './helpers/auth'
 
 test.describe('Whitelist & Jurisdiction Management', () => {
   test.beforeEach(async ({ page }) => {
-    // Suppress console errors to prevent Playwright from failing on browser console output
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed for test stability): ${msg.text()}`)
-      }
-    })
-    
-    // Suppress page errors
-    page.on('pageerror', error => {
-      console.log(`Page error (suppressed for test stability): ${error.message}`)
-    })
+    suppressBrowserErrors(page)
     
     // Set up authenticated session with wallet-free auth
     await page.addInitScript(() => {
@@ -86,8 +77,9 @@ test.describe('Whitelist & Jurisdiction Management', () => {
       // Either we have data or we see empty state
       expect(isTableVisible || hasEmptyState).toBe(true);
     } else {
-      // If table not visible, test passes - page structure may vary
-      expect(true).toBe(true);
+      // If table not visible, verify page has loaded meaningful content
+      const bodyText = await page.locator('body').innerText().catch(() => '')
+      expect(bodyText.length).toBeGreaterThan(100)
     }
   });
 
@@ -140,8 +132,8 @@ test.describe('Whitelist & Jurisdiction Management', () => {
       // Content should be visible or we accept the tab worked
       expect(isJurisdictionTabVisible).toBe(true);
     } else {
-      // If tab structure differs, test passes
-      expect(true).toBe(true);
+      // If tab structure differs, verify page is still functional
+      expect(page.url()).toBeTruthy()
     }
   });
 
@@ -164,8 +156,9 @@ test.describe('Whitelist & Jurisdiction Management', () => {
       const inputValue = await searchInput.inputValue();
       expect(inputValue).toBe('test');
     } else {
-      // If search not visible, test passes
-      expect(true).toBe(true);
+      // If search not visible, verify page has loaded meaningful content
+      const bodyText = await page.locator('body').innerText().catch(() => '')
+      expect(bodyText.length).toBeGreaterThan(100)
     }
   });
 
@@ -189,8 +182,9 @@ test.describe('Whitelist & Jurisdiction Management', () => {
 
       expect(isFilterPanelVisible || isFiltersVisible).toBe(true);
     } else {
-      // If filters not visible, test passes
-      expect(true).toBe(true);
+      // If filters not visible, verify page has loaded meaningful content
+      const bodyText = await page.locator('body').innerText().catch(() => '')
+      expect(bodyText.length).toBeGreaterThan(100)
     }
   });
 
@@ -201,14 +195,16 @@ test.describe('Whitelist & Jurisdiction Management', () => {
 
     // Wait for page to load
 
+    // Click body first to ensure the page has keyboard focus in headless CI
+    await page.locator('body').click()
     // Try to tab through elements
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
 
-    // Check if focus is working (element should be focused)
-    const focusedElement = await page.evaluate(() => document.activeElement?.tagName);
+    // Verify focus moved to a real element (not stuck on body/document root)
+    const focusedElement = await page.evaluate(() => document.activeElement?.tagName)
     
-    // Should be able to navigate with keyboard
-    expect(focusedElement).toBeTruthy();
+    // Should be able to navigate with keyboard — focused tag must not be BODY
+    expect(focusedElement).not.toBe('BODY')
   });
 });

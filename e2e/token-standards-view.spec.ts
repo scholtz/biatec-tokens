@@ -1,18 +1,9 @@
 import { test, expect } from '@playwright/test'
+import { suppressBrowserErrors } from './helpers/auth'
 
 test.describe('Token Standards View', () => {
   test.beforeEach(async ({ page }) => {
-    // Suppress console errors to prevent Playwright from failing on browser console output
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed for test stability): ${msg.text()}`)
-      }
-    })
-    
-    // Suppress page errors
-    page.on('pageerror', error => {
-      console.log(`Page error (suppressed for test stability): ${error.message}`)
-    })
+    suppressBrowserErrors(page)
 
     // Navigate to token standards page (public page, no auth required)
     await page.goto('/token-standards')
@@ -38,9 +29,9 @@ test.describe('Token Standards View', () => {
     for (const standard of standardsToCheck) {
       const standardElement = page.getByText(standard, { exact: false })
       const isVisible = await standardElement.isVisible().catch(() => false)
-      // Note: Flexible assertion to handle async data loading and component mounting
-      // Standards may not be visible if data hasn't loaded yet or component is still initializing
-      expect(isVisible || true).toBe(true)
+      // Standards may load asynchronously — fall back to checking page has content
+      const bodyLength = await page.locator('body').innerText().then(t => t.length).catch(() => 0)
+      expect(isVisible || bodyLength > 100).toBe(true)
     }
   })
 
@@ -48,25 +39,26 @@ test.describe('Token Standards View', () => {
     // Check for network guidance heading
     const networkHeading = page.getByRole('heading', { name: /Network Guidance/i })
     const isVisible = await networkHeading.isVisible().catch(() => false)
-    // Note: Flexible assertion - network guidance may load asynchronously
-    // Test verifies page structure without failing on timing issues
-    expect(isVisible || true).toBe(true)
+    // Network guidance may load asynchronously — fall back to body content check
+    const hasStandardsContent = await page.locator('body').innerText().then(t => t.length > 200).catch(() => false)
+    expect(isVisible || hasStandardsContent).toBe(true)
   })
 
   test('should display fee information for networks', async ({ page }) => {
     // Look for fee-related text
     const feeText = page.getByText(/Fee Structure|Creation:|Transaction:/i).first()
     const isVisible = await feeText.isVisible().catch(() => false)
-    // Note: Flexible assertion - fee information may be in collapsed sections or load async
-    // Test ensures page doesn't crash rather than requiring specific content
-    expect(isVisible || true).toBe(true)
+    // Fee information may be in collapsed sections or load async
+    const hasStandardsContent = await page.locator('body').innerText().then(t => t.length > 200).catch(() => false)
+    expect(isVisible || hasStandardsContent).toBe(true)
   })
 
   test('should display compliance considerations', async ({ page }) => {
     // Look for compliance-related text
     const complianceText = page.getByText(/Compliance|MICA/i).first()
     const isVisible = await complianceText.isVisible().catch(() => false)
-    expect(isVisible || true).toBe(true)
+    const hasStandardsContent = await page.locator('body').innerText().then(t => t.length > 200).catch(() => false)
+    expect(isVisible || hasStandardsContent).toBe(true)
   })
 
   test('should have working enterprise guide link', async ({ page }) => {
@@ -78,9 +70,9 @@ test.describe('Token Standards View', () => {
       // Click should not throw error
       await enterpriseButton.click().catch(() => {})
     }
-    
-    // Test passes regardless of click outcome
-    expect(true).toBe(true)
+
+    // Verify page is still functional after click (no 404)
+    expect(page.url()).not.toContain('404')
   })
 
   test('should display call to action section', async ({ page }) => {
@@ -90,7 +82,8 @@ test.describe('Token Standards View', () => {
     // Look for CTA buttons or links at the bottom
     const ctaButton = page.getByRole('link', { name: /Get Started|Create Token|Sign Up/i }).first()
     const isVisible = await ctaButton.isVisible().catch(() => false)
-    expect(isVisible || true).toBe(true)
+    const bodyContentLength = await page.locator('body').innerText().then(t => t.length).catch(() => 0)
+    expect(isVisible || bodyContentLength > 100).toBe(true)
   })
 
   test('should be responsive on mobile viewport', async ({ page }) => {
@@ -109,12 +102,17 @@ test.describe('Token Standards View', () => {
   })
 
   test('should support keyboard navigation', async ({ page }) => {
+    // Click body first to ensure the page has keyboard focus in headless CI
+    await page.locator('body').click()
     // Tab through interactive elements
     await page.keyboard.press('Tab')
     
-    // Check that focus is visible (at least one element should have focus)
-    const focusedElement = await page.locator(':focus').count()
-    expect(focusedElement).toBeGreaterThanOrEqual(0) // Flexible assertion
+    // Verify at least one element has received focus (not body/document root)
+    const hasFocused = await page.evaluate(() => {
+      const active = document.activeElement
+      return active !== null && active !== document.body && active !== document.documentElement
+    })
+    expect(hasFocused).toBe(true)
   })
 
   test('should load without JavaScript errors', async ({ page }) => {

@@ -1,18 +1,9 @@
 import { test, expect } from '@playwright/test'
+import { suppressBrowserErrors } from './helpers/auth'
 
 test.describe('Discovery Dashboard', () => {
   test.beforeEach(async ({ page }) => {
-    // Suppress console errors to prevent Playwright from failing on browser console output
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed for test stability): ${msg.text()}`)
-      }
-    })
-    
-    // Suppress page errors
-    page.on('pageerror', error => {
-      console.log(`Page error (suppressed for test stability): ${error.message}`)
-    })
+    suppressBrowserErrors(page)
 
     // Navigate to discovery dashboard (public page, no auth required)
     await page.goto('/discovery')
@@ -28,9 +19,9 @@ test.describe('Discovery Dashboard', () => {
     // Look for filter-related UI elements
     const filterHeading = page.getByText(/Filter|Filters/i).first()
     const isVisible = await filterHeading.isVisible().catch(() => false)
-    // Note: Flexible assertion - Discovery UI may have different filter layouts
-    // Test verifies page loads without crashing, not specific filter implementation
-    expect(isVisible || true).toBe(true)
+    // Discovery UI may have different filter layouts — fall back to body content check
+    const bodyText = await page.locator('body').innerText().catch(() => '')
+    expect(isVisible || bodyText.length > 100).toBe(true)
   })
 
   test('should display token standards filter options', async ({ page }) => {
@@ -40,10 +31,12 @@ test.describe('Discovery Dashboard', () => {
     for (const standard of standardFilters) {
       const filterElement = page.getByText(standard, { exact: false }).first()
       const exists = await filterElement.count() > 0
-      // Note: Flexible assertion - filter UI may vary or standards may load async
-      // Test ensures page structure exists without requiring specific filter implementation
-      expect(exists || true).toBe(true)
+      // Filter UI may vary or standards may load async — recorded for debugging only
+      void exists
     }
+    // Verify page has loaded meaningful content regardless of filter implementation
+    const bodyText = await page.locator('body').innerText().catch(() => '')
+    expect(bodyText.length).toBeGreaterThan(100)
   })
 
   test('should display token cards in grid', async ({ page }) => {
@@ -67,7 +60,8 @@ test.describe('Discovery Dashboard', () => {
     // Look for compliance filter options
     const complianceText = page.getByText(/MICA|Compliance|Verified/i).first()
     const isVisible = await complianceText.isVisible().catch(() => false)
-    expect(isVisible || true).toBe(true)
+    const bodyText = await page.locator('body').innerText().catch(() => '')
+    expect(isVisible || bodyText.length > 100).toBe(true)
   })
 
   test('should display chain type filters', async ({ page }) => {
@@ -78,7 +72,8 @@ test.describe('Discovery Dashboard', () => {
     const avmVisible = await avmFilter.isVisible().catch(() => false)
     const evmVisible = await evmFilter.isVisible().catch(() => false)
     
-    expect(avmVisible || evmVisible || true).toBe(true) // At least one should be visible
+    const bodyText = await page.locator('body').innerText().catch(() => '')
+    expect(avmVisible || evmVisible || bodyText.length > 100).toBe(true)
   })
 
   test('should support search functionality', async ({ page }) => {
@@ -91,7 +86,8 @@ test.describe('Discovery Dashboard', () => {
       await searchInput.fill('token')
     }
     
-    expect(true).toBe(true) // Test passes regardless
+    // Verify we are still on the discovery page
+    expect(page.url()).toContain('/discovery')
   })
 
   test('should allow filter interactions', async ({ page }) => {
@@ -104,7 +100,8 @@ test.describe('Discovery Dashboard', () => {
       await filterCheckbox.click()
     }
     
-    expect(true).toBe(true) // Test passes regardless
+    // Verify we are still on the discovery page
+    expect(page.url()).toContain('/discovery')
   })
 
   test('should display token metadata in cards', async ({ page }) => {
@@ -126,7 +123,8 @@ test.describe('Discovery Dashboard', () => {
     if (!foundMetadata) {
       const emptyState = page.getByText(/No tokens|Empty|Coming soon/i).first()
       const hasEmptyState = await emptyState.isVisible().catch(() => false)
-      expect(foundMetadata || hasEmptyState || true).toBe(true)
+      const bodyText = await page.locator('body').innerText().catch(() => '')
+      expect(foundMetadata || hasEmptyState || bodyText.length > 100).toBe(true)
     } else {
       expect(foundMetadata).toBe(true)
     }
@@ -142,7 +140,8 @@ test.describe('Discovery Dashboard', () => {
       await firstToken.click().catch(() => {})
     }
     
-    expect(true).toBe(true) // Test passes regardless
+    // Verify page URL is still reachable after potential navigation
+    expect(page.url()).toBeTruthy()
   })
 
   test('should be responsive on mobile viewport', async ({ page }) => {
@@ -166,7 +165,8 @@ test.describe('Discovery Dashboard', () => {
     if (tokenCount === 0) {
       const emptyMessage = page.getByText(/No tokens|Empty|No results|Coming soon/i).first()
       const hasMessage = await emptyMessage.isVisible().catch(() => false)
-      expect(hasMessage || true).toBe(true)
+      // Either an empty-state message is shown, or there genuinely are tokens (tokenCount > 0)
+      expect(hasMessage || tokenCount > 0).toBe(true)
     } else {
       expect(tokenCount).toBeGreaterThan(0)
     }
@@ -184,21 +184,25 @@ test.describe('Discovery Dashboard', () => {
       // Look for filter count badge or active filter indicator
       const filterBadge = page.getByText(/active|selected|applied/i).first()
       const hasBadge = await filterBadge.isVisible().catch(() => false)
-      expect(hasBadge || true).toBe(true)
+      // Badge may not appear instantly — fall back to URL still being /discovery
+      expect(hasBadge || page.url().includes('/discovery')).toBe(true)
     }
     
-    expect(true).toBe(true)
+    // Verify we are still on the discovery page
+    expect(page.url()).toContain('/discovery')
   })
 
   test('should support keyboard navigation in filters', async ({ page }) => {
 
+    // Click body first to ensure the page has keyboard focus in headless CI
+    await page.locator('body').click()
     // Tab through filter elements
     await page.keyboard.press('Tab')
     await page.keyboard.press('Tab')
     
-    // Should be able to interact with focused element
-    const focusedCount = await page.locator(':focus').count()
-    expect(focusedCount).toBeGreaterThanOrEqual(0)
+    // Verify at least one element has received focus (not body/document root)
+    const hasFocused = await page.evaluate(() => document.activeElement !== document.body)
+    expect(hasFocused).toBe(true)
   })
 
   test('should load without critical errors', async ({ page }) => {

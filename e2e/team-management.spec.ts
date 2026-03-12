@@ -1,18 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { suppressBrowserErrors } from './helpers/auth'
 
 test.describe('Team Management - Compliance Dashboard', () => {
   test.beforeEach(async ({ page }) => {
-    // Suppress console errors to prevent Playwright from failing on browser console output
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        console.log(`Browser console error (suppressed for test stability): ${msg.text()}`)
-      }
-    })
-    
-    // Suppress page errors
-    page.on('pageerror', error => {
-      console.log(`Page error (suppressed for test stability): ${error.message}`)
-    })
+    suppressBrowserErrors(page)
     
     // Set up authentication before each test
     await page.addInitScript(() => {
@@ -72,7 +63,8 @@ test.describe('Team Management - Compliance Dashboard', () => {
     // Check for Invite Member button (visible for owners/admins)
     const inviteButton = page.locator('button').filter({ hasText: /Invite Member/i }).first();
     const isVisible = await inviteButton.isVisible().catch(() => false);
-    expect(isVisible || true).toBe(true); // Pass if button exists or not (depends on role)
+    // Pass if button exists (owner role) or not (viewer role) — page must be on compliance dashboard
+    expect(isVisible || page.url().includes('/compliance')).toBe(true);
   });
 
   test('should open invite member modal', async ({ page }) => {
@@ -105,8 +97,8 @@ test.describe('Team Management - Compliance Dashboard', () => {
       await expect(page.locator('input[type="email"]')).toBeVisible();
       await expect(page.locator('button').filter({ hasText: /Send Invitation/i })).toBeVisible();
     } else {
-      // If button not visible, user might not have permission
-      expect(true).toBe(true);
+      // If button not visible, user might not have permission — verify we're on the compliance page
+      expect(page.url()).toContain('/compliance/')
     }
   });
 
@@ -143,8 +135,9 @@ test.describe('Team Management - Compliance Dashboard', () => {
     if (hasBadges) {
       await expect(roleBadges.first()).toBeVisible();
     } else {
-      // No team members yet or loading
-      expect(true).toBe(true);
+      // No team members yet or loading — verify the page structure exists
+      const hasActivityHeading = await page.getByRole('heading', { name: /Access Activity/i }).isVisible().catch(() => false)
+      expect(hasMembersHeading || hasActivityHeading).toBe(true);
     }
   });
 
@@ -184,6 +177,7 @@ test.describe('Team Management - Compliance Dashboard', () => {
     // Check for ARIA roles or semantic HTML
     const mainContent = page.locator('div.team-access-view, [role="main"]');
     const exists = await mainContent.count().then(count => count > 0);
-    expect(exists || true).toBe(true);
+    // Either ARIA landmark exists, or the page heading confirms we are in the right view
+    expect(exists || await page.locator('h2').filter({ hasText: /Team & Access/i }).isVisible().catch(() => false)).toBe(true);
   });
 });

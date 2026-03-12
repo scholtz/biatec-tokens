@@ -238,7 +238,8 @@ test.describe('Guided Token Launch Flow', () => {
     const isVisible = await scoreCard.isVisible({ timeout: 5000 }).catch(() => false)
     
     // Flexible assertion - may not be visible depending on viewport
-    expect(isVisible || true).toBe(true)
+    const pageLoaded = await page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 }).isVisible().catch(() => false)
+    expect(isVisible || pageLoaded).toBe(true)
   })
 
   test('should show compliance step with checkboxes', async ({ page }) => {
@@ -390,7 +391,8 @@ test.describe('Guided Token Launch Flow', () => {
     const emailInput = page.getByRole('textbox').first()
     const hasEmailInput = await emailInput.isVisible({ timeout: 5000 }).catch(() => false)
     // Page has email/password form or auth-first content — either satisfies the requirement
-    expect(hasEmailInput || true).toBe(true)
+    const navTextLoaded = navText.length > 0
+    expect(hasEmailInput || navTextLoaded).toBe(true)
   })
 
   test('should show user-friendly error banner when submission error occurs (AC #5)', async ({ page }) => {
