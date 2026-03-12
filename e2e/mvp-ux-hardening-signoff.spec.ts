@@ -431,11 +431,15 @@ test.describe('AC #6: Spec quality — semantic waits only', () => {
     await page.goto('/')
     await page.waitForLoadState('load')
 
-    // Semantic check: page must be in a loaded state with a navigable heading
-    const body = page.locator('body')
-    await expect(body).toBeVisible({ timeout: 10000 })
-    // Pass — confirming this spec uses only semantic waits
-    expect(true).toBe(true)
+    // Upgraded from trivially-true assertion to meaningful content check:
+    // The page must have a navigable h1 heading (proves the app loaded correctly).
+    const h1Count = await page.locator('h1').count()
+    expect(h1Count).toBeGreaterThanOrEqual(1)
+
+    // Page title must be non-empty (proves the route resolved successfully)
+    const title = await page.title()
+    expect(title.length).toBeGreaterThan(0)
+    expect(title).not.toMatch(/error|not found|undefined/i)
   })
 })
 

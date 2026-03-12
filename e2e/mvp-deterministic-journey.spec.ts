@@ -69,15 +69,8 @@ test.describe('Section 1: Canonical route contract', () => {
     }
   })
 
-  test('/create/wizard redirects to /launch/guided (backward-compat)', async ({ page }) => {
-    await withAuth(page)
-    await page.goto('/create/wizard')
-    await page.waitForLoadState('load')
-
-    // Redirect should resolve to canonical route
-    const url = page.url()
-    expect(url).toContain('/launch/guided')
-  })
+  // Redirect-compatibility tests for /create/wizard are consolidated in
+  // wizard-redirect-compat.spec.ts (the ONLY permitted file for such tests).
 
   test('authenticated user on /launch/guided sees the guided launch heading', async ({
     page,

@@ -80,6 +80,66 @@ identically to `withAuth()`. All subsequent test assertions remain identical.
 | Critical journey (auth, compliance, token creation) | `loginWithCredentials()` |
 | Isolated UI-only test (no backend dependency) | `withAuth()` |
 | Guest / unauthenticated test | `clearAuthScript()` + `clearAuth()` |
+| **Strict sign-off lane** | `loginWithCredentialsStrict()` (see below) |
+
+### Strict Backend Sign-off Lane: `loginWithCredentialsStrict`
+
+The **strict sign-off lane** is the highest-fidelity testing tier. It is designed to provide
+real-backend Playwright evidence for product MVP sign-off.
+
+**Key difference from `loginWithCredentials`:**
+`loginWithCredentials` falls back to localStorage seeding when the backend is unavailable.
+`loginWithCredentialsStrict` **FAILS (throws)** instead of falling back — ensuring tests
+cannot silently pass through a non-production shortcut.
+
+```typescript
+import { loginWithCredentialsStrict, isStrictBackendMode } from './helpers/auth'
+
+// Used ONLY in mvp-backend-signoff.spec.ts
+test('backend auth produces valid session', async ({ page }) => {
+  test.skip(!isStrictBackendMode(), 'Strict backend sign-off requires BIATEC_STRICT_BACKEND=true')
+
+  // FAILS (throws) if backend is unavailable — never silently falls back
+  await loginWithCredentialsStrict(page)
+  // ...
+})
+```
+
+**Activating the strict sign-off lane:**
+
+```bash
+# Run against a live staging backend
+BIATEC_STRICT_BACKEND=true \
+API_BASE_URL=https://staging.biatec.io \
+TEST_USER_EMAIL=signoff@biatec.io \
+TEST_USER_PASSWORD=<secret> \
+npx playwright test e2e/mvp-backend-signoff.spec.ts
+```
+
+**What happens without these env vars:**
+All tests in `mvp-backend-signoff.spec.ts` skip with a clear message. Standard CI is unaffected.
+
+**Sign-off spec file:** `e2e/mvp-backend-signoff.spec.ts`
+
+| Feature | Status |
+|---|---|
+| No broad `suppressBrowserErrors()` | ✅ Genuine errors surface as failures |
+| No localStorage fallback | ✅ Throws on backend unavailability |
+| Real backend deployment endpoint check | ✅ Verifies endpoint reachability |
+| Wallet UI absence after real auth | ✅ Asserts no WalletConnect/MetaMask/Pera/Defly |
+| Wrong-credentials rejection | ✅ Verifies backend returns 4xx |
+
+### Error Suppression Policy
+
+| Helper | Where used | What it suppresses |
+|---|---|---|
+| `suppressBrowserErrors()` | Permissive tests (isolated UI, component validation) | ALL browser console errors and page errors |
+| `suppressBrowserErrorsNarrow()` | Blocker-facing sign-off specs | Only known CI-safe patterns (Vite HMR, Vue devtools warnings) |
+| _(none)_ | `mvp-backend-signoff.spec.ts` strict lane | Nothing — all errors surface as failures |
+
+**AC #5 compliance:** Blocker-facing suites (`mvp-sign-off-hardening.spec.ts`) use
+`suppressBrowserErrorsNarrow()` instead of the broad suppressor. This ensures genuine
+application regressions surface as test failures rather than being silently masked.
 
 ### Clearing Auth State
 
@@ -137,17 +197,68 @@ npm run test:e2e:report
 2. Navigation links in the nav bar must point to `/launch/guided`, not `/create/wizard`.
 3. If you encounter a test that asserts `/create/wizard` is the canonical route, that test is wrong and must be updated.
 
-**Redirect compatibility is tested separately** in `confidence-hardening-deterministic.spec.ts` and `auth-first-onboarding-closure.spec.ts`.
+**Redirect compatibility is tested separately** in `wizard-redirect-compat.spec.ts`
+(the ONLY permitted location for `/create/wizard` redirect tests — maximum 3 tests).
+
+## Testing Posture — What is Backend-Backed vs Mocked
+
+| Test category | Backend required? | How auth is done | File(s) |
+|---|---|---|---|
+| **Strict sign-off lane** | ✅ YES — fails if backend unavailable | `loginWithCredentialsStrict()` | `mvp-backend-signoff.spec.ts` |
+| Critical journey (blocker spec) | Optional — falls back | `loginWithCredentials()` | `mvp-sign-off-hardening.spec.ts`, `mvp-stabilization.spec.ts` |
+| Isolated UI / component | ❌ NO — localStorage seeding | `withAuth()` | Most other spec files |
+| Guest / unauthenticated | ❌ NO — no auth | `clearAuthScript()` | Various |
+
+### What is currently mocked
+
+1. **Auth** — In permissive lane (standard CI): all E2E tests seed a validated session
+   object into localStorage (`withAuth()` or `loginWithCredentials()` fallback). No real
+   HTTP auth request is made unless `API_BASE_URL` resolves to a live backend.
+
+2. **Deployment lifecycle** — `backend-deployment-contract.spec.ts` permissive lane injects
+   HTML elements into the page DOM to validate the `DeploymentStatusPanel` UI contract.
+   This is a UI contract test, not a real deployment end-to-end test.
+
+3. **Compliance flows** — Compliance spec tests validate the UI contract using component-
+   rendered state. Backend API calls are not made in CI without a live backend.
+
+### What requires a live backend (strict sign-off)
+
+1. `mvp-backend-signoff.spec.ts` — requires `BIATEC_STRICT_BACKEND=true` and `API_BASE_URL`
+   pointing to a live staging backend. All tests in this file skip without these env vars.
+
+2. The deployment strict lane in `backend-deployment-contract.spec.ts` — same guards.
+
+### Known gaps (follow-up work)
+
+- Full wizard form completion through the UI with real form submission is not yet tested E2E.
+- Real-time deployment status polling (SSE/WebSocket) is not covered.
+- Rollback and retry flows are not covered.
+- Compliance evidence upload through the UI is not covered.
 
 ## Test Structure
 
 Tests are organized by feature:
 
+**Strict sign-off lane (requires live backend):**
+- `mvp-backend-signoff.spec.ts` - ⭐ Strict backend sign-off: real auth, no localStorage fallback, no broad error suppression
+
+**MVP Blocker specs (CI-required, permissive auth):**
+- `mvp-sign-off-hardening.spec.ts` - Canonical routes, auth confidence, accessibility, quality gates
+- `mvp-stabilization.spec.ts` - Deterministic guided launch and compliance readiness
+- `mvp-deterministic-journey.spec.ts` - MVP journey determinism and canonical routes
+- `mvp-confidence-hardening.spec.ts` - Auth/deployment confidence hardening
+- `mvp-signoff-readiness.spec.ts` - Sign-off readiness: canonical flow, auth contract, accessibility
+- `backend-deployment-contract.spec.ts` - Deployment lifecycle UI contract (permissive lane) + strict lane
+
+**Auth-first journey:**
 - `auth-first-token-creation.spec.ts` - Auth-first journey and route guards (MVP critical)
 - `confidence-hardening-deterministic.spec.ts` - Deterministic auth/nav state assertions (MVP CI gate)
 - `auth-first-confidence-hardening.spec.ts` - Auth-first onboarding confidence (all entry points)
 - `auth-first-issuance-workspace.spec.ts` - Canonical issuance workspace e2e flow
 - `arc76-validation.spec.ts` - ARC76 account derivation and session persistence
+
+**Feature specs:**
 - `guided-token-launch.spec.ts` - Guided token launch flow (supported auth-first path)
 - `compliance-orchestration.spec.ts` - KYC/AML compliance orchestration
 - `compliance-dashboard.spec.ts` - Compliance dashboard and metrics

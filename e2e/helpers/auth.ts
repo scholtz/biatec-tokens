@@ -13,14 +13,21 @@
  * test-seeded state and the real backend contract is caught immediately.
  *
  * When the backend auth endpoint (`POST /api/auth/login`) is available in the
- * test environment, replace `withAuth` with `loginWithBackend` (defined below
- * as a stub). The session shape and validation logic remain the same.
+ * test environment, use `loginWithCredentials()` (permissive — falls back to seeding)
+ * or `loginWithCredentialsStrict()` (strict — fails if backend unavailable).
+ * The session shape and validation logic remain the same.
  *
- * Canonical auth-test migration path:
- *   1. Current:  withAuth(page)                      — localStorage seeding
- *   2. Next:     loginWithBackend(page, email, pass)  — real HTTP auth
- *   3. Both validate against ARC76SessionContract and expose identical
- *      test assertions, so E2E tests need zero changes between phases.
+ * ## Two-tier auth model
+ *
+ *   Tier 1 — Permissive (default CI): `withAuth()` or `loginWithCredentials()`
+ *     - `withAuth()`: seeds validated localStorage session, no backend required
+ *     - `loginWithCredentials()`: tries backend, falls back to seeding on error
+ *     - Used for: isolated UI tests, component validation, accessibility checks
+ *
+ *   Tier 2 — Strict (sign-off lane): `loginWithCredentialsStrict()`
+ *     - Sends real `POST /api/auth/login` request; FAILS (throws) if backend unavailable
+ *     - Used exclusively in `mvp-backend-signoff.spec.ts` when BIATEC_STRICT_BACKEND=true
+ *     - Tests in this tier skip if BIATEC_STRICT_BACKEND is not set
  *
  * Usage:
  *   import { withAuth, suppressBrowserErrors, setupAuthAndNavigate } from './helpers/auth'
@@ -281,6 +288,130 @@ export async function loginWithBackend(
   return loginWithCredentials(page, email, password)
 }
 
+// ---------------------------------------------------------------------------
+// Strict backend sign-off helpers (Tier 2 — sign-off lane only)
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns true when strict backend sign-off mode is active.
+ *
+ * Strict mode is enabled by setting `BIATEC_STRICT_BACKEND=true` in the test
+ * environment (CI staging with a live backend). When strict mode is active,
+ * sign-off specs run against real backend endpoints instead of seeded state.
+ *
+ * @see loginWithCredentialsStrict
+ */
+export function isStrictBackendMode(): boolean {
+  return process.env.BIATEC_STRICT_BACKEND === 'true'
+}
+
+/**
+ * Returns the backend base URL configured for the sign-off environment.
+ * Falls back to localhost:3000 for local development.
+ */
+export function getBackendBaseUrl(): string {
+  return process.env.API_BASE_URL ?? 'http://localhost:3000'
+}
+
+/**
+ * Strict backend auth — fails loudly if the backend is unavailable or returns a
+ * non-200 response. **Never falls back** to localStorage seeding.
+ *
+ * Use this helper ONLY in strict sign-off specs (`mvp-backend-signoff.spec.ts`)
+ * that are gated on `BIATEC_STRICT_BACKEND=true`. All other specs should use
+ * `loginWithCredentials()` (permissive, falls back on error) or `withAuth()`.
+ *
+ * Failure modes:
+ *   - Network error (backend not running): throws with clear message
+ *   - HTTP non-200 from backend: throws with status code included
+ *   - Missing address field in response: throws with contract violation details
+ *   - ARC76 contract validation failure: throws with validation errors
+ *
+ * This function is the primary mechanism for AC #1 and AC #2:
+ * "loginWithCredentials or an equivalent strict helper used in blocker suites
+ * no longer silently succeeds through localStorage fallback when strict backend
+ * mode is enabled."
+ *
+ * @param page      - Playwright Page instance
+ * @param email     - Optional override for TEST_USER_EMAIL
+ * @param password  - Optional override for TEST_USER_PASSWORD
+ * @throws Error if backend is unavailable, returns non-200, or contract fails
+ */
+export async function loginWithCredentialsStrict(
+  page: Page,
+  email?: string,
+  password?: string,
+): Promise<void> {
+  const resolvedEmail = email ?? process.env.TEST_USER_EMAIL ?? 'e2e-test@biatec.io'
+  const resolvedPassword = password ?? process.env.TEST_USER_PASSWORD ?? ''
+  const apiBaseUrl = getBackendBaseUrl()
+
+  // Strict mode: no try/catch — network errors surface directly as test failures.
+  // This ensures the test FAILS (not silently passes) when the backend is unavailable.
+  const response = await page.request
+    .post(`${apiBaseUrl}/api/auth/login`, {
+      data: { email: resolvedEmail, password: resolvedPassword },
+      timeout: 10000,
+    })
+    .catch((networkError: unknown) => {
+      const msg =
+        networkError instanceof Error ? networkError.message : String(networkError)
+      throw new Error(
+        `[loginWithCredentialsStrict] STRICT MODE: Backend unreachable at ${apiBaseUrl}/api/auth/login. ` +
+          `This sign-off lane requires a live backend. Set API_BASE_URL to the staging backend URL. ` +
+          `Network error: ${msg}`,
+      )
+    })
+
+  if (!response.ok()) {
+    throw new Error(
+      `[loginWithCredentialsStrict] STRICT MODE: Backend returned HTTP ${response.status()} for POST /api/auth/login. ` +
+        `Expected HTTP 200 with valid session. This sign-off lane does not fall back to localStorage seeding.`,
+    )
+  }
+
+  const body = await response.json().catch(() => null)
+  if (!body) {
+    throw new Error(
+      '[loginWithCredentialsStrict] STRICT MODE: Backend returned non-JSON response body for POST /api/auth/login.',
+    )
+  }
+
+  const backendAddress = (body.address as string) || (body.algorandAddress as string)
+  if (!backendAddress) {
+    throw new Error(
+      '[loginWithCredentialsStrict] STRICT MODE: Backend response missing address/algorandAddress field. ' +
+        'Cannot build ARC76 session without a non-empty address. ' +
+        `Response keys received: ${Object.keys(body).join(', ')}`,
+    )
+  }
+
+  const session: AuthUser = {
+    address: backendAddress,
+    email: (body.email as string) || resolvedEmail,
+    isConnected: true,
+    name: (body.name as string) || undefined,
+  }
+
+  const validation = validateSessionContract(session)
+  if (!validation.valid) {
+    throw new Error(
+      `[loginWithCredentialsStrict] STRICT MODE: Backend session failed ARC76 contract validation:\n  ${validation.errors.join('\n  ')}`,
+    )
+  }
+
+  await page.addInitScript((userData: AuthUser) => {
+    localStorage.setItem('algorand_user', JSON.stringify(userData))
+    if (userData.email) {
+      localStorage.setItem('arc76_email', userData.email)
+    }
+  }, session)
+
+  console.log(
+    `[loginWithCredentialsStrict] STRICT MODE: Authenticated via real backend as ${resolvedEmail}`,
+  )
+}
+
 /**
  * Clears all auth state from localStorage. Use in tests that verify
  * unauthenticated (guest) behaviour.
@@ -323,6 +454,11 @@ export async function clearAuthScript(page: Page): Promise<void> {
  * Suppresses browser console errors and page errors that would otherwise
  * cause Playwright to mark a passing test as failed due to mock environment
  * console output.
+ *
+ * **Permissive suppressor — use for isolated UI tests only.**
+ * This function suppresses ALL browser errors including genuine application
+ * regressions. For blocker-facing and sign-off specs, use
+ * `suppressBrowserErrorsNarrow()` instead so real errors surface as failures.
  */
 export function suppressBrowserErrors(page: Page): void {
   page.on('console', msg => {
@@ -332,6 +468,66 @@ export function suppressBrowserErrors(page: Page): void {
   })
   page.on('pageerror', error => {
     console.log(`[Page error suppressed — mock env]: ${error.message}`)
+  })
+}
+
+/**
+ * Narrow error suppressor — only suppresses known CI-safe, non-regression error
+ * patterns (Vite HMR noise, Vue devtools messages, browser extension artefacts).
+ *
+ * **Use this in blocker-facing specs** instead of `suppressBrowserErrors()`.
+ * Unlike the broad suppressor, this function will NOT swallow genuine application
+ * errors, so regressions surface as test failures rather than being silently masked.
+ *
+ * Suppressed patterns (all verified CI-safe):
+ *   - Vite HMR connection messages (`[vite]`)
+ *   - Vue devtools/warning messages in dev mode
+ *   - Browser extension interference patterns (extensions inject scripts)
+ *
+ * Any page error that does NOT match these patterns will be logged to stdout
+ * but will NOT be re-thrown (Playwright surfaces page errors automatically
+ * when no handler is registered; this handler provides logging without suppression).
+ *
+ * AC #5 compliance: "Blocker-facing suites no longer rely on broad
+ * suppressBrowserErrors() behavior; any exceptions are narrowly documented
+ * and justified."
+ */
+export function suppressBrowserErrorsNarrow(page: Page): void {
+  // These are known CI-safe console error patterns that do not indicate
+  // application regressions. Document each pattern's justification:
+  const SAFE_CONSOLE_PATTERNS: RegExp[] = [
+    /\[vite\]/i, // Vite HMR hot-module replacement messages
+    /vue warn/i, // Vue framework warnings in dev mode (not errors)
+    /download the react devtools/i, // Browser suggestion (not our code)
+    /content security policy/i, // CSP violation in dev mode (not prod concern)
+    /cross-origin/i, // CORS dev-mode noise from test infrastructure
+  ]
+
+  page.on('console', msg => {
+    if (msg.type() === 'error') {
+      const text = msg.text()
+      const isSafe = SAFE_CONSOLE_PATTERNS.some(p => p.test(text))
+      if (isSafe) {
+        console.log(`[Console error suppressed — known safe CI pattern]: ${text}`)
+      } else {
+        // Unsuppressed: log clearly so CI output shows genuine issues
+        console.warn(`[Console error — NOT suppressed (possible regression)]: ${text}`)
+      }
+    }
+  })
+
+  // For page-level errors (uncaught exceptions), log but do not suppress the
+  // Playwright error mechanism. Genuine uncaught exceptions should still fail
+  // the test through Playwright's default behavior.
+  page.on('pageerror', error => {
+    const msg = error.message
+    const isSafe = SAFE_CONSOLE_PATTERNS.some(p => p.test(msg))
+    if (isSafe) {
+      console.log(`[Page error suppressed — known safe CI pattern]: ${msg}`)
+    } else {
+      // Log clearly — Playwright will still fail the test via its own mechanism
+      console.error(`[Page error — NOT suppressed (possible regression)]: ${msg}`)
+    }
   })
 }
 

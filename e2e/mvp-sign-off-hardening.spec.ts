@@ -37,7 +37,7 @@
 import { test, expect } from '@playwright/test'
 import {
   loginWithCredentials,
-  suppressBrowserErrors,
+  suppressBrowserErrorsNarrow,
   clearAuthScript,
   getNavText,
 } from './helpers/auth'
@@ -48,7 +48,10 @@ import {
 
 test.describe('AC #1: Canonical route clarity', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    // AC #5 compliance: narrow suppressor only — genuine errors surface as failures.
+    // This spec is a blocker-facing sign-off spec. It must not broadly suppress
+    // browser errors that could indicate application regressions.
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('primary navigation exposes Guided Launch link pointing to /launch/workspace', async ({
@@ -101,7 +104,7 @@ test.describe('AC #1: Canonical route clarity', () => {
 
 test.describe('AC #2: Auth and session confidence', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('loginWithCredentials seeds a structurally valid ARC76 session', async ({ page }) => {
@@ -232,7 +235,7 @@ test.describe('AC #2: Auth and session confidence', () => {
 
 test.describe('AC #3: Accessibility baseline', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('home page has navigation landmark (WCAG 2.4.1)', async ({ page }) => {
@@ -336,7 +339,7 @@ test.describe('AC #3: Accessibility baseline', () => {
 
 test.describe('AC #4 + AC #5: Quality and CI gates', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('this spec contains no arbitrary waitForTimeout calls (semantic waits only)', async ({

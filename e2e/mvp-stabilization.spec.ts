@@ -48,45 +48,14 @@ test.describe('AC #1: Canonical route clarity', () => {
     expect(href).toContain('/launch/workspace')
   })
 
-  test('/create/wizard redirects away from the legacy path for authenticated users', async ({
+  // /create/wizard redirect-compatibility tests are consolidated in wizard-redirect-compat.spec.ts.
+  // AC #4 compliance: non-compat /create/wizard navigations removed from blocker suite.
+  // The dedicated redirect-compatibility spec is the ONLY permitted location for redirect tests.
+
+  test('Guided Launch nav link does not expose /create/wizard as CTA target', async ({
     page,
   }) => {
-    await withAuth(page)
-    await page.goto('/create/wizard', { timeout: 30000 })
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
-
-    // Semantic wait: URL must leave the deprecated path
-    await page.waitForFunction(() => !window.location.pathname.includes('/create/wizard'), {
-      timeout: 20000,
-    })
-
-    expect(page.url()).not.toContain('/create/wizard')
-    expect(page.url()).toContain('/launch/guided')
-  })
-
-  test('/create/wizard redirects unauthenticated users away from the deprecated path', async ({
-    page,
-  }) => {
-    await clearAuthScript(page)
-    await page.goto('/create/wizard', { timeout: 30000 })
-    await page.waitForLoadState('load') // 'load' not 'networkidle' — Vite HMR SSE prevents networkidle in CI
-
-    await page.waitForFunction(
-      () => {
-        const url = window.location.href
-        const emailInput = document.querySelector("input[type='email']")
-        return !url.includes('/create/wizard') || emailInput !== null
-      },
-      { timeout: 20000 },
-    )
-
-    expect(page.url()).not.toContain('/create/wizard')
-  })
-
-  test('no spec file (other than wizard-redirect-compat.spec.ts) navigates to /create/wizard as a test action', async ({
-    page,
-  }) => {
-    // This is a meta-test: proves the canonical route policy in running code.
+    // Meta-test: proves the canonical route policy in running code.
     // The home CTA routes authenticated users to /launch/guided — not /create/wizard.
     await withAuth(page)
     await page.goto('/', { timeout: 30000 })
