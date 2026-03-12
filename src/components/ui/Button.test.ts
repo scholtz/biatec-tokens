@@ -141,4 +141,48 @@ describe('Button Component', () => {
     expect(wrapper.find('.test-icon').exists()).toBe(false);
     expect(wrapper.find('.animate-spin').exists()).toBe(true);
   });
+
+  // ---------------------------------------------------------------------------
+  // WCAG 2.1 AA accessibility tests (SC 4.1.2 Name, Role, Value)
+  // ---------------------------------------------------------------------------
+
+  describe('WCAG 2.1 AA — SC 4.1.2 Name, Role, Value', () => {
+    it('has aria-busy="true" when loading (SC 4.1.2)', () => {
+      const wrapper = mount(Button, { props: { loading: true }, slots: { default: 'Save' } })
+      expect(wrapper.find('button').attributes('aria-busy')).toBe('true')
+    })
+
+    it('does NOT set aria-busy when not loading (SC 4.1.2)', () => {
+      const wrapper = mount(Button, { props: { loading: false }, slots: { default: 'Save' } })
+      expect(wrapper.find('button').attributes('aria-busy')).toBeUndefined()
+    })
+
+    it('exposes ariaLoadingLabel as aria-label during loading (SC 4.1.2)', () => {
+      const wrapper = mount(Button, {
+        props: { loading: true, ariaLoadingLabel: 'Saving changes…' },
+        slots: { default: 'Save' },
+      })
+      expect(wrapper.find('button').attributes('aria-label')).toBe('Saving changes…')
+    })
+
+    it('does NOT set aria-label when not loading even if ariaLoadingLabel provided (SC 4.1.2)', () => {
+      const wrapper = mount(Button, {
+        props: { loading: false, ariaLoadingLabel: 'Saving changes…' },
+        slots: { default: 'Save' },
+      })
+      expect(wrapper.find('button').attributes('aria-label')).toBeUndefined()
+    })
+
+    it('loading spinner has aria-hidden to avoid duplicate announcement (SC 4.1.2)', () => {
+      const wrapper = mount(Button, { props: { loading: true }, slots: { default: 'Save' } })
+      const spinner = wrapper.find('.animate-spin')
+      expect(spinner.attributes('aria-hidden')).toBe('true')
+    })
+
+    it('has visible focus ring classes for keyboard navigation (SC 2.4.7)', () => {
+      const wrapper = mount(Button, { props: { variant: 'primary' }, slots: { default: 'Next' } })
+      const html = wrapper.find('button').classes().join(' ')
+      expect(html).toContain('focus:ring-2')
+    })
+  })
 });

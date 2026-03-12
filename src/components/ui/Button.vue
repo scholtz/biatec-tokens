@@ -2,9 +2,11 @@
   <button
     :class="buttonClasses"
     :disabled="disabled || loading"
+    :aria-busy="loading ? 'true' : undefined"
+    :aria-label="loading && ariaLoadingLabel ? ariaLoadingLabel : undefined"
     @click="$emit('click', $event)"
   >
-    <div v-if="loading" class="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
+    <div v-if="loading" class="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2" aria-hidden="true"></div>
     <slot name="icon" v-if="!loading"></slot>
     <span v-if="$slots.default"><slot /></span>
   </button>
@@ -19,6 +21,9 @@ interface Props {
   disabled?: boolean
   loading?: boolean
   fullWidth?: boolean
+  /** Accessible label to announce while loading (e.g. "Saving…"). Replaces the
+   *  button's visual text for screen readers during the busy state. */
+  ariaLoadingLabel?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {

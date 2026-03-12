@@ -1,17 +1,20 @@
 <template>
   <div class="space-y-2">
-    <label v-if="label" :for="id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+    <label v-if="label" :for="inputId" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
       {{ label }}
-      <span v-if="required" class="text-red-500 ml-1">*</span>
+      <span v-if="required" class="text-red-500 ml-1" aria-hidden="true">*</span>
     </label>
     <div class="relative">
       <input
-        :id="id"
+        :id="inputId"
         :type="type"
         :value="modelValue"
         :placeholder="placeholder"
         :required="required"
         :disabled="disabled"
+        :aria-required="required ? 'true' : undefined"
+        :aria-invalid="error ? 'true' : undefined"
+        :aria-describedby="error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined"
         :class="inputClasses"
         @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
         @focus="$emit('focus', $event)"
@@ -21,13 +24,13 @@
         <slot name="icon" />
       </div>
     </div>
-    <p v-if="error" class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
-    <p v-else-if="hint" class="text-sm text-gray-500 dark:text-gray-400">{{ hint }}</p>
+    <p v-if="error" :id="`${inputId}-error`" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ error }}</p>
+    <p v-else-if="hint" :id="`${inputId}-hint`" class="text-sm text-gray-500 dark:text-gray-400">{{ hint }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, useId } from 'vue'
 
 interface Props {
   id?: string
@@ -44,6 +47,10 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   type: 'text'
 })
+
+// Stable per-instance ID for aria-describedby linkage (Vue 3.5 useId).
+const generatedId = useId()
+const inputId = computed(() => props.id ?? generatedId)
 
 defineEmits<{
   'update:modelValue': [value: string]

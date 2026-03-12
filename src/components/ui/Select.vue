@@ -1,14 +1,17 @@
 <template>
   <div class="space-y-2">
-    <label v-if="label" :for="id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+    <label v-if="label" :for="selectId" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
       {{ label }}
-      <span v-if="required" class="text-red-500 ml-1">*</span>
+      <span v-if="required" class="text-red-500 ml-1" aria-hidden="true">*</span>
     </label>
     <select
-      :id="id"
+      :id="selectId"
       :value="modelValue"
       :required="required"
       :disabled="disabled"
+      :aria-required="required ? 'true' : undefined"
+      :aria-invalid="error ? 'true' : undefined"
+      :aria-describedby="error ? `${selectId}-error` : hint ? `${selectId}-hint` : undefined"
       :class="selectClasses"
       @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
     >
@@ -21,13 +24,13 @@
         {{ typeof option === 'string' ? option : option.label }}
       </option>
     </select>
-    <p v-if="error" class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
-    <p v-else-if="hint" class="text-sm text-gray-500 dark:text-gray-400">{{ hint }}</p>
+    <p v-if="error" :id="`${selectId}-error`" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ error }}</p>
+    <p v-else-if="hint" :id="`${selectId}-hint`" class="text-sm text-gray-500 dark:text-gray-400">{{ hint }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, useId } from 'vue'
 
 interface Option {
   label: string
@@ -47,6 +50,10 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+// Stable per-instance ID for aria-describedby linkage (Vue 3.5 useId).
+const generatedId = useId()
+const selectId = computed(() => props.id ?? generatedId)
 
 defineEmits<{
   'update:modelValue': [value: string]

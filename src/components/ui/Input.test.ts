@@ -170,4 +170,76 @@ describe('Input Component', () => {
     const input = wrapper.find('input');
     expect(input.element.value).toBe('test value');
   });
+
+  // ---------------------------------------------------------------------------
+  // WCAG 2.1 AA accessibility tests (SC 1.3.1, SC 3.3.1, SC 4.1.2)
+  // ---------------------------------------------------------------------------
+
+  describe('WCAG 2.1 AA — SC 3.3.1 Error Identification & SC 4.1.2 Name, Role, Value', () => {
+    it('sets aria-invalid="true" when error prop is provided (SC 3.3.1)', () => {
+      const wrapper = mount(Input, { props: { error: 'Required field' } })
+      expect(wrapper.find('input').attributes('aria-invalid')).toBe('true')
+    })
+
+    it('does NOT set aria-invalid when no error (SC 3.3.1)', () => {
+      const wrapper = mount(Input, { props: {} })
+      expect(wrapper.find('input').attributes('aria-invalid')).toBeUndefined()
+    })
+
+    it('links input to error message via aria-describedby (SC 3.3.1)', () => {
+      const wrapper = mount(Input, { props: { id: 'email', error: 'Invalid email' } })
+      const input = wrapper.find('input')
+      const describedBy = input.attributes('aria-describedby')
+      expect(describedBy).toBe('email-error')
+      // The referenced element must exist in DOM
+      expect(wrapper.find(`#${describedBy}`).exists()).toBe(true)
+    })
+
+    it('links input to hint via aria-describedby when no error (SC 3.3.2)', () => {
+      const wrapper = mount(Input, { props: { id: 'email', hint: 'Enter company email' } })
+      const input = wrapper.find('input')
+      const describedBy = input.attributes('aria-describedby')
+      expect(describedBy).toBe('email-hint')
+      expect(wrapper.find(`#${describedBy}`).exists()).toBe(true)
+    })
+
+    it('removes aria-describedby when neither error nor hint is present', () => {
+      const wrapper = mount(Input, { props: { id: 'email' } })
+      expect(wrapper.find('input').attributes('aria-describedby')).toBeUndefined()
+    })
+
+    it('error message has role="alert" for screen-reader announcement (SC 4.1.3)', () => {
+      const wrapper = mount(Input, { props: { error: 'This is required' } })
+      const errorEl = wrapper.find('p.text-red-600')
+      expect(errorEl.attributes('role')).toBe('alert')
+    })
+
+    it('sets aria-required="true" when required prop is true (SC 4.1.2)', () => {
+      const wrapper = mount(Input, { props: { required: true } })
+      expect(wrapper.find('input').attributes('aria-required')).toBe('true')
+    })
+
+    it('does NOT set aria-required when not required (SC 4.1.2)', () => {
+      const wrapper = mount(Input, { props: { required: false } })
+      expect(wrapper.find('input').attributes('aria-required')).toBeUndefined()
+    })
+
+    it('required asterisk is aria-hidden to avoid duplication (SC 1.3.1)', () => {
+      const wrapper = mount(Input, { props: { label: 'Name', required: true } })
+      const asterisk = wrapper.find('span.text-red-500')
+      expect(asterisk.attributes('aria-hidden')).toBe('true')
+    })
+
+    it('uses provided id for aria-describedby linkage (SC 4.1.2)', () => {
+      const wrapper = mount(Input, { props: { id: 'org-name', error: 'Too short' } })
+      expect(wrapper.find('input').attributes('id')).toBe('org-name')
+      expect(wrapper.find('input').attributes('aria-describedby')).toBe('org-name-error')
+    })
+
+    it('has visible focus ring classes for keyboard navigation (SC 2.4.7)', () => {
+      const wrapper = mount(Input, {})
+      const classes = wrapper.find('input').classes().join(' ')
+      expect(classes).toContain('focus:ring-2')
+    })
+  })
 });

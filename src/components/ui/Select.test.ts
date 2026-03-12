@@ -200,4 +200,56 @@ describe('Select Component', () => {
     const select = wrapper.find('select');
     expect(select.attributes('required')).toBeDefined();
   });
+
+  // ---------------------------------------------------------------------------
+  // WCAG 2.1 AA accessibility tests (SC 1.3.1, SC 3.3.1, SC 4.1.2)
+  // ---------------------------------------------------------------------------
+
+  describe('WCAG 2.1 AA — SC 3.3.1 Error Identification & SC 4.1.2 Name, Role, Value', () => {
+    it('sets aria-invalid="true" when error prop is provided (SC 3.3.1)', () => {
+      const wrapper = mount(Select, { props: { error: 'Please select', options: stringOptions } })
+      expect(wrapper.find('select').attributes('aria-invalid')).toBe('true')
+    })
+
+    it('does NOT set aria-invalid when no error (SC 3.3.1)', () => {
+      const wrapper = mount(Select, { props: { options: stringOptions } })
+      expect(wrapper.find('select').attributes('aria-invalid')).toBeUndefined()
+    })
+
+    it('links select to error message via aria-describedby (SC 3.3.1)', () => {
+      const wrapper = mount(Select, { props: { id: 'network', error: 'Selection required', options: stringOptions } })
+      const select = wrapper.find('select')
+      const describedBy = select.attributes('aria-describedby')
+      expect(describedBy).toBe('network-error')
+      expect(wrapper.find(`#${describedBy}`).exists()).toBe(true)
+    })
+
+    it('links select to hint via aria-describedby when no error (SC 3.3.2)', () => {
+      const wrapper = mount(Select, { props: { id: 'network', hint: 'Pick your network', options: stringOptions } })
+      const select = wrapper.find('select')
+      const describedBy = select.attributes('aria-describedby')
+      expect(describedBy).toBe('network-hint')
+      expect(wrapper.find(`#${describedBy}`).exists()).toBe(true)
+    })
+
+    it('error message has role="alert" for screen-reader announcement (SC 4.1.3)', () => {
+      const wrapper = mount(Select, { props: { error: 'Required', options: stringOptions } })
+      expect(wrapper.find('p.text-red-600').attributes('role')).toBe('alert')
+    })
+
+    it('sets aria-required="true" when required prop is true (SC 4.1.2)', () => {
+      const wrapper = mount(Select, { props: { required: true, options: stringOptions } })
+      expect(wrapper.find('select').attributes('aria-required')).toBe('true')
+    })
+
+    it('required asterisk is aria-hidden to avoid duplication (SC 1.3.1)', () => {
+      const wrapper = mount(Select, { props: { label: 'Network', required: true, options: stringOptions } })
+      expect(wrapper.find('span.text-red-500').attributes('aria-hidden')).toBe('true')
+    })
+
+    it('has visible focus ring classes for keyboard navigation (SC 2.4.7)', () => {
+      const wrapper = mount(Select, { props: { options: stringOptions } })
+      expect(wrapper.find('select').classes().join(' ')).toContain('focus:ring-2')
+    })
+  })
 });

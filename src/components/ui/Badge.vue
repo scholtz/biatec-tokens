@@ -1,5 +1,5 @@
 <template>
-  <span :class="badgeClasses">
+  <span :class="badgeClasses" :role="role">
     <slot />
   </span>
 </template>
@@ -10,6 +10,12 @@ import { computed } from 'vue'
 interface Props {
   variant?: 'default' | 'success' | 'warning' | 'error' | 'info'
   size?: 'sm' | 'md' | 'lg'
+  /**
+   * WCAG SC 4.1.3 Status Messages: use "status" for polite updates (e.g.
+   * compliance passing), "alert" for assertive errors, or undefined for
+   * purely decorative badges that are already within a labelled context.
+   */
+  role?: 'status' | 'alert' | undefined
 }
 
 const props = withDefaults(defineProps<Props>(), {

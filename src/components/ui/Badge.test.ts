@@ -109,4 +109,25 @@ describe('Badge Component', () => {
     expect(wrapper.classes()).toContain('bg-green-100');
     expect(wrapper.classes()).toContain('px-3');
   });
+
+  // ---------------------------------------------------------------------------
+  // WCAG 2.1 AA accessibility tests (SC 1.3.1, SC 4.1.3)
+  // ---------------------------------------------------------------------------
+
+  describe('WCAG 2.1 AA — SC 4.1.3 Status Messages', () => {
+    it('sets role="status" when role prop is "status" (SC 4.1.3 polite announcement)', () => {
+      const wrapper = mount(Badge, { props: { variant: 'success', role: 'status' }, slots: { default: 'Active' } })
+      expect(wrapper.attributes('role')).toBe('status')
+    })
+
+    it('sets role="alert" when role prop is "alert" (SC 4.1.3 assertive announcement)', () => {
+      const wrapper = mount(Badge, { props: { variant: 'error', role: 'alert' }, slots: { default: 'Failed' } })
+      expect(wrapper.attributes('role')).toBe('alert')
+    })
+
+    it('does NOT set a role attribute by default (purely decorative badge)', () => {
+      const wrapper = mount(Badge, { props: {}, slots: { default: 'Default' } })
+      expect(wrapper.attributes('role')).toBeUndefined()
+    })
+  })
 });

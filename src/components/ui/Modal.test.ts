@@ -169,4 +169,77 @@ describe('Modal Component', () => {
     const wrapper = mount(Modal, { props: { show: true, size: 'unknown' as any } });
     expect((wrapper.vm as any).modalSizeClass).toBe('max-w-md');
   });
+
+  // ---------------------------------------------------------------------------
+  // WCAG 2.1 AA accessibility tests (SC 4.1.2 Name, Role, Value)
+  // ---------------------------------------------------------------------------
+
+  describe('WCAG 2.1 AA — SC 4.1.2 Name, Role, Value', () => {
+    it('dialog container has role="dialog" when visible (SC 4.1.2)', () => {
+      const wrapper = mount(Modal, {
+        props: { show: true },
+        attachTo: document.body,
+      })
+      const dialog = wrapper.find('[role="dialog"]')
+      expect(dialog.exists()).toBe(true)
+    })
+
+    it('dialog container has aria-modal="true" to constrain AT navigation (SC 4.1.2)', () => {
+      const wrapper = mount(Modal, {
+        props: { show: true },
+        attachTo: document.body,
+      })
+      const dialog = wrapper.find('[role="dialog"]')
+      expect(dialog.attributes('aria-modal')).toBe('true')
+    })
+
+    it('close button has aria-label for screen-reader description (SC 4.1.2)', () => {
+      const wrapper = mount(Modal, {
+        props: { show: true },
+        slots: { header: '<h2 id="modal-heading">Confirm Action</h2>' },
+        attachTo: document.body,
+      })
+      const closeBtn = wrapper.find('button[aria-label="Close dialog"]')
+      expect(closeBtn.exists()).toBe(true)
+    })
+
+    it('close button SVG is aria-hidden to avoid double announcement (SC 4.1.2)', () => {
+      const wrapper = mount(Modal, {
+        props: { show: true },
+        slots: { header: '<h2>Title</h2>' },
+        attachTo: document.body,
+      })
+      const svg = wrapper.find('button[aria-label="Close dialog"] svg')
+      expect(svg.attributes('aria-hidden')).toBe('true')
+    })
+
+    it('backdrop has aria-hidden to avoid AT traversal outside dialog (SC 4.1.2)', () => {
+      const wrapper = mount(Modal, {
+        props: { show: true },
+        attachTo: document.body,
+      })
+      const backdrop = wrapper.find('[aria-hidden="true"]')
+      expect(backdrop.exists()).toBe(true)
+    })
+
+    it('close button has focus-visible ring class for keyboard navigation (SC 2.4.7)', () => {
+      const wrapper = mount(Modal, {
+        props: { show: true },
+        slots: { header: '<h2>Title</h2>' },
+        attachTo: document.body,
+      })
+      const closeBtn = wrapper.find('button[aria-label="Close dialog"]')
+      expect(closeBtn.classes().join(' ')).toContain('focus-visible:ring-2')
+    })
+
+    it('emits close when Escape key is pressed on the wrapper (keyboard trap SC 2.1.2)', async () => {
+      const wrapper = mount(Modal, {
+        props: { show: true },
+        attachTo: document.body,
+      })
+      const outer = wrapper.find('[role="presentation"]')
+      await outer.trigger('keydown.esc')
+      expect(wrapper.emitted('close')).toBeTruthy()
+    })
+  })
 });
