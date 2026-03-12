@@ -212,9 +212,7 @@ test.describe('Issuance workspace — error state accessibility', () => {
       const alertText = await firstAlert.textContent()
       expect(alertText?.length).toBeGreaterThan(0)
     }
-    // Page is valid when heading rendered successfully
-    const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
-    await expect(heading).toBeVisible({ timeout: 60000 })
+    // Page is valid when heading rendered successfully (already verified above)
   })
 
   test('workspace form fields are keyboard-accessible', async ({ page }) => {
