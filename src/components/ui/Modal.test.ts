@@ -175,32 +175,34 @@ describe('Modal Component', () => {
   // ---------------------------------------------------------------------------
 
   describe('WCAG 2.1 AA — SC 4.1.2 Name, Role, Value', () => {
+    // Modal uses <Teleport to="body"> so Vue Test Utils' wrapper.find() does NOT
+    // search the teleported content.  Use document.body.querySelector() instead and
+    // unmount after each test to keep document.body clean between test runs.
+
     it('dialog container has role="dialog" when visible (SC 4.1.2)', () => {
-      const wrapper = mount(Modal, {
-        props: { show: true },
-        attachTo: document.body,
-      })
-      const dialog = wrapper.find('[role="dialog"]')
-      expect(dialog.exists()).toBe(true)
+      const wrapper = mount(Modal, { props: { show: true }, attachTo: document.body })
+      // Teleport renders into document.body — must query there, not in wrapper
+      const dialog = document.body.querySelector('[role="dialog"]')
+      expect(dialog).not.toBeNull()
+      wrapper.unmount()
     })
 
     it('dialog container has aria-modal="true" to constrain AT navigation (SC 4.1.2)', () => {
-      const wrapper = mount(Modal, {
-        props: { show: true },
-        attachTo: document.body,
-      })
-      const dialog = wrapper.find('[role="dialog"]')
-      expect(dialog.attributes('aria-modal')).toBe('true')
+      const wrapper = mount(Modal, { props: { show: true }, attachTo: document.body })
+      const dialog = document.body.querySelector('[role="dialog"]')
+      expect(dialog?.getAttribute('aria-modal')).toBe('true')
+      wrapper.unmount()
     })
 
     it('close button has aria-label for screen-reader description (SC 4.1.2)', () => {
       const wrapper = mount(Modal, {
         props: { show: true },
-        slots: { header: '<h2 id="modal-heading">Confirm Action</h2>' },
+        slots: { header: '<h2>Confirm Action</h2>' },
         attachTo: document.body,
       })
-      const closeBtn = wrapper.find('button[aria-label="Close dialog"]')
-      expect(closeBtn.exists()).toBe(true)
+      const closeBtn = document.body.querySelector('button[aria-label="Close dialog"]')
+      expect(closeBtn).not.toBeNull()
+      wrapper.unmount()
     })
 
     it('close button SVG is aria-hidden to avoid double announcement (SC 4.1.2)', () => {
@@ -209,17 +211,17 @@ describe('Modal Component', () => {
         slots: { header: '<h2>Title</h2>' },
         attachTo: document.body,
       })
-      const svg = wrapper.find('button[aria-label="Close dialog"] svg')
-      expect(svg.attributes('aria-hidden')).toBe('true')
+      const svg = document.body.querySelector('button[aria-label="Close dialog"] svg')
+      expect(svg?.getAttribute('aria-hidden')).toBe('true')
+      wrapper.unmount()
     })
 
     it('backdrop has aria-hidden to avoid AT traversal outside dialog (SC 4.1.2)', () => {
-      const wrapper = mount(Modal, {
-        props: { show: true },
-        attachTo: document.body,
-      })
-      const backdrop = wrapper.find('[aria-hidden="true"]')
-      expect(backdrop.exists()).toBe(true)
+      const wrapper = mount(Modal, { props: { show: true }, attachTo: document.body })
+      // The semi-transparent backdrop carries aria-hidden="true"
+      const backdrop = document.body.querySelector('.backdrop-blur-sm[aria-hidden="true"]')
+      expect(backdrop).not.toBeNull()
+      wrapper.unmount()
     })
 
     it('close button has focus-visible ring class for keyboard navigation (SC 2.4.7)', () => {
@@ -228,18 +230,20 @@ describe('Modal Component', () => {
         slots: { header: '<h2>Title</h2>' },
         attachTo: document.body,
       })
-      const closeBtn = wrapper.find('button[aria-label="Close dialog"]')
-      expect(closeBtn.classes().join(' ')).toContain('focus-visible:ring-2')
+      const closeBtn = document.body.querySelector('button[aria-label="Close dialog"]')
+      expect(closeBtn?.className).toContain('focus-visible:ring-2')
+      wrapper.unmount()
     })
 
-    it('emits close when Escape key is pressed on the wrapper (keyboard trap SC 2.1.2)', async () => {
-      const wrapper = mount(Modal, {
-        props: { show: true },
-        attachTo: document.body,
-      })
-      const outer = wrapper.find('[role="presentation"]')
-      await outer.trigger('keydown.esc')
+    it('emits close when Escape key is pressed on the outer wrapper (keyboard trap SC 2.1.2)', async () => {
+      const wrapper = mount(Modal, { props: { show: true }, attachTo: document.body })
+      // The Escape handler lives on the outer div (role="presentation") which is
+      // also teleported — reach it via document.body
+      const outer = document.body.querySelector('[role="presentation"]') as HTMLElement | null
+      outer?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+      await new Promise<void>((r) => setTimeout(r, 0))
       expect(wrapper.emitted('close')).toBeTruthy()
+      wrapper.unmount()
     })
   })
 });
