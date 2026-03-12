@@ -6,9 +6,9 @@
     <div class="flex-1 flex flex-col min-h-0 pt-6">
       <div class="flex-1 flex flex-col overflow-y-auto">
         <!-- WCAG SC 1.3.1: nav landmark with explicit label disambiguates from Main navigation -->
-        <nav class="px-4 space-y-1" aria-label="Sidebar navigation" aria-labelledby="sidebar-quick-actions-heading">
+        <nav class="px-4 space-y-1" aria-label="Sidebar navigation">
           <div class="mb-6">
-            <h3 id="sidebar-quick-actions-heading" class="px-3 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Quick Actions</h3>
+            <h3 class="px-3 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Quick Actions</h3>
             <div class="mt-3 space-y-1">
               <!-- WCAG SC 2.4.7: focus-visible rings on all interactive links -->
               <!-- WCAG SC 4.1.2: aria-current="page" on active route -->

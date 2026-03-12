@@ -227,5 +227,5 @@ None at this time. All 7 canonical destinations are present in both desktop and 
 | 2026-03-12 | Changed section heading color from `text-gray-500` to `text-gray-600` | WCAG SC 1.4.3 — `gray-500` is borderline on tinted surfaces |
 | 2026-03-12 | Added `role="status" aria-live="polite"` to Sidebar empty-state | WCAG SC 4.1.3 — status not announced to screen readers |
 | 2026-03-12 | Added `aside aria-label="Supplemental navigation"` | WCAG SC 1.3.6 — region role requires accessible name |
-| 2026-03-12 | Added `nav aria-labelledby` pointing to section heading | WCAG SC 1.3.1 — explicit heading association for nav region |
+| 2026-03-12 | Sidebar nav uses `aria-label="Sidebar navigation"` only (no `aria-labelledby`) | WCAG SC 1.3.1 — `aria-labelledby` was pointing to section heading not nav heading; `aria-label` is more precise |
 | 2026-03-12 | Added global `:focus-visible` CSS rule in `style.css` | WCAG SC 2.4.7 — system-level fallback for missing per-element rings |
