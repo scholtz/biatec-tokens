@@ -435,3 +435,48 @@ describe('Navbar — WCAG 2.1 AA accessibility compliance', () => {
     expect(userMenuBtn.attributes('aria-label')).toMatch(/user account menu/i)
   })
 })
+
+describe('Navbar — subscription status badges', () => {
+  it('shows Trial badge when authenticated and subscription isInTrial', () => {
+    const futureTrialEnd = Math.floor(Date.now() / 1000) + 86400 * 7 // 7 days from now
+    const wrapper = mountNavbar(
+      { isConnected: true, user: { email: 'u@b.io' }, account: 'AAAA' },
+      { subscription: { subscription_status: 'trialing', trial_end: futureTrialEnd } },
+    )
+    const html = wrapper.html()
+    expect(html).toMatch(/Trial/i)
+    // trialDaysRemaining should be at least 6
+    expect(html).toMatch(/\dd left/i)
+  })
+
+  it('shows Past Due badge when authenticated and subscription_status is past_due', () => {
+    const wrapper = mountNavbar(
+      { isConnected: true, user: { email: 'u@b.io' }, account: 'AAAA' },
+      { subscription: { subscription_status: 'past_due' } },
+    )
+    const html = wrapper.html()
+    expect(html).toMatch(/Past Due/i)
+  })
+
+  it('does not show Trial or Past Due badge when authenticated with active subscription', () => {
+    const wrapper = mountNavbar(
+      { isConnected: true, user: { email: 'u@b.io' }, account: 'AAAA' },
+      { subscription: { subscription_status: 'active' } },
+    )
+    const html = wrapper.html()
+    expect(html).not.toMatch(/Past Due/i)
+    expect(html).not.toMatch(/Trial ·/i)
+  })
+
+  it('does not show subscription badges when not authenticated', () => {
+    const futureTrialEnd = Math.floor(Date.now() / 1000) + 86400 * 7
+    const wrapper = mountNavbar(
+      { isConnected: false, user: null },
+      { subscription: { subscription_status: 'trialing', trial_end: futureTrialEnd } },
+    )
+    const html = wrapper.html()
+    // Trial badge is gated on isAuthenticated — should not render without auth
+    expect(html).not.toMatch(/Trial ·/i)
+    expect(html).not.toMatch(/Past Due/i)
+  })
+})
