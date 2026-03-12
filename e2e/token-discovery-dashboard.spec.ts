@@ -31,8 +31,8 @@ test.describe('Discovery Dashboard', () => {
     
     for (const standard of standardFilters) {
       const filterElement = page.getByText(standard, { exact: false }).first()
-      const exists = await filterElement.count() > 0
-      if (exists) atLeastOneFilterFound = true
+      const count = await filterElement.count()
+      if (count > 0) atLeastOneFilterFound = true
     }
     // Verify page has loaded meaningful content (filters may load async or be collapsed)
     const bodyText = await page.locator('body').innerText().catch(() => '')

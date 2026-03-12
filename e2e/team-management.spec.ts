@@ -137,6 +137,7 @@ test.describe('Team Management - Compliance Dashboard', () => {
     } else {
       // No team members yet or loading — verify the page structure exists
       const hasActivityHeading = await page.getByRole('heading', { name: /Access Activity/i }).isVisible().catch(() => false)
+      const hasMembersHeading = await page.getByRole('heading', { name: /Team Members/i }).isVisible().catch(() => false)
       expect(hasMembersHeading || hasActivityHeading).toBe(true);
     }
   });

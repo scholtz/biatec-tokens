@@ -1331,6 +1331,74 @@ node_modules/.bin/vitest run --coverage \
 - ❌ Keep dead switch cases that the underlying store/data can never produce — replace switch with if/if/return
 - ❌ Spy on `router.push` from outside the component after mounting — use `router.currentRoute.value.path` instead
 
+### 7o. E2E Tests Must Never Use Low-Signal (Always-True) Assertions (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 12, 2026 (PR #590) 🚨**
+
+**Violation**: Copilot submitted an E2E hardening PR claiming to fix low-signal assertions, but the adjacent spec files (`token-standards-view.spec.ts`, `token-discovery-dashboard.spec.ts`, `token-detail-view.spec.ts`, `team-management.spec.ts`, `whitelist-jurisdiction.spec.ts`, `guided-token-launch.spec.ts`) still contained 13+ always-true assertions. The blocker roadmap explicitly listed these 6 files as requiring cleanup but they were NOT addressed in the first submission — only fixed after a follow-up review cycle.
+
+**Root Cause**:
+- PR focused on creating new spec files (`mvp-backend-signoff.spec.ts`) but IGNORED the existing low-signal assertions in the 6 spec files listed by name in the roadmap
+- Copilot read "Eliminate the remaining low-signal assertions, starting with `e2e/token-standards-view.spec.ts`..." in the roadmap but only created new infrastructure, not the listed existing file cleanup
+- The always-true assertion patterns are invisible to `grep -n 'expect(true)'` unless you ALSO check `expect(x || true)` and `toBeGreaterThanOrEqual(0)` patterns
+
+**What was fixed** (remedied in second commit of PR #590):
+- All 6 spec files were updated to replace always-true patterns with meaningful assertions
+- Inline `page.on('console',...)` suppressors replaced with canonical `suppressBrowserErrors(page)`
+- Keyboard focus tests updated: `body.click()` before Tab + `document.activeElement` check
+- Bug fixed: `await count() > 0` → `(await count()) > 0` (operator precedence)
+
+**Low-signal assertion patterns that must NEVER appear in E2E tests**:
+```typescript
+// ❌ ALWAYS TRUE — provides zero signal about actual product behavior
+expect(true).toBe(true)
+expect(isVisible || true).toBe(true)
+expect(found || true).toBe(true)
+expect(count).toBeGreaterThanOrEqual(0)  // count is always >= 0
+
+// ✅ CORRECT — meaningful assertions
+expect(page.url()).toContain('/expected-route')          // URL is testable
+expect(bodyText.length).toBeGreaterThan(100)             // page has content
+expect(isVisible || hasEmptyState).toBe(true)            // at least one state visible
+expect(page.url()).toBeTruthy()                          // page navigated somewhere
+```
+
+**Pre-commit check for low-signal assertions** (MANDATORY before any E2E commit):
+```bash
+# Find ALL always-true assertion patterns in E2E files
+grep -rn "expect(true)\.toBe(true)\|\\.toBe(true)\|toBeGreaterThanOrEqual(0)" e2e/ --include="*.spec.ts"
+# Also check for the || true pattern explicitly:
+grep -rn "|| true)\.toBe(true)" e2e/ --include="*.spec.ts"
+# Both must return zero results. If any results found: fix them ALL before committing.
+```
+
+**Inline error suppression pattern** (MUST use canonical helper):
+```typescript
+// ❌ WRONG — inline suppressor — must not appear in spec files
+page.on('console', msg => {
+  if (msg.type() === 'error') {
+    console.log(`Browser console error (suppressed...): ${msg.text()}`)
+  }
+})
+page.on('pageerror', error => {
+  console.log(`Page error (suppressed...): ${error.message}`)
+})
+
+// ✅ CORRECT — use canonical helper
+import { suppressBrowserErrors } from './helpers/auth'
+// In beforeEach:
+suppressBrowserErrors(page)
+```
+
+**Scope awareness**: When a roadmap or issue NAMES SPECIFIC FILES for cleanup, those files MUST be addressed in the same PR. Addressing only new files while leaving named existing files untouched is an incomplete delivery.
+
+**Never Again**:
+- ❌ Leave `expect(true).toBe(true)` in any E2E spec file
+- ❌ Leave `expect(x || true).toBe(true)` patterns (always-true regardless of x)
+- ❌ Leave `expect(count).toBeGreaterThanOrEqual(0)` for counts (always passes)
+- ❌ Leave inline `page.on('console',...)` suppressors in spec files (use `suppressBrowserErrors()`)
+- ❌ Ignore named spec files in a roadmap when those files require cleanup
+
 - [ ] **Navigation Link Required**: If implementing new route, MUST add navigation link
   - ❌ **Past Violation**: Guided launch implemented but not accessible from navbar
   - ✅ **Solution**: Add link to `src/components/layout/Navbar.vue` with appropriate icon
