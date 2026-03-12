@@ -203,8 +203,9 @@ test.describe('Whitelist & Jurisdiction Management', () => {
 
     // Verify focus moved to a real element (not stuck on body/document root)
     const focusedElement = await page.evaluate(() => document.activeElement?.tagName)
+    const focusedOnRealElement = focusedElement !== 'BODY' && focusedElement !== 'HTML' && focusedElement != null
     
-    // Should be able to navigate with keyboard — focused tag must not be BODY
-    expect(focusedElement).not.toBe('BODY')
+    // Should be able to navigate with keyboard — focused tag must not be BODY or HTML
+    expect(focusedOnRealElement).toBe(true)
   });
 });

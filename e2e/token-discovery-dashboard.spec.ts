@@ -27,16 +27,16 @@ test.describe('Discovery Dashboard', () => {
   test('should display token standards filter options', async ({ page }) => {
     // Look for standard filter options (checkboxes or buttons)
     const standardFilters = ['ERC20', 'ERC721', 'ARC200', 'ARC3']
+    let atLeastOneFilterFound = false
     
     for (const standard of standardFilters) {
       const filterElement = page.getByText(standard, { exact: false }).first()
       const exists = await filterElement.count() > 0
-      // Filter UI may vary or standards may load async — recorded for debugging only
-      void exists
+      if (exists) atLeastOneFilterFound = true
     }
-    // Verify page has loaded meaningful content regardless of filter implementation
+    // Verify page has loaded meaningful content (filters may load async or be collapsed)
     const bodyText = await page.locator('body').innerText().catch(() => '')
-    expect(bodyText.length).toBeGreaterThan(100)
+    expect(atLeastOneFilterFound || bodyText.length > 100).toBe(true)
   })
 
   test('should display token cards in grid', async ({ page }) => {
@@ -201,7 +201,10 @@ test.describe('Discovery Dashboard', () => {
     await page.keyboard.press('Tab')
     
     // Verify at least one element has received focus (not body/document root)
-    const hasFocused = await page.evaluate(() => document.activeElement !== document.body)
+    const hasFocused = await page.evaluate(() => {
+      const active = document.activeElement
+      return active !== null && active !== document.body && active !== document.documentElement
+    })
     expect(hasFocused).toBe(true)
   })
 

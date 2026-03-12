@@ -253,7 +253,10 @@ test.describe('Token Detail View', () => {
     await page.keyboard.press('Tab')
     
     // Verify at least one element has received focus (not body/document root)
-    const hasFocused = await page.evaluate(() => document.activeElement !== document.body)
+    const hasFocused = await page.evaluate(() => {
+      const active = document.activeElement
+      return active !== null && active !== document.body && active !== document.documentElement
+    })
     expect(hasFocused).toBe(true)
   })
 })
