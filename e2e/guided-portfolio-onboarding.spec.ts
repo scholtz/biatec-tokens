@@ -179,6 +179,7 @@ test.describe('Guided Portfolio Onboarding', () => {
     await expect(progressbar).toBeVisible({ timeout: 45000 })
 
     const valuenow = await progressbar.getAttribute('aria-valuenow')
+    expect(Number.isNaN(Number(valuenow))).toBe(false)
     expect(Number(valuenow)).toBeGreaterThanOrEqual(0)
     expect(Number(valuenow)).toBeLessThanOrEqual(100)
 
@@ -269,6 +270,7 @@ test.describe('Guided Portfolio Onboarding', () => {
 
     const valuenow = await progressbar.getAttribute('aria-valuenow')
     expect(valuenow).toBeTruthy()
+    expect(Number.isNaN(Number(valuenow))).toBe(false)
     expect(Number(valuenow)).toBeGreaterThanOrEqual(0)
     expect(Number(valuenow)).toBeLessThanOrEqual(100)
   })

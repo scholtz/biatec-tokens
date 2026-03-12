@@ -13,7 +13,8 @@
 import { test, expect } from '@playwright/test'
 import { suppressBrowserErrors } from './helpers/auth'
 
-test.describe('Auth Error Scenarios - Negative Path Testing', () => {(async ({ page }) => {
+test.describe('Auth Error Scenarios - Negative Path Testing', () => {
+  test.beforeEach(async ({ page }) => {
     // Suppress browser console/page errors for mock environment
     suppressBrowserErrors(page)
   })

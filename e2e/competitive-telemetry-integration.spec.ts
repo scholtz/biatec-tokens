@@ -8,7 +8,8 @@
 import { test, expect } from '@playwright/test'
 import { suppressBrowserErrors } from './helpers/auth'
 
-test.describe('Token Creation Journey Tracking', () => {(async ({ page }) => {
+test.describe('Token Creation Journey Tracking', () => {
+  test.beforeEach(async ({ page }) => {
     // Suppress console errors for test stability
     suppressBrowserErrors(page)
 

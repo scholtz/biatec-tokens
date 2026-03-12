@@ -323,7 +323,7 @@ test.describe('Compliance setup workspace — non-wallet accessibility', () => {
     // Verify the main content region has focusable elements (≥1 expected on any rendered page)
     const buttons = page.getByRole('button')
     const buttonCount = await buttons.count()
-    expect(buttonCount).toBeGreaterThanOrEqual(1)
+    expect(buttonCount).toBeGreaterThan(0)
   })
 })
 
