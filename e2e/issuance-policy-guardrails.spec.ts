@@ -27,7 +27,9 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { suppressBrowserErrors } from './helpers/auth'----------------------------------------------------------------
+import { suppressBrowserErrors } from './helpers/auth'
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 

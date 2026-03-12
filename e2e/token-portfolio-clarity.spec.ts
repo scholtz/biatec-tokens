@@ -9,8 +9,9 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { suppressBrowserErrors } from './helpers/auth' () => {
-  test.beforeEach(async ({ page }) => {
+import { suppressBrowserErrors } from './helpers/auth'
+
+test.describe('Token Portfolio Clarity', () => {(async ({ page }) => {
     // Suppress console errors to prevent Playwright from failing on browser console output
     suppressBrowserErrors(page)
 

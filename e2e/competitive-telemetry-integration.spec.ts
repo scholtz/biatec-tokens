@@ -6,8 +6,9 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { suppressBrowserErrors } from './helpers/auth' () => {
-  test.beforeEach(async ({ page }) => {
+import { suppressBrowserErrors } from './helpers/auth'
+
+test.describe('Token Creation Journey Tracking', () => {(async ({ page }) => {
     // Suppress console errors for test stability
     suppressBrowserErrors(page)
 

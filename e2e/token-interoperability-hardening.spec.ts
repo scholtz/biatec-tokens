@@ -83,12 +83,13 @@ test.describe('Wallet Activation Journey — Auth-First', () => {
 
   test('should show step progress indicator', async ({ page }) => {
     const bodyText = await page.locator('body').innerText()
-    // Progress should mention step numbers
+    // Progress should mention step numbers or a heading is present (page rendered)
     const hasStepIndicator =
       bodyText.match(/Step\s+\d+\s+of\s+\d+/i) !== null ||
       bodyText.includes('Step 1') ||
       bodyText.includes('step')
-    expect(hasStepIndicator || true).toBe(true)
+    const h1Exists = await page.locator('h1').count()
+    expect(hasStepIndicator || h1Exists > 0).toBe(true)
   })
 
   test('should display actionable account readiness information', async ({ page }) => {
@@ -149,8 +150,9 @@ test.describe('Home Page — Interoperability CTAs', () => {
     // Token Standards link or section should be accessible
     const standardsLink = page.getByRole('link', { name: /token standards/i }).first()
     const isVisible = await standardsLink.isVisible({ timeout: 10000 }).catch(() => false)
-    // Flexible: link may be in mobile menu only
-    expect(isVisible || true).toBe(true)
+    // The nav must have at least one link — token standards may be in mobile menu
+    const navLinkCount = await page.locator('nav a').count()
+    expect(isVisible || navLinkCount > 0).toBe(true)
   })
 })
 

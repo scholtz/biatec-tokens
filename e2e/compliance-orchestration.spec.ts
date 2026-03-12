@@ -106,9 +106,10 @@ test.describe('Compliance Orchestration View', () => {
     const gatingText = page.getByText(/Token issuance/i).first()
     const isVisible = await gatingText.isVisible().catch(() => false)
     
-    // Banner may or may not be visible depending on mock compliance state
-    // Just verify page loads without error
-    expect(true).toBe(true)
+    // Banner may be conditionally visible — at minimum the page must render a heading
+    const h1 = page.locator('h1').first()
+    const h1Visible = await h1.isVisible().catch(() => false)
+    expect(isVisible || h1Visible).toBe(true)
   })
 
   test('should have accessible form elements', async ({ page }) => {
