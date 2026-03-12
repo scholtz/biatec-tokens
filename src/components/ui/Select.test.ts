@@ -242,6 +242,22 @@ describe('Select Component', () => {
       expect(wrapper.find('select').attributes('aria-required')).toBe('true')
     })
 
+    it('does NOT set aria-required when not required (SC 4.1.2)', () => {
+      const wrapper = mount(Select, { props: { required: false, options: stringOptions } })
+      expect(wrapper.find('select').attributes('aria-required')).toBeUndefined()
+    })
+
+    it('removes aria-describedby when neither error nor hint is present', () => {
+      const wrapper = mount(Select, { props: { id: 'network', options: stringOptions } })
+      expect(wrapper.find('select').attributes('aria-describedby')).toBeUndefined()
+    })
+
+    it('uses provided id for aria-describedby linkage (SC 4.1.2)', () => {
+      const wrapper = mount(Select, { props: { id: 'token-standard', error: 'Required', options: stringOptions } })
+      expect(wrapper.find('select').attributes('id')).toBe('token-standard')
+      expect(wrapper.find('select').attributes('aria-describedby')).toBe('token-standard-error')
+    })
+
     it('required asterisk is aria-hidden to avoid duplication (SC 1.3.1)', () => {
       const wrapper = mount(Select, { props: { label: 'Network', required: true, options: stringOptions } })
       expect(wrapper.find('span.text-red-500').attributes('aria-hidden')).toBe('true')
