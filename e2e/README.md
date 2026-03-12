@@ -502,11 +502,63 @@ Key settings:
 
 ## CI/CD Integration
 
-Playwright tests run automatically in CI/CD pipelines. Make sure to:
+The frontend uses a **two-lane Playwright CI model**. The two lanes are independent — neither blocks the other.
 
-1. Install dependencies: `npm ci`
-2. Install Playwright browsers: `npx playwright install --with-deps`
-3. Run tests: `npm run test:e2e`
+### Lane 1: Permissive (Standard CI) — `playwright.yml`
+
+Runs on every pull request and every push to `main` / `develop`.
+
+- **Auth model**: `withAuth()` — seeds validated localStorage session; no live backend required
+- **Purpose**: Fast developer feedback on UI regressions, accessibility, routing
+- **Sign-off tests**: Skip gracefully (`BIATEC_STRICT_BACKEND` not set)
+
+```bash
+# Standard permissive lane
+npm run test:e2e
+```
+
+### Lane 2: Strict Backend Sign-off Gate — `strict-signoff.yml`
+
+Runs on push to `main` (for sign-off-related files) and on manual `workflow_dispatch`.
+
+- **Auth model**: `loginWithCredentialsStrict()` — throws if backend unavailable; no localStorage fallback
+- **Purpose**: Release-readiness evidence. Proves the real critical path works against a live backend.
+- **Spec file**: `e2e/mvp-backend-signoff.spec.ts`
+
+Required repository secrets:
+
+| Secret | Description |
+|---|---|
+| `SIGNOFF_API_BASE_URL` | Live staging backend URL (e.g. `https://staging.biatec.io`) |
+| `SIGNOFF_TEST_EMAIL` | Email of a provisioned sign-off test account |
+| `SIGNOFF_TEST_PASSWORD` | Password for the sign-off test account |
+
+To run the strict lane locally:
+
+```bash
+BIATEC_STRICT_BACKEND=true \
+API_BASE_URL=https://staging.biatec.io \
+TEST_USER_EMAIL=signoff@biatec.io \
+TEST_USER_PASSWORD=<secret> \
+npx playwright test e2e/mvp-backend-signoff.spec.ts --trace on
+```
+
+To trigger via GitHub Actions:
+1. Navigate to **Actions → 🔒 Strict Backend Sign-off Gate**
+2. Click **Run workflow** and optionally provide `api_base_url`, `test_user_email`, and a `reason`
+
+For full documentation, see [`docs/implementations/STRICT_SIGNOFF_LANE.md`](../docs/implementations/STRICT_SIGNOFF_LANE.md).
+
+### General CI setup
+
+```bash
+# Install dependencies
+npm ci
+# Install Playwright browsers
+npx playwright install --with-deps chromium
+# Run permissive E2E tests
+npm run test:e2e
+```
 
 ## Debugging
 

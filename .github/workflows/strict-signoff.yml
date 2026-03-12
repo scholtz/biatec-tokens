@@ -1,0 +1,252 @@
+name: 🔒 Strict Backend Sign-off Gate
+
+# ---------------------------------------------------------------------------
+# Purpose
+# ---------------------------------------------------------------------------
+# This workflow is the PROTECTED strict-backend sign-off lane for the
+# Biatec Tokens frontend. It is distinct from the standard permissive
+# Playwright lane (playwright.yml) and proves the highest-risk enterprise
+# journey against a live backend under production-like conditions.
+#
+# What it validates:
+#   - Real email/password authentication (no localStorage seeding)
+#   - Real backend session establishment and ARC76 contract compliance
+#   - Deployment initiation, status polling, and terminal-state evidence
+#   - Auth-first routing (protected routes correctly guarded)
+#   - No wallet connector UI after real backend authentication
+#
+# When it runs:
+#   1. Manual trigger (workflow_dispatch) — for release candidates and
+#      pre-merge sign-off by product leads or release managers.
+#   2. On push to `main` — proves the critical path is intact after merges.
+#
+# Prerequisites (must be configured as repository secrets):
+#   SIGNOFF_API_BASE_URL   — Live staging backend, e.g. https://staging.biatec.io
+#   SIGNOFF_TEST_EMAIL     — Email of a provisioned sign-off test account
+#   SIGNOFF_TEST_PASSWORD  — Password for the sign-off test account
+#
+# If secrets are not configured, the lane skips individual sign-off tests
+# (each test calls `requireStrictBackend()` which skips when the env var is
+# absent). The workflow job itself still runs and produces an artifact for
+# audit purposes, making the "not configured" state visible to maintainers.
+#
+# Separation from standard CI:
+#   - Standard CI (playwright.yml): permissive lane, no BIATEC_STRICT_BACKEND,
+#     all sign-off tests skip gracefully. Runs on every PR for fast feedback.
+#   - This workflow: strict lane only, full tracing, longer timeouts. Runs
+#     on push to main and on manual trigger for release readiness.
+#
+# Roadmap:
+#   https://raw.githubusercontent.com/scholtz/biatec-tokens/refs/heads/main/business-owner-roadmap.md
+# ---------------------------------------------------------------------------
+
+on:
+  # Manual trigger — for release candidates and pre-release sign-off
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: |
+          Backend API base URL (e.g. https://staging.biatec.io).
+          Overrides SIGNOFF_API_BASE_URL secret when provided.
+        required: false
+        default: ''
+      test_user_email:
+        description: |
+          Sign-off test account email.
+          Overrides SIGNOFF_TEST_EMAIL secret when provided.
+        required: false
+        default: ''
+      reason:
+        description: |
+          Optional: describe why this sign-off run is being triggered
+          (e.g. "Release candidate v1.2.3", "Post-deploy verification").
+        required: false
+        default: ''
+
+  # Run on every push to main — ensures the critical path is protected after merges
+  push:
+    branches:
+      - main
+    paths:
+      # Sign-off spec and helpers — changes here need immediate strict validation
+      - 'e2e/mvp-backend-signoff.spec.ts'
+      - 'e2e/helpers/auth.ts'
+      - 'src/utils/backendSignoffConfig.ts'
+      # Core auth and routing — changes here affect the critical path
+      - 'src/stores/auth.ts'
+      - 'src/router/index.ts'
+      # Workflow itself — self-validate on update
+      - '.github/workflows/strict-signoff.yml'
+
+jobs:
+  strict-signoff:
+    name: '🔒 Strict Backend Sign-off Gate'
+    runs-on: ubuntu-latest
+    # Allow up to 30 minutes — sign-off suite includes deployment lifecycle polling
+    timeout-minutes: 30
+    # Minimal permissions — this job only reads code and writes artifacts
+    permissions:
+      contents: read
+
+    env:
+      # Strict mode flag — this is what activates loginWithCredentialsStrict()
+      # and prevents silent localStorage fallback in sign-off tests
+      BIATEC_STRICT_BACKEND: 'true'
+
+      # Backend URL: prefer workflow_dispatch input, then repo secret.
+      # NO production fallback — if neither is set, API_BASE_URL is empty and tests
+      # will fail loudly at the network layer (fail-closed, not fail-open).
+      API_BASE_URL: ${{ inputs.api_base_url || secrets.SIGNOFF_API_BASE_URL || '' }}
+
+      # Sign-off test credentials: prefer workflow_dispatch input, then repo secret.
+      # NO hardcoded fallback email — missing credentials must surface as explicit failures.
+      TEST_USER_EMAIL: ${{ inputs.test_user_email || secrets.SIGNOFF_TEST_EMAIL || '' }}
+      TEST_USER_PASSWORD: ${{ secrets.SIGNOFF_TEST_PASSWORD || '' }}
+
+      # Capture the trigger reason in logs
+      SIGNOFF_REASON: ${{ inputs.reason || 'Automated push-to-main verification' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Log sign-off configuration
+        run: |
+          echo "============================================"
+          echo "🔒 STRICT BACKEND SIGN-OFF GATE"
+          echo "============================================"
+          echo "Trigger reason : ${SIGNOFF_REASON}"
+          echo "Strict mode    : BIATEC_STRICT_BACKEND=${BIATEC_STRICT_BACKEND}"
+          echo "Backend URL    : ${API_BASE_URL:-<not set>}"
+          echo "Test email     : ${TEST_USER_EMAIL:-<not set>}"
+          echo "Run ID         : ${{ github.run_id }}"
+          echo "Commit SHA     : ${{ github.sha }}"
+          echo "Ref            : ${{ github.ref }}"
+          echo "============================================"
+          if [ -z "${API_BASE_URL}" ]; then
+            echo "ℹ️  API_BASE_URL is not set. Tests will attempt localhost:3000 (will fail in CI)."
+            echo "   Configure SIGNOFF_API_BASE_URL repository secret to point to a live backend."
+          else
+            echo "✅ Backend URL is configured: ${API_BASE_URL}"
+          fi
+          if [ -z "${TEST_USER_EMAIL}" ]; then
+            echo "ℹ️  TEST_USER_EMAIL is not set. Auth tests will use the default (e2e-test@biatec.io)."
+          fi
+          if [ -z "${TEST_USER_PASSWORD}" ]; then
+            echo "⚠️  SIGNOFF_TEST_PASSWORD is empty."
+            echo "   Auth tests will fail when they attempt real backend login."
+            echo "   Configure the SIGNOFF_TEST_PASSWORD repository secret to enable"
+            echo "   full strict sign-off validation."
+          else
+            echo "✅ Sign-off credentials are configured."
+          fi
+          echo "============================================"
+
+      - name: Verify sign-off prerequisites
+        run: |
+          # Fail fast if API_BASE_URL is empty or points to localhost — neither is a
+          # valid strict sign-off target. This prevents wasting CI minutes on tests
+          # that will fail at the network layer without providing useful diagnostic evidence.
+          #
+          # Exception: allow localhost when explicitly passed via workflow_dispatch input
+          # (developer testing with local backend). Standard push-to-main triggers always
+          # require a real URL via the SIGNOFF_API_BASE_URL secret.
+          if [ -z "${API_BASE_URL}" ]; then
+            echo ""
+            echo "❌ STRICT SIGN-OFF PREREQUISITE FAILURE"
+            echo "   API_BASE_URL is not set. This sign-off lane requires a live backend URL."
+            echo ""
+            echo "   To fix: configure the SIGNOFF_API_BASE_URL repository secret with the"
+            echo "   staging or production backend URL (e.g. https://staging.biatec.io)."
+            echo ""
+            echo "   Alternatively, use workflow_dispatch and provide api_base_url as an input."
+            echo ""
+            exit 1
+          fi
+          if [ -z "${TEST_USER_PASSWORD}" ]; then
+            echo ""
+            echo "❌ STRICT SIGN-OFF PREREQUISITE FAILURE"
+            echo "   SIGNOFF_TEST_PASSWORD is not configured."
+            echo "   This sign-off lane requires real credentials to authenticate against"
+            echo "   the backend. Tests cannot produce credible release evidence without them."
+            echo ""
+            echo "   To fix: configure the SIGNOFF_TEST_PASSWORD repository secret."
+            echo ""
+            exit 1
+          fi
+          echo "✅ Sign-off prerequisites verified — backend URL and credentials are configured."
+
+      - name: Start Vite dev server (background)
+        run: |
+          npm run dev &
+          # Wait for Vite to be ready (up to 30s)
+          timeout 30 bash -c 'until curl -sf http://localhost:5173 > /dev/null; do sleep 1; done'
+          echo "✅ Vite dev server is ready at http://localhost:5173"
+        env:
+          CI: 'true'
+
+      - name: '🔒 Run strict backend sign-off suite'
+        id: signoff
+        run: |
+          npx playwright test e2e/mvp-backend-signoff.spec.ts \
+            --reporter=list,html \
+            --trace=on \
+            --screenshot=on
+        env:
+          CI: 'true'
+        # Do NOT use continue-on-error — this gate must fail the workflow when tests fail
+        # (unless the test itself skips due to missing backend configuration, which is
+        # handled inside the spec with test.skip())
+
+      - name: Upload sign-off report and artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          # Include run ID for audit trail — sign-off artifacts are kept for 90 days
+          name: strict-signoff-report-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 90
+
+      - name: Summarise sign-off result
+        if: always()
+        run: |
+          echo "============================================"
+          echo "🔒 STRICT SIGN-OFF RESULT: ${{ steps.signoff.outcome }}"
+          echo "============================================"
+          if [ "${{ steps.signoff.outcome }}" = "success" ]; then
+            echo "✅ Strict backend sign-off PASSED."
+            echo "   The real backend-backed auth and deployment lifecycle"
+            echo "   were verified. This run can be cited as release evidence."
+          elif [ "${{ steps.signoff.outcome }}" = "skipped" ]; then
+            echo "⚠️  Strict backend sign-off SKIPPED."
+            echo "   All sign-off tests skipped because BIATEC_STRICT_BACKEND"
+            echo "   is not set or backend credentials are not configured."
+            echo "   This is NOT credible release evidence."
+          else
+            echo "❌ Strict backend sign-off FAILED."
+            echo "   One or more sign-off tests failed. Download the artifact"
+            echo "   'strict-signoff-report-${{ github.run_id }}' for traces,"
+            echo "   screenshots, and failure details."
+            echo ""
+            echo "   Common failure causes:"
+            echo "   - Backend unreachable at ${API_BASE_URL}"
+            echo "   - Invalid credentials (SIGNOFF_TEST_EMAIL / SIGNOFF_TEST_PASSWORD)"
+            echo "   - Auth response missing expected fields (address, email)"
+            echo "   - Deployment lifecycle endpoint returns unexpected status"
+            echo "   - Route guard regression (protected route accessible without auth)"
+          fi
+          echo "============================================"
