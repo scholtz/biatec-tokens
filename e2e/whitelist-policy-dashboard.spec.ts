@@ -47,9 +47,10 @@ test.describe("Whitelist Policy Dashboard", () => {
     await page.goto(POLICY_URL);
     await page.waitForLoadState("load");
 
-    // Wait semantically for the Edit Policy button — only visible after mock fetch completes
+    // Use semantic wait: the edit button only appears after the 600ms mock fetch completes.
+    // With Vite pre-warmed in globalSetup, this typically resolves in under 2s.
     const editBtn = page.locator('[data-testid="edit-policy-button"]');
-    const policyLoaded = await editBtn.isVisible({ timeout: 12000 }).catch(() => false);
+    const policyLoaded = await editBtn.isVisible({ timeout: 20000 }).catch(() => false);
 
     const bodyText = await page.locator("body").innerText({ timeout: 10000 });
     // Mock policy contains these texts
@@ -67,18 +68,19 @@ test.describe("Whitelist Policy Dashboard", () => {
     await page.goto(POLICY_URL);
     await page.waitForLoadState("load");
 
-    // Wait semantically for policy to load by checking for jurisdiction panels or edit button
+    // Wait semantically for the edit button — only present after mock fetch completes.
+    // With Vite pre-warmed in globalSetup, this typically resolves in under 2s.
     const editBtn = page.locator('[data-testid="edit-policy-button"]');
-    await editBtn.isVisible({ timeout: 12000 }).catch(() => false);
+    await editBtn.isVisible({ timeout: 20000 }).catch(() => false);
 
     const allowed = page.locator('[data-testid="allowed-jurisdictions-panel"]');
     const blocked = page.locator('[data-testid="blocked-jurisdictions-panel"]');
     const restricted = page.locator('[data-testid="restricted-jurisdictions-panel"]');
 
     const [a, b, r] = await Promise.all([
-      allowed.isVisible({ timeout: 3000 }).catch(() => false),
-      blocked.isVisible({ timeout: 3000 }).catch(() => false),
-      restricted.isVisible({ timeout: 3000 }).catch(() => false),
+      allowed.isVisible({ timeout: 5000 }).catch(() => false),
+      blocked.isVisible({ timeout: 5000 }).catch(() => false),
+      restricted.isVisible({ timeout: 5000 }).catch(() => false),
     ]);
     expect(a || b || r).toBe(true);
   });
@@ -244,11 +246,12 @@ test.describe("Whitelist Policy Dashboard", () => {
     await page.goto(POLICY_URL);
     await page.waitForLoadState("load");
 
-    // Wait semantically for policy content — Investor Categories heading appears after mock fetch
+    // Wait semantically for policy content — Investor Categories heading appears after mock fetch.
+    // With Vite pre-warmed in globalSetup, this typically resolves in under 2s.
     const editBtn = page.locator('[data-testid="edit-policy-button"]');
-    await editBtn.isVisible({ timeout: 12000 }).catch(() => false);
+    await editBtn.isVisible({ timeout: 20000 }).catch(() => false);
 
-    const bodyText = await page.locator("body").innerText({ timeout: 5000 });
+    const bodyText = await page.locator("body").innerText({ timeout: 10000 });
     const hasCategoryContent =
       bodyText.includes("Investor Categories") ||
       bodyText.includes("Retail") ||

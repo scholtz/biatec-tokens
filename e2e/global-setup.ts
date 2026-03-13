@@ -65,6 +65,14 @@ async function globalSetup(_config: FullConfig) {
     await page.goto(`${BASE_URL}/compliance/launch`, { waitUntil: 'load', timeout: 120000 })
     console.log('[globalSetup] /compliance/launch compiled.')
 
+    // Visit whitelist policy dashboard — compiles WhitelistPolicyDashboard.vue and
+    // all 4 sub-components (PolicySummaryPanel, EligibilityInspector, PolicyEditPanel,
+    // PolicyAuditCard). Without this warmup, the first test that hits /compliance/policy
+    // triggers a cold Vite compilation of the entire component subtree, causing the
+    // 12-second "wait for edit button" window to expire before the mock fetch completes.
+    await page.goto(`${BASE_URL}/compliance/policy`, { waitUntil: 'load', timeout: 120000 })
+    console.log('[globalSetup] /compliance/policy compiled.')
+
     console.log('[globalSetup] Vite dev server fully warmed up. All module compilations cached.')
   } catch (err) {
     // Non-fatal: log and continue. Per-test timeouts (test.setTimeout) act as
