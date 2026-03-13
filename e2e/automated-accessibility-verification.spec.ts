@@ -228,8 +228,8 @@ test.describe("Section 2 — Guided Launch accessibility (WCAG SC 1.3.1, 4.1.2, 
     await page.waitForLoadState("load", { timeout: 10000 });
     const h1 = page.getByRole("heading", { level: 1 });
     await expect(h1).toBeVisible({ timeout: 20000 });
-    // Step indicator nav
-    const stepNav = page.locator('[role="navigation"][aria-label*="step" i], [role="navigation"][aria-label*="progress" i], [role="navigation"][aria-label*="issuance" i]');
+    // Step indicator nav — data-testid="issuance-step-indicator" (from ISSUANCE_TEST_IDS.STEP_INDICATOR)
+    const stepNav = page.locator('[data-testid="issuance-step-indicator"]');
     await expect(stepNav).toBeVisible({ timeout: 10000 });
     const ariaLabel = await stepNav.getAttribute("aria-label");
     expect(ariaLabel).toBeTruthy();
@@ -393,8 +393,8 @@ test.describe("Section 4 — Team Workspace accessibility (WCAG SC 1.3.1, 2.4.1,
     await page.waitForLoadState("load", { timeout: 10000 });
     const h1 = page.getByRole("heading", { level: 1 });
     await expect(h1).toBeVisible({ timeout: 20000 });
-    // Summary bar has aria-label="Workflow summary counts"
-    const summaryBar = page.locator('[aria-label*="summary" i], [aria-label*="workflow" i]');
+    // Summary bar has data-testid="summary-bar" and aria-label="Workflow summary counts"
+    const summaryBar = page.locator('[data-testid="summary-bar"]');
     const count = await summaryBar.count();
     expect(count).toBeGreaterThan(0);
   });
@@ -745,8 +745,8 @@ test.describe("Section 8 — Shell ARIA on authenticated enterprise routes (WCAG
     await page.waitForLoadState("load", { timeout: 10000 });
     const h1 = page.getByRole("heading", { level: 1 });
     await expect(h1).toBeVisible({ timeout: 20000 });
-    // The sidebar aside must have an aria-label
-    const sidebarNav = page.locator('aside[aria-label], [aria-label="Supplemental navigation"]');
+    // The sidebar aside must have aria-label="Supplemental navigation"
+    const sidebarNav = page.locator('[aria-label="Supplemental navigation"]');
     const count = await sidebarNav.count();
     expect(count).toBeGreaterThan(0);
   });

@@ -151,7 +151,7 @@ describe('Settings — WCAG AA Accessibility', () => {
 
   it('Network radio fieldset has a <legend> (WCAG SC 1.3.1)', () => {
     const wrapper = mountSettings()
-    const legend = wrapper.find('fieldset legend')
+    const legend = wrapper.find('fieldset > legend')
     expect(legend.exists()).toBe(true)
     expect(legend.text()).toMatch(/active network/i)
   })
