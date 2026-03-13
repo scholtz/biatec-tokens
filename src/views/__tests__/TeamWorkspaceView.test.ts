@@ -270,18 +270,20 @@ describe('TeamWorkspaceView — error state', () => {
 // ---------------------------------------------------------------------------
 
 describe('TeamWorkspaceView — role awareness', () => {
-  it('shows no-role message when user has no team member record', async () => {
+  it('shows no-role banner when user has no team member record', async () => {
     const w = await mountView({
       team: { members: [] },
     })
     expect(w.find('[data-testid="no-role-message"]').exists()).toBe(true)
   })
 
-  it('hides queue sections when user has no role', async () => {
+  it('still shows queue sections when user has no specific role (read-only mode)', async () => {
+    // Workspace content is always visible for authenticated users.
+    // Role determines action capability (approve / manage team), not view access.
     const w = await mountView({
       team: { members: [] },
     })
-    expect(w.find('[data-testid="awaiting-review-section"]').exists()).toBe(false)
+    expect(w.find('[data-testid="awaiting-review-section"]').exists()).toBe(true)
   })
 
   it('shows queue sections when user has a team role', async () => {

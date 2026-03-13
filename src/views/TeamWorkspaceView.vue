@@ -72,32 +72,40 @@
         </div>
       </header>
 
-      <!-- ── No-role message ────────────────────────────────────────── -->
+      <!-- ── No-role info banner (read-only notice) ───────────────── -->
+      <!-- Shown as an informational banner when the user is authenticated but   -->
+      <!-- not yet assigned to the team.  They can still view the workspace in   -->
+      <!-- read-only mode — actions are disabled by canApprove / canManageTeam.  -->
       <div
         v-if="!hasRole"
-        class="glass-effect rounded-xl p-8 border border-white/10 text-center"
+        id="no-role-notice"
+        class="mb-6 glass-effect rounded-xl p-4 border border-yellow-500/30 flex items-start gap-3"
         role="status"
         data-testid="no-role-message"
+        aria-label="Read-only access notice"
       >
-        <i class="pi pi-lock text-gray-500 text-4xl mb-4" aria-hidden="true"></i>
-        <h2 class="text-xl font-semibold text-white mb-2">No Team Role Assigned</h2>
-        <p class="text-gray-400 text-sm mb-4">
-          Contact your organisation owner to be assigned a role before accessing the team workspace.
-        </p>
+        <i class="pi pi-info-circle text-yellow-400 text-xl flex-shrink-0 mt-0.5" aria-hidden="true"></i>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-yellow-300">No Team Role Assigned</p>
+          <p class="text-xs text-gray-400 mt-0.5">
+            You can view pending work items in read-only mode.
+            Contact your organisation owner to be assigned a role before you can approve or request changes.
+          </p>
+        </div>
         <router-link
           to="/compliance"
-          class="inline-flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+          class="text-xs text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap"
+          aria-label="Go to Compliance Dashboard"
         >
-          <i class="pi pi-arrow-left" aria-hidden="true"></i>
-          Go to Compliance Dashboard
+          Compliance Dashboard
         </router-link>
       </div>
 
-      <!-- ── Main content ───────────────────────────────────────────── -->
+      <!-- ── Main content (always shown for authenticated users) ────── -->
       <main
-        v-else
         id="workspace-main"
         aria-label="Team approval workflow"
+        :aria-describedby="!hasRole ? 'no-role-notice' : undefined"
       >
         <!-- Loading state -->
         <div

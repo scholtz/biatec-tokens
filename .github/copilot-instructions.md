@@ -1721,7 +1721,81 @@ grep -rn "isVisible({ timeout" e2e/ --include="*.spec.ts"
 
 ---
 
-## 🚨 CRITICAL: PR QUALITY STANDARDS - HARDENING ISSUES 🚨
+### 7u. `withAuth()` addInitScript Re-Seeds Auth on Every Navigation — Unauthenticated Redirect Tests MUST Use a Separate Describe Block (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 13, 2026 (team-workspace.spec.ts) 🚨**
+
+**Violation**: Copilot wrote a "redirects unauthenticated users away from /team/workspace" test inside a `test.describe` block that had `await withAuth(page)` in the `beforeEach`. The test called `page.evaluate(() => localStorage.clear())` and re-navigated to the protected route, expecting a redirect. The redirect never fired — all 3 retries failed with `Expected: true, Received: false`.
+
+**Root Cause**: `withAuth()` calls `page.addInitScript()`. This registers a JavaScript snippet that runs **before every page load in the browser context**, not just the first one. When the test cleared localStorage and navigated to `/team/workspace`, `addInitScript` re-ran and re-seeded `algorand_user` in localStorage BEFORE the Vue Router guard executed — making the user appear fully authenticated to the router. The router guard never triggered the redirect.
+
+**The `page.evaluate()` approach is NEVER sufficient for clearing auth in a context where `withAuth()` was called**, because `addInitScript` cannot be removed from a page context once registered.
+
+**Correct Pattern — Separate describe block with `clearAuthScript()`**:
+
+```typescript
+// ✅ CORRECT — unauthenticated redirect test is in its OWN describe block
+// that does NOT call withAuth() in beforeEach.
+test.describe('MyView — unauthenticated redirect', () => {
+  test.beforeEach(async ({ page }) => {
+    suppressBrowserErrors(page)
+    // clearAuthScript() registers an addInitScript that REMOVES auth keys,
+    // so it wins over any seeding from prior test contexts.
+    await clearAuthScript(page)
+  })
+
+  test('redirects unauthenticated users away from /my-route', async ({ page }) => {
+    await page.goto('http://localhost:5173/my-route', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+    await page.waitForTimeout(3000)
+
+    const url = page.url()
+    const redirectedAway = !url.includes('/my-route')
+    const hasAuthParam = url.includes('showAuth=true')
+    const showsAuthModal = await page
+      .locator('form').filter({ hasText: /email/i }).first()
+      .isVisible({ timeout: 3000 }).catch(() => false)
+
+    expect(redirectedAway || showsAuthModal || hasAuthParam).toBe(true)
+  })
+})
+
+// ❌ WRONG — unauthenticated redirect test in the SAME describe block as withAuth()
+test.describe('MyView', () => {
+  test.beforeEach(async ({ page }) => {
+    suppressBrowserErrors(page)
+    await withAuth(page)  // ← registers addInitScript that re-seeds auth
+  })
+
+  test('redirects unauthenticated users', async ({ page }) => {
+    await page.goto('/', { timeout: 15000 })
+    await page.evaluate(() => localStorage.clear())  // ← cleared, but...
+    await page.goto('/my-route', { timeout: 15000 })  // ← addInitScript re-seeds auth here!
+    // Router guard sees authenticated user — redirect NEVER fires
+    expect(page.url()).not.toContain('/my-route')  // ALWAYS fails
+  })
+})
+```
+
+**Why `page.evaluate(() => localStorage.clear())` does NOT work**:
+- `addInitScript` callbacks execute at `Page.goto()` time, BEFORE any JavaScript (including the app's auth check)
+- They are ordered: all `addInitScript` scripts fire first, then the page's own scripts load
+- Even if you clear localStorage right before a navigation, the `addInitScript` fires first on the new navigation and re-sets the key
+- The only way to "undo" `addInitScript` seeding is to register a competing `addInitScript` that removes the key (which is what `clearAuthScript()` does)
+
+**File structure rule**: Every spec file that has authenticated tests AND unauthenticated redirect tests MUST have AT LEAST TWO `test.describe` blocks:
+1. An authenticated block with `await withAuth(page)` in `beforeEach`
+2. A separate unauthenticated block with `await clearAuthScript(page)` in `beforeEach`
+
+**Never Again**:
+- ❌ Put unauthenticated redirect tests in a describe block that calls `withAuth()` in `beforeEach`
+- ❌ Use `page.evaluate(() => localStorage.clear())` to simulate logged-out state when `withAuth()` was called
+- ❌ Expect router-guard redirects to fire when auth has been re-seeded by `addInitScript`
+- ✅ Always use a separate `test.describe` + `clearAuthScript()` for unauthenticated redirect testing
+
+---
+
+
 
 **MANDATORY BEFORE SUBMITTING ANY PR FOR HARDENING ISSUES**
 
