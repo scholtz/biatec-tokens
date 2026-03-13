@@ -513,7 +513,7 @@ import {
   CheckCircleIcon,
   ClockIcon,
 } from '@heroicons/vue/24/outline'
-import MainLayout from '../layout/MainLayout.vue'
+import MainLayout from '../components/layout/MainLayout.vue'
 import { usePortfolioLaunchpadStore, LAUNCHPAD_STAGES } from '../stores/portfolioLaunchpad'
 import type { LaunchpadStage } from '../stores/portfolioLaunchpad'
 import {

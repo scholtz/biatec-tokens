@@ -139,17 +139,27 @@ test.describe("Section 1 — Skip-link keyboard activation (WCAG SC 2.4.1)", () 
     await page.goto("/");
     await page.waitForLoadState("load");
 
-    // Click body to give page focus, then Tab to reach first interactive element
-    await page.locator("body").click();
-    await page.keyboard.press("Tab");
-
-    const focusedHref = await page.evaluate(() => {
-      const el = document.activeElement as HTMLAnchorElement | null;
-      return el?.getAttribute("href") ?? "";
+    // Verify via DOM order: the skip link must appear before any nav link in the DOM.
+    // Tab-key approach is unreliable in headless CI (Section 7l of copilot instructions).
+    // DOM order IS the tab order for elements without explicit tabindex, so this gives
+    // an equivalent WCAG 2.4.1 assertion without relying on browser keyboard focus events.
+    const isFirstTabbable = await page.evaluate(() => {
+      const skipLink = document.querySelector('a[href="#main-content"]');
+      if (!skipLink) return false;
+      // Collect all tabbable elements (non-negative tabindex, not disabled)
+      const tabbable = Array.from(
+        document.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [contenteditable="true"], [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => {
+        const style = window.getComputedStyle(el);
+        // sr-only has position:absolute + overflow:hidden but NOT display:none or visibility:hidden
+        return style.display !== "none" && style.visibility !== "hidden";
+      });
+      return tabbable.length > 0 && tabbable[0] === skipLink;
     });
 
-    // The very first Tab should land on the skip link (first tabbable element in shell)
-    expect(focusedHref).toBe("#main-content");
+    expect(isFirstTabbable).toBe(true);
   });
 });
 

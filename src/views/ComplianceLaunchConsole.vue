@@ -1,7 +1,16 @@
 <template>
   <MainLayout>
+  <!-- Secondary in-page skip link to console content (WCAG 2.4.1) -->
+  <a
+    href="#console-main"
+    class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg focus-visible:ring-2 focus-visible:ring-blue-400"
+  >
+    Skip to main content
+  </a>
   <div
     id="console-main"
+    role="region"
+    aria-label="Compliance Launch Console"
     class="compliance-launch-console min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8 px-4"
     data-testid="compliance-launch-console"
   >
