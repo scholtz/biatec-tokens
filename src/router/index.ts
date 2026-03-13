@@ -31,6 +31,7 @@ import GuidedPortfolioOnboarding from "../views/GuidedPortfolioOnboarding.vue";
 import PortfolioIntelligenceView from "../views/PortfolioIntelligenceView.vue";
 import PortfolioLaunchpad from "../views/PortfolioLaunchpad.vue";
 import BusinessCommandCenter from "../views/BusinessCommandCenter.vue";
+import TeamWorkspaceView from "../views/TeamWorkspaceView.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 import { isIssuanceSessionValid, storeIssuanceReturnPath } from "../utils/authFirstIssuanceWorkspace";
 
@@ -236,6 +237,13 @@ const router = createRouter({
       path: "/operations",
       name: "BusinessCommandCenter",
       component: BusinessCommandCenter,
+      meta: { requiresAuth: true },
+    },
+    // Team Operations Workspace — collaborative approval workflow
+    {
+      path: "/team/workspace",
+      name: "TeamWorkspace",
+      component: TeamWorkspaceView,
       meta: { requiresAuth: true },
     },
     // Legacy operations path — redirect to canonical command center

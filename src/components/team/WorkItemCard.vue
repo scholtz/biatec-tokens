@@ -1,0 +1,207 @@
+<template>
+  <article
+    class="work-item-card glass-effect rounded-xl p-5 border border-white/10 hover:border-white/20 transition-all duration-200"
+    role="article"
+    :aria-labelledby="`work-item-title-${item.id}`"
+    :data-testid="`work-item-card-${item.id}`"
+  >
+    <!-- Header row: category + priority + status -->
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+      <span
+        class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-700/60 text-gray-300"
+        :data-testid="`category-badge-${item.id}`"
+      >
+        <i :class="categoryIcon" class="mr-1 text-xs" aria-hidden="true"></i>
+        {{ categoryLabel }}
+      </span>
+
+      <span
+        class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+        :class="priorityClasses"
+        :data-testid="`priority-badge-${item.id}`"
+      >
+        {{ priorityLabel }}
+      </span>
+
+      <ApprovalStatusBadge
+        :state="item.state"
+        size="sm"
+        :data-testid="`status-badge-${item.id}`"
+      />
+    </div>
+
+    <!-- Title -->
+    <h3
+      :id="`work-item-title-${item.id}`"
+      class="text-white font-semibold text-base mb-1 leading-snug"
+      :data-testid="`item-title-${item.id}`"
+    >
+      {{ item.title }}
+    </h3>
+
+    <!-- Description -->
+    <p
+      class="text-gray-400 text-sm mb-3 line-clamp-2"
+      :data-testid="`item-description-${item.id}`"
+    >
+      {{ item.description }}
+    </p>
+
+    <!-- Business consequence -->
+    <div
+      v-if="item.businessConsequence"
+      class="flex items-start gap-2 bg-amber-900/20 border border-amber-700/30 rounded-lg px-3 py-2 mb-3"
+      :data-testid="`business-consequence-${item.id}`"
+    >
+      <i class="pi pi-exclamation-circle text-amber-400 text-sm mt-0.5 flex-shrink-0" aria-hidden="true"></i>
+      <p class="text-amber-300 text-xs leading-relaxed">{{ item.businessConsequence }}</p>
+    </div>
+
+    <!-- Assignee / Reviewer row -->
+    <div class="flex flex-wrap gap-4 text-xs text-gray-500 mb-3">
+      <span v-if="item.assignee" :data-testid="`assignee-${item.id}`">
+        <i class="pi pi-user mr-1" aria-hidden="true"></i>
+        <span class="text-gray-400">Assignee:</span> {{ item.assignee }}
+      </span>
+      <span v-if="item.reviewer" :data-testid="`reviewer-${item.id}`">
+        <i class="pi pi-eye mr-1" aria-hidden="true"></i>
+        <span class="text-gray-400">Reviewer:</span> {{ item.reviewer }}
+      </span>
+      <span v-if="item.dueDate" :class="dueDateClasses" :data-testid="`due-date-${item.id}`">
+        <i class="pi pi-calendar mr-1" aria-hidden="true"></i>
+        Due {{ formatDate(item.dueDate) }}
+      </span>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-white/10">
+      <!-- View Details (always visible) -->
+      <a
+        :href="item.contextPath"
+        class="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+        :aria-label="`View details for ${item.title}`"
+        :data-testid="`view-details-${item.id}`"
+      >
+        <i class="pi pi-external-link" aria-hidden="true"></i>
+        View Details
+      </a>
+
+      <span class="flex-1"></span>
+
+      <!-- Request Changes -->
+      <button
+        v-if="canApprove && item.state === 'in_review'"
+        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-600/20 border border-orange-500/40 text-orange-300 hover:bg-orange-600/30 hover:border-orange-400 transition-all focus:outline-none focus:ring-2 focus:ring-orange-500"
+        :aria-label="`Request changes for ${item.title}`"
+        :data-testid="`request-changes-btn-${item.id}`"
+        @click="emit('requestChanges', item.id)"
+      >
+        <i class="pi pi-pencil" aria-hidden="true"></i>
+        Request Changes
+      </button>
+
+      <!-- Approve -->
+      <button
+        v-if="canApprove && item.state === 'in_review'"
+        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-green-600/20 border border-green-500/40 text-green-300 hover:bg-green-600/30 hover:border-green-400 transition-all focus:outline-none focus:ring-2 focus:ring-green-500"
+        :aria-label="`Approve ${item.title}`"
+        :data-testid="`approve-btn-${item.id}`"
+        @click="emit('approve', item.id)"
+      >
+        <i class="pi pi-check" aria-hidden="true"></i>
+        Approve
+      </button>
+
+      <!-- Assign button (when canAssign) -->
+      <button
+        v-if="canAssign"
+        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-700/40 border border-white/10 text-gray-300 hover:bg-gray-700/60 transition-all focus:outline-none focus:ring-2 focus:ring-gray-400"
+        :aria-label="`Assign ${item.title}`"
+        :data-testid="`assign-btn-${item.id}`"
+        @click="emit('assign', item)"
+      >
+        <i class="pi pi-user-plus" aria-hidden="true"></i>
+        Assign
+      </button>
+    </div>
+  </article>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import ApprovalStatusBadge from './ApprovalStatusBadge.vue'
+import type { WorkItem, WorkItemCategory, WorkItemPriority } from '../../types/approvalWorkflow'
+
+interface Props {
+  item: WorkItem
+  currentUserEmail?: string
+  canApprove?: boolean
+  canAssign?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  canApprove: false,
+  canAssign: false,
+})
+
+const emit = defineEmits<{
+  approve: [itemId: string]
+  requestChanges: [itemId: string]
+  assign: [item: WorkItem]
+}>()
+
+// ── Category helpers ──────────────────────────────────────────────────────
+
+const CATEGORY_LABELS: Record<WorkItemCategory, string> = {
+  whitelist_policy: 'Whitelist Policy',
+  launch_readiness: 'Launch Readiness',
+  compliance_review: 'Compliance Review',
+  issuance_approval: 'Issuance Approval',
+  team_access: 'Team Access',
+}
+
+const CATEGORY_ICONS: Record<WorkItemCategory, string> = {
+  whitelist_policy: 'pi pi-shield',
+  launch_readiness: 'pi pi-rocket',
+  compliance_review: 'pi pi-file-check',
+  issuance_approval: 'pi pi-verified',
+  team_access: 'pi pi-users',
+}
+
+const categoryLabel = computed(() => CATEGORY_LABELS[props.item.category])
+const categoryIcon = computed(() => CATEGORY_ICONS[props.item.category])
+
+// ── Priority helpers ──────────────────────────────────────────────────────
+
+const PRIORITY_LABELS: Record<WorkItemPriority, string> = {
+  critical: 'Critical',
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low',
+}
+
+const PRIORITY_CLASSES: Record<WorkItemPriority, string> = {
+  critical: 'bg-red-900/40 text-red-300 border border-red-700/40',
+  high: 'bg-orange-900/40 text-orange-300 border border-orange-700/40',
+  medium: 'bg-yellow-900/40 text-yellow-300 border border-yellow-700/40',
+  low: 'bg-gray-700/40 text-gray-400 border border-gray-600/40',
+}
+
+const priorityLabel = computed(() => PRIORITY_LABELS[props.item.priority])
+const priorityClasses = computed(() => PRIORITY_CLASSES[props.item.priority])
+
+// ── Due date ──────────────────────────────────────────────────────────────
+
+const dueDateClasses = computed(() => {
+  if (!props.item.dueDate) return 'text-gray-500'
+  const msUntilDue = new Date(props.item.dueDate).getTime() - Date.now()
+  const daysUntilDue = msUntilDue / (1000 * 60 * 60 * 24)
+  if (daysUntilDue < 0) return 'text-red-400 font-medium'
+  if (daysUntilDue <= 3) return 'text-orange-400 font-medium'
+  return 'text-gray-500'
+})
+
+function formatDate(isoDate: string): string {
+  return new Date(isoDate).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })
+}
+</script>
