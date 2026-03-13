@@ -861,9 +861,10 @@ test.describe('Enterprise demo flows — compliance, launch, team operations (AC
     const menu = page.locator('[role="menu"]')
     await expect(menu).toBeVisible({ timeout: 10000 })
 
-    const menuLinks = menu.getByRole('link')
-    const menuLinkCount = await menuLinks.count()
-    expect(menuLinkCount).toBeGreaterThan(0)
+    // User menu items use role="menuitem" (explicit override of implicit link role)
+    const menuItems = menu.getByRole('menuitem')
+    const menuItemCount = await menuItems.count()
+    expect(menuItemCount).toBeGreaterThan(0)
 
     // Subscription must be discoverable via user menu
     const menuText = await menu.textContent({ timeout: 5000 }).catch(() => '')
