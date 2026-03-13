@@ -47,18 +47,17 @@ test.describe("Whitelist Policy Dashboard", () => {
     await page.goto(POLICY_URL);
     await page.waitForLoadState("load");
 
-    // Use semantic wait: the edit button only appears after the 600ms mock fetch completes.
-    // With Vite pre-warmed in globalSetup, this typically resolves in under 2s.
+    // Use waitFor (not isVisible) — waitFor polls until the element appears.
+    // isVisible() is a snapshot check that returns immediately without waiting.
     const editBtn = page.locator('[data-testid="edit-policy-button"]');
-    const policyLoaded = await editBtn.isVisible({ timeout: 20000 }).catch(() => false);
+    await editBtn.waitFor({ state: "visible", timeout: 20000 });
 
-    const bodyText = await page.locator("body").innerText({ timeout: 10000 });
-    // Mock policy contains these texts
+    // Policy is now loaded — verify summary content
+    const bodyText = await page.locator("body").innerText({ timeout: 5000 });
     const hasSummaryContent =
       bodyText.includes("Slovakia") ||
       bodyText.includes("Policy Summary") ||
-      bodyText.includes("Allowed Regions") ||
-      policyLoaded;
+      bodyText.includes("Allowed Regions");
     expect(hasSummaryContent).toBe(true);
   });
 
@@ -68,19 +67,19 @@ test.describe("Whitelist Policy Dashboard", () => {
     await page.goto(POLICY_URL);
     await page.waitForLoadState("load");
 
-    // Wait semantically for the edit button — only present after mock fetch completes.
-    // With Vite pre-warmed in globalSetup, this typically resolves in under 2s.
+    // Use waitFor (not isVisible) — waitFor polls until the element appears.
     const editBtn = page.locator('[data-testid="edit-policy-button"]');
-    await editBtn.isVisible({ timeout: 20000 }).catch(() => false);
+    await editBtn.waitFor({ state: "visible", timeout: 20000 });
 
+    // Policy is loaded — jurisdiction panels are now rendered
     const allowed = page.locator('[data-testid="allowed-jurisdictions-panel"]');
     const blocked = page.locator('[data-testid="blocked-jurisdictions-panel"]');
     const restricted = page.locator('[data-testid="restricted-jurisdictions-panel"]');
 
     const [a, b, r] = await Promise.all([
-      allowed.isVisible({ timeout: 5000 }).catch(() => false),
-      blocked.isVisible({ timeout: 5000 }).catch(() => false),
-      restricted.isVisible({ timeout: 5000 }).catch(() => false),
+      allowed.isVisible({ timeout: 3000 }).catch(() => false),
+      blocked.isVisible({ timeout: 3000 }).catch(() => false),
+      restricted.isVisible({ timeout: 3000 }).catch(() => false),
     ]);
     expect(a || b || r).toBe(true);
   });
@@ -91,11 +90,14 @@ test.describe("Whitelist Policy Dashboard", () => {
     await page.goto(POLICY_URL);
     await page.waitForLoadState("load");
 
-    // Wait for policy to load semantically
+    // waitFor polls until element appears; isVisible() is a snapshot and does not wait
     const reviewBtn = page.locator('[data-testid="review-eligibility-button"]');
-    const isVisible = await reviewBtn.isVisible({ timeout: 12000 }).catch(() => false);
+    const btnVisible = await reviewBtn
+      .waitFor({ state: "visible", timeout: 15000 })
+      .then(() => true)
+      .catch(() => false);
 
-    if (isVisible) {
+    if (btnVisible) {
       await reviewBtn.click();
       const inspector = page.locator('[data-testid="eligibility-inspector-container"]');
       await expect(inspector).toBeVisible({ timeout: 5000 });
@@ -112,11 +114,14 @@ test.describe("Whitelist Policy Dashboard", () => {
     await page.goto(POLICY_URL);
     await page.waitForLoadState("load");
 
-    // Wait for policy to load semantically
+    // waitFor polls until element appears; isVisible() is a snapshot and does not wait
     const reviewBtn = page.locator('[data-testid="review-eligibility-button"]');
-    const isVisible = await reviewBtn.isVisible({ timeout: 12000 }).catch(() => false);
+    const btnVisible = await reviewBtn
+      .waitFor({ state: "visible", timeout: 15000 })
+      .then(() => true)
+      .catch(() => false);
 
-    if (!isVisible) {
+    if (!btnVisible) {
       test.skip(true, "Policy not loaded in time — skipping interactive test");
       return;
     }
@@ -163,11 +168,14 @@ test.describe("Whitelist Policy Dashboard", () => {
     await page.goto(POLICY_URL);
     await page.waitForLoadState("load");
 
-    // Wait for policy to load semantically
+    // waitFor polls until element appears; isVisible() is a snapshot and does not wait
     const editBtn = page.locator('[data-testid="edit-policy-button"]');
-    const isVisible = await editBtn.isVisible({ timeout: 12000 }).catch(() => false);
+    const btnVisible = await editBtn
+      .waitFor({ state: "visible", timeout: 15000 })
+      .then(() => true)
+      .catch(() => false);
 
-    if (isVisible) {
+    if (btnVisible) {
       await editBtn.click();
       // The dialog should appear in the DOM (teleported)
       const dialog = page.locator('[role="dialog"][aria-label="Edit whitelist policy"]');
@@ -184,21 +192,27 @@ test.describe("Whitelist Policy Dashboard", () => {
     await page.goto(POLICY_URL);
     await page.waitForLoadState("load");
 
-    // Wait for policy to load semantically
+    // waitFor polls until element appears; isVisible() is a snapshot and does not wait
     const editBtn = page.locator('[data-testid="edit-policy-button"]');
-    const isVisible = await editBtn.isVisible({ timeout: 12000 }).catch(() => false);
+    const btnVisible = await editBtn
+      .waitFor({ state: "visible", timeout: 15000 })
+      .then(() => true)
+      .catch(() => false);
 
-    if (isVisible) {
+    if (btnVisible) {
       await editBtn.click();
 
       const cancelBtn = page.locator('[aria-label="Cancel editing"]');
-      const cancelVisible = await cancelBtn.isVisible({ timeout: 5000 }).catch(() => false);
-      if (cancelVisible) {
+      // waitFor polls until cancel button appears (dialog open transition)
+      const cancelAppeared = await cancelBtn
+        .waitFor({ state: "visible", timeout: 5000 })
+        .then(() => true)
+        .catch(() => false);
+      if (cancelAppeared) {
         await cancelBtn.click();
-        // Dialog should be gone — use isHidden for deterministic check
+        // Wait for dialog to disappear (CSS transition takes ~0.25s)
         const dialog = page.locator('[role="dialog"][aria-label="Edit whitelist policy"]');
-        const dialogGone = await dialog.isVisible({ timeout: 3000 }).catch(() => false);
-        expect(dialogGone).toBe(false);
+        await expect(dialog).not.toBeVisible({ timeout: 5000 });
       }
     }
   });
@@ -224,9 +238,12 @@ test.describe("Whitelist Policy Dashboard", () => {
     const headingCount = await heading.count();
     expect(headingCount).toBeGreaterThan(0);
 
-    // Back button is accessible
+    // Back button is accessible — use waitFor to poll until rendered
     const backBtn = page.getByRole("button", { name: /Go back/i }).first();
-    const hasBackBtn = await backBtn.isVisible({ timeout: 5000 }).catch(() => false);
+    const hasBackBtn = await backBtn
+      .waitFor({ state: "visible", timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
     expect(hasBackBtn).toBe(true);
   });
 
@@ -246,12 +263,12 @@ test.describe("Whitelist Policy Dashboard", () => {
     await page.goto(POLICY_URL);
     await page.waitForLoadState("load");
 
-    // Wait semantically for policy content — Investor Categories heading appears after mock fetch.
-    // With Vite pre-warmed in globalSetup, this typically resolves in under 2s.
+    // Use waitFor (not isVisible) — waitFor polls until the element appears.
     const editBtn = page.locator('[data-testid="edit-policy-button"]');
-    await editBtn.isVisible({ timeout: 20000 }).catch(() => false);
+    await editBtn.waitFor({ state: "visible", timeout: 20000 });
 
-    const bodyText = await page.locator("body").innerText({ timeout: 10000 });
+    // Policy is loaded — investor categories table should be present
+    const bodyText = await page.locator("body").innerText({ timeout: 5000 });
     const hasCategoryContent =
       bodyText.includes("Investor Categories") ||
       bodyText.includes("Retail") ||

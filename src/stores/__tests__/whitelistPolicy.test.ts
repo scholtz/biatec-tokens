@@ -525,6 +525,67 @@ describe("useWhitelistPolicyStore", () => {
       const warnings = store.detectContradictions();
       expect(warnings).toEqual([]);
     });
+
+    it("warns when country appears in both allowed and restricted lists", async () => {
+      const store = useWhitelistPolicyStore();
+      const p = store.fetchPolicy("token-001");
+      await vi.runAllTimersAsync();
+      await p;
+      store.startEdit();
+      // SK is already in allowedJurisdictions; also add it to restricted
+      store.updateDraft({
+        restrictedJurisdictions: [
+          ...store.draft!.restrictedJurisdictions,
+          { code: "SK", name: "Slovakia" },
+        ],
+      });
+      const warnings = store.detectContradictions();
+      // Warning text: "Slovakia (SK) appears in both Allowed and Restricted lists."
+      expect(warnings.some((w) => w.includes("SK") && w.includes("Allowed") && w.includes("Restricted"))).toBe(true);
+    });
+
+    it("warns when allow_all behavior is set with no blocked jurisdictions", async () => {
+      const store = useWhitelistPolicyStore();
+      const p = store.fetchPolicy("token-001");
+      await vi.runAllTimersAsync();
+      await p;
+      store.startEdit();
+      store.updateDraft({
+        defaultBehavior: "allow_all",
+        blockedJurisdictions: [],
+      });
+      const warnings = store.detectContradictions();
+      // Warning text: "Warning: 'Allow All' behavior with no blocked jurisdictions..."
+      expect(warnings.some((w) => w.includes("Allow All") && w.includes("no blocked jurisdictions"))).toBe(true);
+    });
+
+    it("contradictions computed reflects policy when no draft is active", async () => {
+      const store = useWhitelistPolicyStore();
+      const p = store.fetchPolicy("token-001");
+      await vi.runAllTimersAsync();
+      await p;
+      // No draft — contradictions computed runs detectContradictionsFor(policy.value) at line 153
+      // MOCK_POLICY has no contradictions — result should be empty array
+      expect(store.contradictions).toEqual([]);
+    });
+
+    it("contradictions computed reflects draft when a draft is active", async () => {
+      const store = useWhitelistPolicyStore();
+      const p = store.fetchPolicy("token-001");
+      await vi.runAllTimersAsync();
+      await p;
+      store.startEdit();
+      // Introduce a contradiction in the draft: add PL to both restricted and blocked
+      store.updateDraft({
+        restrictedJurisdictions: [{ code: "PL", name: "Poland" }],
+        blockedJurisdictions: [
+          ...store.draft!.blockedJurisdictions,
+          { code: "PL", name: "Poland" },
+        ],
+      });
+      // With draft active, contradictions computed runs detectContradictionsFor(draft) at line 154
+      expect(store.contradictions.some((w: string) => w.includes("Poland"))).toBe(true);
+    });
   });
 
   // ── hasGaps / criticalGaps with real gaps ───────────────────────────────────
