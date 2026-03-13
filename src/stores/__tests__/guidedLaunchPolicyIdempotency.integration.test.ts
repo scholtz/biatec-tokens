@@ -140,12 +140,13 @@ function fillCompleteAvmForm(store: ReturnType<typeof useGuidedLaunchStore>) {
   store.setComplianceReadiness(validCompliance())
   store.setSelectedTemplate(validAvmTemplate())
   store.setTokenEconomics(validArc200Economics())
-  // Steps 0-3 + step 5 are required
+  // Steps 0-4 + step 6 are required (step 3=whitelist, 4=template, 5=economics optional, 6=review)
   store.completeStep(0, { isValid: true, errors: [], warnings: [] })
   store.completeStep(1, { isValid: true, errors: [], warnings: [] })
   store.completeStep(2, { isValid: true, errors: [], warnings: [] })
   store.completeStep(3, { isValid: true, errors: [], warnings: [] })
-  store.completeStep(5, { isValid: true, errors: [], warnings: [] })
+  store.completeStep(4, { isValid: true, errors: [], warnings: [] })
+  store.completeStep(6, { isValid: true, errors: [], warnings: [] })
 }
 
 /** Fill the store with a complete, valid EVM form and mark required steps complete */
@@ -159,7 +160,8 @@ function fillCompleteEvmForm(store: ReturnType<typeof useGuidedLaunchStore>) {
   store.completeStep(1, { isValid: true, errors: [], warnings: [] })
   store.completeStep(2, { isValid: true, errors: [], warnings: [] })
   store.completeStep(3, { isValid: true, errors: [], warnings: [] })
-  store.completeStep(5, { isValid: true, errors: [], warnings: [] })
+  store.completeStep(4, { isValid: true, errors: [], warnings: [] })
+  store.completeStep(6, { isValid: true, errors: [], warnings: [] })
 }
 
 // ---------------------------------------------------------------------------
@@ -221,7 +223,8 @@ describe('Policy guardrails — network/standard compatibility', () => {
     store.completeStep(1, { isValid: true, errors: [], warnings: [] })
     store.completeStep(2, { isValid: true, errors: [], warnings: [] })
     store.completeStep(3, { isValid: true, errors: [], warnings: [] })
-    store.completeStep(5, { isValid: true, errors: [], warnings: [] })
+    store.completeStep(4, { isValid: true, errors: [], warnings: [] })
+    store.completeStep(6, { isValid: true, errors: [], warnings: [] })
 
     await expect(store.submitLaunch('user@test.com')).rejects.toThrow(/Policy violation/)
     await expect(store.submitLaunch('user@test.com')).rejects.toThrow(/NETWORK_INCOMPATIBLE_EVM_ON_AVM/)
@@ -244,7 +247,8 @@ describe('Policy guardrails — network/standard compatibility', () => {
     store.completeStep(1, { isValid: true, errors: [], warnings: [] })
     store.completeStep(2, { isValid: true, errors: [], warnings: [] })
     store.completeStep(3, { isValid: true, errors: [], warnings: [] })
-    store.completeStep(5, { isValid: true, errors: [], warnings: [] })
+    store.completeStep(4, { isValid: true, errors: [], warnings: [] })
+    store.completeStep(6, { isValid: true, errors: [], warnings: [] })
 
     await expect(store.submitLaunch('user@test.com')).rejects.toThrow(/Policy violation/)
     await expect(store.submitLaunch('user@test.com')).rejects.toThrow(/NETWORK_INCOMPATIBLE_AVM_ON_EVM/)
@@ -270,7 +274,8 @@ describe('Policy guardrails — decimal precision', () => {
     store.completeStep(1, { isValid: true, errors: [], warnings: [] })
     store.completeStep(2, { isValid: true, errors: [], warnings: [] })
     store.completeStep(3, { isValid: true, errors: [], warnings: [] })
-    store.completeStep(5, { isValid: true, errors: [], warnings: [] })
+    store.completeStep(4, { isValid: true, errors: [], warnings: [] })
+    store.completeStep(6, { isValid: true, errors: [], warnings: [] })
 
     const idempotencyKey = deriveIdempotencyKey(
       store.currentForm.draftId ?? 'test',
@@ -298,7 +303,8 @@ describe('Policy guardrails — decimal precision', () => {
     store.completeStep(1, { isValid: true, errors: [], warnings: [] })
     store.completeStep(2, { isValid: true, errors: [], warnings: [] })
     store.completeStep(3, { isValid: true, errors: [], warnings: [] })
-    store.completeStep(5, { isValid: true, errors: [], warnings: [] })
+    store.completeStep(4, { isValid: true, errors: [], warnings: [] })
+    store.completeStep(6, { isValid: true, errors: [], warnings: [] })
 
     await expect(store.submitLaunch('user@test.com')).rejects.toThrow(/DECIMALS_EXCEEDS_STANDARD_LIMIT/)
   })
@@ -323,7 +329,8 @@ describe('Policy guardrails — supply bounds', () => {
     store.completeStep(1, { isValid: true, errors: [], warnings: [] })
     store.completeStep(2, { isValid: true, errors: [], warnings: [] })
     store.completeStep(3, { isValid: true, errors: [], warnings: [] })
-    store.completeStep(5, { isValid: true, errors: [], warnings: [] })
+    store.completeStep(4, { isValid: true, errors: [], warnings: [] })
+    store.completeStep(6, { isValid: true, errors: [], warnings: [] })
 
     await expect(store.submitLaunch('user@test.com')).rejects.toThrow(/SUPPLY_TOO_LOW/)
   })
@@ -429,7 +436,8 @@ describe('Draft identity guard', () => {
     store.completeStep(1, { isValid: true, errors: [], warnings: [] })
     store.completeStep(2, { isValid: true, errors: [], warnings: [] })
     store.completeStep(3, { isValid: true, errors: [], warnings: [] })
-    store.completeStep(5, { isValid: true, errors: [], warnings: [] })
+    store.completeStep(4, { isValid: true, errors: [], warnings: [] })
+    store.completeStep(6, { isValid: true, errors: [], warnings: [] })
 
     // Forcibly remove draftId to simulate programming error
     // @ts-expect-error — intentional test of runtime guard
@@ -459,7 +467,8 @@ describe('Policy check fires before idempotency record is written', () => {
     store.completeStep(1, { isValid: true, errors: [], warnings: [] })
     store.completeStep(2, { isValid: true, errors: [], warnings: [] })
     store.completeStep(3, { isValid: true, errors: [], warnings: [] })
-    store.completeStep(5, { isValid: true, errors: [], warnings: [] })
+    store.completeStep(4, { isValid: true, errors: [], warnings: [] })
+    store.completeStep(6, { isValid: true, errors: [], warnings: [] })
 
     const draftId = store.currentForm.draftId!
     const key = deriveIdempotencyKey(draftId, 'user@test.com')

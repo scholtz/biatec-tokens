@@ -117,8 +117,8 @@ const failStep = (store: ReturnType<typeof useGuidedLaunchStore>, stepIndex: num
   store.completeStep(stepIndex, validation)
 }
 
-// Step indices in the store: 0=organization, 1=intent, 2=compliance, 3=template, 4=economics(optional), 5=review
-const STEP = { ORG: 0, INTENT: 1, COMPLIANCE: 2, TEMPLATE: 3, ECONOMICS: 4, REVIEW: 5 }
+// Step indices in the store: 0=organization, 1=intent, 2=compliance, 3=whitelist, 4=template, 5=economics(optional), 6=review
+const STEP = { ORG: 0, INTENT: 1, COMPLIANCE: 2, WHITELIST: 3, TEMPLATE: 4, ECONOMICS: 5, REVIEW: 6 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -202,6 +202,7 @@ describe('GuidedLaunch store — canSubmit boundary', () => {
     passStep(store, STEP.ORG)
     passStep(store, STEP.INTENT)
     passStep(store, STEP.COMPLIANCE)
+    passStep(store, STEP.WHITELIST)
     passStep(store, STEP.TEMPLATE)
     passStep(store, STEP.REVIEW)
     expect(store.canSubmit).toBe(true)
@@ -212,8 +213,9 @@ describe('GuidedLaunch store — canSubmit boundary', () => {
     passStep(store, STEP.ORG)
     passStep(store, STEP.INTENT)
     passStep(store, STEP.COMPLIANCE)
+    passStep(store, STEP.WHITELIST)
     passStep(store, STEP.TEMPLATE)
-    // ECONOMICS (index 4) intentionally skipped — it is optional
+    // ECONOMICS (index 5) intentionally skipped — it is optional
     passStep(store, STEP.REVIEW)
     expect(store.canSubmit).toBe(true)
   })
@@ -249,6 +251,7 @@ describe('GuidedLaunch store — readinessScore.blockers', () => {
     passStep(store, STEP.ORG)
     passStep(store, STEP.INTENT)
     passStep(store, STEP.COMPLIANCE)
+    passStep(store, STEP.WHITELIST)
     passStep(store, STEP.TEMPLATE)
     passStep(store, STEP.REVIEW)
     expect(store.readinessScore.blockers).toHaveLength(0)

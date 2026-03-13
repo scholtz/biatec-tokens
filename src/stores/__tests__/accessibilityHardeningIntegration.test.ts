@@ -407,9 +407,9 @@ describe('Integration: GUIDED_LAUNCH_STEPS × buildFocusOrderDescriptor (step co
   })
 
   it('GUIDED_LAUNCH_STEPS count matches expected flow depth', () => {
-    // 6 steps: organization, intent, compliance, template, economics, review
+    // 7 steps: organization, intent, compliance, whitelist, template, economics, review
     // Changes here indicate a product flow change that requires accessibility review.
-    expect(GUIDED_LAUNCH_STEPS.length).toBe(6)
+    expect(GUIDED_LAUNCH_STEPS.length).toBe(7)
   })
 
   it('org-profile focus order has more required elements than optional ones', () => {

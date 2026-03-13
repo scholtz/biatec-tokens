@@ -24,7 +24,7 @@ describe('guidedLaunch store', () => {
       
       expect(store.currentForm).toBeDefined()
       expect(store.currentStep).toBe(0)
-      expect(store.totalSteps).toBe(6)
+      expect(store.totalSteps).toBe(7)
       expect(store.completedSteps).toBe(0)
       expect(store.progressPercentage).toBe(0)
     })
@@ -32,13 +32,14 @@ describe('guidedLaunch store', () => {
     it('should have all step statuses initialized', () => {
       const store = useGuidedLaunchStore()
       
-      expect(store.stepStatuses).toHaveLength(6)
+      expect(store.stepStatuses).toHaveLength(7)
       expect(store.stepStatuses[0].id).toBe('organization')
       expect(store.stepStatuses[1].id).toBe('intent')
       expect(store.stepStatuses[2].id).toBe('compliance')
-      expect(store.stepStatuses[3].id).toBe('template')
-      expect(store.stepStatuses[4].id).toBe('economics')
-      expect(store.stepStatuses[5].id).toBe('review')
+      expect(store.stepStatuses[3].id).toBe('whitelist')
+      expect(store.stepStatuses[4].id).toBe('template')
+      expect(store.stepStatuses[5].id).toBe('economics')
+      expect(store.stepStatuses[6].id).toBe('review')
     })
 
     it('should identify optional steps correctly', () => {
@@ -285,7 +286,7 @@ describe('guidedLaunch store', () => {
       const store = useGuidedLaunchStore()
       
       // Complete all required steps
-      const requiredStepIndices = [0, 1, 2, 3, 5] // Excluding optional step 4
+      const requiredStepIndices = [0, 1, 2, 3, 4, 6] // Excluding optional step 5 (economics)
       
       requiredStepIndices.forEach(index => {
         store.completeStep(index, { isValid: true, errors: [], warnings: [] })
@@ -401,7 +402,8 @@ describe('guidedLaunch store', () => {
       store.completeStep(1, { isValid: true, errors: [], warnings: [] })
       store.completeStep(2, { isValid: true, errors: [], warnings: [] })
       store.completeStep(3, { isValid: true, errors: [], warnings: [] })
-      store.completeStep(5, { isValid: true, errors: [], warnings: [] })
+      store.completeStep(4, { isValid: true, errors: [], warnings: [] })
+      store.completeStep(6, { isValid: true, errors: [], warnings: [] })
       
       const response = await store.submitLaunch('user@test.com')
       
@@ -451,7 +453,8 @@ describe('guidedLaunch store', () => {
       store.completeStep(1, { isValid: true, errors: [], warnings: [] })
       store.completeStep(2, { isValid: true, errors: [], warnings: [] })
       store.completeStep(3, { isValid: true, errors: [], warnings: [] })
-      store.completeStep(5, { isValid: true, errors: [], warnings: [] })
+      store.completeStep(4, { isValid: true, errors: [], warnings: [] })
+      store.completeStep(6, { isValid: true, errors: [], warnings: [] })
       
       expect(store.isSubmitting).toBe(false)
       

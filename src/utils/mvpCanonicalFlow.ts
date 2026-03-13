@@ -197,6 +197,7 @@ export const GUIDED_LAUNCH_STEPS = [
   'organization',
   'intent',
   'compliance',
+  'whitelist',
   'template',
   'economics',
   'review',
@@ -242,7 +243,7 @@ export function canAdvanceFromStep(currentIndex: number, completedSteps: number[
 
 /**
  * Returns whether all required (non-optional) steps are complete.
- * The 'economics' step (index 4) is optional.
+ * The 'economics' step (index 5) is optional.
  */
 export function areRequiredStepsComplete(completedSteps: number[]): boolean {
   const OPTIONAL_STEP_INDEX = GUIDED_LAUNCH_STEPS.indexOf('economics');
@@ -417,6 +418,7 @@ export function getStepTitle(step: GuidedLaunchStep): string {
     organization: 'Organization Profile',
     intent: 'Token Intent',
     compliance: 'Compliance Readiness',
+    whitelist: 'Whitelist Policy',
     template: 'Template Selection',
     economics: 'Economics Settings',
     review: 'Review & Submit',

@@ -49,6 +49,67 @@ export interface ComplianceReadiness {
 }
 
 /**
+ * Investor qualification category labels for whitelist policy
+ */
+export type InvestorCategory =
+  | 'accredited_investor'
+  | 'professional_investor'
+  | 'qualified_purchaser'
+  | 'retail_investor'
+  | 'institutional_investor'
+  | 'employees_only'
+  | 'partners_only'
+
+/**
+ * Jurisdiction policy entry in a whitelist policy
+ */
+export interface JurisdictionPolicyEntry {
+  /** ISO 3166-1 alpha-2 country code (e.g. "DE", "US") */
+  code: string
+  /** Human-readable country name */
+  name: string
+  /** Plain-language note about why this jurisdiction is included/excluded */
+  note?: string
+}
+
+/**
+ * Whitelist policy configuration for a token launch.
+ * Defines who may hold or receive the token in compliance-first language.
+ */
+export interface WhitelistPolicy {
+  /** Whether any whitelist/transfer restrictions are active for this token */
+  isEnabled: boolean
+
+  /**
+   * Explicitly allowed jurisdictions.
+   * If provided and non-empty, only participants from these countries may hold the token.
+   * If empty/absent and isEnabled is true, the default is to allow all unless restricted.
+   */
+  allowedJurisdictions: JurisdictionPolicyEntry[]
+
+  /**
+   * Explicitly restricted/blocked jurisdictions.
+   * Participants from these countries may NOT hold the token regardless of other rules.
+   */
+  restrictedJurisdictions: JurisdictionPolicyEntry[]
+
+  /**
+   * Required investor qualification categories.
+   * If non-empty, holders must satisfy at least one category.
+   */
+  investorCategories: InvestorCategory[]
+
+  /**
+   * Optional policy notes visible to compliance reviewers.
+   * Stored as-is and surfaced in the review summary.
+   */
+  policyNotes?: string
+
+  /** Whether the operator has explicitly reviewed and confirmed the policy effect */
+  policyConfirmed: boolean
+}
+
+/**
  * Token economics configuration
  */
 export interface TokenEconomics {
@@ -129,6 +190,7 @@ export interface GuidedLaunchForm {
   organizationProfile?: OrganizationProfile
   tokenIntent?: TokenIntent
   complianceReadiness?: ComplianceReadiness
+  whitelistPolicy?: WhitelistPolicy
   selectedTemplate?: TokenTemplate
   tokenEconomics?: TokenEconomics
   
@@ -153,6 +215,7 @@ export interface LaunchSubmission {
   organizationProfile: OrganizationProfile
   tokenIntent: TokenIntent
   complianceReadiness: ComplianceReadiness
+  whitelistPolicy?: WhitelistPolicy
   tokenTemplate: TokenTemplate
   tokenEconomics: TokenEconomics
   metadata: {

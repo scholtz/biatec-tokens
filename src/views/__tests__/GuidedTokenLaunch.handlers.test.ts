@@ -57,6 +57,15 @@ vi.mock('../../components/guidedLaunch/steps/ComplianceReadinessStep.vue', () =>
     </div>`,
   },
 }))
+vi.mock('../../components/guidedLaunch/steps/WhitelistPolicyStep.vue', () => ({
+  default: {
+    name: 'WhitelistPolicyStep',
+    emits: ['complete', 'update'],
+    template: `<div data-testid="step-whitelist">
+      <button data-testid="whitelist-emit-update" @click="$emit('update', { isEnabled: false, allowedJurisdictions: [], restrictedJurisdictions: [], investorCategories: [], policyConfirmed: false })">Update</button>
+    </div>`,
+  },
+}))
 vi.mock('../../components/guidedLaunch/steps/TemplateSelectionStep.vue', () => ({
   default: {
     name: 'TemplateSelectionStep',
@@ -141,6 +150,7 @@ const mockStore = reactive({
     { id: 'organization', title: 'Organization Profile', isComplete: false, isValid: false, isOptional: false },
     { id: 'intent', title: 'Token Intent', isComplete: false, isValid: false, isOptional: false },
     { id: 'compliance', title: 'Compliance Readiness', isComplete: false, isValid: false, isOptional: false },
+    { id: 'whitelist', title: 'Whitelist Policy', isComplete: false, isValid: false, isOptional: false },
     { id: 'template', title: 'Template Selection', isComplete: false, isValid: false, isOptional: false },
     { id: 'economics', title: 'Economics Settings', isComplete: false, isValid: false, isOptional: true },
     { id: 'review', title: 'Review & Submit', isComplete: false, isValid: false, isOptional: false },
@@ -164,6 +174,7 @@ const mockStore = reactive({
   setOrganizationProfile: vi.fn(),
   setTokenIntent: vi.fn(),
   setComplianceReadiness: vi.fn(),
+  setWhitelistPolicy: vi.fn(),
   setSelectedTemplate: vi.fn(),
   setTokenEconomics: vi.fn(),
   goToStep: vi.fn(),
@@ -225,6 +236,7 @@ function resetStore() {
     { id: 'organization', title: 'Organization Profile', isComplete: false, isValid: false, isOptional: false },
     { id: 'intent', title: 'Token Intent', isComplete: false, isValid: false, isOptional: false },
     { id: 'compliance', title: 'Compliance Readiness', isComplete: false, isValid: false, isOptional: false },
+    { id: 'whitelist', title: 'Whitelist Policy', isComplete: false, isValid: false, isOptional: false },
     { id: 'template', title: 'Template Selection', isComplete: false, isValid: false, isOptional: false },
     { id: 'economics', title: 'Economics Settings', isComplete: false, isValid: false, isOptional: true },
     { id: 'review', title: 'Review & Submit', isComplete: false, isValid: false, isOptional: false },
@@ -334,7 +346,7 @@ describe('GuidedTokenLaunch — step update handlers (lines 441-458)', () => {
   })
 
   it('emitting update from TemplateSelectionStep calls guidedLaunchStore.setSelectedTemplate', async () => {
-    mockStore.currentForm.currentStep = 3
+    mockStore.currentForm.currentStep = 4
     const { wrapper } = await mountView()
     await wrapper.find('[data-testid="template-emit-update"]').trigger('click')
     await flushPromises()
@@ -342,7 +354,7 @@ describe('GuidedTokenLaunch — step update handlers (lines 441-458)', () => {
   })
 
   it('emitting update from EconomicsSettingsStep calls guidedLaunchStore.setTokenEconomics', async () => {
-    mockStore.currentForm.currentStep = 4
+    mockStore.currentForm.currentStep = 5
     const { wrapper } = await mountView()
     await wrapper.find('[data-testid="economics-emit-update"]').trigger('click')
     await flushPromises()
@@ -357,7 +369,7 @@ describe('GuidedTokenLaunch — handleSubmit error path (lines 475-486)', () => 
   })
 
   it('when submitLaunch throws, competitiveTelemetryService.completeJourney is called with success=false', async () => {
-    mockStore.currentForm.currentStep = 5
+    mockStore.currentForm.currentStep = 6
     mockStore.submitLaunch = vi.fn().mockRejectedValue(new Error('Deployment quota exceeded'))
     const { wrapper } = await mountView()
     // Emit the 'submit' event from the ReviewSubmitStep mock button
@@ -371,7 +383,7 @@ describe('GuidedTokenLaunch — handleSubmit error path (lines 475-486)', () => 
   })
 
   it('a failed submitLaunch does not show the success modal', async () => {
-    mockStore.currentForm.currentStep = 5
+    mockStore.currentForm.currentStep = 6
     mockStore.submitLaunch = vi.fn().mockRejectedValue(new Error('Network error'))
     const { wrapper } = await mountView()
     await wrapper.find('[data-testid="review-emit-submit"]').trigger('click')
@@ -387,7 +399,7 @@ describe('GuidedTokenLaunch — success modal actions (lines 489-494)', () => {
   })
 
   it('successful submitLaunch shows the success modal', async () => {
-    mockStore.currentForm.currentStep = 5
+    mockStore.currentForm.currentStep = 6
     const { wrapper } = await mountView()
     await wrapper.find('[data-testid="review-emit-submit"]').trigger('click')
     await flushPromises()
@@ -395,7 +407,7 @@ describe('GuidedTokenLaunch — success modal actions (lines 489-494)', () => {
   })
 
   it('clicking View Dashboard button does not throw', async () => {
-    mockStore.currentForm.currentStep = 5
+    mockStore.currentForm.currentStep = 6
     const { wrapper } = await mountView()
     await wrapper.find('[data-testid="review-emit-submit"]').trigger('click')
     await flushPromises()
@@ -407,7 +419,7 @@ describe('GuidedTokenLaunch — success modal actions (lines 489-494)', () => {
   })
 
   it('clicking Close button does not throw', async () => {
-    mockStore.currentForm.currentStep = 5
+    mockStore.currentForm.currentStep = 6
     const { wrapper } = await mountView()
     await wrapper.find('[data-testid="review-emit-submit"]').trigger('click')
     await flushPromises()
@@ -421,7 +433,7 @@ describe('GuidedTokenLaunch — success modal actions (lines 489-494)', () => {
   it('success modal renders without next-steps section when response has no nextSteps (line 281 false branch)', async () => {
     // Coverage: false branch of v-if="submissionResponse?.nextSteps" at line 281
     // When submitLaunch returns a response without a nextSteps array, the section is hidden
-    mockStore.currentForm.currentStep = 5
+    mockStore.currentForm.currentStep = 6
     mockStore.submitLaunch = vi.fn().mockResolvedValue({
       submissionId: 'sub-no-steps',
       deploymentStatus: 'pending' as const,
@@ -531,7 +543,7 @@ describe('GuidedTokenLaunch — onBeforeUnmount abandonment (lines 537-547)', ()
     expect(mockLaunchTelemetry.trackFlowAbandoned).toHaveBeenCalledWith(
       expect.any(String), // lastStep.id
       1, // completedSteps
-      6, // totalSteps
+      7, // totalSteps
     )
   })
 
@@ -660,7 +672,7 @@ describe('GuidedTokenLaunch — handleSubmit with null user (branch 11, line 463
   })
 
   it('calls submitLaunch with empty email when user is null', async () => {
-    mockStore.currentForm.currentStep = 5
+    mockStore.currentForm.currentStep = 6
     mockAuth.user = null
     const { wrapper } = await mountView()
     await wrapper.find('[data-testid="review-emit-submit"]').trigger('click')
@@ -677,7 +689,7 @@ describe('GuidedTokenLaunch — handleSubmit catch with non-Error (branch 12, li
   })
 
   it('handles non-Error thrown from submitLaunch (string throw)', async () => {
-    mockStore.currentForm.currentStep = 5
+    mockStore.currentForm.currentStep = 6
     // Throw a string (non-Error) to exercise the ternary false branch: 'Unknown error'
     mockStore.submitLaunch = vi.fn().mockRejectedValue('quota exceeded string')
     const { wrapper } = await mountView()

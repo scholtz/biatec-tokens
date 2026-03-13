@@ -122,9 +122,9 @@ describe('GuidedLaunch store — state machine', () => {
     expect(store.progressPercentage).toBe(0)
   })
 
-  it('has 6 steps total', () => {
+  it('has 7 steps total', () => {
     const store = useGuidedLaunchStore()
-    expect(store.totalSteps).toBe(6)
+    expect(store.totalSteps).toBe(7)
   })
 
   it('starts with canSubmit = false', () => {
@@ -356,8 +356,8 @@ describe('GuidedLaunch store — state machine', () => {
 
   it('canSubmit is true when all required steps are complete', () => {
     const store = useGuidedLaunchStore()
-    // Complete all non-optional steps (0=org, 1=intent, 2=compliance, 3=template, 5=review)
-    ;[0, 1, 2, 3, 5].forEach(i =>
+    // Complete all non-optional steps (0=org, 1=intent, 2=compliance, 3=whitelist, 4=template, 6=review)
+    ;[0, 1, 2, 3, 4, 6].forEach(i =>
       store.completeStep(i, { isValid: true, errors: [], warnings: [] }),
     )
     expect(store.canSubmit).toBe(true)
@@ -368,7 +368,7 @@ describe('GuidedLaunch store — state machine', () => {
     ;[0, 1, 2, 3].forEach(i =>
       store.completeStep(i, { isValid: true, errors: [], warnings: [] }),
     )
-    // step 5 (review) still incomplete
+    // step 6 (review) still incomplete
     expect(store.canSubmit).toBe(false)
   })
 
@@ -380,14 +380,14 @@ describe('GuidedLaunch store — state machine', () => {
     expect(store.readinessScore.requiredStepsComplete).toBe(1)
   })
 
-  it('readinessScore.totalRequiredSteps is 5 (economics is optional)', () => {
+  it('readinessScore.totalRequiredSteps is 6 (economics is optional)', () => {
     const store = useGuidedLaunchStore()
-    expect(store.readinessScore.totalRequiredSteps).toBe(5)
+    expect(store.readinessScore.totalRequiredSteps).toBe(6)
   })
 
   it('readinessScore.overallScore is 100 when all required + optional complete', () => {
     const store = useGuidedLaunchStore()
-    ;[0, 1, 2, 3, 4, 5].forEach(i =>
+    ;[0, 1, 2, 3, 4, 5, 6].forEach(i =>
       store.completeStep(i, { isValid: true, errors: [], warnings: [] }),
     )
     expect(store.readinessScore.overallScore).toBe(100)
@@ -401,7 +401,7 @@ describe('GuidedLaunch store — state machine', () => {
 
   it('readinessScore.blockers is empty when all required steps complete', () => {
     const store = useGuidedLaunchStore()
-    ;[0, 1, 2, 3, 5].forEach(i =>
+    ;[0, 1, 2, 3, 4, 6].forEach(i =>
       store.completeStep(i, { isValid: true, errors: [], warnings: [] }),
     )
     expect(store.readinessScore.blockers).toHaveLength(0)
@@ -433,7 +433,7 @@ describe('GuidedLaunch store — state machine', () => {
     store.setComplianceReadiness(makeCompliance())
     store.setSelectedTemplate(makeTemplate())
     store.setTokenEconomics(makeEconomics())
-    ;[0, 1, 2, 3, 5].forEach(i =>
+    ;[0, 1, 2, 3, 4, 6].forEach(i =>
       store.completeStep(i, { isValid: true, errors: [], warnings: [] }),
     )
 

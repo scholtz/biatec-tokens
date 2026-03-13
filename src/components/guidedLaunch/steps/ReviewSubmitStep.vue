@@ -65,6 +65,51 @@
       </div>
     </Card>
 
+    <!-- Whitelist Policy Summary -->
+    <Card variant="glass" padding="md" data-testid="review-whitelist-policy">
+      <h3 class="font-semibold text-white mb-3">Whitelist Policy</h3>
+      <template v-if="formData.whitelistPolicy?.isEnabled">
+        <div class="space-y-2 text-sm">
+          <div v-if="formData.whitelistPolicy.allowedJurisdictions.length">
+            <span class="text-gray-400">Allowed countries:</span>
+            <div class="flex flex-wrap gap-1 mt-1">
+              <Badge
+                v-for="j in formData.whitelistPolicy.allowedJurisdictions"
+                :key="j.code"
+                variant="success"
+              >{{ j.name }}</Badge>
+            </div>
+          </div>
+          <div v-if="formData.whitelistPolicy.restrictedJurisdictions.length">
+            <span class="text-gray-400">Blocked countries:</span>
+            <div class="flex flex-wrap gap-1 mt-1">
+              <Badge
+                v-for="j in formData.whitelistPolicy.restrictedJurisdictions"
+                :key="j.code"
+                variant="error"
+              >{{ j.name }}</Badge>
+            </div>
+          </div>
+          <div v-if="formData.whitelistPolicy.investorCategories.length">
+            <span class="text-gray-400">Investor categories:</span>
+            <div class="flex flex-wrap gap-1 mt-1">
+              <Badge
+                v-for="cat in formData.whitelistPolicy.investorCategories"
+                :key="cat"
+                variant="info"
+              >{{ cat.replace(/_/g, ' ') }}</Badge>
+            </div>
+          </div>
+          <div v-if="!formData.whitelistPolicy.allowedJurisdictions.length && !formData.whitelistPolicy.restrictedJurisdictions.length && !formData.whitelistPolicy.investorCategories.length">
+            <span class="text-gray-300">Restrictions enabled — no specific rules defined. Update rules from the Compliance Dashboard.</span>
+          </div>
+        </div>
+      </template>
+      <template v-else>
+        <p class="text-sm text-gray-400">No transfer restrictions — token is freely transferable.</p>
+      </template>
+    </Card>
+
     <!-- Transaction Preview Panel -->
     <TransactionPreviewPanel
       ref="txPreviewRef"

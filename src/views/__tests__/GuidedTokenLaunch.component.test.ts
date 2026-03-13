@@ -37,6 +37,9 @@ vi.mock('../../components/guidedLaunch/steps/TokenIntentStep.vue', () => ({
 vi.mock('../../components/guidedLaunch/steps/ComplianceReadinessStep.vue', () => ({
   default: { template: '<div data-testid="step-compliance">ComplianceReadinessStep</div>' },
 }))
+vi.mock('../../components/guidedLaunch/steps/WhitelistPolicyStep.vue', () => ({
+  default: { template: '<div data-testid="step-whitelist">WhitelistPolicyStep</div>' },
+}))
 vi.mock('../../components/guidedLaunch/steps/TemplateSelectionStep.vue', () => ({
   default: { template: '<div data-testid="step-template">TemplateSelectionStep</div>' },
 }))
@@ -85,6 +88,7 @@ const mockStore = reactive({
     { id: 'organization', title: 'Organization Profile', isComplete: false, isValid: false, isOptional: false },
     { id: 'intent', title: 'Token Intent', isComplete: false, isValid: false, isOptional: false },
     { id: 'compliance', title: 'Compliance Readiness', isComplete: false, isValid: false, isOptional: false },
+    { id: 'whitelist', title: 'Whitelist Policy', isComplete: false, isValid: false, isOptional: false },
     { id: 'template', title: 'Template Selection', isComplete: false, isValid: false, isOptional: false },
     { id: 'economics', title: 'Economics Settings', isComplete: false, isValid: false, isOptional: true },
     { id: 'review', title: 'Review & Submit', isComplete: false, isValid: false, isOptional: false },
@@ -112,6 +116,7 @@ const mockStore = reactive({
   setOrganizationProfile: vi.fn(),
   setTokenIntent: vi.fn(),
   setComplianceReadiness: vi.fn(),
+  setWhitelistPolicy: vi.fn(),
   setSelectedTemplate: vi.fn(),
   setTokenEconomics: vi.fn(),
   goToStep: vi.fn(),
@@ -164,6 +169,7 @@ function resetStore() {
     { id: 'organization', title: 'Organization Profile', isComplete: false, isValid: false, isOptional: false },
     { id: 'intent', title: 'Token Intent', isComplete: false, isValid: false, isOptional: false },
     { id: 'compliance', title: 'Compliance Readiness', isComplete: false, isValid: false, isOptional: false },
+    { id: 'whitelist', title: 'Whitelist Policy', isComplete: false, isValid: false, isOptional: false },
     { id: 'template', title: 'Template Selection', isComplete: false, isValid: false, isOptional: false },
     { id: 'economics', title: 'Economics Settings', isComplete: false, isValid: false, isOptional: true },
     { id: 'review', title: 'Review & Submit', isComplete: false, isValid: false, isOptional: false },
@@ -216,9 +222,9 @@ describe('GuidedTokenLaunch — data-testid anchors (ISSUANCE_TEST_IDS)', () => 
     expect(wrapper.find('[data-testid="issuance-step-indicator"]').exists()).toBe(true)
   })
 
-  it('all 6 step buttons render (issuance-step-btn-0 through issuance-step-btn-5)', async () => {
+  it('all 7 step buttons render (issuance-step-btn-0 through issuance-step-btn-6)', async () => {
     const wrapper = await mountView()
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       expect(
         wrapper.find(`[data-testid="issuance-step-btn-${i}"]`).exists(),
         `Expected issuance-step-btn-${i} to exist`
@@ -226,7 +232,7 @@ describe('GuidedTokenLaunch — data-testid anchors (ISSUANCE_TEST_IDS)', () => 
     }
   })
 
-  it('continue button has data-testid="issuance-continue" (step 0 of 6, not last step)', async () => {
+  it('continue button has data-testid="issuance-continue" (step 0 of 7, not last step)', async () => {
     const wrapper = await mountView()
     expect(wrapper.find('[data-testid="issuance-continue"]').exists()).toBe(true)
   })
@@ -373,17 +379,17 @@ describe('GuidedTokenLaunch — progress state reflects store values', () => {
     expect(wrapper.html()).toContain('0%')
   })
 
-  it('shows 50% when 3 of 6 steps are complete', async () => {
+  it('shows 43% when 3 of 7 steps are complete', async () => {
     mockStore.stepStatuses = mockStore.stepStatuses.map((s, i) => ({
       ...s,
       isComplete: i < 3,
       isValid: i < 3,
     }))
     const wrapper = await mountView()
-    expect(wrapper.html()).toContain('50%')
+    expect(wrapper.html()).toContain('43%')
   })
 
-  it('progress fill aria-valuenow is 50 when half of steps complete', async () => {
+  it('progress fill aria-valuenow is 43 when 3 of 7 steps complete', async () => {
     mockStore.stepStatuses = mockStore.stepStatuses.map((s, i) => ({
       ...s,
       isComplete: i < 3,
@@ -391,7 +397,7 @@ describe('GuidedTokenLaunch — progress state reflects store values', () => {
     }))
     const wrapper = await mountView()
     const fill = wrapper.find('[data-testid="issuance-progress-pct"]')
-    expect(fill.attributes('aria-valuenow')).toBe('50')
+    expect(fill.attributes('aria-valuenow')).toBe('43')
   })
 
   it('completedSteps count is displayed in the progress overview', async () => {
@@ -401,8 +407,8 @@ describe('GuidedTokenLaunch — progress state reflects store values', () => {
       isValid: i < 2,
     }))
     const wrapper = await mountView()
-    // "2 of 6 steps complete"
-    expect(wrapper.html()).toContain('2 of 6 steps complete')
+    // "2 of 7 steps complete"
+    expect(wrapper.html()).toContain('2 of 7 steps complete')
   })
 })
 
@@ -600,15 +606,15 @@ describe('GuidedTokenLaunch — submit behavior', () => {
     resetStore()
   })
 
-  it('ReviewSubmitStep is rendered on the last step (step 5)', async () => {
-    mockStore.currentForm.currentStep = 5
+  it('ReviewSubmitStep is rendered on the last step (step 6)', async () => {
+    mockStore.currentForm.currentStep = 6
     const wrapper = await mountView()
     expect(wrapper.find('[data-testid="step-review"]').exists()).toBe(true)
   })
 
   it('Continue button is absent on the last step (ReviewSubmitStep handles submit)', async () => {
-    // On last step (index 5 of 6 total), Continue button v-if should be false
-    mockStore.currentForm.currentStep = 5
+    // On last step (index 6 of 7 total), Continue button v-if should be false
+    mockStore.currentForm.currentStep = 6
     const wrapper = await mountView()
     expect(wrapper.find('[data-testid="issuance-continue"]').exists()).toBe(false)
   })
@@ -621,7 +627,7 @@ describe('GuidedTokenLaunch — submit behavior', () => {
       nextSteps: ['Verify token details', 'Monitor deployment'],
     }
     mockStore.submitLaunch = vi.fn().mockResolvedValue(mockResponse)
-    mockStore.currentForm.currentStep = 5
+    mockStore.currentForm.currentStep = 6
     const wrapper = await mountView()
     // Directly invoke the handleSubmit by emitting 'submit' from ReviewSubmitStep mock
     await wrapper.find('[data-testid="step-review"]').trigger('submit')

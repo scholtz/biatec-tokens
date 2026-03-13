@@ -152,8 +152,9 @@ describe('GuidedLaunch store × ComplianceReadiness: readiness score', () => {
     store.completeStep(0, { isValid: true, errors: [], warnings: [] })
     store.completeStep(1, { isValid: true, errors: [], warnings: [] })
     // compliance (2) not completed
-    store.completeStep(3, { isValid: true, errors: [], warnings: [] })
-    store.completeStep(5, { isValid: true, errors: [], warnings: [] })
+    store.completeStep(3, { isValid: true, errors: [], warnings: [] }) // whitelist
+    store.completeStep(4, { isValid: true, errors: [], warnings: [] }) // template
+    store.completeStep(6, { isValid: true, errors: [], warnings: [] }) // review
 
     expect(store.canSubmit).toBe(false)
   })
@@ -173,8 +174,9 @@ describe('GuidedLaunch store × ComplianceReadiness: readiness score', () => {
     store.completeStep(0, { isValid: true, errors: [], warnings: [] })
     store.completeStep(1, { isValid: true, errors: [], warnings: [] })
     store.completeStep(2, { isValid: true, errors: [], warnings: [] }) // compliance
-    store.completeStep(3, { isValid: true, errors: [], warnings: [] })
-    store.completeStep(5, { isValid: true, errors: [], warnings: [] })
+    store.completeStep(3, { isValid: true, errors: [], warnings: [] }) // whitelist
+    store.completeStep(4, { isValid: true, errors: [], warnings: [] }) // template
+    store.completeStep(6, { isValid: true, errors: [], warnings: [] }) // review
 
     expect(store.canSubmit).toBe(true)
   })

@@ -188,23 +188,30 @@
           @update="handleComplianceUpdate"
         />
 
-        <!-- Step 3: Template Selection -->
-        <TemplateSelectionStep
+        <!-- Step 3: Whitelist Policy -->
+        <WhitelistPolicyStep
           v-if="currentStep === 3"
+          @complete="handleStepComplete"
+          @update="handleWhitelistPolicyUpdate"
+        />
+
+        <!-- Step 4: Template Selection -->
+        <TemplateSelectionStep
+          v-if="currentStep === 4"
           @complete="handleStepComplete"
           @update="handleTemplateUpdate"
         />
 
-        <!-- Step 4: Economics Settings (Optional) -->
+        <!-- Step 5: Economics Settings (Optional) -->
         <EconomicsSettingsStep
-          v-if="currentStep === 4"
+          v-if="currentStep === 5"
           @complete="handleStepComplete"
           @update="handleEconomicsUpdate"
         />
 
-        <!-- Step 5: Review & Submit -->
+        <!-- Step 6: Review & Submit -->
         <ReviewSubmitStep
-          v-if="currentStep === 5"
+          v-if="currentStep === 6"
           :readiness-score="readinessScore"
           :form-data="currentForm"
           :is-submitting="isSubmitting"
@@ -332,6 +339,7 @@ import type {
   OrganizationProfile,
   TokenIntent,
   ComplianceReadiness,
+  WhitelistPolicy,
   TokenTemplate,
   TokenEconomics,
   ValidationResult,
@@ -353,6 +361,7 @@ import { getDeploymentNextSteps } from '../utils/tokenDeploymentNextSteps'
 import OrganizationProfileStep from '../components/guidedLaunch/steps/OrganizationProfileStep.vue'
 import TokenIntentStep from '../components/guidedLaunch/steps/TokenIntentStep.vue'
 import ComplianceReadinessStep from '../components/guidedLaunch/steps/ComplianceReadinessStep.vue'
+import WhitelistPolicyStep from '../components/guidedLaunch/steps/WhitelistPolicyStep.vue'
 import TemplateSelectionStep from '../components/guidedLaunch/steps/TemplateSelectionStep.vue'
 import EconomicsSettingsStep from '../components/guidedLaunch/steps/EconomicsSettingsStep.vue'
 import ReviewSubmitStep from '../components/guidedLaunch/steps/ReviewSubmitStep.vue'
@@ -472,6 +481,10 @@ const handleIntentUpdate = (intent: TokenIntent) => {
 
 const handleComplianceUpdate = (compliance: ComplianceReadiness) => {
   guidedLaunchStore.setComplianceReadiness(compliance)
+}
+
+const handleWhitelistPolicyUpdate = (policy: WhitelistPolicy) => {
+  guidedLaunchStore.setWhitelistPolicy(policy)
 }
 
 const handleTemplateUpdate = (template: TokenTemplate) => {

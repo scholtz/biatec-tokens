@@ -312,9 +312,9 @@ describe('LEGACY_WIZARD_ROUTE', () => {
 });
 
 describe('GUIDED_LAUNCH_STEPS', () => {
-  it('should have 6 steps', () => {
-    expect(GUIDED_LAUNCH_STEPS).toHaveLength(6);
-    expect(GUIDED_LAUNCH_STEP_COUNT).toBe(6);
+  it('should have 7 steps', () => {
+    expect(GUIDED_LAUNCH_STEPS).toHaveLength(7);
+    expect(GUIDED_LAUNCH_STEP_COUNT).toBe(7);
   });
 
   it('should start with organization', () => {
@@ -330,6 +330,7 @@ describe('GUIDED_LAUNCH_STEPS', () => {
     expect(ids).toContain('organization');
     expect(ids).toContain('intent');
     expect(ids).toContain('compliance');
+    expect(ids).toContain('whitelist');
     expect(ids).toContain('template');
     expect(ids).toContain('economics');
     expect(ids).toContain('review');
@@ -345,12 +346,16 @@ describe('getStepIndex', () => {
     expect(getStepIndex('organization')).toBe(0);
   });
 
-  it('should return 5 for review', () => {
-    expect(getStepIndex('review')).toBe(5);
+  it('should return 6 for review', () => {
+    expect(getStepIndex('review')).toBe(6);
   });
 
-  it('should return 4 for economics (optional step)', () => {
-    expect(getStepIndex('economics')).toBe(4);
+  it('should return 5 for economics (optional step)', () => {
+    expect(getStepIndex('economics')).toBe(5);
+  });
+
+  it('should return 3 for whitelist', () => {
+    expect(getStepIndex('whitelist')).toBe(3);
   });
 });
 
@@ -381,7 +386,7 @@ describe('canAdvanceFromStep', () => {
 
   it('should return false from the last step index', () => {
     const lastIndex = GUIDED_LAUNCH_STEP_COUNT - 1;
-    expect(canAdvanceFromStep(lastIndex, [0, 1, 2, 3, 4, 5])).toBe(false);
+    expect(canAdvanceFromStep(lastIndex, [0, 1, 2, 3, 4, 5, 6])).toBe(false);
   });
 
   it('should return false for an invalid step index', () => {
@@ -391,16 +396,16 @@ describe('canAdvanceFromStep', () => {
 
 describe('areRequiredStepsComplete', () => {
   it('should return true when all required steps are complete', () => {
-    // economics (index 4) is optional; skip it
-    expect(areRequiredStepsComplete([0, 1, 2, 3, 5])).toBe(true);
+    // economics (index 5) is optional; skip it
+    expect(areRequiredStepsComplete([0, 1, 2, 3, 4, 6])).toBe(true);
   });
 
   it('should return true when all steps including economics are complete', () => {
-    expect(areRequiredStepsComplete([0, 1, 2, 3, 4, 5])).toBe(true);
+    expect(areRequiredStepsComplete([0, 1, 2, 3, 4, 5, 6])).toBe(true);
   });
 
   it('should return false when a required step is missing', () => {
-    expect(areRequiredStepsComplete([0, 1, 2, 3])).toBe(false); // review (5) missing
+    expect(areRequiredStepsComplete([0, 1, 2, 3, 4])).toBe(false); // review (6) missing
   });
 
   it('should return false when empty', () => {

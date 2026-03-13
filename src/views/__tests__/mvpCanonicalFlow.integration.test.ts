@@ -253,17 +253,18 @@ describe('AC #4: Guest nav is free of wallet/network-centric labels', () => {
 // ---------------------------------------------------------------------------
 
 describe('AC #5: Guided launch step ordering and advancement', () => {
-  it('should have 6 canonical steps', () => {
-    expect(GUIDED_LAUNCH_STEP_COUNT).toBe(6);
+  it('should have 7 canonical steps', () => {
+    expect(GUIDED_LAUNCH_STEP_COUNT).toBe(7);
   });
 
   it('should order steps correctly', () => {
     expect(GUIDED_LAUNCH_STEPS[0]).toBe('organization');
     expect(GUIDED_LAUNCH_STEPS[1]).toBe('intent');
     expect(GUIDED_LAUNCH_STEPS[2]).toBe('compliance');
-    expect(GUIDED_LAUNCH_STEPS[3]).toBe('template');
-    expect(GUIDED_LAUNCH_STEPS[4]).toBe('economics');
-    expect(GUIDED_LAUNCH_STEPS[5]).toBe('review');
+    expect(GUIDED_LAUNCH_STEPS[3]).toBe('whitelist');
+    expect(GUIDED_LAUNCH_STEPS[4]).toBe('template');
+    expect(GUIDED_LAUNCH_STEPS[5]).toBe('economics');
+    expect(GUIDED_LAUNCH_STEPS[6]).toBe('review');
   });
 
   it('should block advancement from step 0 when not complete', () => {
@@ -275,15 +276,15 @@ describe('AC #5: Guided launch step ordering and advancement', () => {
   });
 
   it('should block advancement from last step even when complete', () => {
-    expect(canAdvanceFromStep(5, [0, 1, 2, 3, 4, 5])).toBe(false);
+    expect(canAdvanceFromStep(6, [0, 1, 2, 3, 4, 5, 6])).toBe(false);
   });
 
   it('should report all required steps complete when economics is skipped', () => {
-    expect(areRequiredStepsComplete([0, 1, 2, 3, 5])).toBe(true);
+    expect(areRequiredStepsComplete([0, 1, 2, 3, 4, 6])).toBe(true);
   });
 
   it('should report incomplete when review step is missing', () => {
-    expect(areRequiredStepsComplete([0, 1, 2, 3, 4])).toBe(false);
+    expect(areRequiredStepsComplete([0, 1, 2, 3, 4, 5])).toBe(false);
   });
 });
 
@@ -297,7 +298,7 @@ describe('AC #6: Draft fixtures are structurally valid', () => {
     expect(draft.version).toBe('1.0');
     expect(draft.form.currentStep).toBe(0);
     expect(draft.form.completedSteps).toEqual([]);
-    expect(draft.stepStatuses).toHaveLength(6);
+    expect(draft.stepStatuses).toHaveLength(7);
   });
 
   it('should build a draft at step 3 with steps 0,1,2 complete', () => {

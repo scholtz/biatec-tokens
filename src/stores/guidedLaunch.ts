@@ -14,6 +14,7 @@ import type {
   OrganizationProfile,
   TokenIntent,
   ComplianceReadiness,
+  WhitelistPolicy,
   TokenTemplate,
   TokenEconomics,
   StepStatus,
@@ -107,6 +108,7 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
     { id: 'organization', title: 'Organization Profile', isComplete: false, isValid: false, isOptional: false },
     { id: 'intent', title: 'Token Intent', isComplete: false, isValid: false, isOptional: false },
     { id: 'compliance', title: 'Compliance Readiness', isComplete: false, isValid: false, isOptional: false },
+    { id: 'whitelist', title: 'Whitelist Policy', isComplete: false, isValid: false, isOptional: false },
     { id: 'template', title: 'Template Selection', isComplete: false, isValid: false, isOptional: false },
     { id: 'economics', title: 'Economics Settings', isComplete: false, isValid: false, isOptional: true },
     { id: 'review', title: 'Review & Submit', isComplete: false, isValid: false, isOptional: false },
@@ -296,6 +298,12 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
     saveDraft()
   }
 
+  const setWhitelistPolicy = (policy: WhitelistPolicy) => {
+    currentForm.value.whitelistPolicy = policy
+    currentForm.value.lastModified = new Date()
+    saveDraft()
+  }
+
   const setSelectedTemplate = (template: TokenTemplate) => {
     currentForm.value.selectedTemplate = template
     currentForm.value.lastModified = new Date()
@@ -450,6 +458,7 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
         organizationProfile: currentForm.value.organizationProfile,
         tokenIntent: currentForm.value.tokenIntent,
         complianceReadiness: currentForm.value.complianceReadiness,
+        whitelistPolicy: currentForm.value.whitelistPolicy,
         tokenTemplate: currentForm.value.selectedTemplate,
         tokenEconomics: currentForm.value.tokenEconomics,
         metadata: {
@@ -559,6 +568,7 @@ export const useGuidedLaunchStore = defineStore('guidedLaunch', () => {
     setOrganizationProfile,
     setTokenIntent,
     setComplianceReadiness,
+    setWhitelistPolicy,
     setSelectedTemplate,
     setTokenEconomics,
     goToStep,
