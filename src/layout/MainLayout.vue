@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import Navbar from "../components/layout/Navbar.vue";
 import Sidebar from "../components/layout/Sidebar.vue";
@@ -15,22 +15,32 @@ const route = useRoute();
  * for SPA route-change accessibility.
  */
 const routeAnnouncement = ref("");
+let announceTimer: ReturnType<typeof setTimeout> | null = null;
+let clearTimer: ReturnType<typeof setTimeout> | null = null;
 
-watch(
-  () => route.meta?.title ?? route.name ?? route.path,
-  (title) => {
-    // Brief delay lets the new page heading render so AT reads the live
-    // region announcement AFTER the new content is in the DOM.
-    setTimeout(() => {
-      routeAnnouncement.value = title ? `Navigated to ${String(title)}` : "Page changed";
-      // Clear after a short interval so duplicate navigations to the same
-      // route still trigger an announcement.
-      setTimeout(() => {
-        routeAnnouncement.value = "";
-      }, 2000);
-    }, 100);
-  },
-);
+function scheduleAnnouncement(title: unknown): void {
+  // Cancel any pending timers so rapid navigations do not stack
+  if (announceTimer !== null) clearTimeout(announceTimer);
+  if (clearTimer !== null) clearTimeout(clearTimer);
+
+  // Brief delay lets the new page heading render so AT reads the live
+  // region announcement AFTER the new content is in the DOM.
+  announceTimer = setTimeout(() => {
+    routeAnnouncement.value = title ? `Navigated to ${String(title)}` : "Page changed";
+    // Clear after a short interval so duplicate navigations to the same
+    // route still trigger a fresh announcement.
+    clearTimer = setTimeout(() => {
+      routeAnnouncement.value = "";
+    }, 2000);
+  }, 100);
+}
+
+watch(() => route.meta?.title ?? route.name ?? route.path, scheduleAnnouncement);
+
+onUnmounted(() => {
+  if (announceTimer !== null) clearTimeout(announceTimer);
+  if (clearTimer !== null) clearTimeout(clearTimer);
+});
 </script>
 
 <template>

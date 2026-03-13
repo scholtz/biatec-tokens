@@ -63,6 +63,45 @@ async function openMobileMenu(page: Page): Promise<void> {
   await expect(page.locator("#mobile-nav-menu")).toBeVisible({ timeout: 10000 });
 }
 
+/**
+ * Waits until an auth-guarded route has either redirected away, shown an auth
+ * modal, or added a `showAuth=true` query param. Used to verify that
+ * unauthenticated users are protected from accessing protected routes.
+ *
+ * @param page  - Playwright page.
+ * @param route - The protected route path (e.g. "/team/workspace").
+ */
+async function assertAuthGuardedRoute(page: Page, route: string): Promise<void> {
+  // Budget: goto(10) + load(5) + waitForFunction(20) + checks(5) = 40s < 60s
+  await page.goto(`${BASE_URL}${route}`, { timeout: 10000 });
+  await page.waitForLoadState("load", { timeout: 5000 });
+
+  await page.waitForFunction(
+    ([r]) => {
+      const url = window.location.href;
+      const emailInput = document.querySelector("input[type='email']");
+      return !url.includes(r) || url.includes("showAuth=true") || emailInput !== null;
+    },
+    [route],
+    { timeout: 20000 },
+  );
+
+  const url = page.url();
+  const redirectedAway = !url.includes(route);
+  const showsAuthModal = await page
+    .locator("form")
+    .filter({ hasText: /email/i })
+    .first()
+    .isVisible({ timeout: 3000 })
+    .catch(() => false);
+  const hasAuthParam = url.includes("showAuth=true");
+
+  expect(
+    redirectedAway || showsAuthModal || hasAuthParam,
+    `Unauthenticated user must not reach ${route}`,
+  ).toBe(true);
+}
+
 // ---------------------------------------------------------------------------
 // Section 1: Mobile viewport navigation parity (AC #1)
 // ---------------------------------------------------------------------------
@@ -480,47 +519,11 @@ test.describe("Section 7 — Unauthenticated redirect for protected enterprise r
   });
 
   test("unauthenticated user is redirected or shown auth modal for /team/workspace (AC #6)", async ({ page }) => {
-    // Budget: goto(10) + load(5) + waitForFunction(20) + checks(5) = 40s < 60s
-    await page.goto(`${BASE_URL}/team/workspace`, { timeout: 10000 });
-    await page.waitForLoadState("load", { timeout: 5000 });
-
-    await page.waitForFunction(
-      () => {
-        const url = window.location.href;
-        const emailInput = document.querySelector("input[type='email']");
-        return !url.includes("/team/workspace") || url.includes("showAuth=true") || emailInput !== null;
-      },
-      { timeout: 20000 },
-    );
-
-    const url = page.url();
-    const redirectedAway = !url.includes("/team/workspace");
-    const showsAuthModal = await page.locator("form").filter({ hasText: /email/i }).first().isVisible({ timeout: 3000 }).catch(() => false);
-    const hasAuthParam = url.includes("showAuth=true");
-
-    expect(redirectedAway || showsAuthModal || hasAuthParam, "Unauthenticated user must not reach /team/workspace").toBe(true);
+    await assertAuthGuardedRoute(page, "/team/workspace");
   });
 
   test("unauthenticated user is redirected or shown auth modal for /compliance/launch (AC #6)", async ({ page }) => {
-    // Budget: goto(10) + load(5) + waitForFunction(20) + checks(5) = 40s < 60s
-    await page.goto(`${BASE_URL}/compliance/launch`, { timeout: 10000 });
-    await page.waitForLoadState("load", { timeout: 5000 });
-
-    await page.waitForFunction(
-      () => {
-        const url = window.location.href;
-        const emailInput = document.querySelector("input[type='email']");
-        return !url.includes("/compliance/launch") || url.includes("showAuth=true") || emailInput !== null;
-      },
-      { timeout: 20000 },
-    );
-
-    const url = page.url();
-    const redirectedAway = !url.includes("/compliance/launch");
-    const showsAuthModal = await page.locator("form").filter({ hasText: /email/i }).first().isVisible({ timeout: 3000 }).catch(() => false);
-    const hasAuthParam = url.includes("showAuth=true");
-
-    expect(redirectedAway || showsAuthModal || hasAuthParam, "Unauthenticated user must not reach /compliance/launch").toBe(true);
+    await assertAuthGuardedRoute(page, "/compliance/launch");
   });
 
   test("home page is accessible to unauthenticated users without redirect (AC #6)", async ({ page }) => {
