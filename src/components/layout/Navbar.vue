@@ -190,7 +190,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useThemeStore } from "../../stores/theme";
 import { useSubscriptionStore } from "../../stores/subscription";
@@ -255,6 +255,14 @@ const toggleMobileMenu = () => {
   showMobileMenu.value = !showMobileMenu.value;
 };
 
+/** Closes open menus when Escape is pressed — WCAG SC 2.1.1 (Keyboard). */
+const handleKeyDown = (event: KeyboardEvent) => {
+  if (event.key === "Escape") {
+    showMobileMenu.value = false;
+    showUserMenu.value = false;
+  }
+};
+
 const formatAddress = (address?: string) => {
   if (!address) return "";
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -284,8 +292,13 @@ const handleAuthSuccess = (_data: { address: string; walletId: string; network: 
 };
 
 onMounted(async () => {
+  document.addEventListener("keydown", handleKeyDown);
   if (authStore.isAuthenticated) {
     await subscriptionStore.fetchSubscription();
   }
+});
+
+onUnmounted(() => {
+  document.removeEventListener("keydown", handleKeyDown);
 });
 </script>

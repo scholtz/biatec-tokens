@@ -480,3 +480,71 @@ describe('Navbar — subscription status badges', () => {
     expect(html).not.toMatch(/Past Due/i)
   })
 })
+
+// ── Escape key closes menus (WCAG SC 2.1.1) ───────────────────────────────
+
+describe('Navbar — Escape key menu management (WCAG SC 2.1.1)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('Escape key closes mobile menu when open', async () => {
+    const wrapper = mountNavbar()
+    const vm = wrapper.vm as any
+
+    vm.showMobileMenu = true
+    await wrapper.vm.$nextTick()
+    expect(vm.showMobileMenu).toBe(true)
+
+    // Simulate Escape keydown on the document
+    const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+    document.dispatchEvent(event)
+    await wrapper.vm.$nextTick()
+
+    expect(vm.showMobileMenu).toBe(false)
+  })
+
+  it('Escape key closes user menu when open', async () => {
+    const wrapper = mountNavbar({ isConnected: true, user: { email: 'u@b.io' }, account: 'A' })
+    const vm = wrapper.vm as any
+
+    vm.showUserMenu = true
+    await wrapper.vm.$nextTick()
+    expect(vm.showUserMenu).toBe(true)
+
+    const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+    document.dispatchEvent(event)
+    await wrapper.vm.$nextTick()
+
+    expect(vm.showUserMenu).toBe(false)
+  })
+
+  it('Escape key has no effect when both menus are closed', async () => {
+    const wrapper = mountNavbar()
+    const vm = wrapper.vm as any
+
+    expect(vm.showMobileMenu).toBe(false)
+    expect(vm.showUserMenu).toBe(false)
+
+    const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+    document.dispatchEvent(event)
+    await wrapper.vm.$nextTick()
+
+    expect(vm.showMobileMenu).toBe(false)
+    expect(vm.showUserMenu).toBe(false)
+  })
+
+  it('non-Escape key does not close mobile menu', async () => {
+    const wrapper = mountNavbar()
+    const vm = wrapper.vm as any
+
+    vm.showMobileMenu = true
+    await wrapper.vm.$nextTick()
+
+    const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
+    document.dispatchEvent(event)
+    await wrapper.vm.$nextTick()
+
+    expect(vm.showMobileMenu).toBe(true)
+  })
+})
