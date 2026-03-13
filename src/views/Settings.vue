@@ -18,7 +18,7 @@
               <label class="block text-sm font-medium text-gray-300 mb-3">Active Network</label>
               <div class="flex space-x-4">
                 <label v-for="network in networks" :key="network" class="flex items-center space-x-2">
-                  <input v-model="settings.network" :value="network" type="radio" class="w-4 h-4 text-biatec-accent focus:ring-biatec-accent" />
+                  <input v-model="settings.network" :value="network" type="radio" class="w-4 h-4 text-blue-600 focus-visible:ring-2 focus-visible:ring-blue-500" />
                   <span class="text-gray-900 dark:text-white capitalize">{{ network }}</span>
                 </label>
               </div>
@@ -31,7 +31,7 @@
                 <input
                   v-model="currentNetworkConfig.algodUrl"
                   type="url"
-                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
+                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   placeholder="https://testnet-api.algonode.cloud"
                 />
               </div>
@@ -40,7 +40,7 @@
                 <input
                   v-model="currentNetworkConfig.algodToken"
                   type="password"
-                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
+                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   placeholder="Optional API token"
                 />
               </div>
@@ -52,7 +52,7 @@
                 <input
                   v-model="currentNetworkConfig.indexerUrl"
                   type="url"
-                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
+                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   placeholder="https://testnet-idx.algonode.cloud"
                 />
               </div>
@@ -61,7 +61,7 @@
                 <input
                   v-model="currentNetworkConfig.indexerToken"
                   type="password"
-                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
+                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   placeholder="Optional API token"
                 />
               </div>
@@ -79,7 +79,7 @@
               <input
                 v-model="settings.evmRpcUrl"
                 type="url"
-                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
+                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 placeholder="https://ethereum-sepolia.blockpi.network/v1/rpc/public"
               />
             </div>
@@ -88,7 +88,7 @@
               <input
                 v-model.number="settings.evmChainId"
                 type="number"
-                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
+                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 placeholder="11155111"
               />
             </div>
@@ -109,7 +109,7 @@
               <button
                 @click="settingsStore.toggleDemoMode()"
                 :class="[
-                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-biatec-accent',
+                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
                   settings.demoMode ? 'bg-biatec-accent' : 'bg-gray-600',
                 ]"
               >
@@ -123,7 +123,7 @@
               <textarea
                 v-model="customHeaders"
                 rows="3"
-                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-biatec-accent focus:ring-2 focus:ring-biatec-accent/20"
+                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 placeholder='{"X-API-Key": "your-api-key"}'
               ></textarea>
             </div>

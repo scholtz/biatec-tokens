@@ -1,68 +1,71 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
-    <!-- Page header -->
-    <div class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Portfolio Intelligence</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Smart insights and watchlist for your token portfolio
-        </p>
-      </div>
-    </div>
-
-    <!-- Onboarding walkthrough -->
-    <PortfolioOnboardingWalkthrough
-      :is-first-visit="isFirstVisit"
-      :has-completed-onboarding="hasCompletedOnboarding"
-      @completed="onOnboardingCompleted"
-      @skipped="onOnboardingSkipped"
-      @replay="onOnboardingReplay"
-    />
-
-    <!-- Main content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Left column -->
-        <div class="lg:col-span-1 space-y-6">
-          <!-- Portfolio Summary -->
-          <Card variant="glass" padding="lg">
-            <PortfolioSummaryPanel
-              :summary="summary"
-              :loading="loadingPortfolio"
-              :error="portfolioError"
-              @retry="loadPortfolio"
-            />
-          </Card>
-
-          <!-- Watchlist -->
-          <Card variant="glass" padding="lg">
-            <WatchlistModule
-              :watchlist="watchlist"
-              :available-assets="availableAssets"
-              @add="onWatchlistAdd"
-              @remove="onWatchlistRemove"
-            />
-          </Card>
-        </div>
-
-        <!-- Right column: Insights -->
-        <div class="lg:col-span-2">
-          <Card variant="glass" padding="lg">
-            <InsightCardsModule
-              :insights="visibleInsights"
-              :loading="loadingPortfolio"
-              @insight-clicked="onInsightClicked"
-              @insight-dismissed="onInsightDismissed"
-            />
-          </Card>
+  <MainLayout>
+    <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <!-- Page header (WCAG SC 2.4.6: descriptive headings) -->
+      <div class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Portfolio Intelligence</h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Smart insights and watchlist for your token portfolio
+          </p>
         </div>
       </div>
+
+      <!-- Onboarding walkthrough -->
+      <PortfolioOnboardingWalkthrough
+        :is-first-visit="isFirstVisit"
+        :has-completed-onboarding="hasCompletedOnboarding"
+        @completed="onOnboardingCompleted"
+        @skipped="onOnboardingSkipped"
+        @replay="onOnboardingReplay"
+      />
+
+      <!-- Main content -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Left column -->
+          <div class="lg:col-span-1 space-y-6">
+            <!-- Portfolio Summary -->
+            <Card variant="glass" padding="lg">
+              <PortfolioSummaryPanel
+                :summary="summary"
+                :loading="loadingPortfolio"
+                :error="portfolioError"
+                @retry="loadPortfolio"
+              />
+            </Card>
+
+            <!-- Watchlist -->
+            <Card variant="glass" padding="lg">
+              <WatchlistModule
+                :watchlist="watchlist"
+                :available-assets="availableAssets"
+                @add="onWatchlistAdd"
+                @remove="onWatchlistRemove"
+              />
+            </Card>
+          </div>
+
+          <!-- Right column: Insights -->
+          <div class="lg:col-span-2">
+            <Card variant="glass" padding="lg">
+              <InsightCardsModule
+                :insights="visibleInsights"
+                :loading="loadingPortfolio"
+                @insight-clicked="onInsightClicked"
+                @insight-dismissed="onInsightDismissed"
+              />
+            </Card>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import MainLayout from '../components/layout/MainLayout.vue'
 import Card from '../components/ui/Card.vue'
 import PortfolioSummaryPanel from '../components/portfolio/PortfolioSummaryPanel.vue'
 import InsightCardsModule from '../components/portfolio/InsightCardsModule.vue'

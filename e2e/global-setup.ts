@@ -77,6 +77,10 @@ async function globalSetup(_config: FullConfig) {
     await page.goto(`${BASE_URL}/team/workspace`, { waitUntil: 'load', timeout: 120000 })
     console.log('[globalSetup] /team/workspace compiled.')
 
+    // Visit portfolio intelligence — compiles PortfolioIntelligenceView.vue and sub-components.
+    await page.goto(`${BASE_URL}/portfolio`, { waitUntil: 'load', timeout: 120000 })
+    console.log('[globalSetup] /portfolio compiled.')
+
     console.log('[globalSetup] Vite dev server fully warmed up. All module compilations cached.')
   } catch (err) {
     // Non-fatal: log and continue. Per-test timeouts (test.setTimeout) act as

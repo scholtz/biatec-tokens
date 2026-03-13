@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
+import { createTestingPinia } from '@pinia/testing'
 import PortfolioIntelligenceView from '../PortfolioIntelligenceView.vue'
 import {
   computePortfolioSummary,
@@ -316,8 +317,9 @@ describe('PortfolioIntelligenceView component', () => {
   async function mountView() {
     const router = makeRouter()
     await router.push('/portfolio')
+    const pinia = createTestingPinia({ createSpy: vi.fn })
     return mount(PortfolioIntelligenceView, {
-      global: { plugins: [router] },
+      global: { plugins: [router, pinia] },
     })
   }
 

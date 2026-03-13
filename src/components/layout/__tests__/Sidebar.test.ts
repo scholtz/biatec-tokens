@@ -2,9 +2,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createRouter, createMemoryHistory } from 'vue-router';
 import { createPinia, setActivePinia } from 'pinia';
-import Sidebar from './Sidebar.vue';
-import { useTokenStore } from '../../stores/tokens';
-import Badge from '../ui/Badge.vue';
+import Sidebar from '../Sidebar.vue';
+import { useTokenStore } from '../../../stores/tokens';
+import Badge from '../../ui/Badge.vue';
 
 // Mock Heroicons
 vi.mock('@heroicons/vue/24/outline', () => ({
