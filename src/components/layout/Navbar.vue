@@ -13,12 +13,12 @@
         <router-link to="/" class="flex items-center space-x-3 group">
           <img src="../../assets/logo-icon.svg" alt="Biatec Tokens Logo" class="h-14 w-auto hidden sm:block" />
           <div class="hidden sm:block">
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white">Biatec Tokens</h1>
+            <span class="text-xl font-bold text-gray-900 dark:text-white">Biatec Tokens</span>
           </div>
         </router-link>
 
         <!-- Desktop Navigation -->
-        <div class="hidden md:flex items-center space-x-1">
+        <div class="hidden md:flex items-center space-x-1" data-testid="desktop-nav-items">
           <router-link
             v-for="item in navigationItems"
             :key="item.name"

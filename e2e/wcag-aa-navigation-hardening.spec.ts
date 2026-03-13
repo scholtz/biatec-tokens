@@ -41,12 +41,12 @@ test.describe('Simplified business-language navigation (AC #1)', () => {
     const nav = page.locator('nav[aria-label="Main navigation"]')
     await expect(nav).toBeVisible({ timeout: 15000 })
 
-    // Count VISIBLE nav links at desktop viewport (1280px wide)
-    // Invisible (hidden) links in the mobile collapsed menu don't count
-    const navLinks = nav.getByRole('link').filter({ has: page.locator(':visible') })
+    // Count VISIBLE nav links in the desktop navigation items container only
+    // (excludes the logo link which is also inside the <nav> element)
+    const desktopNav = page.locator('[data-testid="desktop-nav-items"]')
+    const navLinks = desktopNav.getByRole('link')
     const count = await navLinks.count()
     // AC #1: ≤7 top-level items for reduced cognitive load
-    // At desktop viewport the desktop nav links are visible (not the mobile ones)
     expect(count).toBeGreaterThanOrEqual(1) // at minimum Home
     expect(count).toBeLessThanOrEqual(7)    // AC #1 ≤7 items
   })
@@ -437,6 +437,7 @@ test.describe('Screen-reader landmarks and ARIA semantics (AC #5)', () => {
     await page.goto('/')
     await page.waitForLoadState('load')
 
+    // The home page's main content h1 (Navbar brand now uses <span>, not <h1>)
     const h1 = page.getByRole('heading', { level: 1 })
     await expect(h1).toBeAttached({ timeout: 15000 })
   })
@@ -849,6 +850,7 @@ test.describe('Enterprise demo flows — compliance, launch, team operations (AC
   })
 
   test('subscription/billing accessible from authenticated user menu (AC #10)', async ({ page }) => {
+    await withAuth(page)
     await page.goto('/')
     await page.waitForLoadState('load')
 
