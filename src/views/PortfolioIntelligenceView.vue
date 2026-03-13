@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import MainLayout from '../components/layout/MainLayout.vue'
+import MainLayout from '../layout/MainLayout.vue'
 import Card from '../components/ui/Card.vue'
 import PortfolioSummaryPanel from '../components/portfolio/PortfolioSummaryPanel.vue'
 import InsightCardsModule from '../components/portfolio/InsightCardsModule.vue'

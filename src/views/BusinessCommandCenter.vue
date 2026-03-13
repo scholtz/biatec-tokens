@@ -1,18 +1,10 @@
 <template>
+  <MainLayout>
   <div
-    class="business-command-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8 px-4"
+    class="business-command-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8 px-4"
     data-testid="business-command-center"
   >
     <div class="max-w-7xl mx-auto">
-      <!-- Skip-to-content landmark for keyboard users -->
-      <a
-        href="#command-center-main"
-        class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg focus-visible:ring-2 focus-visible:ring-blue-400"
-      >
-        Skip to main content
-      </a>
-
-      <!-- Header -->
       <header class="mb-8">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -61,7 +53,7 @@
       </header>
 
       <!-- Main content -->
-      <main id="command-center-main" tabindex="-1">
+      <div id="command-center-main" tabindex="-1">
 
         <!-- Status overview bar -->
         <section
@@ -373,14 +365,16 @@
           </div>
         </section>
 
-      </main>
+      </div>
     </div>
   </div>
+  </MainLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import MainLayout from '../layout/MainLayout.vue';
 import {
   CheckCircleIcon,
   ChevronDownIcon,

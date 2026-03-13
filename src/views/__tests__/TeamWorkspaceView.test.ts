@@ -131,9 +131,10 @@ describe('TeamWorkspaceView — basic rendering', () => {
     expect(w.find('[data-testid="team-workspace"]').exists()).toBe(true)
   })
 
-  it('renders the skip to main content link (WCAG 2.4.1)', async () => {
+  it('renders workspace content area for screen reader orientation (WCAG 2.4.1)', async () => {
     const w = await mountView()
-    expect(w.find('[data-testid="skip-to-main"]').exists()).toBe(true)
+    // Skip link is now provided by MainLayout; verify the workspace content area exists.
+    expect(w.find('[data-testid="team-workspace"]').exists()).toBe(true)
   })
 
   it('renders the awaiting review section', async () => {

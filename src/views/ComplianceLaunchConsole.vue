@@ -1,15 +1,7 @@
 <template>
-  <!-- Skip to main content — WCAG 2.1 AA 2.4.1 -->
-  <a
-    href="#console-main"
-    class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg focus-visible:ring-2 focus-visible:ring-blue-400"
-  >
-    Skip to main content
-  </a>
-
-  <main
+  <MainLayout>
+  <div
     id="console-main"
-    role="main"
     class="compliance-launch-console min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8 px-4"
     data-testid="compliance-launch-console"
   >
@@ -383,12 +375,14 @@
       </footer>
 
     </div>
-  </main>
+  </div>
+  </MainLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import MainLayout from '../layout/MainLayout.vue'
 import {
   ShieldCheckIcon,
   RocketLaunchIcon,

@@ -286,7 +286,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import MainLayout from "../components/layout/MainLayout.vue";
+import MainLayout from "../layout/MainLayout.vue";
 import PolicySummaryPanel from "../components/whitelist/PolicySummaryPanel.vue";
 import PolicyAuditCard from "../components/whitelist/PolicyAuditCard.vue";
 import EligibilityInspector from "../components/whitelist/EligibilityInspector.vue";
