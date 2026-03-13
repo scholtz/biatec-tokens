@@ -257,5 +257,56 @@ describe("WhitelistPolicyDashboard", () => {
       const wrapper = mountDashboard({ policy: MOCK_POLICY });
       expect(wrapper.find("h1").text()).toContain("Whitelist Policy Management");
     });
+
+    it("shows edit panel when edit policy button is clicked", async () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      await wrapper.find('[data-testid="edit-policy-button"]').trigger("click");
+      await nextTick();
+      expect(wrapper.find('[data-testid="policy-edit-panel"]').exists()).toBe(true);
+    });
+
+    it("hides edit panel when close event is emitted", async () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      await wrapper.find('[data-testid="edit-policy-button"]').trigger("click");
+      await nextTick();
+      // The mock edit panel emits 'close' — parent sets showEditPanel = false (visible = false)
+      const editPanel = wrapper.findComponent({ name: "PolicyEditPanel" });
+      await editPanel.vm.$emit("close");
+      await nextTick();
+      // visible prop should now be false
+      expect(editPanel.props("visible")).toBe(false);
+    });
+
+    it("hides edit panel when saved event is emitted", async () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      await wrapper.find('[data-testid="edit-policy-button"]').trigger("click");
+      await nextTick();
+      const editPanel = wrapper.findComponent({ name: "PolicyEditPanel" });
+      await editPanel.vm.$emit("saved");
+      await nextTick();
+      // handlePolicySaved sets showEditPanel = false → visible = false
+      expect(editPanel.props("visible")).toBe(false);
+    });
+  });
+
+  // ── Policy gaps section ───────────────────────────────────────────────────────
+
+  describe("policy gaps", () => {
+    it("shows policy gaps section when hasGaps is true (via store)", () => {
+      const policyWithGaps = {
+        ...MOCK_POLICY,
+        gaps: [
+          { id: "gap-1", message: "No investor categories enabled", severity: "error" as const },
+        ],
+      };
+      const wrapper = mountDashboard({ policy: policyWithGaps });
+      expect(wrapper.text()).toContain("Policy Gaps");
+      expect(wrapper.text()).toContain("No investor categories enabled");
+    });
+
+    it("does not show gaps section when policy has no gaps", () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      expect(wrapper.find(".border-amber-700\\/30").exists()).toBe(false);
+    });
   });
 });

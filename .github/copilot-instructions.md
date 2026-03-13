@@ -1608,6 +1608,66 @@ This two-part approach gives FULL confidence:
 
 ---
 
+### 7s. Teleport Component Internal Functions Must Be Tested Via `(wrapper.vm as any)` in happy-dom (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 13, 2026 (PR #608) 🚨**
+
+**Violation**: `PolicyEditPanel.vue` was submitted with 56.6% function coverage because tests only used DOM-event simulation to trigger internal functions (`addJurisdiction`, `removeJurisdiction`, `toggleCategory`, `toggleKyc`, `changeSummary` branches). In happy-dom's Teleport environment, clicking DOM elements does NOT reliably invoke Vue's compiled `@click` listeners on teleported content, so many code paths were never exercised despite the tests appearing to interact with the correct buttons.
+
+**Root Cause**:
+- Teleport renders into `document.body` outside the component's Shadow DOM, meaning `wrapper.trigger()` and `element.click()` do not reliably call Vue-registered event handlers for internal script-setup functions
+- DOM-click-based tests reached 56.6% function coverage — well below the 80% threshold
+- No `.logic.test.ts` file was created alongside the component, which is the established pattern for complex views/components
+
+**Correct Approach for Teleport Components With Internal Logic**:
+
+1. **Create `ComponentName.logic.test.ts`** alongside the regular `ComponentName.test.ts` for any component using `<Teleport>` with internal `<script setup>` functions
+2. **Access internal functions via `(wrapper.vm as any)`** — this is the only reliable way to call script-setup functions in Teleport components in happy-dom:
+
+```typescript
+// ✅ CORRECT — access script-setup function directly via vm for Teleport components
+const wrapper = mount(PolicyEditPanel, { props, global })
+await nextTick()
+const vm = wrapper.vm as any
+
+// Test addJurisdiction directly (DOM click won't reliably fire in Teleport + happy-dom)
+vm.activeAddInput = 'allowedJurisdictions'
+vm.addCountrySearch = 'Germany'
+await nextTick()
+vm.addJurisdiction('allowedJurisdictions')
+await nextTick()
+expect(vm.localDraft.allowedJurisdictions.find((j: any) => j.code === 'DE')).toBeTruthy()
+
+// Test computed branch directly
+vm.localDraft.kycRequired = false
+await nextTick()
+expect(vm.changeSummary).toContain('Global KYC: Disabled')
+```
+
+3. **Cover ALL internal state branches** that are only accessible through computed properties or reactive data mutations (e.g., `changeSummary` branches for `kycRequired`, `accreditationRequired`, `defaultBehavior`)
+
+**Coverage Checklist for Teleport Components**:
+- [ ] `*.test.ts` — DOM structure, accessibility (aria roles, labels), visibility states
+- [ ] `*.logic.test.ts` — ALL internal functions called directly via `(wrapper.vm as any)`:
+  - Each function that has early-return guard (`if (!localDraft.value) return`)
+  - Each computed branch (e.g., `changeSummary` with 5+ sub-branches)
+  - Each async function that emits events (`handleConfirmSave`, etc.)
+
+**Pre-Commit Coverage Check** (MANDATORY for any `<Teleport>` component):
+```bash
+npx vitest run --coverage \
+  src/components/myComponent/__tests__/MyComponent.test.ts \
+  src/components/myComponent/__tests__/MyComponent.logic.test.ts 2>&1 | grep "MyComponent.vue"
+# Must show: % Funcs ≥80%, % Branch ≥80%
+```
+
+**Never Again**:
+- ❌ Use only DOM-click tests for Teleport component internal function coverage
+- ❌ Submit a Teleport component without a `.logic.test.ts` that uses `(wrapper.vm as any)`
+- ❌ Accept coverage below 80% functions/branches for any new component
+
+---
+
 ## 🚨 CRITICAL: PR QUALITY STANDARDS - HARDENING ISSUES 🚨
 
 **MANDATORY BEFORE SUBMITTING ANY PR FOR HARDENING ISSUES**

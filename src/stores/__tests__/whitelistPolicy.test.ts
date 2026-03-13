@@ -409,4 +409,210 @@ describe("useWhitelistPolicyStore", () => {
       expect(store.criticalGaps).toHaveLength(0);
     });
   });
+
+  // ── checkEligibility extended coverage ─────────────────────────────────────
+
+  describe("checkEligibility — extended branch coverage", () => {
+    async function loadedStore() {
+      const store = useWhitelistPolicyStore();
+      const p = store.fetchPolicy("token-001");
+      await vi.runAllTimersAsync();
+      await p;
+      return store;
+    }
+
+    it("returns 'denied' for unlisted jurisdiction under allow_by_rule default", async () => {
+      const store = await loadedStore();
+      // ZZ is not in any list — default allow_by_rule should deny
+      const promise = store.checkEligibility({ jurisdictionCode: "ZZ", investorCategory: "retail" });
+      await vi.runAllTimersAsync();
+      await promise;
+      expect(store.eligibilityResult?.decision).toBe("denied");
+    });
+
+    it("includes JURISDICTION_NOT_LISTED reason for unlisted jurisdiction", async () => {
+      const store = await loadedStore();
+      const promise = store.checkEligibility({ jurisdictionCode: "ZZ", investorCategory: "retail" });
+      await vi.runAllTimersAsync();
+      await promise;
+      const codes = store.eligibilityResult!.reasons.map((r) => r.code);
+      expect(codes).toContain("JURISDICTION_NOT_LISTED");
+    });
+
+    it("returns 'denied' for unknown investor category (CATEGORY_UNKNOWN)", async () => {
+      const store = await loadedStore();
+      const promise = store.checkEligibility({ jurisdictionCode: "SK", investorCategory: "not_a_real_category" });
+      await vi.runAllTimersAsync();
+      await promise;
+      expect(store.eligibilityResult?.decision).toBe("denied");
+      const codes = store.eligibilityResult!.reasons.map((r) => r.code);
+      expect(codes).toContain("CATEGORY_UNKNOWN");
+    });
+
+    it("does not run eligibility when policy is null", async () => {
+      const store = useWhitelistPolicyStore();
+      // policy is null, no fetch
+      await store.checkEligibility({ jurisdictionCode: "SK", investorCategory: "retail" });
+      expect(store.eligibilityResult).toBeNull();
+    });
+
+    it("sets isCheckingEligibility to true during check", async () => {
+      const store = await loadedStore();
+      const promise = store.checkEligibility({ jurisdictionCode: "SK", investorCategory: "retail" });
+      expect(store.isCheckingEligibility).toBe(true);
+      await vi.runAllTimersAsync();
+      await promise;
+      expect(store.isCheckingEligibility).toBe(false);
+    });
+
+    it("accreditation required produces warning reason for allowed decision", async () => {
+      const store = await loadedStore();
+      // Temporarily set accreditationRequired=true for this check
+      store.startEdit();
+      store.updateDraft({ accreditationRequired: true });
+      const savePromise = store.saveDraft();
+      await vi.runAllTimersAsync();
+      await savePromise;
+      // Now check allowed jurisdiction + category
+      const promise = store.checkEligibility({ jurisdictionCode: "SK", investorCategory: "retail" });
+      await vi.runAllTimersAsync();
+      await promise;
+      const codes = store.eligibilityResult!.reasons.map((r) => r.code);
+      expect(codes).toContain("ACCREDITATION_REQUIRED");
+    });
+  });
+
+  // ── detectContradictions — allow_by_rule with no allowed jurisdictions ──────
+
+  describe("detectContradictions — allow_by_rule with no allowed jurisdictions", () => {
+    it("warns when allow_by_rule and no allowed jurisdictions", async () => {
+      const store = useWhitelistPolicyStore();
+      const p = store.fetchPolicy("token-001");
+      await vi.runAllTimersAsync();
+      await p;
+      store.startEdit();
+      store.updateDraft({
+        defaultBehavior: "allow_by_rule",
+        allowedJurisdictions: [],
+      });
+      const warnings = store.detectContradictions();
+      expect(warnings.some((w) => w.includes("no allowed jurisdictions"))).toBe(true);
+    });
+
+    it("warns when country appears in both restricted and blocked", async () => {
+      const store = useWhitelistPolicyStore();
+      const p = store.fetchPolicy("token-001");
+      await vi.runAllTimersAsync();
+      await p;
+      store.startEdit();
+      // Put PL in both restricted and blocked
+      store.updateDraft({
+        restrictedJurisdictions: [{ code: "PL", name: "Poland" }],
+        blockedJurisdictions: [
+          ...store.draft!.blockedJurisdictions,
+          { code: "PL", name: "Poland" },
+        ],
+      });
+      const warnings = store.detectContradictions();
+      expect(warnings.some((w) => w.includes("Poland"))).toBe(true);
+    });
+
+    it("returns empty contradictions when no draft and no policy", () => {
+      const store = useWhitelistPolicyStore();
+      const warnings = store.detectContradictions();
+      expect(warnings).toEqual([]);
+    });
+  });
+
+  // ── hasGaps / criticalGaps with real gaps ───────────────────────────────────
+
+  describe("hasGaps with real gap data", () => {
+    it("hasGaps returns false with no gaps", async () => {
+      const store = useWhitelistPolicyStore();
+      const p = store.fetchPolicy("token-001");
+      await vi.runAllTimersAsync();
+      await p;
+      expect(store.hasGaps).toBe(false);
+    });
+  });
+
+  // ── saveDraft without existing policy ──────────────────────────────────────
+
+  describe("saveDraft edge cases", () => {
+    it("saveDraft does nothing when draft is null", async () => {
+      const store = useWhitelistPolicyStore();
+      const p = store.fetchPolicy("token-001");
+      await vi.runAllTimersAsync();
+      await p;
+      // draft is null — saveDraft should exit early
+      await store.saveDraft();
+      expect(store.policy?.version).toBe("1.3"); // unchanged
+    });
+  });
+
+  // ── Eligibility with allow_all / deny_all default behaviors ──────────────
+
+  describe("checkEligibility — allow_all and deny_all defaults", () => {
+    it("returns DEFAULT_ALLOW reason for unlisted jurisdiction when defaultBehavior=allow_all", async () => {
+      const store = useWhitelistPolicyStore();
+      const p = store.fetchPolicy("token-001");
+      await vi.runAllTimersAsync();
+      await p;
+      // Change default behavior to allow_all
+      store.startEdit();
+      store.updateDraft({ defaultBehavior: "allow_all" });
+      const savePromise = store.saveDraft();
+      await vi.runAllTimersAsync();
+      await savePromise;
+      // ZZ is not in any list — allow_all default should allow it
+      const checkPromise = store.checkEligibility({ jurisdictionCode: "ZZ", investorCategory: "professional" });
+      await vi.runAllTimersAsync();
+      await checkPromise;
+      const codes = store.eligibilityResult!.reasons.map((r) => r.code);
+      expect(codes).toContain("DEFAULT_ALLOW");
+    });
+
+    it("returns DEFAULT_DENY reason for unlisted jurisdiction when defaultBehavior=deny_all", async () => {
+      const store = useWhitelistPolicyStore();
+      const p = store.fetchPolicy("token-001");
+      await vi.runAllTimersAsync();
+      await p;
+      // Change default behavior to deny_all
+      store.startEdit();
+      store.updateDraft({ defaultBehavior: "deny_all" });
+      const savePromise = store.saveDraft();
+      await vi.runAllTimersAsync();
+      await savePromise;
+      // ZZ is not in any list — deny_all default should deny it
+      const checkPromise = store.checkEligibility({ jurisdictionCode: "ZZ", investorCategory: "professional" });
+      await vi.runAllTimersAsync();
+      await checkPromise;
+      const codes = store.eligibilityResult!.reasons.map((r) => r.code);
+      expect(codes).toContain("DEFAULT_DENY");
+      expect(store.eligibilityResult?.decision).toBe("denied");
+    });
+
+    it("CATEGORY_DENIED reason when investor category explicitly denied", async () => {
+      const store = useWhitelistPolicyStore();
+      const p = store.fetchPolicy("token-001");
+      await vi.runAllTimersAsync();
+      await p;
+      // Disable retail investors
+      store.startEdit();
+      store.updateDraft({
+        allowedInvestorCategories: store.draft!.allowedInvestorCategories.map((c) =>
+          c.category === "retail" ? { ...c, allowed: false } : c
+        ),
+      });
+      const savePromise = store.saveDraft();
+      await vi.runAllTimersAsync();
+      await savePromise;
+      const checkPromise = store.checkEligibility({ jurisdictionCode: "SK", investorCategory: "retail" });
+      await vi.runAllTimersAsync();
+      await checkPromise;
+      const codes = store.eligibilityResult!.reasons.map((r) => r.code);
+      expect(codes).toContain("CATEGORY_DENIED");
+      expect(store.eligibilityResult?.decision).toBe("denied");
+    });
+  });
 });
