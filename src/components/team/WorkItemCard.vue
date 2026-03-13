@@ -192,12 +192,15 @@ const priorityClasses = computed(() => PRIORITY_CLASSES[props.item.priority])
 
 // ── Due date ──────────────────────────────────────────────────────────────
 
+const MS_PER_DAY = 1000 * 60 * 60 * 24
+const URGENT_THRESHOLD_DAYS = 3
+
 const dueDateClasses = computed(() => {
   if (!props.item.dueDate) return 'text-gray-500'
   const msUntilDue = new Date(props.item.dueDate).getTime() - Date.now()
-  const daysUntilDue = msUntilDue / (1000 * 60 * 60 * 24)
+  const daysUntilDue = msUntilDue / MS_PER_DAY
   if (daysUntilDue < 0) return 'text-red-400 font-medium'
-  if (daysUntilDue <= 3) return 'text-orange-400 font-medium'
+  if (daysUntilDue <= URGENT_THRESHOLD_DAYS) return 'text-orange-400 font-medium'
   return 'text-gray-500'
 })
 

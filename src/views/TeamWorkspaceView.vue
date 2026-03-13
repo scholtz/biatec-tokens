@@ -422,7 +422,8 @@ function handleRequestChanges(itemId: string) {
 }
 
 function handleAssign(_item: WorkItem) {
-  // Placeholder: open assign modal — handled by parent or future modal component
+  // TODO: open assign-member modal — tracked in team workspace roadmap (issue #future)
+  // The modal will allow selecting a team member email and calling workflowStore.assignItem().
 }
 
 function handleRetry() {

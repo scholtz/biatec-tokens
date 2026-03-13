@@ -210,7 +210,7 @@ test.describe('Team Operations Workspace', () => {
     await page.waitForLoadState('load', { timeout: 10000 })
     await page.waitForSelector('[data-testid="workspace-heading"]', { timeout: 20000 })
 
-    // The store initialises with 8 mock items; some should appear in queue sections
+    // The store initializes with 8 mock items; some should appear in queue sections
     const cards = page.locator('[data-testid^="work-item-card-"]')
     const count = await cards.count()
     expect(count).toBeGreaterThan(0)

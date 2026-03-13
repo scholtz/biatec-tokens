@@ -280,14 +280,14 @@ describe('TeamWorkspaceView logic — store integration', () => {
     const items = [
       makeItem({ id: 'a1', state: 'pending', assignee: 'a@b.com' }),
       makeItem({ id: 'a2', state: 'in_review', assignee: 'b@c.com' }),
-      makeItem({ id: 'a3', state: 'approved', assignee: 'd@e.com' }), // excluded from active
-      makeItem({ id: 'a4', state: 'pending' }), // no assignee — excluded
+      makeItem({ id: 'a3', state: 'approved', assignee: 'd@e.com' }), // excluded from active (terminal)
+      makeItem({ id: 'a4', state: 'pending', assignee: undefined }), // no assignee — excluded
     ]
     const w = await mountView(items)
     const section = w.find('[data-testid="assigned-section"]')
     const cards = section.findAll('.mock-work-item-card')
     // a1 (pending+assignee) and a2 (in_review+assignee) are the active assigned items
-    // a3 (approved) and a4 (no assignee) are excluded — count must be ≥2 and ≤ total active
-    expect(cards.length).toBeGreaterThanOrEqual(2)
+    // a3 (approved) and a4 (no assignee) are excluded — count must be exactly 2
+    expect(cards.length).toBe(2)
   })
 })
