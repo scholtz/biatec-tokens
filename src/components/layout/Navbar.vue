@@ -140,11 +140,13 @@
 
           <!-- Mobile Menu Button -->
           <button
+            ref="mobileMenuBtnRef"
             @click="toggleMobileMenu"
             class="md:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             :aria-expanded="showMobileMenu"
             aria-controls="mobile-nav-menu"
             :aria-label="showMobileMenu ? 'Close navigation menu' : 'Open navigation menu'"
+            data-testid="mobile-menu-toggle"
           >
             <Bars3Icon v-if="!showMobileMenu" class="w-6 h-6" />
             <XMarkIcon v-else class="w-6 h-6" />
@@ -226,6 +228,9 @@ const showMobileMenu = ref(false);
 const showUserMenu = ref(false);
 const showAuthModal = ref(false);
 
+/** Template ref for the mobile menu toggle button — used to restore focus after Escape closes the menu (WCAG SC 2.1.2). */
+const mobileMenuBtnRef = ref<HTMLButtonElement | null>(null);
+
 /** Icon mapping for canonical nav items — kept local so navItems.ts stays dependency-free. */
 const NAV_ICONS: Record<string, FunctionalComponent<SVGAttributes>> = {
   "/": HomeIcon,
@@ -255,11 +260,17 @@ const toggleMobileMenu = () => {
   showMobileMenu.value = !showMobileMenu.value;
 };
 
-/** Closes open menus when Escape is pressed — WCAG SC 2.1.1 (Keyboard). */
+/** Closes open menus when Escape is pressed — WCAG SC 2.1.1 (Keyboard). Restores focus to the invoking control — WCAG SC 2.1.2 (No Keyboard Trap). */
 const handleKeyDown = (event: KeyboardEvent) => {
   if (event.key === "Escape") {
+    const mobileWasOpen = showMobileMenu.value;
     showMobileMenu.value = false;
     showUserMenu.value = false;
+    // Return focus to the mobile menu toggle button when that menu was open,
+    // so keyboard users are not left at an unpredictable focus position.
+    if (mobileWasOpen && mobileMenuBtnRef.value) {
+      mobileMenuBtnRef.value.focus();
+    }
   }
 };
 
