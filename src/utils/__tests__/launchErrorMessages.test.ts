@@ -26,6 +26,7 @@ describe('launchErrorMessages', () => {
       'SAVE_FAILED',
       'STEP_LOAD_FAILED',
       'SUBMISSION_FAILED',
+      'SERVICE_UNAVAILABLE',
       'RATE_LIMITED',
       'UNKNOWN',
     ];
@@ -161,6 +162,13 @@ describe('launchErrorMessages', () => {
       expect(classifyLaunchError('offline')).toBe('NETWORK_UNAVAILABLE');
     });
 
+    it('should classify backend service unavailability (5xx) as SERVICE_UNAVAILABLE', () => {
+      expect(classifyLaunchError(new Error('Service unavailable'))).toBe('SERVICE_UNAVAILABLE');
+      expect(classifyLaunchError(new Error('503 Service Unavailable'))).toBe('SERVICE_UNAVAILABLE');
+      expect(classifyLaunchError(new Error('502 Bad Gateway'))).toBe('SERVICE_UNAVAILABLE');
+      expect(classifyLaunchError(new Error('Backend temporarily unavailable'))).toBe('SERVICE_UNAVAILABLE');
+    });
+
     it('should classify draft save errors', () => {
       expect(classifyLaunchError(new Error('Failed to save draft'))).toBe('SAVE_FAILED');
       expect(classifyLaunchError(new Error('Storage quota exceeded'))).toBe('SAVE_FAILED');
@@ -190,11 +198,28 @@ describe('launchErrorMessages', () => {
       expect(classifyLaunchError(new Error('NETWORK ERROR'))).toBe('NETWORK_UNAVAILABLE');
     });
 
+    it('SERVICE_UNAVAILABLE message explains Biatec handles backend deployment', () => {
+      const msg = getLaunchErrorMessage('SERVICE_UNAVAILABLE');
+      expect(msg.severity).toBe('warning');
+      expect(msg.recoverable).toBe(true);
+      // Message must guide user to retry and reassure about idempotency
+      expect(msg.action.toLowerCase()).toMatch(/wait|retry|again/);
+      expect(msg.description.toLowerCase()).toMatch(/deployment|backend|service/);
+    });
+
+    it('SUBMISSION_FAILED message mentions Biatec backend deployment context', () => {
+      const msg = getLaunchErrorMessage('SUBMISSION_FAILED');
+      expect(msg.severity).toBe('error');
+      expect(msg.recoverable).toBe(true);
+      expect(msg.description.toLowerCase()).toMatch(/backend|deployment/);
+    });
+
     it('getLaunchErrorMessage with classifyLaunchError should always return a valid message', () => {
       const errors = [
         new Error('auth failed'),
         new Error('session expired'),
         new Error('network error'),
+        new Error('service unavailable'),
         new Error('random unknown error'),
         null,
         undefined,

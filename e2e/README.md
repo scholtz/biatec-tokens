@@ -141,12 +141,17 @@ All tests in `mvp-backend-signoff.spec.ts` skip with a clear message. Standard C
 broad suppressor. This ensures genuine application regressions surface as test failures rather than
 being silently masked.
 
-**Blocker-facing suites using narrow suppressor** (as of Issue #588):
+**Blocker-facing suites using narrow suppressor** (as of Issue #588 + guided-launch hardening):
 - `mvp-sign-off-hardening.spec.ts` ✅
 - `mvp-signoff-readiness.spec.ts` ✅
 - `mvp-stabilization.spec.ts` ✅
 - `mvp-deterministic-journey.spec.ts` ✅
 - `backend-deployment-contract.spec.ts` (permissive lane) ✅
+- `arc76-determinism.spec.ts` ✅ (updated: was broad suppressor)
+- `canonical-launch-aa-hardening.spec.ts` ✅ (updated: was broad suppressor)
+- `guided-token-launch.spec.ts` ✅ (updated: was broad suppressor)
+- `arc76-validation.spec.ts` ✅ (updated: was broad suppressor)
+- `accessibility-auth-launch.spec.ts` ✅ (updated: was broad suppressor)
 
 **Strict lane (no suppressor at all):**
 - `mvp-backend-signoff.spec.ts` — strict auth sign-off tests

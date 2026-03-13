@@ -15,11 +15,11 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { loginWithCredentials, suppressBrowserErrors } from './helpers/auth'
+import { loginWithCredentials, suppressBrowserErrorsNarrow } from './helpers/auth'
 
 test.describe('Guided Token Launch Flow', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
 
     // Critical journey: loginWithCredentials() attempts real backend auth (POST /api/auth/login)
     // and falls back to contract-validated localStorage seeding when backend is unavailable.

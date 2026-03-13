@@ -24,7 +24,7 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { suppressBrowserErrors } from "./helpers/auth";
+import { suppressBrowserErrorsNarrow } from "./helpers/auth";
 
 // ---------------------------------------------------------------------------
 // Shared auth fixture (email/password only – no wallet)
@@ -37,7 +37,7 @@ const authUser = JSON.stringify({
 
 test.describe("Accessibility: Auth Flow", () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page);
+    suppressBrowserErrorsNarrow(page);
   });
 
   // --------------------------------------------------------------------------
@@ -182,7 +182,7 @@ test.describe("Accessibility: Auth Flow", () => {
 
 test.describe("Accessibility: Guided Launch Form", () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page);
+    suppressBrowserErrorsNarrow(page);
 
     // Authenticate before navigation (auth-first pattern)
     await page.addInitScript(() => {
@@ -329,7 +329,7 @@ test.describe("Accessibility: Guided Launch Form", () => {
 
 test.describe("Accessibility: Auth-First Redirect", () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page);
+    suppressBrowserErrorsNarrow(page);
   });
 
   test("unauthenticated access to /launch/guided shows auth UI (not a blank screen)", async ({

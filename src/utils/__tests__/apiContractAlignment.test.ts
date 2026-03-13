@@ -133,13 +133,13 @@ describe('API Contract Alignment: Token Creation Endpoint Errors', () => {
     expect(code).toBe('COMPLIANCE_INCOMPLETE')
   })
 
-  it('should classify submission failure as SUBMISSION_FAILED', () => {
+  it('should classify backend service unavailability as SERVICE_UNAVAILABLE', () => {
     const response: ApiErrorResponse = {
-      status: 500,
+      status: 503,
       message: 'Submission failed: deployment service unavailable',
     }
     const code = classifyApiError(response)
-    expect(code).toBe('SUBMISSION_FAILED')
+    expect(code).toBe('SERVICE_UNAVAILABLE')
 
     const msg = getLaunchErrorMessage(code)
     expect(msg.recoverable).toBe(true)

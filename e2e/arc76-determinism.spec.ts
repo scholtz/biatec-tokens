@@ -37,7 +37,7 @@
  */
 
 import { test, expect, chromium } from '@playwright/test'
-import { loginWithCredentials, withAuth, clearAuthScript, suppressBrowserErrors } from './helpers/auth'
+import { loginWithCredentials, withAuth, clearAuthScript, suppressBrowserErrorsNarrow } from './helpers/auth'
 
 // ---------------------------------------------------------------------------
 // Section 1: Browser-level determinism — same credentials → same address
@@ -54,8 +54,8 @@ test.describe('ARC76 Determinism: same credentials → same address', () => {
     const pageA = await contextA.newPage()
     const pageB = await contextB.newPage()
 
-    suppressBrowserErrors(pageA)
-    suppressBrowserErrors(pageB)
+    suppressBrowserErrorsNarrow(pageA)
+    suppressBrowserErrorsNarrow(pageB)
 
     // Bootstrap auth in context A
     await loginWithCredentials(pageA)
@@ -93,8 +93,8 @@ test.describe('ARC76 Determinism: same credentials → same address', () => {
     const pageA = await contextA.newPage()
     const pageB = await contextB.newPage()
 
-    suppressBrowserErrors(pageA)
-    suppressBrowserErrors(pageB)
+    suppressBrowserErrorsNarrow(pageA)
+    suppressBrowserErrorsNarrow(pageB)
 
     // Seed different emails so the ARC76 derivation produces different addresses
     await loginWithCredentials(pageA, 'user-alpha@arc76-determinism.io')
@@ -142,7 +142,7 @@ test.describe('ARC76 Determinism: invalid session is rejected', () => {
   test('missing algorand_user key causes auth guard to deny protected route access', async ({
     page,
   }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
 
     // Ensure no auth state exists
     await page.addInitScript(() => {
@@ -172,7 +172,7 @@ test.describe('ARC76 Determinism: invalid session is rejected', () => {
   test('malformed algorand_user (missing address) causes auth guard to reject access', async ({
     page,
   }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
 
     // Inject a session that is missing the required `address` field
     await page.addInitScript(() => {
@@ -338,7 +338,7 @@ test.describe('ARC76 Backend Derivation Assertions (API-level)', () => {
 
 test.describe('ARC76 Determinism: relogin and refresh continuity', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('session address persists after page reload (refresh continuity)', async ({ page }) => {
@@ -445,7 +445,7 @@ test.describe('ARC76 Determinism: relogin and refresh continuity', () => {
 
 test.describe('ARC76 Determinism: invalid session explicit error handling and recovery', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('session with missing address field is rejected (not silently accepted)', async ({ page }) => {

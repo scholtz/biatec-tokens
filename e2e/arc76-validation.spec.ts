@@ -23,11 +23,11 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { withAuth, suppressBrowserErrors } from './helpers/auth'
+import { withAuth, suppressBrowserErrorsNarrow } from './helpers/auth'
 
 test.describe('ARC76 Account Derivation Validation', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('should maintain consistent auth state across page reloads', async ({ page }) => {

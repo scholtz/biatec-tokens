@@ -33,6 +33,7 @@ export type LaunchErrorCode =
   | 'SAVE_FAILED'
   | 'STEP_LOAD_FAILED'
   | 'SUBMISSION_FAILED'
+  | 'SERVICE_UNAVAILABLE'
   | 'RATE_LIMITED'
   | 'UNKNOWN';
 
@@ -94,11 +95,20 @@ const errorMessages: Record<LaunchErrorCode, LaunchErrorMessage> = {
   SUBMISSION_FAILED: {
     title: 'Submission did not complete',
     description:
-      'Your token launch request could not be processed at this time.',
+      'Your token launch request could not be processed. Biatec handles deployment in the backend - the request was received but encountered an error during processing.',
     action:
-      'Wait a moment and try submitting again. If the error continues, contact support.',
+      'Wait a moment and try submitting again - your draft has been saved. If the error continues, contact support at support@biatec.io.',
     recoverable: true,
     severity: 'error',
+  },
+  SERVICE_UNAVAILABLE: {
+    title: 'Deployment service temporarily unavailable',
+    description:
+      'The token deployment service is temporarily unavailable. Biatec manages deployment in the backend and the service will recover automatically.',
+    action:
+      'Please wait a few minutes and try again. Your draft is saved and no duplicate will be created when you retry.',
+    recoverable: true,
+    severity: 'warning',
   },
   RATE_LIMITED: {
     title: 'Too many requests',
@@ -151,6 +161,16 @@ export function classifyLaunchError(error: unknown): LaunchErrorCode {
   }
   if (msg.includes('network') || msg.includes('offline') || msg.includes('fetch')) {
     return 'NETWORK_UNAVAILABLE';
+  }
+  // 5xx responses and service unavailability — backend deployment service errors
+  if (
+    msg.includes('service unavailable') ||
+    msg.includes('503') ||
+    msg.includes('502') ||
+    msg.includes('bad gateway') ||
+    msg.includes('temporarily unavailable')
+  ) {
+    return 'SERVICE_UNAVAILABLE';
   }
   if (msg.includes('save') || msg.includes('draft') || msg.includes('storage')) {
     return 'SAVE_FAILED';

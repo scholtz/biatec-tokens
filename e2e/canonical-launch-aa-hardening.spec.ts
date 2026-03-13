@@ -38,7 +38,7 @@ import { test, expect } from '@playwright/test'
 import {
   withAuth,
   clearAuthScript,
-  suppressBrowserErrors,
+  suppressBrowserErrorsNarrow,
   getNavText,
 } from './helpers/auth'
 
@@ -48,7 +48,7 @@ import {
 
 test.describe('AC #1: Canonical flow — /launch/guided as primary creation entry', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('navigation contains a link pointing to /launch/workspace', async ({ page }) => {
@@ -110,7 +110,7 @@ test.describe('AC #1: Canonical flow — /launch/guided as primary creation entr
 
 test.describe('AC #2: Navigation consistency — parity, skip-to-content, ARIA', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('main navigation has accessible role and label', async ({ page }) => {
@@ -197,7 +197,7 @@ test.describe('AC #2: Navigation consistency — parity, skip-to-content, ARIA',
 
 test.describe('AC #3: Auth/session correctness — protected routes and redirects', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('valid authenticated session allows access to /launch/guided', async ({ page }) => {
@@ -325,7 +325,7 @@ test.describe('AC #3: Auth/session correctness — protected routes and redirect
 
 test.describe('AC #4: Accessibility quality — ARIA, focus, landmarks', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('home page has a main landmark (#main-content)', async ({ page }) => {
@@ -428,7 +428,7 @@ test.describe('AC #4: Accessibility quality — ARIA, focus, landmarks', () => {
 
 test.describe('AC #5: Test quality evidence — deterministic, CI-stable assertions', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('home page title is deterministic on load (no timing dependency)', async ({ page }) => {
