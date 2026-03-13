@@ -80,7 +80,7 @@ describe("PolicyEditPanel — interaction logic", () => {
       vm.addJurisdiction("allowedJurisdictions");
       await nextTick();
 
-      const added = vm.localDraft.allowedJurisdictions.find((j: any) => j.code === "DE");
+      const added = vm.localDraft.allowedJurisdictions.find((j: { code: string; name: string }) => j.code === "DE");
       expect(added).toBeTruthy();
       expect(added.name).toBe("Germany");
       // Search field should be cleared
@@ -100,7 +100,7 @@ describe("PolicyEditPanel — interaction logic", () => {
       vm.addJurisdiction("blockedJurisdictions");
       await nextTick();
 
-      const added = vm.localDraft.blockedJurisdictions.find((j: any) => j.code === "FR");
+      const added = vm.localDraft.blockedJurisdictions.find((j: { code: string; name: string }) => j.code === "FR");
       expect(added).toBeTruthy();
       expect(added.name).toBe("France");
       wrapper.unmount();
@@ -119,7 +119,7 @@ describe("PolicyEditPanel — interaction logic", () => {
       await nextTick();
 
       // Fallback: first-two-chars uppercase = "TE"
-      const added = vm.localDraft.allowedJurisdictions.find((j: any) => j.code === "TE");
+      const added = vm.localDraft.allowedJurisdictions.find((j: { code: string; name: string }) => j.code === "TE");
       expect(added).toBeTruthy();
       expect(added.name).toBe("Terraformare");
       wrapper.unmount();
@@ -152,11 +152,11 @@ describe("PolicyEditPanel — interaction logic", () => {
       vm.addCountrySearch = "  "; // whitespace only
       await nextTick();
 
-      const countBefore = vm.localDraft.allowedJurisdictions.length;
+      const countBeforeEmpty = vm.localDraft.allowedJurisdictions.length;
       vm.addJurisdiction("allowedJurisdictions");
       await nextTick();
 
-      expect(vm.localDraft.allowedJurisdictions.length).toBe(countBefore);
+      expect(vm.localDraft.allowedJurisdictions.length).toBe(countBeforeEmpty);
       wrapper.unmount();
     });
 
@@ -185,11 +185,11 @@ describe("PolicyEditPanel — interaction logic", () => {
       await nextTick();
       const vm = wrapper.vm as any;
 
-      expect(vm.localDraft.allowedJurisdictions.find((j: any) => j.code === "SK")).toBeTruthy();
+      expect(vm.localDraft.allowedJurisdictions.find((j: { code: string }) => j.code === "SK")).toBeTruthy();
       vm.removeJurisdiction("allowedJurisdictions", "SK");
       await nextTick();
 
-      expect(vm.localDraft.allowedJurisdictions.find((j: any) => j.code === "SK")).toBeUndefined();
+      expect(vm.localDraft.allowedJurisdictions.find((j: { code: string }) => j.code === "SK")).toBeUndefined();
       wrapper.unmount();
     });
 
@@ -201,7 +201,7 @@ describe("PolicyEditPanel — interaction logic", () => {
       vm.removeJurisdiction("blockedJurisdictions", "US");
       await nextTick();
 
-      expect(vm.localDraft.blockedJurisdictions.find((j: any) => j.code === "US")).toBeUndefined();
+      expect(vm.localDraft.blockedJurisdictions.find((j: { code: string }) => j.code === "US")).toBeUndefined();
       wrapper.unmount();
     });
 

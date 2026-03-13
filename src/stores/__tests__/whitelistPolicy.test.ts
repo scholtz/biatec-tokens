@@ -519,6 +519,9 @@ describe("useWhitelistPolicyStore", () => {
 
     it("returns empty contradictions when no draft and no policy", () => {
       const store = useWhitelistPolicyStore();
+      // Verify preconditions: fresh store has null policy and null draft
+      expect(store.policy).toBeNull();
+      expect(store.draft).toBeNull();
       const warnings = store.detectContradictions();
       expect(warnings).toEqual([]);
     });
