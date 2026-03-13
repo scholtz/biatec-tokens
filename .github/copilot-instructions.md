@@ -1668,6 +1668,59 @@ npx vitest run --coverage \
 
 ---
 
+### 7t. `locator.isVisible()` Is a Snapshot Check — Use `waitFor()` for Polling Waits (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 13, 2026 (PR #608 whitelist-policy-dashboard.spec.ts) 🚨**
+
+**Violation**: E2E tests used `await editBtn.isVisible({ timeout: 12000 }).catch(() => false)` expecting it to WAIT up to 12 seconds for the element to appear. In Playwright, `locator.isVisible()` is a **snapshot check** that returns immediately (true/false). The `{ timeout }` option does NOT cause it to poll. All 3 tests relying on this pattern returned `false` immediately (the async mock fetch hadn't completed) and then asserted on loading-skeleton body text, failing deterministically.
+
+**Root cause**: The difference between snapshot methods and polling methods in Playwright:
+- `locator.isVisible()` — snapshot, returns immediately based on current DOM state
+- `locator.isVisible({ timeout: N })` — STILL a snapshot, the timeout option is NOT a retry wait
+- `locator.waitFor({ state: 'visible', timeout: N })` — polling, WAITS until element appears
+- `expect(locator).toBeVisible({ timeout: N })` — polling assertion, WAITS until element appears
+
+**Correct Pattern** (MANDATORY for any test that waits for an element to appear):
+
+```typescript
+// ❌ WRONG — isVisible returns immediately regardless of timeout value
+const isVisible = await editBtn.isVisible({ timeout: 12000 }).catch(() => false)
+// ^ Returns false immediately if element not in DOM yet — timeout is ignored for polling
+
+// ✅ CORRECT for assertive tests (element MUST appear or test fails):
+await editBtn.waitFor({ state: 'visible', timeout: 20000 })
+// or:
+await expect(editBtn).toBeVisible({ timeout: 20000 })
+
+// ✅ CORRECT for conditional tests (graceful skip if element doesn't appear):
+const btnVisible = await editBtn
+  .waitFor({ state: 'visible', timeout: 15000 })
+  .then(() => true)
+  .catch(() => false)
+
+// ✅ CORRECT for waiting for element to DISAPPEAR (e.g., after dialog close):
+await expect(dialog).not.toBeVisible({ timeout: 5000 })
+// ^ Polls until dialog is hidden (handles CSS transitions)
+// NOT: dialog.isVisible() which returns true immediately during transition
+```
+
+**Pre-Commit Check**:
+```bash
+# Find all uses of isVisible with a timeout (usually a sign of misuse):
+grep -rn "isVisible({ timeout" e2e/ --include="*.spec.ts"
+# If any result expects the return value to be TRUE (meaning "element appeared"), 
+# replace with waitFor({ state: 'visible', timeout }) or expect().toBeVisible({ timeout })
+# Only keep isVisible({ timeout }) if the intent is "check current state, return quickly"
+```
+
+**Never Again**:
+- ❌ Use `await locator.isVisible({ timeout: N })` expecting it to WAIT N seconds for element to appear
+- ❌ Use `isVisible` before `waitFor` if the test depends on the element being present for subsequent assertions
+- ❌ Use `isVisible` to check if a dialog is GONE — use `expect(locator).not.toBeVisible({ timeout })` to handle CSS transitions
+- ✅ Reserve `isVisible()` for immediate snapshot checks where the current state (not a future state) matters
+
+---
+
 ## 🚨 CRITICAL: PR QUALITY STANDARDS - HARDENING ISSUES 🚨
 
 **MANDATORY BEFORE SUBMITTING ANY PR FOR HARDENING ISSUES**
