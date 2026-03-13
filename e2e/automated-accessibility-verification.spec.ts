@@ -84,8 +84,13 @@ async function gotoAndLoad(
   ).toBeVisible({ timeout });
 }
 
-/** Assert main navigation landmark is present with correct aria-label. */
-async function assertMainNavLandmark(page: Page): Promise<void> {
+/**
+ * Assert main navigation landmark is present with correct aria-label.
+ * ONLY call this for views that use MainLayout (i.e., grep -c "MainLayout" src/views/MyView.vue > 0).
+ * DO NOT call for standalone wizard views (e.g. GuidedTokenLaunch.vue) — they have no main nav.
+ * See Section 7v in copilot-instructions.md.
+ */
+async function assertMainLayoutNavLandmark(page: Page): Promise<void> {
   const nav = page.locator('nav[aria-label="Main navigation"]');
   // 10s timeout: nav is always present in MainLayout-wrapped views; gives CI room to render
   await expect(nav).toHaveCount(1, { timeout: 10000 });
@@ -167,7 +172,7 @@ test.describe("Section 1 — Sign-in surface accessibility (WCAG SC 1.3.1, 4.1.2
   }) => {
     await page.goto("/", { timeout: 10000 });
     await page.waitForLoadState("load", { timeout: 8000 });
-    await assertMainNavLandmark(page);
+    await assertMainLayoutNavLandmark(page);
   });
 
   test("home page has no wallet connector UI (product definition) (AC #7)", async ({
@@ -288,10 +293,11 @@ test.describe("Section 2 — Guided Launch accessibility (WCAG SC 1.3.1, 4.1.2, 
     await assertMainLandmark(page);
   });
 
-  test("Guided Launch has no wallet connector UI (AC #7)", async ({ page }) => {
-    // Per §7j: use the home page '/' for nav wallet assertions — the nav is
-    // identical on every page and '/' avoids the heavy onMounted auth overhead of
-    // /launch/guided which would exhaust the 60s CI budget.
+  test("navigation contains no wallet connector UI — verified on home page (AC #7)", async ({ page }) => {
+    // Nav wallet-UI assertions are route-agnostic: the shared Navbar component renders
+    // identically on every page. Per §7j: use '/' for this check — it has the same nav
+    // but avoids the heavy onMounted auth overhead of /launch/guided which exhausts the
+    // 60s CI budget. This assertion covers Guided Launch by proxy (shared nav shell).
     await page.goto("/", { timeout: 10000 });
     await page.waitForLoadState("load", { timeout: 8000 });
     await assertNoWalletUI(page);
@@ -334,7 +340,7 @@ test.describe("Section 3 — Compliance accessibility (WCAG SC 1.3.1, 1.3.6, 4.1
     await page.waitForLoadState("load", { timeout: 10000 });
     const h1 = page.getByRole("heading", { level: 1 });
     await expect(h1).toBeVisible({ timeout: 20000 });
-    await assertMainNavLandmark(page);
+    await assertMainLayoutNavLandmark(page);
   });
 
   test("Compliance Launch Console has no wallet connector UI (AC #7)", async ({
@@ -451,7 +457,7 @@ test.describe("Section 4 — Team Workspace accessibility (WCAG SC 1.3.1, 2.4.1,
     await page.waitForLoadState("load", { timeout: 10000 });
     const h1 = page.getByRole("heading", { level: 1 });
     await expect(h1).toBeVisible({ timeout: 20000 });
-    await assertMainNavLandmark(page);
+    await assertMainLayoutNavLandmark(page);
   });
 
   test("Team Workspace has no wallet connector UI (AC #7)", async ({ page }) => {
@@ -551,7 +557,7 @@ test.describe("Section 5 — Operations accessibility (WCAG SC 1.3.1, 2.4.8, 4.1
     await page.waitForLoadState("load", { timeout: 10000 });
     const h1 = page.getByRole("heading", { level: 1 });
     await expect(h1).toBeVisible({ timeout: 20000 });
-    await assertMainNavLandmark(page);
+    await assertMainLayoutNavLandmark(page);
   });
 
   test("Operations page has no wallet connector UI (AC #7)", async ({ page }) => {
@@ -676,7 +682,7 @@ test.describe("Section 6 — Settings accessibility (WCAG SC 1.3.1, 4.1.2, 2.4.7
     await page.waitForLoadState("load", { timeout: 10000 });
     const h1 = page.getByRole("heading", { level: 1 });
     await expect(h1).toBeVisible({ timeout: 20000 });
-    await assertMainNavLandmark(page);
+    await assertMainLayoutNavLandmark(page);
   });
 
   test("Settings page has no wallet connector UI (AC #7)", async ({ page }) => {
@@ -767,7 +773,7 @@ test.describe("Section 8 — Shell ARIA on authenticated enterprise routes (WCAG
   test("portfolio page has main nav landmark (AC #1, AC #8)", async ({ page }) => {
     await page.goto("/portfolio", { timeout: 15000 });
     await page.waitForLoadState("load", { timeout: 10000 });
-    await assertMainNavLandmark(page);
+    await assertMainLayoutNavLandmark(page);
   });
 
   test("sidebar has aria-label for landmark disambiguation (WCAG SC 2.4.1) (AC #1)", async ({

@@ -1795,6 +1795,121 @@ test.describe('MyView', () => {
 
 ---
 
+### 7v. Standalone Wizard Views Have No `nav[aria-label="Main navigation"]` — Do Not Assert It (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 13, 2026 (PR "Automate WCAG 2.1 AA accessibility verification for six enterprise routes") 🚨**
+
+**Violation**: Tests for `/launch/guided` called `assertMainNavLandmark(page)` which asserts `nav[aria-label="Main navigation"]`. `GuidedTokenLaunch.vue` is a standalone wizard view that does NOT use `MainLayout`. It has its own `<main>` element and a step-indicator navigation. The test failed with "locator resolved to 0 elements" in CI.
+
+**Root Cause**:
+- Not every view uses `MainLayout`. `GuidedTokenLaunch.vue` is intentionally standalone (focused wizard experience, like a checkout flow).
+- The step-indicator nav (`data-testid="issuance-step-indicator"`, `role="navigation"`) IS present — but it is not the main navigation.
+- Asserting `nav[aria-label="Main navigation"]` on standalone views is always wrong.
+
+**How to Identify Standalone Views**:
+```bash
+# Check if a view uses MainLayout:
+grep -c "MainLayout" src/views/GuidedTokenLaunch.vue
+# → 0 = standalone, no main nav
+# → > 0 = uses MainLayout, nav[aria-label="Main navigation"] IS present
+```
+
+**Correct Pattern for Standalone Wizard Views**:
+```typescript
+// ❌ WRONG — asserts a nav landmark that doesn't exist on standalone views
+await assertMainNavLandmark(page)  // nav[aria-label="Main navigation"] → 0 elements!
+
+// ✅ CORRECT — assert the view's OWN navigation landmark
+const stepNav = page.locator('[data-testid="issuance-step-indicator"]')
+await expect(stepNav).toBeAttached({ timeout: 10000 })
+const ariaLabel = await stepNav.getAttribute('aria-label')
+expect(ariaLabel).toBeTruthy()
+// Also verify main landmark exists
+await assertMainLandmark(page)
+```
+
+**Never Again**:
+- ❌ Call `assertMainNavLandmark()` for routes backed by standalone wizard views
+- ❌ Assume `nav[aria-label="Main navigation"]` is present on every route
+- ✅ Always `grep -c "MainLayout"` on the view file before writing nav-landmark assertions
+- ✅ Use the view's OWN navigation landmark (step-indicator, breadcrumb, etc.) for standalone views
+
+---
+
+### 7w. `role="progressbar"` at Initial Value 0 Has `width:0%` — Use `toBeAttached` Not `toBeVisible` (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 13, 2026 (PR "Automate WCAG 2.1 AA accessibility verification for six enterprise routes") 🚨**
+
+**Violation**: An E2E test used `await expect(progressbar).toBeVisible({ timeout: 10000 })` on the GuidedTokenLaunch progress bar. At step 1, `progressPercentage === 0` so the inner bar has `style="width: 0%"`. Playwright considers a 0-width element "hidden" and the test failed with: `"locator resolved to hidden"`.
+
+**Root Cause**: Playwright's `toBeVisible()` requires the element to have non-zero dimensions. A `role="progressbar"` element styled with `width: 0%` is semantically present (in the DOM with all ARIA attributes) but visually zero-width. These are not the same thing.
+
+**Correct Pattern**:
+```typescript
+// ❌ WRONG — fails when progressPercentage === 0 (width:0% = "hidden" to Playwright)
+await expect(page.locator('[role="progressbar"]')).toBeVisible({ timeout: 10000 })
+
+// ✅ CORRECT — element is always in the DOM regardless of progress value
+const progressbar = page.locator('[role="progressbar"]')
+await expect(progressbar).toBeAttached({ timeout: 10000 })
+// Then check ARIA attributes (always present regardless of visual width):
+const valueNow = await progressbar.getAttribute('aria-valuenow')
+const valueMin = await progressbar.getAttribute('aria-valuemin')
+const valueMax = await progressbar.getAttribute('aria-valuemax')
+expect(valueNow).not.toBeNull()
+expect(valueMin).toBe('0')
+expect(valueMax).toBe('100')
+```
+
+**General Rule**: For elements whose visual presence depends on a dynamic value (progress bars, loading bars, counters starting at 0), prefer `toBeAttached()` when testing ARIA semantics, and `toBeVisible()` only when you need to assert the element is visually rendered (e.g., after progress > 0).
+
+**Never Again**:
+- ❌ Use `toBeVisible()` on `[role="progressbar"]` when asserting ARIA attributes
+- ❌ Assume "element is in the DOM" and "element is visible" are the same for dynamic-width elements
+- ✅ Use `toBeAttached()` for DOM presence + ARIA attribute checks on zero-state progress bars
+
+---
+
+### 7x. `[aria-current="page"]` Strict Mode Violation — Multiple Elements May Have It (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 13, 2026 (PR "Automate WCAG 2.1 AA accessibility verification for six enterprise routes") 🚨**
+
+**Violation**: An E2E test used `page.locator('[aria-current="page"]')` and called `toBeVisible()` on it. Playwright strict mode failed with "locator resolved to 2 elements": (1) the active sidebar nav link, and (2) the breadcrumb `<li>` on `/operations`. Both legitimately carry `aria-current="page"`.
+
+**Root Cause**:
+- It is correct WCAG practice for BOTH the nav active link AND the breadcrumb current-page item to have `aria-current="page"`.
+- Using a global `[aria-current="page"]` selector without scoping is therefore always a strict-mode violation on pages that have both a sidebar/nav AND a breadcrumb.
+
+**Correct Pattern**:
+```typescript
+// ❌ WRONG — resolves to 2 elements (nav link + breadcrumb li)
+const current = page.locator('[aria-current="page"]')
+await expect(current).toBeVisible({ timeout: 10000 })
+
+// ✅ CORRECT — scope to the breadcrumb nav to get exactly 1 element
+const current = page.locator('nav[aria-label="Breadcrumb"] [aria-current="page"]')
+await expect(current).toBeVisible({ timeout: 10000 })
+
+// ✅ ALSO CORRECT — scope to sidebar/primary nav
+const navActive = page.locator('nav[aria-label="Main navigation"] [aria-current="page"]')
+await expect(navActive).toBeVisible({ timeout: 10000 })
+
+// ✅ ALSO CORRECT if you know there is only one of the specific role
+const current = page.getByRole('listitem').filter({ has: page.locator('[aria-current="page"]') })
+```
+
+**Pre-Commit Check**:
+```bash
+# Find all unscoped aria-current assertions in E2E specs:
+grep -rn "locator\('\[aria-current=\"page\"\]'\)" e2e/ --include="*.spec.ts"
+# Any result must be scoped to a parent landmark: nav[aria-label="..."] [aria-current="page"]
+```
+
+**Never Again**:
+- ❌ Write `page.locator('[aria-current="page"]')` without scoping to a specific parent landmark
+- ❌ Assume only one element on a page will have `aria-current="page"` (nav link + breadcrumb are both correct)
+- ✅ Always scope to the specific landmark: `nav[aria-label="Breadcrumb"] [aria-current="page"]`
+
 
 
 **MANDATORY BEFORE SUBMITTING ANY PR FOR HARDENING ISSUES**
