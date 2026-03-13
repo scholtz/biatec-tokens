@@ -23,6 +23,14 @@
               </p>
             </div>
             <div class="flex gap-3">
+              <router-link
+                to="/compliance/policy"
+                class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white hover:bg-gray-700 transition-colors flex items-center gap-2"
+                aria-label="Open policy management dashboard"
+              >
+                <i class="pi pi-shield"></i>
+                <span>Policy Management</span>
+              </router-link>
               <button
                 @click="showImportModal = true"
                 class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white hover:bg-gray-700 transition-colors flex items-center gap-2"

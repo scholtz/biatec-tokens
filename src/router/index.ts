@@ -17,6 +17,7 @@ import DiscoveryDashboard from "../views/DiscoveryDashboard.vue";
 import OnboardingFlow from "../views/OnboardingFlow.vue";
 import EnterpriseOnboardingCommandCenter from "../views/EnterpriseOnboardingCommandCenter.vue";
 import WhitelistsView from "../views/WhitelistsView.vue";
+import WhitelistPolicyDashboard from "../views/WhitelistPolicyDashboard.vue";
 import ComplianceOrchestrationView from "../views/ComplianceOrchestrationView.vue";
 import VisionInsightsWorkspace from "../views/VisionInsightsWorkspace.vue";
 import GuidedTokenLaunch from "../views/GuidedTokenLaunch.vue";
@@ -136,6 +137,12 @@ const router = createRouter({
       path: "/compliance/whitelists",
       name: "WhitelistManagement",
       component: WhitelistsView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/compliance/policy",
+      name: "WhitelistPolicyDashboard",
+      component: WhitelistPolicyDashboard,
       meta: { requiresAuth: true },
     },
     {
