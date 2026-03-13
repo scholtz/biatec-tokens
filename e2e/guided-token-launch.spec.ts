@@ -53,8 +53,8 @@ test.describe('Guided Token Launch Flow', () => {
     const mainTitle = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(mainTitle).toBeVisible({ timeout: 60000 })
     
-    // Check progress bar
-    const progressText = page.getByText(/0 of 6 steps complete/i)
+    // Check progress bar (7-step wizard: org, intent, compliance, whitelist, template, economics, review)
+    const progressText = page.getByText(/0 of 7 steps complete/i)
     await expect(progressText).toBeVisible({ timeout: 15000 })
     
     // Check step indicators
@@ -304,15 +304,16 @@ test.describe('Guided Token Launch Flow', () => {
 
   test('should display template selection with cards', async ({ page }) => {
     // Use draft injection to bypass slow multi-step UI navigation in CI.
-    // Inject a draft with currentStep=3 (template selection) and prior steps complete.
+    // Inject a draft with currentStep=4 (template selection) and prior steps complete.
+    // NOTE: Step indices shifted by one when WhitelistPolicy step was added as step 3.
     await page.addInitScript(() => {
       const draft = {
         version: '1.0',
         form: {
           createdAt: new Date().toISOString(),
           lastModified: new Date().toISOString(),
-          currentStep: 3,
-          completedSteps: [0, 1, 2],
+          currentStep: 4,
+          completedSteps: [0, 1, 2, 3],
           isSubmitted: false,
           organizationProfile: {
             organizationName: 'Test Company',
@@ -332,11 +333,19 @@ test.describe('Guided Token Launch Flow', () => {
             kycAmlRequired: true,
             riskAcknowledged: true,
           },
+          whitelistPolicy: {
+            isEnabled: false,
+            allowedJurisdictions: [],
+            restrictedJurisdictions: [],
+            investorCategories: [],
+            policyConfirmed: false,
+          },
         },
         stepStatuses: [
           { id: 'organization', title: 'Organization Profile', isComplete: true, isValid: true, isOptional: false },
           { id: 'intent', title: 'Token Intent', isComplete: true, isValid: true, isOptional: false },
           { id: 'compliance', title: 'Compliance Readiness', isComplete: true, isValid: true, isOptional: false },
+          { id: 'whitelist', title: 'Whitelist Policy', isComplete: true, isValid: true, isOptional: false },
           { id: 'template', title: 'Template Selection', isComplete: false, isValid: false, isOptional: false },
           { id: 'economics', title: 'Economics Settings', isComplete: false, isValid: false, isOptional: true },
           { id: 'review', title: 'Review & Submit', isComplete: false, isValid: false, isOptional: false },
@@ -364,6 +373,116 @@ test.describe('Guided Token Launch Flow', () => {
     
     // At least one should be visible
     expect(hasLoyalty || hasSecurity).toBe(true)
+  })
+
+  test('whitelist policy step renders at step 3 with enable-toggle (draft injection)', async ({ page }) => {
+    // Inject a draft pointing to step 3 (whitelist policy step).
+    // Budget: addInitScript auth(0) + goto(10s) + load(5s) + visible(20s) + 2×visible(10s) = 55s < 60s global
+    await page.addInitScript(() => {
+      localStorage.setItem('algorand_user', JSON.stringify({
+        address: 'WHITELISTTESTE7ARC76TESTADDRESSAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        email: 'test@biatec.io',
+        isConnected: true,
+      }))
+      const draft = {
+        version: '1.0',
+        form: {
+          createdAt: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+          currentStep: 3,
+          completedSteps: [0, 1, 2],
+          isSubmitted: false,
+          organizationProfile: {
+            organizationName: 'Whitelist Test Corp',
+            organizationType: 'company',
+            jurisdiction: 'DE',
+            contactName: 'Ada',
+            contactEmail: 'ada@whitelist-test.io',
+            role: 'compliance_officer',
+          },
+          tokenIntent: {
+            tokenPurpose: 'Regulated security token',
+            targetAudience: 'b2b',
+            expectedHolders: '100_1000',
+          },
+          complianceReadiness: {
+            requiresMICA: true,
+            requiresKYC: true,
+            requiresAML: false,
+            hasLegalReview: true,
+            hasRiskAssessment: true,
+            restrictedJurisdictions: [],
+            whitelistRequired: true,
+            riskAcknowledged: true,
+          },
+        },
+        stepStatuses: [
+          { id: 'organization', title: 'Organization Profile', isComplete: true, isValid: true, isOptional: false },
+          { id: 'intent', title: 'Token Intent', isComplete: true, isValid: true, isOptional: false },
+          { id: 'compliance', title: 'Compliance Readiness', isComplete: true, isValid: true, isOptional: false },
+          { id: 'whitelist', title: 'Whitelist Policy', isComplete: false, isValid: false, isOptional: false },
+          { id: 'template', title: 'Template Selection', isComplete: false, isValid: false, isOptional: false },
+          { id: 'economics', title: 'Economics Settings', isComplete: false, isValid: false, isOptional: true },
+          { id: 'review', title: 'Review & Submit', isComplete: false, isValid: false, isOptional: false },
+        ],
+      }
+      localStorage.setItem('biatec_guided_launch_draft', JSON.stringify(draft))
+    })
+
+    await page.goto('/launch/guided')
+    await page.waitForLoadState('load')
+
+    const title = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
+    await expect(title).toBeVisible({ timeout: 60000 })
+
+    // Whitelist policy heading must be visible at step 3
+    const whitelistHeading = page.locator('h2').filter({ hasText: /Whitelist Policy/i })
+    await expect(whitelistHeading).toBeVisible({ timeout: 30000 })
+
+    // Enable toggle must be present (role="switch" for WCAG SC 4.1.2)
+    const toggle = page.locator('[data-testid="whitelist-enable-toggle"]')
+    await expect(toggle).toBeVisible({ timeout: 10000 })
+
+    // Continue button must be present and labelled correctly
+    const continueBtn = page.locator('[data-testid="whitelist-continue-button"]')
+    await expect(continueBtn).toBeVisible({ timeout: 10000 })
+  })
+
+  test('whitelist policy step: no wallet connector UI present', async ({ page }) => {
+    // Budget: addInitScript auth(0) + goto(10s) + load(5s) + textContent(10s) = 25s << 60s global
+    await page.addInitScript(() => {
+      localStorage.setItem('algorand_user', JSON.stringify({
+        address: 'WHITELISTTESTE7ARC76TESTADDRESSAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        email: 'test@biatec.io',
+        isConnected: true,
+      }))
+      const draft = {
+        version: '1.0',
+        form: {
+          createdAt: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+          currentStep: 3,
+          completedSteps: [0, 1, 2],
+          isSubmitted: false,
+        },
+        stepStatuses: [
+          { id: 'organization', isComplete: true, isValid: true, isOptional: false, title: 'Organization Profile' },
+          { id: 'intent', isComplete: true, isValid: true, isOptional: false, title: 'Token Intent' },
+          { id: 'compliance', isComplete: true, isValid: true, isOptional: false, title: 'Compliance Readiness' },
+          { id: 'whitelist', isComplete: false, isValid: false, isOptional: false, title: 'Whitelist Policy' },
+          { id: 'template', isComplete: false, isValid: false, isOptional: false, title: 'Template Selection' },
+          { id: 'economics', isComplete: false, isValid: false, isOptional: true, title: 'Economics Settings' },
+          { id: 'review', isComplete: false, isValid: false, isOptional: false, title: 'Review & Submit' },
+        ],
+      }
+      localStorage.setItem('biatec_guided_launch_draft', JSON.stringify(draft))
+    })
+
+    await page.goto('/', { timeout: 10000 })
+    await page.waitForLoadState('load', { timeout: 5000 })
+    const nav = page.getByRole('navigation').first()
+    const navText = await nav.textContent({ timeout: 10000 }).catch(() => '')
+    expect(navText).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
   })
 
   test('should ensure no wallet connector references in entire flow', async ({ page }) => {

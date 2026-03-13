@@ -75,11 +75,13 @@ async function clearSessionInPage(page: import('@playwright/test').Page) {
  */
 async function injectDraftAtStep(page: import('@playwright/test').Page, stepIndex: number, extraForm: Record<string, unknown> = {}) {
   await page.addInitScript((args: { stepIndex: number; extraForm: Record<string, unknown> }) => {
-    const steps = ['organization', 'intent', 'compliance', 'template', 'economics', 'review']
+    // 7-step wizard (whitelist was added as step 3 between compliance and template)
+    const steps = ['organization', 'intent', 'compliance', 'whitelist', 'template', 'economics', 'review']
     const stepTitles: Record<string, string> = {
       organization: 'Organization Profile',
       intent: 'Token Intent',
       compliance: 'Compliance Readiness',
+      whitelist: 'Whitelist Policy',
       template: 'Template Selection',
       economics: 'Economics Settings',
       review: 'Review & Submit',
@@ -152,7 +154,8 @@ test.describe('AC #1: Canonical guided launch flow', () => {
     await expect(heading).toBeVisible({ timeout: 60000 })
 
     // Semantic wait: step count text proves wizard state is initialised
-    const progressText = page.getByText(/0 of 6 steps complete/i)
+    // 7-step wizard: organization, intent, compliance, whitelist, template, economics, review
+    const progressText = page.getByText(/0 of 7 steps complete/i)
     await expect(progressText).toBeVisible({ timeout: 30000 })
   })
 
@@ -305,7 +308,8 @@ test.describe('AC #2: Auth bootstrap validates session contract', () => {
 
   test('draft injection at template step renders template selection (no multi-step navigation needed)', async ({ page }) => {
     await bootstrapValidSession(page)
-    await injectDraftAtStep(page, 3, {
+    // Step 4 = template selection (whitelist was inserted as step 3, shifting template from 3→4)
+    await injectDraftAtStep(page, 4, {
       organizationProfile: {
         organizationName: 'Template Test Corp',
         organizationType: 'company',
@@ -324,6 +328,13 @@ test.describe('AC #2: Auth bootstrap validates session contract', () => {
         kycAmlRequired: true,
         riskAcknowledged: true,
       },
+      whitelistPolicy: {
+        isEnabled: false,
+        allowedJurisdictions: [],
+        restrictedJurisdictions: [],
+        investorCategories: [],
+        policyConfirmed: false,
+      },
     })
 
     await page.goto('/launch/guided')
@@ -332,7 +343,7 @@ test.describe('AC #2: Auth bootstrap validates session contract', () => {
     const heading = page.getByRole('heading', { name: /Guided Token Launch/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 60000 })
 
-    // Semantic wait: template heading proves draft loaded and step 3 is rendered
+    // Semantic wait: template heading proves draft loaded and step 4 is rendered
     const templateHeading = page.locator('h2').filter({ hasText: /select token template/i })
     await expect(templateHeading).toBeVisible({ timeout: 30000 })
   })

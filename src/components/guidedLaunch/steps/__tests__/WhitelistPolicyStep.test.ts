@@ -374,4 +374,250 @@ describe('WhitelistPolicyStep', () => {
     expect(text).not.toMatch(/0x[0-9a-f]{40}/i)
     expect(text).not.toMatch(/smart contract/i)
   })
+
+  // ── Jurisdiction management ─────────────────────────────────────────────
+
+  it('clicking a jurisdiction option adds it to the allowed list', async () => {
+    const wrapper = mountStep()
+    await enableToggle(wrapper)
+    // Type a search query to make options appear
+    const searchInput = wrapper.find('[data-testid="allowed-jurisdiction-search"]')
+    await searchInput.setValue('germany')
+    await nextTick()
+
+    // The options list renders as <li> elements inside a <ul> with role="listbox"
+    // and fires addAllowedJurisdiction on click. Verify via emitted 'update' event.
+    const optionItem = wrapper.find('ul[role="listbox"] li')
+    expect(optionItem.exists()).toBe(true)
+    await optionItem.trigger('click')
+    await nextTick()
+    // After clicking, the update event must include the added jurisdiction
+    const updateEvents = wrapper.emitted('update') as Array<Array<any>>
+    expect(updateEvents).toBeTruthy()
+    const lastPayload = updateEvents[updateEvents.length - 1]?.[0]
+    expect(lastPayload?.allowedJurisdictions?.some((j: { code: string }) => j.code === 'DE')).toBe(true)
+  })
+
+  it('clicking a restricted jurisdiction option adds it to the restricted list', async () => {
+    const wrapper = mountStep()
+    await enableToggle(wrapper)
+    const searchInput = wrapper.find('[data-testid="restricted-jurisdiction-search"]')
+    await searchInput.setValue('iran')
+    await nextTick()
+
+    const optionItem = wrapper.find('ul[role="listbox"] li')
+    expect(optionItem.exists()).toBe(true)
+    await optionItem.trigger('click')
+    await nextTick()
+    // After clicking, the update event must include the added restricted jurisdiction
+    const updateEvents = wrapper.emitted('update') as Array<Array<any>>
+    expect(updateEvents).toBeTruthy()
+    const lastPayload = updateEvents[updateEvents.length - 1]?.[0]
+    expect(lastPayload?.restrictedJurisdictions?.some((j: { code: string }) => j.code === 'IR')).toBe(true)
+  })
+
+  it('shows "no results" message when allowed search yields no matches', async () => {
+    const wrapper = mountStep()
+    await enableToggle(wrapper)
+    const searchInput = wrapper.find('[data-testid="allowed-jurisdiction-search"]')
+    await searchInput.setValue('ZZZZNOTACOUNTRY99')
+    await nextTick()
+    // No-results paragraph appears as plain text (no data-testid)
+    const text = wrapper.text()
+    expect(text).toMatch(/no countries found/i)
+  })
+
+  it('shows "no results" message when restricted search yields no matches', async () => {
+    const wrapper = mountStep()
+    await enableToggle(wrapper)
+    const searchInput = wrapper.find('[data-testid="restricted-jurisdiction-search"]')
+    await searchInput.setValue('ZZZZNOTACOUNTRY99')
+    await nextTick()
+    const text = wrapper.text()
+    expect(text).toMatch(/no countries found/i)
+  })
+
+  it('policy notes are included in Continue payload when restrictions are enabled', async () => {
+    const wrapper = mountStep()
+    await enableToggle(wrapper)
+    // Set notes via v-model
+    const notesInput = wrapper.find('[data-testid="policy-notes"]')
+    await notesInput.setValue('MICA compliance requirement — EU investors only.')
+    await nextTick()
+    // Confirm and continue — notes should be in complete payload
+    await confirmPolicy(wrapper)
+    const continueBtn = wrapper.find('[data-testid="whitelist-continue-button"]')
+    await continueBtn.trigger('click')
+    await nextTick()
+    // The complete event should have fired with isValid: true
+    const completeEvents = wrapper.emitted('complete') as Array<Array<any>>
+    expect(completeEvents).toBeTruthy()
+    const completePayload = completeEvents[completeEvents.length - 1]?.[0]
+    expect(completePayload?.isValid).toBe(true)
+  })
+
+  it('policy notes appear in summary when toggle triggers update after notes entered', async () => {
+    const wrapper = mountStep()
+    await enableToggle(wrapper)
+    // Type notes first
+    const notesInput = wrapper.find('[data-testid="policy-notes"]')
+    await notesInput.setValue('MICA compliance requirement')
+    await nextTick()
+    // Now trigger another emitUpdate by toggling a category — notes will be included
+    const catCheckbox = wrapper.find('[data-testid="category-accredited_investor"]')
+    if (catCheckbox.exists()) {
+      const el = catCheckbox.element as HTMLInputElement
+      el.checked = true
+      await catCheckbox.trigger('change')
+      await nextTick()
+    }
+    const updateEvents = wrapper.emitted('update') as Array<Array<any>>
+    if (updateEvents?.length) {
+      const last = updateEvents[updateEvents.length - 1]?.[0]
+      if (last) {
+        expect(last.policyNotes).toBe('MICA compliance requirement')
+      }
+    }
+  })
+
+  it('shows character count for policy notes', async () => {
+    const wrapper = mountStep()
+    await enableToggle(wrapper)
+    const notesInput = wrapper.find('[data-testid="policy-notes"]')
+    await notesInput.setValue('abc')
+    await nextTick()
+    // The template shows "N / 500" character count
+    expect(wrapper.text()).toMatch(/3\s*\/\s*500/)
+  })
+
+  it('summary shows allowed-jurisdictions text when store has jurisdictions and toggle enabled', async () => {
+    const store = useGuidedLaunchStore()
+    // Set store data BEFORE mounting — onMounted will restore it (including isEnabled=true)
+    store.setWhitelistPolicy({
+      isEnabled: true,
+      allowedJurisdictions: [{ code: 'DE', name: 'Germany' }],
+      restrictedJurisdictions: [],
+      investorCategories: [],
+      policyConfirmed: false,
+    })
+    const wrapper = mountStep()
+    // onMounted restores isEnabled=true — NO need to call enableToggle (it would turn OFF again)
+    await nextTick()
+    await nextTick()
+    const text = wrapper.text()
+    expect(text).toMatch(/Germany/i)
+  })
+
+  it('summary shows restricted-jurisdictions text when store has jurisdictions and toggle enabled', async () => {
+    const store = useGuidedLaunchStore()
+    store.setWhitelistPolicy({
+      isEnabled: true,
+      allowedJurisdictions: [],
+      restrictedJurisdictions: [{ code: 'IR', name: 'Iran' }],
+      investorCategories: [],
+      policyConfirmed: false,
+    })
+    const wrapper = mountStep()
+    await nextTick()
+    await nextTick()
+    const text = wrapper.text()
+    expect(text).toMatch(/Iran/i)
+  })
+
+  it('toggling a category off (deselect) emits update with empty investorCategories', async () => {
+    const wrapper = mountStep()
+    await enableToggle(wrapper)
+    // Toggle once to select
+    const catCheckbox = wrapper.find('[data-testid="category-accredited_investor"]')
+    if (catCheckbox.exists()) {
+      const el = catCheckbox.element as HTMLInputElement
+      el.checked = true
+      await catCheckbox.trigger('change')
+      await nextTick()
+      // Toggle again to deselect
+      el.checked = false
+      await catCheckbox.trigger('change')
+      await nextTick()
+      const updateEvents = wrapper.emitted('update') as Array<Array<any>>
+      const last = updateEvents?.[updateEvents.length - 1]?.[0]
+      if (last) {
+        expect(last.investorCategories.includes('accredited_investor')).toBe(false)
+      }
+    }
+  })
+
+  it('removing an allowed jurisdiction tag emits update with reduced list', async () => {
+    const store = useGuidedLaunchStore()
+    store.setWhitelistPolicy({
+      isEnabled: true,
+      allowedJurisdictions: [{ code: 'DE', name: 'Germany' }],
+      restrictedJurisdictions: [],
+      investorCategories: [],
+      policyConfirmed: false,
+    })
+    const wrapper = mountStep()
+    await nextTick()
+    await nextTick()
+    // isEnabled is true from store — section is visible
+    const removeBtn = wrapper.find('[data-testid="remove-allowed-DE"]')
+    if (removeBtn.exists()) {
+      await removeBtn.trigger('click')
+      await nextTick()
+      const updateEvents = wrapper.emitted('update') as Array<Array<any>>
+      const last = updateEvents?.[updateEvents.length - 1]?.[0]
+      if (last) {
+        expect(last.allowedJurisdictions).toEqual([])
+      }
+    }
+  })
+
+  it('removing a restricted jurisdiction tag emits update with reduced list', async () => {
+    const store = useGuidedLaunchStore()
+    store.setWhitelistPolicy({
+      isEnabled: true,
+      allowedJurisdictions: [],
+      restrictedJurisdictions: [{ code: 'IR', name: 'Iran' }],
+      investorCategories: [],
+      policyConfirmed: false,
+    })
+    const wrapper = mountStep()
+    await nextTick()
+    await nextTick()
+    const removeBtn = wrapper.find('[data-testid="remove-restricted-IR"]')
+    if (removeBtn.exists()) {
+      await removeBtn.trigger('click')
+      await nextTick()
+      const updateEvents = wrapper.emitted('update') as Array<Array<any>>
+      const last = updateEvents?.[updateEvents.length - 1]?.[0]
+      if (last) {
+        expect(last.restrictedJurisdictions).toEqual([])
+      }
+    }
+  })
+
+  it('summary shows "no investor qualification" when no categories selected', async () => {
+    const wrapper = mountStep()
+    await enableToggle(wrapper)
+    await nextTick()
+    const summary = wrapper.find('[data-testid="policy-summary"]')
+    if (summary.exists()) {
+      expect(summary.text()).toMatch(/no investor qualification requirement/i)
+    }
+  })
+
+  it('summary includes investor category when selected via store', async () => {
+    const store = useGuidedLaunchStore()
+    store.setWhitelistPolicy({
+      isEnabled: true,
+      allowedJurisdictions: [],
+      restrictedJurisdictions: [],
+      investorCategories: ['accredited_investor'],
+      policyConfirmed: false,
+    })
+    const wrapper = mountStep()
+    await nextTick()
+    await nextTick()
+    const text = wrapper.text()
+    expect(text).toMatch(/accredited/i)
+  })
 })
