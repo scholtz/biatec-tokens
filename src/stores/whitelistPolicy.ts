@@ -234,7 +234,7 @@ export const useWhitelistPolicyStore = defineStore("whitelistPolicy", () => {
     });
 
     if (p.defaultBehavior === "allow_all" && blockedCodes.size === 0) {
-      warnings.push("Default behavior is 'Allow All' but no blocked jurisdictions are specified — all regions are open.");
+      warnings.push("Note: Default behavior is 'Allow All' with no blocked jurisdictions — the policy is intentionally open to all regions.");
     }
 
     if (p.defaultBehavior === "allow_by_rule" && allowedCodes.size === 0) {
@@ -258,6 +258,8 @@ export const useWhitelistPolicyStore = defineStore("whitelistPolicy", () => {
       await new Promise<void>((resolve) => setTimeout(resolve, 800));
       const { dirtyFields: _df, ...policyData } = draft.value;
       const versionParts = (policy.value?.version ?? "1.0").split(".").map(Number);
+      // Ensure at least a two-part version; default minor segment to 0 if missing
+      if (versionParts.length < 2) versionParts.push(0);
       versionParts[1] = (versionParts[1] ?? 0) + 1;
       policy.value = {
         ...policyData,

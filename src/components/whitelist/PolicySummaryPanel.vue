@@ -138,13 +138,22 @@ const healthLabel = computed(() => {
 });
 
 const lastUpdatedText = computed(() => {
-  const updatedAt = new Date(props.policy.lastUpdatedAt);
-  const now = new Date();
-  const diffMs = now.getTime() - updatedAt.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return "today";
-  if (diffDays === 1) return "1 day ago";
-  return `${diffDays} days ago`;
+  try {
+    const updatedAt = new Date(props.policy.lastUpdatedAt);
+    const now = new Date();
+    const diffMs = now.getTime() - updatedAt.getTime();
+    if (diffMs < 0) return "just now"; // future date guard
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return "today";
+    if (diffDays === 1) return "1 day ago";
+    if (diffDays < 30) return `${diffDays} days ago`;
+    const diffMonths = Math.floor(diffDays / 30);
+    if (diffMonths === 1) return "1 month ago";
+    if (diffMonths < 12) return `${diffMonths} months ago`;
+    return `${Math.floor(diffMonths / 12)} year(s) ago`;
+  } catch {
+    return "unknown";
+  }
 });
 
 const defaultBehaviorLabel = computed(() => {

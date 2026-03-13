@@ -241,9 +241,12 @@ function selectJurisdiction(item: { code: string; name: string }) {
 }
 
 function hideList() {
+  // Small delay to allow mousedown on a list option to fire before blur hides the list.
+  // This prevents the dropdown from disappearing before the click is registered.
+  const DROPDOWN_HIDE_DELAY_MS = 150;
   setTimeout(() => {
     showJurisdictionList.value = false;
-  }, 150);
+  }, DROPDOWN_HIDE_DELAY_MS);
 }
 
 const canCheck = computed(

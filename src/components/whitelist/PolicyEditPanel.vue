@@ -452,7 +452,14 @@ function addJurisdiction(key: JurisdictionListKey) {
   const q = addCountrySearch.value.toLowerCase();
   const found = ALL_JURISDICTIONS.find(
     (j) => j.code.toLowerCase() === q || j.name.toLowerCase() === q
-  ) ?? { code: q.toUpperCase().slice(0, 2), name: addCountrySearch.value.trim() };
+  ) ?? {
+    // Fallback: create a custom entry from the search text.
+    // Uses the first two uppercase characters as an ISO-3166-1-alpha-2-style code.
+    // This supports compliance teams who need to add non-standard territories while
+    // a definitive jurisdiction list is being built out.
+    code: q.toUpperCase().slice(0, 2),
+    name: addCountrySearch.value.trim(),
+  };
 
   const list = localDraft.value[key] as JurisdictionPolicyEntry[];
   if (!list.find((j) => j.code === found.code)) {

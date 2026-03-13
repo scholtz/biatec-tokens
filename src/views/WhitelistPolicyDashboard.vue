@@ -299,16 +299,19 @@ const { policy, isLoading, error, hasPolicy, hasGaps } = storeToRefs(store);
 const showEligibilityInspector = ref(false);
 const showEditPanel = ref(false);
 
+// Default token ID — in a production multi-token scenario this would come from route params
+const TOKEN_ID = "token-001";
+
 onMounted(() => {
-  store.fetchPolicy("token-001");
+  store.fetchPolicy(TOKEN_ID);
 });
 
 function retryFetch() {
-  store.fetchPolicy("token-001");
+  store.fetchPolicy(TOKEN_ID);
 }
 
 function initializePolicy() {
-  store.fetchPolicy("token-001");
+  store.fetchPolicy(TOKEN_ID);
 }
 
 function toggleEligibilityInspector() {
