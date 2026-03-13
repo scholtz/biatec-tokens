@@ -234,7 +234,7 @@ export const useWhitelistPolicyStore = defineStore("whitelistPolicy", () => {
     });
 
     if (p.defaultBehavior === "allow_all" && blockedCodes.size === 0) {
-      warnings.push("Note: Default behavior is 'Allow All' with no blocked jurisdictions — the policy is intentionally open to all regions.");
+      warnings.push("Warning: 'Allow All' behavior with no blocked jurisdictions creates an unrestricted policy open to all regions. Review if this is intentional.");
     }
 
     if (p.defaultBehavior === "allow_by_rule" && allowedCodes.size === 0) {
@@ -260,7 +260,8 @@ export const useWhitelistPolicyStore = defineStore("whitelistPolicy", () => {
       const versionParts = (policy.value?.version ?? "1.0").split(".").map(Number);
       // Ensure at least a two-part version; default minor segment to 0 if missing
       if (versionParts.length < 2) versionParts.push(0);
-      versionParts[1] = (versionParts[1] ?? 0) + 1;
+      const currentMinor = Number.isNaN(versionParts[1]) ? 0 : (versionParts[1] ?? 0);
+      versionParts[1] = currentMinor + 1;
       policy.value = {
         ...policyData,
         version: versionParts.join("."),

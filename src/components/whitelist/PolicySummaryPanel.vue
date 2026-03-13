@@ -142,7 +142,7 @@ const lastUpdatedText = computed(() => {
     const updatedAt = new Date(props.policy.lastUpdatedAt);
     const now = new Date();
     const diffMs = now.getTime() - updatedAt.getTime();
-    if (diffMs < 0) return "just now"; // future date guard
+    if (diffMs < 0) return "recently (clock skew detected)"; // future date guard
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     if (diffDays === 0) return "today";
     if (diffDays === 1) return "1 day ago";
