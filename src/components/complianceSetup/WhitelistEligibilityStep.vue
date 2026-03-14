@@ -40,10 +40,11 @@
       <!-- Whitelist Selection (conditional) -->
       <div v-if="formData.whitelistRequired" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">
+          <label for="whitelist-select" class="block text-sm font-medium text-gray-300 mb-2">
             Select Whitelist *
           </label>
           <select
+            id="whitelist-select"
             v-model="formData.whitelistId"
             class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-biatec-accent focus:border-transparent transition-all"
             @change="handleFieldChange"

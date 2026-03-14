@@ -23,10 +23,11 @@
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">
+          <label for="jurisdiction-country" class="block text-sm font-medium text-gray-300 mb-2">
             Country of Registration *
           </label>
           <select
+            id="jurisdiction-country"
             v-model="formData.issuerCountry"
             class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-biatec-accent focus:border-transparent transition-all"
             @change="handleFieldChange"
@@ -42,10 +43,11 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">
+          <label for="jurisdiction-type" class="block text-sm font-medium text-gray-300 mb-2">
             Jurisdiction Type *
           </label>
           <select
+            id="jurisdiction-type"
             v-model="formData.issuerJurisdictionType"
             class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-biatec-accent focus:border-transparent transition-all"
             @change="handleFieldChange"
@@ -125,13 +127,14 @@
 
       <!-- Country Selection (conditional) -->
       <div v-if="formData.distributionScope === 'country_specific'" class="mt-4">
-        <label class="block text-sm font-medium text-gray-300 mb-2">
+        <label for="allowed-countries" class="block text-sm font-medium text-gray-300 mb-2">
           Allowed Countries *
         </label>
         <p class="text-sm text-gray-400 mb-3">
           Select countries where your token will be available
         </p>
         <select
+          id="allowed-countries"
           v-model="formData.allowedCountries"
           multiple
           class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-biatec-accent focus:border-transparent transition-all"

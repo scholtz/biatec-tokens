@@ -38,10 +38,11 @@
 
         <div v-if="formData.kycProviderConfigured" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">
+            <label for="kyc-provider-name" class="block text-sm font-medium text-gray-300 mb-2">
               KYC Provider *
             </label>
             <select
+              id="kyc-provider-name"
               v-model="formData.kycProviderName"
               class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-biatec-accent focus:border-transparent transition-all"
               @change="handleFieldChange"
@@ -57,10 +58,11 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">
+            <label for="kyc-provider-status" class="block text-sm font-medium text-gray-300 mb-2">
               Provider Status
             </label>
             <select
+              id="kyc-provider-status"
               v-model="formData.kycProviderStatus"
               class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-biatec-accent focus:border-transparent transition-all"
               @change="handleFieldChange"
@@ -108,10 +110,11 @@
 
         <div v-if="formData.amlProviderConfigured" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">
+            <label for="aml-provider-name" class="block text-sm font-medium text-gray-300 mb-2">
               AML Provider *
             </label>
             <select
+              id="aml-provider-name"
               v-model="formData.amlProviderName"
               class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-biatec-accent focus:border-transparent transition-all"
               @change="handleFieldChange"
@@ -127,10 +130,11 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">
+            <label for="aml-provider-status" class="block text-sm font-medium text-gray-300 mb-2">
               Provider Status
             </label>
             <select
+              id="aml-provider-status"
               v-model="formData.amlProviderStatus"
               class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-biatec-accent focus:border-transparent transition-all"
               @change="handleFieldChange"
