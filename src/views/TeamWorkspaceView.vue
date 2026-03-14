@@ -168,7 +168,7 @@
               <span
                 class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold"
                 :class="workflowStore.awaitingMyReview.length > 0 ? 'bg-yellow-500 text-gray-900' : 'bg-gray-700 text-gray-300'"
-                aria-label="`${workflowStore.awaitingMyReview.length} items awaiting review`"
+                :aria-label="`${workflowStore.awaitingMyReview.length} item${workflowStore.awaitingMyReview.length !== 1 ? 's' : ''} awaiting review`"
                 data-testid="awaiting-review-count"
               >
                 {{ workflowStore.awaitingMyReview.length }}
@@ -214,7 +214,7 @@
               <span
                 class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold"
                 :class="workflowStore.assignedToTeam.length > 0 ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300'"
-                aria-label="`${workflowStore.assignedToTeam.length} items assigned to team`"
+                :aria-label="`${workflowStore.assignedToTeam.length} item${workflowStore.assignedToTeam.length !== 1 ? 's' : ''} assigned to team`"
                 data-testid="assigned-count"
               >
                 {{ workflowStore.assignedToTeam.length }}
@@ -261,7 +261,7 @@
               <span
                 class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold"
                 :class="workflowStore.readyForApproval.length > 0 ? 'bg-purple-500 text-white' : 'bg-gray-700 text-gray-300'"
-                aria-label="`${workflowStore.readyForApproval.length} items ready for approval`"
+                :aria-label="`${workflowStore.readyForApproval.length} item${workflowStore.readyForApproval.length !== 1 ? 's' : ''} ready for approval`"
                 data-testid="ready-approval-count"
               >
                 {{ workflowStore.readyForApproval.length }}
@@ -297,13 +297,9 @@
             class="border-t border-white/10 pt-6"
             data-testid="completed-section"
           >
-            <button
-              class="flex items-center gap-3 mb-4 w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
-              :aria-expanded="completedExpanded"
-              aria-controls="completed-items-list"
-              data-testid="completed-section-toggle"
-              @click="completedExpanded = !completedExpanded"
-            >
+            <!-- Heading row: h2 is outside the toggle button to preserve WCAG SC 1.3.1 semantics.
+                 Interactive elements (button) must not contain heading elements. -->
+            <div class="flex items-center gap-3 mb-4">
               <h2
                 id="completed-section-heading"
                 class="text-xl font-semibold text-white"
@@ -312,16 +308,26 @@
               </h2>
               <span
                 class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold bg-gray-700 text-gray-300"
+                aria-hidden="true"
                 data-testid="completed-count"
               >
                 {{ workflowStore.recentlyCompleted.length }}
               </span>
-              <i
-                class="pi ml-auto text-gray-300 transition-transform duration-200"
-                :class="completedExpanded ? 'pi-chevron-up' : 'pi-chevron-down'"
-                aria-hidden="true"
-              ></i>
-            </button>
+              <button
+                class="ml-auto inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-300 hover:text-white hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                :aria-expanded="completedExpanded"
+                :aria-label="completedExpanded ? 'Collapse recently completed items' : 'Expand recently completed items'"
+                aria-controls="completed-items-list"
+                data-testid="completed-section-toggle"
+                @click="completedExpanded = !completedExpanded"
+              >
+                <i
+                  class="pi transition-transform duration-200"
+                  :class="completedExpanded ? 'pi-chevron-up' : 'pi-chevron-down'"
+                  aria-hidden="true"
+                ></i>
+              </button>
+            </div>
 
             <div
               v-if="completedExpanded"
@@ -367,12 +373,23 @@
         </div>
       </div>
     </div>
+
+    <!-- Action feedback live region: politely announces approve/reject results
+         to screen readers after async actions complete (WCAG SC 4.1.3).
+         Visually hidden — used exclusively for assistive-technology announcements. -->
+    <div
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      data-testid="action-feedback"
+    >{{ actionFeedback }}</div>
   </div>
   </MainLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import MainLayout from '../layout/MainLayout.vue'
 import { useApprovalWorkflowStore } from '../stores/approvalWorkflow'
 import { useTeamStore } from '../stores/team'
@@ -385,6 +402,21 @@ const teamStore = useTeamStore()
 const authStore = useAuthStore()
 
 const completedExpanded = ref(false)
+
+// ── Screen-reader action feedback (WCAG SC 4.1.3) ────────────────────────
+// Announces the result of approve/request-changes actions politely so
+// keyboard-and-screen-reader users receive confirmation without a visual alert.
+const actionFeedback = ref('')
+let feedbackTimer: ReturnType<typeof setTimeout> | null = null
+
+function announceAction(message: string) {
+  if (feedbackTimer) clearTimeout(feedbackTimer)
+  actionFeedback.value = message
+  feedbackTimer = setTimeout(() => {
+    actionFeedback.value = ''
+    feedbackTimer = null
+  }, 4000)
+}
 
 // ── Auth / role helpers ───────────────────────────────────────────────────
 
@@ -426,10 +458,12 @@ const completedCount = computed(
 
 function handleApprove(itemId: string) {
   workflowStore.updateItemState(itemId, 'approved')
+  announceAction('Item approved successfully.')
 }
 
 function handleRequestChanges(itemId: string) {
   workflowStore.updateItemState(itemId, 'needs_changes')
+  announceAction('Changes requested on item.')
 }
 
 function handleAssign(_item: WorkItem) {
@@ -445,5 +479,13 @@ function handleRetry() {
 
 onMounted(async () => {
   await Promise.all([workflowStore.initialize(), teamStore.initialize()])
+})
+
+onUnmounted(() => {
+  // Clean up the feedback timer to avoid state updates after unmount
+  if (feedbackTimer) {
+    clearTimeout(feedbackTimer)
+    feedbackTimer = null
+  }
 })
 </script>

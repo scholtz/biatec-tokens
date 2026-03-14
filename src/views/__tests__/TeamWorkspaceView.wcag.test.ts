@@ -200,6 +200,97 @@ describe('TeamWorkspaceView — WCAG AA Accessibility', () => {
     expect(toggle.attributes('aria-expanded')).toBe('true')
   })
 
+  it('completed-section toggle button is NOT a heading element — h2 is a sibling (WCAG SC 1.3.1)', () => {
+    // Interactive elements must not contain heading elements (screen readers may
+    // skip or misannounce headings nested inside buttons).
+    const wrapper = mountWorkspace()
+    const toggle = wrapper.find('[data-testid="completed-section-toggle"]')
+    expect(toggle.element.tagName.toLowerCase()).toBe('button')
+    // The button must not contain an h2
+    expect(toggle.find('h2').exists()).toBe(false)
+  })
+
+  it('completed-section heading h2 is a sibling of the toggle, not its child (WCAG SC 1.3.1)', () => {
+    const wrapper = mountWorkspace()
+    const section = wrapper.find('[data-testid="completed-section"]')
+    // h2 must exist in the section
+    const heading = section.find('[id="completed-section-heading"]')
+    expect(heading.exists()).toBe(true)
+    // h2 must not be inside the toggle button
+    const toggle = section.find('[data-testid="completed-section-toggle"]')
+    expect(toggle.find('#completed-section-heading').exists()).toBe(false)
+  })
+
+  it('completed-section toggle button has an aria-label describing expand/collapse (WCAG SC 4.1.2)', () => {
+    const wrapper = mountWorkspace()
+    const toggle = wrapper.find('[data-testid="completed-section-toggle"]')
+    const ariaLabel = toggle.attributes('aria-label') ?? ''
+    expect(ariaLabel.length).toBeGreaterThan(0)
+    // Should mention expand or collapse
+    expect(ariaLabel.toLowerCase()).toMatch(/expand|collapse/)
+  })
+
+  // ── Count badge dynamic aria-label (WCAG SC 1.3.1, SC 4.1.3) ────────────
+  // Count badge aria-labels MUST be v-bind (:aria-label) so they reflect actual
+  // queue sizes. Static aria-label with template literal syntax (without : prefix)
+  // would announce literal backtick characters and unresolved "${}" syntax.
+
+  it('awaiting-review count badge has a meaningful aria-label (not literal backticks) (WCAG SC 1.3.1)', () => {
+    const wrapper = mountWorkspace()
+    const badge = wrapper.find('[data-testid="awaiting-review-count"]')
+    expect(badge.exists()).toBe(true)
+    const ariaLabel = badge.attributes('aria-label') ?? ''
+    // Must not contain literal backtick or unresolved template literal syntax
+    expect(ariaLabel).not.toContain('`')
+    expect(ariaLabel).not.toContain('${')
+    // Must contain a meaningful word
+    expect(ariaLabel.toLowerCase()).toMatch(/item|awaiting|review/)
+  })
+
+  it('assigned count badge has a meaningful aria-label (not literal backticks) (WCAG SC 1.3.1)', () => {
+    const wrapper = mountWorkspace()
+    const badge = wrapper.find('[data-testid="assigned-count"]')
+    expect(badge.exists()).toBe(true)
+    const ariaLabel = badge.attributes('aria-label') ?? ''
+    expect(ariaLabel).not.toContain('`')
+    expect(ariaLabel).not.toContain('${')
+    expect(ariaLabel.toLowerCase()).toMatch(/item|assigned|team/)
+  })
+
+  it('ready-approval count badge has a meaningful aria-label (not literal backticks) (WCAG SC 1.3.1)', () => {
+    const wrapper = mountWorkspace()
+    const badge = wrapper.find('[data-testid="ready-approval-count"]')
+    expect(badge.exists()).toBe(true)
+    const ariaLabel = badge.attributes('aria-label') ?? ''
+    expect(ariaLabel).not.toContain('`')
+    expect(ariaLabel).not.toContain('${')
+    expect(ariaLabel.toLowerCase()).toMatch(/item|ready|approval/)
+  })
+
+  // ── Action feedback live region (WCAG SC 4.1.3) ───────────────────────────
+  // Screen readers must receive a polite announcement when approval actions
+  // complete, so keyboard users know the result without relying on visual cues.
+
+  it('renders an action-feedback live region with role=status and aria-live=polite (WCAG SC 4.1.3)', () => {
+    const wrapper = mountWorkspace()
+    const feedback = wrapper.find('[data-testid="action-feedback"]')
+    expect(feedback.exists()).toBe(true)
+    expect(feedback.attributes('role')).toBe('status')
+    expect(feedback.attributes('aria-live')).toBe('polite')
+  })
+
+  it('action-feedback region has aria-atomic=true to announce full message (WCAG SC 4.1.3)', () => {
+    const wrapper = mountWorkspace()
+    const feedback = wrapper.find('[data-testid="action-feedback"]')
+    expect(feedback.attributes('aria-atomic')).toBe('true')
+  })
+
+  it('action-feedback region is visually hidden (sr-only) to avoid visual clutter (WCAG SC 4.1.3)', () => {
+    const wrapper = mountWorkspace()
+    const feedback = wrapper.find('[data-testid="action-feedback"]')
+    expect(feedback.classes()).toContain('sr-only')
+  })
+
   // ── Approval section landmarks (WCAG SC 1.3.6) ───────────────────────────
 
   it('each approval queue section is wrapped in a <section> element (WCAG SC 1.3.6)', () => {
