@@ -375,7 +375,7 @@ The following automated tests preserve the behaviours introduced or confirmed by
 | 6.5 (action feedback) | `TeamWorkspaceView.wcag.test.ts` | "action-feedback live region with role=status and aria-live=polite" |
 | 2.2 (readiness meter) | `ComplianceLaunchConsole.test.ts` | "readiness score meter has ARIA role and value attributes" |
 | 4.2 (progress bar) | `ComplianceSetupWorkspace.wcag.test.ts` | "progress bar has ARIA progressbar role with aria-valuenow" |
-| 3.5 (table scope) | `WhitelistPolicyDashboard.test.ts` | "investor category table has accessible headers" |
+| 3.5 (table scope) | `WhitelistPolicyDashboard.test.ts` | "investor category table has accessible column headers with scope='col' (WCAG SC 1.3.1)" |
 
 Additionally, E2E-level evidence is provided in `e2e/screen-reader-review-evidence.spec.ts`
 for the live-region and heading structure assertions.
@@ -398,7 +398,9 @@ accessibility evidence package for enterprise compliance journeys.
 
 *Maintained by: Biatec frontend team*  
 *Related: `docs/accessibility/SCREEN_READER_REVIEW_CHECKLIST.md`*  
+*Related: `docs/accessibility/SCREEN_READER_REVIEW_WORKFLOW.md`*  
 *Related: `docs/accessibility/SCREEN_READER_RELEASE_EVIDENCE.md`*  
 *Related: `docs/accessibility/PROCUREMENT_ACCESSIBILITY_EVIDENCE.md`*  
 *E2E spec: `e2e/screen-reader-review-evidence.spec.ts`*  
-*Unit tests: `src/views/__tests__/TeamWorkspaceView.wcag.test.ts`*
+*Unit tests: `src/views/__tests__/TeamWorkspaceView.wcag.test.ts`*  
+*Unit tests: `src/views/__tests__/WhitelistPolicyDashboard.test.ts`*

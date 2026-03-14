@@ -310,4 +310,38 @@ describe("WhitelistPolicyDashboard", () => {
       expect(wrapper.find(".border-amber-700\\/30").exists()).toBe(false);
     });
   });
+
+  // ── Accessibility: investor category table (WCAG SC 1.3.1) ───────────────────
+  // Validates the screen-reader finding logged in SCREEN_READER_REVIEW_ARTIFACT.md
+  // observation 3.5 — the investor category table must expose its header cells with
+  // scope="col" so that AT users can understand each column in reading order.
+  describe("investor category table accessibility (WCAG SC 1.3.1)", () => {
+    it("investor category table has role=\"table\" and accessible aria-label", () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      const table = wrapper.find('[role="table"]');
+      expect(table.exists()).toBe(true);
+      const ariaLabel = table.attributes("aria-label") ?? "";
+      expect(ariaLabel.toLowerCase()).toMatch(/investor|category|categor/);
+    });
+
+    it("investor category table has accessible column headers with scope=\"col\" (WCAG SC 1.3.1)", () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      const headers = wrapper.findAll('th[scope="col"]');
+      // Expect at least the four documented columns: Category, Status, KYC Required, Notes
+      // (Notes column is hidden on mobile, but the th element is always in the DOM)
+      expect(headers.length).toBeGreaterThanOrEqual(4);
+      const headerTexts = headers.map((th) => th.text().trim().toLowerCase());
+      expect(headerTexts).toEqual(
+        expect.arrayContaining(["category", "status"]),
+      );
+    });
+
+    it("investor category table thead is present for AT reading order (WCAG SC 1.3.1)", () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      const thead = wrapper.find("thead");
+      expect(thead.exists()).toBe(true);
+      const tbody = wrapper.find("tbody");
+      expect(tbody.exists()).toBe(true);
+    });
+  });
 });

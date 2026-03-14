@@ -208,9 +208,11 @@ A product owner may sign off on enterprise accessibility for the covered journey
 | `docs/accessibility/SCREEN_READER_REVIEW_CHECKLIST.md` | Reusable review checklist for future releases |
 | `docs/accessibility/PROCUREMENT_ACCESSIBILITY_EVIDENCE.md` | Automated accessibility evidence (axe, Playwright) |
 | `docs/accessibility/UX_ACCESSIBILITY_CONVENTIONS.md` | Developer conventions for accessibility |
+| `docs/accessibility/SCREEN_READER_REVIEW_WORKFLOW.md` | Step-by-step instructions for repeating the manual review |
 | `e2e/accessibility-enterprise-journeys.spec.ts` | Automated E2E accessibility evidence |
 | `e2e/screen-reader-review-evidence.spec.ts` | E2E tests for screen-reader specific behaviors |
 | `src/views/__tests__/TeamWorkspaceView.wcag.test.ts` | Unit tests for remediated WCAG issues |
+| `src/views/__tests__/WhitelistPolicyDashboard.test.ts` | Unit tests including table header accessibility (WCAG SC 1.3.1) |
 
 ---
 
