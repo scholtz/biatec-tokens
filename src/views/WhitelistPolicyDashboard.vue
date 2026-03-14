@@ -138,7 +138,7 @@
               <div class="flex flex-wrap gap-2">
                 <span
                   v-if="policy.allowedJurisdictions.length === 0"
-                  class="text-xs text-gray-500 italic"
+                  class="text-xs text-gray-300 italic"
                 >None configured</span>
                 <span
                   v-for="j in policy.allowedJurisdictions"
@@ -163,7 +163,7 @@
               <div class="flex flex-wrap gap-2">
                 <span
                   v-if="policy.restrictedJurisdictions.length === 0"
-                  class="text-xs text-gray-500 italic"
+                  class="text-xs text-gray-300 italic"
                 >None</span>
                 <span
                   v-for="j in policy.restrictedJurisdictions"
@@ -188,7 +188,7 @@
               <div class="flex flex-wrap gap-2">
                 <span
                   v-if="policy.blockedJurisdictions.length === 0"
-                  class="text-xs text-gray-500 italic"
+                  class="text-xs text-gray-300 italic"
                 >None</span>
                 <span
                   v-for="j in policy.blockedJurisdictions"
@@ -211,7 +211,7 @@
             <div class="overflow-x-auto">
               <table class="w-full text-sm" role="table" aria-label="Investor category rules">
                 <thead>
-                  <tr class="text-left text-gray-500 border-b border-gray-700/50">
+                  <tr class="text-left text-gray-300 border-b border-gray-700/50">
                     <th scope="col" class="pb-3 font-medium">Category</th>
                     <th scope="col" class="pb-3 font-medium">Status</th>
                     <th scope="col" class="pb-3 font-medium">KYC Required</th>
@@ -232,7 +232,7 @@
                       </span>
                     </td>
                     <td class="py-3">
-                      <span :class="cat.kycRequired ? 'text-amber-400' : 'text-gray-500'">
+                      <span :class="cat.kycRequired ? 'text-amber-400' : 'text-gray-300'">
                         {{ cat.kycRequired ? 'Required' : 'Optional' }}
                       </span>
                     </td>
@@ -289,7 +289,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import MainLayout from "../components/layout/MainLayout.vue";
+import MainLayout from "../layout/MainLayout.vue";
 import PolicySummaryPanel from "../components/whitelist/PolicySummaryPanel.vue";
 import PolicyAuditCard from "../components/whitelist/PolicyAuditCard.vue";
 import EligibilityInspector from "../components/whitelist/EligibilityInspector.vue";
