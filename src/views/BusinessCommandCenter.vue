@@ -28,7 +28,7 @@
               id="role-selector"
               v-model="selectedRole"
               @change="handleRoleChange"
-              class="px-4 py-2 bg-white/10 text-white rounded-lg border border-white/20 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+              class="px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
               aria-label="Switch operator role perspective"
               data-testid="role-selector"
             >
@@ -40,7 +40,7 @@
 
         <!-- Breadcrumb -->
         <nav aria-label="Breadcrumb" class="mt-3">
-          <ol class="flex items-center gap-2 text-sm text-gray-400">
+          <ol class="flex items-center gap-2 text-sm text-gray-300">
             <li>
               <router-link to="/" class="hover:text-gray-200 focus-visible:ring-2 focus-visible:ring-blue-400 rounded">
                 Home
@@ -77,7 +77,7 @@
               <p class="text-white font-semibold" data-testid="status-label">
                 {{ overallSeverityLabel }}
               </p>
-              <p class="text-sm text-gray-400">
+              <p class="text-sm text-gray-300">
                 {{ priorityCards.length === 0
                   ? 'No outstanding action items for your operations.'
                   : `${relevantCards.length} item${relevantCards.length !== 1 ? 's' : ''} need${relevantCards.length === 1 ? 's' : ''} your attention.`
@@ -88,14 +88,14 @@
 
           <!-- Status filter -->
           <div class="flex items-center gap-2">
-            <label for="status-filter" class="text-sm text-gray-400 whitespace-nowrap">
+            <label for="status-filter" class="text-sm text-gray-200 whitespace-nowrap">
               Filter:
             </label>
             <select
               id="status-filter"
               v-model="activeFilter"
               @change="handleFilterChange"
-              class="px-3 py-1.5 bg-white/10 text-white text-sm rounded-lg border border-white/20 focus:border-blue-500 outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+              class="px-3 py-1.5 bg-gray-700 text-white text-sm rounded-lg border border-gray-600 focus:border-blue-500 outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
               aria-label="Filter action cards by status"
               data-testid="status-filter"
             >
@@ -127,7 +127,7 @@
                 ? 'No outstanding items'
                 : `No ${getSeverityLabel(activeFilter as StatusSeverity)} items` }}
             </p>
-            <p class="text-gray-400 text-sm">
+            <p class="text-gray-300 text-sm">
               {{ activeFilter === 'all'
                 ? 'Your operations are in good shape. Check back regularly for updates.'
                 : 'Try changing the filter to see other items.' }}
@@ -205,19 +205,19 @@
                 >
                   <dl class="space-y-3 mt-4">
                     <div>
-                      <dt class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">
+                      <dt class="text-xs font-semibold uppercase tracking-wide text-gray-300 mb-1">
                         What happened
                       </dt>
                       <dd class="text-gray-200 text-sm">{{ card.what }}</dd>
                     </div>
                     <div>
-                      <dt class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">
+                      <dt class="text-xs font-semibold uppercase tracking-wide text-gray-300 mb-1">
                         Why it matters
                       </dt>
                       <dd class="text-gray-200 text-sm">{{ card.why }}</dd>
                     </div>
                     <div>
-                      <dt class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">
+                      <dt class="text-xs font-semibold uppercase tracking-wide text-gray-300 mb-1">
                         What to do next
                       </dt>
                       <dd class="text-gray-200 text-sm">{{ card.how }}</dd>
@@ -270,7 +270,7 @@
               >
                 {{ deploymentStatusLabel }}
               </p>
-              <p class="text-xs text-gray-400 mt-1">
+              <p class="text-xs text-gray-300 mt-1">
                 Based on your most recent token deployment activity.
               </p>
             </div>
@@ -299,7 +299,7 @@
               >
                 {{ complianceStatusLabel }}
               </p>
-              <p class="text-xs text-gray-400 mt-1">
+              <p class="text-xs text-gray-300 mt-1">
                 Reflects the status of your compliance checkpoints and documentation.
               </p>
             </div>
@@ -322,7 +322,7 @@
 
             <!-- Template subject -->
             <div class="mb-4">
-              <label class="block text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1" for="stakeholder-subject">
+              <label class="block text-xs font-semibold uppercase tracking-wide text-gray-300 mb-1" for="stakeholder-subject">
                 Subject line
               </label>
               <div
@@ -336,7 +336,7 @@
 
             <!-- Template body -->
             <div class="mb-4">
-              <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Message body</p>
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-300 mb-2">Message body</p>
               <div
                 class="space-y-3 px-4 py-3 bg-white/5 rounded-lg border border-white/10"
                 data-testid="stakeholder-body"

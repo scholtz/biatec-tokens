@@ -36,8 +36,11 @@ async function globalSetup(_config: FullConfig) {
 
     // Seed localStorage so auth-guarded routes render their full component tree
     // (instead of an immediate redirect that skips Vue hydration compilation).
+    // Also seed dark theme so the app renders in dark mode (the primary design mode)
+    // during warmup and axe contrast scans.
     await page.addInitScript((auth: string) => {
       localStorage.setItem('algorand_user', auth)
+      localStorage.setItem('theme', 'dark')
     }, WARMUP_AUTH)
 
     // Visit home — triggers compilation of main.ts and all eager-loaded modules.

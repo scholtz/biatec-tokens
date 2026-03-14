@@ -32,7 +32,7 @@
                 >
                   Team Operations Workspace
                 </h1>
-                <p class="text-gray-400 text-sm mt-1">
+                <p class="text-gray-300 text-sm mt-1">
                   Collaborate on approvals, policy reviews, and compliance sign-offs across your team.
                 </p>
               </div>
@@ -46,28 +46,28 @@
             data-testid="summary-bar"
           >
             <div
-              class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-800/60 border border-white/10"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-800 border border-gray-700"
               data-testid="pending-count-badge"
             >
               <span class="w-2 h-2 rounded-full bg-yellow-400" aria-hidden="true"></span>
               <span class="text-sm font-medium text-white">{{ pendingCount }}</span>
-              <span class="text-xs text-gray-400">Pending</span>
+              <span class="text-xs text-gray-300">Pending</span>
             </div>
             <div
-              class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-800/60 border border-white/10"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-800 border border-gray-700"
               data-testid="in-review-count-badge"
             >
               <span class="w-2 h-2 rounded-full bg-blue-400" aria-hidden="true"></span>
               <span class="text-sm font-medium text-white">{{ inReviewCount }}</span>
-              <span class="text-xs text-gray-400">In Review</span>
+              <span class="text-xs text-gray-300">In Review</span>
             </div>
             <div
-              class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-800/60 border border-white/10"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-800 border border-gray-700"
               data-testid="completed-count-badge"
             >
               <span class="w-2 h-2 rounded-full bg-green-400" aria-hidden="true"></span>
               <span class="text-sm font-medium text-white">{{ completedCount }}</span>
-              <span class="text-xs text-gray-400">Completed</span>
+              <span class="text-xs text-gray-300">Completed</span>
             </div>
           </div>
         </div>
@@ -88,7 +88,7 @@
         <i class="pi pi-info-circle text-yellow-400 text-xl flex-shrink-0 mt-0.5" aria-hidden="true"></i>
         <div class="flex-1 min-w-0">
           <p class="text-sm font-medium text-yellow-300">No Team Role Assigned</p>
-          <p class="text-xs text-gray-400 mt-0.5">
+          <p class="text-xs text-gray-300 mt-0.5">
             You can view pending work items in read-only mode.
             Contact your organisation owner to be assigned a role before you can approve or request changes.
           </p>
@@ -139,7 +139,7 @@
         >
           <i class="pi pi-exclamation-triangle text-red-400 text-4xl mb-4" aria-hidden="true"></i>
           <h2 class="text-xl font-semibold text-white mb-2">Failed to Load Work Items</h2>
-          <p class="text-gray-400 text-sm mb-4">{{ workflowStore.error }}</p>
+          <p class="text-gray-300 text-sm mb-4">{{ workflowStore.error }}</p>
           <button
             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
             data-testid="retry-button"
@@ -167,7 +167,7 @@
               </h2>
               <span
                 class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold"
-                :class="workflowStore.awaitingMyReview.length > 0 ? 'bg-yellow-500 text-gray-900' : 'bg-gray-700 text-gray-400'"
+                :class="workflowStore.awaitingMyReview.length > 0 ? 'bg-yellow-500 text-gray-900' : 'bg-gray-700 text-gray-300'"
                 aria-label="`${workflowStore.awaitingMyReview.length} items awaiting review`"
                 data-testid="awaiting-review-count"
               >
@@ -177,7 +177,7 @@
 
             <div
               v-if="workflowStore.awaitingMyReview.length === 0"
-              class="text-center py-12 text-gray-500"
+              class="text-center py-12 text-gray-300"
               data-testid="empty-state-awaiting"
             >
               <i class="pi pi-inbox text-4xl mb-3" aria-hidden="true"></i>
@@ -213,7 +213,7 @@
               </h2>
               <span
                 class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold"
-                :class="workflowStore.assignedToTeam.length > 0 ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-400'"
+                :class="workflowStore.assignedToTeam.length > 0 ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300'"
                 aria-label="`${workflowStore.assignedToTeam.length} items assigned to team`"
                 data-testid="assigned-count"
               >
@@ -223,7 +223,7 @@
 
             <div
               v-if="workflowStore.assignedToTeam.length === 0"
-              class="text-center py-12 text-gray-500"
+              class="text-center py-12 text-gray-300"
               data-testid="empty-state-assigned"
             >
               <i class="pi pi-users text-4xl mb-3" aria-hidden="true"></i>
@@ -260,7 +260,7 @@
               </h2>
               <span
                 class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold"
-                :class="workflowStore.readyForApproval.length > 0 ? 'bg-purple-500 text-white' : 'bg-gray-700 text-gray-400'"
+                :class="workflowStore.readyForApproval.length > 0 ? 'bg-purple-500 text-white' : 'bg-gray-700 text-gray-300'"
                 aria-label="`${workflowStore.readyForApproval.length} items ready for approval`"
                 data-testid="ready-approval-count"
               >
@@ -270,7 +270,7 @@
 
             <div
               v-if="workflowStore.readyForApproval.length === 0"
-              class="text-center py-12 text-gray-500"
+              class="text-center py-12 text-gray-300"
               data-testid="empty-state-ready"
             >
               <i class="pi pi-check-circle text-4xl mb-3" aria-hidden="true"></i>
@@ -311,13 +311,13 @@
                 Recently Completed
               </h2>
               <span
-                class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold bg-gray-700 text-gray-400"
+                class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold bg-gray-700 text-gray-300"
                 data-testid="completed-count"
               >
                 {{ workflowStore.recentlyCompleted.length }}
               </span>
               <i
-                class="pi ml-auto text-gray-400 transition-transform duration-200"
+                class="pi ml-auto text-gray-300 transition-transform duration-200"
                 :class="completedExpanded ? 'pi-chevron-up' : 'pi-chevron-down'"
                 aria-hidden="true"
               ></i>
@@ -329,7 +329,7 @@
             >
               <div
                 v-if="workflowStore.recentlyCompleted.length === 0"
-                class="text-center py-12 text-gray-500"
+                class="text-center py-12 text-gray-300"
                 data-testid="empty-state-completed"
               >
                 <i class="pi pi-history text-4xl mb-3" aria-hidden="true"></i>
@@ -353,7 +353,7 @@
 
           <!-- Team members link -->
           <div class="border-t border-white/10 pt-6 text-center">
-            <p class="text-gray-500 text-sm mb-2">Need to manage team roles or access?</p>
+            <p class="text-gray-300 text-sm mb-2">Need to manage team roles or access?</p>
             <router-link
               to="/compliance"
               class="inline-flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"

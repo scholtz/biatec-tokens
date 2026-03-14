@@ -32,7 +32,7 @@
                   id="algod-url"
                   v-model="currentNetworkConfig.algodUrl"
                   type="url"
-                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   placeholder="https://testnet-api.algonode.cloud"
                 />
               </div>
@@ -42,7 +42,7 @@
                   id="algod-token"
                   v-model="currentNetworkConfig.algodToken"
                   type="password"
-                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   placeholder="Optional API token"
                 />
               </div>
@@ -55,7 +55,7 @@
                   id="indexer-url"
                   v-model="currentNetworkConfig.indexerUrl"
                   type="url"
-                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   placeholder="https://testnet-idx.algonode.cloud"
                 />
               </div>
@@ -65,7 +65,7 @@
                   id="indexer-token"
                   v-model="currentNetworkConfig.indexerToken"
                   type="password"
-                  class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   placeholder="Optional API token"
                 />
               </div>
@@ -84,7 +84,7 @@
                 id="evm-rpc-url"
                 v-model="settings.evmRpcUrl"
                 type="url"
-                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 placeholder="https://ethereum-sepolia.blockpi.network/v1/rpc/public"
               />
             </div>
@@ -94,7 +94,7 @@
                 id="evm-chain-id"
                 v-model.number="settings.evmChainId"
                 type="number"
-                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 placeholder="11155111"
               />
             </div>
@@ -134,7 +134,7 @@
                 id="custom-headers"
                 v-model="customHeaders"
                 rows="3"
-                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 placeholder='{"X-API-Key": "your-api-key"}'
               ></textarea>
             </div>

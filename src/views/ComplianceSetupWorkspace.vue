@@ -26,7 +26,7 @@
               <h3 class="text-xl font-semibold text-white">
                 {{ completedSteps }} of {{ totalSteps }} Steps Complete
               </h3>
-              <p class="text-gray-600 dark:text-gray-400">{{ progressPercentage }}% done</p>
+              <p class="text-gray-600 dark:text-gray-200">{{ progressPercentage }}% done</p>
             </div>
           </div>
 
@@ -39,7 +39,7 @@
             >
               {{ readiness.readinessScore }}%
             </div>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Readiness Score</p>
+            <p class="text-sm text-gray-600 dark:text-gray-200">Readiness Score</p>
           </div>
         </div>
 
@@ -103,7 +103,7 @@
                   ? 'text-green-400'
                   : step.status === 'blocked'
                   ? 'text-red-400'
-                  : 'text-gray-500',
+                  : 'text-gray-300',
               ]"
             >
               {{ step.title }}
@@ -183,7 +183,7 @@
               'px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-biatec-accent focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900',
               canProceedToNext
                 ? 'bg-biatec-accent hover:bg-biatec-accent/90 text-gray-900'
-                : 'bg-gray-700 text-gray-500 cursor-not-allowed',
+                : 'bg-gray-700 text-gray-300 cursor-not-allowed',
             ]"
           >
             Continue
@@ -204,7 +204,7 @@
       </div>
 
       <!-- Help Text -->
-      <div class="mt-6 text-center text-gray-600 dark:text-gray-400 text-sm">
+      <div class="mt-6 text-center text-gray-600 dark:text-gray-200 text-sm">
         <p>
           Your progress is automatically saved. You can return anytime to complete the setup.
         </p>

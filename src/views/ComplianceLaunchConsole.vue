@@ -33,7 +33,7 @@
               >
                 Compliance Launch Console
               </h1>
-              <p class="text-gray-400 text-sm mt-1">
+              <p class="text-gray-300 text-sm mt-1">
                 Complete your compliance readiness before deploying a regulated token.
               </p>
             </div>
@@ -41,7 +41,7 @@
 
           <!-- Last checked timestamp -->
           <div
-            class="flex-shrink-0 text-xs text-gray-500 sm:text-right mt-1"
+            class="flex-shrink-0 text-xs text-gray-300 sm:text-right mt-1"
             data-testid="last-checked"
             aria-label="Last readiness check time"
           >
@@ -83,7 +83,7 @@
                 {{ GATE_STATE_LABELS[readiness.gate] }}
               </h2>
               <p
-                class="text-sm text-gray-400 mt-0.5"
+                class="text-sm text-gray-300 mt-0.5"
                 data-testid="gate-state-description"
                 aria-live="polite"
               >
@@ -93,7 +93,7 @@
               <!-- Blocker count badge -->
               <div
                 v-if="readiness.totalBlockers > 0"
-                class="inline-flex items-center gap-1.5 mt-2 px-2.5 py-0.5 rounded-full bg-red-900/40 border border-red-700/50 text-xs font-medium text-red-300"
+                class="inline-flex items-center gap-1.5 mt-2 px-2.5 py-0.5 rounded-full bg-red-800 text-xs font-medium text-white"
                 role="status"
                 :aria-label="`${readiness.totalBlockers} blocker${readiness.totalBlockers > 1 ? 's' : ''} must be resolved`"
                 data-testid="blocker-count-badge"
@@ -134,7 +134,7 @@
         <!-- Progress bar -->
         <div class="mt-5">
           <div class="flex items-center justify-between mb-1.5">
-            <span class="text-xs text-gray-500">Compliance readiness</span>
+            <span class="text-xs text-gray-300">Compliance readiness</span>
             <span class="text-xs font-medium" :class="scoreTextClass" data-testid="readiness-percent">
               {{ readiness.readinessScore }}%
             </span>
@@ -201,7 +201,7 @@
                   <h3 class="text-sm font-semibold text-white truncate" :data-testid="`domain-label-${domain.id}`">
                     {{ domain.label }}
                   </h3>
-                  <p class="text-xs text-gray-400 mt-0.5 line-clamp-1">{{ domain.description }}</p>
+                  <p class="text-xs text-gray-300 mt-0.5 line-clamp-1">{{ domain.description }}</p>
                 </div>
               </div>
 
@@ -250,7 +250,7 @@
                 class="pt-4"
                 data-testid="not-started-guidance"
               >
-                <p class="text-sm text-gray-400">
+                <p class="text-sm text-gray-300">
                   This domain has not been configured yet.
                   {{ domain.estimatedMinutes ? `Estimated time: ${domain.estimatedMinutes} minutes.` : '' }}
                 </p>
@@ -286,7 +286,7 @@
 
                   <!-- Why this matters -->
                   <div class="mb-2">
-                    <span class="text-xs font-medium text-gray-400 uppercase tracking-wide">Why this matters</span>
+                    <span class="text-xs font-medium text-gray-300 uppercase tracking-wide">Why this matters</span>
                     <p class="text-sm text-gray-300 mt-0.5" :data-testid="`blocker-why-${blocker.id}`">
                       {{ blocker.why }}
                     </p>
@@ -294,7 +294,7 @@
 
                   <!-- How to fix -->
                   <div class="mb-3">
-                    <span class="text-xs font-medium text-gray-400 uppercase tracking-wide">How to fix</span>
+                    <span class="text-xs font-medium text-gray-300 uppercase tracking-wide">How to fix</span>
                     <p class="text-sm text-gray-300 mt-0.5" :data-testid="`blocker-how-${blocker.id}`">
                       {{ blocker.how }}
                     </p>
@@ -323,7 +323,7 @@
                 <CheckCircleIcon class="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
                 <div>
                   <p class="text-sm font-medium text-green-300">Domain complete</p>
-                  <p class="text-xs text-gray-400 mt-0.5">
+                  <p class="text-xs text-gray-300 mt-0.5">
                     {{ domain.description }}
                   </p>
                 </div>
@@ -343,25 +343,25 @@
         <h2 class="text-sm font-semibold text-gray-300 mb-3">Review Summary</h2>
         <dl class="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
-            <dt class="text-xs text-gray-500">Total Domains</dt>
+            <dt class="text-xs text-gray-300">Total Domains</dt>
             <dd class="text-lg font-bold text-white mt-0.5" data-testid="summary-total-domains">
               {{ readiness.domains.length }}
             </dd>
           </div>
           <div>
-            <dt class="text-xs text-gray-500">Ready</dt>
+            <dt class="text-xs text-gray-300">Ready</dt>
             <dd class="text-lg font-bold text-green-400 mt-0.5" data-testid="summary-ready-count">
               {{ readyCount }}
             </dd>
           </div>
           <div>
-            <dt class="text-xs text-gray-500">Blockers</dt>
+            <dt class="text-xs text-gray-300">Blockers</dt>
             <dd class="text-lg font-bold text-red-400 mt-0.5" data-testid="summary-blocker-count">
               {{ readiness.totalBlockers }}
             </dd>
           </div>
           <div>
-            <dt class="text-xs text-gray-500">Readiness Score</dt>
+            <dt class="text-xs text-gray-300">Readiness Score</dt>
             <dd class="text-lg font-bold mt-0.5" :class="scoreTextClass" data-testid="summary-score">
               {{ readiness.readinessScore }}%
             </dd>
@@ -369,7 +369,7 @@
         </dl>
 
         <div class="mt-4 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
-          <p class="text-xs text-gray-500">
+          <p class="text-xs text-gray-300">
             Last assessment: {{ formattedLastChecked }}
           </p>
           <router-link
@@ -493,10 +493,10 @@ const bannerBorderClass = computed(() => {
 
 const scoreRingClass = computed(() => {
   const score = readiness.value.readinessScore
-  if (score >= 80) return 'border-green-500 text-green-400 bg-green-900/20'
-  if (score >= 60) return 'border-yellow-500 text-yellow-400 bg-yellow-900/20'
-  if (score > 0) return 'border-red-500 text-red-400 bg-red-900/20'
-  return 'border-gray-600 text-gray-400 bg-gray-800/40'
+  if (score >= 80) return 'border-green-500 text-green-200 bg-green-800'
+  if (score >= 60) return 'border-yellow-500 text-yellow-200 bg-yellow-800'
+  if (score > 0) return 'border-red-500 text-red-200 bg-red-800'
+  return 'border-gray-600 text-gray-300 bg-gray-800'
 })
 
 const scoreTextClass = computed(() => {
@@ -550,11 +550,11 @@ function domainCardBorderClass(status: DomainStatus): string {
 function domainIconContainerClass(status: DomainStatus): string {
   switch (status) {
     case 'ready':
-      return 'bg-green-900/40 text-green-400'
+      return 'bg-green-800 text-green-100'
     case 'blocked':
-      return 'bg-red-900/40 text-red-400'
+      return 'bg-red-800 text-white'
     case 'needs_attention':
-      return 'bg-yellow-900/40 text-yellow-400'
+      return 'bg-yellow-800 text-yellow-100'
     default:
       return 'bg-gray-700 text-gray-400'
   }
@@ -563,11 +563,11 @@ function domainIconContainerClass(status: DomainStatus): string {
 function domainStatusBadgeClass(status: DomainStatus): string {
   switch (status) {
     case 'ready':
-      return 'bg-green-900/40 text-green-300 border border-green-700/50'
+      return 'bg-green-800 text-white'
     case 'blocked':
-      return 'bg-red-900/40 text-red-300 border border-red-700/50'
+      return 'bg-red-800 text-white'
     case 'needs_attention':
-      return 'bg-yellow-900/40 text-yellow-300 border border-yellow-700/50'
+      return 'bg-yellow-800 text-white'
     default:
       return 'bg-gray-800 text-gray-400 border border-gray-700'
   }

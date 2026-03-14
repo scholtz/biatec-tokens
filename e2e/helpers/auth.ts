@@ -170,6 +170,12 @@ export async function withAuth(page: Page, user: AuthUser = DEFAULT_TEST_USER): 
     if (userData.email) {
       localStorage.setItem('arc76_email', userData.email)
     }
+    // Ensure dark theme is active so axe contrast scans test against the designed
+    // dark-mode palette (all product views are dark-mode-first). Without this,
+    // headless CI defaults to light mode and dark-card text fails contrast checks.
+    if (!localStorage.getItem('theme')) {
+      localStorage.setItem('theme', 'dark')
+    }
   }, session)
 }
 
