@@ -91,6 +91,25 @@ export interface AxeScanOptions {
 export async function runAxeScan(page: Page, options: AxeScanOptions | string): Promise<void> {
   const opts: AxeScanOptions = typeof options === 'string' ? { context: options } : options
 
+  // Wait for the theme store's initTheme() to complete before running axe.
+  // The theme store default is isDark=true but initTheme() reads from localStorage
+  // or system preference in onMounted and calls updateTheme(), which sets either
+  // the 'dark' or 'light' class on <html>.  Without this wait, concurrent test runs
+  // (2+ Playwright workers) occasionally scan the page while initTheme() is still
+  // pending, finding intermediate computed styles that fail color-contrast rules.
+  // The wait resolves as soon as Vue's onMounted has run — typically within 500ms
+  // of waitForLoadState('load') but needed as a deterministic guard for CI.
+  await page
+    .waitForFunction(
+      () =>
+        document.documentElement.classList.contains('dark') ||
+        document.documentElement.classList.contains('light'),
+      { timeout: 5000 },
+    )
+    .catch(() => {
+      // Non-fatal: proceed if theme class is not present (e.g., unusual headless env).
+    })
+
   let builder = new AxeBuilder({ page }).withTags([...WCAG_AA_TAGS])
 
   if (opts.exclude) {

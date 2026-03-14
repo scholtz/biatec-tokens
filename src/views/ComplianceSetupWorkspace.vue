@@ -1,5 +1,5 @@
 <template>
-  <main id="main-content" role="main" class="compliance-setup-workspace min-h-screen py-8 px-4">
+  <main id="main-content" role="main" class="compliance-setup-workspace min-h-screen py-8 px-4 bg-gray-900">
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="text-center mb-8">
@@ -26,7 +26,7 @@
               <h3 class="text-xl font-semibold text-white">
                 {{ completedSteps }} of {{ totalSteps }} Steps Complete
               </h3>
-              <p class="text-gray-600 dark:text-gray-200">{{ progressPercentage }}% done</p>
+              <p class="text-gray-300">{{ progressPercentage }}% done</p>
             </div>
           </div>
 
@@ -39,7 +39,7 @@
             >
               {{ readiness.readinessScore }}%
             </div>
-            <p class="text-sm text-gray-600 dark:text-gray-200">Readiness Score</p>
+            <p class="text-sm text-gray-300">Readiness Score</p>
           </div>
         </div>
 
@@ -204,7 +204,7 @@
       </div>
 
       <!-- Help Text -->
-      <div class="mt-6 text-center text-gray-600 dark:text-gray-200 text-sm">
+      <div class="mt-6 text-center text-gray-300 text-sm">
         <p>
           Your progress is automatically saved. You can return anytime to complete the setup.
         </p>
