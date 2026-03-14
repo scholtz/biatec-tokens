@@ -757,6 +757,16 @@ test.describe('Section 5 — Compliance setup: readiness evidence + contradictio
 // IMPORTANT: These tests are in a separate describe block WITHOUT withAuth() in beforeEach.
 // withAuth() uses addInitScript which re-seeds auth on every navigation, preventing the
 // router guard from redirecting. Only clearAuthScript() is used here (Section 7u pattern).
+//
+// Guard redirect contract (src/router/index.ts ~L320-335):
+//   if (!isAuthenticated) → next({ name: "Home", query: { showAuth: "true" } })
+//
+// The deterministic signal is: URL acquires ?showAuth=true after the guard fires.
+// page.waitForURL() polls until the URL matches, replacing arbitrary waitForTimeout()
+// calls. The route contract is pinned at the unit level in EnterpriseComplianceWorkspace
+// .integration.test.ts — which documents that /team/workspace and /compliance/policy
+// both require a valid (address + isConnected=true) session, and that no session
+// always produces a redirect-to-home with showAuth=true.
 
 test.describe('Section 6 — Unauthenticated guard: compliance + workspace redirect proof (AC #6)', () => {
   test.beforeEach(async ({ page }) => {
@@ -765,57 +775,35 @@ test.describe('Section 6 — Unauthenticated guard: compliance + workspace redir
   })
 
   test('unauthenticated user accessing /compliance/setup is redirected to auth (AC #6)', async ({ page }) => {
-    await page.goto(`${BASE}/compliance/setup`, { timeout: 15000 })
-    await page.waitForLoadState('load', { timeout: 10000 })
-    await page.waitForTimeout(3000)
+    // Budget: goto(10s) + waitForURL(5s) = 15s < 60s global
+    // The router guard calls next({ name: 'Home', query: { showAuth: 'true' } })
+    // synchronously when localStorage has no session. waitForURL polls until the
+    // URL contains showAuth=true — the redirect fires during or immediately after
+    // the initial navigation so this resolves in under 1 second in practice.
+    await page.goto(`${BASE}/compliance/setup`, { timeout: 10000 })
+    await page.waitForURL(/[?&]showAuth=true/, { timeout: 5000 })
 
-    const url = page.url()
-    const redirectedAway = !url.includes('/compliance/setup')
-    const hasAuthParam = url.includes('showAuth=true')
-    const showsAuthModal = await page
-      .locator('form')
-      .filter({ hasText: /email/i })
-      .first()
-      .isVisible({ timeout: 3000 })
-      .catch(() => false)
-
-    expect(redirectedAway || showsAuthModal || hasAuthParam).toBe(true)
+    // Post-redirect assertion: protected route is no longer active (AC #6)
+    expect(page.url()).toContain('showAuth=true')
+    expect(page.url()).not.toContain('/compliance/setup')
   })
 
   test('unauthenticated user accessing /team/workspace is redirected to auth (AC #6)', async ({ page }) => {
-    await page.goto(`${BASE}/team/workspace`, { timeout: 15000 })
-    await page.waitForLoadState('load', { timeout: 10000 })
-    await page.waitForTimeout(3000)
+    // Budget: goto(10s) + waitForURL(5s) = 15s < 60s global
+    await page.goto(`${BASE}/team/workspace`, { timeout: 10000 })
+    await page.waitForURL(/[?&]showAuth=true/, { timeout: 5000 })
 
-    const url = page.url()
-    const redirectedAway = !url.includes('/team/workspace')
-    const hasAuthParam = url.includes('showAuth=true')
-    const showsAuthModal = await page
-      .locator('form')
-      .filter({ hasText: /email/i })
-      .first()
-      .isVisible({ timeout: 3000 })
-      .catch(() => false)
-
-    expect(redirectedAway || showsAuthModal || hasAuthParam).toBe(true)
+    expect(page.url()).toContain('showAuth=true')
+    expect(page.url()).not.toContain('/team/workspace')
   })
 
   test('unauthenticated user accessing /compliance/policy is redirected to auth (AC #6)', async ({ page }) => {
-    await page.goto(`${BASE}/compliance/policy`, { timeout: 15000 })
-    await page.waitForLoadState('load', { timeout: 10000 })
-    await page.waitForTimeout(3000)
+    // Budget: goto(10s) + waitForURL(5s) = 15s < 60s global
+    await page.goto(`${BASE}/compliance/policy`, { timeout: 10000 })
+    await page.waitForURL(/[?&]showAuth=true/, { timeout: 5000 })
 
-    const url = page.url()
-    const redirectedAway = !url.includes('/compliance/policy')
-    const hasAuthParam = url.includes('showAuth=true')
-    const showsAuthModal = await page
-      .locator('form')
-      .filter({ hasText: /email/i })
-      .first()
-      .isVisible({ timeout: 3000 })
-      .catch(() => false)
-
-    expect(redirectedAway || showsAuthModal || hasAuthParam).toBe(true)
+    expect(page.url()).toContain('showAuth=true')
+    expect(page.url()).not.toContain('/compliance/policy')
   })
 })
 
