@@ -1,10 +1,11 @@
 # Procurement-Grade Accessibility Evidence
 ## Biatec Tokens — Enterprise Issuance Journey WCAG 2.1 AA Verification
 
-**Version**: 1.0  
+**Version**: 2.0  
 **Date**: March 2026  
 **Audience**: Product, QA, procurement reviewers, accessibility stakeholders  
-**CI Run**: `npx playwright test e2e/accessibility-enterprise-journeys.spec.ts`
+**CI Run (E2E)**: `npx playwright test e2e/accessibility-enterprise-journeys.spec.ts`  
+**CI Run (Unit)**: `npx vitest run --reporter=verbose` (includes WCAG unit tests)
 
 ---
 
@@ -46,21 +47,76 @@ semantic structure, and landmark verification. Tests are designed to be:
 | Settings | `/settings` | ✅ | ✅ | — | ✅ | — |
 | Mobile shell (390px) | `/`, `/compliance/launch` | ✅ | — | ✅ | — | — |
 
-**Total**: 64 deterministic tests across 11 describe sections.
+**Total E2E tests**: 64 deterministic tests across 11 describe sections in `accessibility-enterprise-journeys.spec.ts`,
+plus 50 additional procurement-focused tests in `procurement-accessibility-evidence.spec.ts`.
+
+**Total unit WCAG tests**: 160+ unit-level WCAG assertions across 9 view/component WCAG test files (see below).
 
 > **What changed in March 2026 (PR: add-accessibility-proof-workflows)**:
 > Section 4a was added covering the Compliance Setup Workspace (`/compliance/setup`),
 > completing the accessibility evidence for the full set of issue AC requirements.
 > Compliance Setup Workspace is a standalone multi-step wizard that provides its own
 > `<main id="main-content">`, step-nav landmark, progress bar ARIA, and keyboard controls.
+>
+> **What changed in March 2026 (PR: add-accessibility-evidence)**:
+> `Home.wcag.test.ts` (17 tests) and `MainLayout.wcag.test.ts` (13 tests) added to provide
+> unit-level WCAG evidence for the dashboard entry and shared shell accessibility infrastructure.
 
 ---
 
 ## Spec Files
 
-### New — `e2e/accessibility-enterprise-journeys.spec.ts`
-Primary evidence file for this issue. 64 tests in 11 sections aligned to issue
-acceptance criteria.
+### E2E Accessibility Specs
+
+#### Primary — `e2e/accessibility-enterprise-journeys.spec.ts`
+Primary evidence file for enterprise issuance journeys. **64 tests** across 11 sections:
+- Section 1: Home page (unauthenticated + authenticated) — axe scan, landmarks, skip-link
+- Section 2: Sign-in/auth surfaces — form labels, keyboard, axe scan
+- Section 3: Guided Launch wizard — heading structure, progress bar, step-nav, landmarks
+- Section 4: Compliance Dashboard + Policies — axe scan, heading structure, ARIA
+- Section 4a: Compliance Setup Workspace — standalone wizard, step-nav, ARIA
+- Section 5: Whitelist workflow — domain/policy management accessibility
+- Section 6: Team Workspace approvals — keyboard, ARIA, heading structure, axe scan
+- Section 7: Mobile-first shell parity — viewport, nav keyboard, focus restoration
+- Section 8: Cross-route shell invariants — route announcer, no-wallet-UI, single h1
+- Section 9: Keyboard-only reachability for all enterprise routes
+- Section 10: Shared utility helper regression (verifies helper contracts)
+
+#### Procurement-focused — `e2e/procurement-accessibility-evidence.spec.ts`
+Procurement-focused evidence aligned to specific WCAG SCs. **50 tests** across 11 sections:
+- Section 1: Home page WCAG 2.1 AA automated scan
+- Section 2: Guided Launch — step indicator, progress bar, error banner, main landmark
+- Section 3: Compliance — axe scan, readiness banner, domain status, blocker alerts
+- Section 4: Team Workspace — axe scan, approval sections, loading state, workflow summary
+- Section 5: Operations — axe scan, breadcrumb, live regions
+- Section 6: Settings — axe scan, form labels
+- Section 7: Shared shell — route announcer, skip link, sidebar landmark
+- Section 8: Keyboard-only access across enterprise routes
+- Section 9: Cross-route single h1 integrity
+- Section 10: Enterprise trust surface ARIA patterns
+- Section 11: Unauthenticated redirect accessibility
+
+#### Additional E2E Evidence
+- `e2e/automated-accessibility-verification.spec.ts` — 65 tests (enterprise route evidence)
+- `e2e/enterprise-shell-accessibility-evidence.spec.ts` — 54 tests (shell WCAG evidence)
+- `e2e/enterprise-accessibility-parity.spec.ts` — navigation parity evidence
+
+### Unit-Level WCAG Tests
+
+Unit tests provide fast, isolated WCAG 2.1 AA evidence for individual components and views.
+These run in every CI push (no browser required) and catch structural regressions before E2E.
+
+| File | Tests | Coverage |
+|------|-------|----------|
+| `src/views/__tests__/Home.wcag.test.ts` | 17 | h1, headings, CTA state, auth modal, no-wallet-UI |
+| `src/layout/__tests__/MainLayout.wcag.test.ts` | 13 | route-announcer, main landmark, header, sidebar |
+| `src/views/__tests__/TeamWorkspaceView.wcag.test.ts` | 29 | heading hierarchy, ARIA, approval sections, live regions |
+| `src/views/__tests__/ComplianceSetupWorkspace.wcag.test.ts` | 19 | heading, step-nav, progress bar, form labels |
+| `src/views/__tests__/ComplianceLaunchConsole.test.ts` | 16 | progress bar, meter, live regions, focus visibility |
+| `src/views/__tests__/BusinessCommandCenter.wcag.test.ts` | 13 | breadcrumb, role selector, live regions |
+| `src/views/__tests__/LifecycleCockpit.wcag.test.ts` | 5 | ARIA, heading structure, no-wallet-UI |
+| `src/views/__tests__/Settings.wcag.test.ts` | 25 | form labels, toggle aria-pressed, live regions |
+| `src/components/team/__tests__/ApprovalStatusBadge.test.ts` | 15+ | role=status/alert, aria-label, color classes |
 
 ### Shared Helpers — `e2e/helpers/accessibility.ts`
 Reusable utilities so future journey coverage requires minimal new boilerplate:
@@ -76,13 +132,6 @@ Reusable utilities so future journey coverage requires minimal new boilerplate:
 - `assertDialogAccessibility(page, opts)` — verifies dialog role/aria-modal/label
 - `assertFormInputsLabelled(page, formSelector)` — verifies all visible inputs are labelled
 - `gotoAndWaitForHeading(page, path, pattern)` — navigate + wait for h1
-
-### Existing Coverage
-These existing specs also provide accessibility evidence:
-- `e2e/automated-accessibility-verification.spec.ts` — 65 tests (enterprise route evidence)
-- `e2e/enterprise-shell-accessibility-evidence.spec.ts` — 54 tests (shell WCAG evidence)
-- `e2e/procurement-accessibility-evidence.spec.ts` — 50 tests (procurement-focused evidence)
-- `e2e/enterprise-accessibility-parity.spec.ts` — navigation parity evidence
 
 ---
 
@@ -332,13 +381,35 @@ This work addresses the explicitly documented roadmap blocker:
 > "accessibility evidence is improved at the shell level but still lacks full
 > automated WCAG and contrast verification across the highest-value user journeys"
 
-With this implementation, Biatec now has automated evidence for the seven
-highest-value journeys that influence procurement decisions: Home, auth,
-Guided Launch, Compliance, Whitelist, Team Workspace, and Mobile shell.
+With this implementation, Biatec now has automated evidence for all highest-value
+journeys that influence procurement decisions: Home (unauthenticated + authenticated),
+auth surface, Guided Launch, Compliance Dashboard, Compliance Setup Workspace,
+Whitelist management, Team Workspace approvals, Operations Command Center, Settings,
+and Mobile shell — both at the E2E (axe-core + Playwright) level and at the unit/component
+(fast, CI-stable, isolated assertion) level.
+
+---
+
+## Acceptance Criteria Status
+
+| AC | Description | Status |
+|----|-------------|--------|
+| AC #1 | Automated accessibility checks for all 6+ target journeys | ✅ |
+| AC #2 | Critical screens fail CI on meaningful WCAG regressions | ✅ |
+| AC #3 | Shell-level accessibility proof extended to in-product flows | ✅ |
+| AC #4 | Keyboard-only usage is demonstrably reliable | ✅ |
+| AC #5 | Status messages, alerts, live regions verified | ✅ |
+| AC #6 | Shared components updated for correct labels/roles/states | ✅ |
+| AC #7 | New accessibility testing utilities documented | ✅ |
+| AC #8 | Documentation explains automated vs manual scope | ✅ (this file) |
+| AC #9 | Tests are deterministic in CI | ✅ |
+| AC #10 | Implementation is scoped and product-vision aligned | ✅ |
 
 ---
 
 *Last updated: March 2026*  
 *Maintained by: Biatec frontend team*  
-*Test file: `e2e/accessibility-enterprise-journeys.spec.ts`*  
-*Helpers file: `e2e/helpers/accessibility.ts`*
+*E2E spec: `e2e/accessibility-enterprise-journeys.spec.ts`*  
+*E2E spec (procurement): `e2e/procurement-accessibility-evidence.spec.ts`*  
+*Helpers: `e2e/helpers/accessibility.ts`*  
+*Unit WCAG tests: `src/views/__tests__/Home.wcag.test.ts`, `src/layout/__tests__/MainLayout.wcag.test.ts`, and others*
