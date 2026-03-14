@@ -7,8 +7,9 @@
         <div class="mb-8">
           <button
             @click="$router.back()"
-            class="mb-4 text-gray-400 hover:text-white transition-colors flex items-center space-x-2"
+            class="mb-4 text-gray-400 hover:text-white transition-colors flex items-center space-x-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded"
             aria-label="Go back"
+            data-testid="back-button"
           >
             <i class="pi pi-arrow-left" aria-hidden="true"></i>
             <span>Back</span>
@@ -28,7 +29,9 @@
             <div v-if="!isLoading && hasPolicy" class="flex gap-3 flex-wrap">
               <button
                 @click="toggleEligibilityInspector"
-                class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm"
+                class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                :aria-expanded="showEligibilityInspector"
+                aria-controls="eligibility-inspector-container"
                 aria-label="Open eligibility inspector"
                 data-testid="review-eligibility-button"
               >
@@ -37,7 +40,7 @@
               </button>
               <button
                 @click="openEditPanel"
-                class="px-4 py-2 bg-biatec-accent text-white rounded-lg hover:bg-biatec-accent/80 transition-colors flex items-center gap-2 text-sm"
+                class="px-4 py-2 bg-biatec-accent text-white rounded-lg hover:bg-biatec-accent/80 transition-colors flex items-center gap-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
                 aria-label="Edit policy"
                 data-testid="edit-policy-button"
               >
@@ -125,26 +128,37 @@
           </div>
 
           <!-- Jurisdiction grids -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <section aria-labelledby="jurisdictions-heading" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <h2 id="jurisdictions-heading" class="sr-only">Jurisdiction Rules</h2>
             <!-- Allowed -->
-            <div class="glass-effect rounded-xl p-5" data-testid="allowed-jurisdictions-panel">
+            <div
+              class="glass-effect rounded-xl p-5"
+              data-testid="allowed-jurisdictions-panel"
+              role="region"
+              aria-labelledby="allowed-regions-heading"
+            >
               <div class="flex items-center gap-2 mb-3">
                 <i class="pi pi-check-circle text-green-400" aria-hidden="true"></i>
-                <h3 class="text-sm font-semibold text-green-400">Allowed Regions</h3>
-                <span class="ml-auto text-xs bg-green-800 text-green-300 px-2 py-0.5 rounded-full">
+                <h3 id="allowed-regions-heading" class="text-sm font-semibold text-green-400">Allowed Regions</h3>
+                <span
+                  class="ml-auto text-xs bg-green-800 text-green-300 px-2 py-0.5 rounded-full"
+                  :aria-label="`${policy.allowedJurisdictions.length} allowed region${policy.allowedJurisdictions.length !== 1 ? 's' : ''}`"
+                >
                   {{ policy.allowedJurisdictions.length }}
                 </span>
               </div>
-              <div class="flex flex-wrap gap-2">
+              <div class="flex flex-wrap gap-2" role="list" :aria-label="`Allowed regions list (${policy.allowedJurisdictions.length})`">
                 <span
                   v-if="policy.allowedJurisdictions.length === 0"
                   class="text-xs text-gray-300 italic"
+                  role="listitem"
                 >None configured</span>
                 <span
                   v-for="j in policy.allowedJurisdictions"
                   :key="j.code"
                   class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-800 text-green-200 border border-green-700"
                   :title="j.reason"
+                  role="listitem"
                 >
                   {{ j.name }}
                 </span>
@@ -152,24 +166,34 @@
             </div>
 
             <!-- Restricted -->
-            <div class="glass-effect rounded-xl p-5" data-testid="restricted-jurisdictions-panel">
+            <div
+              class="glass-effect rounded-xl p-5"
+              data-testid="restricted-jurisdictions-panel"
+              role="region"
+              aria-labelledby="restricted-regions-heading"
+            >
               <div class="flex items-center gap-2 mb-3">
                 <i class="pi pi-exclamation-triangle text-amber-400" aria-hidden="true"></i>
-                <h3 class="text-sm font-semibold text-amber-400">Restricted Regions</h3>
-                <span class="ml-auto text-xs bg-amber-800 text-amber-200 px-2 py-0.5 rounded-full">
+                <h3 id="restricted-regions-heading" class="text-sm font-semibold text-amber-400">Restricted Regions</h3>
+                <span
+                  class="ml-auto text-xs bg-amber-800 text-amber-200 px-2 py-0.5 rounded-full"
+                  :aria-label="`${policy.restrictedJurisdictions.length} restricted region${policy.restrictedJurisdictions.length !== 1 ? 's' : ''}`"
+                >
                   {{ policy.restrictedJurisdictions.length }}
                 </span>
               </div>
-              <div class="flex flex-wrap gap-2">
+              <div class="flex flex-wrap gap-2" role="list" :aria-label="`Restricted regions list (${policy.restrictedJurisdictions.length})`">
                 <span
                   v-if="policy.restrictedJurisdictions.length === 0"
                   class="text-xs text-gray-300 italic"
+                  role="listitem"
                 >None</span>
                 <span
                   v-for="j in policy.restrictedJurisdictions"
                   :key="j.code"
                   class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-800 text-amber-200 border border-amber-700"
                   :title="j.reason"
+                  role="listitem"
                 >
                   {{ j.name }}
                 </span>
@@ -177,30 +201,40 @@
             </div>
 
             <!-- Blocked -->
-            <div class="glass-effect rounded-xl p-5" data-testid="blocked-jurisdictions-panel">
+            <div
+              class="glass-effect rounded-xl p-5"
+              data-testid="blocked-jurisdictions-panel"
+              role="region"
+              aria-labelledby="blocked-regions-heading"
+            >
               <div class="flex items-center gap-2 mb-3">
                 <i class="pi pi-ban text-red-400" aria-hidden="true"></i>
-                <h3 class="text-sm font-semibold text-red-400">Blocked Regions</h3>
-                <span class="ml-auto text-xs bg-red-800 text-red-200 px-2 py-0.5 rounded-full">
+                <h3 id="blocked-regions-heading" class="text-sm font-semibold text-red-400">Blocked Regions</h3>
+                <span
+                  class="ml-auto text-xs bg-red-800 text-red-200 px-2 py-0.5 rounded-full"
+                  :aria-label="`${policy.blockedJurisdictions.length} blocked region${policy.blockedJurisdictions.length !== 1 ? 's' : ''}`"
+                >
                   {{ policy.blockedJurisdictions.length }}
                 </span>
               </div>
-              <div class="flex flex-wrap gap-2">
+              <div class="flex flex-wrap gap-2" role="list" :aria-label="`Blocked regions list (${policy.blockedJurisdictions.length})`">
                 <span
                   v-if="policy.blockedJurisdictions.length === 0"
                   class="text-xs text-gray-300 italic"
+                  role="listitem"
                 >None</span>
                 <span
                   v-for="j in policy.blockedJurisdictions"
                   :key="j.code"
                   class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-800 text-red-200 border border-red-700"
                   :title="j.reason"
+                  role="listitem"
                 >
                   {{ j.name }}
                 </span>
               </div>
             </div>
-          </div>
+          </section>
 
           <!-- Investor Categories -->
           <div class="glass-effect rounded-xl p-6">
@@ -222,17 +256,33 @@
                   <tr v-for="cat in policy.allowedInvestorCategories" :key="cat.category" class="py-3">
                     <td class="py-3 text-white font-medium">{{ cat.label }}</td>
                     <td class="py-3">
+                      <!-- Status badge: icon + text ensures status is not color-only (WCAG SC 1.4.1) -->
                       <span
                         :class="cat.allowed
                           ? 'bg-green-800 text-green-200 border border-green-700'
                           : 'bg-red-800 text-red-200 border border-red-700'"
-                        class="px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                        class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                        :aria-label="cat.allowed ? 'Status: Allowed' : 'Status: Denied'"
                       >
+                        <i
+                          :class="cat.allowed ? 'pi-check-circle' : 'pi-times-circle'"
+                          class="pi text-xs"
+                          aria-hidden="true"
+                        ></i>
                         {{ cat.allowed ? 'Allowed' : 'Denied' }}
                       </span>
                     </td>
                     <td class="py-3">
-                      <span :class="cat.kycRequired ? 'text-amber-400' : 'text-gray-300'">
+                      <!-- KYC indicator: icon + text so requirement is not color-only (WCAG SC 1.4.1) -->
+                      <span
+                        class="inline-flex items-center gap-1"
+                        :class="cat.kycRequired ? 'text-amber-400' : 'text-gray-300'"
+                      >
+                        <i
+                          :class="cat.kycRequired ? 'pi-id-card' : 'pi-minus-circle'"
+                          class="pi text-xs"
+                          aria-hidden="true"
+                        ></i>
                         {{ cat.kycRequired ? 'Required' : 'Optional' }}
                       </span>
                     </td>
@@ -267,7 +317,15 @@
           </div>
 
           <!-- Eligibility Inspector (shown on demand) -->
-          <div v-if="showEligibilityInspector" data-testid="eligibility-inspector-container">
+          <!-- sr-only live announcement for screen readers when inspector is toggled -->
+          <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            {{ showEligibilityInspector ? 'Eligibility inspector expanded.' : '' }}
+          </div>
+          <div
+            v-if="showEligibilityInspector"
+            id="eligibility-inspector-container"
+            data-testid="eligibility-inspector-container"
+          >
             <EligibilityInspector :policy="policy" />
           </div>
         </div>

@@ -343,5 +343,102 @@ describe("WhitelistPolicyDashboard", () => {
       const tbody = wrapper.find("tbody");
       expect(tbody.exists()).toBe(true);
     });
+
+    // ── WCAG SC 1.4.1 — status badge not conveyed by color alone ───────────────
+    it("investor category status badge has aria-label (WCAG SC 1.4.1)", () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      // The 'Allowed' badge row — MOCK_POLICY has retail=allowed
+      const statusBadge = wrapper.find('td span[aria-label]');
+      expect(statusBadge.exists()).toBe(true);
+      const ariaLabel = statusBadge.attributes("aria-label") ?? "";
+      expect(ariaLabel).toMatch(/Status:/i);
+    });
+
+    it("investor category status badge 'Allowed' has check-circle icon (WCAG SC 1.4.1)", () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      // Retail investor is allowed=true so the first status badge should show check
+      const allowedBadge = wrapper.find('td span[aria-label="Status: Allowed"]');
+      expect(allowedBadge.exists()).toBe(true);
+      const icon = allowedBadge.find('.pi');
+      expect(icon.exists()).toBe(true);
+      expect(icon.classes()).toContain('pi-check-circle');
+    });
+  });
+
+  // ── WCAG SC 2.4.7 — visible focus indicators on interactive controls ─────────
+  describe("focus-visible rings (WCAG SC 2.4.7)", () => {
+    it("back button has focus-visible ring classes", () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      const backBtn = wrapper.find('[data-testid="back-button"]');
+      expect(backBtn.exists()).toBe(true);
+      expect(backBtn.classes().join(" ")).toMatch(/focus-visible/);
+    });
+
+    it("review eligibility button has focus-visible ring classes", () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      const btn = wrapper.find('[data-testid="review-eligibility-button"]');
+      expect(btn.exists()).toBe(true);
+      expect(btn.classes().join(" ")).toMatch(/focus-visible/);
+    });
+
+    it("edit policy button has focus-visible ring classes", () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      const btn = wrapper.find('[data-testid="edit-policy-button"]');
+      expect(btn.exists()).toBe(true);
+      expect(btn.classes().join(" ")).toMatch(/focus-visible/);
+    });
+  });
+
+  // ── WCAG SC 4.1.2 — eligibility inspector toggle ARIA contract ────────────────
+  describe("eligibility inspector ARIA contract (WCAG SC 4.1.2)", () => {
+    it("review eligibility button has aria-expanded='false' by default", () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      const btn = wrapper.find('[data-testid="review-eligibility-button"]');
+      expect(btn.attributes("aria-expanded")).toBe("false");
+    });
+
+    it("review eligibility button has aria-controls pointing to inspector container", () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      const btn = wrapper.find('[data-testid="review-eligibility-button"]');
+      expect(btn.attributes("aria-controls")).toBe("eligibility-inspector-container");
+    });
+
+    it("review eligibility button aria-expanded becomes 'true' after click", async () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      const btn = wrapper.find('[data-testid="review-eligibility-button"]');
+      await btn.trigger("click");
+      await nextTick();
+      expect(btn.attributes("aria-expanded")).toBe("true");
+    });
+  });
+
+  // ── WCAG SC 1.3.1 — jurisdiction panels use section landmarks ────────────────
+  describe("jurisdiction panels landmark structure (WCAG SC 1.3.1)", () => {
+    it("jurisdiction section is wrapped in a <section> element", () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      const section = wrapper.find('section[aria-labelledby="jurisdictions-heading"]');
+      expect(section.exists()).toBe(true);
+    });
+
+    it("allowed jurisdictions panel has role='region' and aria-labelledby", () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      const panel = wrapper.find('[data-testid="allowed-jurisdictions-panel"]');
+      expect(panel.attributes("role")).toBe("region");
+      expect(panel.attributes("aria-labelledby")).toBe("allowed-regions-heading");
+    });
+
+    it("restricted jurisdictions panel has role='region' and aria-labelledby", () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      const panel = wrapper.find('[data-testid="restricted-jurisdictions-panel"]');
+      expect(panel.attributes("role")).toBe("region");
+      expect(panel.attributes("aria-labelledby")).toBe("restricted-regions-heading");
+    });
+
+    it("blocked jurisdictions panel has role='region' and aria-labelledby", () => {
+      const wrapper = mountDashboard({ policy: MOCK_POLICY });
+      const panel = wrapper.find('[data-testid="blocked-jurisdictions-panel"]');
+      expect(panel.attributes("role")).toBe("region");
+      expect(panel.attributes("aria-labelledby")).toBe("blocked-regions-heading");
+    });
   });
 });

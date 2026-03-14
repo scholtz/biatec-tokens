@@ -22,8 +22,15 @@
           <i class="pi pi-shield text-biatec-accent text-xl" aria-hidden="true"></i>
           <h2 class="text-lg font-semibold text-white">Policy Summary</h2>
         </div>
-        <!-- Health badge -->
-        <span :class="healthBadgeClass" class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide">
+        <!-- Health badge — icon + text so status is not conveyed by color alone (WCAG SC 1.4.1) -->
+        <span
+          :class="healthBadgeClass"
+          class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide"
+          role="status"
+          :aria-label="`Policy health: ${healthLabel}`"
+          data-testid="policy-health-badge"
+        >
+          <i :class="healthIconClass" class="pi text-xs" aria-hidden="true"></i>
           {{ healthLabel }}
         </span>
       </div>
@@ -74,7 +81,7 @@
       <div class="mt-3">
         <button
           @click="expanded = !expanded"
-          class="text-xs text-biatec-accent hover:text-biatec-accent/80 transition-colors flex items-center gap-1"
+          class="text-xs text-biatec-accent hover:text-biatec-accent/80 transition-colors flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-biatec-accent focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded"
           :aria-expanded="expanded"
           aria-controls="policy-explanation"
         >
@@ -129,6 +136,15 @@ const healthBadgeClass = computed(() => {
   if (errors > 0) return "bg-red-800 text-red-200 border border-red-700";
   if (warnings > 0) return "bg-amber-800 text-amber-200 border border-amber-700";
   return "bg-green-800 text-green-200 border border-green-700";
+});
+
+// Icon for health badge — ensures status is not conveyed by color alone (WCAG SC 1.4.1)
+const healthIconClass = computed(() => {
+  const errors = props.policy.gaps.filter((g) => g.severity === "error").length;
+  const warnings = props.policy.gaps.filter((g) => g.severity === "warning").length;
+  if (errors > 0) return "pi-times-circle";
+  if (warnings > 0) return "pi-exclamation-triangle";
+  return "pi-check-circle";
 });
 
 const healthLabel = computed(() => {

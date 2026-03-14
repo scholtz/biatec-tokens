@@ -156,5 +156,73 @@ describe("PolicySummaryPanel", () => {
       await nextTick();
       expect(wrapper.text()).toContain("Apply Rules");
     });
+
+    // ── WCAG SC 1.4.1 — status not conveyed by color alone ─────────────────────
+    describe("health badge accessibility (WCAG SC 1.4.1)", () => {
+      it("health badge has data-testid='policy-health-badge' for deterministic selectors", () => {
+        const wrapper = mountPanel();
+        expect(wrapper.find('[data-testid="policy-health-badge"]').exists()).toBe(true);
+      });
+
+      it("healthy badge has role='status' for AT announcement", () => {
+        const wrapper = mountPanel();
+        const badge = wrapper.find('[data-testid="policy-health-badge"]');
+        expect(badge.attributes("role")).toBe("status");
+      });
+
+      it("healthy badge has aria-label containing 'Healthy'", () => {
+        const wrapper = mountPanel();
+        const badge = wrapper.find('[data-testid="policy-health-badge"]');
+        expect(badge.attributes("aria-label")).toMatch(/Healthy/i);
+      });
+
+      it("healthy badge includes a check-circle icon (pi-check-circle)", () => {
+        const wrapper = mountPanel();
+        const icon = wrapper.find('[data-testid="policy-health-badge"] .pi');
+        expect(icon.exists()).toBe(true);
+        // The icon class must contain 'pi-check-circle' for healthy state
+        expect(icon.classes()).toContain("pi-check-circle");
+      });
+
+      it("warning badge includes exclamation-triangle icon (pi-exclamation-triangle)", () => {
+        const policyWithGap: WhitelistPolicy = {
+          ...MOCK_POLICY,
+          gaps: [{ id: "g1", severity: "warning", message: "Low KYC coverage" }],
+        };
+        const wrapper = mount(PolicySummaryPanel, { props: { policy: policyWithGap } });
+        const icon = wrapper.find('[data-testid="policy-health-badge"] .pi');
+        expect(icon.exists()).toBe(true);
+        expect(icon.classes()).toContain("pi-exclamation-triangle");
+      });
+
+      it("critical badge includes times-circle icon (pi-times-circle)", () => {
+        const policyWithError: WhitelistPolicy = {
+          ...MOCK_POLICY,
+          gaps: [{ id: "g1", severity: "error", message: "Investor category missing" }],
+        };
+        const wrapper = mount(PolicySummaryPanel, { props: { policy: policyWithError } });
+        const icon = wrapper.find('[data-testid="policy-health-badge"] .pi');
+        expect(icon.exists()).toBe(true);
+        expect(icon.classes()).toContain("pi-times-circle");
+      });
+
+      it("critical badge aria-label contains 'Critical' (not just color cue)", () => {
+        const policyWithError: WhitelistPolicy = {
+          ...MOCK_POLICY,
+          gaps: [{ id: "g1", severity: "error", message: "No investors allowed" }],
+        };
+        const wrapper = mount(PolicySummaryPanel, { props: { policy: policyWithError } });
+        const badge = wrapper.find('[data-testid="policy-health-badge"]');
+        expect(badge.attributes("aria-label")).toMatch(/Critical/i);
+      });
+    });
+
+    // ── WCAG SC 2.4.7 — focus visible on expand button ─────────────────────────
+    it("expand button has focus-visible ring classes (WCAG SC 2.4.7)", () => {
+      const wrapper = mountPanel();
+      const btn = wrapper.find('button[aria-controls="policy-explanation"]');
+      // Focus-visible ring must be present for keyboard users
+      expect(btn.classes().join(" ")).toMatch(/focus-visible/);
+    });
   });
 });
