@@ -41,6 +41,11 @@ async function globalSetup(_config: FullConfig) {
     await page.addInitScript((auth: string) => {
       localStorage.setItem('algorand_user', auth)
       localStorage.setItem('theme', 'dark')
+      // Apply dark class immediately so Vite pre-warm renders use dark-mode CSS.
+      // This prevents flash-of-light-mode during compilation and ensures that
+      // any axe scans triggered during warm-up find the dark palette applied
+      // from the very first paint rather than waiting for onMounted.
+      document.documentElement.classList.add('dark')
     }, WARMUP_AUTH)
 
     // Visit home — triggers compilation of main.ts and all eager-loaded modules.

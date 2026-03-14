@@ -57,7 +57,7 @@
           <p v-if="validationErrors.whitelistId" class="mt-1 text-sm text-red-400">
             {{ validationErrors.whitelistId }}
           </p>
-          <p class="text-xs text-gray-500 mt-2">
+          <p class="text-xs text-gray-400 mt-2">
             <i class="pi pi-info-circle mr-1"></i>
             Create and manage whitelists in the Whitelist Management section
           </p>

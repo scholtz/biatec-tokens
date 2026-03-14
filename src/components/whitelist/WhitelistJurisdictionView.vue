@@ -69,7 +69,7 @@
             <div class="flex-1">
               <div class="text-sm text-white font-medium mb-1">{{ conflict.entryName }}</div>
               <div class="text-xs text-gray-400">{{ conflict.message }}</div>
-              <div class="text-xs text-gray-500 mt-1">Jurisdiction: {{ conflict.jurisdictionCode }}</div>
+              <div class="text-xs text-gray-400 mt-1">Jurisdiction: {{ conflict.jurisdictionCode }}</div>
             </div>
           </div>
         </div>
@@ -154,7 +154,7 @@
     <Modal :show="showApproveDialog" @close="showApproveDialog = false" title="Approve Whitelist Entry">
       <div v-if="pendingApprovalEntry" class="space-y-4">
         <p class="text-gray-300">Are you sure you want to approve this entry?</p>
-        <div class="p-4 bg-gray-800/50 rounded-lg">
+        <div class="p-4 bg-gray-800 rounded-lg">
           <div class="text-sm text-gray-400 mb-1">Name</div>
           <div class="text-white font-medium">{{ pendingApprovalEntry.name }}</div>
           <div class="text-sm text-gray-400 mt-2 mb-1">Email</div>
@@ -180,7 +180,7 @@
     <Modal :show="showRejectDialog" @close="showRejectDialog = false" title="Reject Whitelist Entry">
       <div v-if="pendingRejectionEntry" class="space-y-4">
         <p class="text-gray-300">Please provide a reason for rejecting this entry:</p>
-        <div class="p-4 bg-gray-800/50 rounded-lg">
+        <div class="p-4 bg-gray-800 rounded-lg">
           <div class="text-sm text-gray-400 mb-1">Name</div>
           <div class="text-white font-medium">{{ pendingRejectionEntry.name }}</div>
           <div class="text-sm text-gray-400 mt-2 mb-1">Email</div>

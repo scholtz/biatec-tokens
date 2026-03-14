@@ -63,7 +63,7 @@
       </h3>
 
       <div class="space-y-4">
-        <div v-for="(status, key) in stepStatuses" :key="key" class="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg">
+        <div v-for="(status, key) in stepStatuses" :key="key" class="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
           <div class="flex items-center">
             <i :class="['text-2xl mr-4', status.ready ? 'pi pi-check-circle text-green-400' : 'pi pi-times-circle text-red-400']"></i>
             <div>
@@ -74,7 +74,7 @@
           <span
             :class="[
               'px-3 py-1 rounded-full text-xs font-medium',
-              status.ready ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'
+              status.ready ? 'bg-green-900 text-green-400' : 'bg-red-900 text-red-400'
             ]"
           >
             {{ status.ready ? 'Complete' : 'Incomplete' }}
@@ -110,7 +110,7 @@
               </div>
               <p class="text-sm text-gray-300 mb-3">{{ blocker.description }}</p>
               
-              <div class="bg-gray-900/50 rounded-lg p-4">
+              <div class="bg-gray-900 rounded-lg p-4">
                 <p class="text-sm font-medium text-white mb-2">
                   <i class="pi pi-wrench mr-2"></i>
                   How to Fix:
@@ -147,12 +147,12 @@
       </h3>
 
       <div class="space-y-3">
-        <div v-for="warning in readiness.warnings" :key="warning.field" class="p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg">
+        <div v-for="warning in readiness.warnings" :key="warning.field" class="p-4 bg-yellow-900 border border-yellow-700 rounded-lg">
           <div class="flex items-start">
             <i class="pi pi-exclamation-triangle text-yellow-400 mt-1 mr-3"></i>
             <div>
               <p class="text-yellow-300 font-medium">{{ warning.message }}</p>
-              <p class="text-yellow-200/80 text-sm mt-1">{{ warning.recommendation }}</p>
+              <p class="text-yellow-200 text-sm mt-1">{{ warning.recommendation }}</p>
             </div>
           </div>
         </div>
@@ -167,7 +167,7 @@
       </h3>
 
       <div class="space-y-3">
-        <div v-for="action in readiness.nextActions" :key="action.id" class="flex items-start p-4 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer">
+        <div v-for="action in readiness.nextActions" :key="action.id" class="flex items-start p-4 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer">
           <div class="flex-1">
             <div class="flex items-center mb-2">
               <span
@@ -181,18 +181,18 @@
               <h4 class="text-white font-medium">{{ action.title }}</h4>
             </div>
             <p class="text-sm text-gray-400 mb-2">{{ action.description }}</p>
-            <div class="flex items-center text-xs text-gray-500">
+            <div class="flex items-center text-xs text-gray-400">
               <i class="pi pi-clock mr-1"></i>
               <span>Est. {{ action.estimatedMinutes }} minutes</span>
             </div>
           </div>
-          <i class="pi pi-chevron-right text-gray-500 mt-2"></i>
+          <i class="pi pi-chevron-right text-gray-400 mt-2"></i>
         </div>
       </div>
     </div>
 
     <!-- Recommendations -->
-    <div v-if="readiness.recommendations.length > 0" class="p-6 bg-blue-900/10 border border-blue-700/30 rounded-xl mb-6">
+    <div v-if="readiness.recommendations.length > 0" class="p-6 bg-blue-900 border border-blue-700 rounded-xl mb-6">
       <h4 class="text-lg font-semibold text-blue-300 mb-3">
         <i class="pi pi-lightbulb mr-2"></i>
         Recommendations
@@ -206,7 +206,7 @@
     </div>
 
     <!-- Deploy Readiness -->
-    <div v-if="readiness.isReadyForDeploy" class="glass-effect rounded-xl p-8 text-center bg-gradient-to-br from-green-900/20 to-emerald-900/20 border-green-700/50">
+    <div v-if="readiness.isReadyForDeploy" class="glass-effect rounded-xl p-8 text-center bg-gradient-to-br from-green-900 to-emerald-900 border border-green-700">
       <i class="pi pi-check-circle text-6xl text-green-400 mb-4"></i>
       <h3 class="text-2xl font-semibold text-green-300 mb-3">
         Ready for Deployment
@@ -225,7 +225,7 @@
     </div>
 
     <!-- Why This Matters -->
-    <div class="p-6 bg-blue-900/10 border border-blue-700/30 rounded-xl">
+    <div class="p-6 bg-blue-900 border border-blue-700 rounded-xl">
       <h4 class="text-lg font-semibold text-blue-300 mb-3">
         <i class="pi pi-lightbulb mr-2"></i>
         Why This Matters
@@ -274,16 +274,16 @@ defineEmits<Emits>()
 // Readiness score styling
 const readinessScoreClass = computed(() => {
   const score = props.readiness.readinessScore
-  if (score >= 80) return 'bg-gradient-to-br from-green-900/20 to-emerald-900/20 border-green-700/50'
-  if (score >= 50) return 'bg-gradient-to-br from-yellow-900/20 to-amber-900/20 border-yellow-700/50'
-  return 'bg-gradient-to-br from-red-900/20 to-orange-900/20 border-red-700/50'
+  if (score >= 80) return 'bg-gradient-to-br from-green-900 to-emerald-900 border-green-700'
+  if (score >= 50) return 'bg-gradient-to-br from-yellow-900 to-amber-900 border-yellow-700'
+  return 'bg-gradient-to-br from-red-900 to-orange-900 border-red-700'
 })
 
 const readinessScoreBgClass = computed(() => {
   const score = props.readiness.readinessScore
-  if (score >= 80) return 'bg-green-900/30 border-2 border-green-700'
-  if (score >= 50) return 'bg-yellow-900/30 border-2 border-yellow-700'
-  return 'bg-red-900/30 border-2 border-red-700'
+  if (score >= 80) return 'bg-green-900 border-2 border-green-700'
+  if (score >= 50) return 'bg-yellow-900 border-2 border-yellow-700'
+  return 'bg-red-900 border-2 border-red-700'
 })
 
 const readinessScoreTextClass = computed(() => {
@@ -341,10 +341,10 @@ const stepStatuses = computed(() => ({
 
 // Blocker styling functions
 const getBlockerClass = (severity: string): string => {
-  if (severity === 'critical') return 'border-red-700 bg-red-900/10'
-  if (severity === 'high') return 'border-orange-700 bg-orange-900/10'
-  if (severity === 'medium') return 'border-yellow-700 bg-yellow-900/10'
-  return 'border-blue-700 bg-blue-900/10'
+  if (severity === 'critical') return 'border-red-700 bg-red-900'
+  if (severity === 'high') return 'border-orange-700 bg-orange-900'
+  if (severity === 'medium') return 'border-yellow-700 bg-yellow-900'
+  return 'border-blue-700 bg-blue-900'
 }
 
 const getBlockerIcon = (severity: string): string => {
@@ -361,17 +361,17 @@ const getBlockerTextClass = (severity: string): string => {
 }
 
 const getBlockerBadgeClass = (severity: string): string => {
-  if (severity === 'critical') return 'bg-red-900/30 text-red-400'
-  if (severity === 'high') return 'bg-orange-900/30 text-orange-400'
-  if (severity === 'medium') return 'bg-yellow-900/30 text-yellow-400'
-  return 'bg-blue-900/30 text-blue-400'
+  if (severity === 'critical') return 'bg-red-900 text-red-300'
+  if (severity === 'high') return 'bg-orange-900 text-orange-300'
+  if (severity === 'medium') return 'bg-yellow-900 text-yellow-300'
+  return 'bg-blue-900 text-blue-300'
 }
 
 const getPriorityClass = (priority: string): string => {
-  if (priority === 'critical') return 'bg-red-900/30 text-red-400'
-  if (priority === 'high') return 'bg-orange-900/30 text-orange-400'
-  if (priority === 'medium') return 'bg-yellow-900/30 text-yellow-400'
-  return 'bg-blue-900/30 text-blue-400'
+  if (priority === 'critical') return 'bg-red-900 text-red-300'
+  if (priority === 'high') return 'bg-orange-900 text-orange-300'
+  if (priority === 'medium') return 'bg-yellow-900 text-yellow-300'
+  return 'bg-blue-900 text-blue-300'
 }
 
 const getStepTitle = (stepId: string): string => {

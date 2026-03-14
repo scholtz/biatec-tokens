@@ -152,7 +152,7 @@
               <p class="text-sm text-gray-600 dark:text-gray-400">
                 By {{ event.actorName || event.actor }}
               </p>
-              <p v-if="event.details" class="text-sm text-gray-500 dark:text-gray-500 mt-1">
+              <p v-if="event.details" class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 {{ event.details }}
               </p>
             </div>

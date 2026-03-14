@@ -33,15 +33,15 @@
 
       <!-- Key metrics -->
       <div class="grid grid-cols-3 gap-3 mb-5">
-        <div class="bg-white/5 rounded-lg p-3 text-center">
+        <div class="bg-gray-800 rounded-lg p-3 text-center">
           <div class="text-2xl font-bold text-green-400">{{ policy.allowedJurisdictions.length }}</div>
           <div class="text-xs text-gray-400 mt-1">Allowed Regions</div>
         </div>
-        <div class="bg-white/5 rounded-lg p-3 text-center">
+        <div class="bg-gray-800 rounded-lg p-3 text-center">
           <div class="text-2xl font-bold text-red-400">{{ policy.blockedJurisdictions.length }}</div>
           <div class="text-xs text-gray-400 mt-1">Blocked Regions</div>
         </div>
-        <div class="bg-white/5 rounded-lg p-3 text-center">
+        <div class="bg-gray-800 rounded-lg p-3 text-center">
           <div class="text-2xl font-bold text-biatec-accent">{{ enabledCategoriesCount }}</div>
           <div class="text-xs text-gray-400 mt-1">Active Categories</div>
         </div>
@@ -84,7 +84,7 @@
         <div
           v-show="expanded"
           id="policy-explanation"
-          class="mt-3 text-xs text-gray-400 leading-relaxed bg-white/5 rounded-lg p-3 space-y-2"
+          class="mt-3 text-xs text-gray-400 leading-relaxed bg-gray-800 rounded-lg p-3 space-y-2"
         >
           <p>
             <strong class="text-gray-300">Default behavior:</strong>

@@ -176,6 +176,14 @@ export async function withAuth(page: Page, user: AuthUser = DEFAULT_TEST_USER): 
     if (!localStorage.getItem('theme')) {
       localStorage.setItem('theme', 'dark')
     }
+    // Apply the dark class to <html> IMMEDIATELY (before Vue initialises) to
+    // prevent a flash-of-light-mode on the very first render.
+    // Without this, Vue's theme store only adds the class inside onMounted —
+    // AFTER the initial render — creating a timing window where axe-core can
+    // scan the page in light mode and report false-positive contrast failures
+    // for text-gray-400 elements on the white glass-effect background (2.54:1
+    // instead of the correct dark-mode 6.93:1).
+    document.documentElement.classList.add('dark')
   }, session)
 }
 

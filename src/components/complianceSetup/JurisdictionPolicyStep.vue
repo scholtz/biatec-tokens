@@ -145,7 +145,7 @@
             {{ country.name }}
           </option>
         </select>
-        <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple countries</p>
+        <p class="text-xs text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple countries</p>
         <p v-if="validationErrors.allowedCountries" class="mt-2 text-sm text-red-400">
           {{ validationErrors.allowedCountries }}
         </p>
