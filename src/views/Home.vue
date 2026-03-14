@@ -84,7 +84,7 @@
                     <Badge :variant="standard.badgeVariant" size="sm">{{ standard.type }}</Badge>
                   </div>
                   <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">{{ standard.description }}</p>
-                  <div class="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                  <div class="flex items-center text-xs text-gray-600 dark:text-gray-400">
                     <span class="w-2 h-2 rounded-full mr-2" :class="standard.statusColor"></span>
                     {{ standard.network }}
                   </div>

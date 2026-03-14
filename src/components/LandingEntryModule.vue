@@ -50,7 +50,7 @@
             <i class="pi pi-check-circle text-green-500"></i>
             <span>View compliance information</span>
           </div>
-          <div class="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
+          <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
             <i class="pi pi-lock"></i>
             <span class="italic">Authenticate later to create tokens</span>
           </div>

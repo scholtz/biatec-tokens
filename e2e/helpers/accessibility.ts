@@ -267,16 +267,16 @@ export async function assertFirstTabTargetIsFocusable(
 ): Promise<{ tag: string; href: string | null; text: string }> {
   await page.locator('body').click({ timeout: 5000 })
   await page.keyboard.press('Tab')
-  const focusedInfo = await page.evaluate(() => {
+  const focusedInfo = await page.evaluate((maxLen: number) => {
     const active = document.activeElement
     return active
       ? {
           tag: active.tagName.toLowerCase(),
           href: active.getAttribute('href'),
-          text: active.textContent?.trim().slice(0, MAX_FOCUSED_TEXT_LENGTH) ?? '',
+          text: active.textContent?.trim().slice(0, maxLen) ?? '',
         }
       : null
-  })
+  }, MAX_FOCUSED_TEXT_LENGTH)
   expect(focusedInfo).not.toBeNull()
   expect(focusedInfo?.tag).toBeTruthy()
   return focusedInfo ?? { tag: '', href: null, text: '' }

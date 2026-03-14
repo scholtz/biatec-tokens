@@ -9,9 +9,9 @@
   <nav class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800" role="navigation" aria-label="Main navigation">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
-        <!-- Logo -->
-        <router-link to="/" class="flex items-center space-x-3 group">
-          <img src="../../assets/logo-icon.svg" alt="Biatec Tokens Logo" class="h-14 w-auto hidden sm:block" />
+        <!-- Logo — aria-label required on mobile where both img and text span are hidden sm:block -->
+        <router-link to="/" aria-label="Biatec Tokens Home" class="flex items-center space-x-3 group">
+          <img src="../../assets/logo-icon.svg" alt="" aria-hidden="true" class="h-14 w-auto hidden sm:block" />
           <div class="hidden sm:block">
             <span class="text-xl font-bold text-gray-900 dark:text-white">Biatec Tokens</span>
           </div>

@@ -80,6 +80,10 @@ async function globalSetup(_config: FullConfig) {
     await page.goto(`${BASE_URL}/team/workspace`, { waitUntil: 'load', timeout: 120000 })
     console.log('[globalSetup] /team/workspace compiled.')
 
+    // Visit whitelist management — compiles WhitelistsView.vue.
+    await page.goto(`${BASE_URL}/compliance/whitelists`, { waitUntil: 'load', timeout: 120000 })
+    console.log('[globalSetup] /compliance/whitelists compiled.')
+
     // Visit portfolio intelligence — compiles PortfolioIntelligenceView.vue and sub-components.
     await page.goto(`${BASE_URL}/portfolio`, { waitUntil: 'load', timeout: 120000 })
     console.log('[globalSetup] /portfolio compiled.')
