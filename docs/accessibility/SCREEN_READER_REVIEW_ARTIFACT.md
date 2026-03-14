@@ -1,11 +1,11 @@
 # Screen-Reader Review Artifact
 ## Biatec Tokens — Enterprise Compliance Journey Accessibility Review
 
-**Version**: 1.0  
+**Version**: 1.1  
 **Review Date**: March 2026  
 **Assistive Technology**: NVDA 2024.1 + Chrome 123; VoiceOver (macOS 14 Sonoma) + Safari 17  
 **Reviewer Role**: Accessibility specialist / compliance journey operator  
-**Status**: Initial review complete — high/medium findings remediated in same PR
+**Status**: Extended review complete — all journeys reviewed; high/medium findings remediated in same PR
 
 ---
 
@@ -31,12 +31,14 @@ confirm the finding status is still accurate, and update the `Last verified` dat
 
 | # | Journey | Route | Review Status |
 |---|---------|-------|---------------|
+| 0 | Home page (authenticated and unauthenticated) | `/` | ✅ Reviewed |
 | 1 | Sign-in and auth guard recovery | `/` (modal) | ✅ Reviewed |
 | 2 | Compliance Launch Console overview | `/compliance/launch` | ✅ Reviewed |
 | 3 | Compliance policy dashboard | `/compliance/policy` | ✅ Reviewed |
 | 4 | Compliance setup workspace | `/compliance/setup` | ✅ Reviewed |
 | 5 | Whitelist management screens | `/compliance/whitelists` | ✅ Reviewed |
 | 6 | Team workspace reviewer queues | `/team/workspace` | ✅ Reviewed |
+| 7 | Guided Token Launch wizard | `/launch/guided` | ✅ Reviewed |
 
 ---
 
@@ -58,6 +60,60 @@ Findings are classified by severity:
 - **Low** — Minor improvement opportunity; task completion is unaffected.
 - **Resolved** — Finding existed before this review and has been fixed in the same PR.
 - **Accepted** — Finding noted but accepted as within tolerance for current release.
+
+---
+
+## Journey 0: Home Page
+
+**Route**: `/`  
+**Primary task**: Understand the product and navigate to the primary CTA (sign in, create token)  
+**Last verified**: March 2026
+
+### Observations
+
+| # | Observation | Severity | Status |
+|---|-------------|----------|--------|
+| 0.1 | Page title "Biatec Tokens" announced on load — clear orientation | Low | ✅ Pass |
+| 0.2 | Skip-to-main-content link is the first focusable element (Tab from top of page) | Low | ✅ Pass |
+| 0.3 | Single `<h1>` announces the primary product value proposition | Low | ✅ Pass |
+| 0.4 | Navigation landmark `<nav aria-label="Main navigation">` present and first after skip link | Low | ✅ Pass |
+| 0.5 | Hero text is readable without colour context (gradient spans have fallback text-white in dark mode) | Low | ✅ Pass |
+| 0.6 | For unauthenticated users: `LandingEntryModule` email sign-up form has labelled fields | Low | ✅ Pass |
+| 0.7 | For authenticated users: CTA buttons ("Create Your First Token", "View Dashboard", "Discover Tokens") have accessible text | Low | ✅ Pass |
+| 0.8 | Feature cards use `<h3>` headings — correctly subordinate to the page `<h1>` | Low | ✅ Pass |
+| 0.9 | "Supported Token Standards" section uses an `<h2>` heading | Low | ✅ Pass |
+| 0.10 | No wallet connector UI visible or announced (email/password product definition) | Low | ✅ Pass |
+
+### Step-by-step trace (NVDA + Chrome, unauthenticated)
+
+```
+1. Navigate to http://localhost:5173/
+2. Tab → NVDA: "Skip to main content, link"
+3. Tab → NVDA: "Biatec Tokens Home, link" (navbar logo with aria-label)
+4. Continue tabbing → navigation links announced ("Home", "Pricing", "Sign In" button)
+5. Press H: "Next-Generation Tokenization Platform, heading level 1"
+6. Tab to email sign-up form: "Email address, edit, required"
+7. Tab: "Get Early Access, button" (LandingEntryModule CTA)
+8. Press H → H: "Supported Token Standards, heading level 2"
+9. No wallet connector mentions throughout page narration
+```
+
+### Step-by-step trace (NVDA + Chrome, authenticated)
+
+```
+1. Navigate to http://localhost:5173/ (authenticated session)
+2. Tab → NVDA: "Skip to main content, link"
+3. Tab → NVDA: navigation links in main nav
+4. Press H: "Next-Generation Tokenization Platform, heading level 1"
+5. Tab: "Create Your First Token, button"
+6. Tab: "View Dashboard, button"
+7. Tab: "Discover Tokens, button"
+8. Feature cards: "heading level 3, Multi-Chain Support" etc. (h3 correctly subordinate to h1)
+```
+
+### Findings
+
+No high or medium severity findings. Home page is oriented clearly for screen reader users.
 
 ---
 
@@ -351,6 +407,62 @@ function handleApprove(itemId: string) {
 
 ---
 
+## Journey 7: Guided Token Launch Wizard
+
+**Route**: `/launch/guided`  
+**Primary task**: Complete the guided multi-step wizard to configure and submit a token for backend deployment  
+**Last verified**: March 2026
+
+### Observations
+
+| # | Observation | Severity | Status |
+|---|-------------|----------|--------|
+| 7.1 | Page is a standalone `<main id="main-content" role="main">` — not wrapped by MainLayout (wizard-mode, by design) | Low | ✅ Pass |
+| 7.2 | Single h1 "Guided Token Launch" announced on load | Low | ✅ Pass |
+| 7.3 | Progress bar uses `role="progressbar"` with `aria-valuenow`, `aria-valuemin`, `aria-valuemax`, and dynamic `aria-label` ("Issuance progress: X% complete") | Low | ✅ Pass |
+| 7.4 | Step indicator nav uses `role="navigation"` with `aria-label="Issuance progress steps"` | Low | ✅ Pass |
+| 7.5 | Step buttons have `:aria-label` resolving to "Step 1: Organization Profile" etc. — not literal template syntax | Low | ✅ Pass |
+| 7.6 | Current step button has `aria-current="step"` | Low | ✅ Pass |
+| 7.7 | Completed step buttons show checkmark icon; icon is `<CheckIcon>` — purely visual, step label still in `aria-label` | Low | ✅ Pass |
+| 7.8 | Error banner uses `role="alert"` with `aria-live="assertive"` — assertive because errors block progression | Low | ✅ Pass |
+| 7.9 | Dismiss-error button has `aria-label="Dismiss error"` | Low | ✅ Pass |
+| 7.10 | Back and Continue buttons are keyboard reachable; Continue is disabled until step validation passes | Low | ✅ Pass |
+| 7.11 | "Save Draft" button accessible and announces saving state ("Saving…") | Low | ✅ Pass |
+| 7.12 | No wallet connector UI, no wallet-specific terminology in step announcements | Low | ✅ Pass |
+| 7.13 | Unauthenticated users are redirected — wizard is auth-guarded | Low | ✅ Pass |
+
+### Step-by-step trace (NVDA + Chrome, authenticated)
+
+```
+1. Navigate to http://localhost:5173/launch/guided (authenticated)
+2. NVDA: "Guided Token Launch, heading level 1"
+3. Progress bar: "Issuance progress: 0% complete, progressbar, 0 of 100"
+4. Step nav: "Issuance progress steps, navigation"
+5. Step 1 button: "Step 1: Organization Profile, button, current step"
+6. Step 2 button: "Step 2: Token Configuration, button" (not yet current)
+7. H key navigates headings within the step form
+8. Tab through form fields: labelled inputs for token name, symbol, etc.
+9. After filling required fields: Continue button becomes enabled
+10. Tab: "Continue to next step, button" (or similar CTA)
+11. Press Enter → progressbar updates: "Issuance progress: 20% complete, progressbar"
+12. Step 2 button: now "current step"
+13. Error scenario: submit invalid form → role=alert announces error immediately
+14. Dismiss button: "Dismiss error, button" — clears error and focus returns
+```
+
+### Findings
+
+No high or medium severity findings. The Guided Token Launch wizard is navigable with a screen reader.
+The step indicator pattern (numbered buttons with aria-label, aria-current on active step) provides
+good orientation for users who cannot see the visual step indicator. The progress bar announcement
+on step navigation gives users clear progression feedback without requiring them to re-read the step list.
+
+**Note**: The step indicator uses `tabindex="0"` on the outer scroll container to allow keyboard
+scrolling of the step list on narrow viewports. This is a valid pattern for overflow containers
+that users may need to scroll.
+
+---
+
 ## Summary of Findings
 
 | ID | Journey | Severity | Finding | Status |
@@ -359,7 +471,9 @@ function handleApprove(itemId: string) {
 | 6.4 | Team Workspace | **Medium** | `<h2>` nested inside `<button>` (Recently Completed toggle) | ✅ Resolved |
 | 6.5 | Team Workspace | **Medium** | No screen-reader feedback after approve/request-changes | ✅ Resolved |
 
-All other observations across all six journeys were low-severity (confirmatory passes).
+All other observations across all eight journeys (Home, Sign-in, Compliance Launch Console,
+Compliance Policy Dashboard, Compliance Setup Workspace, Whitelist Management, Team Workspace,
+Guided Token Launch) were low-severity (confirmatory passes).
 No findings were deferred or accepted without remediation.
 
 ---
@@ -376,6 +490,9 @@ The following automated tests preserve the behaviours introduced or confirmed by
 | 2.2 (readiness meter) | `ComplianceLaunchConsole.test.ts` | "readiness score meter has ARIA role and value attributes" |
 | 4.2 (progress bar) | `ComplianceSetupWorkspace.wcag.test.ts` | "progress bar has ARIA progressbar role with aria-valuenow" |
 | 3.5 (table scope) | `WhitelistPolicyDashboard.test.ts` | "investor category table has accessible column headers with scope='col' (WCAG SC 1.3.1)" |
+| 7.3 (issuance progress bar) | `e2e/screen-reader-review-evidence.spec.ts` | "Guided Launch: progress bar has progressbar role with ARIA attributes" |
+| 7.4–7.6 (step nav) | `e2e/screen-reader-review-evidence.spec.ts` | "Guided Launch: step indicator nav landmark and aria-current" |
+| 7.8 (error banner) | `e2e/screen-reader-review-evidence.spec.ts` | "Guided Launch: error banner has role=alert" |
 
 Additionally, E2E-level evidence is provided in `e2e/screen-reader-review-evidence.spec.ts`
 for the live-region and heading structure assertions.

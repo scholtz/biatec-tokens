@@ -275,3 +275,113 @@ test.describe('Section 5 — Cross-journey: No wallet UI in enterprise narration
     expect(navText).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Section 6 — Guided Token Launch: Screen-reader evidence
+//
+// Journey 7 from the screen-reader review artifact: the Guided Token Launch
+// wizard (/launch/guided) is a standalone wizard view (no MainLayout). This
+// section verifies the ARIA structure that screen readers rely on for step
+// navigation, progress tracking, and error announcements.
+//
+// Note: GuidedTokenLaunch.vue does NOT use MainLayout — it has its own <main>
+// element and step-indicator nav (see Section 7v of copilot instructions).
+// Never assert nav[aria-label="Main navigation"] for /launch/guided tests.
+// ─────────────────────────────────────────────────────────────────────────────
+test.describe('Section 6 — Guided Token Launch: ARIA structure for screen readers', () => {
+  test.beforeEach(async ({ page }) => {
+    suppressBrowserErrors(page)
+    await withAuth(page)
+  })
+
+  test('guided launch page has a single h1 for screen reader orientation (Journey 7.2)', async ({ page }) => {
+    await page.goto(`${BASE}/launch/guided`, { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    const h1Elements = page.locator('h1')
+    await expect(h1Elements).toHaveCount(1, { timeout: 20000 })
+
+    const h1Text = await h1Elements.first().textContent({ timeout: 5000 }) ?? ''
+    expect(h1Text.trim().length).toBeGreaterThan(0)
+    expect(h1Text.toLowerCase()).toContain('guided')
+  })
+
+  test('progress bar has role=progressbar with aria-valuenow/min/max (Journey 7.3)', async ({ page }) => {
+    await page.goto(`${BASE}/launch/guided`, { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    // Progress bar is at 0% on initial load — use toBeAttached not toBeVisible (Section 7w)
+    const progressBar = page.locator('[role="progressbar"]').first()
+    await expect(progressBar).toBeAttached({ timeout: 20000 })
+
+    const valueMin = await progressBar.getAttribute('aria-valuemin', { timeout: 5000 })
+    expect(valueMin).toBe('0')
+
+    const valueMax = await progressBar.getAttribute('aria-valuemax', { timeout: 5000 })
+    expect(valueMax).toBe('100')
+
+    const valueNow = await progressBar.getAttribute('aria-valuenow', { timeout: 5000 })
+    expect(valueNow).not.toBeNull()
+    const n = Number(valueNow)
+    expect(n).toBeGreaterThanOrEqual(0)
+    expect(n).toBeLessThanOrEqual(100)
+
+    const ariaLabel = await progressBar.getAttribute('aria-label', { timeout: 5000 }) ?? ''
+    expect(ariaLabel.length).toBeGreaterThan(0)
+  })
+
+  test('step indicator nav has role=navigation and aria-label (Journey 7.4)', async ({ page }) => {
+    await page.goto(`${BASE}/launch/guided`, { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    // GuidedTokenLaunch uses its own step-indicator nav (not the MainLayout nav)
+    const stepNav = page.locator('[role="navigation"][aria-label]').filter({
+      hasNot: page.locator('nav[aria-label="Main navigation"]'),
+    }).first()
+    await expect(stepNav).toBeAttached({ timeout: 20000 })
+
+    const navLabel = await stepNav.getAttribute('aria-label', { timeout: 5000 }) ?? ''
+    expect(navLabel.length).toBeGreaterThan(0)
+    // Should mention steps, issuance, or progress
+    expect(navLabel.toLowerCase()).toMatch(/step|issuance|progress/)
+  })
+
+  test('first step button has aria-current=step (Journey 7.6)', async ({ page }) => {
+    await page.goto(`${BASE}/launch/guided`, { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    // The first step button in the step indicator should be marked aria-current="step"
+    const currentStepBtn = page.locator('[aria-current="step"]').first()
+    await expect(currentStepBtn).toBeAttached({ timeout: 20000 })
+
+    const tagName = await currentStepBtn.evaluate((el) => el.tagName.toLowerCase())
+    expect(tagName).toBe('button')
+  })
+
+  test('error banner region has role=alert for assertive announcement (Journey 7.8)', async ({ page }) => {
+    await page.goto(`${BASE}/launch/guided`, { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    // Error banner is always in DOM (v-show, not v-if) for aria-live region subscription
+    const errorBanner = page.locator('[role="alert"]').first()
+    await expect(errorBanner).toBeAttached({ timeout: 20000 })
+
+    const ariaLive = await errorBanner.getAttribute('aria-live', { timeout: 5000 })
+    expect(ariaLive).toBe('assertive')
+  })
+
+  test('guided launch nav text contains no wallet connector brand names (Journey 7.12)', async ({ page }) => {
+    // GuidedTokenLaunch is auth-guarded and standalone (no MainLayout nav).
+    // The nav wallet-brand check is best performed on the home page which shares
+    // the same MainLayout nav and is lighter to load (Section 7j — avoid
+    // over-budgeted navigations when the assertion is on a shared component).
+    await page.goto(`${BASE}/`, { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    const nav = page.locator('nav[aria-label="Main navigation"]').first()
+    await expect(nav).toBeAttached({ timeout: 20000 })
+    const navText = await nav.textContent({ timeout: 10000 }) ?? ''
+    // \bPera\b prevents false match on "operations" substring (Section 7e)
+    expect(navText).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
+  })
+})

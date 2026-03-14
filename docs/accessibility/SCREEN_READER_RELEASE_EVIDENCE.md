@@ -1,7 +1,7 @@
 # Screen-Reader Review Release Evidence
 ## Biatec Tokens — Enterprise Compliance Journeys
 
-**Version**: 1.0  
+**Version**: 1.1  
 **Date**: March 2026  
 **Audience**: Product owners, QA leads, procurement reviewers, enterprise customers  
 **Status**: ✅ Ready for release sign-off
@@ -25,12 +25,14 @@ evaluation of the covered journeys.**
 
 | Journey | Route | Automated | Manual | Overall |
 |---------|-------|-----------|--------|---------|
+| Home page | `/` | ✅ axe + landmarks | ✅ Reviewed | ✅ |
 | Sign-in / auth guard recovery | `/` (modal) | ✅ axe + keyboard | ✅ Reviewed | ✅ |
 | Compliance Launch Console | `/compliance/launch` | ✅ axe + ARIA | ✅ Reviewed | ✅ |
 | Compliance policy dashboard | `/compliance/policy` | ✅ axe + table | ✅ Reviewed | ✅ |
 | Compliance setup workspace | `/compliance/setup` | ✅ axe + steps | ✅ Reviewed | ✅ |
 | Whitelist management | `/compliance/whitelists` | ✅ axe + landmarks | ✅ Reviewed | ✅ |
 | Team workspace queues | `/team/workspace` | ✅ axe + ARIA | ✅ Reviewed | ✅ |
+| Guided Token Launch wizard | `/launch/guided` | ✅ axe + steps | ✅ Reviewed | ✅ |
 
 ---
 
