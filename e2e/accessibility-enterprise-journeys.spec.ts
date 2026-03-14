@@ -382,6 +382,108 @@ test.describe('Section 4 — Compliance WCAG 2.1 AA evidence (AC #1, #2, #4)', (
 })
 
 // ---------------------------------------------------------------------------
+// Section 4a — Compliance Setup Workspace (standalone wizard view)
+// ---------------------------------------------------------------------------
+//
+// ComplianceSetupWorkspace.vue is a standalone wizard view (like GuidedTokenLaunch).
+// It provides its own <main id="main-content"> and does NOT use MainLayout.
+// Accessibility assertions scope to the view's own landmarks rather than the
+// shared shell nav (Section 7v pattern).
+
+test.describe('Section 4a — Compliance Setup Workspace WCAG 2.1 AA evidence (AC #1, #2, #4)', () => {
+  test.beforeEach(async ({ page }) => {
+    suppressBrowserErrors(page)
+    await withAuth(page)
+  })
+
+  test(
+    'Compliance Setup Workspace passes axe WCAG 2.1 AA scan (AC #2)',
+    async ({ page }) => {
+      await page.goto('http://localhost:5173/compliance/setup', { timeout: 15000 })
+      await page.waitForLoadState('load', { timeout: 10000 })
+      await expect(page.locator('h1').first()).toBeVisible({ timeout: 20000 })
+      // ComplianceSetupWorkspace is a standalone wizard — no MainLayout nav present.
+      // axe-core scans its own main landmark, step-nav, progress bar, and form elements.
+      await runAxeScan(page, {
+        context: 'compliance setup workspace (step 1)',
+      })
+    },
+  )
+
+  test(
+    'Compliance Setup Workspace has exactly one h1 (WCAG SC 1.3.1) (AC #4)',
+    async ({ page }) => {
+      await page.goto('http://localhost:5173/compliance/setup', { timeout: 15000 })
+      await page.waitForLoadState('load', { timeout: 10000 })
+      await expect(page.locator('h1').first()).toBeVisible({ timeout: 20000 })
+      await assertSingleH1(page)
+    },
+  )
+
+  test(
+    'Compliance Setup Workspace has own main landmark with id="main-content" (WCAG SC 2.4.1) (AC #4)',
+    async ({ page }) => {
+      await page.goto('http://localhost:5173/compliance/setup', { timeout: 15000 })
+      await page.waitForLoadState('load', { timeout: 10000 })
+      await expect(page.locator('h1').first()).toBeVisible({ timeout: 20000 })
+      // Standalone wizard provides its own main landmark (does not use MainLayout)
+      await assertMainLandmark(page)
+    },
+  )
+
+  test(
+    'Compliance Setup Workspace step navigator has aria-label for keyboard discovery (WCAG SC 1.3.1) (AC #4)',
+    async ({ page }) => {
+      await page.goto('http://localhost:5173/compliance/setup', { timeout: 15000 })
+      await page.waitForLoadState('load', { timeout: 10000 })
+      await expect(page.locator('h1').first()).toBeVisible({ timeout: 20000 })
+      // ComplianceSetupWorkspace renders nav[aria-label="Compliance setup steps"] for step navigation
+      const stepNav = page.locator('nav[aria-label="Compliance setup steps"]')
+      await expect(stepNav).toBeAttached({ timeout: 10000 })
+    },
+  )
+
+  test(
+    'Compliance Setup Workspace progress bar has correct ARIA attributes (WCAG SC 1.3.1, 4.1.2) (AC #4)',
+    async ({ page }) => {
+      await page.goto('http://localhost:5173/compliance/setup', { timeout: 15000 })
+      await page.waitForLoadState('load', { timeout: 10000 })
+      await expect(page.locator('h1').first()).toBeVisible({ timeout: 20000 })
+      // Progress bar at step 1 may have width:0% — use toBeAttached, not toBeVisible (Section 7w)
+      const progressbar = page.locator('[role="progressbar"]')
+      await expect(progressbar).toBeAttached({ timeout: 10000 })
+      const valueNow = await progressbar.getAttribute('aria-valuenow')
+      const valueMin = await progressbar.getAttribute('aria-valuemin')
+      const valueMax = await progressbar.getAttribute('aria-valuemax')
+      expect(valueNow).not.toBeNull()
+      expect(valueMin).toBe('0')
+      expect(valueMax).toBe('100')
+    },
+  )
+
+  test(
+    'Compliance Setup Workspace has keyboard-focusable controls in first step (WCAG SC 2.1.1) (AC #3)',
+    async ({ page }) => {
+      await page.goto('http://localhost:5173/compliance/setup', { timeout: 15000 })
+      await page.waitForLoadState('load', { timeout: 10000 })
+      await expect(page.locator('h1').first()).toBeVisible({ timeout: 20000 })
+      await assertKeyboardFocusAfterTab(page)
+    },
+  )
+
+  test(
+    'Compliance Setup Workspace has no wallet connector UI — enterprise definition (AC #2)',
+    async ({ page }) => {
+      await page.goto('http://localhost:5173/compliance/setup', { timeout: 15000 })
+      await page.waitForLoadState('load', { timeout: 10000 })
+      await expect(page.locator('h1').first()).toBeVisible({ timeout: 20000 })
+      const navText = await getNavText(page)
+      expect(navText).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
+    },
+  )
+})
+
+// ---------------------------------------------------------------------------
 // Section 5 — Whitelist workflow
 // ---------------------------------------------------------------------------
 

@@ -38,6 +38,7 @@ semantic structure, and landmark verification. Tests are designed to be:
 | Sign-in / auth | `/` (unauth modal) | ✅ | ✅ | ✅ | — | — |
 | Guided Launch | `/launch/guided` | ✅ | ✅ | ✅ | ✅ | — |
 | Compliance Dashboard | `/compliance/launch` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Compliance Setup Workspace** | `/compliance/setup` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Whitelist Policies | `/compliance/policy` | ✅ | — | ✅ | ✅ | — |
 | Whitelist Management | `/compliance/whitelists` | ✅ | — | ✅ | ✅ | — |
 | Team Workspace | `/team/workspace` | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -45,14 +46,20 @@ semantic structure, and landmark verification. Tests are designed to be:
 | Settings | `/settings` | ✅ | ✅ | — | ✅ | — |
 | Mobile shell (390px) | `/`, `/compliance/launch` | ✅ | — | ✅ | — | — |
 
-**Total**: 57 deterministic tests across 10 describe sections.
+**Total**: 64 deterministic tests across 11 describe sections.
+
+> **What changed in March 2026 (PR: add-accessibility-proof-workflows)**:
+> Section 4a was added covering the Compliance Setup Workspace (`/compliance/setup`),
+> completing the accessibility evidence for the full set of issue AC requirements.
+> Compliance Setup Workspace is a standalone multi-step wizard that provides its own
+> `<main id="main-content">`, step-nav landmark, progress bar ARIA, and keyboard controls.
 
 ---
 
 ## Spec Files
 
 ### New — `e2e/accessibility-enterprise-journeys.spec.ts`
-Primary evidence file for this issue. 57 tests in 10 sections aligned to issue
+Primary evidence file for this issue. 64 tests in 11 sections aligned to issue
 acceptance criteria.
 
 ### Shared Helpers — `e2e/helpers/accessibility.ts`
