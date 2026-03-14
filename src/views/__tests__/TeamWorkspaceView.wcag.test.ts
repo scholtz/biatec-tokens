@@ -169,4 +169,48 @@ describe('TeamWorkspaceView — WCAG AA Accessibility', () => {
     const bar = wrapper.find('[data-testid="summary-bar"]')
     expect(bar.exists()).toBe(true)
   })
+
+  // ── Collapse/expand keyboard ARIA contract (WCAG SC 4.1.2) ───────────────
+
+  it('completed-section toggle button has aria-expanded attribute (WCAG SC 4.1.2)', () => {
+    const wrapper = mountWorkspace()
+    const toggle = wrapper.find('[data-testid="completed-section-toggle"]')
+    expect(toggle.exists()).toBe(true)
+    const expanded = toggle.attributes('aria-expanded')
+    expect(['true', 'false']).toContain(expanded)
+  })
+
+  it('completed-section toggle button has aria-controls attribute (WCAG SC 4.1.2)', () => {
+    const wrapper = mountWorkspace()
+    const toggle = wrapper.find('[data-testid="completed-section-toggle"]')
+    const controls = toggle.attributes('aria-controls')
+    expect(controls).toBeDefined()
+    expect(controls!.length).toBeGreaterThan(0)
+  })
+
+  it('clicking toggle changes aria-expanded from false to true (WCAG SC 4.1.2)', async () => {
+    const wrapper = mountWorkspace()
+    const toggle = wrapper.find('[data-testid="completed-section-toggle"]')
+    const vm = wrapper.vm as any
+    vm.completedExpanded = false
+    await wrapper.vm.$nextTick()
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+    await toggle.trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(toggle.attributes('aria-expanded')).toBe('true')
+  })
+
+  // ── Approval section landmarks (WCAG SC 1.3.6) ───────────────────────────
+
+  it('each approval queue section is wrapped in a <section> element (WCAG SC 1.3.6)', () => {
+    const wrapper = mountWorkspace()
+    const sections = wrapper.findAll('section[aria-labelledby]')
+    expect(sections.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('list containers have aria-label describing their workflow queue (WCAG SC 1.3.6)', () => {
+    const wrapper = mountWorkspace()
+    const labelledList = wrapper.find('[aria-label="Team approval workflow"]')
+    expect(labelledList.exists()).toBe(true)
+  })
 })

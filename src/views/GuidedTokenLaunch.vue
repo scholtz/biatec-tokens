@@ -110,7 +110,7 @@
               :disabled="!canNavigateToStep(index)"
               :data-testid="`${ISSUANCE_TEST_IDS.STEP_BUTTON_PREFIX}${index}`"
               :class="[
-                'relative w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300',
+                'relative w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800',
                 currentStep === index
                   ? 'bg-blue-500 text-white ring-4 ring-blue-500/30 scale-110'
                   : step.isComplete

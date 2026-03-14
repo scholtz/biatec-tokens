@@ -322,6 +322,67 @@ describe('GuidedTokenLaunch — WCAG 2.1 AA accessibility attributes', () => {
   })
 })
 
+describe('GuidedTokenLaunch — keyboard and focus affordances (WCAG SC 2.1, 2.4, 4.1)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetStore()
+  })
+
+  it('step indicator is focusable via tabindex (WCAG SC 2.1.1)', async () => {
+    const wrapper = await mountView()
+    const stepNav = wrapper.find('[data-testid="issuance-step-indicator"]')
+    const tabindex = stepNav.attributes('tabindex')
+    // Must have tabindex="0" to be keyboard-reachable
+    expect(tabindex).toBe('0')
+  })
+
+  it('step buttons carry focus-visible ring classes for visible focus (WCAG SC 2.4.7)', async () => {
+    const wrapper = await mountView()
+    const stepBtn = wrapper.find('[data-testid="issuance-step-btn-0"]')
+    const classes = stepBtn.classes().join(' ')
+    // Must have focus-visible or focus:ring indicator per WCAG SC 2.4.7 fix
+    expect(classes).toMatch(/focus-visible:|focus:ring/)
+  })
+
+  it('continue button has focus-visible ring for visible focus (WCAG SC 2.4.7)', async () => {
+    const wrapper = await mountView()
+    const continueBtn = wrapper.find('[data-testid="issuance-continue"]')
+    const classes = continueBtn.classes().join(' ')
+    // Button component adds focus:ring-2 for keyboard visibility
+    expect(classes).toMatch(/focus:ring/)
+  })
+
+  it('current step button has aria-current="step" for AT navigation context (WCAG SC 1.3.1)', async () => {
+    mockStore.currentForm.currentStep = 0
+    const wrapper = await mountView()
+    const currentStepBtn = wrapper.find('[aria-current="step"]')
+    expect(currentStepBtn.exists()).toBe(true)
+    expect(currentStepBtn.attributes('data-testid')).toBe('issuance-step-btn-0')
+  })
+
+  it('non-current step buttons do not have aria-current (WCAG SC 1.3.1)', async () => {
+    mockStore.currentForm.currentStep = 2
+    const wrapper = await mountView()
+    const btn0 = wrapper.find('[data-testid="issuance-step-btn-0"]')
+    expect(btn0.attributes('aria-current')).toBeUndefined()
+  })
+
+  it('error banner dismiss button has aria-label (WCAG SC 4.1.2)', async () => {
+    mockStore.currentForm.submissionError = 'unauthorized'
+    const wrapper = await mountView()
+    const dismissBtn = wrapper.find('[aria-label="Dismiss error"]')
+    expect(dismissBtn.exists()).toBe(true)
+  })
+
+  it('SVG icons in step buttons are aria-hidden to avoid duplicating label text (WCAG SC 1.1.1)', async () => {
+    const wrapper = await mountView()
+    const svgs = wrapper.find('[data-testid="issuance-step-btn-0"]').findAll('svg')
+    for (const svg of svgs) {
+      expect(svg.attributes('aria-hidden')).toBe('true')
+    }
+  })
+})
+
 describe('GuidedTokenLaunch — product alignment (no wallet-connector UI)', () => {
   beforeEach(() => {
     vi.clearAllMocks()

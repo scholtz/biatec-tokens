@@ -50,7 +50,7 @@ semantic structure, and landmark verification. Tests are designed to be:
 **Total E2E tests**: 64 deterministic tests across 11 describe sections in `accessibility-enterprise-journeys.spec.ts`,
 plus 50 additional procurement-focused tests in `procurement-accessibility-evidence.spec.ts`.
 
-**Total unit WCAG tests**: 160+ unit-level WCAG assertions across 9 view/component WCAG test files (see below).
+**Total unit WCAG tests**: 230+ unit-level WCAG assertions across 10 view/component WCAG test files and 1 integration test file (see below).
 
 > **What changed in March 2026 (PR: add-accessibility-proof-workflows)**:
 > Section 4a was added covering the Compliance Setup Workspace (`/compliance/setup`),
@@ -58,9 +58,14 @@ plus 50 additional procurement-focused tests in `procurement-accessibility-evide
 > Compliance Setup Workspace is a standalone multi-step wizard that provides its own
 > `<main id="main-content">`, step-nav landmark, progress bar ARIA, and keyboard controls.
 >
-> **What changed in March 2026 (PR: add-accessibility-evidence)**:
-> `Home.wcag.test.ts` (17 tests) and `MainLayout.wcag.test.ts` (13 tests) added to provide
-> unit-level WCAG evidence for the dashboard entry and shared shell accessibility infrastructure.
+> **What changed in March 2026 (PR: add-accessibility-evidence v2)**:
+> Integration tests added (`src/__tests__/integration/AccessibilityContracts.integration.test.ts`,
+> 50 tests) proving ARIA role contracts hold under state transitions
+> (pending→blocked→approved live-region changes), aria-labelledby→h3 wiring in WorkItemCard,
+> aria-expanded keyboard toggle in TeamWorkspaceView, and full ComplianceLaunchConsole region
+> semantics. GuidedTokenLaunch step buttons now carry `focus-visible:ring-2` classes (WCAG SC 2.4.7
+> fix). TeamWorkspaceView.wcag.test.ts extended to 19 tests covering keyboard toggle contract.
+> GuidedTokenLaunch.component.test.ts extended to 53 tests covering keyboard/focus affordances.
 
 ---
 
@@ -110,13 +115,15 @@ These run in every CI push (no browser required) and catch structural regression
 |------|-------|----------|
 | `src/views/__tests__/Home.wcag.test.ts` | 17 | h1, headings, CTA state, auth modal, no-wallet-UI |
 | `src/layout/__tests__/MainLayout.wcag.test.ts` | 13 | route-announcer, main landmark, header, sidebar |
-| `src/views/__tests__/TeamWorkspaceView.wcag.test.ts` | 29 | heading hierarchy, ARIA, approval sections, live regions |
+| `src/views/__tests__/TeamWorkspaceView.wcag.test.ts` | 19 | heading hierarchy, ARIA, approval sections, aria-expanded toggle |
+| `src/views/__tests__/GuidedTokenLaunch.component.test.ts` | 53 | WCAG attrs, keyboard affordances, focus-visible, aria-current, error banner |
 | `src/views/__tests__/ComplianceSetupWorkspace.wcag.test.ts` | 19 | heading, step-nav, progress bar, form labels |
 | `src/views/__tests__/ComplianceLaunchConsole.test.ts` | 16 | progress bar, meter, live regions, focus visibility |
 | `src/views/__tests__/BusinessCommandCenter.wcag.test.ts` | 13 | breadcrumb, role selector, live regions |
 | `src/views/__tests__/LifecycleCockpit.wcag.test.ts` | 5 | ARIA, heading structure, no-wallet-UI |
 | `src/views/__tests__/Settings.wcag.test.ts` | 25 | form labels, toggle aria-pressed, live regions |
 | `src/components/team/__tests__/ApprovalStatusBadge.test.ts` | 15+ | role=status/alert, aria-label, color classes |
+| `src/__tests__/integration/AccessibilityContracts.integration.test.ts` | 50 | role contracts, aria-labelledby, keyboard toggle, live-region transitions |
 
 ### Shared Helpers — `e2e/helpers/accessibility.ts`
 Reusable utilities so future journey coverage requires minimal new boilerplate:
