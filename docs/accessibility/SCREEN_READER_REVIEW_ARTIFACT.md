@@ -482,8 +482,8 @@ No findings were deferred or accepted without remediation.
 
 The following automated tests preserve the behaviours introduced or confirmed by this review:
 
-| Finding | Unit test file | Test description |
-|---------|---------------|-----------------|
+| Finding | Unit / Integration test file | Test description |
+|---------|------------------------------|-----------------|
 | 6.3 (count badge aria-label) | `TeamWorkspaceView.wcag.test.ts` | "awaiting-review/assigned/ready-approval count badge has a meaningful aria-label" |
 | 6.4 (h2 not in button) | `TeamWorkspaceView.wcag.test.ts` | "h2 is NOT a heading element nested inside button" |
 | 6.5 (action feedback) | `TeamWorkspaceView.wcag.test.ts` | "action-feedback live region with role=status and aria-live=polite" |
@@ -493,6 +493,22 @@ The following automated tests preserve the behaviours introduced or confirmed by
 | 7.3 (issuance progress bar) | `e2e/screen-reader-review-evidence.spec.ts` | "Guided Launch: progress bar has progressbar role with ARIA attributes" |
 | 7.4–7.6 (step nav) | `e2e/screen-reader-review-evidence.spec.ts` | "Guided Launch: step indicator nav landmark and aria-current" |
 | 7.8 (error banner) | `e2e/screen-reader-review-evidence.spec.ts` | "Guided Launch: error banner has role=alert" |
+
+**Procurement-grade integration test suite (73 tests, added issue #639):**
+
+`src/__tests__/integration/ScreenReaderSignOffEvidence.integration.test.ts` provides
+an end-to-end machine-verifiable layer for ALL findings in this artifact:
+
+| Section | Coverage area | Test count |
+|---------|--------------|-----------|
+| Section 1 | Modal dialog labelling (role=dialog, aria-modal, aria-labelledby, close-btn label, tabindex, show/hide) | 8 |
+| Section 2 | Compliance Launch Console — heading hierarchy, progressbar, live region, CTA labels | 9 |
+| Section 3 | Compliance Setup Workspace — main landmark, progressbar, step nav, aria-current, mobile live region | 11 |
+| Section 4 | Whitelist Policy Dashboard — h1, skeleton aria-hidden, loading role=status, error role=alert, table + th scope | 7 |
+| Section 5 | Team Workspace — action-feedback role/aria-live/aria-atomic/sr-only, h2 hierarchy, section headings, error role=alert | 12 |
+| Section 6 | Guided Token Launch — main landmark, h1, progressbar, step nav, aria-current, error banner assertive | 14 |
+| Section 7 | Cross-journey compliance-status badges — text label not colour-only, role=alert vs role=status, icon aria-hidden | 7 |
+| Section 8 | Cross-journey error/validation urgency — assertive vs polite live regions per journey | 5 |
 
 Additionally, E2E-level evidence is provided in `e2e/screen-reader-review-evidence.spec.ts`
 for the live-region and heading structure assertions.
@@ -513,6 +529,7 @@ accessibility evidence package for enterprise compliance journeys.
 
 ---
 
+*Closes: issue #639*  
 *Maintained by: Biatec frontend team*  
 *Related: `docs/accessibility/SCREEN_READER_REVIEW_CHECKLIST.md`*  
 *Related: `docs/accessibility/SCREEN_READER_REVIEW_WORKFLOW.md`*  

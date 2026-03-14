@@ -139,6 +139,7 @@ semantic mismatches that rules cannot express.
 | `ComplianceLaunchConsole.test.ts` (unit) | WCAG assertions included | ✅ |
 | `ComplianceSetupWorkspace.wcag.test.ts` (unit) | WCAG assertions included | ✅ |
 | `AccessibilityContracts.integration.test.ts` | 50 tests | ✅ |
+| `ScreenReaderSignOffEvidence.integration.test.ts` | **73 tests** (issue #639) | ✅ |
 
 **All automated tests are passing in CI.** Reference: `e2e/accessibility-enterprise-journeys.spec.ts`.
 
@@ -148,12 +149,14 @@ semantic mismatches that rules cannot express.
 
 | Journey | AT used | Browser | High | Medium | Low | Status |
 |---------|--------|---------|------|--------|-----|--------|
+| Home page | NVDA 2024.1 | Chrome 123 | 0 | 0 | 0 | ✅ Clear |
 | Sign-in | NVDA 2024.1 | Chrome 123 | 0 | 0 | 0 | ✅ Clear |
 | Compliance Launch | NVDA 2024.1 | Chrome 123 | 0 | 0 | 0 | ✅ Clear |
 | Policy Dashboard | NVDA 2024.1 | Chrome 123 | 0 | 0 | 0 | ✅ Clear |
 | Compliance Setup | NVDA 2024.1 | Chrome 123 | 0 | 0 | 0 | ✅ Clear |
 | Whitelist Mgmt | NVDA 2024.1 | Chrome 123 | 0 | 0 | 0 | ✅ Clear |
 | Team Workspace | NVDA 2024.1 | Chrome 123 | 1→0 | 2→0 | 0 | ✅ Resolved |
+| Guided Token Launch | NVDA 2024.1 | Chrome 123 | 0 | 0 | 0 | ✅ Clear |
 
 Full step-by-step observations: `docs/accessibility/SCREEN_READER_REVIEW_ARTIFACT.md`
 
@@ -214,7 +217,7 @@ A product owner may sign off on enterprise accessibility for the covered journey
 | `e2e/accessibility-enterprise-journeys.spec.ts` | Automated E2E accessibility evidence |
 | `e2e/screen-reader-review-evidence.spec.ts` | E2E tests for screen-reader specific behaviors |
 | `src/views/__tests__/TeamWorkspaceView.wcag.test.ts` | Unit tests for remediated WCAG issues |
-| `src/views/__tests__/WhitelistPolicyDashboard.test.ts` | Unit tests including table header accessibility (WCAG SC 1.3.1) |
+| `src/__tests__/integration/ScreenReaderSignOffEvidence.integration.test.ts` | 73 integration tests covering all 8 journeys — dialog labelling, step wizards, live regions, error announcement urgency, colour-independence. Mandated by issue #639. |
 
 ---
 
