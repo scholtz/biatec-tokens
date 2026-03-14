@@ -64,7 +64,7 @@
                 </div>
               </div>
 
-              <div class="w-full bg-gray-700 rounded-full h-2.5" role="progressbar" :aria-valuenow="tokenUsagePercent" aria-valuemin="0" aria-valuemax="100">
+              <div class="w-full bg-gray-700 rounded-full h-2.5" role="progressbar" :aria-label="`Token usage: ${tokenUsagePercent}% of allowance used`" :aria-valuenow="tokenUsagePercent" aria-valuemin="0" aria-valuemax="100">
                 <div
                   :class="getProgressColor(tokenUsagePercent)"
                   class="h-2.5 rounded-full transition-all duration-500"
@@ -122,7 +122,7 @@
               </div>
 
               <div v-if="hasApiAccess">
-                <div class="w-full bg-gray-700 rounded-full h-2.5" role="progressbar" :aria-valuenow="apiUsagePercent" aria-valuemin="0" aria-valuemax="100">
+                <div class="w-full bg-gray-700 rounded-full h-2.5" role="progressbar" :aria-label="`API usage: ${apiUsagePercent}% of allowance used`" :aria-valuenow="apiUsagePercent" aria-valuemin="0" aria-valuemax="100">
                   <div
                     :class="getProgressColor(apiUsagePercent)"
                     class="h-2.5 rounded-full transition-all duration-500"

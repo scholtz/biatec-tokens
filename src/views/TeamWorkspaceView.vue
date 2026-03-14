@@ -80,7 +80,7 @@
       <div
         v-if="!hasRole"
         id="no-role-notice"
-        class="mb-6 glass-effect rounded-xl p-4 border border-yellow-500/30 flex items-start gap-3"
+        class="mb-6 bg-gray-800 rounded-xl p-4 border border-yellow-500/30 flex items-start gap-3"
         role="status"
         data-testid="no-role-message"
         aria-label="Read-only access notice"
@@ -119,7 +119,7 @@
           <div
             v-for="i in 3"
             :key="i"
-            class="glass-effect rounded-xl p-5 border border-white/10 animate-pulse"
+            class="bg-gray-800 rounded-xl p-5 border border-white/10 animate-pulse"
           >
             <div class="flex gap-2 mb-3">
               <div class="h-5 w-24 bg-gray-700 rounded-full"></div>
@@ -133,7 +133,7 @@
         <!-- Error state -->
         <div
           v-else-if="workflowStore.error"
-          class="glass-effect rounded-xl p-8 border border-red-500/20 text-center"
+          class="bg-gray-800 rounded-xl p-8 border border-red-500/20 text-center"
           role="alert"
           data-testid="error-state"
         >

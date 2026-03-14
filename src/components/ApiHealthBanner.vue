@@ -51,7 +51,7 @@
                   API is unreachable
                 </span>
               </p>
-              <p v-if="error && isUnreachable" class="text-xs mt-1 opacity-90">
+              <p v-if="error && isUnreachable" class="text-xs mt-1 text-white">
                 {{ error }}
               </p>
             </div>
@@ -154,7 +154,7 @@ const bannerClasses = computed(() => {
   const base = 'w-full transition-all duration-300';
   
   if (isSlow.value) {
-    return `${base} bg-gradient-to-r from-yellow-500 to-orange-500 text-white`;
+    return `${base} bg-gradient-to-r from-amber-600 to-orange-600 text-white`;
   }
   
   if (isUnreachable.value) {

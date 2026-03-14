@@ -53,6 +53,7 @@
           :style="{ width: `${report.readinessScore}%` }"
           data-testid="progress-bar"
           role="progressbar"
+          :aria-label="`Launch readiness: ${report.readinessScore}% complete`"
           :aria-valuenow="report.readinessScore"
           aria-valuemin="0"
           aria-valuemax="100"

@@ -9,7 +9,7 @@
               <span class="bg-gradient-to-r from-blue-600 to-purple-800 bg-clip-text text-transparent block mt-2 dark:text-white">Next-Generation</span>
               <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block mt-2 dark:text-white"> Tokenization Platform </span>
             </h1>
-            <p class="text-xl sm:text-2xl max-w-4xl mx-auto mb-12 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block mt-2 dark:text-white">
+            <p class="text-xl sm:text-2xl max-w-4xl mx-auto mb-12 text-gray-700 dark:text-white block mt-2">
               Create, manage, and deploy tokens across multiple standards with enterprise-grade security and lightning-fast performance.
             </p>
           </div>
@@ -55,7 +55,7 @@
           <!-- Stats -->
           <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
             <Card v-for="stat in stats" :key="stat.label" variant="elevated" class="text-center hover:scale-105 transition-transform duration-200">
-              <div class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+              <div class="text-3xl md:text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">
                 {{ stat.value }}
               </div>
               <div class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ stat.label }}</div>

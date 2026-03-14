@@ -52,7 +52,7 @@
 
       <!-- ── Launch Readiness Banner ── -->
       <section
-        class="glass-effect rounded-2xl p-6 mb-6 border shadow-lg"
+        class="bg-gray-800 rounded-2xl p-6 mb-6 border shadow-lg"
         :class="bannerBorderClass"
         aria-labelledby="readiness-banner-heading"
         data-testid="readiness-banner"
@@ -173,7 +173,7 @@
           <article
             v-for="domain in readiness.domains"
             :key="domain.id"
-            class="glass-effect rounded-xl border shadow-md transition-shadow duration-200"
+            class="bg-gray-800 rounded-xl border shadow-md transition-shadow duration-200"
             :class="domainCardBorderClass(domain.status)"
             :data-testid="`domain-card-${domain.id}`"
             :aria-label="`${domain.label}: ${DOMAIN_STATUS_LABELS[domain.status]}`"
@@ -335,7 +335,7 @@
 
       <!-- ── Evidence & Review Summary ── -->
       <footer
-        class="mt-8 glass-effect rounded-xl border border-white/10 p-5 shadow-md"
+        class="mt-8 bg-gray-800 rounded-xl border border-white/10 p-5 shadow-md"
         data-testid="evidence-summary"
         role="contentinfo"
         aria-label="Compliance review summary"

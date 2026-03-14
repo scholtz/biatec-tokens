@@ -36,6 +36,7 @@
     "whatamesh": "^0.2.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
     "@pinia/testing": "^1.0.3",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/vite": "^4.2.1",

@@ -1,6 +1,6 @@
 <template>
   <article
-    class="work-item-card glass-effect rounded-xl p-5 border border-white/10 hover:border-white/20 transition-all duration-200"
+    class="work-item-card bg-gray-800 rounded-xl p-5 border border-white/10 hover:border-white/20 transition-all duration-200"
     role="article"
     :aria-labelledby="`work-item-title-${item.id}`"
     :data-testid="`work-item-card-${item.id}`"

@@ -22,6 +22,7 @@
       <div
         class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2"
         role="progressbar"
+        :aria-label="`Onboarding step progress: ${progressPercent}% complete`"
         :aria-valuenow="progressPercent"
         aria-valuemin="0"
         aria-valuemax="100"

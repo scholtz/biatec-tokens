@@ -19,7 +19,7 @@
         aria-label="Sign up with email - recommended for new users"
         data-testid="email-signup-button"
       >
-        <div class="absolute top-0 right-0 px-3 py-1 bg-blue-500 text-white text-xs font-semibold rounded-bl-lg">
+        <div class="absolute top-0 right-0 px-3 py-1 bg-blue-700 text-white text-xs font-semibold rounded-bl-lg">
           Recommended
         </div>
         
@@ -57,10 +57,10 @@
         </div>
 
         <div class="flex items-center justify-between">
-          <span class="text-blue-600 dark:text-blue-400 font-semibold group-hover:gap-2 transition-all">
+          <span class="text-blue-700 dark:text-blue-400 font-semibold group-hover:gap-2 transition-all">
             Get Started
           </span>
-          <i class="pi pi-arrow-right text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform"></i>
+          <i class="pi pi-arrow-right text-blue-700 dark:text-blue-400 group-hover:translate-x-1 transition-transform"></i>
         </div>
       </button>
 
@@ -69,9 +69,9 @@
     <!-- Info Footer -->
     <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
       <div class="flex items-start gap-3">
-        <i class="pi pi-info-circle text-blue-600 dark:text-blue-400 mt-0.5"></i>
+        <i class="pi pi-info-circle text-blue-700 dark:text-blue-400 mt-0.5"></i>
         <div class="text-sm text-gray-700 dark:text-gray-300">
-          <strong class="text-blue-600 dark:text-blue-400">New to blockchain tokens?</strong>
+          <strong class="text-blue-700 dark:text-blue-400">New to blockchain tokens?</strong>
           <p class="mt-1">
             Start with email to explore the platform and create compliant tokens without any blockchain knowledge. 
             No prior experience or technical setup required to get started.

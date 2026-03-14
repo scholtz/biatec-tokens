@@ -87,6 +87,7 @@
             class="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
             :style="{ width: `${progressPercentage}%` }"
             role="progressbar"
+            :aria-label="`Issuance progress: ${progressPercentage}% complete`"
             :data-testid="ISSUANCE_TEST_IDS.PROGRESS_PERCENTAGE"
             :aria-valuenow="progressPercentage"
             aria-valuemin="0"
@@ -96,7 +97,7 @@
       </Card>
 
       <!-- Step Indicator -->
-      <div class="mb-8 overflow-x-auto" :data-testid="ISSUANCE_TEST_IDS.STEP_INDICATOR" role="navigation" aria-label="Issuance progress steps">
+      <div class="mb-8 overflow-x-auto" :data-testid="ISSUANCE_TEST_IDS.STEP_INDICATOR" role="navigation" aria-label="Issuance progress steps" tabindex="0">
         <div class="flex items-center gap-2 min-w-max">
           <div
             v-for="(step, index) in stepStatuses"

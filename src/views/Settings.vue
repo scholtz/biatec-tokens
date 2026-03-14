@@ -5,11 +5,11 @@
         <!-- Header -->
         <div class="mb-8">
           <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">Settings</h1>
-          <p class="text-gray-300 text-lg">Configure your development environment and network settings</p>
+          <p class="text-gray-700 dark:text-gray-300 text-lg">Configure your development environment and network settings</p>
         </div>
 
         <!-- Network Configuration -->
-        <div class="glass-effect rounded-xl p-6 mb-8">
+        <div class="bg-gray-800 rounded-xl p-6 mb-8">
           <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Network Configuration</h2>
 
           <div class="space-y-6">
@@ -74,7 +74,7 @@
         </div>
 
         <!-- EVM Configuration -->
-        <div class="glass-effect rounded-xl p-6 mb-8">
+        <div class="bg-gray-800 rounded-xl p-6 mb-8">
           <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">EVM Configuration</h2>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -102,7 +102,7 @@
         </div>
 
         <!-- Developer Tools -->
-        <div class="glass-effect rounded-xl p-6 mb-8">
+        <div class="bg-gray-800 rounded-xl p-6 mb-8">
           <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Developer Tools</h2>
 
           <div class="space-y-6">
@@ -167,7 +167,7 @@
         </div>
 
         <!-- Import/Export -->
-        <div class="glass-effect rounded-xl p-6 mb-8">
+        <div class="bg-gray-800 rounded-xl p-6 mb-8">
           <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Import/Export Settings</h2>
 
           <div class="space-y-4">

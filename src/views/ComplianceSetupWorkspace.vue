@@ -13,7 +13,7 @@
       </div>
 
       <!-- Progress Tracker -->
-      <div class="glass-effect rounded-2xl p-6 mb-8 shadow-lg border border-white/10">
+      <div class="bg-gray-800 rounded-2xl p-6 mb-8 shadow-lg border border-white/10">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-3">
             <div
@@ -120,7 +120,7 @@
       </div>
 
       <!-- Step Content -->
-      <div class="glass-effect rounded-2xl p-8 shadow-2xl border border-white/10 mb-6">
+      <div class="bg-gray-800 rounded-2xl p-8 shadow-2xl border border-white/10 mb-6">
         <transition name="fade" mode="out-in">
           <JurisdictionPolicyStep
             v-if="currentStepIndex === 0"
@@ -227,7 +227,7 @@
           Your compliance setup is complete and ready for deployment.
         </p>
 
-        <div class="glass-effect rounded-xl p-6 mb-6">
+        <div class="bg-gray-800 rounded-xl p-6 mb-6">
           <h4 class="text-lg font-semibold text-white mb-3">Next Steps:</h4>
           <ul class="space-y-2 text-gray-300">
             <li class="flex items-start">

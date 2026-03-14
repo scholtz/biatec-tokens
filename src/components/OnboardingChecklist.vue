@@ -37,6 +37,7 @@
                   class="h-full bg-white transition-all duration-500"
                   :style="{ width: `${onboardingStore.progressPercentage}%` }"
                   role="progressbar"
+                  :aria-label="`Onboarding progress: ${onboardingStore.progressPercentage}% complete`"
                   :aria-valuenow="onboardingStore.progressPercentage"
                   aria-valuemin="0"
                   aria-valuemax="100"
@@ -91,7 +92,7 @@
                       </h4>
                       <span
                         v-if="step.optional"
-                        class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400"
+                        class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"
                       >
                         Optional
                       </span>
