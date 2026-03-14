@@ -32,6 +32,7 @@ import PortfolioIntelligenceView from "../views/PortfolioIntelligenceView.vue";
 import PortfolioLaunchpad from "../views/PortfolioLaunchpad.vue";
 import BusinessCommandCenter from "../views/BusinessCommandCenter.vue";
 import TeamWorkspaceView from "../views/TeamWorkspaceView.vue";
+import ComplianceEvidencePackView from "../views/ComplianceEvidencePackView.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 import { isIssuanceSessionValid, storeIssuanceReturnPath } from "../utils/authFirstIssuanceWorkspace";
 
@@ -158,6 +159,13 @@ const router = createRouter({
       name: "ComplianceLaunchConsole",
       component: ComplianceLaunchConsole,
       meta: { requiresAuth: true },
+    },
+    // Compliance Evidence Pack Workspace — regulator-ready evidence review and export
+    {
+      path: "/compliance/evidence",
+      name: "ComplianceEvidencePack",
+      component: ComplianceEvidencePackView,
+      meta: { requiresAuth: true, title: "Compliance Evidence Pack" },
     },
     {
       path: "/attestations",

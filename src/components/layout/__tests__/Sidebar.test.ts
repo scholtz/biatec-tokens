@@ -26,6 +26,9 @@ vi.mock('@heroicons/vue/24/outline', () => ({
   UsersIcon: {
     template: '<svg class="h-5 w-5"></svg>',
   },
+  ClipboardDocumentCheckIcon: {
+    template: '<svg class="h-5 w-5"></svg>',
+  },
   CurrencyDollarIcon: {
     template: '<svg class="h-5 w-5"></svg>',
   },
@@ -117,7 +120,7 @@ describe('Sidebar Component', () => {
       });
 
       const links = wrapper.findAll('a');
-      expect(links).toHaveLength(8); // Now includes Compliance Monitoring and Whitelist Management
+      expect(links).toHaveLength(9); // Now includes Release Evidence, Compliance Monitoring, and Whitelist Management
 
       // Check link texts and routes
       expect(links[0].text()).toContain('Guided Token Launch');
@@ -137,12 +140,15 @@ describe('Sidebar Component', () => {
       
       expect(links[5].text()).toContain('Onboarding Center');
       expect(links[5].attributes('to')).toBe('/enterprise/onboarding');
+
+      expect(links[6].text()).toContain('Release Evidence');
+      expect(links[6].attributes('to')).toBe('/compliance/evidence');
       
-      expect(links[6].text()).toContain('Compliance Monitoring');
-      expect(links[6].attributes('to')).toBe('/compliance-monitoring');
+      expect(links[7].text()).toContain('Compliance Monitoring');
+      expect(links[7].attributes('to')).toBe('/compliance-monitoring');
       
-      expect(links[7].text()).toContain('Whitelist Management');
-      expect(links[7].attributes('to')).toBe('/compliance/whitelists');
+      expect(links[8].text()).toContain('Whitelist Management');
+      expect(links[8].attributes('to')).toBe('/compliance/whitelists');
     });
 
     it('should render icons for quick actions', () => {
@@ -157,8 +163,8 @@ describe('Sidebar Component', () => {
       });
 
       const svgs = wrapper.findAll('svg');
-      // 8 links each with an SVG icon (UsersIcon replaces the old <i class="pi pi-users">)
-      expect(svgs).toHaveLength(8);
+      // 9 links each with an SVG icon (added Release Evidence link with ClipboardDocumentCheckIcon)
+      expect(svgs).toHaveLength(9);
     });
   });
 
