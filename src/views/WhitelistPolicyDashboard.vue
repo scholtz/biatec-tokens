@@ -49,7 +49,10 @@
         </div>
 
         <!-- Loading skeleton -->
-        <div v-if="isLoading" class="space-y-6 animate-pulse" aria-busy="true" aria-label="Loading policy">
+        <!-- Screen-reader announcement for loading state -->
+        <div v-if="isLoading" class="sr-only" role="status" aria-live="polite">Loading policy, please wait…</div>
+        <!-- Visual skeleton — aria-hidden: no meaningful content for AT (bg-white/10 skips axe contrast check) -->
+        <div v-if="isLoading" class="space-y-6 animate-pulse" aria-hidden="true">
           <div class="glass-effect rounded-xl p-6">
             <div class="h-5 bg-white/10 rounded w-1/3 mb-3"></div>
             <div class="h-4 bg-white/10 rounded w-full mb-2"></div>
@@ -250,7 +253,7 @@
               <li
                 v-for="gap in policy.gaps"
                 :key="gap.id"
-                :class="gap.severity === 'error' ? 'border-red-700/50 bg-red-900/20' : 'border-amber-700/50 bg-amber-900/20'"
+                :class="gap.severity === 'error' ? 'border-red-700 bg-red-800' : 'border-amber-700 bg-amber-800'"
                 class="flex items-start gap-3 border rounded-lg px-4 py-3 text-sm"
               >
                 <i
@@ -258,7 +261,7 @@
                   class="pi mt-0.5 flex-shrink-0"
                   aria-hidden="true"
                 ></i>
-                <span :class="gap.severity === 'error' ? 'text-red-300' : 'text-amber-300'">{{ gap.message }}</span>
+                <span :class="gap.severity === 'error' ? 'text-red-200' : 'text-amber-200'">{{ gap.message }}</span>
               </li>
             </ul>
           </div>

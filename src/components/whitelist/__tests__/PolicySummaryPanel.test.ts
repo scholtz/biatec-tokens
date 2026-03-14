@@ -44,7 +44,8 @@ describe("PolicySummaryPanel", () => {
       const wrapper = mount(PolicySummaryPanel, {
         props: { policy: MOCK_POLICY, loading: true },
       });
-      expect(wrapper.find('[aria-busy="true"]').exists()).toBe(true);
+      // Loading state uses aria-hidden on visual skeleton + sr-only role="status" for AT
+      expect(wrapper.find('[aria-hidden="true"].animate-pulse').exists()).toBe(true);
     });
 
     it("shows animate-pulse while loading", () => {

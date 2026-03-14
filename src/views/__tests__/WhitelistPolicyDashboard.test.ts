@@ -113,7 +113,8 @@ describe("WhitelistPolicyDashboard", () => {
   describe("loading state", () => {
     it("renders loading skeleton when isLoading is true", () => {
       const wrapper = mountDashboard({ isLoading: true });
-      expect(wrapper.find('[aria-busy="true"]').exists()).toBe(true);
+      // Loading state uses aria-hidden on visual skeleton + sr-only role="status" for AT
+      expect(wrapper.find('[aria-hidden="true"].animate-pulse').exists()).toBe(true);
     });
 
     it("shows animate-pulse class when loading", () => {

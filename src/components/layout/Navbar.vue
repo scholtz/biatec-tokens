@@ -11,7 +11,7 @@
       <div class="flex justify-between items-center h-16">
         <!-- Logo — aria-label required on mobile where both img and text span are hidden sm:block -->
         <router-link to="/" aria-label="Biatec Tokens Home" class="flex items-center space-x-3 group">
-          <img src="../../assets/logo-icon.svg" alt="" aria-hidden="true" class="h-14 w-auto hidden sm:block" />
+          <img src="../../assets/logo-icon.svg" alt="Biatec Tokens Logo" class="h-14 w-auto hidden sm:block" />
           <div class="hidden sm:block">
             <span class="text-xl font-bold text-gray-900 dark:text-white">Biatec Tokens</span>
           </div>

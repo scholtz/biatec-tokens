@@ -1,5 +1,5 @@
 <template>
-  <div class="glass-effect rounded-xl p-6" aria-label="Policy audit information">
+  <div class="glass-effect rounded-xl p-6" role="region" aria-label="Policy audit information">
     <div class="flex items-center gap-2 mb-4">
       <i class="pi pi-history text-biatec-accent text-xl" aria-hidden="true"></i>
       <h3 class="text-base font-semibold text-white">Audit Trail</h3>
@@ -24,7 +24,7 @@
         <dt class="text-sm text-gray-400 flex-shrink-0">Last Updated</dt>
         <dd class="text-sm text-gray-300 text-right">
           <div>{{ formattedLastUpdated }}</div>
-          <div class="text-xs text-gray-500 mt-0.5">by {{ policy.lastUpdatedByEmail }}</div>
+          <div class="text-xs text-gray-400 mt-0.5">by {{ policy.lastUpdatedByEmail }}</div>
         </dd>
       </div>
 
@@ -55,9 +55,9 @@ const props = defineProps<{
 
 const reviewStatusClass = computed(() => {
   const map: Record<string, string> = {
-    approved: "bg-green-900/50 text-green-300",
-    pending_review: "bg-amber-900/50 text-amber-300",
-    changes_requested: "bg-red-900/50 text-red-300",
+    approved: "bg-green-800 text-green-200",
+    pending_review: "bg-amber-800 text-amber-200",
+    changes_requested: "bg-red-800 text-red-200",
   };
   return map[props.policy.reviewStatus] ?? "bg-gray-700 text-gray-300";
 });
@@ -73,9 +73,9 @@ const reviewStatusLabel = computed(() => {
 
 const statusClass = computed(() => {
   const map: Record<string, string> = {
-    active: "bg-green-900/50 text-green-300",
+    active: "bg-green-800 text-green-200",
     draft: "bg-gray-700 text-gray-300",
-    pending_review: "bg-amber-900/50 text-amber-300",
+    pending_review: "bg-amber-800 text-amber-200",
   };
   return map[props.policy.status] ?? "bg-gray-700 text-gray-300";
 });

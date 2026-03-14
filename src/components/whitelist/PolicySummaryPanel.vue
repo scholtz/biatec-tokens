@@ -1,7 +1,9 @@
 <template>
-  <div class="glass-effect rounded-xl p-6" aria-label="Policy summary panel">
-    <!-- Loading skeleton -->
-    <div v-if="loading" class="animate-pulse space-y-3" aria-busy="true" aria-label="Loading policy summary">
+  <div class="glass-effect rounded-xl p-6" role="region" aria-label="Policy summary panel">
+    <!-- Screen-reader loading announcement (sr-only) -->
+    <div v-if="loading" class="sr-only" role="status" aria-live="polite">Loading policy summary, please wait…</div>
+    <!-- Loading skeleton — aria-hidden: purely visual, no meaningful content for AT -->
+    <div v-if="loading" class="animate-pulse space-y-3" aria-hidden="true">
       <div class="h-4 bg-white/10 rounded w-3/4"></div>
       <div class="h-4 bg-white/10 rounded w-full"></div>
       <div class="h-4 bg-white/10 rounded w-5/6"></div>
@@ -50,7 +52,7 @@
         <div
           v-for="gap in policy.gaps"
           :key="gap.id"
-          :class="gap.severity === 'error' ? 'bg-red-900/30 border-red-700/50' : 'bg-amber-900/30 border-amber-700/50'"
+          :class="gap.severity === 'error' ? 'bg-red-800 border-red-700' : 'bg-amber-800 border-amber-700'"
           class="flex items-start gap-2 border rounded-lg px-3 py-2 text-sm"
         >
           <i
@@ -58,12 +60,12 @@
             class="pi mt-0.5 flex-shrink-0"
             aria-hidden="true"
           ></i>
-          <span :class="gap.severity === 'error' ? 'text-red-300' : 'text-amber-300'">{{ gap.message }}</span>
+          <span :class="gap.severity === 'error' ? 'text-red-200' : 'text-amber-200'">{{ gap.message }}</span>
         </div>
       </div>
 
       <!-- Last updated footer -->
-      <div class="flex items-center gap-2 text-xs text-gray-500 border-t border-gray-700/50 pt-3">
+      <div class="flex items-center gap-2 text-xs text-gray-400 border-t border-gray-700/50 pt-3">
         <i class="pi pi-clock" aria-hidden="true"></i>
         <span>Last updated {{ lastUpdatedText }} by {{ policy.lastUpdatedByEmail }}</span>
       </div>
@@ -124,9 +126,9 @@ const enabledCategoriesCount = computed(
 const healthBadgeClass = computed(() => {
   const errors = props.policy.gaps.filter((g) => g.severity === "error").length;
   const warnings = props.policy.gaps.filter((g) => g.severity === "warning").length;
-  if (errors > 0) return "bg-red-900/50 text-red-300 border border-red-700/50";
-  if (warnings > 0) return "bg-amber-900/50 text-amber-300 border border-amber-700/50";
-  return "bg-green-900/50 text-green-300 border border-green-700/50";
+  if (errors > 0) return "bg-red-800 text-red-200 border border-red-700";
+  if (warnings > 0) return "bg-amber-800 text-amber-200 border border-amber-700";
+  return "bg-green-800 text-green-200 border border-green-700";
 });
 
 const healthLabel = computed(() => {
