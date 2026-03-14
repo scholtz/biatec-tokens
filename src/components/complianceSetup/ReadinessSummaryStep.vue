@@ -206,7 +206,7 @@
     </div>
 
     <!-- Deploy Readiness -->
-    <div v-if="readiness.isReadyForDeploy" class="glass-effect rounded-xl p-8 text-center bg-gradient-to-br from-green-900 to-emerald-900 border border-green-700">
+    <div v-if="readiness.isReadyForDeploy" class="rounded-xl p-8 text-center bg-gradient-to-br from-green-900 to-emerald-900 border border-green-700">
       <i class="pi pi-check-circle text-6xl text-green-400 mb-4"></i>
       <h3 class="text-2xl font-semibold text-green-300 mb-3">
         Ready for Deployment
@@ -274,9 +274,9 @@ defineEmits<Emits>()
 // Readiness score styling
 const readinessScoreClass = computed(() => {
   const score = props.readiness.readinessScore
-  if (score >= 80) return 'bg-gradient-to-br from-green-900 to-emerald-900 border-green-700'
-  if (score >= 50) return 'bg-gradient-to-br from-yellow-900 to-amber-900 border-yellow-700'
-  return 'bg-gradient-to-br from-red-900 to-orange-900 border-red-700'
+  if (score >= 80) return 'border-2 border-green-700'
+  if (score >= 50) return 'border-2 border-yellow-700'
+  return 'border-2 border-red-700'
 })
 
 const readinessScoreBgClass = computed(() => {
