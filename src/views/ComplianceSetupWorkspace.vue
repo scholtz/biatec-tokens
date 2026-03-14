@@ -265,7 +265,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useComplianceSetupStore } from '../stores/complianceSetup'
 import JurisdictionPolicyStep from '../components/complianceSetup/JurisdictionPolicyStep.vue'
@@ -390,11 +390,14 @@ const goToDashboard = () => {
   router.push('/compliance')
 }
 
-// Lifecycle
-onMounted(() => {
-  // Load existing draft if available
-  setupStore.loadDraft()
-})
+// Load existing draft synchronously during setup — BEFORE child components mount.
+// This is critical because child step components emit 'validation-change' in their
+// own onMounted hooks, which triggers completeStep → saveDraft in the parent handler.
+// Since Vue 3 fires child onMounted BEFORE parent onMounted, calling loadDraft() in
+// the parent's onMounted is too late: the child's save already overwrites any
+// pre-seeded draft. Calling loadDraft() here (in the setup() phase) ensures the
+// correct currentStepIndex is in place BEFORE any child component mounts or emits.
+setupStore.loadDraft()
 </script>
 
 <style scoped>
