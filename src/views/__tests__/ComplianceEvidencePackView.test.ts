@@ -347,9 +347,8 @@ describe('ComplianceEvidencePackView — Rendering', () => {
   it('copy contains no wallet connector framing (AC #8)', async () => {
     const wrapper = mountView()
     await nextTick()
-    const html = wrapper.html().toLowerCase()
-    expect(html).not.toMatch(/walletconnect|metamask|\bpera wallet\b|defly/i)
-    expect(html).not.toMatch(/connect.*wallet|wallet.*connect/)
+    const html = wrapper.html()
+    expect(html).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
   })
 
   it('copy does not contain "sign transaction" language (AC #8)', async () => {

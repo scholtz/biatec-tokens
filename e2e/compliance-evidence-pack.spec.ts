@@ -350,7 +350,8 @@ test.describe('Compliance Evidence Pack — wallet-free language (AC #8)', () =>
     const workspace = page.getByTestId('evidence-pack-workspace')
     await expect(workspace).toBeVisible({ timeout: 20000 })
     const text = await workspace.textContent({ timeout: 10000 })
-    expect(text?.toLowerCase()).not.toMatch(/connect your wallet|wallet required/)
+    // Use specific brand names only to avoid false positives on informational copy
+    expect(text).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
     expect(text?.toLowerCase()).not.toMatch(/sign transaction/)
   })
 

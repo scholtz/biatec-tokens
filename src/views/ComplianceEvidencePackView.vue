@@ -23,7 +23,7 @@
  *  7. Export Bundle              — JSON / CSV download actions
  */
 
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import MainLayout from '../layout/MainLayout.vue'
 import {
@@ -56,6 +56,8 @@ const loadError = ref<string | null>(null)
 const expandedSections = ref<Set<string>>(new Set())
 const exportStatus = ref<'idle' | 'exporting' | 'success' | 'error'>('idle')
 const lastRefreshed = ref<string | null>(null)
+// Timeout handles for cleanup on unmount (prevent state updates on unmounted component)
+let exportResetTimeout: ReturnType<typeof setTimeout> | null = null
 
 // ---------------------------------------------------------------------------
 // Evidence data — in a production build this would come from a backend API or
@@ -342,7 +344,8 @@ function exportJSON(): void {
     const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
     downloadBlob(content, 'application/json', `compliance-evidence-pack-${ts}.json`)
     exportStatus.value = 'success'
-    setTimeout(() => { exportStatus.value = 'idle' }, 3000)
+    if (exportResetTimeout) clearTimeout(exportResetTimeout)
+    exportResetTimeout = setTimeout(() => { exportStatus.value = 'idle' }, 3000)
   } catch {
     exportStatus.value = 'error'
   }
@@ -368,7 +371,8 @@ function exportCSV(): void {
     const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
     downloadBlob(csv, 'text/csv', `compliance-evidence-pack-${ts}.csv`)
     exportStatus.value = 'success'
-    setTimeout(() => { exportStatus.value = 'idle' }, 3000)
+    if (exportResetTimeout) clearTimeout(exportResetTimeout)
+    exportResetTimeout = setTimeout(() => { exportStatus.value = 'idle' }, 3000)
   } catch {
     exportStatus.value = 'error'
   }
@@ -381,6 +385,10 @@ function navigateTo(path: string | null): void {
 // ---------------------------------------------------------------------------
 // Lifecycle
 // ---------------------------------------------------------------------------
+
+onBeforeUnmount(() => {
+  if (exportResetTimeout) clearTimeout(exportResetTimeout)
+})
 
 onMounted(() => {
   try {
