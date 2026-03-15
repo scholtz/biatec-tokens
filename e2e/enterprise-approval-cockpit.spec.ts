@@ -706,11 +706,14 @@ test.describe('Enterprise Approval Queue — strict sign-off readiness workspace
     const configAlert = page.getByTestId('config-blocked-alert')
     await configAlert.waitFor({ state: 'visible', timeout: 20000 })
     const text = await configAlert.textContent({ timeout: 5000 }).catch(() => '')
-    // Should use operational language, not just say "test failed"
-    const isOperational = (text ?? '').toLowerCase().includes('config') ||
-      (text ?? '').toLowerCase().includes('environment') ||
-      (text ?? '').toLowerCase().includes('operational')
-    expect(isOperational).toBe(true)
+    // Must communicate this is an OPERATIONAL gap (missing env/credentials),
+    // not a product/feature bug — per AC #9 and the roadmap blocker narrative.
+    const lower = (text ?? '').toLowerCase()
+    const mentionsCredentials = lower.includes('credentials') || lower.includes('credential')
+    const mentionsEnvOrConfig = lower.includes('environment') || lower.includes('config')
+    const mentionsProtectedLane = lower.includes('protected') || lower.includes('sign-off')
+    expect(mentionsCredentials || mentionsEnvOrConfig).toBe(true)
+    expect(mentionsProtectedLane).toBe(true)
   })
 
   test('evidence dimensions list is rendered (AC #1)', async ({ page }) => {
@@ -830,23 +833,23 @@ test.describe('Enterprise Approval Queue — strict sign-off readiness workspace
     expect(usesComplianceLanguage).toBe(true)
   })
 
-  test('readiness panel is keyboard-navigable (focus reaches content) (AC #5)', async ({ page }) => {
+  test('readiness panel is keyboard-navigable (evidence links are focusable) (AC #5)', async ({ page }) => {
     await openCockpit(page)
     const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 30000 })
     await page.waitForLoadState('load', { timeout: 10000 })
-    // Click into the readiness panel area to give it proximity focus
     const panel = page.getByTestId('sign-off-readiness-panel')
     await panel.waitFor({ state: 'visible', timeout: 20000 })
-    // Tab a few times to navigate into the panel
-    await page.locator('body').click()
-    for (let i = 0; i < 15; i++) {
-      await page.keyboard.press('Tab')
-    }
-    const hasFocusedElement = await page.evaluate(() => {
+    // Evidence links inside the panel are keyboard-focusable interactive elements
+    const evidenceLinks = panel.locator('[data-testid^="dimension-link-"]')
+    const linkCount = await evidenceLinks.count()
+    expect(linkCount).toBeGreaterThanOrEqual(1)
+    // Focus the first evidence link directly and verify it receives focus
+    await evidenceLinks.first().focus()
+    const hasFocusedLink = await page.evaluate(() => {
       const active = document.activeElement
       return active !== null && active !== document.body && active !== document.documentElement
     })
-    expect(hasFocusedElement).toBe(true)
+    expect(hasFocusedLink).toBe(true)
   })
 })

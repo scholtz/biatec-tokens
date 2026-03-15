@@ -178,7 +178,7 @@
                 class="ml-1 text-gray-500"
                 :aria-label="`Owner: ${dep.ownerDomain}`"
               >
-                (Owned by: {{ OWNER_DOMAIN_NEXT_ACTION_LABELS[dep.ownerDomain].replace('Action required by: ', '') }})
+                (Owned by: {{ ownerDomainDisplayName(dep.ownerDomain) }})
               </span>
             </div>
           </li>
@@ -344,7 +344,7 @@
                 :aria-label="`Action owner: ${OWNER_DOMAIN_NEXT_ACTION_LABELS[action.ownerDomain]}`"
                 :data-testid="`next-action-owner-${action.id}`"
               >
-                {{ OWNER_DOMAIN_NEXT_ACTION_LABELS[action.ownerDomain].replace('Action required by: ', '') }}
+                {{ ownerDomainDisplayName(action.ownerDomain) }}
               </span>
             </div>
 
@@ -411,6 +411,7 @@ import type { ReleaseReadinessState, SignOffReadinessState } from '../../utils/r
 import {
   SIGN_OFF_READINESS_LABELS,
   OWNER_DOMAIN_NEXT_ACTION_LABELS,
+  ownerDomainDisplayName,
   readinessStateBadgeClass,
   dimensionCardBorderClass,
   dimensionCardBgClass,

@@ -615,12 +615,19 @@ describe('SignOffReadinessPanel — accessibility', () => {
     expect(ariaLabel!.toLowerCase()).toContain('missing')
   })
 
-  it('product-vs-evidence notice has accessible aria-label', async () => {
+  it('product-vs-evidence notice has accessible aria-label and meaningful content', async () => {
     const wrapper = await mountPanel(makeReadiness())
     const notice = wrapper.find('[data-testid="product-vs-evidence-notice"]')
     const ariaLabel = notice.attributes('aria-label')
     expect(ariaLabel).toBeTruthy()
     expect(ariaLabel!.toLowerCase()).toContain('evidence')
+    // Content must explain the distinction (WCAG SC 1.3.1 programmatic determination)
+    const text = notice.text()
+    expect(text.length).toBeGreaterThan(20)
+    const coversDistinction = text.toLowerCase().includes('delivered') ||
+      text.toLowerCase().includes('implemented') ||
+      text.toLowerCase().includes('operational')
+    expect(coversDistinction).toBe(true)
   })
 
   it('config-blocked alert has aria-label', async () => {

@@ -13,6 +13,7 @@ import {
   SIGN_OFF_READINESS_LABELS,
   SIGN_OFF_READINESS_DESCRIPTIONS,
   OWNER_DOMAIN_NEXT_ACTION_LABELS,
+  NEXT_ACTION_IDS,
   EVIDENCE_FRESHNESS_DAYS,
   EVIDENCE_FRESHNESS_MS,
   isSignOffBlocking,
@@ -34,6 +35,7 @@ import {
   dimensionCardBgClass,
   readinessBannerClass,
   readinessBannerTextClass,
+  ownerDomainDisplayName,
 } from '../releaseReadiness'
 
 // ---------------------------------------------------------------------------
@@ -382,7 +384,7 @@ describe('deriveNextActions', () => {
     const dims = [makeDimension({ state: 'ready' })]
     const configs = [makeConfigDep({ isConfigured: false, isRequired: true })]
     const actions = deriveNextActions(dims, configs)
-    const configAction = actions.find((a) => a.id === 'config-missing')
+    const configAction = actions.find((a) => a.id === NEXT_ACTION_IDS.CONFIG_MISSING)
     expect(configAction).toBeDefined()
     expect(configAction!.isLaunchBlocking).toBe(true)
   })
@@ -391,14 +393,14 @@ describe('deriveNextActions', () => {
     const dims = [makeDimension({ state: 'ready' })]
     const configs = [makeConfigDep({ isConfigured: false, isRequired: false })]
     const actions = deriveNextActions(dims, configs)
-    expect(actions.find((a) => a.id === 'config-missing')).toBeUndefined()
+    expect(actions.find((a) => a.id === NEXT_ACTION_IDS.CONFIG_MISSING)).toBeUndefined()
   })
 
   it('includes evidence-missing action for missing critical dimensions', () => {
     const dims = [makeDimension({ state: 'missing_evidence', isLaunchCritical: true })]
     const configs = [makeConfigDep({ isConfigured: true })]
     const actions = deriveNextActions(dims, configs)
-    const missingAction = actions.find((a) => a.id === 'evidence-missing')
+    const missingAction = actions.find((a) => a.id === NEXT_ACTION_IDS.EVIDENCE_MISSING)
     expect(missingAction).toBeDefined()
     expect(missingAction!.isLaunchBlocking).toBe(true)
     expect(missingAction!.dimensionIds).toContain('test-dim')
@@ -408,7 +410,7 @@ describe('deriveNextActions', () => {
     const dims = [makeDimension({ state: 'stale_evidence', isLaunchCritical: true })]
     const configs = [makeConfigDep({ isConfigured: true })]
     const actions = deriveNextActions(dims, configs)
-    const staleAction = actions.find((a) => a.id === 'evidence-stale')
+    const staleAction = actions.find((a) => a.id === NEXT_ACTION_IDS.EVIDENCE_STALE)
     expect(staleAction).toBeDefined()
     expect(staleAction!.isLaunchBlocking).toBe(true)
   })
@@ -417,7 +419,7 @@ describe('deriveNextActions', () => {
     const dims = [makeDimension({ state: 'stale_evidence', isLaunchCritical: false })]
     const configs = [makeConfigDep({ isConfigured: true })]
     const actions = deriveNextActions(dims, configs)
-    const advisoryAction = actions.find((a) => a.id === 'advisory-improvements')
+    const advisoryAction = actions.find((a) => a.id === NEXT_ACTION_IDS.ADVISORY_IMPROVEMENTS)
     expect(advisoryAction).toBeDefined()
     expect(advisoryAction!.isLaunchBlocking).toBe(false)
   })
@@ -426,8 +428,8 @@ describe('deriveNextActions', () => {
     // Non-critical stale dims go to advisory, not to the blocking stale action
     const dims = [makeDimension({ state: 'stale_evidence', isLaunchCritical: false })]
     const actions = deriveNextActions(dims, [])
-    expect(actions.find((a) => a.id === 'evidence-stale')).toBeUndefined()
-    expect(actions.find((a) => a.id === 'advisory-improvements')).toBeDefined()
+    expect(actions.find((a) => a.id === NEXT_ACTION_IDS.EVIDENCE_STALE)).toBeUndefined()
+    expect(actions.find((a) => a.id === NEXT_ACTION_IDS.ADVISORY_IMPROVEMENTS)).toBeDefined()
   })
 
   it('can include multiple actions simultaneously', () => {
@@ -439,8 +441,38 @@ describe('deriveNextActions', () => {
     const actions = deriveNextActions(dims, configs)
     // Should have: config-missing, evidence-missing, advisory-improvements
     expect(actions.map((a) => a.id)).toEqual(
-      expect.arrayContaining(['config-missing', 'evidence-missing', 'advisory-improvements']),
+      expect.arrayContaining([
+        NEXT_ACTION_IDS.CONFIG_MISSING,
+        NEXT_ACTION_IDS.EVIDENCE_MISSING,
+        NEXT_ACTION_IDS.ADVISORY_IMPROVEMENTS,
+      ]),
     )
+  })
+
+  it('uses shared_ops owner when multiple config deps have different owners', () => {
+    const dims: EvidenceDimension[] = []
+    const configs = [
+      makeConfigDep({ isConfigured: false, isRequired: true, ownerDomain: 'compliance' }),
+      makeConfigDep({ id: 'dep2', isConfigured: false, isRequired: true, ownerDomain: 'legal' }),
+    ]
+    const actions = deriveNextActions(dims, configs)
+    const configAction = actions.find((a) => a.id === NEXT_ACTION_IDS.CONFIG_MISSING)
+    expect(configAction).toBeDefined()
+    // Multiple owners → canonical shared_ops attribution
+    expect(configAction!.ownerDomain).toBe('shared_ops')
+  })
+
+  it('uses the single owner when all missing config deps share one owner', () => {
+    const dims: EvidenceDimension[] = []
+    const configs = [
+      makeConfigDep({ isConfigured: false, isRequired: true, ownerDomain: 'compliance' }),
+      makeConfigDep({ id: 'dep2', isConfigured: false, isRequired: true, ownerDomain: 'compliance' }),
+    ]
+    const actions = deriveNextActions(dims, configs)
+    const configAction = actions.find((a) => a.id === NEXT_ACTION_IDS.CONFIG_MISSING)
+    expect(configAction).toBeDefined()
+    // Single shared owner → use that owner
+    expect(configAction!.ownerDomain).toBe('compliance')
   })
 })
 
@@ -729,7 +761,7 @@ describe('edge cases', () => {
     const configs = [makeConfigDep({ isConfigured: false, isRequired: false })]
     const state = deriveReleaseReadiness(dims, configs, freshTimestamp, true, NOW)
     expect(state.missingConfigCount).toBe(0)
-    expect(state.nextActions.find((a) => a.id === 'config-missing')).toBeUndefined()
+    expect(state.nextActions.find((a) => a.id === NEXT_ACTION_IDS.CONFIG_MISSING)).toBeUndefined()
   })
 
   it('correctly prioritizes missing > stale for overall state', () => {
@@ -801,5 +833,29 @@ describe('CSS helper functions', () => {
     const classes = states.map((s) => readinessBannerClass(s))
     const unique = new Set(classes)
     expect(unique.size).toBe(states.length)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 15. ownerDomainDisplayName
+// ---------------------------------------------------------------------------
+
+describe('ownerDomainDisplayName', () => {
+  it('returns display name without "Action required by:" prefix', () => {
+    expect(ownerDomainDisplayName('compliance')).toBe('Compliance Team')
+    expect(ownerDomainDisplayName('legal')).toBe('Legal Team')
+    expect(ownerDomainDisplayName('procurement')).toBe('Procurement Team')
+    expect(ownerDomainDisplayName('executive')).toBe('Executive Sponsor')
+    expect(ownerDomainDisplayName('shared_ops')).toBe('Shared Operations')
+    expect(ownerDomainDisplayName('unassigned')).toBe('Unassigned')
+  })
+
+  it('does not include a colon or "Action required by" prefix in any value', () => {
+    const domains = ['compliance', 'legal', 'procurement', 'executive', 'shared_ops', 'unassigned'] as const
+    for (const d of domains) {
+      const name = ownerDomainDisplayName(d)
+      expect(name).not.toContain('Action required by')
+      expect(name).not.toContain(':')
+    }
   })
 })

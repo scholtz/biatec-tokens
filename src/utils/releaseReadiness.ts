@@ -197,6 +197,32 @@ export const OWNER_DOMAIN_NEXT_ACTION_LABELS: Record<OwnerDomain, string> = {
   unassigned: 'Action required by: Unassigned (escalation needed)',
 }
 
+/** Display name for an owner domain (no "Action required by:" prefix). */
+export const OWNER_DOMAIN_DISPLAY_NAMES: Record<OwnerDomain, string> = {
+  compliance: 'Compliance Team',
+  legal: 'Legal Team',
+  procurement: 'Procurement Team',
+  executive: 'Executive Sponsor',
+  shared_ops: 'Shared Operations',
+  unassigned: 'Unassigned',
+}
+
+/** Returns the display name for an owner domain (without label prefix). */
+export function ownerDomainDisplayName(domain: OwnerDomain): string {
+  return OWNER_DOMAIN_DISPLAY_NAMES[domain]
+}
+
+// ---------------------------------------------------------------------------
+// Next action ID constants (export to allow stable references in tests/components)
+// ---------------------------------------------------------------------------
+
+export const NEXT_ACTION_IDS = {
+  CONFIG_MISSING: 'config-missing',
+  EVIDENCE_MISSING: 'evidence-missing',
+  EVIDENCE_STALE: 'evidence-stale',
+  ADVISORY_IMPROVEMENTS: 'advisory-improvements',
+} as const
+
 // ---------------------------------------------------------------------------
 // Freshness helpers
 // ---------------------------------------------------------------------------
@@ -241,7 +267,6 @@ export function formatEvidenceFreshnessLabel(
   const hours = Math.floor(minutes / 60)
   if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`
   const days = Math.floor(hours / 24)
-  if (days === 0) return 'Today'
   return `${days} day${days === 1 ? '' : 's'} ago`
 }
 
@@ -312,9 +337,14 @@ export function deriveNextActions(
   // Config-blocked dependencies go first
   const missingConfigs = configDeps.filter((c) => !c.isConfigured && c.isRequired)
   if (missingConfigs.length > 0) {
+    // When multiple configs are missing and owned by different domains, use the
+    // canonical shared_ops domain to avoid mis-attributing a multi-team dependency
+    // to a single owner.  If all missing configs share one owner, use that owner.
+    const uniqueOwners = [...new Set(missingConfigs.map((c) => c.ownerDomain))]
+    const configOwner: OwnerDomain = uniqueOwners.length === 1 ? uniqueOwners[0] : 'shared_ops'
     actions.push({
-      id: 'config-missing',
-      ownerDomain: missingConfigs[0].ownerDomain,
+      id: NEXT_ACTION_IDS.CONFIG_MISSING,
+      ownerDomain: configOwner,
       summary: 'Configure missing protected environment credentials',
       explanation:
         'The strict sign-off lane requires backend environment variables or secrets that are not yet configured. ' +
@@ -330,7 +360,7 @@ export function deriveNextActions(
   const missingDims = dimensions.filter((d) => d.isLaunchCritical && d.state === 'missing_evidence')
   if (missingDims.length > 0) {
     actions.push({
-      id: 'evidence-missing',
+      id: NEXT_ACTION_IDS.EVIDENCE_MISSING,
       ownerDomain: missingDims[0].ownerDomain,
       summary: 'Execute the protected strict sign-off run to generate release evidence',
       explanation:
@@ -347,7 +377,7 @@ export function deriveNextActions(
   const staleDims = dimensions.filter((d) => d.isLaunchCritical && d.state === 'stale_evidence')
   if (staleDims.length > 0) {
     actions.push({
-      id: 'evidence-stale',
+      id: NEXT_ACTION_IDS.EVIDENCE_STALE,
       ownerDomain: staleDims[0].ownerDomain,
       summary: 'Re-run the protected sign-off workflow to refresh stale evidence',
       explanation:
@@ -364,7 +394,7 @@ export function deriveNextActions(
   const advisoryDims = dimensions.filter((d) => !d.isLaunchCritical && d.state !== 'ready')
   if (advisoryDims.length > 0) {
     actions.push({
-      id: 'advisory-improvements',
+      id: NEXT_ACTION_IDS.ADVISORY_IMPROVEMENTS,
       ownerDomain: advisoryDims[0].ownerDomain,
       summary: 'Address advisory evidence improvements to strengthen release posture',
       explanation:
