@@ -597,3 +597,256 @@ test.describe('Enterprise Approval Queue — remediation workflow panel', () => 
     expect(text).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
   })
 })
+
+// ---------------------------------------------------------------------------
+// Section 8: Strict Sign-Off Readiness Workspace (new AC #13–AC #22)
+// ---------------------------------------------------------------------------
+
+test.describe('Enterprise Approval Queue — strict sign-off readiness workspace', () => {
+  test('sign-off readiness panel is present on the cockpit page (AC #1)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const panel = page.getByTestId('sign-off-readiness-panel')
+    await expect(panel).toBeAttached({ timeout: 20000 })
+  })
+
+  test('readiness panel heading is "Strict Sign-Off Readiness"', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const readinessHeading = page.getByTestId('readiness-heading')
+    await readinessHeading.waitFor({ state: 'visible', timeout: 20000 })
+    const text = await readinessHeading.textContent({ timeout: 5000 }).catch(() => '')
+    expect(text).toContain('Strict Sign-Off Readiness')
+  })
+
+  test('readiness state badge is present with role="status" (AC #2, AC #5)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const badge = page.getByTestId('readiness-state-badge')
+    await expect(badge).toBeAttached({ timeout: 20000 })
+    const role = await badge.getAttribute('role')
+    expect(role).toBe('status')
+  })
+
+  test('readiness state badge shows a labeled state (not color-only) (AC #5)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const badge = page.getByTestId('readiness-state-badge')
+    await badge.waitFor({ state: 'visible', timeout: 20000 })
+    const text = await badge.textContent({ timeout: 5000 }).catch(() => '')
+    expect(text).toBeTruthy()
+    expect(text!.trim().length).toBeGreaterThan(0)
+    const ariaLabel = await badge.getAttribute('aria-label')
+    expect(ariaLabel).toBeTruthy()
+  })
+
+  test('readiness summary banner is a region landmark with aria-label (AC #5)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const banner = page.getByTestId('readiness-summary-banner')
+    await expect(banner).toBeAttached({ timeout: 20000 })
+    const role = await banner.getAttribute('role')
+    expect(role).toBe('region')
+    const ariaLabel = await banner.getAttribute('aria-label')
+    expect(ariaLabel).toBeTruthy()
+    expect(ariaLabel!.toLowerCase()).toContain('readiness')
+  })
+
+  test('blocking count stat is visible in readiness panel (AC #2)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const blockingCount = page.getByTestId('readiness-blocking-count')
+    await expect(blockingCount).toBeAttached({ timeout: 20000 })
+  })
+
+  test('stale count stat is visible in readiness panel (AC #2)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const staleCount = page.getByTestId('readiness-stale-count')
+    await expect(staleCount).toBeAttached({ timeout: 20000 })
+  })
+
+  test('last-run bar is visible and shows freshness (AC #5)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const lastRunBar = page.getByTestId('last-run-bar')
+    await expect(lastRunBar).toBeAttached({ timeout: 20000 })
+    const runLabel = page.getByTestId('last-run-label')
+    await expect(runLabel).toBeAttached({ timeout: 10000 })
+    const text = await runLabel.textContent({ timeout: 5000 }).catch(() => '')
+    expect(text).toBeTruthy()
+    // Default state: no protected run recorded yet
+    const ariaLabel = await runLabel.getAttribute('aria-label')
+    expect(ariaLabel).toBeTruthy()
+    expect(ariaLabel!.toLowerCase()).toContain('last protected sign-off evidence')
+  })
+
+  test('configuration blocked alert is visible for MVP blocking state (AC #3, AC #9)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const configAlert = page.getByTestId('config-blocked-alert')
+    await expect(configAlert).toBeAttached({ timeout: 20000 })
+    const role = await configAlert.getAttribute('role')
+    expect(role).toBe('alert')
+  })
+
+  test('config blocked alert explains operational (not product) gap (AC #9)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const configAlert = page.getByTestId('config-blocked-alert')
+    await configAlert.waitFor({ state: 'visible', timeout: 20000 })
+    const text = await configAlert.textContent({ timeout: 5000 }).catch(() => '')
+    // Should use operational language, not just say "test failed"
+    const isOperational = (text ?? '').toLowerCase().includes('config') ||
+      (text ?? '').toLowerCase().includes('environment') ||
+      (text ?? '').toLowerCase().includes('operational')
+    expect(isOperational).toBe(true)
+  })
+
+  test('evidence dimensions list is rendered (AC #1)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const dimensionsHeading = page.getByTestId('dimensions-heading')
+    await expect(dimensionsHeading).toBeAttached({ timeout: 20000 })
+    const dimensionsList = page.getByTestId('dimensions-list')
+    await expect(dimensionsList).toBeAttached({ timeout: 10000 })
+    const items = await dimensionsList.locator('li').all()
+    expect(items.length).toBeGreaterThanOrEqual(3)
+  })
+
+  test('dimension cards show state badges with aria-labels (AC #5)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const panel = page.getByTestId('sign-off-readiness-panel')
+    await expect(panel).toBeAttached({ timeout: 20000 })
+    // Find dimension state badges in the panel
+    const stateBadges = panel.locator('[data-testid^="dimension-state-"]')
+    const count = await stateBadges.count()
+    expect(count).toBeGreaterThanOrEqual(3)
+    // First badge should have aria-label
+    if (count > 0) {
+      const firstAriaLabel = await stateBadges.first().getAttribute('aria-label')
+      expect(firstAriaLabel).toBeTruthy()
+      expect(firstAriaLabel!.toLowerCase()).toContain('evidence state')
+    }
+  })
+
+  test('next actions section is visible (AC #4)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const nextActionsSection = page.getByTestId('next-actions-section')
+    await expect(nextActionsSection).toBeAttached({ timeout: 20000 })
+    const nextActionsHeading = page.getByTestId('next-actions-heading')
+    await expect(nextActionsHeading).toBeAttached({ timeout: 10000 })
+  })
+
+  test('next actions show owner domain attribution (AC #4)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const panel = page.getByTestId('sign-off-readiness-panel')
+    await expect(panel).toBeAttached({ timeout: 20000 })
+    // Owner badges on next actions
+    const ownerBadges = panel.locator('[data-testid^="next-action-owner-"]')
+    const count = await ownerBadges.count()
+    expect(count).toBeGreaterThanOrEqual(1)
+    if (count > 0) {
+      const ariaLabel = await ownerBadges.first().getAttribute('aria-label')
+      expect(ariaLabel).toBeTruthy()
+      expect(ariaLabel!.toLowerCase()).toContain('action owner')
+    }
+  })
+
+  test('launch-blocking badge is present on at least one next action (AC #3)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const panel = page.getByTestId('sign-off-readiness-panel')
+    await expect(panel).toBeAttached({ timeout: 20000 })
+    const blockingBadges = panel.locator('[data-testid^="next-action-blocking-"]')
+    const count = await blockingBadges.count()
+    expect(count).toBeGreaterThanOrEqual(1)
+  })
+
+  test('product-vs-evidence notice is visible (AC #6)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const notice = page.getByTestId('product-vs-evidence-notice')
+    await expect(notice).toBeAttached({ timeout: 20000 })
+    const role = await notice.getAttribute('role')
+    expect(role).toBe('note')
+  })
+
+  test('product-vs-evidence notice distinguishes feature delivery from evidence (AC #6)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const notice = page.getByTestId('product-vs-evidence-notice')
+    await notice.waitFor({ state: 'visible', timeout: 20000 })
+    const text = await notice.textContent({ timeout: 5000 }).catch(() => '')
+    // Should explain that product functionality is delivered but evidence is pending
+    const distinguishesFeatureVsEvidence = (text ?? '').toLowerCase().includes('delivered') ||
+      (text ?? '').toLowerCase().includes('implemented') ||
+      (text ?? '').toLowerCase().includes('operational')
+    expect(distinguishesFeatureVsEvidence).toBe(true)
+  })
+
+  test('readiness panel contains no wallet connector UI (AC #7)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const panel = page.getByTestId('sign-off-readiness-panel')
+    await expect(panel).toBeAttached({ timeout: 20000 })
+    const text = await panel.textContent({ timeout: 5000 }).catch(() => '')
+    expect(text).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
+  })
+
+  test('readiness panel uses enterprise compliance language (AC #7)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const panel = page.getByTestId('sign-off-readiness-panel')
+    await panel.waitFor({ state: 'visible', timeout: 20000 })
+    const text = await panel.textContent({ timeout: 5000 }).catch(() => '')
+    // Should use enterprise compliance language
+    const usesComplianceLanguage =
+      (text ?? '').toLowerCase().includes('evidence') ||
+      (text ?? '').toLowerCase().includes('sign-off') ||
+      (text ?? '').toLowerCase().includes('compliance')
+    expect(usesComplianceLanguage).toBe(true)
+  })
+
+  test('readiness panel is keyboard-navigable (focus reaches content) (AC #5)', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+    // Click into the readiness panel area to give it proximity focus
+    const panel = page.getByTestId('sign-off-readiness-panel')
+    await panel.waitFor({ state: 'visible', timeout: 20000 })
+    // Tab a few times to navigate into the panel
+    await page.locator('body').click()
+    for (let i = 0; i < 15; i++) {
+      await page.keyboard.press('Tab')
+    }
+    const hasFocusedElement = await page.evaluate(() => {
+      const active = document.activeElement
+      return active !== null && active !== document.body && active !== document.documentElement
+    })
+    expect(hasFocusedElement).toBe(true)
+  })
+})

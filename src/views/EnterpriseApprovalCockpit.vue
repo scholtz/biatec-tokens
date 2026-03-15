@@ -528,6 +528,11 @@
             :workflow="remediationWorkflow"
           />
 
+          <!-- ── Strict Sign-Off Readiness Workspace ── -->
+          <SignOffReadinessPanel
+            :readiness="signOffReadiness"
+          />
+
           <!-- ── Navigation Links ── -->
           <nav
             aria-label="Related compliance workspaces"
@@ -571,6 +576,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink } from 'vue-router'
 import MainLayout from '../layout/MainLayout.vue'
 import RemediationTaskPanel from '../components/approval/RemediationTaskPanel.vue'
+import SignOffReadinessPanel from '../components/approval/SignOffReadinessPanel.vue'
 
 import {
   ClipboardDocumentCheckIcon,
@@ -614,6 +620,7 @@ import {
 } from '../utils/approvalCockpit'
 
 import { deriveRemediationWorkflow } from '../utils/remediationWorkflow'
+import { buildDefaultReleaseReadiness } from '../utils/releaseReadiness'
 
 // ---------------------------------------------------------------------------
 // State
@@ -632,6 +639,7 @@ const recommendation = computed(() => state.value.recommendation)
 const topBlockers = computed(() => getTopBlockers(state.value.stages))
 const blockingStage = computed(() => findBlockingStage(state.value.stages))
 const remediationWorkflow = computed(() => deriveRemediationWorkflow(state.value.stages))
+const signOffReadiness = computed(() => buildDefaultReleaseReadiness())
 
 const formattedRefreshedAt = computed(() => {
   if (!state.value.refreshedAt) return ''
@@ -766,6 +774,7 @@ defineExpose({
   topBlockers,
   blockingStage,
   remediationWorkflow,
+  signOffReadiness,
   stageHasStaleEvidence,
   stageNumberClass,
   blockerCardClass,
