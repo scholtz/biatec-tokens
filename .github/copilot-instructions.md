@@ -1964,6 +1964,70 @@ grep -n "locator('\[data-testid\^=" e2e/*.spec.ts | grep -v "getByTestId"
 - ✅ Always chain: `expandedContainer.locator('[data-testid^="..."]').first()`
 - ✅ Expand the container, then get a reference to the container, then search inside it
 
+---
+
+### 7z. Vue 3 Fallthrough Attributes Override Component Root `data-testid` — Never Pass `data-testid` to a Component That Already Sets One (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 15, 2026 (PR #652 — 9 CI failures) 🚨**
+
+**Violation**: `EnterpriseApprovalCockpit.vue` passed `data-testid="remediation-panel"` to `<RemediationTaskPanel>`. The component's root `<section>` already had `data-testid="remediation-task-panel"`. In Vue 3, fallthrough attributes from the parent **override** the child component's own root-element attributes. The `data-testid` on the rendered DOM became `"remediation-panel"` (the parent's value), not `"remediation-task-panel"` (the component's own value). All 9 E2E tests that queried `page.getByTestId('remediation-task-panel')` failed with `element(s) not found`.
+
+**Root Cause**:
+- Vue 3 merges `class` and `style` attributes from parent + child, but for all OTHER attributes (including `data-testid`), the parent's value **wins** and overrides the child's value.
+- The developer assumed passing `data-testid` to a component was additive or inert — but it silently replaced the component's own testid.
+- 9 E2E tests that were written correctly (asserting on the component's own testid) started failing after the parent added its own override.
+
+**Vue 3 Attribute Inheritance Rule** (mandatory knowledge):
+```
+- class="..." + class="..." → MERGED (both classes applied)
+- style="..." + style="..." → MERGED (both style objects applied)
+- data-testid="..."         → OVERRIDDEN (parent's value replaces child's value)
+- aria-*="..."              → OVERRIDDEN (parent's value replaces child's value)
+- id="..."                  → OVERRIDDEN (parent's value replaces child's value)
+```
+
+**Correct Pattern**:
+```typescript
+// ❌ WRONG — parent passes data-testid that overrides component's own root testid
+<RemediationTaskPanel
+  :workflow="remediationWorkflow"
+  data-testid="remediation-panel"   // OVERRIDES RemediationTaskPanel's own data-testid="remediation-task-panel"!
+/>
+
+// ✅ CORRECT — let the component own its own data-testid; parent does not pass one
+<RemediationTaskPanel
+  :workflow="remediationWorkflow"
+/>
+// Now the component's root element retains data-testid="remediation-task-panel"
+```
+
+**When is it OK to pass data-testid to a component**?
+Only when the component's root element does NOT have its own `data-testid` already set — i.e., the parent is the sole source of the testid.
+
+**Pre-Commit Check** (MANDATORY when adding any `data-testid` or `aria-*` to a component invocation):
+```bash
+# 1. Find the component file
+grep -rn "data-testid" src/components/approval/MyComponent.vue | head -5
+# If this shows a data-testid on the root element, the component OWNS that testid.
+# Do NOT pass a different data-testid from the parent.
+
+# 2. If you need to test the component is present from an E2E test,
+#    use the component's OWN testid (e.g. page.getByTestId('remediation-task-panel'))
+#    NOT a new id you invented in the parent invocation.
+```
+
+**Investigation Pattern for "element not found" E2E failures**:
+If an E2E test fails with `expect(locator).toBeAttached() — element(s) not found` for a `data-testid` that exists in the component template:
+1. Check how the component is invoked in the parent view
+2. If the parent passes `data-testid="something-else"` as a prop → that's the bug
+3. Fix: remove the redundant `data-testid` from the parent invocation
+
+**Never Again**:
+- ❌ Pass `data-testid` to a component invocation when the component's root element already has one
+- ❌ Assume passing `data-testid` to a component is harmless — it silently overrides the component's own testid
+- ❌ Add a redundant `data-testid` on a component tag "for reference" — it will break E2E tests
+- ✅ Let components own their own `data-testid` values; parents should not override them
+
 
 
 

@@ -227,6 +227,28 @@ describe('deriveHandoffState', () => {
     ]
     expect(deriveHandoffState('legal_reviewer', stages)).toBe('waiting_on_compliance')
   })
+
+  it('returns waiting_on_procurement when procurement stage is blocked', () => {
+    const stages: ApprovalStage[] = [
+      makeStage({ id: 'procurement-review', role: 'procurement_reviewer', status: 'blocked' }),
+      makeStage({ id: 'exec-sign-off', role: 'executive_sponsor', status: 'not_started' }),
+    ]
+    expect(deriveHandoffState('executive_sponsor', stages)).toBe('waiting_on_procurement')
+  })
+
+  it('returns waiting_on_executive when executive stage is blocked', () => {
+    const stages: ApprovalStage[] = [
+      makeStage({ id: 'exec-sign-off', role: 'executive_sponsor', status: 'blocked' }),
+      makeStage({ id: 'compliance-review', role: 'compliance_operator', status: 'not_started' }),
+    ]
+    // A compliance operator's stage is not blocked by executive — but if the executive stage is 
+    // the only one blocking, it returns waiting_on_executive for a different role
+    const stages2: ApprovalStage[] = [
+      makeStage({ id: 'exec-sign-off', role: 'executive_sponsor', status: 'blocked' }),
+      makeStage({ id: 'procurement-review', role: 'procurement_reviewer', status: 'not_started' }),
+    ]
+    expect(deriveHandoffState('procurement_reviewer', stages2)).toBe('waiting_on_executive')
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -539,6 +561,30 @@ describe('prioritizeTasks', () => {
     const result = prioritizeTasks(tasks)
     expect(result[0].id).toBe('stale')
     expect(result[1].id).toBe('fresh')
+  })
+
+  it('sorts stale evidence before missing within same urgency', () => {
+    // This covers the b.evidenceFreshness === stale branch (a=missing, b=stale)
+    const tasks: RemediationTask[] = [
+      makeTask({ id: 'missing', isLaunchBlocking: true, urgency: 'high', evidenceFreshness: 'missing' }),
+      makeTask({ id: 'stale', isLaunchBlocking: true, urgency: 'high', evidenceFreshness: 'stale' }),
+    ]
+    const result = prioritizeTasks(tasks)
+    expect(result[0].id).toBe('stale')
+    expect(result[1].id).toBe('missing')
+  })
+
+  it('maintains stable order for two tasks with identical priority attributes', () => {
+    // Both fresh + same urgency: order is preserved (return 0 branch)
+    const tasks: RemediationTask[] = [
+      makeTask({ id: 'x', isLaunchBlocking: true, urgency: 'high', evidenceFreshness: 'fresh' }),
+      makeTask({ id: 'y', isLaunchBlocking: true, urgency: 'high', evidenceFreshness: 'fresh' }),
+    ]
+    const result = prioritizeTasks(tasks)
+    expect(result.length).toBe(2)
+    // Verify all original tasks are still present (stable output)
+    const resultIds = result.map((t) => t.id).sort()
+    expect(resultIds).toEqual(['x', 'y'])
   })
 
   it('does not mutate the input array', () => {

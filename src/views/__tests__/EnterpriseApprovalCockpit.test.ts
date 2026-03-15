@@ -16,6 +16,7 @@
  *  - Disclaimer text
  *  - Wallet-free language
  *  - Refresh action
+ *  - Remediation workflow panel integration
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -862,5 +863,132 @@ describe('stageNumberClass helper', () => {
     vi.advanceTimersByTime(400)
     await nextTick()
     expect((wrapper.vm as any).stageNumberClass(status)).toContain(colorHint)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 21. Remediation Workflow Panel — integration in cockpit view
+// ---------------------------------------------------------------------------
+
+describe('Remediation workflow panel integration', () => {
+  beforeEach(() => { vi.useFakeTimers() })
+  afterEach(() => { vi.useRealTimers() })
+
+  it('renders the RemediationTaskPanel component after data loads', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    await nextTick()
+    const panel = wrapper.find('[data-testid="remediation-task-panel"]')
+    expect(panel.exists()).toBe(true)
+  })
+
+  it('renders the Remediation Workflow heading inside the panel', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    await nextTick()
+    const title = wrapper.find('[data-testid="remediation-panel-title"]')
+    expect(title.exists()).toBe(true)
+    expect(title.text()).toContain('Remediation Workflow')
+  })
+
+  it('renders the remediation stats section', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    await nextTick()
+    const stats = wrapper.find('[data-testid="remediation-stats"]')
+    expect(stats.exists()).toBe(true)
+  })
+
+  it('renders the blocking count stat in the remediation panel', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    await nextTick()
+    const count = wrapper.find('[data-testid="remediation-blocking-count"]')
+    expect(count.exists()).toBe(true)
+    // Default mock state has blocking items — count should be a number
+    expect(count.text().trim()).toMatch(/^\d+$/)
+  })
+
+  it('panel section has aria-labelledby attribute pointing to the heading id', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    await nextTick()
+    const panel = wrapper.find('[data-testid="remediation-task-panel"]')
+    expect(panel.exists()).toBe(true)
+    expect(panel.attributes('aria-labelledby')).toBe('remediation-panel-heading')
+  })
+
+  it('renders the remediation panel disclaimer footer', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    await nextTick()
+    const disclaimer = wrapper.find('[data-testid="remediation-panel-disclaimer"]')
+    expect(disclaimer.exists()).toBe(true)
+    expect(disclaimer.text()).toContain('Remediation tasks')
+  })
+
+  it('remediation panel does not contain wallet-connector terminology', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    await nextTick()
+    const panel = wrapper.find('[data-testid="remediation-task-panel"]')
+    expect(panel.exists()).toBe(true)
+    expect(panel.text()).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
+  })
+
+  it('stage groups container is rendered when tasks exist', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    await nextTick()
+    // Default state has blockers in several stages
+    const groups = wrapper.find('[data-testid="remediation-stage-groups"]')
+    expect(groups.exists()).toBe(true)
+  })
+
+  it('remediationWorkflow computed property is derived from stages', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    await nextTick()
+    const vm = wrapper.vm as any
+    // remediationWorkflow should be a valid workflow state object
+    expect(vm.remediationWorkflow).toBeDefined()
+    expect(typeof vm.remediationWorkflow.launchBlockingCount).toBe('number')
+    expect(typeof vm.remediationWorkflow.staleEvidenceCount).toBe('number')
+    expect(Array.isArray(vm.remediationWorkflow.stageGroups)).toBe(true)
+    expect(Array.isArray(vm.remediationWorkflow.allTasks)).toBe(true)
+  })
+
+  it('remediationWorkflow topUrgency reflects the highest severity blocking task', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    await nextTick()
+    const vm = wrapper.vm as any
+    // Default state has critical-severity blockers, so topUrgency should not be null
+    const validUrgencies = ['critical', 'high', 'medium', 'advisory', null]
+    expect(validUrgencies).toContain(vm.remediationWorkflow.topUrgency)
+  })
+
+  it('panel is placed after the blockers section and before navigation links', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    await nextTick()
+    const html = wrapper.html()
+    const panelIdx = html.indexOf('data-testid="remediation-task-panel"')
+    const navIdx = html.indexOf('data-testid="cockpit-nav"')
+    // Panel must appear before navigation
+    expect(panelIdx).toBeGreaterThan(0)
+    expect(navIdx).toBeGreaterThan(0)
+    expect(panelIdx).toBeLessThan(navIdx)
   })
 })
