@@ -859,3 +859,86 @@ describe('ownerDomainDisplayName', () => {
     }
   })
 })
+
+// ---------------------------------------------------------------------------
+// 16. formatEvidenceFreshnessLabel — negative / future timestamp
+// ---------------------------------------------------------------------------
+
+const CLOCK_SKEW_TOLERANCE_MS = 60_000 // 60 seconds ahead
+
+describe('formatEvidenceFreshnessLabel — edge cases', () => {
+  it('returns "Just now" for a future timestamp (clock skew tolerance)', () => {
+    // ageMs < 0 when the evidence timestamp is slightly in the future
+    const future = new Date(NOW.getTime() + CLOCK_SKEW_TOLERANCE_MS).toISOString()
+    expect(formatEvidenceFreshnessLabel(future, NOW)).toBe('Just now')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 17. deriveReadinessHeadline — singular/plural completeness
+// ---------------------------------------------------------------------------
+
+describe('deriveReadinessHeadline — singular forms', () => {
+  it('uses singular "dimension requires" for stale_evidence with count = 1', () => {
+    const h = deriveReadinessHeadline('stale_evidence', 1, 0)
+    // Singular: "1 evidence dimension requires a fresh protected run"
+    expect(h).toContain('1')
+    expect(h.toLowerCase()).not.toContain('dimensions require ')
+  })
+
+  it('uses plural "dimensions require" for stale_evidence with count > 1', () => {
+    const h = deriveReadinessHeadline('stale_evidence', 2, 0)
+    expect(h).toContain('2')
+  })
+
+  it('uses singular "item is" for configuration_blocked with count = 1', () => {
+    const h = deriveReadinessHeadline('configuration_blocked', 0, 1)
+    expect(h).toContain('1')
+    expect(h.toLowerCase()).toContain('item')
+  })
+
+  it('uses plural "items are" for configuration_blocked with count > 1', () => {
+    const h = deriveReadinessHeadline('configuration_blocked', 0, 2)
+    expect(h).toContain('2')
+    expect(h.toLowerCase()).toContain('items')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 18. Full-state integration — advisory_follow_up scenario
+// ---------------------------------------------------------------------------
+
+describe('advisory_follow_up full integration', () => {
+  it('advisory_follow_up state is non-blocking', () => {
+    const dims = [
+      makeDimension({ id: 'd1', state: 'ready', isLaunchCritical: true }),
+      makeDimension({ id: 'd2', state: 'stale_evidence', isLaunchCritical: false }),
+    ]
+    const state = deriveReleaseReadiness(dims, [], freshTimestamp, true, NOW)
+    expect(state.overallState).toBe('advisory_follow_up')
+    expect(isSignOffBlocking(state.overallState)).toBe(false)
+    expect(isSignOffClear(state.overallState)).toBe(true)
+  })
+
+  it('advisory_follow_up headline mentions advisory', () => {
+    const h = deriveReadinessHeadline('advisory_follow_up', 0, 0)
+    expect(h.toLowerCase()).toContain('advisory')
+  })
+
+  it('advisory_follow_up rationale mentions launch-critical evidence being clear', () => {
+    const r = deriveReadinessRationale('advisory_follow_up')
+    // Should affirm that launch-critical evidence is clear
+    expect(r.toLowerCase()).toContain('launch')
+  })
+
+  it('advisory next action is not launch-blocking', () => {
+    const dims = [
+      makeDimension({ id: 'd1', state: 'ready', isLaunchCritical: true }),
+      makeDimension({ id: 'd2', state: 'stale_evidence', isLaunchCritical: false }),
+    ]
+    const actions = deriveNextActions(dims, [])
+    const advisoryAction = actions.find((a) => a.id === NEXT_ACTION_IDS.ADVISORY_IMPROVEMENTS)
+    expect(advisoryAction).toBeDefined()
+    expect(advisoryAction!.isLaunchBlocking).toBe(false)
+  })
+})

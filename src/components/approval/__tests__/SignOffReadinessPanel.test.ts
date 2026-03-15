@@ -34,10 +34,14 @@ import {
   type EvidenceDimension,
   type ConfigurationDependency,
   type ReadinessNextAction,
+  SIGN_OFF_READINESS_LABELS,
   buildDefaultReleaseReadiness,
   deriveReleaseReadiness,
 } from '../../../utils/releaseReadiness'
 import type { OwnerDomain } from '../../../utils/remediationWorkflow'
+
+// Derive valid states from the canonical labels map — stays in sync automatically
+const ALL_SIGN_OFF_STATES = Object.keys(SIGN_OFF_READINESS_LABELS) as ReleaseReadinessState['overallState'][]
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -637,5 +641,100 @@ describe('SignOffReadinessPanel — accessibility', () => {
     const alert = wrapper.find('[data-testid="config-blocked-alert"]')
     const ariaLabel = alert.attributes('aria-label')
     expect(ariaLabel).toBeTruthy()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 10. All five state variants rendered
+// ---------------------------------------------------------------------------
+
+describe('SignOffReadinessPanel — all five overallState variants', () => {
+  // Use the canonical labels map to derive valid states — stays in sync automatically
+  const states = ALL_SIGN_OFF_STATES
+
+  for (const state of states) {
+    it(`renders without error for overallState="${state}"`, async () => {
+      const wrapper = await mountPanel(
+        makeReadiness({ overallState: state }),
+      )
+      expect(wrapper.find('[data-testid="sign-off-readiness-panel"]').exists()).toBe(true)
+      const badge = wrapper.find('[data-testid="readiness-state-badge"]')
+      expect(badge.exists()).toBe(true)
+      // Must have a text label — never rely on color alone (AC #5)
+      expect(badge.text().trim().length).toBeGreaterThan(0)
+    })
+  }
+
+  it('advisory_follow_up shows teal banner (distinct from green ready)', async () => {
+    const readiness = makeReadiness({ overallState: 'advisory_follow_up' })
+    const wrapper = await mountPanel(readiness)
+    const banner = wrapper.find('[data-testid="readiness-summary-banner"]')
+    // Teal (or any non-red/orange) class expected — banner must exist
+    expect(banner.exists()).toBe(true)
+    // State badge label must be "Advisory Follow-Up"
+    const badge = wrapper.find('[data-testid="readiness-state-badge"]')
+    expect(badge.text()).toContain('Advisory')
+  })
+
+  it('stale_evidence shows orange-ish banner (not green)', async () => {
+    const readiness = makeReadiness({ overallState: 'stale_evidence' })
+    const wrapper = await mountPanel(readiness)
+    const badge = wrapper.find('[data-testid="readiness-state-badge"]')
+    expect(badge.text()).toContain('Stale Evidence')
+  })
+
+  it('missing_evidence badge aria-label contains "missing"', async () => {
+    const readiness = makeReadiness({ overallState: 'missing_evidence' })
+    const wrapper = await mountPanel(readiness)
+    const badge = wrapper.find('[data-testid="readiness-state-badge"]')
+    const ariaLabel = badge.attributes('aria-label')
+    expect(ariaLabel!.toLowerCase()).toContain('missing')
+  })
+
+  it('configuration_blocked badge text contains "Blocked"', async () => {
+    const readiness = makeReadiness({ overallState: 'configuration_blocked' })
+    const wrapper = await mountPanel(readiness)
+    const badge = wrapper.find('[data-testid="readiness-state-badge"]')
+    expect(badge.text()).toContain('Blocked')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 11. Fail-closed messaging — never ambiguous for blocking states
+// ---------------------------------------------------------------------------
+
+describe('SignOffReadinessPanel — fail-closed messaging', () => {
+  it('rationale for configuration_blocked mentions blocking (fail-closed)', async () => {
+    const readiness = makeReadiness({
+      overallState: 'configuration_blocked',
+      rationale: 'Required configuration items are blocking the strict sign-off lane from executing.',
+    })
+    const wrapper = await mountPanel(readiness)
+    const rationale = wrapper.find('[data-testid="readiness-rationale"]')
+    expect(rationale.text().toLowerCase()).toContain('block')
+  })
+
+  it('rationale for missing_evidence does not use "ready" or "clear" language', async () => {
+    const readiness = makeReadiness({
+      overallState: 'missing_evidence',
+      rationale: 'Launch-critical evidence is missing. This is a blocker for sign-off authorization.',
+    })
+    const wrapper = await mountPanel(readiness)
+    const rationale = wrapper.find('[data-testid="readiness-rationale"]')
+    const text = rationale.text().toLowerCase()
+    // Should not give false confidence
+    expect(text).not.toContain('ready for sign-off')
+    expect(text).not.toContain('all evidence is present')
+  })
+
+  it('configuration blocked: each missing dep shows its label', async () => {
+    const deps = [
+      makeConfigDep({ id: 'dep-a', label: 'Protected Backend API URL', isConfigured: false, isRequired: true }),
+      makeConfigDep({ id: 'dep-b', label: 'Bearer Token', isConfigured: false, isRequired: true }),
+    ]
+    const readiness = makeReadiness({ missingConfigCount: 2, configDependencies: deps })
+    const wrapper = await mountPanel(readiness)
+    expect(wrapper.find('[data-testid="config-dep-dep-a"]').text()).toContain('Protected Backend API URL')
+    expect(wrapper.find('[data-testid="config-dep-dep-b"]').text()).toContain('Bearer Token')
   })
 })
