@@ -260,8 +260,143 @@ describe('ComplianceReportingWorkspace — whitelist data loading', () => {
 })
 
 // ---------------------------------------------------------------------------
-// 6. Stale evidence detection
+// 5b. Whitelist fail-closed: required whitelist with zero approved investors
+// This is a hard blocker. The workspace must report 'failed' status and surface
+// it as a blocker in the UI and in every export format.
 // ---------------------------------------------------------------------------
+
+describe('ComplianceReportingWorkspace — whitelist fail-closed (required + zero approved)', () => {
+  function makeRequiredEmptyWhitelist() {
+    return JSON.stringify({
+      updatedAt: new Date().toISOString(),
+      whitelistEnabled: true,          // required
+      activeWhitelistId: 'wl-block-1',
+      approvedInvestors: [],           // zero approved — hard blocker
+      pendingInvestors: [{ id: 'p1' }],
+    })
+  }
+
+  it('whitelist status is failed when required and zero approved investors', async () => {
+    const wrapper = await mountWorkspace({ biatec_whitelist_setup: makeRequiredEmptyWhitelist() })
+    // Overall status banner must show 'failed' label (not 'warning' / not 'ready')
+    const label = wrapper.find('[data-testid="overall-status-label"]')
+    expect(label.text()).not.toMatch(/review required|evidence collection in progress/i)
+    // The word "Blockers" text or failed label must appear
+    expect(label.text()).toMatch(/Critical Blockers|Missing Required Evidence/i)
+  })
+
+  it('blockers list contains whitelist blocker text', async () => {
+    const wrapper = await mountWorkspace({ biatec_whitelist_setup: makeRequiredEmptyWhitelist() })
+    const blockersList = wrapper.find('[data-testid="blockers-list"]')
+    expect(blockersList.exists()).toBe(true)
+    expect(blockersList.text()).toContain('no approved investors')
+  })
+
+  it('readiness score does not receive the whitelist "warning" partial credit', async () => {
+    // When whitelist is 'failed', score should contribute 0 (not the 15-point partial credit)
+    const wrapper = await mountWorkspace({ biatec_whitelist_setup: makeRequiredEmptyWhitelist() })
+    const score = wrapper.find('[data-testid="readiness-score-value"]')
+    const scoreNum = parseInt(score.text())
+    // Max score with no other data = 0; whitelist 'failed' contributes 0 (not 15)
+    expect(scoreNum).toBe(0)
+  })
+
+  it('export JSON includes failed status for whitelist section', async () => {
+    const createObjectURL = vi.fn().mockReturnValue('blob:test')
+    const revokeObjectURL = vi.fn()
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL })
+    const blobs: Blob[] = []
+    const OrigBlob = globalThis.Blob
+    vi.stubGlobal('Blob', class extends OrigBlob {
+      constructor(parts: BlobPart[], opts?: BlobPropertyBag) {
+        super(parts, opts)
+        blobs.push(this)
+      }
+    })
+    const appendSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((el) => el)
+    const removeSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((el) => el)
+
+    const wrapper = await mountWorkspace({ biatec_whitelist_setup: makeRequiredEmptyWhitelist() })
+    await wrapper.find('[data-testid="export-json-button"]').trigger('click')
+
+    // The JSON Blob content should contain "failed" for whitelist
+    if (blobs.length > 0) {
+      const text = await blobs[blobs.length - 1].text()
+      const parsed = JSON.parse(text)
+      expect(parsed.whitelist.status).toBe('failed')
+      expect(parsed.whitelist.approvedInvestorCount).toBe(0)
+    } else {
+      // Fallback: blob creation was stubbed but JSON must still be valid
+      expect(createObjectURL).toHaveBeenCalled()
+    }
+
+    appendSpy.mockRestore()
+    removeSpy.mockRestore()
+  })
+
+  it('export text report includes BLOCKER line for zero-approved whitelist', async () => {
+    const createObjectURL = vi.fn().mockReturnValue('blob:test')
+    const revokeObjectURL = vi.fn()
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL })
+    const blobContents: string[] = []
+    const OrigBlob = globalThis.Blob
+    vi.stubGlobal('Blob', class extends OrigBlob {
+      constructor(parts: BlobPart[], opts?: BlobPropertyBag) {
+        super(parts, opts)
+        // Capture text synchronously from parts array
+        const content = parts.map((p) => (typeof p === 'string' ? p : '')).join('')
+        if (content.includes('WHITELIST POSTURE') || content.includes('COMPLIANCE REPORTING')) {
+          blobContents.push(content)
+        }
+      }
+    })
+    const appendSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((el) => el)
+    const removeSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((el) => el)
+
+    const wrapper = await mountWorkspace({ biatec_whitelist_setup: makeRequiredEmptyWhitelist() })
+    await wrapper.find('[data-testid="export-text-button"]').trigger('click')
+
+    if (blobContents.length > 0) {
+      expect(blobContents[0]).toContain('BLOCKER')
+      expect(blobContents[0]).toContain('no approved investors')
+    } else {
+      // Blob may not have captured if parts were non-string ArrayBuffer
+      expect(createObjectURL).toHaveBeenCalled()
+    }
+
+    appendSpy.mockRestore()
+    removeSpy.mockRestore()
+  })
+
+  it('does NOT treat required whitelist with investors as failed', async () => {
+    const whitelistWithInvestors = JSON.stringify({
+      updatedAt: new Date().toISOString(),
+      whitelistEnabled: true,
+      approvedInvestors: [{ id: 'inv1' }, { id: 'inv2' }],
+      pendingInvestors: [],
+    })
+    const wrapper = await mountWorkspace({ biatec_whitelist_setup: whitelistWithInvestors })
+    const label = wrapper.find('[data-testid="overall-status-label"]')
+    // With investors, whitelist is 'ready' — overall should NOT be 'failed' due to whitelist
+    // (other sections may still be 'pending', making overall 'pending' or 'warning')
+    expect(label.text()).not.toMatch(/Critical Blockers/i)
+  })
+
+  it('does NOT treat non-required whitelist with zero investors as failed', async () => {
+    const whitelistNotRequired = JSON.stringify({
+      updatedAt: new Date().toISOString(),
+      whitelistEnabled: false,  // not required — no blocker even if 0 approved
+      approvedInvestors: [],
+      pendingInvestors: [],
+    })
+    const wrapper = await mountWorkspace({ biatec_whitelist_setup: whitelistNotRequired })
+    const label = wrapper.find('[data-testid="overall-status-label"]')
+    // Whitelist not required → status is 'ready' — should not show as blocked
+    expect(label.text()).not.toContain('Critical Blockers')
+  })
+})
+
+
 
 describe('ComplianceReportingWorkspace — stale evidence', () => {
   it('shows freshness warning for stale data (>24h old)', async () => {

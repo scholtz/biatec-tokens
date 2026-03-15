@@ -768,8 +768,11 @@ function loadBundle(): ComplianceReportBundle {
   if (whitelistData) {
     const approved = Array.isArray(whitelistData.approvedInvestors) ? whitelistData.approvedInvestors.length : 0
     const pending = Array.isArray(whitelistData.pendingInvestors) ? whitelistData.pendingInvestors.length : 0
+    // A required whitelist with zero approved investors is a hard blocker — status is 'failed', not 'warning'.
+    // This is a fail-closed rule: the platform must not report non-blocking readiness when no investors
+    // can legally participate. Release sign-off MUST be blocked in this state.
     bundle.whitelist = {
-      status: whitelistData.whitelistEnabled && approved === 0 ? 'warning' : 'ready',
+      status: whitelistData.whitelistEnabled && approved === 0 ? 'failed' : 'ready',
       whitelistRequired: whitelistData.whitelistEnabled ?? false,
       approvedInvestorCount: approved,
       pendingInvestorCount: pending,
@@ -828,6 +831,9 @@ function buildTextReport(b: ComplianceReportBundle): string {
     `Approved Investors : ${b.whitelist.approvedInvestorCount}`,
     `Pending Investors  : ${b.whitelist.pendingInvestorCount}`,
     `Active Whitelist ID: ${b.whitelist.activeWhitelistId ?? 'None'}`,
+    ...(b.whitelist.whitelistRequired && b.whitelist.approvedInvestorCount === 0
+      ? ['BLOCKER: Whitelist is required but has no approved investors. Release sign-off is blocked.']
+      : []),
     '',
     '4. INVESTOR ELIGIBILITY',
     line,
