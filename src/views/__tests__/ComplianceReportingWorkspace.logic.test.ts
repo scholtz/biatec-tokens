@@ -797,3 +797,145 @@ describe('ComplianceReportingWorkspace — export readiness (fully ready)', () =
     expect(label.text()).toBeTruthy()
   })
 })
+
+// ---------------------------------------------------------------------------
+// Component tests: fallback messaging with incomplete/null approval data
+// ---------------------------------------------------------------------------
+
+describe('ComplianceReportingWorkspace — safe fallback when approval data is missing', () => {
+  it('renders without crashing when no localStorage data is present', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="compliance-reporting-workspace"]').exists()).toBe(true)
+  })
+
+  it('renders export readiness section even when no approval stages are loaded', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="export-readiness-section"]').exists()).toBe(true)
+  })
+
+  it('shows non-empty export readiness label when approval data is absent', async () => {
+    const wrapper = await mountWorkspace()
+    const label = wrapper.find('[data-testid="export-readiness-label"]')
+    expect(label.exists()).toBe(true)
+    expect(label.text().length).toBeGreaterThan(5)
+  })
+
+  it('shows non-empty export readiness rationale when approval data is absent', async () => {
+    const wrapper = await mountWorkspace()
+    const rationale = wrapper.find('[data-testid="export-readiness-rationale"]')
+    expect(rationale.exists()).toBe(true)
+    expect(rationale.text().length).toBeGreaterThan(10)
+  })
+
+  it('approval history section shows empty state (not a crash) when no stages', async () => {
+    const wrapper = await mountWorkspace()
+    // Should gracefully render empty state, not throw
+    const section = wrapper.find('[data-testid="approval-history-section"]')
+    expect(section.exists()).toBe(true)
+    expect(wrapper.find('[data-testid="approval-history-empty"]').exists()).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Component tests: blocked vs missing checklist item rendering
+// ---------------------------------------------------------------------------
+
+describe('ComplianceReportingWorkspace — blocked badge on checklist items', () => {
+  it('does not show any blocked badge when all evidence is present', async () => {
+    // Default bundle in mountWorkspace has all sections ready
+    const fullSetup = JSON.stringify({
+      updatedAt: new Date().toISOString(),
+      allowedJurisdictions: [{ code: 'EU', name: 'European Union' }],
+      restrictedJurisdictions: [],
+      kycRequired: true,
+      amlRequired: false,
+      kycProvider: 'SumSub',
+      accreditationRequired: false,
+      retailPermitted: true,
+      eligibilityCategories: [],
+    })
+    const fullWhitelist = JSON.stringify({
+      updatedAt: new Date().toISOString(),
+      whitelistRequired: false,
+      activeWhitelistId: null,
+      approvedInvestors: [],
+      pendingInvestors: [],
+    })
+    const wrapper = await mountWorkspace({
+      biatec_compliance_setup: fullSetup,
+      biatec_whitelist_setup: fullWhitelist,
+    })
+    // With all items present, no blocked badge should appear
+    const blocked = wrapper.findAll('[data-testid="checklist-blocked-badge"]')
+    expect(blocked.length).toBe(0)
+  })
+
+  it('export readiness label is non-empty for every possible status', async () => {
+    const wrapper = await mountWorkspace()
+    const label = wrapper.find('[data-testid="export-readiness-label"]')
+    expect(label.text().length).toBeGreaterThan(5)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Component tests: export readiness reflects approval summary state
+// ---------------------------------------------------------------------------
+
+describe('ComplianceReportingWorkspace — export readiness with approval stages', () => {
+  const blockedApprovalStages = JSON.stringify([
+    {
+      id: 'stage-1',
+      label: 'Compliance Review',
+      role: 'Compliance',
+      status: 'blocked',
+      lastActionAt: null,
+      conditions: null,
+      summary: 'Critical blockers present',
+      blockers: [{ isLaunchBlocking: true }],
+    },
+  ])
+
+  it('shows approval summary metrics when stages are loaded', async () => {
+    const wrapper = await mountWorkspace({ biatec_approval_stages: blockedApprovalStages })
+    expect(wrapper.find('[data-testid="approval-summary-metrics"]').exists()).toBe(true)
+  })
+
+  it('approval blocked count renders correctly with blocked stage', async () => {
+    const wrapper = await mountWorkspace({ biatec_approval_stages: blockedApprovalStages })
+    const blockedEl = wrapper.find('[data-testid="approval-blocked-count"]')
+    expect(blockedEl.exists()).toBe(true)
+    expect(blockedEl.text()).toBe('1')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Component tests: remediation hints rendered for non-ready items
+// ---------------------------------------------------------------------------
+
+describe('ComplianceReportingWorkspace — checklist remediation hints', () => {
+  it('renders remediation hint for jurisdiction when not configured', async () => {
+    // No setup localStorage → jurisdiction not configured → hint should appear
+    const wrapper = await mountWorkspace()
+    const hint = wrapper.find('[data-testid="checklist-hint-jurisdiction"]')
+    // hint exists only if the item is not present
+    const jurisdictionItem = wrapper.find('[data-testid="checklist-item-jurisdiction"]')
+    expect(jurisdictionItem.exists()).toBe(true)
+    // jurisdiction is not configured (no localStorage) → hint should be visible
+    expect(hint.exists()).toBe(true)
+    expect(hint.text().length).toBeGreaterThan(5)
+  })
+
+  it('export readiness checklist renders all 5 checklist items', async () => {
+    const wrapper = await mountWorkspace()
+    const items = [
+      'checklist-item-jurisdiction',
+      'checklist-item-kyc_aml',
+      'checklist-item-whitelist',
+      'checklist-item-investor_eligibility',
+      'checklist-item-approval_history',
+    ]
+    for (const testid of items) {
+      expect(wrapper.find(`[data-testid="${testid}"]`).exists()).toBe(true)
+    }
+  })
+})

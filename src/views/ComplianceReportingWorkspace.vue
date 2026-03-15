@@ -579,22 +579,27 @@
                 :data-testid="`checklist-item-${item.id}`"
               >
                 <component
-                  :is="item.isPresent ? CheckCircleIcon : (item.isRequiredForExternal ? XCircleIcon : MinusCircleIcon)"
+                  :is="item.isPresent ? CheckCircleIcon : (item.isBlocked || item.isRequiredForExternal) ? XCircleIcon : MinusCircleIcon"
                   class="w-4 h-4 flex-shrink-0 mt-0.5"
-                  :class="item.isPresent ? 'text-green-400' : (item.isRequiredForExternal ? 'text-red-400' : 'text-gray-500')"
-                  :aria-label="item.isPresent ? 'Present' : (item.isRequiredForExternal ? 'Missing — required' : 'Optional — not present')"
+                  :class="item.isPresent ? 'text-green-400' : item.isBlocked ? 'text-red-500' : item.isRequiredForExternal ? 'text-red-400' : 'text-gray-500'"
+                  :aria-label="item.isPresent ? 'Present' : (item.isBlocked ? 'Blocked — active failure' : (item.isRequiredForExternal ? 'Missing — required' : 'Optional — not present'))"
                 />
                 <div class="flex-1 min-w-0">
                   <span
-                    :class="item.isPresent ? 'text-gray-200' : (item.isRequiredForExternal ? 'text-red-300' : 'text-gray-400')"
+                    :class="item.isPresent ? 'text-gray-200' : (item.isBlocked ? 'text-red-300 font-semibold' : (item.isRequiredForExternal ? 'text-red-300' : 'text-gray-400'))"
                     class="font-medium"
                   >{{ item.label }}</span>
+                  <span
+                    v-if="item.isBlocked && !item.isPresent"
+                    class="ml-2 text-xs bg-red-900 text-red-200 px-1.5 py-0.5 rounded font-medium"
+                    data-testid="checklist-blocked-badge"
+                  >Blocked</span>
                   <span
                     v-if="item.isStale"
                     class="ml-2 text-xs text-yellow-400 font-medium"
                   >[Stale]</span>
                   <span
-                    v-if="!item.isPresent && !item.isRequiredForExternal"
+                    v-if="!item.isPresent && !item.isBlocked && !item.isRequiredForExternal"
                     class="ml-2 text-xs text-gray-500"
                   >Optional</span>
                   <p

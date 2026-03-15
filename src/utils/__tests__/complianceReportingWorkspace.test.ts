@@ -19,6 +19,7 @@ import {
   buildAudienceReportText,
   exportReadinessStatusClass,
   approvalOutcomeBadgeClass,
+  isTimestampStale,
   type AudiencePreset,
   type ApprovalOutcome,
   type ExportReadinessStatus,
@@ -901,5 +902,544 @@ describe('buildAudienceReportText — KYC pending reviews in report', () => {
     const readiness = deriveExportPackageReadiness(bundle, null)
     const text = buildAudienceReportText(bundle, 'compliance', null, readiness)
     expect(text).not.toMatch(/Pending Reviews\s*:/)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 11. isTimestampStale — exported and deterministically testable
+// ---------------------------------------------------------------------------
+
+describe('isTimestampStale — exported with injectable now', () => {
+  const THIRTY_ONE_DAYS_MS = 31 * 24 * 60 * 60 * 1000
+  const TWENTY_NINE_DAYS_MS = 29 * 24 * 60 * 60 * 1000
+
+  it('returns true when timestamp is older than 30 days', () => {
+    const now = Date.now()
+    const staleDate = new Date(now - THIRTY_ONE_DAYS_MS).toISOString()
+    expect(isTimestampStale(staleDate, now)).toBe(true)
+  })
+
+  it('returns false when timestamp is within 30 days', () => {
+    const now = Date.now()
+    const freshDate = new Date(now - TWENTY_NINE_DAYS_MS).toISOString()
+    expect(isTimestampStale(freshDate, now)).toBe(false)
+  })
+
+  it('returns false when timestamp is null', () => {
+    expect(isTimestampStale(null)).toBe(false)
+  })
+
+  it('is deterministic with injected now — does not depend on Date.now()', () => {
+    const frozenNow = new Date('2024-06-01T00:00:00Z').getTime()
+    const staleDate = new Date('2024-04-01T00:00:00Z').toISOString() // 61 days before frozenNow
+    const freshDate = new Date('2024-05-20T00:00:00Z').toISOString() // 12 days before frozenNow
+    expect(isTimestampStale(staleDate, frozenNow)).toBe(true)
+    expect(isTimestampStale(freshDate, frozenNow)).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 12. ExportChecklistItem.isBlocked semantics — blocker vs missing distinction
+// ---------------------------------------------------------------------------
+
+describe('deriveExportPackageReadiness — isBlocked field semantics', () => {
+  it('kyc_aml item has isBlocked=true when kycAml.status === failed', () => {
+    const bundle = makeBundle({
+      kycAml: {
+        status: 'failed',
+        kycRequired: true,
+        amlRequired: false,
+        providerConfigured: false,
+        pendingReviewCount: 0,
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    const item = result.checklist.find((c) => c.id === 'kyc_aml')
+    expect(item?.isBlocked).toBe(true)
+    expect(item?.isPresent).toBe(false)
+  })
+
+  it('kyc_aml item has isBlocked=false when kycAml.status === warning', () => {
+    const bundle = makeBundle({
+      kycAml: {
+        status: 'warning',
+        kycRequired: true,
+        amlRequired: true,
+        providerConfigured: true,
+        pendingReviewCount: 2,
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    const item = result.checklist.find((c) => c.id === 'kyc_aml')
+    expect(item?.isBlocked).toBe(false)
+    expect(item?.isPresent).toBe(true)
+  })
+
+  it('whitelist item has isBlocked=true when whitelist.status === failed', () => {
+    const bundle = makeBundle({
+      whitelist: {
+        status: 'failed',
+        whitelistRequired: true,
+        approvedInvestorCount: 0,
+        pendingInvestorCount: 0,
+        activeWhitelistId: null,
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    const item = result.checklist.find((c) => c.id === 'whitelist')
+    expect(item?.isBlocked).toBe(true)
+    expect(item?.isPresent).toBe(false)
+  })
+
+  it('whitelist item has isBlocked=false when whitelist.status === warning', () => {
+    const bundle = makeBundle({
+      whitelist: {
+        status: 'warning',
+        whitelistRequired: true,
+        approvedInvestorCount: 1,
+        pendingInvestorCount: 3,
+        activeWhitelistId: 'wl-001',
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    const item = result.checklist.find((c) => c.id === 'whitelist')
+    expect(item?.isBlocked).toBe(false)
+    expect(item?.isPresent).toBe(true)
+  })
+
+  it('investor_eligibility item has isBlocked=true when status === failed', () => {
+    const bundle = makeBundle({
+      investorEligibility: {
+        status: 'failed',
+        accreditedRequired: true,
+        retailPermitted: false,
+        eligibilityCategories: [],
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    const item = result.checklist.find((c) => c.id === 'investor_eligibility')
+    expect(item?.isBlocked).toBe(true)
+    expect(item?.isPresent).toBe(false)
+  })
+
+  it('investor_eligibility item has isBlocked=false when status === pending (not yet configured)', () => {
+    const bundle = makeBundle({
+      investorEligibility: {
+        status: 'pending',
+        accreditedRequired: false,
+        retailPermitted: false,
+        eligibilityCategories: [],
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    const item = result.checklist.find((c) => c.id === 'investor_eligibility')
+    expect(item?.isBlocked).toBe(false)
+    expect(item?.isPresent).toBe(false)
+  })
+
+  it('jurisdiction item always has isBlocked=false (no failed state — either configured or not)', () => {
+    const bundle = makeBundle({
+      jurisdiction: {
+        configured: false,
+        jurisdictions: [],
+        permittedCount: 0,
+        restrictedCount: 0,
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    const item = result.checklist.find((c) => c.id === 'jurisdiction')
+    expect(item?.isBlocked).toBe(false)
+  })
+
+  it('approval_history item always has isBlocked=false', () => {
+    const result = deriveExportPackageReadiness(makeBundle(), null)
+    const item = result.checklist.find((c) => c.id === 'approval_history')
+    expect(item?.isBlocked).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 13. blockerCount vs missingCount — semantically different computations
+// ---------------------------------------------------------------------------
+
+describe('deriveExportPackageReadiness — blockerCount vs missingCount semantics', () => {
+  it('blockerCount counts items with isBlocked=true (active failures), missingCount counts not-yet-configured items', () => {
+    // kyc_aml.status=failed → blockerCount=1, missingCount=0 (it is blocked, not just missing)
+    const bundle = makeBundle({
+      overallStatus: 'warning',
+      kycAml: {
+        status: 'failed',
+        kycRequired: true,
+        amlRequired: false,
+        providerConfigured: false,
+        pendingReviewCount: 0,
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    expect(result.blockerCount).toBe(1)
+    expect(result.missingCount).toBe(0)
+  })
+
+  it('jurisdiction not configured → missingCount=1, blockerCount=0 (not set up yet, not actively failed)', () => {
+    const bundle = makeBundle({
+      overallStatus: 'warning',
+      jurisdiction: {
+        configured: false,
+        jurisdictions: [],
+        permittedCount: 0,
+        restrictedCount: 0,
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    expect(result.missingCount).toBe(1)
+    expect(result.blockerCount).toBe(0)
+  })
+
+  it('investor_eligibility pending → missingCount counts it, blockerCount does not', () => {
+    const bundle = makeBundle({
+      overallStatus: 'warning',
+      investorEligibility: {
+        status: 'pending',
+        accreditedRequired: false,
+        retailPermitted: false,
+        eligibilityCategories: [],
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    expect(result.missingCount).toBeGreaterThanOrEqual(1)
+    expect(result.blockerCount).toBe(0)
+  })
+
+  it('investor_eligibility failed → blockerCount counts it, missingCount does not', () => {
+    const bundle = makeBundle({
+      overallStatus: 'warning',
+      investorEligibility: {
+        status: 'failed',
+        accreditedRequired: true,
+        retailPermitted: false,
+        eligibilityCategories: [],
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    expect(result.blockerCount).toBeGreaterThanOrEqual(1)
+    expect(result.missingCount).toBe(0)
+  })
+
+  it('blockerCount and missingCount are NOT the same value when both blocked and missing items exist', () => {
+    const bundle = makeBundle({
+      overallStatus: 'warning',
+      kycAml: {
+        status: 'failed', // active blocker
+        kycRequired: true,
+        amlRequired: false,
+        providerConfigured: false,
+        pendingReviewCount: 0,
+        staleSince: null,
+      },
+      jurisdiction: {
+        configured: false, // missing (not yet set up)
+        jurisdictions: [],
+        permittedCount: 0,
+        restrictedCount: 0,
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    // blockerCount = 1 (kyc failed), missingCount = 1 (jurisdiction not configured)
+    expect(result.blockerCount).toBe(1)
+    expect(result.missingCount).toBe(1)
+    // Crucially they are not equal to each other's total
+    expect(result.blockerCount).not.toBe(result.missingCount + result.blockerCount)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 14. Status derivation — blocked status triggered by blockerCount, not just overallStatus
+// ---------------------------------------------------------------------------
+
+describe('deriveExportPackageReadiness — blocked status from checklist blockers', () => {
+  it('status is blocked when kyc_aml.status === failed even if bundle.overallStatus !== failed', () => {
+    // This is the key correctness fix: a failed checklist item should block export
+    // regardless of what the overall bundle status says
+    const bundle = makeBundle({
+      overallStatus: 'warning', // overall is NOT failed
+      kycAml: {
+        status: 'failed', // but KYC is failed → active blocker
+        kycRequired: true,
+        amlRequired: false,
+        providerConfigured: false,
+        pendingReviewCount: 0,
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    expect(result.status).toBe('blocked')
+    expect(result.blockerCount).toBe(1)
+  })
+
+  it('status is blocked when whitelist.status === failed even if bundle.overallStatus !== failed', () => {
+    const bundle = makeBundle({
+      overallStatus: 'warning',
+      whitelist: {
+        status: 'failed',
+        whitelistRequired: true,
+        approvedInvestorCount: 0,
+        pendingInvestorCount: 0,
+        activeWhitelistId: null,
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    expect(result.status).toBe('blocked')
+  })
+
+  it('status is blocked when investor_eligibility.status === failed even if overallStatus !== failed', () => {
+    const bundle = makeBundle({
+      overallStatus: 'warning',
+      investorEligibility: {
+        status: 'failed',
+        accreditedRequired: true,
+        retailPermitted: false,
+        eligibilityCategories: [],
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    expect(result.status).toBe('blocked')
+  })
+
+  it('status is incomplete (not blocked) when jurisdiction is not configured — that is a missing item, not a blocker', () => {
+    const bundle = makeBundle({
+      overallStatus: 'warning',
+      jurisdiction: {
+        configured: false,
+        jurisdictions: [],
+        permittedCount: 0,
+        restrictedCount: 0,
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    // jurisdiction being unconfigured is a setup gap, not an active failure
+    expect(result.status).toBe('incomplete')
+    expect(result.missingCount).toBe(1)
+    expect(result.blockerCount).toBe(0)
+  })
+
+  it('rationale for blocked state mentions critical controls', () => {
+    const bundle = makeBundle({
+      overallStatus: 'warning',
+      kycAml: {
+        status: 'failed',
+        kycRequired: true,
+        amlRequired: false,
+        providerConfigured: false,
+        pendingReviewCount: 0,
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    expect(result.rationale).toMatch(/failed state/i)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 15. Remediation hints — completeness for all non-ready states
+// ---------------------------------------------------------------------------
+
+describe('deriveExportPackageReadiness — remediation hints for all non-ready states', () => {
+  it('investor_eligibility has remediation hint when status === failed', () => {
+    const bundle = makeBundle({
+      investorEligibility: {
+        status: 'failed',
+        accreditedRequired: true,
+        retailPermitted: false,
+        eligibilityCategories: [],
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    const item = result.checklist.find((c) => c.id === 'investor_eligibility')
+    expect(item?.remediationHint).toBeTruthy()
+    expect(item?.remediationHint).toMatch(/failed|fix|review|correct/i)
+  })
+
+  it('investor_eligibility has remediation hint when status === unavailable', () => {
+    const bundle = makeBundle({
+      investorEligibility: {
+        status: 'unavailable',
+        accreditedRequired: false,
+        retailPermitted: false,
+        eligibilityCategories: [],
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    const item = result.checklist.find((c) => c.id === 'investor_eligibility')
+    expect(item?.remediationHint).toBeTruthy()
+    expect(item?.remediationHint).toMatch(/unavailable|check/i)
+  })
+
+  it('whitelist has remediation hint when whitelistRequired and approvedInvestorCount === 0 (warning state)', () => {
+    const bundle = makeBundle({
+      whitelist: {
+        status: 'warning',
+        whitelistRequired: true,
+        approvedInvestorCount: 0,
+        pendingInvestorCount: 2,
+        activeWhitelistId: 'wl-001',
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    const item = result.checklist.find((c) => c.id === 'whitelist')
+    expect(item?.remediationHint).toBeTruthy()
+  })
+
+  it('whitelist has remediation hint when pendingInvestorCount > 0', () => {
+    const bundle = makeBundle({
+      whitelist: {
+        status: 'warning',
+        whitelistRequired: true,
+        approvedInvestorCount: 2,
+        pendingInvestorCount: 5,
+        activeWhitelistId: 'wl-001',
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    const item = result.checklist.find((c) => c.id === 'whitelist')
+    expect(item?.remediationHint).toBeTruthy()
+    expect(item?.remediationHint).toMatch(/pending/i)
+  })
+
+  it('kyc_aml has remediation hint for pending state', () => {
+    const bundle = makeBundle({
+      kycAml: {
+        status: 'pending',
+        kycRequired: true,
+        amlRequired: false,
+        providerConfigured: false,
+        pendingReviewCount: 0,
+        staleSince: null,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, null)
+    const item = result.checklist.find((c) => c.id === 'kyc_aml')
+    // kyc_aml with status pending is not present (pending is not ready/warning)
+    // it should have a hint
+    expect(item?.remediationHint).toBeTruthy()
+    expect(item?.remediationHint).toMatch(/progress|complete|setup/i)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 16. buildAudienceReportText — safety with partial/null data
+// ---------------------------------------------------------------------------
+
+describe('buildAudienceReportText — safety with partial/null data', () => {
+  it('does not throw when bundle.launchName is null', () => {
+    const bundle = makeBundle({ launchName: null as unknown as string })
+    const readiness = deriveExportPackageReadiness(bundle, null)
+    expect(() => buildAudienceReportText(bundle, 'all', null, readiness)).not.toThrow()
+  })
+
+  it('includes fallback "Unnamed Launch" when bundle.launchName is null', () => {
+    const bundle = makeBundle({ launchName: null as unknown as string })
+    const readiness = deriveExportPackageReadiness(bundle, null)
+    const text = buildAudienceReportText(bundle, 'all', null, readiness)
+    expect(text).toContain('Unnamed Launch')
+  })
+
+  it('does not throw when approvalSummary has an empty entries array', () => {
+    const approvalSummary: ApprovalHistorySummary = {
+      totalStages: 0,
+      approvedCount: 0,
+      conditionalCount: 0,
+      blockedCount: 0,
+      pendingCount: 0,
+      allLaunchCriticalSigned: false,
+      entries: [],
+      lastActionAt: null,
+    }
+    const bundle = makeBundle()
+    const readiness = deriveExportPackageReadiness(bundle, approvalSummary)
+    expect(() => buildAudienceReportText(bundle, 'all', approvalSummary, readiness)).not.toThrow()
+  })
+
+  it('does not throw when jurisdiction.jurisdictions is empty', () => {
+    const bundle = makeBundle({
+      jurisdiction: {
+        configured: true,
+        jurisdictions: [],
+        permittedCount: 0,
+        restrictedCount: 0,
+        staleSince: null,
+      },
+    })
+    const readiness = deriveExportPackageReadiness(bundle, null)
+    expect(() => buildAudienceReportText(bundle, 'all', null, readiness)).not.toThrow()
+  })
+
+  it('renders BLOCKED label in export text for blocked checklist items', () => {
+    const bundle = makeBundle({
+      overallStatus: 'warning',
+      kycAml: {
+        status: 'failed',
+        kycRequired: true,
+        amlRequired: false,
+        providerConfigured: false,
+        pendingReviewCount: 0,
+        staleSince: null,
+      },
+    })
+    const readiness = deriveExportPackageReadiness(bundle, null)
+    const text = buildAudienceReportText(bundle, 'all', null, readiness)
+    // A blocked item should render as BLOCKED not just MISSING
+    expect(text).toMatch(/BLOCKED/)
+  })
+
+  it('all audience presets generate text without throwing for edge-case bundle', () => {
+    const bundle = makeBundle({
+      launchName: null as unknown as string,
+      readinessScore: 0,
+      overallStatus: 'pending',
+    })
+    const readiness = deriveExportPackageReadiness(bundle, null)
+    const presets: AudiencePreset[] = ['all', 'compliance', 'procurement', 'executive']
+    for (const preset of presets) {
+      expect(() => buildAudienceReportText(bundle, preset, null, readiness)).not.toThrow()
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 17. buildAudienceReportText — launch name is included in report header
+// ---------------------------------------------------------------------------
+
+describe('buildAudienceReportText — report header', () => {
+  it('includes launch name in report header', () => {
+    const bundle = makeBundle({ launchName: 'My Special Token Launch' })
+    const readiness = deriveExportPackageReadiness(bundle, null)
+    const text = buildAudienceReportText(bundle, 'all', null, readiness)
+    expect(text).toContain('My Special Token Launch')
+  })
+
+  it('includes BIATEC TOKENS header in report', () => {
+    const bundle = makeBundle()
+    const readiness = deriveExportPackageReadiness(bundle, null)
+    const text = buildAudienceReportText(bundle, 'all', null, readiness)
+    expect(text).toContain('BIATEC TOKENS')
   })
 })

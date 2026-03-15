@@ -125,6 +125,12 @@ export interface ExportChecklistItem {
   description: string
   /** Whether this item is present in the report bundle */
   isPresent: boolean
+  /**
+   * Whether this item is in an actively failed/broken state (as opposed to simply
+   * not yet configured). Used to distinguish blockers (active failures that need
+   * remediation) from missing items (setup work not yet done).
+   */
+  isBlocked: boolean
   /** Whether this item is required for an external sign-off package */
   isRequiredForExternal: boolean
   /** Whether this item has a stale evidence flag */
@@ -138,7 +144,17 @@ export interface ExportPackageReadiness {
   headline: string
   rationale: string
   checklist: ExportChecklistItem[]
+  /**
+   * Number of checklist items that are required for external submission AND are
+   * in an actively failed/broken state (e.g. KYC provider configured but failing).
+   * These must be resolved before the package can be used at all.
+   */
   blockerCount: number
+  /**
+   * Number of checklist items that are required for external submission AND have
+   * not yet been configured (setup work not yet done). These gate completeness
+   * but are not the same as active failures.
+   */
   missingCount: number
   staleCount: number
   computedAt: string
@@ -229,13 +245,26 @@ function mapStageStatusToOutcome(status: string): ApprovalOutcome {
   }
 }
 
+/**
+ * Returns true if an EvidenceStatus indicates the evidence section is present
+ * and usable (either fully ready or in a warning state with caveats).
+ * Used consistently across checklist item construction.
+ */
+function isStatusPresent(status: string): boolean {
+  return status === 'ready' || status === 'warning'
+}
+
 // ---------------------------------------------------------------------------
 // Export package readiness derivation
 // ---------------------------------------------------------------------------
 
 const STALE_THRESHOLD_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 
-function isTimestampStale(timestamp: string | null, now: number = Date.now()): boolean {
+/**
+ * Returns true if a timestamp is older than STALE_THRESHOLD_MS.
+ * Accepts an optional `now` parameter for deterministic testing.
+ */
+export function isTimestampStale(timestamp: string | null, now: number = Date.now()): boolean {
   if (!timestamp) return false
   return now - new Date(timestamp).getTime() > STALE_THRESHOLD_MS
 }
@@ -256,6 +285,8 @@ export function deriveExportPackageReadiness(
       label: 'Jurisdiction Coverage',
       description: 'Operator has configured permitted and restricted jurisdictions.',
       isPresent: bundle.jurisdiction.configured,
+      // Jurisdiction has no "failed" state — it is either configured or not yet set up
+      isBlocked: false,
       isRequiredForExternal: true,
       isStale: isTimestampStale(bundle.jurisdiction.staleSince),
       remediationHint: bundle.jurisdiction.configured
@@ -266,43 +297,56 @@ export function deriveExportPackageReadiness(
       id: 'kyc_aml',
       label: 'KYC / AML Posture',
       description: 'KYC and AML requirements are defined and provider is configured.',
-      isPresent:
-        bundle.kycAml.status === 'ready' || bundle.kycAml.status === 'warning',
+      isPresent: isStatusPresent(bundle.kycAml.status),
+      // KYC is an active blocker when it has been configured but is in a failed state
+      isBlocked: bundle.kycAml.status === 'failed',
       isRequiredForExternal: true,
       isStale: isTimestampStale(bundle.kycAml.staleSince),
       remediationHint:
         bundle.kycAml.status === 'failed'
           ? 'KYC is required but no provider is configured. Add a provider in Compliance Setup.'
           : bundle.kycAml.pendingReviewCount > 0
-            ? `${bundle.kycAml.pendingReviewCount} review(s) pending. Complete KYC reviews before exporting.`
-            : null,
+            ? `${bundle.kycAml.pendingReviewCount} KYC review(s) are pending. Complete them before exporting.`
+            : bundle.kycAml.status === 'pending'
+              ? 'KYC/AML configuration is in progress. Complete the setup before exporting.'
+              : null,
     },
     {
       id: 'whitelist',
       label: 'Investor Whitelist',
       description: 'Whitelist posture is defined, and approved investors are present if required.',
-      isPresent:
-        bundle.whitelist.status === 'ready' || bundle.whitelist.status === 'warning',
+      isPresent: isStatusPresent(bundle.whitelist.status),
+      // Whitelist is an active blocker when required and has no approved investors
+      isBlocked: bundle.whitelist.status === 'failed',
       isRequiredForExternal: true,
       isStale: isTimestampStale(bundle.whitelist.staleSince),
       remediationHint:
         bundle.whitelist.status === 'failed'
           ? 'Whitelist is required but has no approved investors. Add investors in Whitelist Policy.'
-          : null,
+          : bundle.whitelist.whitelistRequired && bundle.whitelist.approvedInvestorCount === 0
+            ? 'No investors have been approved yet. Approve at least one investor before exporting.'
+            : bundle.whitelist.whitelistRequired && bundle.whitelist.pendingInvestorCount > 0
+              ? `${bundle.whitelist.pendingInvestorCount} investor application(s) are pending review.`
+              : null,
     },
     {
       id: 'investor_eligibility',
       label: 'Investor Eligibility Policy',
       description: 'Accreditation requirements and retail access permissions are configured.',
-      isPresent:
-        bundle.investorEligibility.status !== 'pending' &&
-        bundle.investorEligibility.status !== 'unavailable',
+      // Consistent with kyc_aml and whitelist: only 'ready' or 'warning' counts as present
+      isPresent: isStatusPresent(bundle.investorEligibility.status),
+      // Eligibility is an active blocker when it has been configured but failed
+      isBlocked: bundle.investorEligibility.status === 'failed',
       isRequiredForExternal: true,
       isStale: isTimestampStale(bundle.investorEligibility.staleSince),
       remediationHint:
-        bundle.investorEligibility.status === 'pending'
-          ? 'Complete Compliance Setup to define investor eligibility policy.'
-          : null,
+        bundle.investorEligibility.status === 'failed'
+          ? 'Investor eligibility configuration has failed. Review and correct the policy settings in Compliance Setup.'
+          : bundle.investorEligibility.status === 'pending'
+            ? 'Complete Compliance Setup to define investor eligibility policy.'
+            : bundle.investorEligibility.status === 'unavailable'
+              ? 'Investor eligibility data is unavailable. Check your Compliance Setup configuration.'
+              : null,
     },
     {
       id: 'approval_history',
@@ -310,6 +354,8 @@ export function deriveExportPackageReadiness(
       description:
         'At least one approval stage has been reviewed and its outcome recorded.',
       isPresent: approvalSummary !== null && approvalSummary.totalStages > 0,
+      // Approval history has no "active failure" state — it is either present or not started
+      isBlocked: false,
       isRequiredForExternal: false,
       isStale: false,
       remediationHint:
@@ -319,12 +365,16 @@ export function deriveExportPackageReadiness(
     },
   ]
 
+  // blockerCount: required items that are in an actively failed/broken state.
+  // These represent real compliance failures that block any use of the package.
   const blockerCount = checklist.filter(
-    (item) => item.isRequiredForExternal && !item.isPresent,
+    (item) => item.isRequiredForExternal && item.isBlocked,
   ).length
 
+  // missingCount: required items that have not yet been configured.
+  // These are setup gaps — work that hasn't been done yet, not active failures.
   const missingCount = checklist.filter(
-    (item) => item.isRequiredForExternal && !item.isPresent,
+    (item) => item.isRequiredForExternal && !item.isPresent && !item.isBlocked,
   ).length
 
   const staleCount = checklist.filter((item) => item.isStale).length
@@ -333,42 +383,35 @@ export function deriveExportPackageReadiness(
   let headline: string
   let rationale: string
 
-  if (bundle.overallStatus === 'failed') {
+  if (blockerCount > 0 || bundle.overallStatus === 'failed') {
+    // Active compliance failures block any use of the export package
     status = 'blocked'
     headline = EXPORT_READINESS_LABELS.blocked
     rationale =
       'One or more critical compliance controls are in a failed state. The export package cannot be used for sign-off until these are resolved. Review the blockers above and complete the required setup.'
   } else if (missingCount > 0) {
+    // Required evidence has not yet been configured
     status = 'incomplete'
     headline = EXPORT_READINESS_LABELS.incomplete
     rationale = `${missingCount} required evidence item${missingCount !== 1 ? 's are' : ' is'} missing. Complete the Compliance Setup workflow before generating an exportable package.`
-  } else if (bundle.overallStatus === 'ready') {
-    if (staleCount === 0 && approvalSummary && approvalSummary.allLaunchCriticalSigned) {
-      status = 'ready_for_external'
-      headline = EXPORT_READINESS_LABELS.ready_for_external
-      rationale =
-        'All compliance controls are configured, evidence is present, and approval stages are signed off. This package is suitable for external review or regulator submission.'
-    } else if (staleCount > 0) {
-      status = 'ready_for_internal'
-      headline = EXPORT_READINESS_LABELS.ready_for_internal
-      rationale =
-        'Some evidence items are stale and should be refreshed before external submission. The package can be used for internal review in the meantime.'
-    } else {
-      status = 'ready_for_internal'
-      headline = EXPORT_READINESS_LABELS.ready_for_internal
-      rationale =
-        'Compliance evidence is complete and controls are in place. Approval workflow sign-off is pending. This package is suitable for internal review but not yet ready for external submission.'
-    }
   } else if (staleCount > 0) {
+    // All items are present but some evidence needs refreshing
     status = 'ready_for_internal'
     headline = EXPORT_READINESS_LABELS.ready_for_internal
     rationale =
       'Some evidence items are stale and should be refreshed before external submission. The package can be used for internal review in the meantime.'
-  } else {
-    status = 'incomplete'
-    headline = EXPORT_READINESS_LABELS.incomplete
+  } else if (bundle.overallStatus === 'ready' && approvalSummary && approvalSummary.allLaunchCriticalSigned) {
+    // All evidence present, fresh, and approval workflow complete
+    status = 'ready_for_external'
+    headline = EXPORT_READINESS_LABELS.ready_for_external
     rationale =
-      'Evidence collection is in progress. Return here once all compliance setup steps are complete.'
+      'All compliance controls are configured, evidence is present, and approval stages are signed off. This package is suitable for external review or regulator submission.'
+  } else {
+    // Evidence present and no active blockers — approval sign-off still pending
+    status = 'ready_for_internal'
+    headline = EXPORT_READINESS_LABELS.ready_for_internal
+    rationale =
+      'Compliance evidence is complete and controls are in place. Approval workflow sign-off is pending or evidence is in warning state. This package is suitable for internal review but not yet ready for external submission.'
   }
 
   return {
@@ -399,9 +442,15 @@ export function buildAudienceReportText(
 ): string {
   const line = '─'.repeat(60)
   const audienceLabel = AUDIENCE_PRESET_LABELS[audience]
+  const generatedAt = bundle.generatedAt
+    ? new Date(bundle.generatedAt).toUTCString()
+    : 'Unknown date'
+  const launchName = bundle.launchName ?? 'Unnamed Launch'
+
   const lines: string[] = [
     `BIATEC TOKENS — COMPLIANCE REPORT [${audienceLabel.toUpperCase()}]`,
-    `Generated: ${new Date(bundle.generatedAt).toUTCString()}`,
+    `Launch    : ${launchName}`,
+    `Generated : ${generatedAt}`,
     line,
     '',
   ]
@@ -409,22 +458,23 @@ export function buildAudienceReportText(
   // Always include overall status
   lines.push('OVERALL COMPLIANCE POSTURE')
   lines.push(line)
-  lines.push(`Status          : ${bundle.overallStatus.toUpperCase()}`)
-  lines.push(`Readiness Score : ${bundle.readinessScore}%`)
+  lines.push(`Status          : ${(bundle.overallStatus ?? 'unknown').toUpperCase()}`)
+  lines.push(`Readiness Score : ${bundle.readinessScore ?? 0}%`)
   lines.push(`Export Package  : ${exportReadiness.headline}`)
   lines.push(`Export Rationale: ${exportReadiness.rationale}`)
   lines.push('')
 
-  const priorities = AUDIENCE_SECTION_PRIORITIES[audience]
+  const priorities = AUDIENCE_SECTION_PRIORITIES[audience] ?? AUDIENCE_SECTION_PRIORITIES.all
 
   if (priorities.includes('jurisdiction')) {
     lines.push('JURISDICTION COVERAGE')
     lines.push(line)
-    lines.push(`Configured  : ${bundle.jurisdiction.configured ? 'Yes' : 'No'}`)
-    lines.push(`Permitted   : ${bundle.jurisdiction.permittedCount}`)
-    lines.push(`Restricted  : ${bundle.jurisdiction.restrictedCount}`)
-    if (bundle.jurisdiction.jurisdictions.length > 0) {
-      lines.push(`Jurisdictions: ${bundle.jurisdiction.jurisdictions.join(', ')}`)
+    lines.push(`Configured  : ${bundle.jurisdiction?.configured ? 'Yes' : 'No'}`)
+    lines.push(`Permitted   : ${bundle.jurisdiction?.permittedCount ?? 0}`)
+    lines.push(`Restricted  : ${bundle.jurisdiction?.restrictedCount ?? 0}`)
+    const jurisdictions = bundle.jurisdiction?.jurisdictions ?? []
+    if (jurisdictions.length > 0) {
+      lines.push(`Jurisdictions: ${jurisdictions.join(', ')}`)
     }
     lines.push('')
   }
@@ -432,11 +482,11 @@ export function buildAudienceReportText(
   if (priorities.includes('kyc_aml')) {
     lines.push('KYC / AML REVIEW STATUS')
     lines.push(line)
-    lines.push(`Status             : ${bundle.kycAml.status.toUpperCase()}`)
-    lines.push(`KYC Required       : ${bundle.kycAml.kycRequired ? 'Yes' : 'No'}`)
-    lines.push(`AML Required       : ${bundle.kycAml.amlRequired ? 'Yes' : 'No'}`)
-    lines.push(`Provider Configured: ${bundle.kycAml.providerConfigured ? 'Yes' : 'No'}`)
-    if (bundle.kycAml.pendingReviewCount > 0) {
+    lines.push(`Status             : ${(bundle.kycAml?.status ?? 'unknown').toUpperCase()}`)
+    lines.push(`KYC Required       : ${bundle.kycAml?.kycRequired ? 'Yes' : 'No'}`)
+    lines.push(`AML Required       : ${bundle.kycAml?.amlRequired ? 'Yes' : 'No'}`)
+    lines.push(`Provider Configured: ${bundle.kycAml?.providerConfigured ? 'Yes' : 'No'}`)
+    if ((bundle.kycAml?.pendingReviewCount ?? 0) > 0) {
       lines.push(`Pending Reviews    : ${bundle.kycAml.pendingReviewCount}`)
     }
     lines.push('')
@@ -445,11 +495,11 @@ export function buildAudienceReportText(
   if (priorities.includes('whitelist')) {
     lines.push('WHITELIST POSTURE')
     lines.push(line)
-    lines.push(`Status             : ${bundle.whitelist.status.toUpperCase()}`)
-    lines.push(`Whitelist Required : ${bundle.whitelist.whitelistRequired ? 'Yes' : 'No'}`)
-    lines.push(`Approved Investors : ${bundle.whitelist.approvedInvestorCount}`)
-    lines.push(`Pending Investors  : ${bundle.whitelist.pendingInvestorCount}`)
-    if (bundle.whitelist.whitelistRequired && bundle.whitelist.approvedInvestorCount === 0) {
+    lines.push(`Status             : ${(bundle.whitelist?.status ?? 'unknown').toUpperCase()}`)
+    lines.push(`Whitelist Required : ${bundle.whitelist?.whitelistRequired ? 'Yes' : 'No'}`)
+    lines.push(`Approved Investors : ${bundle.whitelist?.approvedInvestorCount ?? 0}`)
+    lines.push(`Pending Investors  : ${bundle.whitelist?.pendingInvestorCount ?? 0}`)
+    if (bundle.whitelist?.whitelistRequired && (bundle.whitelist?.approvedInvestorCount ?? 0) === 0) {
       lines.push('BLOCKER: Whitelist required but no approved investors.')
     }
     lines.push('')
@@ -458,11 +508,12 @@ export function buildAudienceReportText(
   if (priorities.includes('investor_eligibility')) {
     lines.push('INVESTOR ELIGIBILITY')
     lines.push(line)
-    lines.push(`Status                : ${bundle.investorEligibility.status.toUpperCase()}`)
-    lines.push(`Accredited Required   : ${bundle.investorEligibility.accreditedRequired ? 'Yes' : 'No'}`)
-    lines.push(`Retail Permitted      : ${bundle.investorEligibility.retailPermitted ? 'Yes' : 'No'}`)
-    if (bundle.investorEligibility.eligibilityCategories.length > 0) {
-      lines.push(`Eligibility Categories: ${bundle.investorEligibility.eligibilityCategories.join(', ')}`)
+    lines.push(`Status                : ${(bundle.investorEligibility?.status ?? 'unknown').toUpperCase()}`)
+    lines.push(`Accredited Required   : ${bundle.investorEligibility?.accreditedRequired ? 'Yes' : 'No'}`)
+    lines.push(`Retail Permitted      : ${bundle.investorEligibility?.retailPermitted ? 'Yes' : 'No'}`)
+    const eligibilityCategories = bundle.investorEligibility?.eligibilityCategories ?? []
+    if (eligibilityCategories.length > 0) {
+      lines.push(`Eligibility Categories: ${eligibilityCategories.join(', ')}`)
     }
     lines.push('')
   }
@@ -476,11 +527,15 @@ export function buildAudienceReportText(
     lines.push(`Blocked        : ${approvalSummary.blockedCount}`)
     lines.push(`Pending        : ${approvalSummary.pendingCount}`)
     lines.push(`All Signed-Off : ${approvalSummary.allLaunchCriticalSigned ? 'Yes' : 'No'}`)
-    if (approvalSummary.entries.length > 0) {
+    const entries = approvalSummary.entries ?? []
+    if (entries.length > 0) {
       lines.push('')
-      for (const entry of approvalSummary.entries) {
-        const ts = entry.actionedAt ? ` (${new Date(entry.actionedAt).toLocaleDateString()})` : ''
-        lines.push(`  ${entry.label}: ${APPROVAL_OUTCOME_LABELS[entry.outcome]}${ts}`)
+      for (const entry of entries) {
+        const outcomeLabel = APPROVAL_OUTCOME_LABELS[entry.outcome] ?? entry.outcome
+        const ts = entry.actionedAt
+          ? ` (${new Date(entry.actionedAt).toLocaleDateString()})`
+          : ''
+        lines.push(`  ${entry.label}: ${outcomeLabel}${ts}`)
         if (entry.conditions) lines.push(`    Conditions: ${entry.conditions}`)
       }
     }
@@ -489,10 +544,16 @@ export function buildAudienceReportText(
 
   lines.push(line)
   lines.push('Export Package Checklist:')
-  for (const item of exportReadiness.checklist) {
-    const status = item.isPresent ? '✓' : item.isRequiredForExternal ? '✗ MISSING' : '○ Optional'
+  for (const item of exportReadiness.checklist ?? []) {
+    const itemStatus = item.isPresent
+      ? '✓'
+      : item.isBlocked
+        ? '✗ BLOCKED'
+        : item.isRequiredForExternal
+          ? '✗ MISSING'
+          : '○ Optional'
     const stale = item.isStale ? ' [STALE]' : ''
-    lines.push(`  ${status}  ${item.label}${stale}`)
+    lines.push(`  ${itemStatus}  ${item.label}${stale}`)
     if (!item.isPresent && item.remediationHint) {
       lines.push(`        → ${item.remediationHint}`)
     }
