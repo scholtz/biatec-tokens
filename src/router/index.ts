@@ -34,6 +34,7 @@ import BusinessCommandCenter from "../views/BusinessCommandCenter.vue";
 import TeamWorkspaceView from "../views/TeamWorkspaceView.vue";
 import ComplianceEvidencePackView from "../views/ComplianceEvidencePackView.vue";
 import ComplianceReportingWorkspace from "../views/ComplianceReportingWorkspace.vue";
+import EnterpriseRiskReportBuilder from "../views/EnterpriseRiskReportBuilder.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 import { isIssuanceSessionValid, storeIssuanceReturnPath } from "../utils/authFirstIssuanceWorkspace";
 
@@ -174,6 +175,13 @@ const router = createRouter({
       name: "ComplianceReportingWorkspace",
       component: ComplianceReportingWorkspace,
       meta: { requiresAuth: true, title: "Compliance Reporting Workspace" },
+    },
+    // Enterprise Risk Report Builder — configurable risk scoring and custom compliance reports
+    {
+      path: "/compliance/risk-report",
+      name: "EnterpriseRiskReportBuilder",
+      component: EnterpriseRiskReportBuilder,
+      meta: { requiresAuth: true, title: "Enterprise Risk Report Builder" },
     },
     {
       path: "/attestations",

@@ -478,6 +478,13 @@
             >
               Whitelist Policy
             </router-link>
+            <router-link
+              to="/compliance/risk-report"
+              class="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
+              data-testid="nav-risk-report"
+            >
+              Risk Report Builder
+            </router-link>
           </nav>
 
         </template>

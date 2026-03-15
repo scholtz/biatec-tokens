@@ -90,6 +90,17 @@
                 Release Evidence
               </router-link>
               <router-link
+                to="/compliance/risk-report"
+                :aria-current="isActive('/compliance/risk-report') ? 'page' : undefined"
+                class="group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
+                :class="isActive('/compliance/risk-report')
+                  ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                  : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'"
+              >
+                <ShieldExclamationIcon class="mr-3 h-5 w-5 shrink-0" aria-hidden="true" />
+                Risk Report Builder
+              </router-link>
+              <router-link
                 to="/compliance-monitoring"
                 :aria-current="isActive('/compliance-monitoring') ? 'page' : undefined"
                 class="group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
@@ -151,7 +162,7 @@
 import { useRoute } from "vue-router";
 import { useTokenStore } from "../../stores/tokens";
 import Badge from "../ui/Badge.vue";
-import { PlusCircleIcon, ChartBarIcon, CubeIcon, BuildingOfficeIcon, ShieldCheckIcon, UsersIcon, ClipboardDocumentCheckIcon } from "@heroicons/vue/24/outline";
+import { PlusCircleIcon, ChartBarIcon, CubeIcon, BuildingOfficeIcon, ShieldCheckIcon, ShieldExclamationIcon, UsersIcon, ClipboardDocumentCheckIcon } from "@heroicons/vue/24/outline";
 
 const route = useRoute();
 const tokenStore = useTokenStore();

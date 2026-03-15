@@ -23,6 +23,9 @@ vi.mock('@heroicons/vue/24/outline', () => ({
   ShieldCheckIcon: {
     template: '<svg class="h-5 w-5"></svg>',
   },
+  ShieldExclamationIcon: {
+    template: '<svg class="h-5 w-5"></svg>',
+  },
   UsersIcon: {
     template: '<svg class="h-5 w-5"></svg>',
   },
@@ -62,6 +65,7 @@ describe('Sidebar Component', () => {
         { path: '/enterprise/onboarding', name: 'EnterpriseOnboarding' },
         { path: '/compliance-monitoring', name: 'ComplianceMonitoring' },
         { path: '/compliance/whitelists', name: 'WhitelistManagement' },
+        { path: '/compliance/risk-report', name: 'EnterpriseRiskReportBuilder' },
       ],
     });
 
@@ -120,7 +124,7 @@ describe('Sidebar Component', () => {
       });
 
       const links = wrapper.findAll('a');
-      expect(links).toHaveLength(9); // Now includes Release Evidence, Compliance Monitoring, and Whitelist Management
+      expect(links).toHaveLength(10); // Includes Release Evidence, Compliance Monitoring, Whitelist Management, Risk Report
 
       // Check link texts and routes
       expect(links[0].text()).toContain('Guided Token Launch');
@@ -144,11 +148,14 @@ describe('Sidebar Component', () => {
       expect(links[6].text()).toContain('Release Evidence');
       expect(links[6].attributes('to')).toBe('/compliance/evidence');
       
-      expect(links[7].text()).toContain('Compliance Monitoring');
-      expect(links[7].attributes('to')).toBe('/compliance-monitoring');
+      expect(links[7].text()).toContain('Risk Report Builder');
+      expect(links[7].attributes('to')).toBe('/compliance/risk-report');
+
+      expect(links[8].text()).toContain('Compliance Monitoring');
+      expect(links[8].attributes('to')).toBe('/compliance-monitoring');
       
-      expect(links[8].text()).toContain('Whitelist Management');
-      expect(links[8].attributes('to')).toBe('/compliance/whitelists');
+      expect(links[9].text()).toContain('Whitelist Management');
+      expect(links[9].attributes('to')).toBe('/compliance/whitelists');
     });
 
     it('should render icons for quick actions', () => {
@@ -163,8 +170,8 @@ describe('Sidebar Component', () => {
       });
 
       const svgs = wrapper.findAll('svg');
-      // 9 links each with an SVG icon (added Release Evidence link with ClipboardDocumentCheckIcon)
-      expect(svgs).toHaveLength(9);
+      // 10 links each with an SVG icon
+      expect(svgs).toHaveLength(10);
     });
   });
 
