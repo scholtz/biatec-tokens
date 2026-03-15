@@ -625,7 +625,7 @@
 
             <p class="text-xs text-gray-400 mb-4">
               Export is tailored to the <strong class="text-gray-200">{{ AUDIENCE_PRESET_LABELS[selectedAudience] }}</strong> audience.
-              Switch the audience preset above to generate an export scoped to compliance, procurement, or executive review.
+              Use the audience selector at the top of the page to generate an export scoped to compliance, procurement, or executive review.
             </p>
 
             <div class="flex flex-wrap gap-3">
@@ -1097,7 +1097,8 @@ function loadApprovalSummary(): ApprovalHistorySummary | null {
         blockers: (s.blockers ?? []).map((b) => ({ isLaunchBlocking: b.isLaunchBlocking ?? false })),
       })),
     )
-  } catch {
+  } catch (err) {
+    console.warn('[ComplianceReportingWorkspace] Failed to parse biatec_approval_stages from localStorage:', err)
     return null
   }
 }

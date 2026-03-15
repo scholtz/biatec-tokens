@@ -290,7 +290,7 @@ test.describe('Compliance Reporting Workspace — audience presets', () => {
   test('Full Report button is selected by default', async ({ page }) => {
     await openReportingWorkspace(page)
     const allBtn = page.getByTestId('audience-btn-all')
-    await expect(allBtn).toBeAttached({ timeout: 15000 })
+    await expect(allBtn).toBeVisible({ timeout: 20000 })
     const pressed = await allBtn.getAttribute('aria-pressed', { timeout: 5000 })
     expect(pressed).toBe('true')
   })

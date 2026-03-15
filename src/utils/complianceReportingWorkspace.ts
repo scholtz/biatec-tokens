@@ -235,9 +235,9 @@ function mapStageStatusToOutcome(status: string): ApprovalOutcome {
 
 const STALE_THRESHOLD_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 
-function isTimestampStale(timestamp: string | null): boolean {
+function isTimestampStale(timestamp: string | null, now: number = Date.now()): boolean {
   if (!timestamp) return false
-  return Date.now() - new Date(timestamp).getTime() > STALE_THRESHOLD_MS
+  return now - new Date(timestamp).getTime() > STALE_THRESHOLD_MS
 }
 
 /**
@@ -320,7 +320,7 @@ export function deriveExportPackageReadiness(
   ]
 
   const blockerCount = checklist.filter(
-    (item) => item.isRequiredForExternal && (bundle.overallStatus === 'failed'),
+    (item) => item.isRequiredForExternal && !item.isPresent,
   ).length
 
   const missingCount = checklist.filter(
