@@ -32,6 +32,9 @@ vi.mock('@heroicons/vue/24/outline', () => ({
   ClipboardDocumentCheckIcon: {
     template: '<svg class="h-5 w-5"></svg>',
   },
+  ClipboardDocumentListIcon: {
+    template: '<svg class="h-5 w-5"></svg>',
+  },
   CurrencyDollarIcon: {
     template: '<svg class="h-5 w-5"></svg>',
   },
@@ -124,7 +127,7 @@ describe('Sidebar Component', () => {
       });
 
       const links = wrapper.findAll('a');
-      expect(links).toHaveLength(10); // Includes Release Evidence, Compliance Monitoring, Whitelist Management, Risk Report
+      expect(links).toHaveLength(11); // Includes Release Evidence, Compliance Monitoring, Whitelist Management, Risk Report, Approval Queue
 
       // Check link texts and routes
       expect(links[0].text()).toContain('Guided Token Launch');
@@ -151,11 +154,14 @@ describe('Sidebar Component', () => {
       expect(links[7].text()).toContain('Risk Report Builder');
       expect(links[7].attributes('to')).toBe('/compliance/risk-report');
 
-      expect(links[8].text()).toContain('Compliance Monitoring');
-      expect(links[8].attributes('to')).toBe('/compliance-monitoring');
+      expect(links[8].text()).toContain('Approval Queue');
+      expect(links[8].attributes('to')).toBe('/compliance/approval');
+
+      expect(links[9].text()).toContain('Compliance Monitoring');
+      expect(links[9].attributes('to')).toBe('/compliance-monitoring');
       
-      expect(links[9].text()).toContain('Whitelist Management');
-      expect(links[9].attributes('to')).toBe('/compliance/whitelists');
+      expect(links[10].text()).toContain('Whitelist Management');
+      expect(links[10].attributes('to')).toBe('/compliance/whitelists');
     });
 
     it('should render icons for quick actions', () => {
@@ -170,8 +176,8 @@ describe('Sidebar Component', () => {
       });
 
       const svgs = wrapper.findAll('svg');
-      // 10 links each with an SVG icon
-      expect(svgs).toHaveLength(10);
+      // 11 links each with an SVG icon
+      expect(svgs).toHaveLength(11);
     });
   });
 

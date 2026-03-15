@@ -601,3 +601,266 @@ describe('Exposed contract', () => {
     expect(vm.expandedStages.has('compliance-review')).toBe(false)
   })
 })
+
+// ---------------------------------------------------------------------------
+// 14. Refresh action — covers 724-729 (timer body), 745 (onBeforeUnmount)
+// ---------------------------------------------------------------------------
+
+describe('Refresh action', () => {
+  beforeEach(() => { vi.useFakeTimers() })
+  afterEach(() => { vi.useRealTimers() })
+
+  it('refresh() sets isLoading to true immediately', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    const vm = wrapper.vm as any
+    vm.refresh()
+    expect(vm.isLoading).toBe(true)
+  })
+
+  it('refresh() resets loading to false after 400ms', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    const vm = wrapper.vm as any
+    vm.refresh()
+    expect(vm.isLoading).toBe(true)
+    vi.advanceTimersByTime(500)
+    await nextTick()
+    expect(vm.isLoading).toBe(false)
+  })
+
+  it('refresh() replaces state with a new cockpit state', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    const vm = wrapper.vm as any
+    vm.refresh()
+    vi.advanceTimersByTime(500)
+    await nextTick()
+    expect(typeof vm.state.refreshedAt).toBe('string')
+    expect(vm.state.refreshedAt).toBeTruthy()
+    expect(Array.isArray(vm.state.stages)).toBe(true)
+  })
+
+  it('calling refresh twice cancels the previous timer (clearTimeout called)', async () => {
+    const clearSpy = vi.spyOn(globalThis, 'clearTimeout')
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    const vm = wrapper.vm as any
+    vm.refresh()
+    vm.refresh()
+    expect(clearSpy).toHaveBeenCalled()
+    clearSpy.mockRestore()
+  })
+
+  it('onBeforeUnmount clears the loading timer', async () => {
+    const clearSpy = vi.spyOn(globalThis, 'clearTimeout')
+    const wrapper = await mountView()
+    wrapper.unmount()
+    expect(clearSpy).toHaveBeenCalled()
+    clearSpy.mockRestore()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 15. No-blockers state — v-else branch when topBlockers is empty
+// ---------------------------------------------------------------------------
+
+describe('No-blockers state', () => {
+  beforeEach(() => { vi.useFakeTimers() })
+  afterEach(() => { vi.useRealTimers() })
+
+  it('shows no-blockers-state when all stages have no blockers', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    const vm = wrapper.vm as any
+    vm.state.stages = vm.state.stages.map((s: any) => ({
+      ...s,
+      blockers: [],
+      status: 'approved',
+    }))
+    vm.state.recommendation = { posture: 'ready', headline: 'All clear', rationale: 'Approved' }
+    await nextTick()
+    await nextTick()
+    const noBlockers = wrapper.find('[data-testid="no-blockers-state"]')
+    expect(noBlockers.exists()).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 16. formattedRefreshedAt computed
+// ---------------------------------------------------------------------------
+
+describe('formattedRefreshedAt', () => {
+  beforeEach(() => { vi.useFakeTimers() })
+  afterEach(() => { vi.useRealTimers() })
+
+  it('returns raw string when refreshedAt is not a valid date', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    const vm = wrapper.vm as any
+    vm.state.refreshedAt = 'not-a-date'
+    await nextTick()
+    expect(vm.formattedRefreshedAt).toBe('not-a-date')
+  })
+
+  it('returns empty string when refreshedAt is falsy', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    const vm = wrapper.vm as any
+    vm.state.refreshedAt = ''
+    await nextTick()
+    expect(vm.formattedRefreshedAt).toBe('')
+  })
+
+  it('returns a locale string for a valid ISO date', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    const vm = wrapper.vm as any
+    const iso = '2025-06-15T10:30:00.000Z'
+    vm.state.refreshedAt = iso
+    await nextTick()
+    const formatted = vm.formattedRefreshedAt
+    expect(typeof formatted).toBe('string')
+    expect(formatted.length).toBeGreaterThan(0)
+    expect(formatted).not.toBe(iso)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 17. posture icon computed — conditionally_ready and ready branches
+// ---------------------------------------------------------------------------
+
+describe('Posture icon computed', () => {
+  beforeEach(() => { vi.useFakeTimers() })
+  afterEach(() => { vi.useRealTimers() })
+
+  it('postureIcon returns the correct icon for "ready" posture', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    const vm = wrapper.vm as any
+    vm.state.recommendation = { posture: 'ready', headline: 'Ready', rationale: 'All approved' }
+    vm.state.stages = vm.state.stages.map((s: any) => ({ ...s, status: 'approved', blockers: [] }))
+    await nextTick()
+    expect(vm.postureIcon).toBeTruthy()
+  })
+
+  it('postureIcon returns the correct icon for "conditionally_ready" posture', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    const vm = wrapper.vm as any
+    vm.state.recommendation = {
+      posture: 'conditionally_ready',
+      headline: 'Conditionally ready',
+      rationale: 'Some conditions',
+    }
+    await nextTick()
+    expect(vm.postureIcon).toBeTruthy()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 18. stageHasStaleEvidence helper
+// ---------------------------------------------------------------------------
+
+describe('stageHasStaleEvidence helper', () => {
+  beforeEach(() => { vi.useFakeTimers() })
+  afterEach(() => { vi.useRealTimers() })
+
+  it('returns false when stage has no blockers with staleSince', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    const vm = wrapper.vm as any
+    const stage = {
+      blockers: [
+        { id: 'b1', title: 'Test', severity: 'informational', isLaunchBlocking: false, action: '' },
+      ],
+    }
+    expect(vm.stageHasStaleEvidence(stage)).toBe(false)
+  })
+
+  it('returns true when a blocker has a staleSince older than 30 days', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    const vm = wrapper.vm as any
+    const oldDate = new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString()
+    const stage = {
+      blockers: [
+        { id: 'b1', title: 'Test', severity: 'medium', isLaunchBlocking: true, action: '', staleSince: oldDate },
+      ],
+    }
+    expect(vm.stageHasStaleEvidence(stage)).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 19. blockerCardClass helper — covers all severity branches
+// ---------------------------------------------------------------------------
+
+describe('blockerCardClass helper', () => {
+  beforeEach(() => { vi.useFakeTimers() })
+  afterEach(() => { vi.useRealTimers() })
+
+  it('returns red classes for critical severity', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    expect((wrapper.vm as any).blockerCardClass('critical')).toContain('red')
+  })
+
+  it('returns orange classes for high severity', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    expect((wrapper.vm as any).blockerCardClass('high')).toContain('orange')
+  })
+
+  it('returns yellow classes for medium severity', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    expect((wrapper.vm as any).blockerCardClass('medium')).toContain('yellow')
+  })
+
+  it('returns gray classes for informational severity', async () => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    expect((wrapper.vm as any).blockerCardClass('informational')).toContain('gray')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 20. stageNumberClass helper — covers all stage status branches
+// ---------------------------------------------------------------------------
+
+describe('stageNumberClass helper', () => {
+  beforeEach(() => { vi.useFakeTimers() })
+  afterEach(() => { vi.useRealTimers() })
+
+  it.each([
+    ['not_started', 'gray'],
+    ['ready_for_review', 'blue'],
+    ['in_review', 'indigo'],
+    ['needs_attention', 'yellow'],
+    ['conditionally_approved', 'teal'],
+    ['approved', 'green'],
+    ['blocked', 'red'],
+  ] as const)('returns %s color for status "%s"', async (status, colorHint) => {
+    const wrapper = await mountView()
+    vi.advanceTimersByTime(400)
+    await nextTick()
+    expect((wrapper.vm as any).stageNumberClass(status)).toContain(colorHint)
+  })
+})

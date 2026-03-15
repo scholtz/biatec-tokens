@@ -625,11 +625,9 @@ const topBlockers = computed(() => getTopBlockers(state.value.stages))
 const blockingStage = computed(() => findBlockingStage(state.value.stages))
 
 const formattedRefreshedAt = computed(() => {
-  try {
-    return new Date(state.value.refreshedAt).toLocaleString()
-  } catch {
-    return state.value.refreshedAt
-  }
+  if (!state.value.refreshedAt) return ''
+  const d = new Date(state.value.refreshedAt)
+  return isNaN(d.getTime()) ? state.value.refreshedAt : d.toLocaleString()
 })
 
 const postureClass = computed(() =>
@@ -759,5 +757,10 @@ defineExpose({
   topBlockers,
   blockingStage,
   stageHasStaleEvidence,
+  stageNumberClass,
+  blockerCardClass,
+  postureIcon,
+  postureIconBgClass,
+  formattedRefreshedAt,
 })
 </script>

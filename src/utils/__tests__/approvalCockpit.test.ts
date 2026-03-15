@@ -292,6 +292,42 @@ describe('computeReleaseRecommendation', () => {
       expect(typeof rec.headline).toBe('string')
     }
   })
+
+  it('headline uses singular "stage" when exactly 1 stage needs attention (line 303 branch)', () => {
+    const stages = [makeStage({ status: 'needs_attention' })]
+    const rec = computeReleaseRecommendation(stages, now)
+    expect(rec.posture).toBe('not_ready')
+    expect(rec.headline).toContain('1 stage require')
+    expect(rec.headline).not.toContain('stages require')
+  })
+
+  it('headline uses plural "stages" when more than 1 stage needs attention (line 303 branch)', () => {
+    const stages = [
+      makeStage({ status: 'needs_attention' }),
+      makeStage({ id: 's2', status: 'needs_attention' }),
+    ]
+    const rec = computeReleaseRecommendation(stages, now)
+    expect(rec.headline).toContain('stages require')
+  })
+
+  it('headline uses singular "stage" for conditionally_ready when 1 stage (line 307 branch)', () => {
+    const stages = [
+      makeStage({ status: 'conditionally_approved' }),
+    ]
+    const rec = computeReleaseRecommendation(stages, now)
+    expect(rec.posture).toBe('conditionally_ready')
+    expect(rec.headline).toContain('1 stage')
+    expect(rec.headline).not.toContain('1 stages')
+  })
+
+  it('headline uses plural "stages" for conditionally_ready when multiple (line 307 branch)', () => {
+    const stages = [
+      makeStage({ status: 'conditionally_approved' }),
+      makeStage({ id: 's2', status: 'conditionally_approved' }),
+    ]
+    const rec = computeReleaseRecommendation(stages, now)
+    expect(rec.headline).toContain('2 stages')
+  })
 })
 
 // ---------------------------------------------------------------------------
