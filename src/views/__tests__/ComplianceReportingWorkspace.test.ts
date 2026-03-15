@@ -300,7 +300,7 @@ describe('ComplianceReportingWorkspace — wallet-free language', () => {
   it('does not contain wallet connector UI text', async () => {
     const wrapper = await mountWorkspace()
     const html = wrapper.html()
-    expect(html).not.toMatch(/WalletConnect|MetaMask|\bPera\b Wallet|Defly/i)
+    expect(html).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
     expect(html).not.toContain('connect wallet')
     expect(html).not.toContain('Not connected')
   })
