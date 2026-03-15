@@ -186,11 +186,11 @@ describe('deriveStageStatus', () => {
     expect(deriveStageStatus([], 'not_started')).toBe('ready_for_review')
   })
 
-  it('preserves "approved" status when no launch blockers', () => {
+  it('preserves "approved" status when there are no blockers at all', () => {
     expect(deriveStageStatus([], 'approved')).toBe('approved')
   })
 
-  it('preserves "conditionally_approved" status when no launch blockers', () => {
+  it('preserves "conditionally_approved" status when there are no blockers at all', () => {
     expect(deriveStageStatus([], 'conditionally_approved')).toBe('conditionally_approved')
   })
 
@@ -204,6 +204,38 @@ describe('deriveStageStatus', () => {
     const status = deriveStageStatus(blockers)
     expect(status).toBe('needs_attention')
     expect(status).not.toBe('blocked')
+  })
+
+  // Regression: approved + informational blocker — PO reported correctness gap
+  // An approved stage must be downgraded when new concerns appear so reviewers
+  // know re-review is required.  Without this fix the stage silently stayed
+  // "approved" even after new informational evidence was added.
+  it('downgrades "approved" to "needs_attention" when an informational blocker is added', () => {
+    const blockers = [makeBlocker({ severity: 'informational', isLaunchBlocking: false })]
+    expect(deriveStageStatus(blockers, 'approved')).toBe('needs_attention')
+  })
+
+  it('downgrades "conditionally_approved" to "needs_attention" when an informational blocker is added', () => {
+    const blockers = [makeBlocker({ severity: 'informational', isLaunchBlocking: false })]
+    expect(deriveStageStatus(blockers, 'conditionally_approved')).toBe('needs_attention')
+  })
+
+  it('downgrades "approved" to "needs_attention" when a non-launch-blocking medium blocker is added', () => {
+    const blockers = [makeBlocker({ severity: 'medium', isLaunchBlocking: false })]
+    expect(deriveStageStatus(blockers, 'approved')).toBe('needs_attention')
+  })
+
+  it('downgrades "conditionally_approved" to "needs_attention" when a non-launch-blocking medium blocker is added', () => {
+    const blockers = [makeBlocker({ severity: 'medium', isLaunchBlocking: false })]
+    expect(deriveStageStatus(blockers, 'conditionally_approved')).toBe('needs_attention')
+  })
+
+  it('preserves "approved" only when there are truly zero blockers', () => {
+    expect(deriveStageStatus([], 'approved')).toBe('approved')
+  })
+
+  it('preserves "conditionally_approved" only when there are truly zero blockers', () => {
+    expect(deriveStageStatus([], 'conditionally_approved')).toBe('conditionally_approved')
   })
 })
 
@@ -327,6 +359,50 @@ describe('computeReleaseRecommendation', () => {
     ]
     const rec = computeReleaseRecommendation(stages, now)
     expect(rec.headline).toContain('2 stages')
+  })
+
+  // Regression: release recommendation must reflect downgraded stage status.
+  // When deriveStageStatus downgrades approved/conditionally_approved → needs_attention,
+  // computeReleaseRecommendation must produce not_ready (not conditionally_ready / ready).
+  it('returns "not_ready" when a previously-approved stage now has an informational blocker (needs_attention)', () => {
+    // Stage was approved, but an informational blocker now exists — deriveStageStatus
+    // returns needs_attention; computeReleaseRecommendation must produce not_ready.
+    const stages = [
+      makeStage({
+        status: 'needs_attention', // result of deriveStageStatus(informationalBlockers, 'approved')
+        blockers: [makeBlocker({ severity: 'informational', isLaunchBlocking: false })],
+      }),
+      makeStage({ id: 's2', status: 'approved' }),
+    ]
+    const rec = computeReleaseRecommendation(stages, now)
+    expect(rec.posture).toBe('not_ready')
+    expect(rec.approvedStageCount).toBe(1) // only the genuinely approved stage counts
+  })
+
+  it('returns "not_ready" when a previously-conditionally-approved stage now has an informational blocker', () => {
+    const stages = [
+      makeStage({
+        status: 'needs_attention', // deriveStageStatus(informationalBlockers, 'conditionally_approved')
+        blockers: [makeBlocker({ severity: 'informational', isLaunchBlocking: false })],
+      }),
+      makeStage({ id: 's2', status: 'approved' }),
+    ]
+    const rec = computeReleaseRecommendation(stages, now)
+    expect(rec.posture).toBe('not_ready')
+  })
+
+  it('does NOT produce "ready" when any stage is needs_attention (regression guard)', () => {
+    // All stages appear signed-off in raw data, but one has an informational blocker
+    // that deriveStageStatus should downgrade.  Simulate the derived result here.
+    const stages = [
+      makeStage({ status: 'needs_attention' }),
+      makeStage({ id: 's2', status: 'approved' }),
+      makeStage({ id: 's3', status: 'approved' }),
+    ]
+    const rec = computeReleaseRecommendation(stages, now)
+    expect(rec.posture).not.toBe('ready')
+    expect(rec.posture).not.toBe('conditionally_ready')
+    expect(rec.posture).toBe('not_ready')
   })
 })
 

@@ -253,11 +253,16 @@ export function deriveStageStatus(
   const mediumLaunch = launchBlockers.filter((b) => b.severity === 'medium')
   if (mediumLaunch.length > 0) return 'needs_attention'
 
-  // No launch blockers — preserve terminal approved/conditional states
-  if (isSignedOff(currentStatus)) return currentStatus
-
+  // Any remaining blockers — including informational / non-launch-blocking ones —
+  // require a reviewer to take a fresh look, even if the stage was previously
+  // signed off.  Preserving approval status silently would hide new concerns from
+  // legal, procurement, and executive reviewers who rely on this cockpit to know
+  // when a stage has changed since their last review.
   const anyBlockers = blockers.length > 0
   if (anyBlockers) return 'needs_attention'
+
+  // No blockers at all — safe to preserve a signed-off state.
+  if (isSignedOff(currentStatus)) return currentStatus
 
   if (currentStatus === 'not_started') return 'ready_for_review'
 
