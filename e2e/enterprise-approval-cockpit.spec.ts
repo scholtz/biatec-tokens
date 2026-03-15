@@ -472,3 +472,128 @@ test.describe('Enterprise Approval Queue — authentication guard', () => {
     expect(redirectedAway || showsAuthModal || hasAuthParam).toBe(true)
   })
 })
+
+// ---------------------------------------------------------------------------
+// Section 11: Remediation Workflow Panel (new feature)
+// ---------------------------------------------------------------------------
+
+test.describe('Enterprise Approval Queue — remediation workflow panel', () => {
+  test('remediation task panel is present on the page', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const panel = page.getByTestId('remediation-task-panel')
+    await expect(panel).toBeAttached({ timeout: 20000 })
+  })
+
+  test('remediation panel has the Remediation Workflow heading', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const panelTitle = page.getByTestId('remediation-panel-title')
+    await expect(panelTitle).toBeVisible({ timeout: 20000 })
+    const text = await panelTitle.textContent({ timeout: 5000 })
+    expect(text).toContain('Remediation Workflow')
+  })
+
+  test('remediation stats section is rendered', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const stats = page.getByTestId('remediation-stats')
+    await expect(stats).toBeAttached({ timeout: 20000 })
+  })
+
+  test('remediation blocking count is shown', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const count = page.getByTestId('remediation-blocking-count')
+    await expect(count).toBeVisible({ timeout: 20000 })
+    const text = await count.textContent({ timeout: 5000 })
+    // Should be a number (there are blockers in the default state)
+    expect(text?.trim()).toMatch(/^\d+$/)
+  })
+
+  test('remediation stage groups are rendered for stages with tasks', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const groups = page.getByTestId('remediation-stage-groups')
+    await expect(groups).toBeAttached({ timeout: 20000 })
+  })
+
+  test('compliance-review group header is shown with blocking count badge', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    // Wait for stage groups to render
+    const groups = page.getByTestId('remediation-stage-groups')
+    await expect(groups).toBeAttached({ timeout: 20000 })
+    const groupHeader = page.getByTestId('remediation-group-header-compliance-review')
+    await expect(groupHeader).toBeAttached({ timeout: 15000 })
+  })
+
+  test('legal-review group header is shown', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const groups = page.getByTestId('remediation-stage-groups')
+    await expect(groups).toBeAttached({ timeout: 20000 })
+    const groupHeader = page.getByTestId('remediation-group-header-legal-review')
+    await expect(groupHeader).toBeAttached({ timeout: 15000 })
+  })
+
+  test('auto-expanded blocking group shows blocking section heading', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    // Compliance review has blocking tasks and is auto-expanded
+    const blockingHeading = page.getByTestId('remediation-blocking-heading-compliance-review')
+    await expect(blockingHeading).toBeAttached({ timeout: 20000 })
+  })
+
+  test('group header has role="button" with aria-expanded for accessibility', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const groups = page.getByTestId('remediation-stage-groups')
+    await expect(groups).toBeAttached({ timeout: 20000 })
+    const header = page.getByTestId('remediation-group-header-compliance-review')
+    await expect(header).toBeAttached({ timeout: 15000 })
+    const role = await header.getAttribute('role')
+    expect(role).toBe('button')
+    const expanded = await header.getAttribute('aria-expanded')
+    expect(['true', 'false']).toContain(expanded)
+  })
+
+  test('panel section has aria-labelledby for screen readers', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const panel = page.getByTestId('remediation-task-panel')
+    await expect(panel).toBeAttached({ timeout: 20000 })
+    const labelledBy = await panel.getAttribute('aria-labelledby')
+    expect(labelledBy).toBe('remediation-panel-heading')
+  })
+
+  test('remediation panel disclaimer is present', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const disclaimer = page.getByTestId('remediation-panel-disclaimer')
+    await expect(disclaimer).toBeAttached({ timeout: 20000 })
+    const text = await disclaimer.textContent({ timeout: 5000 }).catch(() => '')
+    expect(text).toContain('Remediation tasks')
+  })
+
+  test('cockpit remediation panel contains no wallet connector UI', async ({ page }) => {
+    await openCockpit(page)
+    const heading = page.getByRole('heading', { name: /Enterprise Approval Queue/i, level: 1 })
+    await expect(heading).toBeVisible({ timeout: 30000 })
+    const panel = page.getByTestId('remediation-task-panel')
+    await expect(panel).toBeAttached({ timeout: 20000 })
+    const text = await panel.textContent({ timeout: 5000 }).catch(() => '')
+    expect(text).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
+  })
+})
