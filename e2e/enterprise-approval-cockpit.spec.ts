@@ -268,7 +268,10 @@ test.describe('Enterprise Approval Queue — stage expand and blockers', () => {
     await openCockpit(page)
     const header = page.getByTestId('stage-header-legal-review')
     await header.click()
-    const blockerTitle = page.locator('[data-testid^="blocker-title-"]').first()
+    // Scope to the expanded stage body to avoid matching hidden blocker elements
+    // in other collapsed stages (v-show keeps them in DOM but hidden)
+    const stageBody = page.getByTestId('stage-body-legal-review')
+    const blockerTitle = stageBody.locator('[data-testid^="blocker-title-"]').first()
     await expect(blockerTitle).toBeVisible({ timeout: 10000 })
     const text = await blockerTitle.textContent()
     expect(text!.length).toBeGreaterThan(0)
@@ -278,7 +281,10 @@ test.describe('Enterprise Approval Queue — stage expand and blockers', () => {
     await openCockpit(page)
     const header = page.getByTestId('stage-header-legal-review')
     await header.click()
-    const indicator = page.locator('[data-testid^="blocker-launch-blocking-"]').first()
+    // Scope to the expanded stage body to avoid matching hidden indicators
+    // in other collapsed stages (v-show keeps them in DOM but hidden)
+    const stageBody = page.getByTestId('stage-body-legal-review')
+    const indicator = stageBody.locator('[data-testid^="blocker-launch-blocking-"]').first()
     await expect(indicator).toBeVisible({ timeout: 10000 })
   })
 })

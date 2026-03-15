@@ -1910,9 +1910,62 @@ grep -rn "locator\('\[aria-current=\"page\"\]'\)" e2e/ --include="*.spec.ts"
 - ❌ Assume only one element on a page will have `aria-current="page"` (nav link + breadcrumb are both correct)
 - ✅ Always scope to the specific landmark: `nav[aria-label="Breadcrumb"] [aria-current="page"]`
 
+---
+
+### 7y. Unscoped `.first()` Locators on `v-show` Elements Pick Up Hidden Siblings — Always Scope to the Expanded Container (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 15, 2026 (enterprise-approval-cockpit.spec.ts) 🚨**
+
+**Violation**: Copilot wrote two E2E tests that:
+1. Expanded the `legal-review` stage by clicking its header
+2. Then searched for `[data-testid^="blocker-title-"]` and `[data-testid^="blocker-launch-blocking-"]` using unscoped `.first()`
+
+Both tests failed in CI with "unexpected value 'hidden'" because Playwright's `.first()` found `blocker-title-kyc-config-missing` inside the **collapsed** `compliance-review` stage (rendered before `legal-review` in the DOM). Since that stage uses `v-show` to hide/show its body, the element is present in the DOM but visually hidden — and `.first()` picks it up before any elements in the expanded stage.
+
+**Root Cause**:
+- `v-show` keeps elements in the DOM (adds/removes `display:none`) — they are always present for selector matching
+- Unscoped prefix-match selectors like `[data-testid^="blocker-"]` traverse the full DOM
+- `.first()` returns the **first DOM order** match, NOT the first visible match
+- If a prior section in the DOM has matching elements that are hidden (`v-show=false`), `.first()` returns them and the `toBeVisible()` assertion fails
+
+**Correct Pattern** (MANDATORY when testing expandable/collapsible sections):
+```typescript
+// ❌ WRONG — unscoped .first() picks up hidden elements from collapsed sections
+await header.click()
+const blockerTitle = page.locator('[data-testid^="blocker-title-"]').first()
+await expect(blockerTitle).toBeVisible({ timeout: 10000 }) // FAILS: picks up hidden sibling!
+
+// ✅ CORRECT — scope to the specific expanded container BEFORE searching for children
+await header.click()
+const stageBody = page.getByTestId('stage-body-legal-review') // the container just expanded
+const blockerTitle = stageBody.locator('[data-testid^="blocker-title-"]').first()
+await expect(blockerTitle).toBeVisible({ timeout: 10000 }) // PASSES: only searches inside expanded body
+```
+
+**Universal Rule**: Any time a page uses `v-show` (or any CSS hide/show mechanism) to render multiple collapsible sections, you MUST scope child locators to the specific container you just expanded. Never use unscoped `.first()`, `.nth()`, or prefix-match selectors on elements that could appear in other hidden sections.
+
+**Pre-Commit Check** (MANDATORY for any test that expands a section and then searches inside it):
+```bash
+# Find unscoped prefix-match locators that could match hidden siblings:
+grep -n "locator('\[data-testid\^=" e2e/*.spec.ts | grep -v "getByTestId"
+# For each result: verify the locator is chained from a scoped container, not from page.
+# If "page.locator('[data-testid^=...]')" appears after an expand/click: WRONG — must scope it.
+```
+
+**This applies to ALL collapsible/expandable patterns**, including but not limited to:
+- Accordion stages (approval queues, FAQ sections, wizard steps)
+- Tab panels (only one tab's content is visible at a time)
+- Drawer/dialog content (multiple drawers may be rendered, only one visible)
+- v-show toggle panels (any section that hides/shows via CSS without unmounting)
+
+**Never Again**:
+- ❌ Use `page.locator('[data-testid^="..."]').first()` after expanding a section when other hidden sections may have matching children
+- ❌ Assume `.first()` returns the first visible element — it returns the first DOM-order element regardless of visibility
+- ✅ Always chain: `expandedContainer.locator('[data-testid^="..."]').first()`
+- ✅ Expand the container, then get a reference to the container, then search inside it
 
 
-**MANDATORY BEFORE SUBMITTING ANY PR FOR HARDENING ISSUES**
+
 
 ### PR Quality Checklist (MUST ALL BE ✅ BEFORE SUBMISSION)
 
