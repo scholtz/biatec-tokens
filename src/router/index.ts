@@ -36,6 +36,7 @@ import ComplianceEvidencePackView from "../views/ComplianceEvidencePackView.vue"
 import ComplianceReportingWorkspace from "../views/ComplianceReportingWorkspace.vue";
 import EnterpriseRiskReportBuilder from "../views/EnterpriseRiskReportBuilder.vue";
 import EnterpriseApprovalCockpit from "../views/EnterpriseApprovalCockpit.vue";
+import InvestorComplianceOnboardingWorkspace from "../views/InvestorComplianceOnboardingWorkspace.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 import { isIssuanceSessionValid, storeIssuanceReturnPath } from "../utils/authFirstIssuanceWorkspace";
 
@@ -190,6 +191,13 @@ const router = createRouter({
       name: "EnterpriseApprovalCockpit",
       component: EnterpriseApprovalCockpit,
       meta: { requiresAuth: true, title: "Enterprise Approval Queue" },
+    },
+    // Investor Compliance Onboarding — onboarding readiness, KYC/AML review, jurisdiction checks
+    {
+      path: "/compliance/onboarding",
+      name: "InvestorComplianceOnboarding",
+      component: InvestorComplianceOnboardingWorkspace,
+      meta: { requiresAuth: true, title: "Investor Compliance Onboarding" },
     },
     {
       path: "/attestations",
