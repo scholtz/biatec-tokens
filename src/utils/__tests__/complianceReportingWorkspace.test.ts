@@ -732,3 +732,174 @@ describe('EXPORT_READINESS_DESCRIPTIONS', () => {
     expect(EXPORT_READINESS_DESCRIPTIONS.ready_for_external).toMatch(/external|regulator/i)
   })
 })
+
+// ---------------------------------------------------------------------------
+// 8. mapStageStatusToOutcome via deriveApprovalHistorySummary — uncovered branches
+// ---------------------------------------------------------------------------
+
+describe('deriveApprovalHistorySummary — in_review and ready_for_review stages map to pending', () => {
+  it('in_review stage contributes to pendingCount', () => {
+    const stages = [
+      {
+        id: 'stage-ir',
+        label: 'Legal Review',
+        role: 'legal' as const,
+        status: 'in_review',
+        lastActionAt: null,
+        conditions: null,
+        summary: 'Under active review',
+        blockers: [],
+      },
+    ]
+    const summary = deriveApprovalHistorySummary(stages)
+    expect(summary.pendingCount).toBe(1)
+    expect(summary.entries[0].outcome).toBe('pending')
+  })
+
+  it('ready_for_review stage contributes to pendingCount', () => {
+    const stages = [
+      {
+        id: 'stage-rfr',
+        label: 'Compliance Sign-off',
+        role: 'compliance_operator' as const,
+        status: 'ready_for_review',
+        lastActionAt: null,
+        conditions: null,
+        summary: 'Awaiting reviewer assignment',
+        blockers: [],
+      },
+    ]
+    const summary = deriveApprovalHistorySummary(stages)
+    expect(summary.pendingCount).toBe(1)
+    expect(summary.entries[0].outcome).toBe('pending')
+  })
+
+  it('unknown status falls through to not_started', () => {
+    const stages = [
+      {
+        id: 'stage-unk',
+        label: 'Unknown Stage',
+        role: 'compliance_operator' as const,
+        status: 'draft_only',
+        lastActionAt: null,
+        conditions: null,
+        summary: '',
+        blockers: [],
+      },
+    ]
+    const summary = deriveApprovalHistorySummary(stages)
+    expect(summary.entries[0].outcome).toBe('not_started')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 9. deriveExportPackageReadiness — ready_for_internal via stale evidence path
+// ---------------------------------------------------------------------------
+
+describe('deriveExportPackageReadiness — stale evidence degrades to ready_for_internal', () => {
+  it('status is ready_for_internal (not ready_for_external) when evidence is stale even with approval sign-off', () => {
+    const staleDate = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString()
+    // Bundle is 'ready' overall and approval is fully signed, but evidence is stale
+    const bundle = makeBundle({
+      overallStatus: 'ready',
+      jurisdiction: {
+        configured: true,
+        jurisdictions: ['Germany'],
+        permittedCount: 1,
+        restrictedCount: 0,
+        staleSince: staleDate,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, makeApprovalSummary(true))
+    expect(result.status).toBe('ready_for_internal')
+  })
+
+  it('rationale mentions stale evidence', () => {
+    const staleDate = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString()
+    const bundle = makeBundle({
+      overallStatus: 'ready',
+      jurisdiction: {
+        configured: true,
+        jurisdictions: ['Germany'],
+        permittedCount: 1,
+        restrictedCount: 0,
+        staleSince: staleDate,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, makeApprovalSummary(true))
+    expect(result.rationale).toMatch(/stale/i)
+  })
+
+  it('staleCount is at least 1', () => {
+    const staleDate = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString()
+    const bundle = makeBundle({
+      overallStatus: 'ready',
+      jurisdiction: {
+        configured: true,
+        jurisdictions: ['Germany'],
+        permittedCount: 1,
+        restrictedCount: 0,
+        staleSince: staleDate,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, makeApprovalSummary(true))
+    expect(result.staleCount).toBeGreaterThanOrEqual(1)
+  })
+
+  it('status is ready_for_internal when bundle status is warning and staleCount > 0', () => {
+    const staleDate = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString()
+    // 'warning' overallStatus with stale evidence reaches the else-if(staleCount > 0) branch
+    const bundle = makeBundle({
+      overallStatus: 'warning',
+      jurisdiction: {
+        configured: true,
+        jurisdictions: ['Germany'],
+        permittedCount: 1,
+        restrictedCount: 0,
+        staleSince: staleDate,
+      },
+    })
+    const result = deriveExportPackageReadiness(bundle, makeApprovalSummary(true))
+    expect(result.status).toBe('ready_for_internal')
+    expect(result.rationale).toMatch(/stale/i)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 10. buildAudienceReportText — KYC pendingReviewCount > 0 in report text
+// ---------------------------------------------------------------------------
+
+describe('buildAudienceReportText — KYC pending reviews in report', () => {
+  it('includes pending review count when pendingReviewCount > 0', () => {
+    const bundle = makeBundle({
+      kycAml: {
+        status: 'warning',
+        kycRequired: true,
+        amlRequired: true,
+        providerConfigured: true,
+        pendingReviewCount: 7,
+        staleSince: null,
+      },
+    })
+    const readiness = deriveExportPackageReadiness(bundle, null)
+    const text = buildAudienceReportText(bundle, 'compliance', null, readiness)
+    // The pending review count line (line 435) should appear in the report
+    expect(text).toMatch(/pending reviews\s*:\s*7/i)
+  })
+
+  it('does NOT include pending review count line when pendingReviewCount is 0', () => {
+    const bundle = makeBundle({
+      kycAml: {
+        status: 'ready',
+        kycRequired: true,
+        amlRequired: true,
+        providerConfigured: true,
+        pendingReviewCount: 0,
+        staleSince: null,
+      },
+    })
+    const readiness = deriveExportPackageReadiness(bundle, null)
+    const text = buildAudienceReportText(bundle, 'compliance', null, readiness)
+    expect(text).not.toMatch(/Pending Reviews\s*:/)
+  })
+})

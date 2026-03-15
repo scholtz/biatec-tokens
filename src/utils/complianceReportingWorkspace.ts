@@ -343,11 +343,16 @@ export function deriveExportPackageReadiness(
     headline = EXPORT_READINESS_LABELS.incomplete
     rationale = `${missingCount} required evidence item${missingCount !== 1 ? 's are' : ' is'} missing. Complete the Compliance Setup workflow before generating an exportable package.`
   } else if (bundle.overallStatus === 'ready') {
-    if (approvalSummary && approvalSummary.allLaunchCriticalSigned) {
+    if (staleCount === 0 && approvalSummary && approvalSummary.allLaunchCriticalSigned) {
       status = 'ready_for_external'
       headline = EXPORT_READINESS_LABELS.ready_for_external
       rationale =
         'All compliance controls are configured, evidence is present, and approval stages are signed off. This package is suitable for external review or regulator submission.'
+    } else if (staleCount > 0) {
+      status = 'ready_for_internal'
+      headline = EXPORT_READINESS_LABELS.ready_for_internal
+      rationale =
+        'Some evidence items are stale and should be refreshed before external submission. The package can be used for internal review in the meantime.'
     } else {
       status = 'ready_for_internal'
       headline = EXPORT_READINESS_LABELS.ready_for_internal
