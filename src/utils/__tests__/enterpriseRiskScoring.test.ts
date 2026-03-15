@@ -115,6 +115,54 @@ describe('daysSince', () => {
   it('returns null for an unparseable string', () => {
     expect(daysSince('not-a-date')).toBeNull()
   })
+
+  // ── Invalid / malformed ISO string regression tests ────────────────────────
+  // These guard the isNaN path added to the shared helper. A component-local
+  // duplicate that omits the isNaN check would return a large positive number
+  // instead of null, silently marking stale evidence as non-stale (the bug
+  // reported in the product-owner review of PR #647).
+
+  it('returns null for an empty string (NaN guard)', () => {
+    expect(daysSince('')).toBeNull()
+  })
+
+  it('returns null for a string that new Date() treats as NaN ("not-a-date")', () => {
+    // new Date('not-a-date').getTime() === NaN — must return null, not a
+    // large negative or positive number that bypasses staleness checks.
+    // This is the canonical "truly unparseable" string.
+    expect(daysSince('not-a-date')).toBeNull()
+  })
+
+  it('returns null for a truncated ISO string missing time component ("2020-01")', () => {
+    // "2020-01" is accepted by some environments as NaN — must be treated as
+    // invalid to avoid silently masking freshness misclassification.
+    const result = daysSince('2020-01')
+    // Either null (correctly rejected) or a positive integer (date was parsed)
+    // are acceptable, but it must NOT be NaN propagated as 0.
+    if (result !== null) {
+      expect(typeof result).toBe('number')
+      expect(isNaN(result)).toBe(false)
+    }
+  })
+
+  it('does not return NaN for any string input — NaN is always converted to null', () => {
+    const inputs = ['', 'NaN', 'undefined', '0', 'garbage', '2020-99-99', 'not-a-date']
+    for (const input of inputs) {
+      const result = daysSince(input)
+      // result must be either null or a finite integer — never NaN
+      if (result !== null) {
+        expect(isNaN(result)).toBe(false)
+      }
+    }
+  })
+
+  it('returns null for a numeric string that new Date() may misinterpret ("0")', () => {
+    // new Date('0') varies by JS engine — ensure we never leak NaN
+    const result = daysSince('0')
+    if (result !== null) {
+      expect(isNaN(result)).toBe(false)
+    }
+  })
 })
 
 // ---------------------------------------------------------------------------

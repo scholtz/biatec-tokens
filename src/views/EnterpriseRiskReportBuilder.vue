@@ -516,6 +516,7 @@ import {
   computeRiskAssessment,
   buildCustomReportPayload,
   formatReportAsText,
+  daysSince,
   type RiskAssessment,
   type ReportPreset,
   type RiskBand,
@@ -611,16 +612,7 @@ const PRESETS: Array<{ id: ReportPreset; label: string; description: string; ico
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function daysSince(iso: string | null): number | null {
-  if (!iso) return null
-  try {
-    const ms = Date.now() - new Date(iso).getTime()
-    return Math.floor(ms / (1000 * 60 * 60 * 24))
-  } catch {
-    return null
-  }
-}
+// daysSince is imported from ../utils/enterpriseRiskScoring (includes isNaN guard)
 
 function buildTimestamp(offsetMinutes = 0): string {
   const d = new Date(Date.now() - offsetMinutes * 60 * 1000)
