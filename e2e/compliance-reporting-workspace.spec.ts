@@ -267,3 +267,160 @@ test.describe('Compliance Reporting Workspace — unauthenticated redirect', () 
     expect(redirectedAway || hasAuthParam || showsAuthModal).toBe(true)
   })
 })
+
+// ---------------------------------------------------------------------------
+// Section 9: Audience preset selector
+// ---------------------------------------------------------------------------
+
+test.describe('Compliance Reporting Workspace — audience presets', () => {
+  test('audience preset selector is visible', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const buttons = page.getByTestId('audience-preset-buttons')
+    await expect(buttons).toBeAttached({ timeout: 20000 })
+  })
+
+  test('all four audience preset buttons are present', async ({ page }) => {
+    await openReportingWorkspace(page)
+    for (const preset of ['all', 'compliance', 'procurement', 'executive']) {
+      const btn = page.getByTestId(`audience-btn-${preset}`)
+      await expect(btn).toBeAttached({ timeout: 15000 })
+    }
+  })
+
+  test('Full Report button is selected by default', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const allBtn = page.getByTestId('audience-btn-all')
+    await expect(allBtn).toBeAttached({ timeout: 15000 })
+    const pressed = await allBtn.getAttribute('aria-pressed', { timeout: 5000 })
+    expect(pressed).toBe('true')
+  })
+
+  test('audience preset description is visible', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const desc = page.getByTestId('audience-preset-description')
+    await expect(desc).toBeVisible({ timeout: 20000 })
+    const text = await desc.textContent({ timeout: 5000 })
+    expect(text?.length).toBeGreaterThan(10)
+  })
+
+  test('clicking Compliance Review preset updates aria-pressed', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const complianceBtn = page.getByTestId('audience-btn-compliance')
+    await expect(complianceBtn).toBeAttached({ timeout: 15000 })
+    await complianceBtn.click({ timeout: 5000 })
+    await page.waitForTimeout(300)
+    const pressed = await complianceBtn.getAttribute('aria-pressed', { timeout: 5000 })
+    expect(pressed).toBe('true')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Section 10: Approval history section
+// ---------------------------------------------------------------------------
+
+test.describe('Compliance Reporting Workspace — approval history', () => {
+  test('approval history section is present', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const section = page.getByTestId('approval-history-section')
+    await expect(section).toBeAttached({ timeout: 20000 })
+  })
+
+  test('approval history toggle has aria-expanded attribute', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const toggle = page.getByTestId('approval-history-toggle')
+    await expect(toggle).toBeAttached({ timeout: 20000 })
+    const expanded = await toggle.getAttribute('aria-expanded', { timeout: 5000 })
+    expect(['true', 'false']).toContain(expanded)
+  })
+
+  test('approval history empty state is shown when no stages recorded', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const emptyState = page.getByTestId('approval-history-empty')
+    await expect(emptyState).toBeAttached({ timeout: 20000 })
+  })
+
+  test('link to Approval Queue is present in approval history section', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const link = page.getByTestId('nav-approval-queue')
+    await expect(link).toBeAttached({ timeout: 20000 })
+  })
+
+  test('clicking toggle expands/collapses approval history (keyboard accessible)', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const toggle = page.getByTestId('approval-history-toggle')
+    await toggle.waitFor({ state: 'visible', timeout: 20000 })
+    const expandedBefore = await toggle.getAttribute('aria-expanded', { timeout: 5000 })
+    await toggle.click({ timeout: 5000 })
+    await page.waitForTimeout(300)
+    const expandedAfter = await toggle.getAttribute('aria-expanded', { timeout: 5000 })
+    expect(expandedBefore).not.toBe(expandedAfter)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Section 11: Export package readiness
+// ---------------------------------------------------------------------------
+
+test.describe('Compliance Reporting Workspace — export package readiness', () => {
+  test('export readiness section is present', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const section = page.getByTestId('export-readiness-section')
+    await expect(section).toBeAttached({ timeout: 20000 })
+  })
+
+  test('export readiness label is visible', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const label = page.getByTestId('export-readiness-label')
+    await expect(label).toBeVisible({ timeout: 20000 })
+    const text = await label.textContent({ timeout: 5000 })
+    expect(text?.length).toBeGreaterThan(5)
+  })
+
+  test('export readiness rationale is visible', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const rationale = page.getByTestId('export-readiness-rationale')
+    await expect(rationale).toBeVisible({ timeout: 20000 })
+    const text = await rationale.textContent({ timeout: 5000 })
+    expect(text?.length).toBeGreaterThan(10)
+  })
+
+  test('export readiness checklist is present', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const checklist = page.getByTestId('export-readiness-checklist')
+    await expect(checklist).toBeAttached({ timeout: 20000 })
+  })
+
+  test('checklist includes jurisdiction item', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const item = page.getByTestId('checklist-item-jurisdiction')
+    await expect(item).toBeAttached({ timeout: 20000 })
+  })
+
+  test('checklist includes KYC/AML item', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const item = page.getByTestId('checklist-item-kyc_aml')
+    await expect(item).toBeAttached({ timeout: 20000 })
+  })
+
+  test('checklist does not use wallet-centric language', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const checklist = page.getByTestId('export-readiness-checklist')
+    const text = await checklist.textContent({ timeout: 10000 }).catch(() => '')
+    expect(text).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Section 12: Sidebar navigation link
+// ---------------------------------------------------------------------------
+
+test.describe('Compliance Reporting Workspace — sidebar navigation', () => {
+  test('sidebar contains a Compliance Reporting navigation link', async ({ page }) => {
+    await openReportingWorkspace(page)
+    // The sidebar nav link for /compliance/reporting should be present
+    const sidebarNav = page.locator('nav[aria-label="Sidebar navigation"]')
+    await expect(sidebarNav).toBeAttached({ timeout: 20000 })
+    const reportingLink = sidebarNav.getByRole('link', { name: /Compliance Reporting/i })
+    await expect(reportingLink).toBeAttached({ timeout: 10000 })
+  })
+})

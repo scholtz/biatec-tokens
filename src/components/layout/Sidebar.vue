@@ -90,6 +90,17 @@
                 Release Evidence
               </router-link>
               <router-link
+                to="/compliance/reporting"
+                :aria-current="isActive('/compliance/reporting') ? 'page' : undefined"
+                class="group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
+                :class="isActive('/compliance/reporting')
+                  ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                  : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'"
+              >
+                <ClipboardDocumentListIcon class="mr-3 h-5 w-5 shrink-0" aria-hidden="true" />
+                Compliance Reporting
+              </router-link>
+              <router-link
                 to="/compliance/risk-report"
                 :aria-current="isActive('/compliance/risk-report') ? 'page' : undefined"
                 class="group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"

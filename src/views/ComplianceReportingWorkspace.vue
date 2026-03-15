@@ -47,6 +47,39 @@
 
         <template v-else>
 
+          <!-- ── Audience Preset Selector ── -->
+          <section
+            class="mb-6"
+            aria-labelledby="audience-preset-heading"
+            data-testid="audience-preset-section"
+          >
+            <h2 id="audience-preset-heading" class="sr-only">Report audience</h2>
+            <div
+              role="group"
+              aria-label="Select report audience"
+              class="flex flex-wrap gap-2"
+              data-testid="audience-preset-buttons"
+            >
+              <button
+                v-for="preset in (['all', 'compliance', 'procurement', 'executive'] as AudiencePreset[])"
+                :key="preset"
+                type="button"
+                :aria-pressed="selectedAudience === preset"
+                :data-testid="`audience-btn-${preset}`"
+                class="px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                :class="selectedAudience === preset
+                  ? 'bg-blue-700 border-blue-500 text-white'
+                  : 'bg-gray-800 border-white/10 text-gray-300 hover:bg-gray-700 hover:text-white'"
+                @click="selectedAudience = preset"
+              >
+                {{ AUDIENCE_PRESET_LABELS[preset] }}
+              </button>
+            </div>
+            <p class="mt-2 text-xs text-gray-400" data-testid="audience-preset-description">
+              {{ audienceDescription }}
+            </p>
+          </section>
+
           <!-- ── Overall Readiness Banner ── -->
           <section
             class="mb-6 rounded-2xl border p-6 shadow-lg"
@@ -124,6 +157,7 @@
 
           <!-- ── Jurisdiction Coverage ── -->
           <section
+            v-if="isSectionVisible('jurisdiction')"
             class="mb-6 bg-gray-800 rounded-2xl border border-white/10 p-6 shadow-lg"
             aria-labelledby="jurisdiction-heading"
             data-testid="jurisdiction-section"
@@ -186,6 +220,7 @@
 
           <!-- ── Investor Eligibility ── -->
           <section
+            v-if="isSectionVisible('investor_eligibility')"
             class="mb-6 bg-gray-800 rounded-2xl border border-white/10 p-6 shadow-lg"
             aria-labelledby="investor-eligibility-heading"
             data-testid="investor-eligibility-section"
@@ -236,6 +271,7 @@
 
           <!-- ── KYC / AML Review Status ── -->
           <section
+            v-if="isSectionVisible('kyc_aml')"
             class="mb-6 bg-gray-800 rounded-2xl border border-white/10 p-6 shadow-lg"
             aria-labelledby="kyc-aml-heading"
             data-testid="kyc-aml-section"
@@ -288,6 +324,7 @@
 
           <!-- ── Whitelist Posture ── -->
           <section
+            v-if="isSectionVisible('whitelist')"
             class="mb-6 bg-gray-800 rounded-2xl border border-white/10 p-6 shadow-lg"
             aria-labelledby="whitelist-heading"
             data-testid="whitelist-section"
@@ -342,6 +379,7 @@
 
           <!-- ── Evidence Summary ── -->
           <section
+            v-if="isSectionVisible('evidence')"
             class="mb-6 bg-gray-800 rounded-2xl border border-white/10 p-6 shadow-lg"
             aria-labelledby="evidence-summary-heading"
             data-testid="evidence-summary-section"
@@ -390,6 +428,190 @@
             </router-link>
           </section>
 
+          <!-- ── Approval History ── -->
+          <section
+            v-if="isSectionVisible('approval_history')"
+            class="mb-6 bg-gray-800 rounded-2xl border border-white/10 p-6 shadow-lg"
+            aria-labelledby="approval-history-heading"
+            data-testid="approval-history-section"
+          >
+            <button
+              type="button"
+              class="w-full flex items-center justify-between text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
+              :aria-expanded="approvalHistoryExpanded"
+              :aria-label="approvalHistoryToggleLabel"
+              data-testid="approval-history-toggle"
+              @click="approvalHistoryExpanded = !approvalHistoryExpanded"
+            >
+              <h2 id="approval-history-heading" class="text-base font-semibold text-white flex items-center gap-2">
+                <QueueListIcon class="w-4 h-4 text-violet-400" aria-hidden="true" />
+                Approval Stage History
+              </h2>
+              <span class="text-gray-400 text-xs flex items-center gap-1">
+                <span v-if="approvalSummary">
+                  {{ approvalSummary.approvedCount }}/{{ approvalSummary.totalStages }} signed off
+                </span>
+                <span v-else class="text-gray-500">No stages recorded</span>
+                <svg
+                  :class="approvalHistoryExpanded ? 'rotate-180' : ''"
+                  class="w-4 h-4 transition-transform duration-200"
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"
+                ><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+              </span>
+            </button>
+
+            <!-- Collapsed summary metrics -->
+            <div
+              v-if="approvalSummary"
+              class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3"
+              data-testid="approval-summary-metrics"
+            >
+              <div class="bg-gray-900/50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-400 mb-0.5">Approved</p>
+                <p class="text-lg font-bold text-green-400" data-testid="approval-approved-count">{{ approvalSummary.approvedCount }}</p>
+              </div>
+              <div class="bg-gray-900/50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-400 mb-0.5">Conditional</p>
+                <p class="text-lg font-bold text-blue-400" data-testid="approval-conditional-count">{{ approvalSummary.conditionalCount }}</p>
+              </div>
+              <div class="bg-gray-900/50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-400 mb-0.5">Blocked</p>
+                <p class="text-lg font-bold text-red-400" data-testid="approval-blocked-count">{{ approvalSummary.blockedCount }}</p>
+              </div>
+              <div class="bg-gray-900/50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-400 mb-0.5">Pending</p>
+                <p class="text-lg font-bold text-yellow-400" data-testid="approval-pending-count">{{ approvalSummary.pendingCount }}</p>
+              </div>
+            </div>
+            <div v-else class="mt-3 text-sm text-gray-400" data-testid="approval-history-empty">
+              No approval stages have been recorded yet.
+              <router-link
+                to="/compliance/approval"
+                class="inline ml-1 text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
+                data-testid="approval-queue-link"
+              >Open Approval Queue</router-link>
+            </div>
+
+            <!-- Expanded stage entries -->
+            <div
+              v-if="approvalHistoryExpanded && approvalSummary && approvalSummary.entries.length > 0"
+              class="mt-4 space-y-3"
+              data-testid="approval-history-entries"
+            >
+              <div
+                v-for="entry in approvalSummary.entries"
+                :key="entry.id"
+                class="bg-gray-900/60 rounded-xl p-4 border border-white/5"
+                :data-testid="`approval-entry-${entry.id}`"
+              >
+                <div class="flex items-start justify-between gap-3 mb-1">
+                  <div class="flex items-center gap-2">
+                    <UserCircleIcon class="w-4 h-4 text-gray-400 flex-shrink-0" aria-hidden="true" />
+                    <span class="text-sm font-medium text-white">{{ entry.label }}</span>
+                  </div>
+                  <span
+                    class="inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0"
+                    :class="approvalOutcomeBadgeClass(entry.outcome)"
+                  >{{ APPROVAL_OUTCOME_LABELS[entry.outcome] }}</span>
+                </div>
+                <p class="text-xs text-gray-400 ml-6 mb-1">{{ entry.reviewerRole }}</p>
+                <p v-if="entry.summary" class="text-xs text-gray-300 ml-6">{{ entry.summary }}</p>
+                <p
+                  v-if="entry.conditions"
+                  class="mt-1.5 ml-6 text-xs text-blue-300 flex items-start gap-1"
+                >
+                  <InformationCircleIcon class="w-3.5 h-3.5 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                  Conditions: {{ entry.conditions }}
+                </p>
+                <p
+                  v-if="entry.actionedAt"
+                  class="mt-1.5 ml-6 flex items-center gap-1 text-xs text-gray-500"
+                >
+                  <ClockIcon class="w-3 h-3" aria-hidden="true" />
+                  {{ new Date(entry.actionedAt).toLocaleString() }}
+                </p>
+              </div>
+            </div>
+
+            <router-link
+              to="/compliance/approval"
+              class="mt-4 inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
+              data-testid="nav-approval-queue"
+            >
+              Open Approval Queue
+              <ArrowRightIcon class="w-3 h-3" aria-hidden="true" />
+            </router-link>
+          </section>
+
+          <!-- ── Export Package Readiness ── -->
+          <section
+            v-if="isSectionVisible('export')"
+            class="mb-6 rounded-2xl border p-6 shadow-lg"
+            :class="exportReadinessBannerClass"
+            aria-labelledby="export-readiness-heading"
+            data-testid="export-readiness-section"
+          >
+            <div class="flex items-start gap-2 mb-2">
+              <CheckBadgeIcon class="w-5 h-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
+              <div class="flex-1 min-w-0">
+                <h2 id="export-readiness-heading" class="text-base font-semibold text-white">
+                  Export Package Readiness
+                </h2>
+                <p class="text-sm font-medium mt-0.5" data-testid="export-readiness-label">
+                  {{ exportReadiness.headline }}
+                </p>
+              </div>
+            </div>
+            <p class="text-xs text-gray-300 mb-4" data-testid="export-readiness-rationale">
+              {{ exportReadiness.rationale }}
+            </p>
+
+            <!-- Checklist -->
+            <ul
+              class="space-y-2"
+              aria-label="Export package checklist"
+              data-testid="export-readiness-checklist"
+            >
+              <li
+                v-for="item in exportReadiness.checklist"
+                :key="item.id"
+                class="flex items-start gap-2.5 text-sm"
+                :data-testid="`checklist-item-${item.id}`"
+              >
+                <component
+                  :is="item.isPresent ? CheckCircleIcon : (item.isRequiredForExternal ? XCircleIcon : MinusCircleIcon)"
+                  class="w-4 h-4 flex-shrink-0 mt-0.5"
+                  :class="item.isPresent ? 'text-green-400' : (item.isRequiredForExternal ? 'text-red-400' : 'text-gray-500')"
+                  :aria-label="item.isPresent ? 'Present' : (item.isRequiredForExternal ? 'Missing — required' : 'Optional — not present')"
+                />
+                <div class="flex-1 min-w-0">
+                  <span
+                    :class="item.isPresent ? 'text-gray-200' : (item.isRequiredForExternal ? 'text-red-300' : 'text-gray-400')"
+                    class="font-medium"
+                  >{{ item.label }}</span>
+                  <span
+                    v-if="item.isStale"
+                    class="ml-2 text-xs text-yellow-400 font-medium"
+                  >[Stale]</span>
+                  <span
+                    v-if="!item.isPresent && !item.isRequiredForExternal"
+                    class="ml-2 text-xs text-gray-500"
+                  >Optional</span>
+                  <p
+                    v-if="!item.isPresent && item.remediationHint"
+                    class="mt-0.5 text-xs text-gray-400"
+                    :data-testid="`checklist-hint-${item.id}`"
+                  >{{ item.remediationHint }}</p>
+                </div>
+              </li>
+            </ul>
+
+            <!-- Export description -->
+            <p class="mt-4 text-xs text-gray-400 italic">
+              {{ EXPORT_READINESS_DESCRIPTIONS[exportReadiness.status] }}
+            </p>
+          </section>
+
           <!-- ── Export Actions ── -->
           <section
             class="mb-6 bg-gray-800 rounded-2xl border border-white/10 p-6 shadow-lg"
@@ -402,7 +624,8 @@
             </h2>
 
             <p class="text-xs text-gray-400 mb-4">
-              Generate a regulator-ready compliance report in machine-readable or human-readable format for audit, procurement, or sign-off workflows.
+              Export is tailored to the <strong class="text-gray-200">{{ AUDIENCE_PRESET_LABELS[selectedAudience] }}</strong> audience.
+              Switch the audience preset above to generate an export scoped to compliance, procurement, or executive review.
             </p>
 
             <div class="flex flex-wrap gap-3">
@@ -499,7 +722,9 @@
  *
  * Aggregates jurisdiction, KYC/AML, whitelist, and investor-eligibility data
  * from localStorage into a single regulator-ready reporting view. Supports
- * JSON, text, and clipboard export formats.
+ * audience-aware report presets (compliance, procurement, executive), an
+ * export package readiness checklist, approval history, and JSON/text/clipboard
+ * export formats.
  *
  * WCAG 2.1 AA: landmarks, headings, aria-labelledby, non-color-only status,
  * skip link, keyboard navigation.
@@ -525,6 +750,10 @@ import {
   ShieldCheckIcon,
   ListBulletIcon,
   MinusCircleIcon,
+  ClockIcon,
+  CheckBadgeIcon,
+  UserCircleIcon,
+  QueueListIcon,
 } from '@heroicons/vue/24/outline'
 import {
   STATUS_LABELS,
@@ -536,6 +765,21 @@ import {
   type WhitelistSummary,
   type InvestorEligibilitySummary,
 } from '../utils/complianceEvidencePack'
+import {
+  AUDIENCE_PRESET_LABELS,
+  AUDIENCE_PRESET_DESCRIPTIONS,
+  AUDIENCE_SECTION_PRIORITIES,
+  APPROVAL_OUTCOME_LABELS,
+  EXPORT_READINESS_DESCRIPTIONS,
+  deriveApprovalHistorySummary,
+  deriveExportPackageReadiness,
+  buildAudienceReportText,
+  exportReadinessStatusClass,
+  approvalOutcomeBadgeClass,
+  type AudiencePreset,
+  type ApprovalHistorySummary,
+  type ExportPackageReadiness,
+} from '../utils/complianceReportingWorkspace'
 
 // ---------------------------------------------------------------------------
 // Sub-components (inline for simplicity)
@@ -808,53 +1052,6 @@ function loadBundle(): ComplianceReportBundle {
 // Export helpers
 // ---------------------------------------------------------------------------
 
-function buildTextReport(b: ComplianceReportBundle): string {
-  const line = '─'.repeat(60)
-  const lines: string[] = [
-    `COMPLIANCE REPORTING WORKSPACE — ${new Date(b.generatedAt).toUTCString()}`,
-    line,
-    `Overall Status : ${OVERALL_STATUS_LABEL[b.overallStatus]}`,
-    `Readiness Score: ${b.readinessScore}%`,
-    '',
-    '1. JURISDICTION COVERAGE',
-    line,
-    `Configured  : ${b.jurisdiction.configured ? 'Yes' : 'No'}`,
-    `Permitted   : ${b.jurisdiction.permittedCount}`,
-    `Restricted  : ${b.jurisdiction.restrictedCount}`,
-    `Jurisdictions: ${b.jurisdiction.jurisdictions.join(', ') || 'None'}`,
-    '',
-    '2. KYC / AML REVIEW STATUS',
-    line,
-    `Status             : ${STATUS_LABELS[b.kycAml.status]}`,
-    `KYC Required       : ${b.kycAml.kycRequired ? 'Yes' : 'No'}`,
-    `AML Required       : ${b.kycAml.amlRequired ? 'Yes' : 'No'}`,
-    `Provider Configured: ${b.kycAml.providerConfigured ? 'Yes' : 'No'}`,
-    `Pending Reviews    : ${b.kycAml.pendingReviewCount}`,
-    '',
-    '3. WHITELIST POSTURE',
-    line,
-    `Status             : ${STATUS_LABELS[b.whitelist.status]}`,
-    `Whitelist Required : ${b.whitelist.whitelistRequired ? 'Yes' : 'No'}`,
-    `Approved Investors : ${b.whitelist.approvedInvestorCount}`,
-    `Pending Investors  : ${b.whitelist.pendingInvestorCount}`,
-    `Active Whitelist ID: ${b.whitelist.activeWhitelistId ?? 'None'}`,
-    ...(b.whitelist.whitelistRequired && b.whitelist.approvedInvestorCount === 0
-      ? ['BLOCKER: Whitelist is required but has no approved investors. Release sign-off is blocked.']
-      : []),
-    '',
-    '4. INVESTOR ELIGIBILITY',
-    line,
-    `Status                : ${STATUS_LABELS[b.investorEligibility.status]}`,
-    `Accredited Required   : ${b.investorEligibility.accreditedRequired ? 'Yes' : 'No'}`,
-    `Retail Permitted      : ${b.investorEligibility.retailPermitted ? 'Yes' : 'No'}`,
-    `Eligibility Categories: ${b.investorEligibility.eligibilityCategories.join(', ') || 'None'}`,
-    '',
-    line,
-    'This document was generated by Biatec Tokens Compliance Reporting Workspace.',
-  ]
-  return lines.join('\n')
-}
-
 function downloadBlob(content: string, filename: string, mimeType: string): void {
   const blob = new Blob([content], { type: mimeType })
   const url = URL.createObjectURL(blob)
@@ -868,6 +1065,44 @@ function downloadBlob(content: string, filename: string, mimeType: string): void
 }
 
 // ---------------------------------------------------------------------------
+// Approval summary loading (localStorage mock — backend-ready)
+// ---------------------------------------------------------------------------
+
+interface StoredApprovalStage {
+  id: string
+  label: string
+  role?: string
+  status: string
+  lastActionAt?: string | null
+  conditions?: string | null
+  summary?: string
+  blockers?: Array<{ isLaunchBlocking?: boolean }>
+}
+
+function loadApprovalSummary(): ApprovalHistorySummary | null {
+  try {
+    const raw = localStorage.getItem('biatec_approval_stages')
+    if (!raw) return null
+    const stages = JSON.parse(raw) as StoredApprovalStage[]
+    if (!Array.isArray(stages) || stages.length === 0) return null
+    return deriveApprovalHistorySummary(
+      stages.map((s) => ({
+        id: s.id,
+        label: s.label,
+        role: s.role ?? 'compliance_operator',
+        status: s.status,
+        lastActionAt: s.lastActionAt ?? null,
+        conditions: s.conditions ?? null,
+        summary: s.summary ?? '',
+        blockers: (s.blockers ?? []).map((b) => ({ isLaunchBlocking: b.isLaunchBlocking ?? false })),
+      })),
+    )
+  } catch {
+    return null
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Component state
 // ---------------------------------------------------------------------------
 
@@ -875,6 +1110,15 @@ const isLoading = ref(true)
 const bundle = ref<ComplianceReportBundle>(buildDefaultBundle())
 const clipboardCopied = ref(false)
 let clipboardTimer: ReturnType<typeof setTimeout> | null = null
+
+/** Currently selected audience preset */
+const selectedAudience = ref<AudiencePreset>('all')
+
+/** Approval history — populated from localStorage mock data (backend-ready) */
+const approvalSummary = ref<ApprovalHistorySummary | null>(null)
+
+/** Whether approval history section is expanded */
+const approvalHistoryExpanded = ref(false)
 
 // ---------------------------------------------------------------------------
 // Computed
@@ -977,13 +1221,45 @@ const clipboardButtonLabel = computed((): string =>
 )
 
 // ---------------------------------------------------------------------------
+// Audience-preset computed
+// ---------------------------------------------------------------------------
+
+const audienceDescription = computed((): string => AUDIENCE_PRESET_DESCRIPTIONS[selectedAudience.value])
+
+const visibleSections = computed((): string[] => AUDIENCE_SECTION_PRIORITIES[selectedAudience.value])
+
+function isSectionVisible(sectionId: string): boolean {
+  return visibleSections.value.includes(sectionId)
+}
+
+// ---------------------------------------------------------------------------
+// Export package readiness (derived)
+// ---------------------------------------------------------------------------
+
+const exportReadiness = computed((): ExportPackageReadiness =>
+  deriveExportPackageReadiness(bundle.value, approvalSummary.value),
+)
+
+const exportReadinessBannerClass = computed((): string =>
+  exportReadinessStatusClass(exportReadiness.value.status),
+)
+
+// ---------------------------------------------------------------------------
+// Approval history computed
+// ---------------------------------------------------------------------------
+
+const approvalHistoryToggleLabel = computed((): string =>
+  approvalHistoryExpanded.value ? 'Collapse approval history' : 'Expand approval history',
+)
+
+// ---------------------------------------------------------------------------
 // Export actions
 // ---------------------------------------------------------------------------
 
 function exportJson(): void {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
   downloadBlob(
-    JSON.stringify({ ...bundle.value, generatedAt: new Date().toISOString() }, null, 2),
+    JSON.stringify({ ...bundle.value, generatedAt: new Date().toISOString(), audience: selectedAudience.value }, null, 2),
     `compliance-report-${timestamp}.json`,
     'application/json',
   )
@@ -991,15 +1267,22 @@ function exportJson(): void {
 
 function exportText(): void {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-  downloadBlob(
-    buildTextReport({ ...bundle.value, generatedAt: new Date().toISOString() }),
-    `compliance-report-${timestamp}.txt`,
-    'text/plain',
+  const text = buildAudienceReportText(
+    { ...bundle.value, generatedAt: new Date().toISOString() },
+    selectedAudience.value,
+    approvalSummary.value,
+    exportReadiness.value,
   )
+  downloadBlob(text, `compliance-report-${timestamp}.txt`, 'text/plain')
 }
 
 async function copyToClipboard(): Promise<void> {
-  const text = buildTextReport({ ...bundle.value, generatedAt: new Date().toISOString() })
+  const text = buildAudienceReportText(
+    { ...bundle.value, generatedAt: new Date().toISOString() },
+    selectedAudience.value,
+    approvalSummary.value,
+    exportReadiness.value,
+  )
   try {
     await navigator.clipboard.writeText(text)
   } catch {
@@ -1050,6 +1333,7 @@ function sectionStatusIcon(status: EvidenceStatus): typeof CheckCircleIcon {
 
 onMounted(() => {
   bundle.value = loadBundle()
+  approvalSummary.value = loadApprovalSummary()
   isLoading.value = false
 })
 
