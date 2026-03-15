@@ -526,7 +526,6 @@
           <!-- ── Remediation Workflow Panel ── -->
           <RemediationTaskPanel
             :workflow="remediationWorkflow"
-            data-testid="remediation-panel"
           />
 
           <!-- ── Navigation Links ── -->
