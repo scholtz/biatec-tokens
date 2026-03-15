@@ -3760,6 +3760,84 @@ Before marking ANY dependency update complete:
 - Shows inadequate verification
 - Missing test results summary
 
+### 7aa. Sidebar Link Tests Must Be Updated When New Nav Links Are Added (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 15, 2026 (PR build-investor-compliance-workspace) 🚨**
+
+**Violation**: Copilot added the "Investor Onboarding" link (`/compliance/onboarding`) to `Sidebar.vue` — the 13th navigation link — but did NOT update the two hardcoded link/SVG count assertions in `Sidebar.test.ts`. The tests expected 12 links and 12 SVGs; the PR shipped with 2 failing Sidebar tests blocking CI.
+
+**Additionally**: No component test for `InvestorComplianceOnboardingWorkspace.vue` was delivered with the initial PR. The instructions in section 7m explicitly require a `.test.ts` file for every new view component in the same commit.
+
+**Root Cause**:
+1. **Missing Sidebar test sync**: When adding a nav link to Sidebar, the test file that asserts the link count was not updated in the same commit.
+2. **Missing component test for new view**: `InvestorComplianceOnboardingWorkspace.vue` was created without its matching `InvestorComplianceOnboardingWorkspace.test.ts`.
+
+**Correct Approach — MANDATORY whenever adding a new Sidebar link**:
+
+```bash
+# 1. Count links currently in Sidebar.test.ts before making any change:
+grep -n "toHaveLength" src/components/layout/__tests__/Sidebar.test.ts | grep -E "links|svgs"
+# Note: if links count is N, your addition makes it N+1.
+
+# 2. After adding the link to Sidebar.vue, immediately update Sidebar.test.ts:
+#    - Change toHaveLength(N) → toHaveLength(N+1) for both link count and SVG count assertions
+#    - Add the new link assertion at the correct index position in the links array
+#    - Add the new route to makeRouter() if it has a named route
+
+# 3. Run Sidebar tests BEFORE committing:
+node_modules/.bin/vitest run src/components/layout/__tests__/Sidebar.test.ts
+# Must show: Tests  21 passed (21)  ← no failures
+
+# 4. Create the view component test in the SAME commit (see section 7m):
+#    src/views/__tests__/InvestorComplianceOnboardingWorkspace.test.ts
+```
+
+**Sidebar Test Update Pattern** (example adding link at index 7, shifting others down):
+
+```typescript
+// ❌ WRONG — hardcoded 12 not updated after adding 13th link
+expect(links).toHaveLength(12)    // → CI fails
+expect(svgs).toHaveLength(12)     // → CI fails
+
+// ✅ CORRECT — updated to 13 in the same commit as Sidebar.vue change
+expect(links).toHaveLength(13)
+expect(svgs).toHaveLength(13)
+// Add the new assertion at the correct index:
+expect(links[7].text()).toContain('Investor Onboarding')
+expect(links[7].attributes('to')).toBe('/compliance/onboarding')
+// Shift all subsequent index assertions by +1
+```
+
+**View Loading State in Component Tests** — `v-if="!isLoading"` requires fake timers:
+
+When a view uses `setTimeout` in `onMounted` to end a loading state, tests must call `vi.useFakeTimers()` and advance timers past the loading duration before making assertions. Without this, all tests that check content under `v-else` fail because the component is still in loading state.
+
+```typescript
+// ❌ WRONG — content under v-else is not rendered if isLoading is still true
+async function mountWorkspace() {
+  const wrapper = mount(MyView, { global: { plugins: [router] } })
+  await router.isReady()
+  await nextTick()  // isLoading is still true! Content not rendered.
+  return wrapper
+}
+
+// ✅ CORRECT — advance fake timers past the loading timeout
+async function mountWorkspace() {
+  vi.useFakeTimers()
+  const wrapper = mount(MyView, { global: { plugins: [router] } })
+  await router.isReady()
+  await vi.advanceTimersByTimeAsync(200)  // past the 150ms setTimeout
+  await nextTick()
+  return wrapper
+}
+// Also add vi.useRealTimers() in afterEach
+```
+
+**Never Again**:
+- ❌ Add a Sidebar link without updating `Sidebar.test.ts` link/SVG count in the same commit
+- ❌ Create a new view component without a matching `.test.ts` file in the same commit (see section 7m)
+- ❌ Write component tests for loading-state views without `vi.useFakeTimers()` to advance the loading timeout
+
 ## Additional Notes
 
 - The application uses Vue Router for navigation
