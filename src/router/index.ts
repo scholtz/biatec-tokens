@@ -35,6 +35,7 @@ import TeamWorkspaceView from "../views/TeamWorkspaceView.vue";
 import ComplianceEvidencePackView from "../views/ComplianceEvidencePackView.vue";
 import ComplianceReportingWorkspace from "../views/ComplianceReportingWorkspace.vue";
 import EnterpriseRiskReportBuilder from "../views/EnterpriseRiskReportBuilder.vue";
+import EnterpriseApprovalCockpit from "../views/EnterpriseApprovalCockpit.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 import { isIssuanceSessionValid, storeIssuanceReturnPath } from "../utils/authFirstIssuanceWorkspace";
 
@@ -182,6 +183,13 @@ const router = createRouter({
       name: "EnterpriseRiskReportBuilder",
       component: EnterpriseRiskReportBuilder,
       meta: { requiresAuth: true, title: "Enterprise Risk Report Builder" },
+    },
+    // Enterprise Approval Queue — release sign-off cockpit for regulated token launches
+    {
+      path: "/compliance/approval",
+      name: "EnterpriseApprovalCockpit",
+      component: EnterpriseApprovalCockpit,
+      meta: { requiresAuth: true, title: "Enterprise Approval Queue" },
     },
     {
       path: "/attestations",
