@@ -230,6 +230,41 @@ describe('RemediationTaskPanel', () => {
       const body = wrapper.find('[data-testid="remediation-group-body-compliance-review"]')
       expect(body.exists()).toBe(true)
     })
+
+    it('Enter key on group header toggles the group', async () => {
+      const group = makeGroup({ blockingTasks: [], advisoryTasks: [makeTask({ isLaunchBlocking: false })] })
+      const workflow = makeWorkflow({ stageGroups: [group], allTasks: [group.advisoryTasks[0]], launchBlockingCount: 0 })
+      const wrapper = await mountPanel(workflow)
+      const vm = wrapper.vm as any
+      expect(vm.expandedGroups.has('compliance-review')).toBe(false)
+      // Trigger the keydown.enter handler
+      const header = wrapper.find('[data-testid="remediation-group-header-compliance-review"]')
+      await header.trigger('keydown.enter')
+      expect(vm.expandedGroups.has('compliance-review')).toBe(true)
+    })
+
+    it('Space key on group header toggles the group', async () => {
+      const group = makeGroup({ blockingTasks: [], advisoryTasks: [makeTask({ isLaunchBlocking: false })] })
+      const workflow = makeWorkflow({ stageGroups: [group], allTasks: [group.advisoryTasks[0]], launchBlockingCount: 0 })
+      const wrapper = await mountPanel(workflow)
+      const vm = wrapper.vm as any
+      expect(vm.expandedGroups.has('compliance-review')).toBe(false)
+      // Trigger the keydown.space handler
+      const header = wrapper.find('[data-testid="remediation-group-header-compliance-review"]')
+      await header.trigger('keydown.space')
+      expect(vm.expandedGroups.has('compliance-review')).toBe(true)
+    })
+
+    it('click on group header toggles the group', async () => {
+      const group = makeGroup({ blockingTasks: [], advisoryTasks: [makeTask({ isLaunchBlocking: false })] })
+      const workflow = makeWorkflow({ stageGroups: [group], allTasks: [group.advisoryTasks[0]], launchBlockingCount: 0 })
+      const wrapper = await mountPanel(workflow)
+      const vm = wrapper.vm as any
+      expect(vm.expandedGroups.has('compliance-review')).toBe(false)
+      const header = wrapper.find('[data-testid="remediation-group-header-compliance-review"]')
+      await header.trigger('click')
+      expect(vm.expandedGroups.has('compliance-review')).toBe(true)
+    })
   })
 
   describe('handoff notice', () => {

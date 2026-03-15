@@ -210,6 +210,13 @@ describe('RemediationTaskCard', () => {
       const block = wrapper.find('[data-testid="task-missing-evidence-task-kyc"]')
       expect(block.exists()).toBe(false)
     })
+
+    it('does not render missing evidence block when missing but NOT launch-blocking', async () => {
+      // The v-else-if requires both missing AND isLaunchBlocking
+      const wrapper = await mountCard(makeTask({ evidenceFreshness: 'missing', isLaunchBlocking: false }))
+      const block = wrapper.find('[data-testid="task-missing-evidence-task-kyc"]')
+      expect(block.exists()).toBe(false)
+    })
   })
 
   describe('handoff note', () => {

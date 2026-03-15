@@ -767,3 +767,73 @@ describe('ROLE_TO_DOMAIN', () => {
     }
   })
 })
+
+// ---------------------------------------------------------------------------
+// Additional coverage: deriveHandoffState — procurement / executive branches
+// ---------------------------------------------------------------------------
+
+describe('deriveHandoffState — additional domain branches', () => {
+  it('returns waiting_on_procurement when procurement stage is blocked and current role is different', () => {
+    const stages: ApprovalStage[] = [
+      makeStage({ id: 'procurement-review', role: 'procurement_reviewer', status: 'blocked' }),
+      makeStage({ id: 'exec-sign-off', role: 'executive_sponsor', status: 'not_started' }),
+    ]
+    // executive_sponsor is asking; procurement is blocking → waiting_on_procurement
+    expect(deriveHandoffState('executive_sponsor', stages)).toBe('waiting_on_procurement')
+  })
+
+  it('returns waiting_on_executive when executive stage is blocked and current role is different', () => {
+    const stages: ApprovalStage[] = [
+      makeStage({ id: 'exec-sign-off', role: 'executive_sponsor', status: 'blocked' }),
+      makeStage({ id: 'compliance-review', role: 'compliance_operator', status: 'not_started' }),
+    ]
+    // compliance_operator is asking; executive is blocking → waiting_on_executive
+    expect(deriveHandoffState('compliance_operator', stages)).toBe('waiting_on_executive')
+  })
+
+  it('returns no_handoff when the only blocking stage is the same domain as current role', () => {
+    // Both are procurement domain — no cross-domain handoff
+    const stages: ApprovalStage[] = [
+      makeStage({ id: 'procurement-review-a', role: 'procurement_reviewer', status: 'blocked' }),
+    ]
+    expect(deriveHandoffState('procurement_reviewer', stages)).toBe('no_handoff')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Additional coverage: prioritizeTasks — stale ordering edge cases
+// ---------------------------------------------------------------------------
+
+describe('prioritizeTasks — stale ordering edge cases', () => {
+  it('places non-stale (fresh) before another non-stale (missing) when neither is stale', () => {
+    // Neither a nor b is 'stale'; the tiebreak (return 0) leaves original order
+    const tasks: RemediationTask[] = [
+      makeTask({ id: 'fresh', isLaunchBlocking: true, urgency: 'high', evidenceFreshness: 'fresh' }),
+      makeTask({ id: 'missing', isLaunchBlocking: true, urgency: 'high', evidenceFreshness: 'missing' }),
+    ]
+    const result = prioritizeTasks(tasks)
+    // Relative order unchanged since neither is stale
+    expect(result.map((t) => t.id)).toEqual(['fresh', 'missing'])
+  })
+
+  it('places stale task after a higher-urgency non-stale task (urgency takes precedence)', () => {
+    const tasks: RemediationTask[] = [
+      makeTask({ id: 'stale-medium', isLaunchBlocking: true, urgency: 'medium', evidenceFreshness: 'stale' }),
+      makeTask({ id: 'fresh-high', isLaunchBlocking: true, urgency: 'high', evidenceFreshness: 'fresh' }),
+    ]
+    const result = prioritizeTasks(tasks)
+    expect(result[0].id).toBe('fresh-high')
+    expect(result[1].id).toBe('stale-medium')
+  })
+
+  it('sorts stale before missing within the same urgency (b is stale, a is not)', () => {
+    // a=missing (not stale), b=stale → b should sort before a
+    const tasks: RemediationTask[] = [
+      makeTask({ id: 'missing-evidence', isLaunchBlocking: true, urgency: 'high', evidenceFreshness: 'missing' }),
+      makeTask({ id: 'stale-evidence', isLaunchBlocking: true, urgency: 'high', evidenceFreshness: 'stale' }),
+    ]
+    const result = prioritizeTasks(tasks)
+    expect(result[0].id).toBe('stale-evidence')
+    expect(result[1].id).toBe('missing-evidence')
+  })
+})
