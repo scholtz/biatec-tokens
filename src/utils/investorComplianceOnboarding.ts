@@ -240,7 +240,7 @@ export interface AMLScreeningRecord {
   screeningStatus: AMLScreeningStatus
   riskRating: AMLRiskRating
   /** ISO timestamp of the most recent screening run; null if never run. */
-  screennedAt: string | null
+  screenedAt: string | null
   /** Plain-language note on the screening outcome or flag reason. */
   note: string | null
   /** Whether an outstanding issue is launch-blocking. */

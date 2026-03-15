@@ -758,8 +758,6 @@ function toggleStage(stageId: string): void {
   } else {
     expandedStageIds.value.add(stageId)
   }
-  // Reassign to trigger Vue reactivity
-  expandedStageIds.value = new Set(expandedStageIds.value)
 }
 
 function applyFixture(key: FixtureKey): void {

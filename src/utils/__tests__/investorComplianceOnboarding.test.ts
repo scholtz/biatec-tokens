@@ -668,7 +668,7 @@ describe('isAMLClear', () => {
       entityName: 'Entity',
       screeningStatus: status,
       riskRating: 'low',
-      screennedAt: null,
+      screenedAt: null,
       note: null,
       isLaunchBlocking: false,
     }
