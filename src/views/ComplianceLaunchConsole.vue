@@ -380,6 +380,14 @@
             Open full compliance setup
             <ArrowRightIcon class="w-3.5 h-3.5" aria-hidden="true" />
           </router-link>
+          <router-link
+            to="/compliance/reporting"
+            class="inline-flex items-center gap-2 text-xs font-medium text-teal-400 hover:text-teal-300 transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded"
+            data-testid="reporting-workspace-link"
+          >
+            View Full Compliance Report
+            <ArrowRightIcon class="w-3.5 h-3.5" aria-hidden="true" />
+          </router-link>
         </div>
       </footer>
 

@@ -33,6 +33,7 @@ import PortfolioLaunchpad from "../views/PortfolioLaunchpad.vue";
 import BusinessCommandCenter from "../views/BusinessCommandCenter.vue";
 import TeamWorkspaceView from "../views/TeamWorkspaceView.vue";
 import ComplianceEvidencePackView from "../views/ComplianceEvidencePackView.vue";
+import ComplianceReportingWorkspace from "../views/ComplianceReportingWorkspace.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 import { isIssuanceSessionValid, storeIssuanceReturnPath } from "../utils/authFirstIssuanceWorkspace";
 
@@ -166,6 +167,13 @@ const router = createRouter({
       name: "ComplianceEvidencePack",
       component: ComplianceEvidencePackView,
       meta: { requiresAuth: true, title: "Compliance Evidence Pack" },
+    },
+    // Compliance Reporting Workspace — enterprise compliance reporting and release evidence
+    {
+      path: "/compliance/reporting",
+      name: "ComplianceReportingWorkspace",
+      component: ComplianceReportingWorkspace,
+      meta: { requiresAuth: true, title: "Compliance Reporting Workspace" },
     },
     {
       path: "/attestations",

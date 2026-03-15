@@ -888,6 +888,13 @@ onMounted(() => {
             >
               Attestations Dashboard
             </router-link>
+            <router-link
+              to="/compliance/reporting"
+              class="text-sm text-teal-400 hover:text-teal-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
+              data-testid="reporting-workspace-link"
+            >
+              Compliance Reporting Workspace
+            </router-link>
           </nav>
 
         </template>
