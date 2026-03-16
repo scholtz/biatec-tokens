@@ -49,6 +49,22 @@ The frontend CI has two distinct Playwright lanes.
 
 The two lanes do not block each other. Standard CI remains fast. The strict lane runs separately, in parallel, and on its own schedule.
 
+## Evidence Quality: What Counts as Release Evidence
+
+> **Critical distinction** — a "green" strict-signoff workflow run is NOT automatically release evidence. Evidence quality depends on which mode the run used.
+
+| Run outcome | Mode | Is this release evidence? |
+|---|---|---|
+| ✅ All tests passed | Mode 2 or 3 with real backend | **YES** — cite this run ID |
+| ✅ All tests skipped | Mode 1 (no secrets) | **NO** — infrastructure only |
+| ✅ All tests skipped | Mode 2/3 with localhost URL | **NO** — local target, not staging |
+| ❌ Prerequisite failure | Mode 3 without secrets | **NO** — fail-closed (intentional) |
+| ❌ Tests failed | Any mode | **NO** — backend contract violation |
+
+**How to tell which mode was used:** Download the `strict-signoff-report` artifact from the run. The `signoff-status.json` file contains a `mode` field (`not-configured` or `full-strict`) and a `is_release_evidence` boolean.
+
+**For procurement and compliance reviews:** Only cite runs where `is_release_evidence: true` in `signoff-status.json`. Infrastructure-only runs prove the CI plumbing but do not prove the product journey.
+
 ## Three Run Modes
 
 ### Mode 1: Infrastructure-only (no backend secrets configured)
@@ -58,7 +74,7 @@ The two lanes do not block each other. Standard CI remains fast. The strict lane
 **Behaviour:**
 - Workflow completes successfully (does not fail the push)
 - All sign-off tests skip with a clear message ("not release evidence")
-- A `signoff-status.json` artifact is uploaded showing the configuration state
+- A `signoff-status.json` artifact is uploaded showing the configuration state, with `is_release_evidence: false`
 - No real backend was exercised; this run cannot be cited as release evidence
 
 **Interpreting this:** The workflow infrastructure is working. The missing backend configuration is clearly documented. When secrets are configured, the next run will produce real evidence.
@@ -71,9 +87,9 @@ The two lanes do not block each other. Standard CI remains fast. The strict lane
 - Vite dev server starts
 - All sign-off tests run against the real backend
 - Tests fail loudly on any backend unavailability or contract violation
-- Full Playwright report + traces uploaded as artifact
+- Full Playwright report + traces + `signoff-status.json` with `is_release_evidence: true` uploaded as artifact
 
-**Interpreting this:** If the workflow shows ✅ PASSED, this run is credible release evidence.
+**Interpreting this:** If the workflow shows ✅ PASSED and the artifact shows `is_release_evidence: true`, this run is credible release evidence.
 
 ### Mode 3: Manual release sign-off (workflow_dispatch)
 
@@ -81,7 +97,7 @@ The two lanes do not block each other. Standard CI remains fast. The strict lane
 
 **Behaviour:**
 - If secrets are NOT configured: workflow fails immediately after the prerequisite check (fail-closed gate). An operator explicitly requesting release sign-off must have the backend configured.
-- If secrets ARE configured: full strict sign-off runs and produces evidence artifacts.
+- If secrets ARE configured: full strict sign-off runs and produces evidence artifacts with `is_release_evidence: true`.
 
 **Interpreting this:** For official release sign-off, always use `workflow_dispatch` with properly configured secrets. The fail-closed behaviour on `workflow_dispatch` without secrets is intentional — it prevents a manual release sign-off from being accidentally "passed" in infrastructure-only mode.
 
@@ -144,7 +160,7 @@ This run can be cited as release evidence. The workflow run ID can be referenced
 
 ## Prerequisites
 
-To enable full strict sign-off validation, configure these **repository secrets** in GitHub:
+To enable full strict sign-off validation, configure these **environment secrets** in the `sign-off-protected` GitHub Environment, or as repository-level secrets if the environment has not yet been created:
 
 | Secret | Description | Example |
 |---|---|---|
@@ -158,6 +174,38 @@ The test account must be:
 - Able to initiate and poll the deployment lifecycle endpoint
 
 If `SIGNOFF_TEST_PASSWORD` is empty and you use `workflow_dispatch`, the workflow will fail closed (exit 1) rather than silently passing. For push-to-main without secrets, the workflow completes with all tests skipped and an infrastructure-status artifact.
+
+## Protected Environment Setup
+
+The workflow job declares `environment: sign-off-protected`. This is a GitHub Actions [Environment](https://docs.github.com/en/actions/deployment/targeting-different-deployment-environments) that provides:
+
+1. **Environment-scoped secrets** with stricter access control than repository secrets
+2. **Deployment protection rules** (required reviewers, wait timers, branch restrictions)
+3. **Visible deployment records** in the GitHub Actions UI
+
+### Creating the `sign-off-protected` Environment
+
+1. Go to **Repository Settings → Environments → New environment**
+2. Name it exactly `sign-off-protected`
+3. Under **Deployment protection rules**:
+   - Add required reviewers (product owner, release manager)
+   - Enable **Required reviewers** for `workflow_dispatch` triggers
+   - Restrict deployable branches to `main` only
+4. Under **Environment secrets**, add:
+   - `SIGNOFF_API_BASE_URL`
+   - `SIGNOFF_TEST_EMAIL`
+   - `SIGNOFF_TEST_PASSWORD`
+
+> **If the environment does not exist yet:** secrets fall back to repository-level secrets with the same names. The workflow will still function — the difference is that protection rules (required reviewers, branch restrictions) will not be enforced until the environment is created.
+
+### Why a Protected Environment Matters for Release Evidence
+
+Using a GitHub Environment for sign-off:
+
+- **Proves who approved the run** — GitHub tracks which reviewer approved the deployment
+- **Prevents accidental production runs** — branch restrictions ensure only `main` can trigger it
+- **Provides an audit trail** — every run appears as a "deployment" to `sign-off-protected` in GitHub
+- **Enterprise governance** — required reviewers enforce a human approval gate before sign-off evidence is produced
 
 ## Running the Strict Lane Locally
 

@@ -150,6 +150,10 @@ export function describeBackendSignoffConfig(
  * Returns a skip message suitable for `test.skip()` calls in sign-off specs.
  * Returns `undefined` when the test should NOT be skipped (strict mode active).
  *
+ * This is a simpler predecessor to `requireStrictBackend()`. It only checks
+ * `BIATEC_STRICT_BACKEND` — not the backend URL. For the full guard that also
+ * validates `API_BASE_URL` is a real non-localhost URL, use `requireStrictBackend()`.
+ *
  * Usage:
  *   const skipMsg = getSignoffSkipReason()
  *   test.skip(skipMsg !== undefined, skipMsg ?? '')
@@ -166,4 +170,80 @@ export function getSignoffSkipReason(
     'real backend. Set BIATEC_STRICT_BACKEND=true and API_BASE_URL=<staging-url> to run ' +
     'this sign-off lane.'
   )
+}
+
+/**
+ * Full skip guard for strict sign-off specs.
+ *
+ * Returns a skip-reason string when the test should be skipped; returns
+ * `undefined` when the test SHOULD run (strict mode active + real backend URL).
+ *
+ * This is the canonical guard for `e2e/mvp-backend-signoff.spec.ts`. It enforces
+ * both conditions required for credible release evidence:
+ *   1. `BIATEC_STRICT_BACKEND === "true"` — strict mode must be explicitly activated.
+ *   2. `API_BASE_URL` is set, is a valid URL, and is NOT localhost/127.0.0.1 — must
+ *      point to a real staging or production backend, not a local dev server.
+ *
+ * Skip conditions (in priority order):
+ *   1. `BIATEC_STRICT_BACKEND` is not set to "true" — standard CI, tests skip gracefully.
+ *   2. `API_BASE_URL` is not set or is empty — backend not configured; tests skip with a
+ *      clear "not release evidence" message rather than failing at the network layer.
+ *   3. `API_BASE_URL` is malformed (not a valid URL) — tests skip with a parse-error message.
+ *   4. `API_BASE_URL` points to localhost or 127.0.0.1 — tests skip; localhost is not a
+ *      valid sign-off target for production release evidence.
+ *
+ * When `BIATEC_STRICT_BACKEND=true` AND a real non-localhost `API_BASE_URL` is set:
+ * returns `undefined` — all tests run and fail loudly on any backend unavailability
+ * or contract violation (fail-closed behaviour is preserved).
+ *
+ * Usage:
+ *   const skipReason = requireStrictBackend()
+ *   test.skip(skipReason !== undefined, skipReason ?? '')
+ *
+ * @param env - Environment variables map (defaults to process.env for production use)
+ */
+export function requireStrictBackend(
+  env: Record<string, string | undefined> = process.env,
+): string | undefined {
+  if (!isStrictBackendMode(env)) {
+    return (
+      'Strict backend sign-off lane requires BIATEC_STRICT_BACKEND=true. ' +
+      'Set API_BASE_URL and BIATEC_STRICT_BACKEND=true to run against a live backend. ' +
+      'This skip is intentional: the test must fail (not silently pass) if run without a real backend.'
+    )
+  }
+
+  const apiBaseUrl = env.API_BASE_URL ?? ''
+  if (!apiBaseUrl) {
+    return (
+      'Strict backend sign-off mode is active (BIATEC_STRICT_BACKEND=true) but ' +
+      'API_BASE_URL is not set. Configure the SIGNOFF_API_BASE_URL repository secret ' +
+      'or environment secret to point to a live staging backend ' +
+      '(e.g. https://staging.biatec.io). ' +
+      'This skip is intentional — tests will NOT silently pass without a real backend. ' +
+      'This run is NOT credible release evidence. See STRICT_SIGNOFF_LANE.md.'
+    )
+  }
+
+  let hostname: string
+  try {
+    hostname = new URL(apiBaseUrl).hostname
+  } catch {
+    return (
+      `Strict backend sign-off mode is active but API_BASE_URL is malformed: "${apiBaseUrl}". ` +
+      'Configure SIGNOFF_API_BASE_URL with a valid URL (e.g. https://staging.biatec.io). ' +
+      'This run is NOT credible release evidence.'
+    )
+  }
+
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return (
+      `Strict backend sign-off mode is active but API_BASE_URL points to localhost (${apiBaseUrl}). ` +
+      'A localhost URL is not a valid strict sign-off target. Configure SIGNOFF_API_BASE_URL ' +
+      'with a real staging or production URL for credible release evidence. ' +
+      'This run is NOT credible release evidence. See STRICT_SIGNOFF_LANE.md.'
+    )
+  }
+
+  return undefined
 }

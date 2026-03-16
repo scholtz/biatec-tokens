@@ -82,79 +82,17 @@
 import { test, expect } from '@playwright/test'
 import {
   loginWithCredentialsStrict,
-  isStrictBackendMode,
   getBackendBaseUrl,
   clearAuthScript,
   getNavText,
 } from './helpers/auth'
+import { requireStrictBackend } from '../src/utils/backendSignoffConfig'
 
 // ---------------------------------------------------------------------------
-// Guard: all tests in this file require BIATEC_STRICT_BACKEND=true
+// Guard: all tests in this file require BIATEC_STRICT_BACKEND=true AND a real
+// non-localhost API_BASE_URL. The guard is now exported from backendSignoffConfig
+// for testability — this import replaces the previous inline private function.
 // ---------------------------------------------------------------------------
-
-/**
- * Skip guard used by every test in this spec.
- *
- * Returns a skip reason string when the test should be skipped; returns
- * `undefined` when the test should run.
- *
- * Skip conditions (in priority order):
- *   1. `BIATEC_STRICT_BACKEND` is not set to "true" — standard CI, tests skip gracefully.
- *   2. `API_BASE_URL` is not set, is empty, or points to localhost — backend is not
- *      configured; tests skip with a clear "not release evidence" message rather than
- *      failing with a network error. This allows the workflow to complete on push-to-main
- *      even when repository secrets are not configured, while still NOT silently passing.
- *
- * When `BIATEC_STRICT_BACKEND=true` AND a real `API_BASE_URL` is set: all tests run
- * and fail loudly on any backend unavailability or contract violation.
- */
-function requireStrictBackend(): string | undefined {
-  if (!isStrictBackendMode()) {
-    return (
-      'Strict backend sign-off lane requires BIATEC_STRICT_BACKEND=true. ' +
-      'Set API_BASE_URL and BIATEC_STRICT_BACKEND=true to run against a live backend. ' +
-      'This skip is intentional: the test must fail (not silently pass) if run without a real backend.'
-    )
-  }
-
-  // Additional guard: if API_BASE_URL is empty or points to localhost, the workflow
-  // is running in "infrastructure-only" mode (secrets not configured). Tests skip
-  // with a clear message rather than failing at the network layer.
-  // This allows push-to-main runs to complete (producing an infrastructure-status
-  // artifact) even when the backend is not yet wired up.
-  const apiBaseUrl = process.env.API_BASE_URL ?? ''
-  if (!apiBaseUrl) {
-    return (
-      'Strict backend sign-off mode is active (BIATEC_STRICT_BACKEND=true) but ' +
-      'API_BASE_URL is not set. Configure the SIGNOFF_API_BASE_URL repository secret ' +
-      'to point to a live staging backend (e.g. https://staging.biatec.io). ' +
-      'This skip is intentional — tests will NOT silently pass without a real backend. ' +
-      'This run is NOT credible release evidence. See STRICT_SIGNOFF_LANE.md.'
-    )
-  }
-
-  let hostname: string
-  try {
-    hostname = new URL(apiBaseUrl).hostname
-  } catch {
-    return (
-      `Strict backend sign-off mode is active but API_BASE_URL is malformed: "${apiBaseUrl}". ` +
-      'Configure SIGNOFF_API_BASE_URL with a valid URL (e.g. https://staging.biatec.io). ' +
-      'This run is NOT credible release evidence.'
-    )
-  }
-
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return (
-      `Strict backend sign-off mode is active but API_BASE_URL points to localhost (${apiBaseUrl}). ` +
-      'A localhost URL is not a valid strict sign-off target. Configure SIGNOFF_API_BASE_URL ' +
-      'with a real staging or production URL for credible release evidence. ' +
-      'This run is NOT credible release evidence. See STRICT_SIGNOFF_LANE.md.'
-    )
-  }
-
-  return undefined
-}
 
 // ===========================================================================
 // AC #1 + AC #2: Strict backend authentication

@@ -99,6 +99,35 @@ jobs:
     permissions:
       contents: read
 
+    # ---------------------------------------------------------------------------
+    # Protected environment declaration.
+    #
+    # This job uses the 'sign-off-protected' GitHub Environment, which provides:
+    #   1. Environment-scoped secrets (SIGNOFF_API_BASE_URL, SIGNOFF_TEST_EMAIL,
+    #      SIGNOFF_TEST_PASSWORD) with stricter access control than repo secrets.
+    #   2. Optional deployment protection rules (required reviewers, wait timers,
+    #      branch restrictions) that enforce sign-off governance.
+    #   3. A visible deployment record in the GitHub UI under "Environments".
+    #
+    # To configure the protected environment:
+    #   1. Repository Settings → Environments → New environment → "sign-off-protected"
+    #   2. Under "Deployment protection rules":
+    #      - Add required reviewers (e.g. product owner, release manager)
+    #      - Enable "Required reviewers" for workflow_dispatch triggers
+    #      - Optionally restrict to "main" branch only
+    #   3. Under "Environment secrets", add:
+    #      - SIGNOFF_API_BASE_URL  (e.g. https://staging.biatec.io)
+    #      - SIGNOFF_TEST_EMAIL    (e.g. signoff@biatec.io)
+    #      - SIGNOFF_TEST_PASSWORD (sign-off test account password)
+    #
+    # If the 'sign-off-protected' environment does not exist yet, secrets fall
+    # back to repository-level secrets with the same names. The workflow will
+    # still function — the difference is that environment protection rules
+    # (required reviewers, branch restrictions) will not be enforced until the
+    # environment is created.
+    # ---------------------------------------------------------------------------
+    environment: sign-off-protected
+
     env:
       # Strict mode flag — this is what activates loginWithCredentialsStrict()
       # and prevents silent localStorage fallback in sign-off tests
@@ -225,20 +254,22 @@ jobs:
           cat > playwright-report/signoff-status.json << EOF
           {
             "status": "not_configured",
+            "mode": "not-configured",
+            "is_release_evidence": false,
             "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
             "run_id": "${{ github.run_id }}",
             "commit_sha": "${{ github.sha }}",
             "ref": "${{ github.ref }}",
             "trigger": "${{ github.event_name }}",
-            "reason": "${SIGNOFF_REASON}",
             "api_base_url_set": $([ -n "${API_BASE_URL}" ] && echo "true" || echo "false"),
             "credentials_set": $([ -n "${TEST_USER_PASSWORD}" ] && echo "true" || echo "false"),
             "summary": "Sign-off prerequisites not configured. Tests were skipped. This is NOT release evidence.",
-            "action_required": "Configure SIGNOFF_API_BASE_URL and SIGNOFF_TEST_PASSWORD repository secrets to enable full strict sign-off validation.",
+            "action_required": "Configure SIGNOFF_API_BASE_URL and SIGNOFF_TEST_PASSWORD in the sign-off-protected GitHub Environment (or repository secrets) to enable full strict sign-off validation.",
             "next_steps": [
-              "Set SIGNOFF_API_BASE_URL to the live staging backend URL (e.g. https://staging.biatec.io)",
-              "Set SIGNOFF_TEST_PASSWORD to the password for the sign-off test account",
-              "Optionally set SIGNOFF_TEST_EMAIL to override the default (e2e-test@biatec.io)",
+              "Go to Repository Settings → Environments → sign-off-protected",
+              "Add SIGNOFF_API_BASE_URL set to the live staging backend URL (e.g. https://staging.biatec.io)",
+              "Add SIGNOFF_TEST_PASSWORD for the sign-off test account",
+              "Optionally add SIGNOFF_TEST_EMAIL to override the default (e2e-test@biatec.io)",
               "Re-trigger this workflow via workflow_dispatch once secrets are configured"
             ]
           }
@@ -270,7 +301,37 @@ jobs:
         # (unless the test itself skips due to missing backend configuration, which is
         # handled inside the spec with test.skip())
 
-      - name: Upload sign-off report and artifacts
+      - name: Generate full-strict sign-off status artifact
+        if: steps.prereqs.outputs.prereqs_met == 'true' && always()
+        run: |
+          mkdir -p playwright-report
+          SIGNOFF_OUTCOME="${{ steps.signoff.outcome }}"
+          IS_RELEASE_EVIDENCE="false"
+          STATUS="failed"
+          if [ "${SIGNOFF_OUTCOME}" = "success" ]; then
+            IS_RELEASE_EVIDENCE="true"
+            STATUS="passed"
+          elif [ "${SIGNOFF_OUTCOME}" = "skipped" ]; then
+            STATUS="skipped"
+          fi
+
+          cat > playwright-report/signoff-status.json << JSONEOF
+          {
+            "status": "${STATUS}",
+            "mode": "full-strict",
+            "is_release_evidence": ${IS_RELEASE_EVIDENCE},
+            "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+            "run_id": "${{ github.run_id }}",
+            "commit_sha": "${{ github.sha }}",
+            "ref": "${{ github.ref }}",
+            "trigger": "${{ github.event_name }}",
+            "api_base_url_set": true,
+            "credentials_set": true,
+            "summary": "Full strict sign-off run (real backend configured). is_release_evidence=${IS_RELEASE_EVIDENCE}. Status=${STATUS}."
+          }
+          JSONEOF
+          echo "📋 Full-strict sign-off status written to playwright-report/signoff-status.json"
+          cat playwright-report/signoff-status.json
         if: always()
         uses: actions/upload-artifact@v7
         with:
@@ -300,14 +361,17 @@ jobs:
             echo ""
             echo "   To produce real release evidence:"
             echo "   1. Configure SIGNOFF_API_BASE_URL, SIGNOFF_TEST_EMAIL, SIGNOFF_TEST_PASSWORD"
-            echo "      as repository secrets in Settings → Secrets and variables → Actions."
+            echo "      in the sign-off-protected GitHub Environment:"
+            echo "      Repository Settings → Environments → sign-off-protected → Environment secrets."
             echo "   2. Trigger a workflow_dispatch run from Actions → 🔒 Strict Backend Sign-off Gate."
-            echo "   3. Download the artifact and cite the run ID in release notes."
+            echo "   3. Download the artifact and check signoff-status.json for is_release_evidence:true."
+            echo "   4. Cite the run ID in release notes once is_release_evidence is true."
           elif [ "${SIGNOFF_OUTCOME}" = "success" ]; then
             echo "✅ STRICT SIGN-OFF RESULT: PASSED"
             echo "============================================"
             echo "   The real backend-backed auth and deployment lifecycle"
             echo "   were verified. This run can be cited as release evidence."
+            echo "   signoff-status.json contains: is_release_evidence:true, mode:full-strict"
             echo "   Artifact: strict-signoff-report-${{ github.run_id }}"
           elif [ "${SIGNOFF_OUTCOME}" = "skipped" ]; then
             echo "⚠️  STRICT SIGN-OFF RESULT: SKIPPED"

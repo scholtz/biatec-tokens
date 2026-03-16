@@ -23,6 +23,7 @@ import {
   isSignoffFullyConfigured,
   describeBackendSignoffConfig,
   getSignoffSkipReason,
+  requireStrictBackend,
 } from '../backendSignoffConfig'
 
 // ---------------------------------------------------------------------------
@@ -272,5 +273,252 @@ describe('describeBackendSignoffConfig', () => {
     expect(describeBackendSignoffConfig(env1).configSummary.length).toBeGreaterThan(0)
     expect(describeBackendSignoffConfig(env2).configSummary.length).toBeGreaterThan(0)
     expect(describeBackendSignoffConfig(env3).configSummary.length).toBeGreaterThan(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// requireStrictBackend (full sign-off guard: strict mode + real URL)
+//
+// This is the canonical guard function used by mvp-backend-signoff.spec.ts.
+// It is now exported from backendSignoffConfig.ts for testability.
+//
+// Contract:
+//   - Returns undefined   → test SHOULD run (real backend configured)
+//   - Returns string      → test SHOULD be skipped (provide reason to test.skip)
+//
+// Separation from getSignoffSkipReason:
+//   getSignoffSkipReason only checks BIATEC_STRICT_BACKEND (simpler, older guard)
+//   requireStrictBackend also validates API_BASE_URL is a real non-localhost URL
+// ---------------------------------------------------------------------------
+
+describe('requireStrictBackend', () => {
+  // --- Positive path: test SHOULD run ---
+
+  it('returns undefined when BIATEC_STRICT_BACKEND=true and API_BASE_URL is a real staging URL', () => {
+    expect(
+      requireStrictBackend({
+        BIATEC_STRICT_BACKEND: 'true',
+        API_BASE_URL: 'https://staging.biatec.io',
+      }),
+    ).toBeUndefined()
+  })
+
+  it('returns undefined when BIATEC_STRICT_BACKEND=true and API_BASE_URL is a production URL', () => {
+    expect(
+      requireStrictBackend({
+        BIATEC_STRICT_BACKEND: 'true',
+        API_BASE_URL: 'https://api.biatec.io',
+      }),
+    ).toBeUndefined()
+  })
+
+  it('returns undefined when BIATEC_STRICT_BACKEND=true and API_BASE_URL has a path prefix', () => {
+    expect(
+      requireStrictBackend({
+        BIATEC_STRICT_BACKEND: 'true',
+        API_BASE_URL: 'https://staging.biatec.io/api/v1',
+      }),
+    ).toBeUndefined()
+  })
+
+  it('returns undefined when BIATEC_STRICT_BACKEND=true and API_BASE_URL uses a non-standard port', () => {
+    expect(
+      requireStrictBackend({
+        BIATEC_STRICT_BACKEND: 'true',
+        API_BASE_URL: 'https://staging.biatec.io:8443',
+      }),
+    ).toBeUndefined()
+  })
+
+  // --- Negative path: BIATEC_STRICT_BACKEND not "true" ---
+
+  it('returns a skip reason when BIATEC_STRICT_BACKEND is not set', () => {
+    const reason = requireStrictBackend({ API_BASE_URL: 'https://staging.biatec.io' })
+    expect(typeof reason).toBe('string')
+    expect(reason as string).toMatch(/BIATEC_STRICT_BACKEND/i)
+  })
+
+  it('returns a skip reason when BIATEC_STRICT_BACKEND is "false"', () => {
+    const reason = requireStrictBackend({
+      BIATEC_STRICT_BACKEND: 'false',
+      API_BASE_URL: 'https://staging.biatec.io',
+    })
+    expect(typeof reason).toBe('string')
+  })
+
+  it('returns a skip reason when BIATEC_STRICT_BACKEND is "TRUE" (case-sensitive)', () => {
+    const reason = requireStrictBackend({
+      BIATEC_STRICT_BACKEND: 'TRUE',
+      API_BASE_URL: 'https://staging.biatec.io',
+    })
+    expect(typeof reason).toBe('string')
+  })
+
+  it('returns a skip reason when BIATEC_STRICT_BACKEND is "1"', () => {
+    const reason = requireStrictBackend({
+      BIATEC_STRICT_BACKEND: '1',
+      API_BASE_URL: 'https://staging.biatec.io',
+    })
+    expect(typeof reason).toBe('string')
+  })
+
+  it('returns a skip reason when BIATEC_STRICT_BACKEND is empty string', () => {
+    const reason = requireStrictBackend({
+      BIATEC_STRICT_BACKEND: '',
+      API_BASE_URL: 'https://staging.biatec.io',
+    })
+    expect(typeof reason).toBe('string')
+  })
+
+  // --- Negative path: API_BASE_URL not configured ---
+
+  it('returns a skip reason when API_BASE_URL is not set', () => {
+    const reason = requireStrictBackend({ BIATEC_STRICT_BACKEND: 'true' })
+    expect(typeof reason).toBe('string')
+    expect(reason as string).toMatch(/API_BASE_URL/i)
+    // Must explicitly say this is NOT release evidence
+    expect(reason as string).toMatch(/NOT credible release evidence/i)
+  })
+
+  it('returns a skip reason when API_BASE_URL is empty string', () => {
+    const reason = requireStrictBackend({
+      BIATEC_STRICT_BACKEND: 'true',
+      API_BASE_URL: '',
+    })
+    expect(typeof reason).toBe('string')
+    expect(reason as string).toMatch(/API_BASE_URL/i)
+  })
+
+  it('skip reason for missing URL mentions SIGNOFF_API_BASE_URL secret name', () => {
+    const reason = requireStrictBackend({ BIATEC_STRICT_BACKEND: 'true' })
+    // Must guide operator to the correct configuration action
+    expect(reason as string).toMatch(/SIGNOFF_API_BASE_URL/i)
+  })
+
+  // --- Negative path: API_BASE_URL is localhost (not a valid sign-off target) ---
+
+  it('returns a skip reason when API_BASE_URL is http://localhost:3000', () => {
+    const reason = requireStrictBackend({
+      BIATEC_STRICT_BACKEND: 'true',
+      API_BASE_URL: 'http://localhost:3000',
+    })
+    expect(typeof reason).toBe('string')
+    expect(reason as string).toMatch(/localhost/i)
+    expect(reason as string).toMatch(/NOT credible release evidence/i)
+  })
+
+  it('returns a skip reason when API_BASE_URL is http://localhost (no port)', () => {
+    const reason = requireStrictBackend({
+      BIATEC_STRICT_BACKEND: 'true',
+      API_BASE_URL: 'http://localhost',
+    })
+    expect(typeof reason).toBe('string')
+    expect(reason as string).toMatch(/localhost/i)
+  })
+
+  it('returns a skip reason when API_BASE_URL is http://127.0.0.1:3000', () => {
+    const reason = requireStrictBackend({
+      BIATEC_STRICT_BACKEND: 'true',
+      API_BASE_URL: 'http://127.0.0.1:3000',
+    })
+    expect(typeof reason).toBe('string')
+    expect(reason as string).toMatch(/localhost/i)
+    expect(reason as string).toMatch(/NOT credible release evidence/i)
+  })
+
+  it('returns a skip reason when API_BASE_URL is http://127.0.0.1 (no port)', () => {
+    const reason = requireStrictBackend({
+      BIATEC_STRICT_BACKEND: 'true',
+      API_BASE_URL: 'http://127.0.0.1',
+    })
+    expect(typeof reason).toBe('string')
+  })
+
+  // --- Negative path: API_BASE_URL is malformed ---
+
+  it('returns a skip reason when API_BASE_URL is not a valid URL', () => {
+    const reason = requireStrictBackend({
+      BIATEC_STRICT_BACKEND: 'true',
+      API_BASE_URL: 'not-a-valid-url',
+    })
+    expect(typeof reason).toBe('string')
+    expect(reason as string).toMatch(/malformed/i)
+    expect(reason as string).toMatch(/NOT credible release evidence/i)
+  })
+
+  it('returns a skip reason when API_BASE_URL is just a path (no scheme)', () => {
+    const reason = requireStrictBackend({
+      BIATEC_STRICT_BACKEND: 'true',
+      API_BASE_URL: '/api/v1',
+    })
+    expect(typeof reason).toBe('string')
+    expect(reason as string).toMatch(/malformed/i)
+  })
+
+  it('returns a skip reason when API_BASE_URL is plain text with no scheme', () => {
+    const reason = requireStrictBackend({
+      BIATEC_STRICT_BACKEND: 'true',
+      API_BASE_URL: 'staging.biatec.io',
+    })
+    expect(typeof reason).toBe('string')
+    // Without scheme, URL constructor throws → malformed
+    expect(reason as string).toMatch(/malformed/i)
+  })
+
+  // --- Message quality: skip reasons are non-trivial and actionable ---
+
+  it('all skip reasons are non-empty strings with actionable guidance', () => {
+    const cases: Record<string, string | undefined>[] = [
+      {},
+      { BIATEC_STRICT_BACKEND: 'false' },
+      { BIATEC_STRICT_BACKEND: 'true' },
+      { BIATEC_STRICT_BACKEND: 'true', API_BASE_URL: '' },
+      { BIATEC_STRICT_BACKEND: 'true', API_BASE_URL: 'http://localhost:3000' },
+      { BIATEC_STRICT_BACKEND: 'true', API_BASE_URL: 'not-valid' },
+    ]
+    for (const env of cases) {
+      const reason = requireStrictBackend(env)
+      expect(typeof reason).toBe('string')
+      expect((reason as string).length).toBeGreaterThan(40) // not a trivial one-liner
+    }
+  })
+
+  it('none of the skip reasons silently pass — all mention this is intentional or not evidence', () => {
+    const cases: Record<string, string | undefined>[] = [
+      {},
+      { BIATEC_STRICT_BACKEND: 'false' },
+      { BIATEC_STRICT_BACKEND: 'true', API_BASE_URL: '' },
+      { BIATEC_STRICT_BACKEND: 'true', API_BASE_URL: 'http://localhost:3000' },
+    ]
+    for (const env of cases) {
+      const reason = requireStrictBackend(env)
+      // Each message must make it explicit this is not release evidence or is intentional
+      const hasReleaseEvidence = /NOT credible release evidence/i.test(reason as string)
+      const hasIntentional = /intentional/i.test(reason as string)
+      expect(hasReleaseEvidence || hasIntentional, `Skip reason missing evidence/intentional mention: ${reason}`).toBe(true)
+    }
+  })
+
+  // --- Integration-readiness: requireStrictBackend vs getSignoffSkipReason ---
+
+  it('requireStrictBackend returns undefined only when isSignoffFullyConfigured would also return true', () => {
+    const env = {
+      BIATEC_STRICT_BACKEND: 'true',
+      API_BASE_URL: 'https://staging.biatec.io',
+    }
+    expect(requireStrictBackend(env)).toBeUndefined()
+    expect(isSignoffFullyConfigured(env)).toBe(true)
+  })
+
+  it('requireStrictBackend returns a skip reason when isSignoffFullyConfigured returns false', () => {
+    const cases: Array<Record<string, string | undefined>> = [
+      {},
+      { BIATEC_STRICT_BACKEND: 'true' },
+      { BIATEC_STRICT_BACKEND: 'true', API_BASE_URL: 'http://localhost:3000' },
+    ]
+    for (const env of cases) {
+      expect(isSignoffFullyConfigured(env)).toBe(false)
+      expect(requireStrictBackend(env)).toBeDefined()
+    }
   })
 })
