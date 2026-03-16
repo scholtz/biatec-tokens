@@ -38,6 +38,7 @@ import EnterpriseRiskReportBuilder from "../views/EnterpriseRiskReportBuilder.vu
 import EnterpriseApprovalCockpit from "../views/EnterpriseApprovalCockpit.vue";
 import InvestorComplianceOnboardingWorkspace from "../views/InvestorComplianceOnboardingWorkspace.vue";
 import ComplianceOperationsCockpit from "../views/ComplianceOperationsCockpit.vue";
+import ReleaseEvidenceCenterView from "../views/ReleaseEvidenceCenterView.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 import { isIssuanceSessionValid, storeIssuanceReturnPath } from "../utils/authFirstIssuanceWorkspace";
 
@@ -171,6 +172,13 @@ const router = createRouter({
       name: "ComplianceEvidencePack",
       component: ComplianceEvidencePackView,
       meta: { requiresAuth: true, title: "Compliance Evidence Pack" },
+    },
+    // Release Evidence Center — integrated sign-off readiness, evidence inventory, diagnostics, and blockers
+    {
+      path: "/compliance/release",
+      name: "ReleaseEvidenceCenter",
+      component: ReleaseEvidenceCenterView,
+      meta: { requiresAuth: true, title: "Release Evidence Center" },
     },
     // Compliance Reporting Workspace — enterprise compliance reporting and release evidence
     {

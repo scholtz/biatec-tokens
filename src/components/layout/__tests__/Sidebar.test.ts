@@ -75,6 +75,8 @@ describe('Sidebar Component', () => {
         { path: '/compliance/reporting', name: 'ComplianceReportingWorkspace' },
         { path: '/compliance/onboarding', name: 'InvestorComplianceOnboarding' },
         { path: '/compliance/operations', name: 'ComplianceOperationsCockpit' },
+        { path: '/compliance/evidence', name: 'ComplianceEvidencePack' },
+        { path: '/compliance/release', name: 'ReleaseEvidenceCenter' },
       ],
     });
 
@@ -133,7 +135,7 @@ describe('Sidebar Component', () => {
       });
 
       const links = wrapper.findAll('a');
-      expect(links).toHaveLength(14); // Includes Release Evidence, Investor Onboarding, Compliance Reporting, Compliance Monitoring, Whitelist Management, Risk Report, Approval Queue, Operations Cockpit
+      expect(links).toHaveLength(15); // Includes Release Evidence, Sign-off Readiness, Investor Onboarding, Compliance Reporting, Compliance Monitoring, Whitelist Management, Risk Report, Approval Queue, Operations Cockpit
 
       // Check link texts and routes
       expect(links[0].text()).toContain('Guided Token Launch');
@@ -157,26 +159,29 @@ describe('Sidebar Component', () => {
       expect(links[6].text()).toContain('Release Evidence');
       expect(links[6].attributes('to')).toBe('/compliance/evidence');
 
-      expect(links[7].text()).toContain('Investor Onboarding');
-      expect(links[7].attributes('to')).toBe('/compliance/onboarding');
+      expect(links[7].text()).toContain('Sign-off Readiness');
+      expect(links[7].attributes('to')).toBe('/compliance/release');
 
-      expect(links[8].text()).toContain('Compliance Reporting');
-      expect(links[8].attributes('to')).toBe('/compliance/reporting');
+      expect(links[8].text()).toContain('Investor Onboarding');
+      expect(links[8].attributes('to')).toBe('/compliance/onboarding');
 
-      expect(links[9].text()).toContain('Risk Report Builder');
-      expect(links[9].attributes('to')).toBe('/compliance/risk-report');
+      expect(links[9].text()).toContain('Compliance Reporting');
+      expect(links[9].attributes('to')).toBe('/compliance/reporting');
 
-      expect(links[10].text()).toContain('Approval Queue');
-      expect(links[10].attributes('to')).toBe('/compliance/approval');
+      expect(links[10].text()).toContain('Risk Report Builder');
+      expect(links[10].attributes('to')).toBe('/compliance/risk-report');
 
-      expect(links[11].text()).toContain('Operations Cockpit');
-      expect(links[11].attributes('to')).toBe('/compliance/operations');
+      expect(links[11].text()).toContain('Approval Queue');
+      expect(links[11].attributes('to')).toBe('/compliance/approval');
 
-      expect(links[12].text()).toContain('Compliance Monitoring');
-      expect(links[12].attributes('to')).toBe('/compliance-monitoring');
+      expect(links[12].text()).toContain('Operations Cockpit');
+      expect(links[12].attributes('to')).toBe('/compliance/operations');
+
+      expect(links[13].text()).toContain('Compliance Monitoring');
+      expect(links[13].attributes('to')).toBe('/compliance-monitoring');
       
-      expect(links[13].text()).toContain('Whitelist Management');
-      expect(links[13].attributes('to')).toBe('/compliance/whitelists');
+      expect(links[14].text()).toContain('Whitelist Management');
+      expect(links[14].attributes('to')).toBe('/compliance/whitelists');
     });
 
     it('should render icons for quick actions', () => {
@@ -191,8 +196,8 @@ describe('Sidebar Component', () => {
       });
 
       const svgs = wrapper.findAll('svg');
-      // 14 links each with an SVG icon
-      expect(svgs).toHaveLength(14);
+      // 15 links each with an SVG icon
+      expect(svgs).toHaveLength(15);
     });
   });
 

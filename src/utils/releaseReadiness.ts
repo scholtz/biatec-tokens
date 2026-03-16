@@ -695,3 +695,388 @@ export function readinessBannerTextClass(state: SignOffReadinessState): string {
       return 'text-yellow-300'
   }
 }
+
+// ---------------------------------------------------------------------------
+// Release Evidence Center — test ID constants
+// ---------------------------------------------------------------------------
+
+/**
+ * Stable data-testid values for the Release Evidence Center workspace.
+ * Centralised here so component templates and test files share the same source
+ * of truth and never drift apart.
+ */
+export const RELEASE_CENTER_TEST_IDS = {
+  ROOT: 'release-evidence-center',
+  HEADING: 'release-center-heading',
+  LOADING: 'release-center-loading',
+  DEGRADED_ALERT: 'release-center-degraded',
+  REFRESH_BTN: 'release-center-refresh',
+  REFRESHED_AT: 'release-center-refreshed-at',
+  READINESS_PANEL: 'release-readiness-panel-wrapper',
+  DIMENSIONS_SECTION: 'release-dimensions-section',
+  DIMENSION_CARD: (id: string) => `dimension-card-${id}`,
+  DIMENSION_BADGE: (id: string) => `dimension-badge-${id}`,
+  ENV_DIAG_SECTION: 'release-env-diagnostics',
+  ENV_DEP_CARD: (id: string) => `env-dep-${id}`,
+  NEXT_ACTIONS_SECTION: 'release-next-actions',
+  NEXT_ACTION_ITEM: (id: string) => `next-action-${id}`,
+  APPROVAL_HANDOFF_SECTION: 'release-approval-handoff',
+  EXPORT_SECTION: 'release-export-section',
+  EXPORT_BTN: 'release-export-btn',
+  EXPORT_STATUS: 'release-export-status',
+} as const
+
+// ---------------------------------------------------------------------------
+// Deterministic fixtures for testing (AC #7)
+// ---------------------------------------------------------------------------
+
+/** Fixed past timestamp helpers (deterministic, no Date.now() dependency). */
+const FIXTURE_BASE_ISO = '2025-01-15T09:00:00.000Z' // arbitrary fixed base
+
+function _fixtureFreshAt(): string {
+  // 5 days before FIXTURE_BASE_ISO
+  return new Date(new Date(FIXTURE_BASE_ISO).getTime() - 5 * 24 * 60 * 60 * 1000).toISOString()
+}
+
+function _fixtureStaleAt(): string {
+  // 40 days before FIXTURE_BASE_ISO
+  return new Date(new Date(FIXTURE_BASE_ISO).getTime() - 40 * 24 * 60 * 60 * 1000).toISOString()
+}
+
+/**
+ * Deterministic fixture: every evidence dimension is ready and fresh.
+ * Used for "happy-path" unit and E2E test scenarios.
+ */
+export function buildReadyFixture(now = new Date(FIXTURE_BASE_ISO)): ReleaseReadinessState {
+  const freshAt = _fixtureFreshAt()
+  const dimensions: EvidenceDimension[] = [
+    {
+      id: 'strict-run-execution',
+      title: 'Protected Strict Sign-Off Run',
+      description: 'Protected run executed and signed artifact confirmed.',
+      state: 'ready',
+      isLaunchCritical: true,
+      lastEvidenceAt: freshAt,
+      freshnessLabel: '5 days ago',
+      ownerDomain: 'shared_ops',
+      nextActionSummary: 'No action required.',
+      evidencePath: '/compliance/reporting',
+    },
+    {
+      id: 'compliance-report-bundle',
+      title: 'Compliance Evidence Bundle',
+      description: 'Release-grade compliance report bundle generated.',
+      state: 'ready',
+      isLaunchCritical: true,
+      lastEvidenceAt: freshAt,
+      freshnessLabel: '5 days ago',
+      ownerDomain: 'compliance',
+      nextActionSummary: 'No action required.',
+      evidencePath: '/compliance/evidence',
+    },
+    {
+      id: 'integration-validation',
+      title: 'Live Integration Validation',
+      description: 'End-to-end integration validation complete.',
+      state: 'ready',
+      isLaunchCritical: true,
+      lastEvidenceAt: freshAt,
+      freshnessLabel: '5 days ago',
+      ownerDomain: 'shared_ops',
+      nextActionSummary: 'No action required.',
+      evidencePath: '/compliance/reporting',
+    },
+    {
+      id: 'approval-sign-off',
+      title: 'Multi-Stakeholder Approval Sign-Off',
+      description: 'All required reviewers have completed sign-off.',
+      state: 'ready',
+      isLaunchCritical: false,
+      lastEvidenceAt: freshAt,
+      freshnessLabel: '5 days ago',
+      ownerDomain: 'executive',
+      nextActionSummary: 'No action required.',
+      evidencePath: '/compliance/approval',
+    },
+  ]
+  const configDeps: ConfigurationDependency[] = [
+    {
+      id: 'backend-api-url',
+      label: 'Protected Backend API URL',
+      description: 'Backend API URL is configured.',
+      isConfigured: true,
+      isRequired: true,
+      ownerDomain: 'shared_ops',
+    },
+    {
+      id: 'strict-run-token',
+      label: 'Strict Sign-Off Bearer Token',
+      description: 'Bearer token is configured.',
+      isConfigured: true,
+      isRequired: true,
+      ownerDomain: 'shared_ops',
+    },
+    {
+      id: 'evidence-storage',
+      label: 'Evidence Artifact Storage',
+      description: 'Storage destination configured.',
+      isConfigured: true,
+      isRequired: false,
+      ownerDomain: 'shared_ops',
+    },
+  ]
+  return deriveReleaseReadiness(dimensions, configDeps, freshAt, true, now)
+}
+
+/**
+ * Deterministic fixture: critical evidence is missing (never recorded).
+ * Used for "fail-closed / blocked" test scenarios.
+ */
+export function buildBlockedFixture(now = new Date(FIXTURE_BASE_ISO)): ReleaseReadinessState {
+  const dimensions: EvidenceDimension[] = [
+    {
+      id: 'strict-run-execution',
+      title: 'Protected Strict Sign-Off Run',
+      description: 'Protected run has not been executed.',
+      state: 'missing_evidence',
+      isLaunchCritical: true,
+      lastEvidenceAt: null,
+      freshnessLabel: 'Never',
+      ownerDomain: 'shared_ops',
+      nextActionSummary: 'Configure protected backend credentials and execute the strict sign-off workflow.',
+      evidencePath: '/compliance/reporting',
+    },
+    {
+      id: 'compliance-report-bundle',
+      title: 'Compliance Evidence Bundle',
+      description: 'Compliance bundle has not been generated.',
+      state: 'missing_evidence',
+      isLaunchCritical: true,
+      lastEvidenceAt: null,
+      freshnessLabel: 'Never',
+      ownerDomain: 'compliance',
+      nextActionSummary: 'Generate and export a full compliance evidence bundle.',
+      evidencePath: '/compliance/evidence',
+    },
+    {
+      id: 'integration-validation',
+      title: 'Live Integration Validation',
+      description: 'Integration validation has not been run.',
+      state: 'missing_evidence',
+      isLaunchCritical: true,
+      lastEvidenceAt: null,
+      freshnessLabel: 'Never',
+      ownerDomain: 'shared_ops',
+      nextActionSummary: 'Run live integration tests against the protected environment.',
+      evidencePath: '/compliance/reporting',
+    },
+    {
+      id: 'approval-sign-off',
+      title: 'Multi-Stakeholder Approval Sign-Off',
+      description: 'Approval sign-off has not started.',
+      state: 'advisory_follow_up',
+      isLaunchCritical: false,
+      lastEvidenceAt: null,
+      freshnessLabel: 'Not yet complete',
+      ownerDomain: 'executive',
+      nextActionSummary: 'Complete all approval stages in the Enterprise Approval Queue.',
+      evidencePath: '/compliance/approval',
+    },
+  ]
+  const configDeps: ConfigurationDependency[] = [
+    {
+      id: 'backend-api-url',
+      label: 'Protected Backend API URL',
+      description: 'Not yet configured.',
+      isConfigured: false,
+      isRequired: true,
+      ownerDomain: 'shared_ops',
+    },
+    {
+      id: 'strict-run-token',
+      label: 'Strict Sign-Off Bearer Token',
+      description: 'Not yet configured.',
+      isConfigured: false,
+      isRequired: true,
+      ownerDomain: 'shared_ops',
+    },
+    {
+      id: 'evidence-storage',
+      label: 'Evidence Artifact Storage',
+      description: 'Not yet configured.',
+      isConfigured: false,
+      isRequired: false,
+      ownerDomain: 'shared_ops',
+    },
+  ]
+  return deriveReleaseReadiness(dimensions, configDeps, null, null, now)
+}
+
+/**
+ * Deterministic fixture: evidence exists but is older than the freshness window.
+ * Used for "at-risk / stale" test scenarios.
+ */
+export function buildStaleFixture(now = new Date(FIXTURE_BASE_ISO)): ReleaseReadinessState {
+  const staleAt = _fixtureStaleAt()
+  const dimensions: EvidenceDimension[] = [
+    {
+      id: 'strict-run-execution',
+      title: 'Protected Strict Sign-Off Run',
+      description: 'Protected run evidence is stale — a fresh run is required.',
+      state: 'stale_evidence',
+      isLaunchCritical: true,
+      lastEvidenceAt: staleAt,
+      freshnessLabel: '40 days ago',
+      ownerDomain: 'shared_ops',
+      nextActionSummary: 'Re-execute the strict sign-off workflow to produce fresh evidence.',
+      evidencePath: '/compliance/reporting',
+    },
+    {
+      id: 'compliance-report-bundle',
+      title: 'Compliance Evidence Bundle',
+      description: 'Compliance bundle is stale — regenerate for release.',
+      state: 'stale_evidence',
+      isLaunchCritical: true,
+      lastEvidenceAt: staleAt,
+      freshnessLabel: '40 days ago',
+      ownerDomain: 'compliance',
+      nextActionSummary: 'Regenerate the compliance evidence bundle from the live environment.',
+      evidencePath: '/compliance/evidence',
+    },
+    {
+      id: 'integration-validation',
+      title: 'Live Integration Validation',
+      description: 'Integration validation evidence is stale.',
+      state: 'stale_evidence',
+      isLaunchCritical: true,
+      lastEvidenceAt: staleAt,
+      freshnessLabel: '40 days ago',
+      ownerDomain: 'shared_ops',
+      nextActionSummary: 'Re-run live integration tests to produce fresh evidence.',
+      evidencePath: '/compliance/reporting',
+    },
+    {
+      id: 'approval-sign-off',
+      title: 'Multi-Stakeholder Approval Sign-Off',
+      description: 'Approval sign-off pending re-confirmation after evidence refresh.',
+      state: 'advisory_follow_up',
+      isLaunchCritical: false,
+      lastEvidenceAt: null,
+      freshnessLabel: 'Not yet complete',
+      ownerDomain: 'executive',
+      nextActionSummary: 'Re-confirm approval sign-off after fresh evidence is available.',
+      evidencePath: '/compliance/approval',
+    },
+  ]
+  const configDeps: ConfigurationDependency[] = [
+    {
+      id: 'backend-api-url',
+      label: 'Protected Backend API URL',
+      description: 'Configured.',
+      isConfigured: true,
+      isRequired: true,
+      ownerDomain: 'shared_ops',
+    },
+    {
+      id: 'strict-run-token',
+      label: 'Strict Sign-Off Bearer Token',
+      description: 'Configured.',
+      isConfigured: true,
+      isRequired: true,
+      ownerDomain: 'shared_ops',
+    },
+    {
+      id: 'evidence-storage',
+      label: 'Evidence Artifact Storage',
+      description: 'Not configured (optional).',
+      isConfigured: false,
+      isRequired: false,
+      ownerDomain: 'shared_ops',
+    },
+  ]
+  return deriveReleaseReadiness(dimensions, configDeps, staleAt, true, now)
+}
+
+/**
+ * Deterministic fixture: required configuration dependencies are absent.
+ * Used for "degraded / configuration-blocked" test scenarios.
+ */
+export function buildDegradedFixture(now = new Date(FIXTURE_BASE_ISO)): ReleaseReadinessState {
+  const dimensions: EvidenceDimension[] = [
+    {
+      id: 'strict-run-execution',
+      title: 'Protected Strict Sign-Off Run',
+      description: 'Cannot execute — protected backend credentials are missing.',
+      state: 'configuration_blocked',
+      isLaunchCritical: true,
+      lastEvidenceAt: null,
+      freshnessLabel: 'Never',
+      ownerDomain: 'shared_ops',
+      nextActionSummary: 'Configure the protected backend API URL and bearer token first.',
+      evidencePath: '/compliance/reporting',
+    },
+    {
+      id: 'compliance-report-bundle',
+      title: 'Compliance Evidence Bundle',
+      description: 'Cannot generate — environment not configured.',
+      state: 'missing_evidence',
+      isLaunchCritical: true,
+      lastEvidenceAt: null,
+      freshnessLabel: 'Never',
+      ownerDomain: 'compliance',
+      nextActionSummary: 'Resolve environment configuration, then generate the bundle.',
+      evidencePath: '/compliance/evidence',
+    },
+    {
+      id: 'integration-validation',
+      title: 'Live Integration Validation',
+      description: 'Cannot run — backend endpoint not reachable.',
+      state: 'configuration_blocked',
+      isLaunchCritical: true,
+      lastEvidenceAt: null,
+      freshnessLabel: 'Never',
+      ownerDomain: 'shared_ops',
+      nextActionSummary: 'Resolve backend connectivity before running integration tests.',
+      evidencePath: '/compliance/reporting',
+    },
+    {
+      id: 'approval-sign-off',
+      title: 'Multi-Stakeholder Approval Sign-Off',
+      description: 'Blocked on upstream evidence resolution.',
+      state: 'advisory_follow_up',
+      isLaunchCritical: false,
+      lastEvidenceAt: null,
+      freshnessLabel: 'Not yet complete',
+      ownerDomain: 'executive',
+      nextActionSummary: 'Cannot proceed until upstream blockers are resolved.',
+      evidencePath: '/compliance/approval',
+    },
+  ]
+  const configDeps: ConfigurationDependency[] = [
+    {
+      id: 'backend-api-url',
+      label: 'Protected Backend API URL',
+      description: 'Not configured.',
+      isConfigured: false,
+      isRequired: true,
+      ownerDomain: 'shared_ops',
+    },
+    {
+      id: 'strict-run-token',
+      label: 'Strict Sign-Off Bearer Token',
+      description: 'Not configured.',
+      isConfigured: false,
+      isRequired: true,
+      ownerDomain: 'shared_ops',
+    },
+    {
+      id: 'evidence-storage',
+      label: 'Evidence Artifact Storage',
+      description: 'Not configured.',
+      isConfigured: false,
+      isRequired: false,
+      ownerDomain: 'shared_ops',
+    },
+  ]
+  return deriveReleaseReadiness(dimensions, configDeps, null, null, now)
+}
