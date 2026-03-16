@@ -39,6 +39,7 @@ import EnterpriseApprovalCockpit from "../views/EnterpriseApprovalCockpit.vue";
 import InvestorComplianceOnboardingWorkspace from "../views/InvestorComplianceOnboardingWorkspace.vue";
 import ComplianceOperationsCockpit from "../views/ComplianceOperationsCockpit.vue";
 import ReleaseEvidenceCenterView from "../views/ReleaseEvidenceCenterView.vue";
+import ReportingCommandCenterView from "../views/ReportingCommandCenterView.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 import { isIssuanceSessionValid, storeIssuanceReturnPath } from "../utils/authFirstIssuanceWorkspace";
 
@@ -214,6 +215,13 @@ const router = createRouter({
       name: "ComplianceOperationsCockpit",
       component: ComplianceOperationsCockpit,
       meta: { requiresAuth: true, title: "Compliance Operations Cockpit" },
+    },
+    // Reporting Command Center — scheduled recurring compliance reporting for enterprise audiences
+    {
+      path: "/compliance/reporting-center",
+      name: "ReportingCommandCenter",
+      component: ReportingCommandCenterView,
+      meta: { requiresAuth: true, title: "Reporting Command Center" },
     },
     {
       path: "/attestations",

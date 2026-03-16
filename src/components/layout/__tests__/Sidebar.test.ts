@@ -38,6 +38,9 @@ vi.mock('@heroicons/vue/24/outline', () => ({
   ChartBarSquareIcon: {
     template: '<svg class="h-5 w-5"></svg>',
   },
+  CalendarDaysIcon: {
+    template: '<svg class="h-5 w-5"></svg>',
+  },
   CurrencyDollarIcon: {
     template: '<svg class="h-5 w-5"></svg>',
   },
@@ -77,6 +80,7 @@ describe('Sidebar Component', () => {
         { path: '/compliance/operations', name: 'ComplianceOperationsCockpit' },
         { path: '/compliance/evidence', name: 'ComplianceEvidencePack' },
         { path: '/compliance/release', name: 'ReleaseEvidenceCenter' },
+        { path: '/compliance/reporting-center', name: 'ReportingCommandCenter' },
       ],
     });
 
@@ -135,7 +139,7 @@ describe('Sidebar Component', () => {
       });
 
       const links = wrapper.findAll('a');
-      expect(links).toHaveLength(15); // Includes Release Evidence, Sign-off Readiness, Investor Onboarding, Compliance Reporting, Compliance Monitoring, Whitelist Management, Risk Report, Approval Queue, Operations Cockpit
+      expect(links).toHaveLength(16); // Includes Release Evidence, Sign-off Readiness, Investor Onboarding, Compliance Reporting, Compliance Monitoring, Whitelist Management, Risk Report, Approval Queue, Operations Cockpit, Reporting Center
 
       // Check link texts and routes
       expect(links[0].text()).toContain('Guided Token Launch');
@@ -182,6 +186,9 @@ describe('Sidebar Component', () => {
       
       expect(links[14].text()).toContain('Whitelist Management');
       expect(links[14].attributes('to')).toBe('/compliance/whitelists');
+
+      expect(links[15].text()).toContain('Reporting Center');
+      expect(links[15].attributes('to')).toBe('/compliance/reporting-center');
     });
 
     it('should render icons for quick actions', () => {
@@ -196,8 +203,8 @@ describe('Sidebar Component', () => {
       });
 
       const svgs = wrapper.findAll('svg');
-      // 15 links each with an SVG icon
-      expect(svgs).toHaveLength(15);
+      // 16 links each with an SVG icon
+      expect(svgs).toHaveLength(16);
     });
   });
 
