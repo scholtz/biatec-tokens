@@ -543,6 +543,182 @@
             </router-link>
           </section>
 
+          <!-- ── Evidence Manifest ── -->
+          <section
+            v-if="isSectionVisible('evidence_manifest')"
+            class="mb-6 bg-gray-800 rounded-2xl border border-white/10 p-6 shadow-lg"
+            aria-labelledby="evidence-manifest-heading"
+            data-testid="evidence-manifest-section"
+          >
+            <button
+              type="button"
+              class="w-full flex items-center justify-between text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
+              :aria-expanded="manifestExpanded"
+              :aria-label="manifestToggleLabel"
+              data-testid="evidence-manifest-toggle"
+              @click="manifestExpanded = !manifestExpanded"
+            >
+              <h2 id="evidence-manifest-heading" class="text-base font-semibold text-white flex items-center gap-2">
+                <TableCellsIcon class="w-4 h-4 text-cyan-400" aria-hidden="true" />
+                Evidence Manifest
+              </h2>
+              <span class="text-gray-400 text-xs flex items-center gap-1">
+                {{ evidenceManifest.filter(e => e.isIncluded).length }}/{{ evidenceManifest.length }} sources included
+                <svg
+                  :class="manifestExpanded ? 'rotate-180' : ''"
+                  class="w-4 h-4 transition-transform duration-200"
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"
+                ><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+              </span>
+            </button>
+
+            <!-- Summary counts -->
+            <div class="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3" data-testid="manifest-summary-counts">
+              <div class="bg-gray-900/50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-400 mb-0.5">Included</p>
+                <p class="text-lg font-bold text-green-400" data-testid="manifest-included-count">{{ evidenceManifest.filter(e => e.isIncluded).length }}</p>
+              </div>
+              <div class="bg-gray-900/50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-400 mb-0.5">Excluded</p>
+                <p class="text-lg font-bold text-red-400" data-testid="manifest-excluded-count">{{ evidenceManifest.filter(e => !e.isIncluded).length }}</p>
+              </div>
+              <div class="bg-gray-900/50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-400 mb-0.5">Stale</p>
+                <p class="text-lg font-bold text-yellow-400" data-testid="manifest-stale-count">{{ evidenceManifest.filter(e => e.isStale).length }}</p>
+              </div>
+            </div>
+
+            <!-- Manifest entries table (expanded) -->
+            <div
+              v-if="manifestExpanded && evidenceManifest.length > 0"
+              class="mt-4 overflow-x-auto"
+              data-testid="manifest-entries"
+            >
+              <table class="w-full text-sm" aria-label="Evidence manifest entries">
+                <thead>
+                  <tr class="border-b border-white/10">
+                    <th scope="col" class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider pb-2 pr-4">Evidence Source</th>
+                    <th scope="col" class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider pb-2 pr-4">Authority</th>
+                    <th scope="col" class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider pb-2 pr-4 hidden sm:table-cell">Summary</th>
+                    <th scope="col" class="text-left text-xs font-medium text-gray-400 uppercase tracking-wider pb-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700/50">
+                  <tr
+                    v-for="entry in evidenceManifest"
+                    :key="entry.id"
+                    :data-testid="`manifest-entry-${entry.id}`"
+                  >
+                    <td class="py-2.5 pr-4">
+                      <span class="text-gray-200 font-medium">{{ entry.label }}</span>
+                      <span
+                        v-if="entry.isStale"
+                        class="ml-1.5 text-xs text-yellow-400"
+                      >[Stale]</span>
+                    </td>
+                    <td class="py-2.5 pr-4">
+                      <span
+                        class="inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium"
+                        :class="manifestAuthorityBadgeClass(entry.authorityLevel)"
+                      >{{ EVIDENCE_AUTHORITY_LABELS[entry.authorityLevel] }}</span>
+                    </td>
+                    <td class="py-2.5 pr-4 text-xs text-gray-400 hidden sm:table-cell">{{ entry.summaryText }}</td>
+                    <td class="py-2.5">
+                      <span
+                        v-if="entry.isIncluded"
+                        class="inline-flex items-center gap-1 text-xs text-green-300"
+                        :data-testid="`manifest-included-${entry.id}`"
+                      >
+                        <CheckCircleIcon class="w-3.5 h-3.5" aria-hidden="true" />
+                        Included
+                      </span>
+                      <span
+                        v-else
+                        class="inline-flex items-center gap-1 text-xs text-red-300"
+                        :data-testid="`manifest-excluded-${entry.id}`"
+                      >
+                        <XCircleIcon class="w-3.5 h-3.5" aria-hidden="true" />
+                        Excluded
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Exclusion reasons -->
+              <div
+                v-if="evidenceManifest.some(e => !e.isIncluded && e.exclusionReason)"
+                class="mt-3 space-y-1.5"
+                data-testid="manifest-exclusion-reasons"
+              >
+                <p class="text-xs font-medium text-gray-400 mb-1">Excluded item reasons:</p>
+                <div
+                  v-for="entry in evidenceManifest.filter(e => !e.isIncluded && e.exclusionReason)"
+                  :key="`excl-${entry.id}`"
+                  class="flex items-start gap-2 text-xs text-gray-400"
+                >
+                  <InformationCircleIcon class="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-yellow-400" aria-hidden="true" />
+                  <span><strong class="text-gray-300">{{ entry.label }}:</strong> {{ entry.exclusionReason }}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── Contradictions & Remediation Summary ── -->
+          <section
+            v-if="isSectionVisible('contradictions')"
+            class="mb-6 bg-gray-800 rounded-2xl border border-white/10 p-6 shadow-lg"
+            aria-labelledby="contradictions-heading"
+            data-testid="contradictions-section"
+          >
+            <h2 id="contradictions-heading" class="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <SparklesIcon class="w-4 h-4 text-orange-400" aria-hidden="true" />
+              Contradictions &amp; Remediation
+              <span
+                v-if="contradictions.length > 0"
+                class="ml-1 text-xs px-2 py-0.5 rounded-full font-medium bg-orange-900/50 text-orange-300"
+                data-testid="contradictions-count-badge"
+              >{{ contradictions.length }} found</span>
+            </h2>
+
+            <div v-if="contradictions.length === 0" class="py-3" data-testid="contradictions-empty">
+              <div class="flex items-center gap-2 text-sm text-green-300">
+                <CheckCircleIcon class="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+                No contradictions detected. The evidence set is internally consistent.
+              </div>
+            </div>
+
+            <ul v-else class="space-y-4" data-testid="contradictions-list" aria-label="Detected evidence contradictions">
+              <li
+                v-for="flag in contradictions"
+                :key="flag.id"
+                class="rounded-xl border p-4"
+                :class="flag.severity === 'critical' ? 'bg-red-900/20 border-red-700/40' : flag.severity === 'high' ? 'bg-orange-900/20 border-orange-700/40' : 'bg-yellow-900/20 border-yellow-700/30'"
+                :data-testid="`contradiction-${flag.id}`"
+              >
+                <div class="flex items-start justify-between gap-3 mb-2">
+                  <div class="flex items-center gap-2">
+                    <ExclamationTriangleIcon
+                      class="w-4 h-4 flex-shrink-0"
+                      :class="flag.severity === 'critical' ? 'text-red-400' : flag.severity === 'high' ? 'text-orange-400' : 'text-yellow-400'"
+                      aria-hidden="true"
+                    />
+                    <span class="text-sm font-semibold text-white">{{ flag.title }}</span>
+                  </div>
+                  <span
+                    class="inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0"
+                    :class="contradictionSeverityBadgeClass(flag.severity)"
+                  >{{ CONTRADICTION_SEVERITY_LABELS[flag.severity] }}</span>
+                </div>
+                <p class="text-xs text-gray-300 mb-2 ml-6">{{ flag.description }}</p>
+                <div class="ml-6 flex items-start gap-1.5 text-xs text-blue-300">
+                  <InformationCircleIcon class="w-3.5 h-3.5 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                  <span data-testid="contradiction-remediation">{{ flag.remediationHint }}</span>
+                </div>
+              </li>
+            </ul>
+          </section>
+
           <!-- ── Export Package Readiness ── -->
           <section
             v-if="isSectionVisible('export')"
@@ -634,6 +810,17 @@
             </p>
 
             <div class="flex flex-wrap gap-3">
+              <!-- Generate Audit Package button (primary action) -->
+              <button
+                type="button"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                data-testid="generate-audit-package-button"
+                @click="assemblePackage"
+              >
+                <SparklesIcon class="w-4 h-4" aria-hidden="true" />
+                Generate Audit Package
+              </button>
+
               <button
                 type="button"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-teal-700 hover:bg-teal-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
@@ -670,6 +857,126 @@
               <PrinterIcon class="w-3.5 h-3.5" aria-hidden="true" />
               Use your browser's print function to produce a printer-friendly version of this page.
             </p>
+          </section>
+
+          <!-- ── Audit Package Preview ── -->
+          <section
+            v-if="auditPackagePreviewOpen && auditPackage"
+            class="mb-6 rounded-2xl border p-6 shadow-lg"
+            :class="auditPackageReadinessClass(auditPackage.isRegulatorReady, auditPackage.exportReadinessStatus)"
+            aria-labelledby="audit-package-heading"
+            data-testid="audit-package-preview"
+            aria-live="polite"
+          >
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h2 id="audit-package-heading" class="text-base font-semibold text-white flex items-center gap-2">
+                  <SparklesIcon class="w-4 h-4" :class="auditPackage.isRegulatorReady ? 'text-green-400' : 'text-orange-400'" aria-hidden="true" />
+                  Audit Export Package Preview
+                </h2>
+                <p class="text-xs text-gray-400 mt-0.5">
+                  Package ID: <code class="text-gray-200 bg-gray-800/60 px-1.5 py-0.5 rounded" data-testid="audit-package-id">{{ auditPackage.packageId }}</code>
+                  · Audience: <strong class="text-gray-200">{{ auditPackage.audienceLabel }}</strong>
+                </p>
+              </div>
+              <button
+                type="button"
+                class="text-xs text-gray-400 hover:text-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded px-2 py-1 flex-shrink-0"
+                aria-label="Close audit package preview"
+                data-testid="close-audit-package-preview"
+                @click="auditPackagePreviewOpen = false"
+              >
+                Dismiss
+              </button>
+            </div>
+
+            <!-- Readiness gate -->
+            <div
+              class="rounded-xl p-4 mb-4"
+              :class="auditPackage.isRegulatorReady ? 'bg-green-900/30 border border-green-700/40' : 'bg-red-900/20 border border-red-700/30'"
+              data-testid="audit-package-readiness-gate"
+            >
+              <div class="flex items-center gap-2 mb-1">
+                <component
+                  :is="auditPackage.isRegulatorReady ? CheckCircleIcon : XCircleIcon"
+                  class="w-4 h-4 flex-shrink-0"
+                  :class="auditPackage.isRegulatorReady ? 'text-green-400' : 'text-red-400'"
+                  aria-hidden="true"
+                />
+                <span class="text-sm font-semibold" :class="auditPackage.isRegulatorReady ? 'text-green-300' : 'text-red-300'" data-testid="audit-package-readiness-label">
+                  {{ auditPackage.isRegulatorReady ? 'Regulator-Ready' : 'Not Ready for Regulator Submission' }}
+                </span>
+              </div>
+              <p class="text-xs text-gray-300 ml-6" data-testid="audit-package-readiness-text">{{ auditPackage.readinessGateText }}</p>
+            </div>
+
+            <!-- Package summary metrics -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4" data-testid="audit-package-metrics">
+              <div class="bg-gray-900/50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-400 mb-0.5">Evidence Items</p>
+                <p class="text-lg font-bold text-white" data-testid="pkg-total-evidence">{{ auditPackage.totalEvidenceItems }}</p>
+              </div>
+              <div class="bg-gray-900/50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-400 mb-0.5">Included</p>
+                <p class="text-lg font-bold text-green-400" data-testid="pkg-included-count">{{ auditPackage.includedItemCount }}</p>
+              </div>
+              <div class="bg-gray-900/50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-400 mb-0.5">Excluded</p>
+                <p class="text-lg font-bold text-red-400" data-testid="pkg-excluded-count">{{ auditPackage.excludedItemCount }}</p>
+              </div>
+              <div class="bg-gray-900/50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-400 mb-0.5">Contradictions</p>
+                <p
+                  class="text-lg font-bold"
+                  :class="auditPackage.contradictionCount > 0 ? 'text-orange-400' : 'text-green-400'"
+                  data-testid="pkg-contradiction-count"
+                >{{ auditPackage.contradictionCount }}</p>
+              </div>
+            </div>
+
+            <!-- Timeline preview (top 5 events) -->
+            <div v-if="auditPackage.timeline.length > 0" class="mb-4" data-testid="audit-package-timeline">
+              <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Evidence Timeline (Most Recent)</h3>
+              <ul class="space-y-2" aria-label="Evidence timeline">
+                <li
+                  v-for="event in auditPackage.timeline.slice(0, 5)"
+                  :key="event.id"
+                  class="flex items-start gap-2 text-xs"
+                >
+                  <ClockIcon class="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-gray-500" aria-hidden="true" />
+                  <div>
+                    <span class="text-gray-200 font-medium">{{ event.label }}</span>
+                    <span v-if="event.isLaunchCritical" class="ml-1.5 text-xs text-yellow-400">Launch-Critical</span>
+                    <p class="text-gray-400 mt-0.5">{{ event.detail }}</p>
+                    <p class="text-gray-500 mt-0.5">{{ new Date(event.timestamp).toLocaleDateString() }}</p>
+                  </div>
+                </li>
+              </ul>
+              <p v-if="auditPackage.timeline.length > 5" class="mt-1 text-xs text-gray-500">
+                + {{ auditPackage.timeline.length - 5 }} more timeline events in the full export
+              </p>
+            </div>
+
+            <!-- Download audit package -->
+            <div class="flex flex-wrap gap-3 pt-3 border-t border-white/10">
+              <button
+                type="button"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                data-testid="download-audit-package-button"
+                @click="exportAuditPackageJson"
+              >
+                <ArrowDownTrayIcon class="w-4 h-4" aria-hidden="true" />
+                Download Audit Package (JSON)
+              </button>
+              <p
+                v-if="!auditPackage.isRegulatorReady"
+                class="self-center text-xs text-yellow-300 flex items-center gap-1"
+                data-testid="audit-package-draft-notice"
+              >
+                <ExclamationTriangleIcon class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" />
+                This package is a draft — not suitable for regulator submission until all blockers are resolved.
+              </p>
+            </div>
           </section>
 
           <!-- ── Workspace Navigation ── -->
@@ -759,6 +1066,8 @@ import {
   CheckBadgeIcon,
   UserCircleIcon,
   QueueListIcon,
+  TableCellsIcon,
+  SparklesIcon,
 } from '@heroicons/vue/24/outline'
 import {
   STATUS_LABELS,
@@ -785,6 +1094,19 @@ import {
   type ApprovalHistorySummary,
   type ExportPackageReadiness,
 } from '../utils/complianceReportingWorkspace'
+import {
+  buildEvidenceManifest,
+  detectContradictions,
+  assembleAuditExportPackage,
+  contradictionSeverityBadgeClass,
+  manifestAuthorityBadgeClass,
+  auditPackageReadinessClass,
+  EVIDENCE_AUTHORITY_LABELS,
+  CONTRADICTION_SEVERITY_LABELS,
+  type AuditExportPackage,
+  type EvidenceManifestEntry,
+  type ContradictionFlag,
+} from '../utils/auditExportPackage'
 
 // ---------------------------------------------------------------------------
 // Sub-components (inline for simplicity)
@@ -1126,6 +1448,15 @@ const approvalSummary = ref<ApprovalHistorySummary | null>(null)
 /** Whether approval history section is expanded */
 const approvalHistoryExpanded = ref(false)
 
+/** Whether the evidence manifest section is expanded */
+const manifestExpanded = ref(false)
+
+/** Assembled audit export package (null until requested) */
+const auditPackage = ref<AuditExportPackage | null>(null)
+
+/** Whether the audit package preview is visible */
+const auditPackagePreviewOpen = ref(false)
+
 // ---------------------------------------------------------------------------
 // Computed
 // ---------------------------------------------------------------------------
@@ -1257,6 +1588,47 @@ const exportReadinessBannerClass = computed((): string =>
 const approvalHistoryToggleLabel = computed((): string =>
   approvalHistoryExpanded.value ? 'Collapse approval history' : 'Expand approval history',
 )
+
+// ---------------------------------------------------------------------------
+// Evidence manifest and contradiction computed (audit export)
+// ---------------------------------------------------------------------------
+
+const evidenceManifest = computed((): EvidenceManifestEntry[] =>
+  buildEvidenceManifest(bundle.value, approvalSummary.value),
+)
+
+const contradictions = computed((): ContradictionFlag[] =>
+  detectContradictions(bundle.value, approvalSummary.value),
+)
+
+const manifestToggleLabel = computed((): string =>
+  manifestExpanded.value ? 'Collapse evidence manifest' : 'Expand evidence manifest',
+)
+
+function assemblePackage(): void {
+  auditPackage.value = assembleAuditExportPackage(
+    bundle.value,
+    approvalSummary.value,
+    selectedAudience.value,
+    exportReadiness.value,
+  )
+  auditPackagePreviewOpen.value = true
+}
+
+function exportAuditPackageJson(): void {
+  const pkg = auditPackage.value ?? assembleAuditExportPackage(
+    bundle.value,
+    approvalSummary.value,
+    selectedAudience.value,
+    exportReadiness.value,
+  )
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+  downloadBlob(
+    JSON.stringify(pkg, null, 2),
+    `audit-export-package-${timestamp}.json`,
+    'application/json',
+  )
+}
 
 // ---------------------------------------------------------------------------
 // Export actions

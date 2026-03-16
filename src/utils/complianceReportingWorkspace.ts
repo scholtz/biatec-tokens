@@ -37,10 +37,10 @@ export const AUDIENCE_PRESET_DESCRIPTIONS: Record<AudiencePreset, string> = {
 
 /** Sections a given audience cares most about, in display priority order. */
 export const AUDIENCE_SECTION_PRIORITIES: Record<AudiencePreset, string[]> = {
-  all: ['overall', 'jurisdiction', 'kyc_aml', 'whitelist', 'investor_eligibility', 'evidence', 'approval_history', 'export'],
-  compliance: ['overall', 'kyc_aml', 'jurisdiction', 'investor_eligibility', 'whitelist', 'evidence', 'approval_history', 'export'],
-  procurement: ['overall', 'whitelist', 'jurisdiction', 'kyc_aml', 'investor_eligibility', 'evidence', 'export'],
-  executive: ['overall', 'approval_history', 'evidence', 'export'],
+  all: ['overall', 'jurisdiction', 'kyc_aml', 'whitelist', 'investor_eligibility', 'evidence', 'approval_history', 'evidence_manifest', 'contradictions', 'export'],
+  compliance: ['overall', 'kyc_aml', 'jurisdiction', 'investor_eligibility', 'whitelist', 'evidence', 'approval_history', 'evidence_manifest', 'contradictions', 'export'],
+  procurement: ['overall', 'whitelist', 'jurisdiction', 'kyc_aml', 'investor_eligibility', 'evidence', 'evidence_manifest', 'contradictions', 'export'],
+  executive: ['overall', 'approval_history', 'evidence', 'evidence_manifest', 'contradictions', 'export'],
 }
 
 // ---------------------------------------------------------------------------
