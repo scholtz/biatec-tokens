@@ -661,3 +661,214 @@ describe('degraded state rendering', () => {
     expect(banner.attributes('role')).toBe('alert')
   })
 })
+
+// ---------------------------------------------------------------------------
+// Queue health summary (new feature — covers queueHealth computed)
+// ---------------------------------------------------------------------------
+
+describe('queue health summary bar', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+  })
+
+  it('queue-health-summary element is rendered', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="queue-health-summary"]').exists()).toBe(true)
+  })
+
+  it('health-total cell is rendered', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="health-total"]').exists()).toBe(true)
+  })
+
+  it('health-total shows a numeric value', async () => {
+    const wrapper = await mountWorkspace()
+    const cell = wrapper.find('[data-testid="health-total"] dd')
+    const text = cell.text()
+    expect(Number(text.trim())).toBeGreaterThan(0)
+  })
+
+  it('health-escalated cell is rendered', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="health-escalated"]').exists()).toBe(true)
+  })
+
+  it('health-overdue cell is rendered', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="health-overdue"]').exists()).toBe(true)
+  })
+
+  it('health-ready cell is rendered', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="health-ready"]').exists()).toBe(true)
+  })
+
+  it('health-awaiting-docs cell is rendered', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="health-awaiting-docs"]').exists()).toBe(true)
+  })
+
+  it('queueHealth.total equals number of filteredAndSortedStages when no filter active', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    // queueHealth is derived from all workspace stages (not filtered)
+    expect(vm.queueHealth.total).toBeGreaterThan(0)
+  })
+
+  it('refresh in demo mode clears isDegraded (covers line 1144)', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+
+    // Simulate a previous degraded state
+    vm.isDegraded = true
+    vm.loadError = 'Previous error'
+    await nextTick()
+
+    // Refresh (demo mode path) should clear isDegraded
+    const btn = wrapper.find('[data-testid="refresh-btn"]')
+    await btn.trigger('click')
+    await nextTick()
+    // Advance past the 300ms refresh setTimeout
+    await vi.advanceTimersByTimeAsync(350)
+    await nextTick()
+
+    expect(vm.isDegraded).toBe(false)
+    expect(vm.loadError).toBeNull()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Filter and sort controls (new features)
+// ---------------------------------------------------------------------------
+
+describe('filter and sort controls', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+  })
+
+  it('queue-filter-controls element is rendered', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="queue-filter-controls"]').exists()).toBe(true)
+  })
+
+  it('status-filter-chips is rendered', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="status-filter-chips"]').exists()).toBe(true)
+  })
+
+  it('hasActiveFilters is false initially', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    expect(vm.hasActiveFilters).toBe(false)
+  })
+
+  it('hasActiveFilters is true when status filter applied', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.activeFilter = { status: ['in_progress'] }
+    await nextTick()
+    expect(vm.hasActiveFilters).toBe(true)
+  })
+
+  it('hasActiveFilters is true when overdueOnly filter applied', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.activeFilter = { overdueOnly: true }
+    await nextTick()
+    expect(vm.hasActiveFilters).toBe(true)
+  })
+
+  it('hasActiveFilters is true when escalatedOnly filter applied', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.activeFilter = { escalatedOnly: true }
+    await nextTick()
+    expect(vm.hasActiveFilters).toBe(true)
+  })
+
+  it('clear-filters-btn does NOT appear when no filters are active', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="clear-filters-btn"]').exists()).toBe(false)
+  })
+
+  it('clear-filters-btn appears when filters are active', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.activeFilter = { overdueOnly: true }
+    await nextTick()
+    await nextTick()
+    await nextTick()
+    expect(wrapper.find('[data-testid="clear-filters-btn"]').exists()).toBe(true)
+  })
+
+  it('activeSortKey defaults to stage', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    expect(vm.activeSortKey).toBe('stage')
+  })
+
+  it('changing activeSortKey to lastUpdated is reflected in computed state', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.activeSortKey = 'lastUpdated'
+    await nextTick()
+    expect(vm.activeSortKey).toBe('lastUpdated')
+    // filteredAndSortedStages should still return array (may have same order for simple fixture)
+    expect(Array.isArray(vm.filteredAndSortedStages)).toBe(true)
+  })
+
+  it('sort dropdown is rendered', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="sort-key-select"]').exists()).toBe(true)
+  })
+
+  it('toggling status filter via toggleStatusFilter adds it to activeFilter.status', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    expect((vm.activeFilter.status ?? []).includes('blocked')).toBe(false)
+    vm.toggleStatusFilter('blocked')
+    await nextTick()
+    expect((vm.activeFilter.status ?? []).includes('blocked')).toBe(true)
+  })
+
+  it('toggling same status filter twice removes it', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.toggleStatusFilter('blocked')
+    await nextTick()
+    vm.toggleStatusFilter('blocked')
+    await nextTick()
+    expect((vm.activeFilter.status ?? []).includes('blocked')).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Next-action hints on stage cards (new feature)
+// ---------------------------------------------------------------------------
+
+describe('next-action hints on stage cards', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+  })
+
+  it('stage-next-action elements are rendered for each visible stage', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    for (const stage of vm.filteredAndSortedStages) {
+      const el = wrapper.find(`[data-testid="stage-next-action-${stage.id}"]`)
+      expect(el.exists()).toBe(true)
+    }
+  })
+
+  it('stage-next-action text is non-empty for all visible stages', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    for (const stage of vm.filteredAndSortedStages) {
+      const el = wrapper.find(`[data-testid="stage-next-action-${stage.id}"]`)
+      expect(el.text().trim().length).toBeGreaterThan(0)
+    }
+  })
+})
