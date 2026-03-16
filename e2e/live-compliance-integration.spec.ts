@@ -53,16 +53,16 @@ test.describe('Live data states — Investor Compliance Onboarding Workspace', (
     await openOnboardingWorkspace(page)
     const heading = page.getByRole('heading', { name: /Investor Compliance Onboarding/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 30000 })
-    // Posture card shows overall status — either "ready" or "blocked" or similar
-    const postureCard = page.getByTestId('posture-card')
-    await expect(postureCard).toBeVisible({ timeout: 20000 })
-    const postureText = await postureCard.textContent({ timeout: 10000 }).catch(() => '')
+    // Posture banner shows overall status — either "ready" or "blocked" or similar
+    const postureBanner = page.getByTestId('readiness-posture-banner')
+    await expect(postureBanner).toBeVisible({ timeout: 20000 })
+    const postureText = await postureBanner.textContent({ timeout: 10000 }).catch(() => '')
     expect(postureText?.length ?? 0).toBeGreaterThan(0)
   })
 
   test('readiness score is rendered as a meaningful number (not blank)', async ({ page }) => {
     await openOnboardingWorkspace(page)
-    const readinessScore = page.getByTestId('overall-readiness-score')
+    const readinessScore = page.getByTestId('readiness-score')
     await expect(readinessScore).toBeVisible({ timeout: 20000 })
     const text = await readinessScore.textContent({ timeout: 10000 }).catch(() => '')
     // Score should contain a % character
@@ -73,7 +73,8 @@ test.describe('Live data states — Investor Compliance Onboarding Workspace', (
     await openOnboardingWorkspace(page)
     const stagesList = page.getByTestId('stages-list')
     await stagesList.waitFor({ state: 'visible', timeout: 20000 })
-    const stageItems = page.locator('[data-testid^="stage-card-"]')
+    // stage items are keyed by stage-item-<id>
+    const stageItems = page.locator('[data-testid^="stage-item-"]')
     const count = await stageItems.count()
     // Should have exactly 7 stages
     expect(count).toBe(7)
@@ -99,14 +100,14 @@ test.describe('Live data states — Investor Compliance Onboarding Workspace', (
 
   test('demo mode toggle switches between fixtures without wallet UI (AC #4)', async ({ page }) => {
     await openOnboardingWorkspace(page)
-    // Look for the "Blocked" fixture button in demo mode
-    const blockedBtn = page.getByRole('button', { name: /Blocked/i })
+    // Look for the "Blocked (KYC/AML)" fixture button in demo mode (data-testid="fixture-btn-blocked")
+    const blockedBtn = page.getByTestId('fixture-btn-blocked')
     const isVisible = await blockedBtn.isVisible({ timeout: 5000 }).catch(() => false)
     if (isVisible) {
       await blockedBtn.click({ timeout: 5000 })
       await page.waitForTimeout(300)
       // After clicking "Blocked", the posture banner should reflect blocked state
-      const posture = page.getByTestId('posture-card')
+      const posture = page.getByTestId('readiness-posture-banner')
       await expect(posture).toBeVisible({ timeout: 10000 })
     }
     // Either way: no wallet UI should appear
@@ -291,8 +292,11 @@ test.describe('Accessibility — live-backed compliance UI (AC #8)', () => {
     await openOnboardingWorkspace(page)
     const stagesList = page.getByTestId('stages-list')
     await stagesList.waitFor({ state: 'visible', timeout: 20000 })
-    // The stages list should have role=list
-    const role = await stagesList.getAttribute('role')
-    expect(role).toBe('list')
+    // The stages list is an <ol> element — semantically a list (role=list is implicit)
+    const tagName = await stagesList.evaluate((el) => el.tagName.toLowerCase())
+    expect(tagName).toBe('ol')
+    // Verify aria-label is present for screen reader context
+    const ariaLabel = await stagesList.getAttribute('aria-label')
+    expect(ariaLabel).toBeTruthy()
   })
 })

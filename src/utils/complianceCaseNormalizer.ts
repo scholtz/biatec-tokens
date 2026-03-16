@@ -23,8 +23,6 @@ import type {
   BackendJurisdictionOutcome,
   BackendScreeningOutcome,
   BackendEvidenceItem,
-  BackendJurisdictionEntry,
-  BackendRemediationTask,
 } from '../lib/api/complianceCaseManagement'
 
 import type {
