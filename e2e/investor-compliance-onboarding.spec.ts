@@ -788,7 +788,8 @@ test.describe('Investor Compliance Onboarding — queue health summary bar', () 
     await expect(totalCell).toBeVisible({ timeout: 20000 })
     const text = await totalCell.textContent({ timeout: 5000 })
     // partial fixture has 7 stages
-    expect(Number(text!.trim())).toBeGreaterThan(0)
+    expect(text).not.toBeNull()
+    expect(Number(text?.trim() ?? '0')).toBeGreaterThan(0)
   })
 
   test('queue health summary has escalated and overdue counters', async ({ page }) => {

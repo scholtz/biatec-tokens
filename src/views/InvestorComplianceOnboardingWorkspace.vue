@@ -327,7 +327,7 @@
                       :aria-label="`Go to remediation for: ${blocker.title}`"
                       :data-testid="`blocker-remediation-link-${blocker.id}`"
                     >
-                      Resolve →
+                      Resolve <span aria-hidden="true">→</span>
                     </RouterLink>
                   </div>
                 </div>
@@ -540,7 +540,7 @@
                       :data-testid="`stage-next-action-${stage.id}`"
                       aria-label="Next action"
                     >
-                      → {{ deriveCaseNextAction(stage) }}
+                      <span aria-hidden="true">→ </span>{{ deriveCaseNextAction(stage) }}
                     </p>
                   </div>
 
