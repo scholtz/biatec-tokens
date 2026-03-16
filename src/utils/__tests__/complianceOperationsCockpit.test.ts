@@ -17,6 +17,10 @@
 import { describe, it, expect } from 'vitest'
 import {
   classifySlaUrgency,
+  classifyItemAge,
+  deriveAgingBuckets,
+  agingBucketBadgeClass,
+  agingBucketCellClass,
   deriveQueueHealth,
   deriveStageBottlenecks,
   deriveHandoffReadiness,
@@ -38,6 +42,8 @@ import {
   COCKPIT_STAGE_LABELS,
   HANDOFF_READINESS_LABELS,
   COCKPIT_PERSONA_LABELS,
+  AGING_BUCKET_LABELS,
+  AGING_BUCKET_THRESHOLDS,
   MOCK_WORK_ITEMS_HEALTHY,
   MOCK_WORK_ITEMS_DEGRADED,
   SLA_DUE_SOON_HOURS,
@@ -48,6 +54,7 @@ import {
   type SlaUrgency,
   type HandoffReadiness,
   type CockpitWorkflowStage,
+  type AgingBucket,
 } from '../../utils/complianceOperationsCockpit'
 
 // ---------------------------------------------------------------------------
@@ -789,5 +796,246 @@ describe('deriveRoleSummaries', () => {
   it('COCKPIT_TEST_IDS includes ROLE_SUMMARY_PANEL and ROLE_SUMMARY_CARD', () => {
     expect(COCKPIT_TEST_IDS.ROLE_SUMMARY_PANEL).toBe('role-summary-panel')
     expect(COCKPIT_TEST_IDS.ROLE_SUMMARY_CARD).toBe('role-summary-card')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// classifyItemAge (aging bucket analysis)
+// ---------------------------------------------------------------------------
+
+const DAY_MS = 24 * HOUR_MS
+
+describe('classifyItemAge', () => {
+  it('returns critical when lastActionAt is null', () => {
+    expect(classifyItemAge(null, FIXED_NOW)).toBe('critical')
+  })
+
+  it('returns fresh when last action was less than 24h ago', () => {
+    const recent = new Date(FIXED_NOW - 12 * HOUR_MS).toISOString()
+    expect(classifyItemAge(recent, FIXED_NOW)).toBe('fresh')
+  })
+
+  it('returns fresh when last action was exactly 23h 59m ago', () => {
+    const nearThreshold = new Date(FIXED_NOW - (24 * HOUR_MS - 60000)).toISOString()
+    expect(classifyItemAge(nearThreshold, FIXED_NOW)).toBe('fresh')
+  })
+
+  it('returns aging when last action was between 24h and 72h ago', () => {
+    const twoDaysAgo = new Date(FIXED_NOW - 2 * DAY_MS).toISOString()
+    expect(classifyItemAge(twoDaysAgo, FIXED_NOW)).toBe('aging')
+  })
+
+  it('returns aging when last action was exactly 48h ago', () => {
+    const exactly48h = new Date(FIXED_NOW - 48 * HOUR_MS).toISOString()
+    expect(classifyItemAge(exactly48h, FIXED_NOW)).toBe('aging')
+  })
+
+  it('returns stale when last action was between 3 and 7 days ago', () => {
+    const fiveDaysAgo = new Date(FIXED_NOW - 5 * DAY_MS).toISOString()
+    expect(classifyItemAge(fiveDaysAgo, FIXED_NOW)).toBe('stale')
+  })
+
+  it('returns critical when last action was more than 7 days ago', () => {
+    const tenDaysAgo = new Date(FIXED_NOW - 10 * DAY_MS).toISOString()
+    expect(classifyItemAge(tenDaysAgo, FIXED_NOW)).toBe('critical')
+  })
+
+  it('returns critical when last action was exactly 7 days ago (boundary → critical)', () => {
+    const exactlySevenDays = new Date(FIXED_NOW - 7 * DAY_MS).toISOString()
+    expect(classifyItemAge(exactlySevenDays, FIXED_NOW)).toBe('critical')
+  })
+
+  it('returns fresh when lastActionAt is in the future (future timestamps → fresh)', () => {
+    const future = new Date(FIXED_NOW + DAY_MS).toISOString()
+    expect(classifyItemAge(future, FIXED_NOW)).toBe('fresh')
+  })
+
+  it('uses Date.now() as fallback when no time provided', () => {
+    const recent = new Date(Date.now() - 60000).toISOString()
+    expect(classifyItemAge(recent)).toBe('fresh')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// deriveAgingBuckets
+// ---------------------------------------------------------------------------
+
+describe('deriveAgingBuckets', () => {
+  function makeAgedItem(daysAgo: number, overrides: Partial<WorkItem> = {}): WorkItem {
+    return makeItem({
+      lastActionAt: new Date(FIXED_NOW - daysAgo * DAY_MS).toISOString(),
+      ...overrides,
+    })
+  }
+
+  it('returns all zeros for empty list', () => {
+    const result = deriveAgingBuckets([], FIXED_NOW)
+    expect(result.fresh).toBe(0)
+    expect(result.aging).toBe(0)
+    expect(result.stale).toBe(0)
+    expect(result.critical).toBe(0)
+    expect(result.averageDaysOpen).toBe(0)
+    expect(result.oldestItemDays).toBe(0)
+  })
+
+  it('excludes complete items from aging analysis', () => {
+    const items = [makeAgedItem(3), makeAgedItem(3, { status: 'complete' })]
+    const result = deriveAgingBuckets(items, FIXED_NOW)
+    expect(result.stale).toBe(1)
+    expect(result.fresh + result.aging + result.stale + result.critical).toBe(1)
+  })
+
+  it('classifies a fresh item (< 24h)', () => {
+    const items = [makeItem({ lastActionAt: new Date(FIXED_NOW - 6 * HOUR_MS).toISOString() })]
+    const result = deriveAgingBuckets(items, FIXED_NOW)
+    expect(result.fresh).toBe(1)
+    expect(result.aging).toBe(0)
+  })
+
+  it('classifies an aging item (1-3 days)', () => {
+    const items = [makeAgedItem(2)]
+    const result = deriveAgingBuckets(items, FIXED_NOW)
+    expect(result.aging).toBe(1)
+  })
+
+  it('classifies a stale item (3-7 days)', () => {
+    const items = [makeAgedItem(5)]
+    const result = deriveAgingBuckets(items, FIXED_NOW)
+    expect(result.stale).toBe(1)
+  })
+
+  it('classifies a critical item (> 7 days)', () => {
+    const items = [makeAgedItem(10)]
+    const result = deriveAgingBuckets(items, FIXED_NOW)
+    expect(result.critical).toBe(1)
+  })
+
+  it('places item with null lastActionAt in critical bucket', () => {
+    const items = [makeItem({ lastActionAt: null })]
+    const result = deriveAgingBuckets(items, FIXED_NOW)
+    expect(result.critical).toBe(1)
+  })
+
+  it('computes averageDaysOpen across multiple items', () => {
+    const items = [makeAgedItem(1), makeAgedItem(3)]
+    const result = deriveAgingBuckets(items, FIXED_NOW)
+    expect(result.averageDaysOpen).toBeCloseTo(2, 0)
+  })
+
+  it('ignores null lastActionAt in average calculation', () => {
+    const items = [
+      makeItem({ lastActionAt: new Date(FIXED_NOW - 4 * DAY_MS).toISOString() }),
+      makeItem({ lastActionAt: null }),
+    ]
+    const result = deriveAgingBuckets(items, FIXED_NOW)
+    // null item goes to critical bucket but is excluded from average calc
+    expect(result.averageDaysOpen).toBeCloseTo(4, 0)
+    expect(result.critical).toBe(1) // null → critical
+  })
+
+  it('tracks the oldest item in oldestItemDays', () => {
+    const items = [makeAgedItem(2), makeAgedItem(8)]
+    const result = deriveAgingBuckets(items, FIXED_NOW)
+    expect(result.oldestItemDays).toBeCloseTo(8, 0)
+  })
+
+  it('returns 0 for oldestItemDays when all items have null lastActionAt', () => {
+    const items = [makeItem({ lastActionAt: null })]
+    const result = deriveAgingBuckets(items, FIXED_NOW)
+    expect(result.oldestItemDays).toBe(0)
+  })
+
+  it('mixed buckets are counted correctly', () => {
+    const items = [
+      makeItem({ lastActionAt: new Date(FIXED_NOW - 2 * HOUR_MS).toISOString() }),  // fresh
+      makeAgedItem(2),    // aging
+      makeAgedItem(5),    // stale
+      makeAgedItem(10),   // critical
+    ]
+    const result = deriveAgingBuckets(items, FIXED_NOW)
+    expect(result.fresh).toBe(1)
+    expect(result.aging).toBe(1)
+    expect(result.stale).toBe(1)
+    expect(result.critical).toBe(1)
+  })
+
+  it('MOCK_WORK_ITEMS_DEGRADED produces non-zero aging buckets', () => {
+    const result = deriveAgingBuckets(MOCK_WORK_ITEMS_DEGRADED, FIXED_NOW)
+    const total = result.fresh + result.aging + result.stale + result.critical
+    expect(total).toBeGreaterThan(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// agingBucketBadgeClass and agingBucketCellClass
+// ---------------------------------------------------------------------------
+
+describe('agingBucketBadgeClass', () => {
+  const buckets: AgingBucket[] = ['fresh', 'aging', 'stale', 'critical']
+
+  it('returns a non-empty string for every AgingBucket value', () => {
+    for (const bucket of buckets) {
+      expect(agingBucketBadgeClass(bucket).length).toBeGreaterThan(0)
+    }
+  })
+
+  it('returns green classes for fresh', () => {
+    expect(agingBucketBadgeClass('fresh')).toContain('green')
+  })
+
+  it('returns red classes for critical', () => {
+    expect(agingBucketBadgeClass('critical')).toContain('red')
+  })
+})
+
+describe('agingBucketCellClass', () => {
+  it('returns bg-gray-700 when count is 0', () => {
+    expect(agingBucketCellClass('stale', 0)).toBe('bg-gray-700')
+  })
+
+  it('returns colored class when count > 0', () => {
+    expect(agingBucketCellClass('critical', 2)).toContain('red')
+    expect(agingBucketCellClass('fresh', 1)).toContain('green')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// AGING_BUCKET constants
+// ---------------------------------------------------------------------------
+
+describe('AGING_BUCKET_LABELS', () => {
+  it('has labels for all four aging buckets', () => {
+    expect(AGING_BUCKET_LABELS.fresh).toBeTruthy()
+    expect(AGING_BUCKET_LABELS.aging).toBeTruthy()
+    expect(AGING_BUCKET_LABELS.stale).toBeTruthy()
+    expect(AGING_BUCKET_LABELS.critical).toBeTruthy()
+  })
+})
+
+describe('AGING_BUCKET_THRESHOLDS', () => {
+  it('freshHours < agingHours < staleHours', () => {
+    expect(AGING_BUCKET_THRESHOLDS.freshHours).toBeLessThan(AGING_BUCKET_THRESHOLDS.agingHours)
+    expect(AGING_BUCKET_THRESHOLDS.agingHours).toBeLessThan(AGING_BUCKET_THRESHOLDS.staleHours)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// COCKPIT_TEST_IDS — aging panel IDs
+// ---------------------------------------------------------------------------
+
+describe('COCKPIT_TEST_IDS aging panel entries', () => {
+  it('includes AGING_PANEL', () => {
+    expect(COCKPIT_TEST_IDS.AGING_PANEL).toBe('aging-analysis-panel')
+  })
+
+  it('includes AGING_FRESH, AGING_AGING, AGING_STALE, AGING_CRITICAL', () => {
+    expect(COCKPIT_TEST_IDS.AGING_FRESH).toBe('aging-fresh')
+    expect(COCKPIT_TEST_IDS.AGING_AGING).toBe('aging-aging')
+    expect(COCKPIT_TEST_IDS.AGING_STALE).toBe('aging-stale')
+    expect(COCKPIT_TEST_IDS.AGING_CRITICAL).toBe('aging-critical')
+  })
+
+  it('includes AGING_AVERAGE', () => {
+    expect(COCKPIT_TEST_IDS.AGING_AVERAGE).toBe('aging-average-days')
   })
 })

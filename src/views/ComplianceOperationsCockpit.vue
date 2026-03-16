@@ -284,6 +284,94 @@
             </div>
           </section>
 
+          <!-- ── Item Aging Analysis ── -->
+          <section
+            class="rounded-2xl border border-gray-700 bg-gray-800/60 p-6 mb-8 shadow-lg"
+            :data-testid="COCKPIT_TEST_IDS.AGING_PANEL"
+            aria-labelledby="aging-analysis-heading"
+          >
+            <h2 id="aging-analysis-heading" class="text-lg font-semibold text-white mb-2">
+              Item Aging Analysis
+            </h2>
+            <p class="text-gray-400 text-sm mb-5">
+              How long have active items been without progress? Stale and critical items need
+              reassignment or escalation to prevent SLA breaches.
+              <span v-if="agingBuckets.averageDaysOpen > 0" class="text-gray-300 font-medium">
+                Average: {{ agingBuckets.averageDaysOpen.toFixed(1) }} days open.
+              </span>
+            </p>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <!-- Fresh -->
+              <div
+                class="rounded-xl p-4 text-center"
+                :class="agingBuckets.fresh > 0 ? 'bg-green-900' : 'bg-gray-700'"
+                :data-testid="COCKPIT_TEST_IDS.AGING_FRESH"
+              >
+                <dd class="text-2xl font-bold" :class="agingBuckets.fresh > 0 ? 'text-green-200' : 'text-white'">
+                  {{ agingBuckets.fresh }}
+                </dd>
+                <dt class="text-xs mt-1" :class="agingBuckets.fresh > 0 ? 'text-green-300' : 'text-gray-400'">
+                  Fresh (&lt; 24 h)
+                </dt>
+              </div>
+
+              <!-- Aging -->
+              <div
+                class="rounded-xl p-4 text-center"
+                :class="agingBuckets.aging > 0 ? 'bg-yellow-900' : 'bg-gray-700'"
+                :data-testid="COCKPIT_TEST_IDS.AGING_AGING"
+              >
+                <dd class="text-2xl font-bold" :class="agingBuckets.aging > 0 ? 'text-yellow-200' : 'text-white'">
+                  {{ agingBuckets.aging }}
+                </dd>
+                <dt class="text-xs mt-1" :class="agingBuckets.aging > 0 ? 'text-yellow-300' : 'text-gray-400'">
+                  Aging (1–3 days)
+                </dt>
+              </div>
+
+              <!-- Stale -->
+              <div
+                class="rounded-xl p-4 text-center"
+                :class="agingBuckets.stale > 0 ? 'bg-orange-900' : 'bg-gray-700'"
+                :data-testid="COCKPIT_TEST_IDS.AGING_STALE"
+              >
+                <dd class="text-2xl font-bold" :class="agingBuckets.stale > 0 ? 'text-orange-200' : 'text-white'">
+                  {{ agingBuckets.stale }}
+                </dd>
+                <dt class="text-xs mt-1" :class="agingBuckets.stale > 0 ? 'text-orange-300' : 'text-gray-400'">
+                  Stale (3–7 days)
+                </dt>
+              </div>
+
+              <!-- Critical aging -->
+              <div
+                class="rounded-xl p-4 text-center"
+                :class="agingBuckets.critical > 0 ? 'bg-red-900' : 'bg-gray-700'"
+                :data-testid="COCKPIT_TEST_IDS.AGING_CRITICAL"
+              >
+                <dd class="text-2xl font-bold" :class="agingBuckets.critical > 0 ? 'text-red-200' : 'text-white'">
+                  {{ agingBuckets.critical }}
+                </dd>
+                <dt class="text-xs mt-1" :class="agingBuckets.critical > 0 ? 'text-red-300' : 'text-gray-400'">
+                  Critical (&gt; 7 days)
+                </dt>
+              </div>
+            </div>
+
+            <!-- Average days open -->
+            <p
+              v-if="agingBuckets.oldestItemDays > 0"
+              class="text-xs text-gray-500 mt-4"
+              :data-testid="COCKPIT_TEST_IDS.AGING_AVERAGE"
+            >
+              Oldest active item: {{ agingBuckets.oldestItemDays.toFixed(1) }} days without action.
+              <span v-if="agingBuckets.oldestItemDays > 7" class="text-red-300 font-medium">
+                Escalation recommended.
+              </span>
+            </p>
+          </section>
+
           <!-- ── Worklist Panel ── -->
           <section
             class="rounded-2xl border border-gray-700 bg-gray-800/60 p-6 mb-8 shadow-lg"
@@ -311,6 +399,8 @@
                   <option value="unassigned">Unassigned</option>
                   <option value="overdue">Overdue</option>
                   <option value="blocked">Blocked</option>
+                  <option value="awaiting_customer_input">Awaiting Customer Input</option>
+                  <option value="pending_review">Pending Review</option>
                   <option value="approval_ready">Approval Ready</option>
                   <option value="escalated">Escalated</option>
                 </select>
@@ -569,6 +659,7 @@ import {
   deriveCockpitPosture,
   buildDefaultHandoffs,
   deriveRoleSummaries,
+  deriveAgingBuckets,
   cockpitPostureBannerClass,
   cockpitPostureIconClass,
   workItemStatusBadgeClass,
@@ -631,6 +722,8 @@ const now = computed(() => Date.now())
 
 const queueHealth = computed(() => deriveQueueHealth(workItems.value, now.value))
 
+const agingBuckets = computed(() => deriveAgingBuckets(workItems.value, now.value))
+
 const stageBottlenecks = computed(() => deriveStageBottlenecks(workItems.value, now.value))
 
 const handoffs = computed(() => buildDefaultHandoffs(workItems.value, now.value))
@@ -690,6 +783,10 @@ const filteredWorkItems = computed(() => {
       )
     case 'blocked':
       return active.filter((i) => i.status === 'blocked')
+    case 'awaiting_customer_input':
+      return active.filter((i) => i.ownership === 'blocked_by_external')
+    case 'pending_review':
+      return active.filter((i) => i.status === 'pending_review')
     case 'approval_ready':
       return active.filter((i) => i.status === 'approval_ready')
     case 'escalated':

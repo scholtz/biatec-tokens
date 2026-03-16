@@ -481,6 +481,128 @@ export function handoffReadinessBadgeClass(readiness: HandoffReadiness): string 
 }
 
 // ---------------------------------------------------------------------------
+// Item aging analysis (manager analytics: average aging buckets)
+// ---------------------------------------------------------------------------
+
+/**
+ * Aging bucket: how long since the item was last acted upon.
+ * Used for analytics-lite summaries to surface stale work to operations leads.
+ */
+export type AgingBucket = 'fresh' | 'aging' | 'stale' | 'critical'
+
+export const AGING_BUCKET_LABELS: Record<AgingBucket, string> = {
+  fresh: 'Fresh (< 24 h)',
+  aging: 'Aging (1–3 days)',
+  stale: 'Stale (3–7 days)',
+  critical: 'Critical (> 7 days)',
+}
+
+export const AGING_BUCKET_DESCRIPTIONS: Record<AgingBucket, string> = {
+  fresh: 'Items acted on within the last 24 hours. No immediate concern.',
+  aging: 'Items not progressed for 1–3 days. Monitor for SLA drift.',
+  stale: 'Items inactive for 3–7 days. Consider reassignment or escalation.',
+  critical: 'Items with no recorded action for more than 7 days. Immediate attention required.',
+}
+
+/** Hour thresholds for aging classification */
+export const AGING_BUCKET_THRESHOLDS = {
+  freshHours: 24,
+  agingHours: 72,
+  staleHours: 168, // 7 days
+} as const
+
+/**
+ * Classify how long a work item has been inactive based on its `lastActionAt`
+ * timestamp.  A null timestamp is treated as the most critical bucket.
+ */
+export function classifyItemAge(lastActionAt: string | null, now: number = Date.now()): AgingBucket {
+  if (!lastActionAt) return 'critical'
+  const ms = now - new Date(lastActionAt).getTime()
+  if (isNaN(ms) || ms < 0) return 'fresh'
+  const hours = ms / (1000 * 60 * 60)
+  if (hours < AGING_BUCKET_THRESHOLDS.freshHours) return 'fresh'
+  if (hours < AGING_BUCKET_THRESHOLDS.agingHours) return 'aging'
+  if (hours < AGING_BUCKET_THRESHOLDS.staleHours) return 'stale'
+  return 'critical'
+}
+
+/** Aggregated aging counts and derived averages for the operations cockpit */
+export interface AgingBucketSummary {
+  fresh: number
+  aging: number
+  stale: number
+  critical: number
+  /** Average number of days since last action across all active items (0 if no items) */
+  averageDaysOpen: number
+  /** Days since last action for the oldest active item (0 if no items) */
+  oldestItemDays: number
+}
+
+/**
+ * Derive aggregated aging bucket counts from a list of work items.
+ * Only active (non-complete) items are included in the analysis.
+ */
+export function deriveAgingBuckets(
+  items: WorkItem[],
+  now: number = Date.now(),
+): AgingBucketSummary {
+  const active = items.filter((i) => i.status !== 'complete')
+  const counts: Record<AgingBucket, number> = { fresh: 0, aging: 0, stale: 0, critical: 0 }
+  let totalMs = 0
+  let itemsWithDate = 0
+  let maxMs = 0
+
+  for (const item of active) {
+    const bucket = classifyItemAge(item.lastActionAt, now)
+    counts[bucket]++
+    if (item.lastActionAt) {
+      const ms = Math.max(0, now - new Date(item.lastActionAt).getTime())
+      if (!isNaN(ms)) {
+        totalMs += ms
+        itemsWithDate++
+        if (ms > maxMs) maxMs = ms
+      }
+    }
+  }
+
+  const msPerDay = 1000 * 60 * 60 * 24
+  return {
+    ...counts,
+    averageDaysOpen: itemsWithDate > 0 ? totalMs / itemsWithDate / msPerDay : 0,
+    oldestItemDays: maxMs > 0 ? maxMs / msPerDay : 0,
+  }
+}
+
+/** Returns Tailwind CSS classes for an aging bucket badge */
+export function agingBucketBadgeClass(bucket: AgingBucket): string {
+  switch (bucket) {
+    case 'fresh':
+      return 'bg-green-800 text-green-100'
+    case 'aging':
+      return 'bg-yellow-800 text-yellow-100'
+    case 'stale':
+      return 'bg-orange-800 text-orange-100'
+    case 'critical':
+      return 'bg-red-800 text-red-100'
+  }
+}
+
+/** Returns Tailwind CSS classes for the aging count cell background */
+export function agingBucketCellClass(bucket: AgingBucket, count: number): string {
+  if (count === 0) return 'bg-gray-700'
+  switch (bucket) {
+    case 'fresh':
+      return 'bg-green-900'
+    case 'aging':
+      return 'bg-yellow-900'
+    case 'stale':
+      return 'bg-orange-900'
+    case 'critical':
+      return 'bg-red-900'
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Mock fixture (deterministic, for CI/dev testing)
 // ---------------------------------------------------------------------------
 
@@ -828,4 +950,10 @@ export const COCKPIT_TEST_IDS = {
   LOADING_STATE: 'cockpit-loading-state',
   ROLE_SUMMARY_PANEL: 'role-summary-panel',
   ROLE_SUMMARY_CARD: 'role-summary-card',
+  AGING_PANEL: 'aging-analysis-panel',
+  AGING_FRESH: 'aging-fresh',
+  AGING_AGING: 'aging-aging',
+  AGING_STALE: 'aging-stale',
+  AGING_CRITICAL: 'aging-critical',
+  AGING_AVERAGE: 'aging-average-days',
 } as const

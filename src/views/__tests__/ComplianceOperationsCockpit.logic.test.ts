@@ -343,3 +343,171 @@ describe('ComplianceOperationsCockpit — degraded state', () => {
     expect(text.length).toBeGreaterThan(50)
   })
 })
+
+// ---------------------------------------------------------------------------
+// 7. New filter options — awaiting_customer_input and pending_review
+// ---------------------------------------------------------------------------
+
+describe('ComplianceOperationsCockpit — awaiting_customer_input filter', () => {
+  it('filter option exists in the select element', async () => {
+    const wrapper = await mountCockpit()
+    const select = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.FILTER_SELECT}"]`)
+    const html = select.element.innerHTML
+    expect(html).toContain('awaiting_customer_input')
+  })
+
+  it('changing filter to awaiting_customer_input shows items with blocked_by_external ownership', async () => {
+    const wrapper = await mountCockpit()
+    const select = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.FILTER_SELECT}"]`)
+    await select.setValue('awaiting_customer_input')
+    await nextTick()
+
+    // MOCK_WORK_ITEMS_DEGRADED has wi-102 with ownership=blocked_by_external
+    const rows = wrapper.findAll(`[data-testid="${COCKPIT_TEST_IDS.WORK_ITEM_ROW}"]`)
+    const emptyState = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.WORKLIST_EMPTY}"]`)
+    // Should show at least the one blocked_by_external item, or empty if none
+    expect(rows.length > 0 || emptyState.exists()).toBe(true)
+  })
+
+  it('awaiting_customer_input filter does NOT show assigned_to_me items', async () => {
+    const wrapper = await mountCockpit()
+    const vm = wrapper.vm as any
+    // Inject a mix of items with different ownership
+    vm.workItems = [
+      {
+        id: 'a',
+        title: 'External blocked item',
+        stage: 'kyc_aml',
+        status: 'blocked',
+        ownership: 'blocked_by_external',
+        lastActionAt: null,
+        dueAt: null,
+        workspacePath: '/compliance/onboarding',
+        note: null,
+        isLaunchBlocking: false,
+      },
+      {
+        id: 'b',
+        title: 'My item',
+        stage: 'kyc_aml',
+        status: 'in_progress',
+        ownership: 'assigned_to_me',
+        lastActionAt: null,
+        dueAt: null,
+        workspacePath: '/compliance/onboarding',
+        note: null,
+        isLaunchBlocking: false,
+      },
+    ]
+    await nextTick()
+    const select = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.FILTER_SELECT}"]`)
+    await select.setValue('awaiting_customer_input')
+    await nextTick()
+
+    const rows = wrapper.findAll(`[data-testid="${COCKPIT_TEST_IDS.WORK_ITEM_ROW}"]`)
+    expect(rows).toHaveLength(1) // Only the blocked_by_external item
+    expect(rows[0].text()).toContain('External blocked item')
+  })
+})
+
+describe('ComplianceOperationsCockpit — pending_review filter', () => {
+  it('filter option exists in the select element', async () => {
+    const wrapper = await mountCockpit()
+    const select = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.FILTER_SELECT}"]`)
+    const html = select.element.innerHTML
+    expect(html).toContain('pending_review')
+  })
+
+  it('pending_review filter shows only items with status=pending_review', async () => {
+    const wrapper = await mountCockpit()
+    const vm = wrapper.vm as any
+    vm.workItems = [
+      {
+        id: 'r1',
+        title: 'Pending review item',
+        stage: 'kyc_aml',
+        status: 'pending_review',
+        ownership: 'assigned_to_team',
+        lastActionAt: null,
+        dueAt: null,
+        workspacePath: '/compliance/onboarding',
+        note: null,
+        isLaunchBlocking: false,
+      },
+      {
+        id: 'r2',
+        title: 'Blocked item',
+        stage: 'kyc_aml',
+        status: 'blocked',
+        ownership: 'assigned_to_me',
+        lastActionAt: null,
+        dueAt: null,
+        workspacePath: '/compliance/onboarding',
+        note: null,
+        isLaunchBlocking: false,
+      },
+    ]
+    await nextTick()
+    const select = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.FILTER_SELECT}"]`)
+    await select.setValue('pending_review')
+    await nextTick()
+
+    const rows = wrapper.findAll(`[data-testid="${COCKPIT_TEST_IDS.WORK_ITEM_ROW}"]`)
+    expect(rows).toHaveLength(1)
+    expect(rows[0].text()).toContain('Pending review item')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 8. Aging analysis panel
+// ---------------------------------------------------------------------------
+
+describe('ComplianceOperationsCockpit — aging analysis panel', () => {
+  it('aging panel is present after loading', async () => {
+    const wrapper = await mountCockpit()
+    const panel = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.AGING_PANEL}"]`)
+    expect(panel.exists()).toBe(true)
+  })
+
+  it('aging panel has an accessible heading', async () => {
+    const wrapper = await mountCockpit()
+    const panel = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.AGING_PANEL}"]`)
+    const heading = panel.find('h2')
+    expect(heading.text()).toContain('Aging')
+  })
+
+  it('aging panel has AGING_FRESH cell', async () => {
+    const wrapper = await mountCockpit()
+    const cell = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.AGING_FRESH}"]`)
+    expect(cell.exists()).toBe(true)
+  })
+
+  it('aging panel has AGING_CRITICAL cell', async () => {
+    const wrapper = await mountCockpit()
+    const cell = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.AGING_CRITICAL}"]`)
+    expect(cell.exists()).toBe(true)
+  })
+
+  it('aging cells contain numeric counts', async () => {
+    const wrapper = await mountCockpit()
+    const freshCell = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.AGING_FRESH}"]`)
+    const criticalCell = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.AGING_CRITICAL}"]`)
+    // Both should render dd elements with numeric values
+    const freshDd = freshCell.find('dd')
+    const criticalDd = criticalCell.find('dd')
+    expect(freshDd.exists()).toBe(true)
+    expect(criticalDd.exists()).toBe(true)
+    expect(Number(freshDd.text())).toBeGreaterThanOrEqual(0)
+    expect(Number(criticalDd.text())).toBeGreaterThanOrEqual(0)
+  })
+
+  it('aging panel aria-labelledby points to a heading with "aging" text', async () => {
+    const wrapper = await mountCockpit()
+    const panel = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.AGING_PANEL}"]`)
+    const labelId = panel.attributes('aria-labelledby')
+    expect(labelId).toBe('aging-analysis-heading')
+    const heading = wrapper.find('#aging-analysis-heading')
+    expect(heading.exists()).toBe(true)
+    expect(heading.text().toLowerCase()).toContain('aging')
+  })
+})

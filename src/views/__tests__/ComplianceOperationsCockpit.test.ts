@@ -437,3 +437,87 @@ describe('ComplianceOperationsCockpit — role-aware summaries (AC #5)', () => {
     expect(html).toContain('Launch Blocking')
   })
 })
+
+// ---------------------------------------------------------------------------
+// 10. Aging analysis panel (new feature — AC #2 analytics-lite)
+// ---------------------------------------------------------------------------
+
+describe('ComplianceOperationsCockpit — aging analysis panel (AC #2 analytics-lite)', () => {
+  it('renders the aging analysis panel', async () => {
+    const wrapper = await mountCockpit()
+    const panel = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.AGING_PANEL}"]`)
+    expect(panel.exists()).toBe(true)
+  })
+
+  it('aging panel has role-compatible aria-labelledby heading', async () => {
+    const wrapper = await mountCockpit()
+    const panel = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.AGING_PANEL}"]`)
+    const labelId = panel.attributes('aria-labelledby')
+    expect(labelId).toBeTruthy()
+    const heading = wrapper.find(`#${labelId}`)
+    expect(heading.exists()).toBe(true)
+    expect(heading.text().length).toBeGreaterThan(0)
+  })
+
+  it('aging panel contains all four bucket cells', async () => {
+    const wrapper = await mountCockpit()
+    expect(wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.AGING_FRESH}"]`).exists()).toBe(true)
+    expect(wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.AGING_AGING}"]`).exists()).toBe(true)
+    expect(wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.AGING_STALE}"]`).exists()).toBe(true)
+    expect(wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.AGING_CRITICAL}"]`).exists()).toBe(true)
+  })
+
+  it('aging panel has descriptive paragraph text (WCAG SC 3.3.2)', async () => {
+    const wrapper = await mountCockpit()
+    const panel = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.AGING_PANEL}"]`)
+    const text = panel.text()
+    expect(text).toMatch(/stale|aging|progress|sla/i)
+  })
+
+  it('aging bucket cells use dd for value (semantic definition term pattern)', async () => {
+    const wrapper = await mountCockpit()
+    const freshCell = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.AGING_FRESH}"]`)
+    // Each cell follows the dd (value) + dt (label) pattern
+    const dd = freshCell.find('dd')
+    const dt = freshCell.find('dt')
+    expect(dd.exists()).toBe(true)
+    expect(dt.exists()).toBe(true)
+  })
+
+  it('aging panel description text contains "Aging Analysis"', async () => {
+    const wrapper = await mountCockpit()
+    const panel = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.AGING_PANEL}"]`)
+    const h2 = panel.find('h2')
+    expect(h2.text()).toContain('Aging Analysis')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 11. New filter options are present in select (AC #2 awaiting-input, awaiting-review)
+// ---------------------------------------------------------------------------
+
+describe('ComplianceOperationsCockpit — filter select option coverage', () => {
+  it('filter select contains awaiting_customer_input option', async () => {
+    const wrapper = await mountCockpit()
+    const select = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.FILTER_SELECT}"]`)
+    const options = select.findAll('option')
+    const values = options.map((o) => o.attributes('value'))
+    expect(values).toContain('awaiting_customer_input')
+  })
+
+  it('filter select contains pending_review option', async () => {
+    const wrapper = await mountCockpit()
+    const select = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.FILTER_SELECT}"]`)
+    const options = select.findAll('option')
+    const values = options.map((o) => o.attributes('value'))
+    expect(values).toContain('pending_review')
+  })
+
+  it('filter select option labels use enterprise-friendly language', async () => {
+    const wrapper = await mountCockpit()
+    const select = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.FILTER_SELECT}"]`)
+    const html = select.html()
+    expect(html).toContain('Awaiting Customer Input')
+    expect(html).toContain('Pending Review')
+  })
+})
