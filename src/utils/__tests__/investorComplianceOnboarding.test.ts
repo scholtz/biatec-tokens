@@ -48,6 +48,12 @@ import {
   isKYCApproved,
   isAMLClear,
   isJurisdictionBlocking,
+  // Queue helpers
+  deriveQueueHealth,
+  applyQueueFilter,
+  sortCases,
+  deriveCaseNextAction,
+  deriveDegradedState,
   // Constants
   ONBOARDING_STAGE_LABELS,
   ONBOARDING_STAGE_STATUS_LABELS,
@@ -857,5 +863,275 @@ describe('MOCK_ONBOARDING_STAGES_STALE', () => {
   it('does NOT derive ready_for_handoff posture (fail-closed)', () => {
     const state = deriveOnboardingWorkspaceState(MOCK_ONBOARDING_STAGES_STALE)
     expect(state.posture).not.toBe('ready_for_handoff')
+  })
+})
+
+// ===========================================================================
+// Queue management helpers (new functions)
+// ===========================================================================
+
+describe('deriveQueueHealth', () => {
+  it('returns zero counts for empty array', () => {
+    const health = deriveQueueHealth([])
+    expect(health.total).toBe(0)
+    expect(health.pendingReview).toBe(0)
+    expect(health.escalated).toBe(0)
+    expect(health.overdue).toBe(0)
+    expect(health.readyForApproval).toBe(0)
+    expect(health.awaitingDocuments).toBe(0)
+  })
+
+  it('counts total correctly', () => {
+    const health = deriveQueueHealth(MOCK_ONBOARDING_STAGES_PARTIAL)
+    expect(health.total).toBe(MOCK_ONBOARDING_STAGES_PARTIAL.length)
+  })
+
+  it('counts complete stages as readyForApproval', () => {
+    const health = deriveQueueHealth(MOCK_ONBOARDING_STAGES_READY)
+    expect(health.readyForApproval).toBe(MOCK_ONBOARDING_STAGES_READY.length)
+  })
+
+  it('counts stale stages as overdue', () => {
+    const health = deriveQueueHealth(MOCK_ONBOARDING_STAGES_STALE)
+    expect(health.overdue).toBe(MOCK_ONBOARDING_STAGES_STALE.length)
+  })
+
+  it('counts stages with critical blockers as escalated', () => {
+    const health = deriveQueueHealth(MOCK_ONBOARDING_STAGES_BLOCKED)
+    // Blocked fixture has critical blockers in identity_kyc_review and aml_risk_review
+    expect(health.escalated).toBeGreaterThan(0)
+  })
+
+  it('counts in_progress stages as awaitingDocuments', () => {
+    const stages = MOCK_ONBOARDING_STAGES_PARTIAL
+    const inProgressCount = stages.filter((s) => s.status === 'in_progress').length
+    const health = deriveQueueHealth(stages)
+    expect(health.awaitingDocuments).toBe(inProgressCount)
+  })
+
+  it('counts pending_review stages correctly', () => {
+    const stage: OnboardingStage = {
+      id: 'intake',
+      label: 'Intake',
+      description: '',
+      status: 'pending_review',
+      summary: '',
+      blockers: [],
+      lastActionAt: null,
+      evidenceLinks: [],
+    }
+    const health = deriveQueueHealth([stage])
+    expect(health.pendingReview).toBe(1)
+  })
+})
+
+describe('applyQueueFilter', () => {
+  it('returns all stages when filter is empty', () => {
+    const result = applyQueueFilter(MOCK_ONBOARDING_STAGES_PARTIAL, {})
+    expect(result).toHaveLength(MOCK_ONBOARDING_STAGES_PARTIAL.length)
+  })
+
+  it('filters by status', () => {
+    const result = applyQueueFilter(MOCK_ONBOARDING_STAGES_PARTIAL, { status: ['complete'] })
+    for (const stage of result) {
+      expect(stage.status).toBe('complete')
+    }
+  })
+
+  it('filters by multiple statuses', () => {
+    const result = applyQueueFilter(MOCK_ONBOARDING_STAGES_PARTIAL, {
+      status: ['complete', 'in_progress'],
+    })
+    for (const stage of result) {
+      expect(['complete', 'in_progress']).toContain(stage.status)
+    }
+  })
+
+  it('returns empty array when no stages match status filter', () => {
+    const result = applyQueueFilter(MOCK_ONBOARDING_STAGES_PARTIAL, {
+      status: ['pending_review'],
+    })
+    expect(result).toHaveLength(0)
+  })
+
+  it('overdueOnly returns only stale stages', () => {
+    const result = applyQueueFilter(MOCK_ONBOARDING_STAGES_STALE, { overdueOnly: true })
+    expect(result.length).toBeGreaterThan(0)
+    for (const stage of result) {
+      expect(stage.status).toBe('stale')
+    }
+  })
+
+  it('escalatedOnly returns only stages with critical blockers', () => {
+    const result = applyQueueFilter(MOCK_ONBOARDING_STAGES_BLOCKED, { escalatedOnly: true })
+    for (const stage of result) {
+      expect(stage.blockers.some((b) => b.severity === 'critical')).toBe(true)
+    }
+  })
+
+  it('assignee filter matches only stages with that assignee', () => {
+    const stages: OnboardingStage[] = [
+      { id: 'intake', label: '', description: '', status: 'complete', summary: '', blockers: [], lastActionAt: null, evidenceLinks: [], assignee: 'alice' },
+      { id: 'documentation_review', label: '', description: '', status: 'in_progress', summary: '', blockers: [], lastActionAt: null, evidenceLinks: [], assignee: 'bob' },
+    ]
+    const result = applyQueueFilter(stages, { assignee: 'alice' })
+    expect(result).toHaveLength(1)
+    expect(result[0].assignee).toBe('alice')
+  })
+
+  it('empty status array applies no filter', () => {
+    const result = applyQueueFilter(MOCK_ONBOARDING_STAGES_PARTIAL, { status: [] })
+    expect(result).toHaveLength(MOCK_ONBOARDING_STAGES_PARTIAL.length)
+  })
+})
+
+describe('sortCases', () => {
+  it('does not mutate the input array', () => {
+    const original = [...MOCK_ONBOARDING_STAGES_PARTIAL]
+    sortCases(MOCK_ONBOARDING_STAGES_PARTIAL, 'priority')
+    expect(MOCK_ONBOARDING_STAGES_PARTIAL).toHaveLength(original.length)
+    expect(MOCK_ONBOARDING_STAGES_PARTIAL[0].id).toBe(original[0].id)
+  })
+
+  it('sort by stage preserves ONBOARDING_STAGE_ORDER', () => {
+    const shuffled = [...MOCK_ONBOARDING_STAGES_PARTIAL].reverse()
+    const sorted = sortCases(shuffled, 'stage')
+    for (let i = 0; i < sorted.length; i++) {
+      expect(sorted[i].id).toBe(MOCK_ONBOARDING_STAGES_PARTIAL[i].id)
+    }
+  })
+
+  it('sort by priority puts critical stages first', () => {
+    const stages: OnboardingStage[] = [
+      { id: 'intake', label: '', description: '', status: 'in_progress', summary: '', blockers: [{ id: 'b1', stageId: 'intake', severity: 'medium', title: 'med', reason: '', recommendedAction: '', remediationPath: '', staleSince: null, isLaunchBlocking: false }], lastActionAt: null, evidenceLinks: [] },
+      { id: 'documentation_review', label: '', description: '', status: 'blocked', summary: '', blockers: [{ id: 'b2', stageId: 'documentation_review', severity: 'critical', title: 'crit', reason: '', recommendedAction: '', remediationPath: '', staleSince: null, isLaunchBlocking: true }], lastActionAt: null, evidenceLinks: [] },
+    ]
+    const sorted = sortCases(stages, 'priority')
+    expect(sorted[0].id).toBe('documentation_review')
+  })
+
+  it('sort by lastUpdated puts most recent first', () => {
+    const older = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+    const newer = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+    const stages: OnboardingStage[] = [
+      { id: 'intake', label: '', description: '', status: 'complete', summary: '', blockers: [], lastActionAt: older, evidenceLinks: [] },
+      { id: 'documentation_review', label: '', description: '', status: 'complete', summary: '', blockers: [], lastActionAt: newer, evidenceLinks: [] },
+    ]
+    const sorted = sortCases(stages, 'lastUpdated')
+    expect(sorted[0].id).toBe('documentation_review')
+  })
+
+  it('sort by waitingDays puts longest-waiting first', () => {
+    const recent = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+    const old = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
+    const stages: OnboardingStage[] = [
+      { id: 'intake', label: '', description: '', status: 'complete', summary: '', blockers: [], lastActionAt: recent, evidenceLinks: [] },
+      { id: 'documentation_review', label: '', description: '', status: 'complete', summary: '', blockers: [], lastActionAt: old, evidenceLinks: [] },
+    ]
+    const sorted = sortCases(stages, 'waitingDays')
+    expect(sorted[0].id).toBe('documentation_review')
+  })
+
+  it('sort by waitingDays puts null lastActionAt last', () => {
+    const recent = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+    const stages: OnboardingStage[] = [
+      { id: 'intake', label: '', description: '', status: 'complete', summary: '', blockers: [], lastActionAt: recent, evidenceLinks: [] },
+      { id: 'documentation_review', label: '', description: '', status: 'not_started', summary: '', blockers: [], lastActionAt: null, evidenceLinks: [] },
+    ]
+    const sorted = sortCases(stages, 'waitingDays')
+    // null lastActionAt = Infinity wait = first when sorting by waiting days DESC
+    expect(sorted[0].id).toBe('documentation_review')
+  })
+})
+
+describe('deriveCaseNextAction', () => {
+  it('returns no-action message for complete stage', () => {
+    const stage: OnboardingStage = { id: 'intake', label: '', description: '', status: 'complete', summary: '', blockers: [], lastActionAt: null, evidenceLinks: [] }
+    expect(deriveCaseNextAction(stage)).toContain('No action required')
+  })
+
+  it('returns start message for not_started stage', () => {
+    const stage: OnboardingStage = { id: 'intake', label: '', description: '', status: 'not_started', summary: '', blockers: [], lastActionAt: null, evidenceLinks: [] }
+    expect(deriveCaseNextAction(stage)).toContain('Begin this stage')
+  })
+
+  it('returns reviewer message for pending_review stage', () => {
+    const stage: OnboardingStage = { id: 'intake', label: '', description: '', status: 'pending_review', summary: '', blockers: [], lastActionAt: null, evidenceLinks: [] }
+    expect(deriveCaseNextAction(stage)).toContain('reviewer must sign off')
+  })
+
+  it('returns blocker title for in_progress stage with blockers', () => {
+    const stage: OnboardingStage = {
+      id: 'intake', label: '', description: '', status: 'in_progress', summary: '',
+      blockers: [{ id: 'b1', stageId: 'intake', severity: 'high', title: 'Missing certificate', reason: '', recommendedAction: '', remediationPath: '', staleSince: null, isLaunchBlocking: true }],
+      lastActionAt: null, evidenceLinks: [],
+    }
+    const action = deriveCaseNextAction(stage)
+    expect(action).toContain('Missing certificate')
+  })
+
+  it('returns continue message for in_progress stage without blockers', () => {
+    const stage: OnboardingStage = { id: 'intake', label: '', description: '', status: 'in_progress', summary: '', blockers: [], lastActionAt: null, evidenceLinks: [] }
+    expect(deriveCaseNextAction(stage)).toContain('Continue')
+  })
+
+  it('returns blocker title for blocked stage', () => {
+    const stage: OnboardingStage = {
+      id: 'aml_risk_review', label: '', description: '', status: 'blocked', summary: '',
+      blockers: [{ id: 'b1', stageId: 'aml_risk_review', severity: 'critical', title: 'AML flag', reason: '', recommendedAction: '', remediationPath: '', staleSince: null, isLaunchBlocking: true }],
+      lastActionAt: null, evidenceLinks: [],
+    }
+    const action = deriveCaseNextAction(stage)
+    expect(action).toContain('AML flag')
+  })
+
+  it('returns investigate message for blocked stage with no blockers', () => {
+    const stage: OnboardingStage = { id: 'intake', label: '', description: '', status: 'blocked', summary: '', blockers: [], lastActionAt: null, evidenceLinks: [] }
+    expect(deriveCaseNextAction(stage)).toContain('Investigate')
+  })
+
+  it('returns refresh evidence message for stale stage', () => {
+    const stage: OnboardingStage = { id: 'intake', label: '', description: '', status: 'stale', summary: '', blockers: [], lastActionAt: null, evidenceLinks: [] }
+    expect(deriveCaseNextAction(stage)).toContain('Refresh the evidence')
+  })
+})
+
+describe('deriveDegradedState', () => {
+  it('returns isDegraded=false for null', () => {
+    const result = deriveDegradedState(null)
+    expect(result.isDegraded).toBe(false)
+  })
+
+  it('returns isDegraded=false for undefined', () => {
+    const result = deriveDegradedState(undefined)
+    expect(result.isDegraded).toBe(false)
+  })
+
+  it('returns isDegraded=true for an Error instance', () => {
+    const result = deriveDegradedState(new Error('connection failed'))
+    expect(result.isDegraded).toBe(true)
+    expect(result.message).toContain('connection failed')
+  })
+
+  it('returns isDegraded=true for a non-empty string', () => {
+    const result = deriveDegradedState('service unavailable')
+    expect(result.isDegraded).toBe(true)
+    expect(result.message).toBe('service unavailable')
+  })
+
+  it('returns isDegraded=true for an object', () => {
+    const result = deriveDegradedState({ code: 503 })
+    expect(result.isDegraded).toBe(true)
+  })
+
+  it('includes an actionableHint when degraded', () => {
+    const result = deriveDegradedState(new Error('network error'))
+    expect(result.actionableHint.length).toBeGreaterThan(20)
+  })
+
+  it('returns empty strings for non-degraded result', () => {
+    const result = deriveDegradedState(null)
+    expect(result.message).toBe('')
+    expect(result.actionableHint).toBe('')
   })
 })

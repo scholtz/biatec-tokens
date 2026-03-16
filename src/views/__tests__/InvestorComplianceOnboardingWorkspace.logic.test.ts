@@ -488,3 +488,176 @@ describe('InvestorComplianceOnboardingWorkspace — logic (interaction & lifecyc
     })
   })
 })
+
+// ---------------------------------------------------------------------------
+// Filter / sort controls
+// ---------------------------------------------------------------------------
+
+describe('filter and sort controls', () => {
+  it('renders queue health summary bar', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="queue-health-summary"]').exists()).toBe(true)
+  })
+
+  it('renders queue health total count', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="health-total"]').exists()).toBe(true)
+  })
+
+  it('renders filter controls section', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="queue-filter-controls"]').exists()).toBe(true)
+  })
+
+  it('renders status filter chips', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="status-filter-chips"]').exists()).toBe(true)
+  })
+
+  it('renders sort key select', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="sort-key-select"]').exists()).toBe(true)
+  })
+
+  it('toggleStatusFilter adds status to filter', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    expect((vm.activeFilter.status ?? []).includes('blocked')).toBe(false)
+    vm.toggleStatusFilter('blocked')
+    await nextTick()
+    expect(vm.activeFilter.status).toContain('blocked')
+  })
+
+  it('toggleStatusFilter removes status when already selected', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.toggleStatusFilter('complete')
+    await nextTick()
+    expect(vm.activeFilter.status).toContain('complete')
+    vm.toggleStatusFilter('complete')
+    await nextTick()
+    expect(vm.activeFilter.status).not.toContain('complete')
+  })
+
+  it('clearFilters resets filter and sort to defaults', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.toggleStatusFilter('blocked')
+    vm.activeSortKey = 'priority'
+    await nextTick()
+    vm.clearFilters()
+    await nextTick()
+    expect(vm.activeFilter).toEqual({})
+    expect(vm.activeSortKey).toBe('stage')
+  })
+
+  it('filteredAndSortedStages returns all stages when filter is empty', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    expect(vm.filteredAndSortedStages).toHaveLength(vm.workspaceState.stages.length)
+  })
+
+  it('filteredAndSortedStages respects active status filter', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.toggleStatusFilter('complete')
+    await nextTick()
+    for (const stage of vm.filteredAndSortedStages) {
+      expect(stage.status).toBe('complete')
+    }
+  })
+
+  it('hasActiveFilters is false initially', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    expect(vm.hasActiveFilters).toBe(false)
+  })
+
+  it('hasActiveFilters is true after applying a filter', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.toggleStatusFilter('blocked')
+    await nextTick()
+    expect(vm.hasActiveFilters).toBe(true)
+  })
+
+  it('renders stages-empty-state when no stages match filter', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    // Apply a filter that matches nothing (pending_review not in partial fixture)
+    vm.activeFilter = { status: ['pending_review'] }
+    await nextTick()
+    await nextTick()
+    expect(wrapper.find('[data-testid="stages-empty-state"]').exists()).toBe(true)
+  })
+
+  it('renders navigation action buttons', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="handoff-to-approval-btn"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="view-cases-btn"]').exists()).toBe(true)
+  })
+
+  it('handoff-to-approval-btn links to /compliance/approval', async () => {
+    const wrapper = await mountWorkspace()
+    const btn = wrapper.find('[data-testid="handoff-to-approval-btn"]')
+    // RouterLink renders as <a href="..."> in the test environment with createWebHistory
+    const href = btn.attributes('href')
+    expect(href).toContain('/compliance/approval')
+  })
+
+  it('renders next action for each stage', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    for (const stage of vm.filteredAndSortedStages) {
+      const el = wrapper.find(`[data-testid="stage-next-action-${stage.id}"]`)
+      expect(el.exists()).toBe(true)
+      expect(el.text().length).toBeGreaterThan(2)
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Degraded state rendering
+// ---------------------------------------------------------------------------
+
+describe('degraded state rendering', () => {
+  it('degraded-state-banner is NOT shown when isDegraded is false', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.isDegraded = false
+    vm.loadError = null
+    await nextTick()
+    expect(wrapper.find('[data-testid="degraded-state-banner"]').exists()).toBe(false)
+  })
+
+  it('degraded-state-banner IS shown when isDegraded and loadError are set', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.isDegraded = true
+    vm.loadError = 'Backend unreachable'
+    await nextTick()
+    await nextTick()
+    expect(wrapper.find('[data-testid="degraded-state-banner"]').exists()).toBe(true)
+  })
+
+  it('degraded-state-banner contains the loadError message', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.isDegraded = true
+    vm.loadError = 'Connection timeout'
+    await nextTick()
+    await nextTick()
+    expect(wrapper.html()).toContain('Connection timeout')
+  })
+
+  it('degraded-state-banner has role="alert" for screen readers', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.isDegraded = true
+    vm.loadError = 'Error'
+    await nextTick()
+    await nextTick()
+    const banner = wrapper.find('[data-testid="degraded-state-banner"]')
+    expect(banner.attributes('role')).toBe('alert')
+  })
+})

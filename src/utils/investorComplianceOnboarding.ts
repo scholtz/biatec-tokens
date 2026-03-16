@@ -342,6 +342,10 @@ export interface OnboardingStage {
   lastActionAt: string | null
   /** Optional evidence links for drill-down */
   evidenceLinks: Array<{ label: string; path: string }>
+  /** Optional: operator assigned to this stage */
+  assignee?: string
+  /** Optional: explicit priority override; derived from blockers if absent */
+  priority?: 'critical' | 'high' | 'medium' | 'low'
 }
 
 // ---------------------------------------------------------------------------
@@ -627,6 +631,238 @@ export function blockerSeverityBadgeClass(severity: OnboardingBlockerSeverity): 
       return 'bg-yellow-800 text-yellow-200'
     case 'informational':
       return 'bg-gray-700 text-gray-300'
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Queue management types and helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Filter options for the compliance case queue.
+ * All fields are optional; omitted fields apply no filter on that dimension.
+ */
+export interface CaseQueueFilter {
+  /** Filter to only stages with one of these statuses */
+  status?: string[]
+  /** Filter to stages at or above this priority level */
+  priority?: 'critical' | 'high' | 'medium' | 'low'
+  /** Filter to stages assigned to this operator */
+  assignee?: string
+  /** If true, show only stages with stale evidence */
+  overdueOnly?: boolean
+  /** If true, show only stages with at least one critical blocker */
+  escalatedOnly?: boolean
+}
+
+/** Key to sort the case queue by */
+export type CaseSortKey = 'priority' | 'lastUpdated' | 'waitingDays' | 'stage'
+
+/** Aggregated health counts for the queue summary bar */
+export interface QueueHealthSummary {
+  /** Total number of stages in the queue */
+  total: number
+  /** Stages with status 'pending_review' */
+  pendingReview: number
+  /** Stages with at least one critical blocker */
+  escalated: number
+  /** Stages with status 'stale' (evidence overdue) */
+  overdue: number
+  /** Stages with status 'complete' */
+  readyForApproval: number
+  /** Stages with status 'in_progress' */
+  awaitingDocuments: number
+  /** Stages that are degraded (blocked by data unavailability, not business blockers) */
+  degradedCount: number
+}
+
+/**
+ * Derives a queue health summary from a list of onboarding stages.
+ * Used to populate the summary bar at the top of the workspace.
+ */
+export function deriveQueueHealth(cases: OnboardingStage[]): QueueHealthSummary {
+  let pendingReview = 0
+  let escalated = 0
+  let overdue = 0
+  let readyForApproval = 0
+  let awaitingDocuments = 0
+  let degradedCount = 0
+
+  for (const stage of cases) {
+    if (stage.status === 'pending_review') pendingReview++
+    if (stage.status === 'stale') overdue++
+    if (stage.status === 'complete') readyForApproval++
+    if (stage.status === 'in_progress') awaitingDocuments++
+    if (stage.blockers.some((b) => b.severity === 'critical')) escalated++
+    // A stage is considered degraded when its only blocker references a data-load error
+    if (
+      stage.status === 'blocked' &&
+      stage.blockers.length > 0 &&
+      stage.blockers.every((b) => b.id.startsWith('degraded-'))
+    ) {
+      degradedCount++
+    }
+  }
+
+  return {
+    total: cases.length,
+    pendingReview,
+    escalated,
+    overdue,
+    readyForApproval,
+    awaitingDocuments,
+    degradedCount,
+  }
+}
+
+/** Derives the effective priority for a stage (explicit override > highest blocker severity). */
+function deriveEffectivePriority(stage: OnboardingStage): 'critical' | 'high' | 'medium' | 'low' {
+  if (stage.priority) return stage.priority
+  if (stage.blockers.length === 0) return 'low'
+  const severityOrder: Array<'critical' | 'high' | 'medium' | 'low'> = ['critical', 'high', 'medium', 'low']
+  for (const sev of severityOrder) {
+    if (stage.blockers.some((b) => b.severity === sev)) return sev
+  }
+  return 'low'
+}
+
+const PRIORITY_RANK: Record<'critical' | 'high' | 'medium' | 'low', number> = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+}
+
+/**
+ * Applies a CaseQueueFilter to a list of stages and returns the matching subset.
+ */
+export function applyQueueFilter(
+  cases: OnboardingStage[],
+  filter: CaseQueueFilter,
+): OnboardingStage[] {
+  return cases.filter((stage) => {
+    if (filter.status && filter.status.length > 0) {
+      if (!filter.status.includes(stage.status)) return false
+    }
+    if (filter.priority) {
+      const effective = deriveEffectivePriority(stage)
+      if (PRIORITY_RANK[effective] > PRIORITY_RANK[filter.priority]) return false
+    }
+    if (filter.assignee) {
+      if (stage.assignee !== filter.assignee) return false
+    }
+    if (filter.overdueOnly) {
+      if (stage.status !== 'stale') return false
+    }
+    if (filter.escalatedOnly) {
+      if (!stage.blockers.some((b) => b.severity === 'critical')) return false
+    }
+    return true
+  })
+}
+
+/**
+ * Returns a new array of stages sorted by the given sort key.
+ * Does not mutate the input array.
+ */
+export function sortCases(cases: OnboardingStage[], sortKey: CaseSortKey): OnboardingStage[] {
+  const copy = [...cases]
+  switch (sortKey) {
+    case 'priority':
+      return copy.sort(
+        (a, b) => PRIORITY_RANK[deriveEffectivePriority(a)] - PRIORITY_RANK[deriveEffectivePriority(b)],
+      )
+    case 'lastUpdated':
+      return copy.sort((a, b) => {
+        const aTime = a.lastActionAt ? new Date(a.lastActionAt).getTime() : 0
+        const bTime = b.lastActionAt ? new Date(b.lastActionAt).getTime() : 0
+        return bTime - aTime // most recent first
+      })
+    case 'waitingDays': {
+      const now = Date.now()
+      return copy.sort((a, b) => {
+        const aWait = a.lastActionAt ? now - new Date(a.lastActionAt).getTime() : Infinity
+        const bWait = b.lastActionAt ? now - new Date(b.lastActionAt).getTime() : Infinity
+        return bWait - aWait // longest wait first
+      })
+    }
+    case 'stage':
+      return copy.sort(
+        (a, b) =>
+          ONBOARDING_STAGE_ORDER.indexOf(a.id as OnboardingStageId) -
+          ONBOARDING_STAGE_ORDER.indexOf(b.id as OnboardingStageId),
+      )
+    default:
+      return copy
+  }
+}
+
+/**
+ * Derives the plain-language next action an operator should take for a stage.
+ * Returns a concise instruction string suitable for display in the stage card header.
+ *
+ * @param stage - The onboarding stage to evaluate
+ * @returns A plain-language string describing the recommended next action
+ */
+export function deriveCaseNextAction(stage: OnboardingStage): string {
+  switch (stage.status) {
+    case 'complete':
+      return 'No action required — stage is complete.'
+    case 'not_started':
+      return 'Begin this stage by initiating the required review process.'
+    case 'in_progress': {
+      if (stage.blockers.length > 0) {
+        const top = stage.blockers.find((b) => b.isLaunchBlocking) ?? stage.blockers[0]
+        return `Resolve blocker: ${top.title}`
+      }
+      return 'Continue progressing this stage and update the status when complete.'
+    }
+    case 'pending_review':
+      return 'A compliance reviewer must sign off on this stage before it can proceed.'
+    case 'blocked': {
+      if (stage.blockers.length > 0) {
+        const critical = stage.blockers.find((b) => b.severity === 'critical')
+        const top = critical ?? stage.blockers[0]
+        return `Resolve critical blocker: ${top.title}`
+      }
+      return 'Investigate and resolve the underlying issue blocking this stage.'
+    }
+    case 'stale':
+      return 'Refresh the evidence package — current evidence is outside the 30-day validity window.'
+    default:
+      return 'Review the stage status and take appropriate corrective action.'
+  }
+}
+
+/**
+ * Interprets an API error value and returns a structured degraded-state descriptor.
+ * Fail-closed: any non-null error is treated as degraded.
+ */
+export function deriveDegradedState(apiError: unknown): {
+  isDegraded: boolean
+  message: string
+  actionableHint: string
+} {
+  if (apiError === null || apiError === undefined) {
+    return {
+      isDegraded: false,
+      message: '',
+      actionableHint: '',
+    }
+  }
+
+  let message = 'Compliance data is currently unavailable.'
+  if (apiError instanceof Error) {
+    message = apiError.message
+  } else if (typeof apiError === 'string' && apiError.length > 0) {
+    message = apiError
+  }
+
+  return {
+    isDegraded: true,
+    message,
+    actionableHint:
+      'Launch readiness cannot be confirmed. Do not proceed with launch activities until this workspace shows live, verified data. Retry in a few minutes or contact the compliance team.',
   }
 }
 

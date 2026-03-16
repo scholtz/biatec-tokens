@@ -103,6 +103,44 @@
             </div>
           </div>
 
+          <!-- ── Queue Health Summary Bar ── -->
+          <div
+            class="mb-6 rounded-xl border border-gray-700 bg-gray-800/60 p-4"
+            data-testid="queue-health-summary"
+            aria-label="Queue health summary"
+            role="region"
+          >
+            <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+              Queue Health
+            </h2>
+            <dl class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div class="flex flex-col items-center rounded-lg bg-gray-700/50 px-3 py-2" data-testid="health-total">
+                <dd class="text-xl font-bold text-white">{{ queueHealth.total }}</dd>
+                <dt class="text-xs text-gray-400 mt-0.5">Total</dt>
+              </div>
+              <div class="flex flex-col items-center rounded-lg bg-indigo-900/50 px-3 py-2" data-testid="health-pending-review">
+                <dd class="text-xl font-bold text-indigo-300">{{ queueHealth.pendingReview }}</dd>
+                <dt class="text-xs text-indigo-400 mt-0.5">Pending Review</dt>
+              </div>
+              <div class="flex flex-col items-center rounded-lg bg-red-900/50 px-3 py-2" data-testid="health-escalated">
+                <dd class="text-xl font-bold text-red-300">{{ queueHealth.escalated }}</dd>
+                <dt class="text-xs text-red-400 mt-0.5">Escalated</dt>
+              </div>
+              <div class="flex flex-col items-center rounded-lg bg-yellow-900/50 px-3 py-2" data-testid="health-overdue">
+                <dd class="text-xl font-bold text-yellow-300">{{ queueHealth.overdue }}</dd>
+                <dt class="text-xs text-yellow-400 mt-0.5">Overdue</dt>
+              </div>
+              <div class="flex flex-col items-center rounded-lg bg-green-900/50 px-3 py-2" data-testid="health-ready">
+                <dd class="text-xl font-bold text-green-300">{{ queueHealth.readyForApproval }}</dd>
+                <dt class="text-xs text-green-400 mt-0.5">Complete</dt>
+              </div>
+              <div class="flex flex-col items-center rounded-lg bg-blue-900/50 px-3 py-2" data-testid="health-awaiting-docs">
+                <dd class="text-xl font-bold text-blue-300">{{ queueHealth.awaitingDocuments }}</dd>
+                <dt class="text-xs text-blue-400 mt-0.5">In Progress</dt>
+              </div>
+            </dl>
+          </div>
+
           <!-- ── Fixture selector (dev/demo — hidden in production) ── -->
           <div
             v-if="isDemoMode"
@@ -302,21 +340,150 @@
             aria-labelledby="stages-heading"
             data-testid="onboarding-stages-section"
           >
-            <h2
-              id="stages-heading"
-              class="text-xl font-semibold text-white mb-4"
-              data-testid="stages-heading"
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <h2
+                id="stages-heading"
+                class="text-xl font-semibold text-white"
+                data-testid="stages-heading"
+              >
+                Review Stages
+              </h2>
+
+              <!-- ── Navigation buttons ── -->
+              <div class="flex items-center gap-2 flex-shrink-0" data-testid="stages-nav-actions">
+                <RouterLink
+                  to="/compliance/approval"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-700 hover:bg-teal-600 text-white text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+                  data-testid="handoff-to-approval-btn"
+                  aria-label="Hand off to approval cockpit"
+                >
+                  <ArrowRightCircleIcon class="w-4 h-4" aria-hidden="true" />
+                  Hand Off to Approval
+                </RouterLink>
+                <RouterLink
+                  to="/compliance/approval"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-600 hover:border-gray-400 text-gray-300 hover:text-white text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
+                  data-testid="view-cases-btn"
+                  aria-label="View all compliance cases"
+                >
+                  <ChartBarIcon class="w-4 h-4" aria-hidden="true" />
+                  View Cases
+                </RouterLink>
+              </div>
+            </div>
+
+            <!-- ── Filter and Sort Controls ── -->
+            <div
+              class="rounded-xl border border-gray-700 bg-gray-800/40 p-4 mb-4"
+              data-testid="queue-filter-controls"
+              role="group"
+              aria-label="Filter and sort stages"
             >
-              Review Stages
-            </h2>
+              <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+                <!-- Status filter chips -->
+                <div class="flex items-center gap-2 flex-wrap" data-testid="status-filter-chips">
+                  <span class="text-xs text-gray-400 font-medium flex-shrink-0">Status:</span>
+                  <button
+                    v-for="opt in statusFilterOptions"
+                    :key="opt.value"
+                    type="button"
+                    :aria-pressed="(activeFilter.status ?? []).includes(opt.value)"
+                    :data-testid="`status-filter-${opt.value}`"
+                    class="px-2 py-0.5 text-xs rounded-full border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+                    :class="(activeFilter.status ?? []).includes(opt.value)
+                      ? 'bg-teal-700 border-teal-500 text-white'
+                      : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'"
+                    @click="toggleStatusFilter(opt.value)"
+                  >
+                    {{ opt.label }}
+                  </button>
+                </div>
+
+                <!-- Overdue only toggle -->
+                <label class="flex items-center gap-1.5 cursor-pointer" data-testid="overdue-filter-label">
+                  <input
+                    type="checkbox"
+                    :checked="!!activeFilter.overdueOnly"
+                    class="rounded border-gray-600 bg-gray-700 text-teal-500 focus:ring-teal-400 focus:ring-offset-gray-800"
+                    data-testid="overdue-filter-checkbox"
+                    aria-label="Show overdue stages only"
+                    @change="activeFilter = { ...activeFilter, overdueOnly: activeFilter.overdueOnly ? undefined : true }"
+                  />
+                  <span class="text-xs text-gray-300">Overdue only</span>
+                </label>
+
+                <!-- Escalated only toggle -->
+                <label class="flex items-center gap-1.5 cursor-pointer" data-testid="escalated-filter-label">
+                  <input
+                    type="checkbox"
+                    :checked="!!activeFilter.escalatedOnly"
+                    class="rounded border-gray-600 bg-gray-700 text-teal-500 focus:ring-teal-400 focus:ring-offset-gray-800"
+                    data-testid="escalated-filter-checkbox"
+                    aria-label="Show escalated stages only"
+                    @change="activeFilter = { ...activeFilter, escalatedOnly: activeFilter.escalatedOnly ? undefined : true }"
+                  />
+                  <span class="text-xs text-gray-300">Escalated only</span>
+                </label>
+
+                <!-- Sort key -->
+                <div class="flex items-center gap-2 ml-auto" data-testid="sort-control">
+                  <label for="sort-key-select" class="text-xs text-gray-400 font-medium flex-shrink-0">Sort:</label>
+                  <select
+                    id="sort-key-select"
+                    v-model="activeSortKey"
+                    class="text-xs bg-gray-700 border border-gray-600 text-white rounded-lg px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+                    data-testid="sort-key-select"
+                    aria-label="Sort stages by"
+                  >
+                    <option
+                      v-for="opt in sortKeyOptions"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.label }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Reset filters & sort -->
+                <button
+                  v-if="hasActiveFilters || activeSortKey !== 'stage'"
+                  type="button"
+                  class="text-xs text-teal-400 underline hover:text-teal-300 focus:outline-none focus-visible:ring-1 focus-visible:ring-teal-400 rounded flex-shrink-0"
+                  data-testid="clear-filters-btn"
+                  aria-label="Reset all filters and sort order"
+                  @click="clearFilters"
+                >
+                  Reset filters &amp; sort
+                </button>
+              </div>
+            </div>
 
             <ol
               class="space-y-3"
               aria-label="Onboarding review stages"
               data-testid="stages-list"
             >
+              <!-- No results empty state -->
               <li
-                v-for="(stage, index) in workspaceState.stages"
+                v-if="filteredAndSortedStages.length === 0"
+                class="rounded-xl border border-gray-700 bg-gray-800/40 p-6 text-center"
+                data-testid="stages-empty-state"
+              >
+                <p class="text-gray-400 text-sm">
+                  No stages match the current filters.
+                </p>
+                <button
+                  type="button"
+                  class="mt-2 text-xs text-teal-400 underline hover:text-teal-300 focus:outline-none"
+                  @click="clearFilters"
+                >
+                  Clear filters
+                </button>
+              </li>
+
+              <li
+                v-for="(stage, index) in filteredAndSortedStages"
                 :key="stage.id"
                 class="rounded-xl border bg-gray-800 shadow-sm overflow-hidden"
                 :class="stageCardBorderClass(stage.status)"
@@ -367,6 +534,14 @@
                       </span>
                     </div>
                     <p class="text-xs text-gray-400 mt-0.5 truncate">{{ stage.summary }}</p>
+                    <!-- Next action hint (always visible in card header) -->
+                    <p
+                      class="text-xs text-teal-400 mt-0.5 truncate"
+                      :data-testid="`stage-next-action-${stage.id}`"
+                      aria-label="Next action"
+                    >
+                      → {{ deriveCaseNextAction(stage) }}
+                    </p>
                   </div>
 
                   <!-- Expand/collapse chevron -->
@@ -385,6 +560,15 @@
                   :data-testid="`stage-body-${stage.id}`"
                 >
                   <p class="text-sm text-gray-300 mb-4">{{ stage.description }}</p>
+
+                  <!-- Assignee (if set) -->
+                  <p
+                    v-if="stage.assignee"
+                    class="text-xs text-gray-400 mb-2"
+                    :data-testid="`stage-assignee-${stage.id}`"
+                  >
+                    <span class="font-medium text-gray-300">Assigned to:</span> {{ stage.assignee }}
+                  </p>
 
                   <!-- Last action timestamp -->
                   <p
@@ -631,6 +815,9 @@ import {
 import {
   type OnboardingWorkspaceState,
   type OnboardingStageStatus,
+  type CaseQueueFilter,
+  type CaseSortKey,
+  type QueueHealthSummary,
   ONBOARDING_STAGE_STATUS_LABELS,
   ONBOARDING_BLOCKER_SEVERITY_LABELS,
   WORKSPACE_READINESS_POSTURE_LABELS,
@@ -642,6 +829,11 @@ import {
   stageStatusBadgeClass,
   blockerSeverityBadgeClass,
   formatOnboardingStalenessLabel,
+  deriveQueueHealth,
+  applyQueueFilter,
+  sortCases,
+  deriveCaseNextAction,
+  deriveDegradedState,
   MOCK_ONBOARDING_STAGES_READY,
   MOCK_ONBOARDING_STAGES_BLOCKED,
   MOCK_ONBOARDING_STAGES_PARTIAL,
@@ -700,6 +892,46 @@ const workspaceState = ref<OnboardingWorkspaceState>(
 const authStore = useAuthStore()
 
 // ---------------------------------------------------------------------------
+// Queue filter / sort state
+// ---------------------------------------------------------------------------
+
+const activeFilter = ref<CaseQueueFilter>({})
+const activeSortKey = ref<CaseSortKey>('stage')
+
+const statusFilterOptions: Array<{ value: OnboardingStageStatus; label: string }> = [
+  { value: 'blocked', label: 'Blocked' },
+  { value: 'pending_review', label: 'Pending Review' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'stale', label: 'Stale' },
+  { value: 'complete', label: 'Complete' },
+  { value: 'not_started', label: 'Not Started' },
+]
+
+const sortKeyOptions: Array<{ value: CaseSortKey; label: string }> = [
+  { value: 'stage', label: 'Stage Order' },
+  { value: 'priority', label: 'Priority' },
+  { value: 'lastUpdated', label: 'Last Updated' },
+  { value: 'waitingDays', label: 'Waiting Days' },
+]
+
+function toggleStatusFilter(status: OnboardingStageStatus): void {
+  const current = activeFilter.value.status ?? []
+  if (current.includes(status)) {
+    activeFilter.value = {
+      ...activeFilter.value,
+      status: current.filter((s) => s !== status),
+    }
+  } else {
+    activeFilter.value = { ...activeFilter.value, status: [...current, status] }
+  }
+}
+
+function clearFilters(): void {
+  activeFilter.value = {}
+  activeSortKey.value = 'stage'
+}
+
+// ---------------------------------------------------------------------------
 // Computed
 // ---------------------------------------------------------------------------
 
@@ -711,6 +943,26 @@ const formattedRefreshedAt = computed(() => {
 })
 
 const topBlockers = computed(() => getTopOnboardingBlockers(workspaceState.value.stages, 5))
+
+const queueHealth = computed<QueueHealthSummary>(() =>
+  deriveQueueHealth(workspaceState.value.stages),
+)
+
+const filteredAndSortedStages = computed(() => {
+  const filtered = applyQueueFilter(workspaceState.value.stages, activeFilter.value)
+  return sortCases(filtered, activeSortKey.value)
+})
+
+const hasActiveFilters = computed(() => {
+  const f = activeFilter.value
+  return (
+    (f.status && f.status.length > 0) ||
+    !!f.priority ||
+    !!f.assignee ||
+    !!f.overdueOnly ||
+    !!f.escalatedOnly
+  )
+})
 
 const postureIcon = computed(() => {
   switch (workspaceState.value.posture) {
@@ -840,9 +1092,10 @@ async function loadLiveData(): Promise<void> {
 
     if (!result.ok) {
       // Backend returned an error — mark degraded, stay fail-closed
-      loadError.value = result.error.userGuidance
-      isDegraded.value = true
-      const degradedStages = buildDegradedOnboardingStages(result.error.userGuidance)
+      const degraded = deriveDegradedState(result.error.userGuidance)
+      loadError.value = degraded.message
+      isDegraded.value = degraded.isDegraded
+      const degradedStages = buildDegradedOnboardingStages(degraded.message)
       workspaceState.value = deriveOnboardingWorkspaceState(degradedStages)
       return
     }
@@ -872,10 +1125,10 @@ async function loadLiveData(): Promise<void> {
       isDegraded.value = false
     }
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unexpected error loading compliance data.'
-    loadError.value = msg
-    isDegraded.value = true
-    const degradedStages = buildDegradedOnboardingStages(msg)
+    const degraded = deriveDegradedState(err)
+    loadError.value = degraded.message
+    isDegraded.value = degraded.isDegraded
+    const degradedStages = buildDegradedOnboardingStages(degraded.message)
     workspaceState.value = deriveOnboardingWorkspaceState(degradedStages)
   }
 }
