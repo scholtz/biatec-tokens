@@ -44,6 +44,7 @@ import {
   COCKPIT_PERSONA_LABELS,
   AGING_BUCKET_LABELS,
   AGING_BUCKET_THRESHOLDS,
+  WORKFLOW_STAGE_ORDER,
   MOCK_WORK_ITEMS_HEALTHY,
   MOCK_WORK_ITEMS_DEGRADED,
   SLA_DUE_SOON_HOURS,
@@ -1037,5 +1038,264 @@ describe('COCKPIT_TEST_IDS aging panel entries', () => {
 
   it('includes AGING_AVERAGE', () => {
     expect(COCKPIT_TEST_IDS.AGING_AVERAGE).toBe('aging-average-days')
+  })
+
+  it('includes PERSONA_SELECTOR and PERSONA_TAB', () => {
+    expect(COCKPIT_TEST_IDS.PERSONA_SELECTOR).toBe('persona-selector')
+    expect(COCKPIT_TEST_IDS.PERSONA_TAB).toBe('persona-tab')
+  })
+
+  it('includes WORK_ITEM_HANDOFF_CONTEXT', () => {
+    expect(COCKPIT_TEST_IDS.WORK_ITEM_HANDOFF_CONTEXT).toBe('work-item-handoff-context')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// filterWorkItemsByPersona (AC #3 — role-aware filtering)
+// ---------------------------------------------------------------------------
+
+import {
+  filterWorkItemsByPersona,
+  OPERATOR_ROLE_FILTER_LABELS,
+  OPERATOR_ROLE_FILTER_DESCRIPTIONS,
+  deriveWorkItemHandoffContext,
+  type OperatorRole,
+} from '../../utils/complianceOperationsCockpit'
+
+describe('filterWorkItemsByPersona', () => {
+  const now = new Date('2026-03-16T12:00:00.000Z').getTime()
+
+  const makeItem = (
+    id: string,
+    status: WorkItemStatus,
+    ownership: OwnershipState,
+    isLaunchBlocking = false,
+  ): WorkItem => ({
+    id,
+    title: `Item ${id}`,
+    stage: 'kyc_aml',
+    status,
+    ownership,
+    lastActionAt: null,
+    dueAt: null,
+    workspacePath: '/compliance/onboarding',
+    note: null,
+    isLaunchBlocking,
+  })
+
+  const items: WorkItem[] = [
+    makeItem('a', 'in_progress', 'assigned_to_me'),
+    makeItem('b', 'pending_review', 'assigned_to_team'),
+    makeItem('c', 'overdue', 'unassigned', true),
+    makeItem('d', 'blocked', 'unassigned'),
+    makeItem('e', 'approval_ready', 'assigned_to_team', true),
+    makeItem('f', 'escalated', 'escalated'),
+    makeItem('g', 'complete', 'assigned_to_me'), // should never appear
+  ]
+
+  it('compliance_analyst sees assigned_to_me, pending_review, and overdue items', () => {
+    const result = filterWorkItemsByPersona(items, 'compliance_analyst')
+    const ids = result.map((i) => i.id)
+    expect(ids).toContain('a') // assigned_to_me
+    expect(ids).toContain('b') // pending_review
+    expect(ids).toContain('c') // overdue
+    expect(ids).not.toContain('g') // complete excluded
+  })
+
+  it('operations_lead sees unassigned, blocked, and escalated items', () => {
+    const result = filterWorkItemsByPersona(items, 'operations_lead')
+    const ids = result.map((i) => i.id)
+    expect(ids).toContain('c') // unassigned
+    expect(ids).toContain('d') // blocked
+    expect(ids).toContain('f') // escalated
+    expect(ids).not.toContain('g') // complete excluded
+  })
+
+  it('sign_off_approver sees approval_ready and launch-blocking items', () => {
+    const result = filterWorkItemsByPersona(items, 'sign_off_approver')
+    const ids = result.map((i) => i.id)
+    expect(ids).toContain('e') // approval_ready + launch-blocking
+    expect(ids).toContain('c') // launch-blocking (overdue)
+    expect(ids).not.toContain('a') // in_progress, not launch-blocking
+    expect(ids).not.toContain('g') // complete excluded
+  })
+
+  it('team_lead sees escalated, blocked, and launch-blocking items', () => {
+    const result = filterWorkItemsByPersona(items, 'team_lead')
+    const ids = result.map((i) => i.id)
+    expect(ids).toContain('f') // escalated
+    expect(ids).toContain('d') // blocked
+    expect(ids).toContain('c') // launch-blocking
+    expect(ids).toContain('e') // launch-blocking
+    expect(ids).not.toContain('g') // complete excluded
+  })
+
+  it('never returns completed items for any persona', () => {
+    const roles: OperatorRole[] = ['compliance_analyst', 'operations_lead', 'sign_off_approver', 'team_lead']
+    roles.forEach((role) => {
+      const result = filterWorkItemsByPersona(items, role)
+      expect(result.find((i) => i.id === 'g')).toBeUndefined()
+    })
+  })
+
+  it('returns empty array when no items match the persona', () => {
+    const onlyComplete: WorkItem[] = [makeItem('z', 'complete', 'assigned_to_me')]
+    const result = filterWorkItemsByPersona(onlyComplete, 'compliance_analyst')
+    expect(result).toHaveLength(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// OPERATOR_ROLE_FILTER_LABELS and OPERATOR_ROLE_FILTER_DESCRIPTIONS
+// ---------------------------------------------------------------------------
+
+describe('OPERATOR_ROLE_FILTER_LABELS', () => {
+  const roles: OperatorRole[] = ['compliance_analyst', 'operations_lead', 'sign_off_approver', 'team_lead']
+
+  it('provides a non-empty label for every OperatorRole', () => {
+    roles.forEach((role) => {
+      expect(OPERATOR_ROLE_FILTER_LABELS[role].length).toBeGreaterThan(0)
+    })
+  })
+
+  it('compliance_analyst maps to Analyst', () => {
+    expect(OPERATOR_ROLE_FILTER_LABELS.compliance_analyst).toBe('Analyst')
+  })
+
+  it('sign_off_approver maps to Approver', () => {
+    expect(OPERATOR_ROLE_FILTER_LABELS.sign_off_approver).toBe('Approver')
+  })
+})
+
+describe('OPERATOR_ROLE_FILTER_DESCRIPTIONS', () => {
+  const roles: OperatorRole[] = ['compliance_analyst', 'operations_lead', 'sign_off_approver', 'team_lead']
+
+  it('provides a non-empty description for every OperatorRole', () => {
+    roles.forEach((role) => {
+      expect(OPERATOR_ROLE_FILTER_DESCRIPTIONS[role].length).toBeGreaterThan(10)
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// deriveWorkItemHandoffContext (AC #5 — handoff context)
+// ---------------------------------------------------------------------------
+
+describe('deriveWorkItemHandoffContext', () => {
+  const now = new Date('2026-03-16T12:00:00.000Z').getTime()
+
+  const makeItem = (
+    stage: CockpitWorkflowStage,
+    status: WorkItemStatus,
+    ownership: OwnershipState = 'assigned_to_me',
+    isLaunchBlocking = false,
+    dueAt: string | null = null,
+  ): WorkItem => ({
+    id: 'ctx-test',
+    title: 'Context test item',
+    stage,
+    status,
+    ownership,
+    lastActionAt: null,
+    dueAt,
+    workspacePath: '/compliance/onboarding',
+    note: null,
+    isLaunchBlocking,
+  })
+
+  it('returns a previousStage for stages after the first', () => {
+    const item = makeItem('kyc_aml', 'pending_review')
+    const ctx = deriveWorkItemHandoffContext(item, now)
+    expect(ctx.previousStage).toBe('document_review')
+  })
+
+  it('returns null previousStage for the first stage (onboarding)', () => {
+    const item = makeItem('onboarding', 'open')
+    const ctx = deriveWorkItemHandoffContext(item, now)
+    expect(ctx.previousStage).toBeNull()
+  })
+
+  it('nextAction is non-empty for every status value', () => {
+    const statuses: WorkItemStatus[] = [
+      'open', 'in_progress', 'pending_review', 'blocked', 'approval_ready', 'overdue', 'escalated', 'complete',
+    ]
+    statuses.forEach((status) => {
+      const item = makeItem('kyc_aml', status)
+      const ctx = deriveWorkItemHandoffContext(item, now)
+      expect(ctx.nextAction.length).toBeGreaterThan(0)
+    })
+  })
+
+  it('blocked items with external ownership suggest follow-up with external party', () => {
+    const item = makeItem('kyc_aml', 'blocked', 'blocked_by_external')
+    const ctx = deriveWorkItemHandoffContext(item, now)
+    expect(ctx.nextAction.toLowerCase()).toContain('external')
+  })
+
+  it('approval_ready items suggest proceeding to sign-off', () => {
+    const item = makeItem('approval', 'approval_ready')
+    const ctx = deriveWorkItemHandoffContext(item, now)
+    expect(ctx.nextAction.toLowerCase()).toContain('sign-off')
+  })
+
+  it('isUrgent is true for overdue items', () => {
+    const item = makeItem('kyc_aml', 'overdue')
+    const ctx = deriveWorkItemHandoffContext(item, now)
+    expect(ctx.isUrgent).toBe(true)
+  })
+
+  it('isUrgent is true for launch-blocking items', () => {
+    const item = makeItem('kyc_aml', 'pending_review', 'assigned_to_team', true)
+    const ctx = deriveWorkItemHandoffContext(item, now)
+    expect(ctx.isUrgent).toBe(true)
+  })
+
+  it('isUrgent is true when dueAt is in the past (SLA overdue)', () => {
+    const item = makeItem('kyc_aml', 'in_progress', 'assigned_to_me', false, '2026-03-15T09:00:00.000Z')
+    const ctx = deriveWorkItemHandoffContext(item, now)
+    expect(ctx.isUrgent).toBe(true)
+  })
+
+  it('isUrgent is false for on-track items with no deadline', () => {
+    const item = makeItem('document_review', 'in_progress')
+    const ctx = deriveWorkItemHandoffContext(item, now)
+    expect(ctx.isUrgent).toBe(false)
+  })
+
+  it('missingEvidence is populated for blocked kyc_aml items', () => {
+    const item = makeItem('kyc_aml', 'blocked')
+    const ctx = deriveWorkItemHandoffContext(item, now)
+    expect(ctx.missingEvidence.length).toBeGreaterThan(0)
+    expect(ctx.missingEvidence[0].toLowerCase()).toContain('kyc')
+  })
+
+  it('missingEvidence is empty for in-progress items without blocking status', () => {
+    const item = makeItem('kyc_aml', 'in_progress')
+    const ctx = deriveWorkItemHandoffContext(item, now)
+    expect(ctx.missingEvidence).toHaveLength(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// WORKFLOW_STAGE_ORDER — shared constant (de-duplication AC)
+// ---------------------------------------------------------------------------
+
+describe('WORKFLOW_STAGE_ORDER', () => {
+  it('starts with onboarding', () => {
+    expect(WORKFLOW_STAGE_ORDER[0]).toBe('onboarding')
+  })
+
+  it('ends with reporting', () => {
+    expect(WORKFLOW_STAGE_ORDER[WORKFLOW_STAGE_ORDER.length - 1]).toBe('reporting')
+  })
+
+  it('contains all 6 stages', () => {
+    expect(WORKFLOW_STAGE_ORDER).toHaveLength(6)
+  })
+
+  it('every stage has a label in COCKPIT_STAGE_LABELS', () => {
+    WORKFLOW_STAGE_ORDER.forEach((stage) => {
+      expect(COCKPIT_STAGE_LABELS[stage].length).toBeGreaterThan(0)
+    })
   })
 })

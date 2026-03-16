@@ -115,6 +115,16 @@ export const COCKPIT_STAGE_LABELS: Record<CockpitWorkflowStage, string> = {
   reporting: 'Reporting',
 }
 
+/** Ordered list of workflow stages from intake to completion. */
+export const WORKFLOW_STAGE_ORDER: CockpitWorkflowStage[] = [
+  'onboarding',
+  'document_review',
+  'kyc_aml',
+  'remediation',
+  'approval',
+  'reporting',
+]
+
 export const COCKPIT_STAGE_PATHS: Record<CockpitWorkflowStage, string> = {
   onboarding: '/compliance/onboarding',
   document_review: '/compliance/onboarding',
@@ -248,16 +258,7 @@ export function deriveStageBottlenecks(
   items: WorkItem[],
   now: number = Date.now(),
 ): StageBottleneck[] {
-  const stages: CockpitWorkflowStage[] = [
-    'onboarding',
-    'document_review',
-    'kyc_aml',
-    'remediation',
-    'approval',
-    'reporting',
-  ]
-
-  return stages
+  return WORKFLOW_STAGE_ORDER
     .map((stage) => {
       const stageItems = items.filter((i) => i.stage === stage && i.status !== 'complete')
       return {
@@ -921,6 +922,154 @@ export function deriveRoleSummaries(
 }
 
 // ---------------------------------------------------------------------------
+// Persona-based worklist filtering (AC #3)
+// ---------------------------------------------------------------------------
+
+/**
+ * Labels shown in the persona-perspective selector tabs.
+ * Maps OperatorRole to a concise, operator-facing label.
+ */
+export const OPERATOR_ROLE_FILTER_LABELS: Record<OperatorRole, string> = {
+  compliance_analyst: 'Analyst',
+  operations_lead: 'Ops Lead',
+  sign_off_approver: 'Approver',
+  team_lead: 'Team Lead',
+}
+
+/** Brief description of what each persona cares about in the worklist. */
+export const OPERATOR_ROLE_FILTER_DESCRIPTIONS: Record<OperatorRole, string> = {
+  compliance_analyst:
+    'Shows items assigned to you, overdue SLA items, and cases pending review. Focus: complete assigned work and flag blockers.',
+  operations_lead:
+    'Shows unassigned items, bottlenecks, and cases requiring workload redistribution. Focus: maintain throughput and SLA compliance.',
+  sign_off_approver:
+    'Shows approval-ready items and launch-blocking cases. Focus: review readiness and make timely sign-off decisions.',
+  team_lead:
+    'Shows escalated items, blocked cases, and aging work across all stages. Focus: resolve escalations and improve queue flow.',
+}
+
+/**
+ * Filter work items by operator role persona.
+ * Each persona sees the subset of active items most relevant to their responsibilities.
+ * Items with status 'complete' are always excluded.
+ */
+export function filterWorkItemsByPersona(items: WorkItem[], role: OperatorRole): WorkItem[] {
+  const active = items.filter((i) => i.status !== 'complete')
+  switch (role) {
+    case 'compliance_analyst':
+      // Analysts focus on items assigned to them and overdue/pending items
+      return active.filter(
+        (i) =>
+          i.ownership === 'assigned_to_me' ||
+          i.status === 'pending_review' ||
+          i.status === 'overdue',
+      )
+    case 'operations_lead':
+      // Ops leads focus on unassigned items, blocked work, and overall throughput
+      return active.filter(
+        (i) =>
+          i.ownership === 'unassigned' ||
+          i.status === 'blocked' ||
+          i.status === 'escalated' ||
+          i.ownership === 'escalated',
+      )
+    case 'sign_off_approver':
+      // Approvers focus on items that are approval-ready and launch-blocking
+      return active.filter(
+        (i) => i.status === 'approval_ready' || (i.isLaunchBlocking && i.status !== 'complete'),
+      )
+    case 'team_lead':
+      // Team leads see escalated items, blocked work, and critical aging items
+      return active.filter(
+        (i) =>
+          i.status === 'escalated' ||
+          i.ownership === 'escalated' ||
+          i.status === 'blocked' ||
+          i.isLaunchBlocking,
+      )
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Handoff context (AC #5) — enriches work items with next-step guidance
+// ---------------------------------------------------------------------------
+
+/**
+ * Describes the handoff context for a work item: where it came from,
+ * what action is required next, and what evidence may be missing.
+ */
+export interface WorkItemHandoffContext {
+  /** Previous workflow stage this item came from (null if at the start) */
+  previousStage: CockpitWorkflowStage | null
+  /** Plain-language description of the next action required */
+  nextAction: string
+  /** List of missing evidence items that block progression */
+  missingEvidence: string[]
+  /** Whether the item requires immediate action due to SLA or blocking status */
+  isUrgent: boolean
+}
+
+/**
+ * Derive a simple handoff context for a work item.
+ * Used to surface next-step guidance in the worklist and handoff panel.
+ */
+export function deriveWorkItemHandoffContext(
+  item: WorkItem,
+  now: number = Date.now(),
+): WorkItemHandoffContext {
+  const urgency = classifySlaUrgency(item.dueAt, now)
+  const isUrgent =
+    item.status === 'overdue' ||
+    urgency === 'overdue' ||
+    urgency === 'due_soon' ||
+    item.isLaunchBlocking
+
+  // Derive previous stage using the shared workflow stage order
+  const stageIndex = WORKFLOW_STAGE_ORDER.indexOf(item.stage)
+  const previousStage = stageIndex > 0 ? WORKFLOW_STAGE_ORDER[stageIndex - 1] : null
+
+  // Derive next action based on status
+  let nextAction = 'Review and take action on this item.'
+  switch (item.status) {
+    case 'open':
+      nextAction = 'Claim this item and begin processing.'
+      break
+    case 'in_progress':
+      nextAction = 'Continue processing and update status when stage is complete.'
+      break
+    case 'pending_review':
+      nextAction = 'Review the evidence and approve or return for revision.'
+      break
+    case 'blocked':
+      nextAction =
+        item.ownership === 'blocked_by_external'
+          ? 'Follow up with the external party to unblock progression.'
+          : 'Identify and resolve the blocker, then re-open the item.'
+      break
+    case 'approval_ready':
+      nextAction = 'Review the approval checklist and proceed to sign-off.'
+      break
+    case 'overdue':
+      nextAction = 'This item is past its SLA deadline. Escalate or resolve immediately.'
+      break
+    case 'escalated':
+      nextAction = 'Senior review required. Assign to approver and resolve escalation.'
+      break
+  }
+
+  // Simple evidence hints based on stage
+  const missingEvidence: string[] = []
+  if (item.status === 'blocked' || item.status === 'overdue') {
+    if (item.stage === 'kyc_aml') missingEvidence.push('KYC identity documents')
+    if (item.stage === 'document_review') missingEvidence.push('Supporting documentation package')
+    if (item.stage === 'remediation') missingEvidence.push('Proof of address or remediation evidence')
+    if (item.stage === 'approval') missingEvidence.push('Compliance sign-off confirmation')
+  }
+
+  return { previousStage, nextAction, missingEvidence, isUrgent }
+}
+
+// ---------------------------------------------------------------------------
 // Data-testid constants
 // ---------------------------------------------------------------------------
 
@@ -939,6 +1088,7 @@ export const COCKPIT_TEST_IDS = {
   WORKLIST_PANEL: 'worklist-panel',
   WORKLIST_EMPTY: 'worklist-empty',
   WORK_ITEM_ROW: 'work-item-row',
+  WORK_ITEM_HANDOFF_CONTEXT: 'work-item-handoff-context',
   BOTTLENECK_PANEL: 'bottleneck-panel',
   BOTTLENECK_EMPTY: 'bottleneck-empty',
   HANDOFF_PANEL: 'handoff-panel',
@@ -950,6 +1100,8 @@ export const COCKPIT_TEST_IDS = {
   LOADING_STATE: 'cockpit-loading-state',
   ROLE_SUMMARY_PANEL: 'role-summary-panel',
   ROLE_SUMMARY_CARD: 'role-summary-card',
+  PERSONA_SELECTOR: 'persona-selector',
+  PERSONA_TAB: 'persona-tab',
   AGING_PANEL: 'aging-analysis-panel',
   AGING_FRESH: 'aging-fresh',
   AGING_AGING: 'aging-aging',

@@ -433,3 +433,160 @@ test.describe('Compliance Operations Cockpit — sidebar navigation', () => {
     expect(page.url()).toContain('/compliance/operations')
   })
 })
+
+// ---------------------------------------------------------------------------
+// Section 10: Role persona selector (AC #3)
+// ---------------------------------------------------------------------------
+
+test.describe('Compliance Operations Cockpit — persona selector', () => {
+  test('persona selector panel is visible (AC #3)', async ({ page }) => {
+    await openCockpit(page)
+    const selector = page.getByTestId('persona-selector')
+    await expect(selector).toBeVisible({ timeout: 25000 })
+  })
+
+  test('persona selector has four role tab buttons', async ({ page }) => {
+    await openCockpit(page)
+    const selector = page.getByTestId('persona-selector')
+    await expect(selector).toBeVisible({ timeout: 25000 })
+    const tabs = page.getByTestId('persona-tab')
+    const count = await tabs.count()
+    expect(count).toBe(4)
+  })
+
+  test('persona tabs have role="tab" for accessibility (AC #11)', async ({ page }) => {
+    await openCockpit(page)
+    const tabs = page.getByTestId('persona-tab')
+    await expect(tabs.first()).toBeVisible({ timeout: 25000 })
+    const role = await tabs.first().getAttribute('role')
+    expect(role).toBe('tab')
+  })
+
+  test('tablist has accessible aria-label', async ({ page }) => {
+    await openCockpit(page)
+    const selector = page.getByTestId('persona-selector')
+    await expect(selector).toBeVisible({ timeout: 25000 })
+    const tablist = selector.locator('[role="tablist"]')
+    await expect(tablist).toBeAttached({ timeout: 10000 })
+    const ariaLabel = await tablist.getAttribute('aria-label')
+    expect(ariaLabel).toBeTruthy()
+    expect(ariaLabel).toContain('role')
+  })
+
+  test('first persona tab is selected by default (compliance analyst)', async ({ page }) => {
+    await openCockpit(page)
+    const tabs = page.getByTestId('persona-tab')
+    await expect(tabs.first()).toBeVisible({ timeout: 25000 })
+    const ariaSelected = await tabs.first().getAttribute('aria-selected')
+    expect(ariaSelected).toBe('true')
+  })
+
+  test('clicking the Ops Lead tab changes the worklist heading', async ({ page }) => {
+    await openCockpit(page)
+    const tabs = page.getByTestId('persona-tab')
+    await expect(tabs.nth(1)).toBeVisible({ timeout: 25000 })
+    await tabs.nth(1).click({ timeout: 5000 })
+    await page.waitForTimeout(300)
+    const heading = page.locator('#worklist-heading')
+    await expect(heading).toBeVisible({ timeout: 10000 })
+    const headingText = await heading.textContent({ timeout: 5000 })
+    expect(headingText).toContain('Operations Lead')
+  })
+
+  test('clicking the Approver tab changes the worklist heading', async ({ page }) => {
+    await openCockpit(page)
+    const tabs = page.getByTestId('persona-tab')
+    await expect(tabs.nth(2)).toBeVisible({ timeout: 25000 })
+    await tabs.nth(2).click({ timeout: 5000 })
+    await page.waitForTimeout(300)
+    const heading = page.locator('#worklist-heading')
+    await expect(heading).toBeVisible({ timeout: 10000 })
+    const headingText = await heading.textContent({ timeout: 5000 })
+    expect(headingText).toContain('Approver')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Section 11: Work item handoff context (AC #5)
+// ---------------------------------------------------------------------------
+
+test.describe('Compliance Operations Cockpit — work item handoff context', () => {
+  test('work item rows show handoff context with Next action hint (AC #5)', async ({ page }) => {
+    await openCockpit(page)
+    const rows = page.getByTestId('work-item-row')
+    await expect(rows.first()).toBeVisible({ timeout: 25000 })
+    const firstRow = rows.first()
+    const ctx = firstRow.getByTestId('work-item-handoff-context')
+    await expect(ctx).toBeAttached({ timeout: 10000 })
+    const ctxText = await ctx.textContent({ timeout: 5000 }).catch(() => '')
+    expect(ctxText).toContain('Next:')
+  })
+
+  test('blocked items show missing evidence warnings when viewing all blocked items', async ({ page }) => {
+    await openCockpit(page)
+    // Switch to the 'blocked' filter to ensure blocked items are visible
+    const filterSelect = page.getByTestId('worklist-filter-select')
+    await filterSelect.waitFor({ state: 'visible', timeout: 20000 })
+    await filterSelect.selectOption('blocked')
+    await page.waitForTimeout(500)
+
+    const rows = page.getByTestId('work-item-row')
+    const count = await rows.count()
+    // Mock data has blocked kyc_aml items that should show missing evidence
+    let foundMissing = false
+    for (let i = 0; i < count && !foundMissing; i++) {
+      const rowText = await rows.nth(i).textContent({ timeout: 5000 }).catch(() => '')
+      if (rowText?.includes('Missing:')) {
+        foundMissing = true
+      }
+    }
+    // If blocked items exist in the mock, they must display missing evidence
+    if (count > 0) {
+      expect(foundMissing).toBe(true)
+    }
+  })
+
+  test('handoff context section is present in every visible work item', async ({ page }) => {
+    await openCockpit(page)
+    const rows = page.getByTestId('work-item-row')
+    const count = await rows.count()
+    expect(count).toBeGreaterThan(0)
+    for (let i = 0; i < count; i++) {
+      const ctx = rows.nth(i).getByTestId('work-item-handoff-context')
+      await expect(ctx).toBeAttached({ timeout: 5000 })
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Section 12: Role-aware summary cards (AC #2, #3)
+// ---------------------------------------------------------------------------
+
+test.describe('Compliance Operations Cockpit — role-aware summary cards', () => {
+  test('role summary panel is visible', async ({ page }) => {
+    await openCockpit(page)
+    const panel = page.getByTestId('role-summary-panel')
+    await expect(panel).toBeVisible({ timeout: 25000 })
+  })
+
+  test('three role summary cards are rendered', async ({ page }) => {
+    await openCockpit(page)
+    const cards = page.getByTestId('role-summary-card')
+    await expect(cards.first()).toBeVisible({ timeout: 25000 })
+    const count = await cards.count()
+    expect(count).toBe(3)
+  })
+
+  test('role summary cards have distinct persona data attributes', async ({ page }) => {
+    await openCockpit(page)
+    const cards = page.getByTestId('role-summary-card')
+    await expect(cards.first()).toBeVisible({ timeout: 25000 })
+    const count = await cards.count()
+    const personas = new Set<string>()
+    for (let i = 0; i < count; i++) {
+      const persona = await cards.nth(i).getAttribute('data-persona')
+      if (persona) personas.add(persona)
+    }
+    expect(personas.size).toBe(3)
+  })
+})

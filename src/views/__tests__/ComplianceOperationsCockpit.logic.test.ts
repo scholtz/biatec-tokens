@@ -511,3 +511,149 @@ describe('ComplianceOperationsCockpit — aging analysis panel', () => {
     expect(heading.text().toLowerCase()).toContain('aging')
   })
 })
+
+// ---------------------------------------------------------------------------
+// 9. Persona selector (AC #3 — role-aware filtering)
+// ---------------------------------------------------------------------------
+
+describe('ComplianceOperationsCockpit — persona selector', () => {
+  it('persona selector panel is rendered', async () => {
+    const wrapper = await mountCockpit()
+    const selector = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.PERSONA_SELECTOR}"]`)
+    expect(selector.exists()).toBe(true)
+  })
+
+  it('four persona tab buttons are rendered', async () => {
+    const wrapper = await mountCockpit()
+    const tabs = wrapper.findAll(`[data-testid="${COCKPIT_TEST_IDS.PERSONA_TAB}"]`)
+    expect(tabs).toHaveLength(4)
+  })
+
+  it('persona tabs have role="tab" attributes', async () => {
+    const wrapper = await mountCockpit()
+    const tabs = wrapper.findAll(`[data-testid="${COCKPIT_TEST_IDS.PERSONA_TAB}"]`)
+    tabs.forEach((tab) => {
+      expect(tab.attributes('role')).toBe('tab')
+    })
+  })
+
+  it('default active persona is compliance_analyst', async () => {
+    const wrapper = await mountCockpit()
+    const vm = wrapper.vm as any
+    expect(vm.activePersona).toBe('compliance_analyst')
+  })
+
+  it('first persona tab has aria-selected="true" by default', async () => {
+    const wrapper = await mountCockpit()
+    const tabs = wrapper.findAll(`[data-testid="${COCKPIT_TEST_IDS.PERSONA_TAB}"]`)
+    // The first tab (compliance_analyst) should be selected
+    expect(tabs[0].attributes('aria-selected')).toBe('true')
+  })
+
+  it('clicking a different persona tab changes activePersona', async () => {
+    const wrapper = await mountCockpit()
+    const tabs = wrapper.findAll(`[data-testid="${COCKPIT_TEST_IDS.PERSONA_TAB}"]`)
+    // Click the second tab (operations_lead)
+    await tabs[1].trigger('click')
+    await nextTick()
+    const vm = wrapper.vm as any
+    expect(vm.activePersona).toBe('operations_lead')
+  })
+
+  it('worklist heading changes when persona changes', async () => {
+    const wrapper = await mountCockpit()
+    const tabs = wrapper.findAll(`[data-testid="${COCKPIT_TEST_IDS.PERSONA_TAB}"]`)
+    await tabs[2].trigger('click') // sign_off_approver
+    await nextTick()
+    const heading = wrapper.find('#worklist-heading')
+    expect(heading.text()).toContain('Sign-Off Approver')
+  })
+
+  it('switching to sign_off_approver persona filters to approval-ready items', async () => {
+    const wrapper = await mountCockpit()
+    const vm = wrapper.vm as any
+    // Add an approval-ready item to the work items
+    vm.workItems = [
+      {
+        id: 'ap1',
+        title: 'Approval ready item',
+        stage: 'approval',
+        status: 'approval_ready',
+        ownership: 'assigned_to_team',
+        lastActionAt: null,
+        dueAt: null,
+        workspacePath: '/compliance/approval',
+        note: null,
+        isLaunchBlocking: false,
+      },
+      {
+        id: 'in1',
+        title: 'In progress item',
+        stage: 'kyc_aml',
+        status: 'in_progress',
+        ownership: 'assigned_to_me',
+        lastActionAt: null,
+        dueAt: null,
+        workspacePath: '/compliance/onboarding',
+        note: null,
+        isLaunchBlocking: false,
+      },
+    ]
+    await nextTick()
+    const tabs = wrapper.findAll(`[data-testid="${COCKPIT_TEST_IDS.PERSONA_TAB}"]`)
+    await tabs[2].trigger('click') // sign_off_approver
+    await nextTick()
+    const rows = wrapper.findAll(`[data-testid="${COCKPIT_TEST_IDS.WORK_ITEM_ROW}"]`)
+    // Should only show the approval_ready item for the approver persona
+    expect(rows.length).toBe(1)
+    expect(rows[0].text()).toContain('Approval ready item')
+  })
+
+  it('persona selector panel has aria-labelledby', async () => {
+    const wrapper = await mountCockpit()
+    const selector = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.PERSONA_SELECTOR}"]`)
+    expect(selector.attributes('aria-labelledby')).toBe('persona-selector-heading')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 10. Work item handoff context display (AC #5)
+// ---------------------------------------------------------------------------
+
+describe('ComplianceOperationsCockpit — work item handoff context', () => {
+  it('each work item row contains a handoff context element', async () => {
+    const wrapper = await mountCockpit()
+    const rows = wrapper.findAll(`[data-testid="${COCKPIT_TEST_IDS.WORK_ITEM_ROW}"]`)
+    rows.forEach((row) => {
+      const ctx = row.find(`[data-testid="${COCKPIT_TEST_IDS.WORK_ITEM_HANDOFF_CONTEXT}"]`)
+      expect(ctx.exists()).toBe(true)
+    })
+  })
+
+  it('handoff context shows a next action hint (deterministic with seeded item)', async () => {
+    const wrapper = await mountCockpit()
+    const vm = wrapper.vm as any
+    // Seed a known work item so the test is deterministic
+    vm.workItems = [
+      {
+        id: 'handoff-test-1',
+        title: 'Known in-progress item',
+        stage: 'kyc_aml',
+        status: 'in_progress',
+        ownership: 'assigned_to_me',
+        lastActionAt: null,
+        dueAt: null,
+        workspacePath: '/compliance/onboarding',
+        note: null,
+        isLaunchBlocking: false,
+      },
+    ]
+    await nextTick()
+    const rows = wrapper.findAll(`[data-testid="${COCKPIT_TEST_IDS.WORK_ITEM_ROW}"]`)
+    expect(rows.length).toBeGreaterThan(0)
+    const ctx = rows[0].find(`[data-testid="${COCKPIT_TEST_IDS.WORK_ITEM_HANDOFF_CONTEXT}"]`)
+    expect(ctx.exists()).toBe(true)
+    // Should contain "Next:" prefix
+    expect(ctx.text()).toContain('Next:')
+  })
+})

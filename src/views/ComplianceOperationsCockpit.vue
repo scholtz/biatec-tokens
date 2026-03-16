@@ -189,6 +189,50 @@
             </div>
           </section>
 
+          <!-- ── Persona / Role Selector (AC #3) ── -->
+          <section
+            class="rounded-2xl border border-gray-700 bg-gray-800/60 p-6 mb-8 shadow-lg"
+            :data-testid="COCKPIT_TEST_IDS.PERSONA_SELECTOR"
+            aria-labelledby="persona-selector-heading"
+          >
+            <h2 id="persona-selector-heading" class="text-lg font-semibold text-white mb-2">
+              My Role Perspective
+            </h2>
+            <p class="text-gray-400 text-sm mb-5">
+              Switch to see the worklist items most relevant to your operational role. Each persona
+              sees the priority tasks, blockers, and handoffs that match their responsibilities.
+            </p>
+            <!-- Role tabs -->
+            <div
+              role="tablist"
+              aria-label="Select your operator role to filter the worklist"
+              class="flex flex-wrap gap-2"
+            >
+              <button
+                v-for="role in personas"
+                :key="role"
+                role="tab"
+                :aria-selected="activePersona === role"
+                :data-testid="COCKPIT_TEST_IDS.PERSONA_TAB"
+                :data-persona="role"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
+                :class="activePersona === role
+                  ? 'bg-teal-700 text-white border border-teal-500'
+                  : 'bg-gray-700 text-gray-300 border border-gray-600 hover:bg-gray-600 hover:text-white'"
+                @click="activePersona = role"
+              >
+                {{ OPERATOR_ROLE_FILTER_LABELS[role] }}
+              </button>
+            </div>
+            <!-- Active persona description -->
+            <p
+              class="text-gray-400 text-xs mt-4 italic"
+              :data-testid="`persona-description-${activePersona}`"
+            >
+              {{ OPERATOR_ROLE_FILTER_DESCRIPTIONS[activePersona] }}
+            </p>
+          </section>
+
           <!-- ── Queue Health Panel ── -->
           <section
             class="rounded-2xl border border-gray-700 bg-gray-800/60 p-6 mb-8 shadow-lg"
@@ -380,7 +424,7 @@
           >
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
               <h2 id="worklist-heading" class="text-lg font-semibold text-white">
-                My Worklist
+                {{ OPERATOR_ROLE_LABELS[activePersona] }} Worklist
               </h2>
               <!-- Filter -->
               <div class="flex items-center gap-2">
@@ -463,9 +507,46 @@
                       >
                         {{ SLA_URGENCY_LABELS[getItemSlaUrgency(item)] }}
                       </span>
+                      <!-- Launch-blocking badge -->
+                      <span
+                        v-if="item.isLaunchBlocking"
+                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-900 text-red-200"
+                        aria-label="Launch blocking"
+                      >
+                        Launch Blocking
+                      </span>
                     </div>
                     <p class="text-white font-medium text-sm truncate">{{ item.title }}</p>
                     <p v-if="item.note" class="text-gray-400 text-xs mt-0.5 truncate">{{ item.note }}</p>
+                    <!-- ── Handoff context (AC #5) ── -->
+                    <div
+                      :data-testid="COCKPIT_TEST_IDS.WORK_ITEM_HANDOFF_CONTEXT"
+                      class="mt-2 pt-2 border-t border-gray-800"
+                    >
+                      <p class="text-xs text-teal-300 font-medium">
+                        Next: {{ getHandoffContext(item).nextAction }}
+                      </p>
+                      <ul
+                        v-if="getHandoffContext(item).missingEvidence.length > 0"
+                        class="mt-1 space-y-0.5"
+                        aria-label="Missing evidence"
+                      >
+                        <li
+                          v-for="evidence in getHandoffContext(item).missingEvidence"
+                          :key="evidence"
+                          class="text-xs text-yellow-400 flex items-center gap-1"
+                        >
+                          <span aria-hidden="true">⚠</span>
+                          <span>Missing: {{ evidence }}</span>
+                        </li>
+                      </ul>
+                      <p
+                        v-if="getHandoffContext(item).previousStage"
+                        class="text-xs text-gray-500 mt-0.5"
+                      >
+                        Previous stage: {{ COCKPIT_STAGE_LABELS[getHandoffContext(item).previousStage ?? 'onboarding'] }}
+                      </p>
+                    </div>
                   </div>
                   <div class="flex-shrink-0 flex items-center gap-3">
                     <span class="text-xs text-gray-500 hidden sm:block">
@@ -654,6 +735,9 @@ import {
   OWNERSHIP_STATE_LABELS,
   SLA_URGENCY_LABELS,
   HANDOFF_READINESS_LABELS,
+  OPERATOR_ROLE_LABELS,
+  OPERATOR_ROLE_FILTER_LABELS,
+  OPERATOR_ROLE_FILTER_DESCRIPTIONS,
   deriveQueueHealth,
   deriveStageBottlenecks,
   deriveCockpitPosture,
@@ -667,11 +751,14 @@ import {
   slaUrgencyBadgeClass,
   handoffReadinessBadgeClass,
   classifySlaUrgency,
+  filterWorkItemsByPersona,
+  deriveWorkItemHandoffContext,
   MOCK_WORK_ITEMS_DEGRADED,
   MOCK_COCKPIT_REFRESHED_AT,
   type WorkItem,
   type CockpitPosture,
   type HandoffReadiness,
+  type OperatorRole,
 } from '../utils/complianceOperationsCockpit'
 
 // ---------------------------------------------------------------------------
@@ -683,6 +770,7 @@ const isDegraded = ref(false)
 const workItems = ref<WorkItem[]>([])
 const refreshedAt = ref<string>(MOCK_COCKPIT_REFRESHED_AT)
 const worklistFilter = ref<string>('all')
+const activePersona = ref<OperatorRole>('compliance_analyst')
 
 // ---------------------------------------------------------------------------
 // Lifecycle
@@ -770,8 +858,13 @@ const formattedRefreshedAt = computed(() => {
 // Worklist filtering
 // ---------------------------------------------------------------------------
 
+/** All operator role options for the persona selector */
+const personas: OperatorRole[] = ['compliance_analyst', 'operations_lead', 'sign_off_approver', 'team_lead']
+
 const filteredWorkItems = computed(() => {
   const active = workItems.value.filter((i) => i.status !== 'complete')
+  // Persona filter is always applied; specific status/ownership filters override it
+  const personaItems = filterWorkItemsByPersona(workItems.value, activePersona.value)
   switch (worklistFilter.value) {
     case 'assigned_to_me':
       return active.filter((i) => i.ownership === 'assigned_to_me')
@@ -792,7 +885,7 @@ const filteredWorkItems = computed(() => {
     case 'escalated':
       return active.filter((i) => i.status === 'escalated' || i.ownership === 'escalated')
     default:
-      return active
+      return personaItems
   }
 })
 
@@ -802,6 +895,10 @@ const filteredWorkItems = computed(() => {
 
 function getItemSlaUrgency(item: WorkItem) {
   return classifySlaUrgency(item.dueAt, now.value)
+}
+
+function getHandoffContext(item: WorkItem) {
+  return deriveWorkItemHandoffContext(item, now.value)
 }
 
 function handoffCardBorderClass(readiness: HandoffReadiness): string {
