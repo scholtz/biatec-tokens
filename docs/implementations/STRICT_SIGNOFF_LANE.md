@@ -42,12 +42,48 @@ The frontend CI has two distinct Playwright lanes.
 ### Lane 2: Strict Sign-off (This Document)
 
 **Workflow:** `.github/workflows/strict-signoff.yml`
-**Trigger:** Push to `main` on sign-off-related files + manual `workflow_dispatch`
+**Trigger:** Push to `main` on key source files + manual `workflow_dispatch`
 **Auth model:** `loginWithCredentialsStrict()` — throws if backend unavailable; no localStorage fallback
 **Purpose:** Release-readiness evidence. Proves the real critical path works against a live backend.
-**Sign-off tests:** Run for real and fail loudly if the backend is unreachable or auth fails.
+**Sign-off tests:** Run for real and fail loudly if the backend is unreachable or auth fails (when backend is configured).
 
 The two lanes do not block each other. Standard CI remains fast. The strict lane runs separately, in parallel, and on its own schedule.
+
+## Three Run Modes
+
+### Mode 1: Infrastructure-only (no backend secrets configured)
+
+**When it occurs:** Push-to-main when `SIGNOFF_API_BASE_URL` and/or `SIGNOFF_TEST_PASSWORD` are not set.
+
+**Behaviour:**
+- Workflow completes successfully (does not fail the push)
+- All sign-off tests skip with a clear message ("not release evidence")
+- A `signoff-status.json` artefact is uploaded showing the configuration state
+- No real backend was exercised; this run cannot be cited as release evidence
+
+**Interpreting this:** The workflow infrastructure is working. The missing backend configuration is clearly documented. When secrets are configured, the next run will produce real evidence.
+
+### Mode 2: Full strict sign-off (backend secrets configured, push-to-main)
+
+**When it occurs:** Push-to-main after `SIGNOFF_API_BASE_URL` and `SIGNOFF_TEST_PASSWORD` are configured.
+
+**Behaviour:**
+- Vite dev server starts
+- All sign-off tests run against the real backend
+- Tests fail loudly on any backend unavailability or contract violation
+- Full Playwright report + traces uploaded as artefact
+
+**Interpreting this:** If the workflow shows ✅ PASSED, this run is credible release evidence.
+
+### Mode 3: Manual release sign-off (workflow_dispatch)
+
+**When it occurs:** A product lead or release manager triggers `workflow_dispatch`.
+
+**Behaviour:**
+- If secrets are NOT configured: workflow fails immediately after the prerequisite check (fail-closed gate). An operator explicitly requesting release sign-off must have the backend configured.
+- If secrets ARE configured: full strict sign-off runs and produces evidence artefacts.
+
+**Interpreting this:** For official release sign-off, always use `workflow_dispatch` with properly configured secrets. The fail-closed behaviour on `workflow_dispatch` without secrets is intentional — it prevents a manual release sign-off from being accidentally "passed" in infrastructure-only mode.
 
 ## What the Strict Lane Validates
 
@@ -89,11 +125,18 @@ Common failure causes:
 | `Expected heading to be visible` | Route guard regression or page rendering failure |
 | `Strict mode violation` | `BIATEC_STRICT_BACKEND=true` but a test tried to use a seeded auth shortcut |
 
+### ⚠️ `NOT CONFIGURED` — No backend secrets, workflow completed with skipped tests
+
+All sign-off tests skipped because `API_BASE_URL` was not set or pointed to localhost. The `signoff-status.json` artefact explains the state. This is NOT release evidence.
+
+To produce real release evidence:
+1. Configure `SIGNOFF_API_BASE_URL`, `SIGNOFF_TEST_EMAIL`, `SIGNOFF_TEST_PASSWORD` as repository secrets
+2. Trigger `workflow_dispatch` from **Actions → 🔒 Strict Backend Sign-off Gate**
+3. Download the artefact and cite the run ID in release notes
+
 ### ⚠️ `SKIPPED` — Tests ran but all were skipped
 
-All sign-off tests skip when `BIATEC_STRICT_BACKEND=true` is not set. If the workflow ran with `BIATEC_STRICT_BACKEND=true` but all tests still skipped, check whether `requireStrictBackend()` inside `mvp-backend-signoff.spec.ts` is returning an unexpected skip reason.
-
-A run where all tests skipped is **not credible release evidence**.
+All sign-off tests skip when `BIATEC_STRICT_BACKEND=true` is not set, or when `API_BASE_URL` is not set/is localhost. A run where all tests skipped is **not credible release evidence**.
 
 ### ✅ `PASSED` — Tests ran and passed
 
@@ -114,7 +157,7 @@ The test account must be:
 - Able to call `POST /api/auth/login` successfully
 - Able to initiate and poll the deployment lifecycle endpoint
 
-If `SIGNOFF_TEST_PASSWORD` is empty, auth tests will fail with a clear error message (not silently pass).
+If `SIGNOFF_TEST_PASSWORD` is empty and you use `workflow_dispatch`, the workflow will fail closed (exit 1) rather than silently passing. For push-to-main without secrets, the workflow completes with all tests skipped and an infrastructure-status artefact.
 
 ## Running the Strict Lane Locally
 
@@ -137,6 +180,8 @@ npx playwright test e2e/mvp-backend-signoff.spec.ts --trace on
    - `reason` — descriptive label for the run (e.g. "Release candidate v1.2.3")
 4. Click **Run workflow**
 
+**Note:** If you use `workflow_dispatch` without secrets configured, the workflow will fail immediately with a clear error message explaining what is missing. This is intentional fail-closed behaviour for manual release sign-off.
+
 ## Artefact Retention
 
 Sign-off artefacts are retained for **90 days**. This ensures that a specific sign-off run can be referenced during audit, procurement review, or post-mortem investigation.
@@ -147,13 +192,15 @@ The artefact name includes the run ID: `strict-signoff-report-{run-id}`.
 
 This strict sign-off lane directly addresses the MVP sign-off gap identified in the business owner roadmap:
 
-> "The strict real-backend sign-off lane exists in the codebase, yet it is not enforced in the standard CI flow that product leadership can trust for MVP sign-off."
+> "The strict real-backend sign-off lane exists in the codebase, yet the latest push-to-main execution stopped before test execution because API_BASE_URL was unset and SIGNOFF_TEST_PASSWORD was empty."
 
-With this workflow:
-- The sign-off lane is **first-class CI** — not an optional developer capability
-- It **fails loudly** when backend prerequisites are absent
-- It produces **artefacts suitable for product-owner review**
+With this updated workflow:
+- The sign-off lane **completes on every push to main** — even without backend secrets (infrastructure-only mode)
+- Every completion produces an **artefact** showing the current configuration state
+- When secrets ARE configured, the lane **fails loudly** when backend prerequisites are absent (fail-closed for release gates)
+- It produces **artefacts suitable for product-owner review** when backend is configured
 - It is **separable** from the fast developer-feedback lane (no impact on standard CI speed)
+- For **manual sign-off** (`workflow_dispatch`): still fails if secrets are missing — the fail-closed gate is maintained for deliberate release sign-off
 
 ## Files
 
@@ -164,3 +211,4 @@ With this workflow:
 | `e2e/helpers/auth.ts` | `loginWithCredentialsStrict()` and `isStrictBackendMode()` helpers |
 | `src/utils/backendSignoffConfig.ts` | Pure functions for sign-off mode detection (testable) |
 | `src/utils/__tests__/backendSignoffConfig.test.ts` | Unit tests for sign-off config utilities |
+| `docs/implementations/STRICT_SIGNOFF_LANE.md` | This document |
