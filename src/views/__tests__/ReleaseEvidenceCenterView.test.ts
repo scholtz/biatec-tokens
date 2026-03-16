@@ -190,7 +190,7 @@ describe('ReleaseEvidenceCenterView — WCAG AA Accessibility', () => {
 
   it('dimension status badges have aria-label describing the status (SC 1.1.1)', async () => {
     const wrapper = await mountView()
-    const badge = wrapper.find(`[data-testid="dimension-badge-strict-run-execution"]`)
+    const badge = wrapper.find(`[data-testid="rc-dim-badge-strict-run-execution"]`)
     if (badge.exists()) {
       const ariaLabel = badge.attributes('aria-label') ?? ''
       expect(ariaLabel.length).toBeGreaterThan(5)
@@ -254,7 +254,7 @@ describe('ReleaseEvidenceCenterView — Content Rendering', () => {
 
   it('renders at least one dimension card for launch-critical evidence', async () => {
     const wrapper = await mountView()
-    const card = wrapper.find(`[data-testid="dimension-card-strict-run-execution"]`)
+    const card = wrapper.find(`[data-testid="rc-dim-card-strict-run-execution"]`)
     expect(card.exists()).toBe(true)
   })
 
@@ -353,7 +353,7 @@ describe('ReleaseEvidenceCenterView — Fail-Closed Behavior (AC #3)', () => {
 
   it('dimension cards show status badges for each evidence item', async () => {
     const wrapper = await mountView()
-    const badges = wrapper.findAll('[data-testid^="dimension-badge-"]')
+    const badges = wrapper.findAll('[data-testid^="rc-dim-badge-"]')
     expect(badges.length).toBeGreaterThan(0)
   })
 

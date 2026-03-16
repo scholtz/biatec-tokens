@@ -125,7 +125,7 @@ test.describe('Release Evidence Center — evidence artifact inventory (AC #5)',
 
   test('launch-critical dimension card for strict-run-execution is rendered', async ({ page }) => {
     await openWorkspace(page)
-    const card = page.getByTestId('dimension-card-strict-run-execution')
+    const card = page.getByTestId('rc-dim-card-strict-run-execution')
     await expect(card).toBeAttached({ timeout: 20000 })
   })
 
@@ -141,7 +141,7 @@ test.describe('Release Evidence Center — evidence artifact inventory (AC #5)',
 
   test('dimension cards show last evidence and owner information', async ({ page }) => {
     await openWorkspace(page)
-    const card = page.getByTestId('dimension-card-strict-run-execution')
+    const card = page.getByTestId('rc-dim-card-strict-run-execution')
     await expect(card).toBeAttached({ timeout: 20000 })
     const text = await card.innerText({ timeout: 5000 }).catch(() => '')
     expect(text).toMatch(/Last evidence|Never/i)
@@ -152,7 +152,8 @@ test.describe('Release Evidence Center — evidence artifact inventory (AC #5)',
     await openWorkspace(page)
     const dimensionsSection = page.getByTestId('release-dimensions-section')
     await expect(dimensionsSection).toBeVisible({ timeout: 20000 })
-    const workspaceLinks = dimensionsSection.getByRole('button', { name: /Open workspace/i })
+    // Buttons have aria-label "Navigate to X workspace"
+    const workspaceLinks = dimensionsSection.getByRole('button', { name: /Navigate to.*workspace/i })
     const count = await workspaceLinks.count()
     expect(count).toBeGreaterThan(0)
   })
@@ -397,7 +398,7 @@ test.describe('Release Evidence Center — accessibility (AC #8)', () => {
     await openWorkspace(page)
     const dimensionsSection = page.getByTestId('release-dimensions-section')
     await expect(dimensionsSection).toBeVisible({ timeout: 20000 })
-    const badge = page.getByTestId('dimension-badge-strict-run-execution')
+    const badge = page.getByTestId('rc-dim-badge-strict-run-execution')
     await expect(badge).toBeAttached({ timeout: 10000 })
     const ariaLabel = await badge.getAttribute('aria-label', { timeout: 5000 }).catch(() => null)
     if (ariaLabel !== null) {
@@ -409,6 +410,9 @@ test.describe('Release Evidence Center — accessibility (AC #8)', () => {
     await openWorkspace(page)
     const heading = page.getByRole('heading', { name: /Release Evidence Center/i, level: 1 })
     await expect(heading).toBeVisible({ timeout: 30000 })
+    // Wait for the evidence section heading to appear (ensures full render)
+    const evidenceH2 = page.getByRole('heading', { name: /Evidence Artifact Inventory/i, level: 2 })
+    await expect(evidenceH2).toBeVisible({ timeout: 15000 })
     const h2s = page.getByRole('heading', { level: 2 })
     const count = await h2s.count()
     expect(count).toBeGreaterThan(2) // evidence inventory, env diagnostics, approval handoff, export
@@ -450,11 +454,11 @@ test.describe('Release Evidence Center — no wallet connector UI', () => {
 test.describe('Release Evidence Center — sidebar navigation (AC #10)', () => {
   test('sidebar "Sign-off Readiness" link is present and navigates to /compliance/release', async ({ page }) => {
     await openWorkspace(page)
-    // Navigate away then back via sidebar
+    // Navigate to home — the sidebar is visible on all authenticated pages
     await page.goto('/', { timeout: 15000 })
     await page.waitForLoadState('load', { timeout: 10000 })
-    const heading = page.getByRole('heading', { name: /Release Evidence Center/i, level: 1 })
-    await expect(heading.or(page.getByRole('heading', { name: /Biatec Tokens/i })).first()).toBeAttached({ timeout: 20000 })
+    // Wait for any heading to confirm page rendered
+    await expect(page.locator('h1').first()).toBeAttached({ timeout: 20000 })
 
     // Find the Sign-off Readiness link in the sidebar
     const sidebarLink = page.getByRole('link', { name: /Sign-off Readiness/i }).first()
