@@ -35,6 +35,9 @@ vi.mock('@heroicons/vue/24/outline', () => ({
   ClipboardDocumentListIcon: {
     template: '<svg class="h-5 w-5"></svg>',
   },
+  ChartBarSquareIcon: {
+    template: '<svg class="h-5 w-5"></svg>',
+  },
   CurrencyDollarIcon: {
     template: '<svg class="h-5 w-5"></svg>',
   },
@@ -71,6 +74,7 @@ describe('Sidebar Component', () => {
         { path: '/compliance/risk-report', name: 'EnterpriseRiskReportBuilder' },
         { path: '/compliance/reporting', name: 'ComplianceReportingWorkspace' },
         { path: '/compliance/onboarding', name: 'InvestorComplianceOnboarding' },
+        { path: '/compliance/operations', name: 'ComplianceOperationsCockpit' },
       ],
     });
 
@@ -129,7 +133,7 @@ describe('Sidebar Component', () => {
       });
 
       const links = wrapper.findAll('a');
-      expect(links).toHaveLength(13); // Includes Release Evidence, Investor Onboarding, Compliance Reporting, Compliance Monitoring, Whitelist Management, Risk Report, Approval Queue
+      expect(links).toHaveLength(14); // Includes Release Evidence, Investor Onboarding, Compliance Reporting, Compliance Monitoring, Whitelist Management, Risk Report, Approval Queue, Operations Cockpit
 
       // Check link texts and routes
       expect(links[0].text()).toContain('Guided Token Launch');
@@ -165,11 +169,14 @@ describe('Sidebar Component', () => {
       expect(links[10].text()).toContain('Approval Queue');
       expect(links[10].attributes('to')).toBe('/compliance/approval');
 
-      expect(links[11].text()).toContain('Compliance Monitoring');
-      expect(links[11].attributes('to')).toBe('/compliance-monitoring');
+      expect(links[11].text()).toContain('Operations Cockpit');
+      expect(links[11].attributes('to')).toBe('/compliance/operations');
+
+      expect(links[12].text()).toContain('Compliance Monitoring');
+      expect(links[12].attributes('to')).toBe('/compliance-monitoring');
       
-      expect(links[12].text()).toContain('Whitelist Management');
-      expect(links[12].attributes('to')).toBe('/compliance/whitelists');
+      expect(links[13].text()).toContain('Whitelist Management');
+      expect(links[13].attributes('to')).toBe('/compliance/whitelists');
     });
 
     it('should render icons for quick actions', () => {
@@ -184,8 +191,8 @@ describe('Sidebar Component', () => {
       });
 
       const svgs = wrapper.findAll('svg');
-      // 13 links each with an SVG icon
-      expect(svgs).toHaveLength(13);
+      // 14 links each with an SVG icon
+      expect(svgs).toHaveLength(14);
     });
   });
 

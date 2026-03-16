@@ -37,6 +37,7 @@ import ComplianceReportingWorkspace from "../views/ComplianceReportingWorkspace.
 import EnterpriseRiskReportBuilder from "../views/EnterpriseRiskReportBuilder.vue";
 import EnterpriseApprovalCockpit from "../views/EnterpriseApprovalCockpit.vue";
 import InvestorComplianceOnboardingWorkspace from "../views/InvestorComplianceOnboardingWorkspace.vue";
+import ComplianceOperationsCockpit from "../views/ComplianceOperationsCockpit.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 import { isIssuanceSessionValid, storeIssuanceReturnPath } from "../utils/authFirstIssuanceWorkspace";
 
@@ -198,6 +199,13 @@ const router = createRouter({
       name: "InvestorComplianceOnboarding",
       component: InvestorComplianceOnboardingWorkspace,
       meta: { requiresAuth: true, title: "Investor Compliance Onboarding" },
+    },
+    // Compliance Operations Cockpit — role-aware task coordination, SLA monitoring, workflow handoffs
+    {
+      path: "/compliance/operations",
+      name: "ComplianceOperationsCockpit",
+      component: ComplianceOperationsCockpit,
+      meta: { requiresAuth: true, title: "Compliance Operations Cockpit" },
     },
     {
       path: "/attestations",
