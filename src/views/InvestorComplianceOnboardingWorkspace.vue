@@ -77,6 +77,32 @@
 
         <template v-else>
 
+          <!-- ── Degraded / error state banner ── -->
+          <div
+            v-if="isDegraded && loadError"
+            class="mb-6 rounded-xl border border-red-700 bg-red-950 p-4"
+            data-testid="degraded-state-banner"
+            role="alert"
+            aria-live="assertive"
+            aria-label="Compliance data unavailable"
+          >
+            <div class="flex items-start gap-3">
+              <ExclamationCircleIcon class="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
+              <div>
+                <p class="text-sm font-semibold text-red-200">
+                  Compliance data is currently unavailable
+                </p>
+                <p class="text-xs text-red-300 mt-1">
+                  {{ loadError }}
+                </p>
+                <p class="text-xs text-red-400 mt-2">
+                  Launch readiness cannot be confirmed. Do not proceed with launch activities until this
+                  workspace shows live, verified data.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <!-- ── Fixture selector (dev/demo — hidden in production) ── -->
           <div
             v-if="isDemoMode"
@@ -622,6 +648,17 @@ import {
   MOCK_ONBOARDING_STAGES_STALE,
 } from '../utils/investorComplianceOnboarding'
 
+import {
+  createComplianceCaseClient,
+} from '../lib/api/complianceCaseManagement'
+
+import {
+  normaliseCohortReadinessToStages,
+  buildDegradedOnboardingStages,
+} from '../utils/complianceCaseNormalizer'
+
+import { useAuthStore } from '../stores/auth'
+
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
@@ -629,6 +666,12 @@ import {
 const isLoading = ref(true)
 const refreshedAt = ref<Date>(new Date())
 const expandedStageIds = ref<Set<string>>(new Set())
+
+/** Error message when live data load fails (null = no error). */
+const loadError = ref<string | null>(null)
+
+/** True when the backend could not be reached and we show degraded state. */
+const isDegraded = ref(false)
 
 /** Show fixture selector in dev / demo environments. */
 const isDemoMode = ref(import.meta.env.DEV)
@@ -653,6 +696,8 @@ const fixtureStages = {
 const workspaceState = ref<OnboardingWorkspaceState>(
   deriveOnboardingWorkspaceState(MOCK_ONBOARDING_STAGES_PARTIAL),
 )
+
+const authStore = useAuthStore()
 
 // ---------------------------------------------------------------------------
 // Computed
@@ -764,15 +809,89 @@ function applyFixture(key: FixtureKey): void {
   activeFixture.value = key
   workspaceState.value = deriveOnboardingWorkspaceState(fixtureStages[key])
   refreshedAt.value = new Date()
+  loadError.value = null
+  isDegraded.value = false
 }
 
-function refresh(): void {
-  isLoading.value = true
-  setTimeout(() => {
+// ---------------------------------------------------------------------------
+// Live data loading (production / authenticated environments)
+// ---------------------------------------------------------------------------
+
+/**
+ * Attempt to load live cohort readiness data from the compliance case API.
+ * Falls back to the deterministic fixture and marks the workspace as degraded
+ * when the backend is unavailable or returns an error. Fail-closed: any
+ * ambiguous response is treated as degraded rather than silently marking ready.
+ */
+async function loadLiveData(): Promise<void> {
+  const bearerToken = authStore.session || localStorage.getItem('arc76_session')
+  const client = createComplianceCaseClient(bearerToken)
+
+  if (!client) {
+    // No auth token available — fall back to fixtures gracefully
+    loadError.value = null
+    isDegraded.value = false
     workspaceState.value = deriveOnboardingWorkspaceState(fixtureStages[activeFixture.value])
-    refreshedAt.value = new Date()
-    isLoading.value = false
-  }, 300)
+    return
+  }
+
+  try {
+    const result = await client.getMonitoringDashboard()
+
+    if (!result.ok) {
+      // Backend returned an error — mark degraded, stay fail-closed
+      loadError.value = result.error.userGuidance
+      isDegraded.value = true
+      const degradedStages = buildDegradedOnboardingStages(result.error.userGuidance)
+      workspaceState.value = deriveOnboardingWorkspaceState(degradedStages)
+      return
+    }
+
+    const dashboard = result.data
+
+    // If there are cohort summaries, use the first one's readiness data to
+    // build the stage model. In a multi-cohort product this would be refined
+    // to select the relevant cohort by project/token ID.
+    if (dashboard.cohortSummaries && dashboard.cohortSummaries.length > 0) {
+      const cohort = dashboard.cohortSummaries[0]
+      const liveStages = normaliseCohortReadinessToStages(cohort)
+      workspaceState.value = deriveOnboardingWorkspaceState(liveStages)
+      loadError.value = null
+      isDegraded.value = false
+    } else {
+      // Empty cohort list — no cases yet, show not_started state gracefully
+      workspaceState.value = deriveOnboardingWorkspaceState(
+        fixtureStages['partial'].map((s) => ({
+          ...s,
+          status: 'not_started' as OnboardingStageStatus,
+          summary: 'No investor cases have been registered yet.',
+          blockers: [],
+        })),
+      )
+      loadError.value = null
+      isDegraded.value = false
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unexpected error loading compliance data.'
+    loadError.value = msg
+    isDegraded.value = true
+    const degradedStages = buildDegradedOnboardingStages(msg)
+    workspaceState.value = deriveOnboardingWorkspaceState(degradedStages)
+  }
+}
+
+async function refresh(): Promise<void> {
+  isLoading.value = true
+  if (isDemoMode.value) {
+    await new Promise<void>((resolve) => setTimeout(resolve, 300))
+    workspaceState.value = deriveOnboardingWorkspaceState(fixtureStages[activeFixture.value])
+    loadError.value = null
+    isDegraded.value = false
+  } else {
+    await loadLiveData()
+  }
+  refreshedAt.value = new Date()
+  isLoading.value = false
 }
 
 // ---------------------------------------------------------------------------
@@ -781,15 +900,19 @@ function refresh(): void {
 
 let autoRefreshInterval: ReturnType<typeof setInterval> | null = null
 
-onMounted(() => {
-  // Simulate async data load
-  setTimeout(() => {
+onMounted(async () => {
+  if (isDemoMode.value) {
+    // Dev/demo: use deterministic fixtures
+    setTimeout(() => {
+      isLoading.value = false
+    }, 150)
+  } else {
+    // Production: attempt live data load
+    await loadLiveData()
     isLoading.value = false
-  }, 150)
 
-  // Auto-refresh every 5 minutes in non-demo environments
-  if (!import.meta.env.DEV) {
-    autoRefreshInterval = setInterval(refresh, 5 * 60 * 1000)
+    // Auto-refresh every 5 minutes in live environments
+    autoRefreshInterval = setInterval(() => void refresh(), 5 * 60 * 1000)
   }
 })
 

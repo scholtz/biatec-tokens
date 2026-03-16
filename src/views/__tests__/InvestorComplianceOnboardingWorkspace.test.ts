@@ -19,6 +19,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
 import { nextTick } from 'vue'
+import { createTestingPinia } from '@pinia/testing'
 import InvestorComplianceOnboardingWorkspace from '../InvestorComplianceOnboardingWorkspace.vue'
 
 // ---------------------------------------------------------------------------
@@ -51,7 +52,7 @@ async function mountWorkspace() {
   vi.useFakeTimers()
   const router = makeRouter()
   const wrapper = mount(InvestorComplianceOnboardingWorkspace, {
-    global: { plugins: [router] },
+    global: { plugins: [router, createTestingPinia({ createSpy: vi.fn })] },
   })
   await router.isReady()
   // Advance past the 150ms loading timeout

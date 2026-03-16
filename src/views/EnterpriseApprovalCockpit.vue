@@ -533,6 +533,86 @@
             :readiness="signOffReadiness"
           />
 
+          <!-- ── Investor Onboarding Readiness Summary ── -->
+          <section
+            class="mt-6 rounded-xl border p-5"
+            :class="onboardingReadinessLoaded
+              ? (onboardingReadinessBlocked ? 'border-red-800 bg-red-950/40' : onboardingReadinessReady ? 'border-green-800 bg-green-950/30' : 'border-gray-700 bg-gray-800/60')
+              : 'border-gray-700 bg-gray-800/60'"
+            data-testid="onboarding-readiness-summary"
+            aria-labelledby="onboarding-summary-heading"
+          >
+            <div class="flex items-start justify-between gap-4 mb-3">
+              <h2
+                id="onboarding-summary-heading"
+                class="text-base font-semibold text-white flex items-center gap-2"
+              >
+                <ClipboardDocumentCheckIcon class="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                Investor Compliance Onboarding
+              </h2>
+              <RouterLink
+                to="/compliance/onboarding"
+                class="text-xs text-teal-400 hover:text-teal-300 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
+                data-testid="onboarding-readiness-link"
+                aria-label="Open investor compliance onboarding workspace"
+              >
+                Open workspace →
+              </RouterLink>
+            </div>
+
+            <!-- Loading skeleton -->
+            <div v-if="!onboardingReadinessLoaded" class="animate-pulse space-y-2" aria-busy="true" aria-label="Loading onboarding readiness">
+              <div class="h-4 bg-gray-700 rounded w-3/4"></div>
+              <div class="h-3 bg-gray-700 rounded w-1/2"></div>
+            </div>
+
+            <!-- Loaded state -->
+            <template v-else>
+              <div class="flex items-center gap-3 mb-2">
+                <span
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  :class="onboardingReadinessReady ? 'bg-green-800 text-green-200' :
+                    onboardingReadinessBlocked ? 'bg-red-800 text-red-200' :
+                    'bg-yellow-800 text-yellow-200'"
+                  data-testid="onboarding-status-badge"
+                >
+                  {{ onboardingStatusLabel }}
+                </span>
+                <span class="text-xs text-gray-400" data-testid="onboarding-readiness-score">
+                  Readiness: {{ onboardingReadinessScore }}%
+                </span>
+              </div>
+              <p class="text-sm text-gray-300" data-testid="onboarding-readiness-headline">
+                {{ onboardingHeadline }}
+              </p>
+              <div
+                v-if="onboardingBlockerTitles.length > 0"
+                class="mt-3 space-y-1"
+                data-testid="onboarding-blocker-list"
+                role="list"
+                aria-label="Onboarding blockers"
+              >
+                <div
+                  v-for="title in onboardingBlockerTitles"
+                  :key="title"
+                  class="flex items-start gap-2 text-xs text-red-300"
+                  role="listitem"
+                >
+                  <ExclamationTriangleIcon class="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-red-400" aria-hidden="true" />
+                  {{ title }}
+                </div>
+              </div>
+              <p
+                v-if="onboardingDegradedMessage"
+                class="mt-2 text-xs text-yellow-300"
+                role="alert"
+                data-testid="onboarding-degraded-message"
+              >
+                ⚠ {{ onboardingDegradedMessage }}
+              </p>
+            </template>
+          </section>
+
           <!-- ── Navigation Links ── -->
           <nav
             aria-label="Related compliance workspaces"
@@ -621,6 +701,9 @@ import {
 
 import { deriveRemediationWorkflow } from '../utils/remediationWorkflow'
 import { buildDefaultReleaseReadiness } from '../utils/releaseReadiness'
+import { createComplianceCaseClient } from '../lib/api/complianceCaseManagement'
+import { normaliseCohortReadinessSummary } from '../utils/complianceCaseNormalizer'
+import { useAuthStore } from '../stores/auth'
 
 // ---------------------------------------------------------------------------
 // State
@@ -630,6 +713,66 @@ const isLoading = ref(true)
 const state = ref<ApprovalCockpitState>(buildDefaultCockpitState())
 const expandedStages = ref<Set<string>>(new Set())
 let loadTimer: ReturnType<typeof setTimeout> | null = null
+
+// ---------------------------------------------------------------------------
+// Onboarding readiness (live data from compliance case API)
+// ---------------------------------------------------------------------------
+
+const authStore = useAuthStore()
+const onboardingReadinessLoaded = ref(false)
+const onboardingReadinessReady = ref(false)
+const onboardingReadinessBlocked = ref(false)
+const onboardingReadinessScore = ref(0)
+const onboardingStatusLabel = ref('Loading…')
+const onboardingHeadline = ref('')
+const onboardingBlockerTitles = ref<string[]>([])
+const onboardingDegradedMessage = ref<string | null>(null)
+
+async function loadOnboardingReadiness(): Promise<void> {
+  const bearerToken = authStore.session || localStorage.getItem('arc76_session')
+  const client = createComplianceCaseClient(bearerToken)
+  if (!client) {
+    // No auth token — show a neutral placeholder without claiming ready
+    onboardingReadinessLoaded.value = true
+    onboardingStatusLabel.value = 'Not Available'
+    onboardingHeadline.value = 'Sign in to load live onboarding readiness data.'
+    return
+  }
+  try {
+    const result = await client.getMonitoringDashboard()
+    if (!result.ok) {
+      onboardingReadinessLoaded.value = true
+      onboardingReadinessBlocked.value = true
+      onboardingStatusLabel.value = 'Data Unavailable'
+      onboardingHeadline.value = 'Onboarding readiness cannot be confirmed.'
+      onboardingDegradedMessage.value = result.error.userGuidance
+      return
+    }
+    const cohorts = result.data.cohortSummaries
+    if (!cohorts || cohorts.length === 0) {
+      onboardingReadinessLoaded.value = true
+      onboardingStatusLabel.value = 'No Cohorts'
+      onboardingHeadline.value = 'No investor cohorts have been registered yet.'
+      return
+    }
+    const summary = normaliseCohortReadinessSummary(cohorts[0])
+    onboardingReadinessLoaded.value = true
+    onboardingReadinessReady.value = summary.isReadyForHandoff
+    onboardingReadinessBlocked.value = summary.hasLaunchBlockers && !summary.isReadyForHandoff
+    onboardingReadinessScore.value = summary.readinessScore
+    onboardingStatusLabel.value = summary.statusLabel
+    onboardingHeadline.value = summary.headline
+    onboardingBlockerTitles.value = summary.blockerTitles
+    onboardingDegradedMessage.value = null
+  } catch (err) {
+    onboardingReadinessLoaded.value = true
+    onboardingReadinessBlocked.value = true
+    onboardingStatusLabel.value = 'Error'
+    onboardingHeadline.value = 'Failed to load onboarding readiness data.'
+    onboardingDegradedMessage.value =
+      err instanceof Error ? err.message : 'Unexpected error loading compliance data.'
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Derived
@@ -754,6 +897,8 @@ onMounted(() => {
     state.value = buildDefaultCockpitState()
     isLoading.value = false
   }, 300)
+  // Load onboarding readiness from compliance case API (non-blocking)
+  void loadOnboardingReadiness()
 })
 
 onBeforeUnmount(() => {
@@ -781,5 +926,15 @@ defineExpose({
   postureIcon,
   postureIconBgClass,
   formattedRefreshedAt,
+  // Onboarding readiness
+  onboardingReadinessLoaded,
+  onboardingReadinessReady,
+  onboardingReadinessBlocked,
+  onboardingReadinessScore,
+  onboardingStatusLabel,
+  onboardingHeadline,
+  onboardingBlockerTitles,
+  onboardingDegradedMessage,
+  loadOnboardingReadiness,
 })
 </script>
