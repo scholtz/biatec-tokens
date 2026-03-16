@@ -388,4 +388,103 @@ describe('InvestorComplianceOnboardingWorkspace — logic (interaction & lifecyc
       expect(vm.topBlockers.length).toBe(0)
     })
   })
+
+  // ── Production path: autoRefreshInterval cleanup ──────────────────────────
+
+  describe('onBeforeUnmount with active interval', () => {
+    it('clears a manually-set autoRefreshInterval on unmount', async () => {
+      vi.useFakeTimers()
+      const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval')
+
+      const router = makeRouter()
+      const wrapper = mount(InvestorComplianceOnboardingWorkspace, {
+        global: { plugins: [router, createTestingPinia({ createSpy: vi.fn })] },
+      })
+      await router.isReady()
+      await vi.advanceTimersByTimeAsync(200)
+      await nextTick()
+
+      const vm = wrapper.vm as any
+      // Manually set an interval to simulate the production path where the
+      // auto-refresh interval would have been registered.
+      const dummyInterval = setInterval(() => {}, 1000)
+      vm.autoRefreshInterval = dummyInterval
+
+      wrapper.unmount()
+      await nextTick()
+
+      // clearInterval should have been called with our dummy interval
+      expect(clearIntervalSpy).toHaveBeenCalledWith(dummyInterval)
+      vi.useRealTimers()
+    })
+  })
+
+  // ── stageCardBorderClass / stageNumberClass helper coverage ──────────────
+
+  describe('stageCardBorderClass and stageNumberClass helpers', () => {
+    it('stageCardBorderClass returns expected class for each status', async () => {
+      const wrapper = await mountWorkspace()
+      const vm = wrapper.vm as any
+
+      expect(vm.stageCardBorderClass('complete')).toBe('border-green-800')
+      expect(vm.stageCardBorderClass('blocked')).toBe('border-red-800')
+      expect(vm.stageCardBorderClass('stale')).toBe('border-yellow-800')
+      expect(vm.stageCardBorderClass('in_progress')).toBe('border-blue-800')
+      expect(vm.stageCardBorderClass('pending_review')).toBe('border-blue-800')
+      expect(vm.stageCardBorderClass('not_started')).toBe('border-gray-700')
+    })
+
+    it('stageNumberClass returns expected class for each status', async () => {
+      const wrapper = await mountWorkspace()
+      const vm = wrapper.vm as any
+
+      expect(vm.stageNumberClass('complete')).toBe('bg-green-700 text-white')
+      expect(vm.stageNumberClass('blocked')).toBe('bg-red-700 text-white')
+      expect(vm.stageNumberClass('stale')).toBe('bg-yellow-700 text-white')
+      expect(vm.stageNumberClass('in_progress')).toBe('bg-blue-700 text-white')
+      expect(vm.stageNumberClass('pending_review')).toBe('bg-blue-700 text-white')
+      expect(vm.stageNumberClass('not_started')).toBe('bg-gray-700 text-gray-300')
+    })
+  })
+
+  // ── progressBarColorClass computed ────────────────────────────────────────
+
+  describe('progressBarColorClass computed', () => {
+    it('returns bg-green-500 for 100% readiness', async () => {
+      const wrapper = await mountWorkspace()
+      const vm = wrapper.vm as any
+
+      // Switch to ready fixture (100% readiness)
+      const readyBtn = wrapper.findAll('[data-testid^="fixture-btn-"]').find((btn) =>
+        btn.text().includes('Ready'),
+      )
+      expect(readyBtn).toBeDefined()
+      await readyBtn!.trigger('click')
+      await nextTick()
+
+      expect(vm.progressBarColorClass).toBe('bg-green-500')
+    })
+
+    it('returns bg-yellow-500 for 60-99% readiness', async () => {
+      const wrapper = await mountWorkspace()
+      const vm = wrapper.vm as any
+
+      // Mutate directly to a mid-range score
+      vm.workspaceState = { ...vm.workspaceState, readinessScore: 75 }
+      await nextTick()
+
+      expect(vm.progressBarColorClass).toBe('bg-yellow-500')
+    })
+
+    it('returns bg-red-500 for <60% readiness', async () => {
+      const wrapper = await mountWorkspace()
+      const vm = wrapper.vm as any
+
+      // Mutate directly to a low score
+      vm.workspaceState = { ...vm.workspaceState, readinessScore: 30 }
+      await nextTick()
+
+      expect(vm.progressBarColorClass).toBe('bg-red-500')
+    })
+  })
 })
