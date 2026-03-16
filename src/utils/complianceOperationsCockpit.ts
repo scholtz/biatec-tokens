@@ -643,6 +643,162 @@ export function buildDefaultHandoffs(items: WorkItem[], now: number = Date.now()
 }
 
 // ---------------------------------------------------------------------------
+// Role-aware summaries (AC #5)
+// ---------------------------------------------------------------------------
+
+/**
+ * Executive-facing role type that maps to the three named personas from the
+ * product acceptance criteria.  Distinct from OperatorRole (queue assignment
+ * labels) — these are the three audience personas the cockpit must serve.
+ */
+export type CockpitPersona = 'compliance_manager' | 'operations_lead' | 'executive_sponsor'
+
+export const COCKPIT_PERSONA_LABELS: Record<CockpitPersona, string> = {
+  compliance_manager: 'Compliance Manager',
+  operations_lead: 'Operations Lead',
+  executive_sponsor: 'Executive Sponsor',
+}
+
+export const COCKPIT_PERSONA_DESCRIPTIONS: Record<CockpitPersona, string> = {
+  compliance_manager:
+    'Queue health, overdue SLA breaches, and items requiring immediate review or escalation.',
+  operations_lead:
+    'Workload distribution, unassigned items, bottleneck concentration, and handoff readiness.',
+  executive_sponsor:
+    'Overall compliance posture, launch-blocking issues, and downstream readiness for program approval.',
+}
+
+/** A single stat shown in a role summary card */
+export interface RoleSummaryMetric {
+  label: string
+  value: number
+  /** css severity class suffix: 'red' | 'yellow' | 'green' | 'gray' */
+  severity: 'red' | 'yellow' | 'green' | 'gray'
+  /** Short action prompt shown to the persona */
+  prompt: string | null
+}
+
+/** A role-aware summary card produced for a specific persona */
+export interface RoleSummaryCard {
+  persona: CockpitPersona
+  label: string
+  description: string
+  metrics: RoleSummaryMetric[]
+  /** True when the persona has at least one critical metric requiring attention */
+  needsAttention: boolean
+}
+
+/**
+ * Derive role-aware summary cards for the three cockpit personas.
+ * Uses fail-closed logic: missing data is treated as degraded, not optimistic.
+ */
+export function deriveRoleSummaries(
+  items: WorkItem[],
+  health: QueueHealthMetrics,
+  now: number = Date.now(),
+): RoleSummaryCard[] {
+  const active = items.filter((i) => i.status !== 'complete')
+  const isItemOverdue = (i: WorkItem) =>
+    i.status === 'overdue' || classifySlaUrgency(i.dueAt, now) === 'overdue'
+  const overdueCount = active.filter(isItemOverdue).length
+  const dueSoonCount = active.filter(
+    (i) => classifySlaUrgency(i.dueAt, now) === 'due_soon',
+  ).length
+  const launchBlockingCount = active.filter((i) => i.isLaunchBlocking).length
+  const unassignedCount = active.filter((i) => i.ownership === 'unassigned').length
+  const escalatedCount = active.filter(
+    (i) => i.ownership === 'escalated' || i.status === 'escalated',
+  ).length
+  const approvalReadyCount = active.filter((i) => i.status === 'approval_ready').length
+
+  // ── Compliance Manager ──
+  const complianceCard: RoleSummaryCard = {
+    persona: 'compliance_manager',
+    label: COCKPIT_PERSONA_LABELS.compliance_manager,
+    description: COCKPIT_PERSONA_DESCRIPTIONS.compliance_manager,
+    needsAttention: overdueCount > 0 || health.blocked > 0,
+    metrics: [
+      {
+        label: 'Overdue',
+        value: overdueCount,
+        severity: overdueCount > 0 ? 'red' : 'green',
+        prompt: overdueCount > 0 ? 'Review and escalate overdue items now' : null,
+      },
+      {
+        label: 'Due Soon',
+        value: dueSoonCount,
+        severity: dueSoonCount > 0 ? 'yellow' : 'green',
+        prompt: dueSoonCount > 0 ? 'Action needed within 24 hours' : null,
+      },
+      {
+        label: 'Escalated',
+        value: escalatedCount,
+        severity: escalatedCount > 0 ? 'yellow' : 'gray',
+        prompt: escalatedCount > 0 ? 'Monitor escalated cases' : null,
+      },
+    ],
+  }
+
+  // ── Operations Lead ──
+  const operationsCard: RoleSummaryCard = {
+    persona: 'operations_lead',
+    label: COCKPIT_PERSONA_LABELS.operations_lead,
+    description: COCKPIT_PERSONA_DESCRIPTIONS.operations_lead,
+    needsAttention: unassignedCount > 0 || health.blocked > 0,
+    metrics: [
+      {
+        label: 'Unassigned',
+        value: unassignedCount,
+        severity: unassignedCount > 0 ? 'yellow' : 'green',
+        prompt: unassignedCount > 0 ? 'Assign ownership to prevent SLA drift' : null,
+      },
+      {
+        label: 'Blocked',
+        value: health.blocked,
+        severity: health.blocked > 0 ? 'red' : 'green',
+        prompt: health.blocked > 0 ? 'Unblock items to restore flow' : null,
+      },
+      {
+        label: 'Approval Ready',
+        value: approvalReadyCount,
+        severity: approvalReadyCount > 0 ? 'green' : 'gray',
+        prompt: approvalReadyCount > 0 ? 'Forward to approval queue' : null,
+      },
+    ],
+  }
+
+  // ── Executive Sponsor ──
+  const executiveCard: RoleSummaryCard = {
+    persona: 'executive_sponsor',
+    label: COCKPIT_PERSONA_LABELS.executive_sponsor,
+    description: COCKPIT_PERSONA_DESCRIPTIONS.executive_sponsor,
+    needsAttention: launchBlockingCount > 0,
+    metrics: [
+      {
+        label: 'Launch Blocking',
+        value: launchBlockingCount,
+        severity: launchBlockingCount > 0 ? 'red' : 'green',
+        prompt: launchBlockingCount > 0 ? 'Resolve blockers before proceeding to launch' : null,
+      },
+      {
+        label: 'Total Active',
+        value: health.total,
+        severity: health.total > 0 ? 'gray' : 'green',
+        prompt: null,
+      },
+      {
+        label: 'Overdue',
+        value: overdueCount,
+        severity: overdueCount > 0 ? 'red' : 'green',
+        prompt: overdueCount > 0 ? 'SLA breaches require senior attention' : null,
+      },
+    ],
+  }
+
+  return [complianceCard, operationsCard, executiveCard]
+}
+
+// ---------------------------------------------------------------------------
 // Data-testid constants
 // ---------------------------------------------------------------------------
 
@@ -670,4 +826,6 @@ export const COCKPIT_TEST_IDS = {
   REFRESHED_AT: 'cockpit-refreshed-at',
   FILTER_SELECT: 'worklist-filter-select',
   LOADING_STATE: 'cockpit-loading-state',
+  ROLE_SUMMARY_PANEL: 'role-summary-panel',
+  ROLE_SUMMARY_CARD: 'role-summary-card',
 } as const

@@ -126,6 +126,69 @@
             </div>
           </section>
 
+          <!-- ── Role-Aware Summaries (AC #5) ── -->
+          <section
+            class="rounded-2xl border border-gray-700 bg-gray-800/60 p-6 mb-8 shadow-lg"
+            :data-testid="COCKPIT_TEST_IDS.ROLE_SUMMARY_PANEL"
+            aria-labelledby="role-summary-heading"
+          >
+            <h2 id="role-summary-heading" class="text-lg font-semibold text-white mb-2">
+              Role-Aware Priorities
+            </h2>
+            <p class="text-gray-400 text-sm mb-5">
+              Tailored operational focus for each team role. Each card highlights the metrics
+              most relevant to that persona's responsibilities.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div
+                v-for="card in roleSummaries"
+                :key="card.persona"
+                :data-testid="COCKPIT_TEST_IDS.ROLE_SUMMARY_CARD"
+                :data-persona="card.persona"
+                class="rounded-xl border p-4 flex flex-col gap-3 transition-colors"
+                :class="roleSummaryCardBorderClass(card.needsAttention)"
+              >
+                <div>
+                  <div class="flex items-center gap-2 mb-1 flex-wrap">
+                    <h3 class="text-white font-medium text-sm">{{ card.label }}</h3>
+                    <span
+                      v-if="card.needsAttention"
+                      class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-800 text-yellow-100"
+                      aria-label="Needs attention"
+                    >
+                      Needs Attention
+                    </span>
+                  </div>
+                  <p class="text-gray-400 text-xs">{{ card.description }}</p>
+                </div>
+                <dl class="space-y-2">
+                  <div
+                    v-for="metric in card.metrics"
+                    :key="metric.label"
+                    class="flex items-center justify-between"
+                  >
+                    <dt class="text-xs text-gray-400">{{ metric.label }}</dt>
+                    <dd
+                      class="text-sm font-bold"
+                      :class="roleSummaryMetricClass(metric.severity)"
+                      :aria-label="`${metric.label}: ${metric.value}`"
+                    >
+                      {{ metric.value }}
+                    </dd>
+                  </div>
+                </dl>
+                <template v-for="metric in card.metrics" :key="metric.label">
+                  <p
+                    v-if="metric.prompt"
+                    class="text-xs text-gray-500 border-t border-gray-700 pt-2"
+                  >
+                    {{ metric.prompt }}
+                  </p>
+                </template>
+              </div>
+            </div>
+          </section>
+
           <!-- ── Queue Health Panel ── -->
           <section
             class="rounded-2xl border border-gray-700 bg-gray-800/60 p-6 mb-8 shadow-lg"
@@ -505,6 +568,7 @@ import {
   deriveStageBottlenecks,
   deriveCockpitPosture,
   buildDefaultHandoffs,
+  deriveRoleSummaries,
   cockpitPostureBannerClass,
   cockpitPostureIconClass,
   workItemStatusBadgeClass,
@@ -570,6 +634,8 @@ const queueHealth = computed(() => deriveQueueHealth(workItems.value, now.value)
 const stageBottlenecks = computed(() => deriveStageBottlenecks(workItems.value, now.value))
 
 const handoffs = computed(() => buildDefaultHandoffs(workItems.value, now.value))
+
+const roleSummaries = computed(() => deriveRoleSummaries(workItems.value, queueHealth.value, now.value))
 
 const posture = computed<CockpitPosture>(() =>
   deriveCockpitPosture(queueHealth.value, !isDegraded.value),
@@ -652,5 +718,24 @@ function handoffCardBorderClass(readiness: HandoffReadiness): string {
     default:
       return 'border-gray-700 bg-gray-900/30'
   }
+}
+
+function roleSummaryMetricClass(severity: 'red' | 'yellow' | 'green' | 'gray'): string {
+  switch (severity) {
+    case 'red':
+      return 'text-red-300'
+    case 'yellow':
+      return 'text-yellow-300'
+    case 'green':
+      return 'text-green-300'
+    default:
+      return 'text-gray-300'
+  }
+}
+
+function roleSummaryCardBorderClass(needsAttention: boolean): string {
+  return needsAttention
+    ? 'border-yellow-700 bg-yellow-900/10'
+    : 'border-gray-700 bg-gray-800/60'
 }
 </script>

@@ -395,3 +395,45 @@ describe('ComplianceOperationsCockpit — disclaimer', () => {
     expect(disclaimer.attributes('role')).toBe('note')
   })
 })
+
+// ---------------------------------------------------------------------------
+// 9. Role-aware summary panel (AC #5)
+// ---------------------------------------------------------------------------
+
+describe('ComplianceOperationsCockpit — role-aware summaries (AC #5)', () => {
+  it('renders the role summary panel', async () => {
+    const wrapper = await mountCockpit()
+    const panel = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.ROLE_SUMMARY_PANEL}"]`)
+    expect(panel.exists()).toBe(true)
+  })
+
+  it('role summary panel has aria-labelledby (SC 1.3.1)', async () => {
+    const wrapper = await mountCockpit()
+    const panel = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.ROLE_SUMMARY_PANEL}"]`)
+    expect(panel.attributes('aria-labelledby')).toBeTruthy()
+  })
+
+  it('renders exactly three role summary cards', async () => {
+    const wrapper = await mountCockpit()
+    const cards = wrapper.findAll(`[data-testid="${COCKPIT_TEST_IDS.ROLE_SUMMARY_CARD}"]`)
+    expect(cards.length).toBe(3)
+  })
+
+  it('each role summary card has a data-persona attribute', async () => {
+    const wrapper = await mountCockpit()
+    const cards = wrapper.findAll(`[data-testid="${COCKPIT_TEST_IDS.ROLE_SUMMARY_CARD}"]`)
+    const personas = cards.map((c) => c.attributes('data-persona'))
+    expect(personas).toContain('compliance_manager')
+    expect(personas).toContain('operations_lead')
+    expect(personas).toContain('executive_sponsor')
+  })
+
+  it('role summary cards contain metric labels', async () => {
+    const wrapper = await mountCockpit()
+    const panel = wrapper.find(`[data-testid="${COCKPIT_TEST_IDS.ROLE_SUMMARY_PANEL}"]`)
+    const html = panel.html()
+    expect(html).toContain('Overdue')
+    expect(html).toContain('Unassigned')
+    expect(html).toContain('Launch Blocking')
+  })
+})

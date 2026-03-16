@@ -22,6 +22,7 @@ import {
   deriveHandoffReadiness,
   deriveCockpitPosture,
   buildDefaultHandoffs,
+  deriveRoleSummaries,
   cockpitPostureBannerClass,
   cockpitPostureIconClass,
   workItemStatusBadgeClass,
@@ -36,6 +37,7 @@ import {
   COCKPIT_POSTURE_LABELS,
   COCKPIT_STAGE_LABELS,
   HANDOFF_READINESS_LABELS,
+  COCKPIT_PERSONA_LABELS,
   MOCK_WORK_ITEMS_HEALTHY,
   MOCK_WORK_ITEMS_DEGRADED,
   SLA_DUE_SOON_HOURS,
@@ -681,5 +683,111 @@ describe('Fail-closed behaviour', () => {
     expect(health.total).toBe(0)
     expect(health.overdue).toBe(0)
     expect(health.blocked).toBe(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// AC #5 — Role-aware summaries (deriveRoleSummaries)
+// ---------------------------------------------------------------------------
+
+describe('deriveRoleSummaries', () => {
+  it('returns exactly three role summary cards', () => {
+    const health = deriveQueueHealth(MOCK_WORK_ITEMS_DEGRADED, FIXED_NOW)
+    const summaries = deriveRoleSummaries(MOCK_WORK_ITEMS_DEGRADED, health, FIXED_NOW)
+    expect(summaries).toHaveLength(3)
+  })
+
+  it('returns cards for compliance_manager, operations_lead, and executive_sponsor', () => {
+    const health = deriveQueueHealth(MOCK_WORK_ITEMS_DEGRADED, FIXED_NOW)
+    const summaries = deriveRoleSummaries(MOCK_WORK_ITEMS_DEGRADED, health, FIXED_NOW)
+    const personas = summaries.map((c) => c.persona)
+    expect(personas).toContain('compliance_manager')
+    expect(personas).toContain('operations_lead')
+    expect(personas).toContain('executive_sponsor')
+  })
+
+  it('each card has a non-empty label and description', () => {
+    const health = deriveQueueHealth(MOCK_WORK_ITEMS_DEGRADED, FIXED_NOW)
+    const summaries = deriveRoleSummaries(MOCK_WORK_ITEMS_DEGRADED, health, FIXED_NOW)
+    summaries.forEach((card) => {
+      expect(card.label).toBeTruthy()
+      expect(card.description).toBeTruthy()
+    })
+  })
+
+  it('each card has at least two metrics', () => {
+    const health = deriveQueueHealth(MOCK_WORK_ITEMS_DEGRADED, FIXED_NOW)
+    const summaries = deriveRoleSummaries(MOCK_WORK_ITEMS_DEGRADED, health, FIXED_NOW)
+    summaries.forEach((card) => {
+      expect(card.metrics.length).toBeGreaterThanOrEqual(2)
+    })
+  })
+
+  it('compliance_manager card flags overdue items when they exist', () => {
+    const health = deriveQueueHealth(MOCK_WORK_ITEMS_DEGRADED, FIXED_NOW)
+    const summaries = deriveRoleSummaries(MOCK_WORK_ITEMS_DEGRADED, health, FIXED_NOW)
+    const cmCard = summaries.find((c) => c.persona === 'compliance_manager')!
+    const overdueMetric = cmCard.metrics.find((m) => m.label === 'Overdue')!
+    // MOCK_WORK_ITEMS_DEGRADED has an overdue item (wi-101)
+    expect(overdueMetric.severity).toBe('red')
+    expect(cmCard.needsAttention).toBe(true)
+  })
+
+  it('operations_lead card flags unassigned items when they exist', () => {
+    const health = deriveQueueHealth(MOCK_WORK_ITEMS_DEGRADED, FIXED_NOW)
+    const summaries = deriveRoleSummaries(MOCK_WORK_ITEMS_DEGRADED, health, FIXED_NOW)
+    const olCard = summaries.find((c) => c.persona === 'operations_lead')!
+    const unassignedMetric = olCard.metrics.find((m) => m.label === 'Unassigned')!
+    // wi-101 is unassigned
+    expect(unassignedMetric.value).toBeGreaterThan(0)
+    expect(unassignedMetric.severity).toBe('yellow')
+    expect(olCard.needsAttention).toBe(true)
+  })
+
+  it('executive_sponsor card flags launch-blocking items when they exist', () => {
+    const health = deriveQueueHealth(MOCK_WORK_ITEMS_DEGRADED, FIXED_NOW)
+    const summaries = deriveRoleSummaries(MOCK_WORK_ITEMS_DEGRADED, health, FIXED_NOW)
+    const esCard = summaries.find((c) => c.persona === 'executive_sponsor')!
+    const launchMetric = esCard.metrics.find((m) => m.label === 'Launch Blocking')!
+    expect(launchMetric.value).toBeGreaterThan(0)
+    expect(launchMetric.severity).toBe('red')
+    expect(esCard.needsAttention).toBe(true)
+  })
+
+  it('all cards return needsAttention=false when items are healthy', () => {
+    const tenDaysMs = 10 * 24 * HOUR_MS
+    const healthItems: WorkItem[] = [
+      makeItem({ status: 'in_progress', ownership: 'assigned_to_me', dueAt: new Date(FIXED_NOW + tenDaysMs).toISOString(), isLaunchBlocking: false }),
+    ]
+    const health = deriveQueueHealth(healthItems, FIXED_NOW)
+    const summaries = deriveRoleSummaries(healthItems, health, FIXED_NOW)
+    // With healthy items, no overdue/blocked/launch-blocking → no attention needed
+    const complianceCard = summaries.find((c) => c.persona === 'compliance_manager')!
+    const executiveCard = summaries.find((c) => c.persona === 'executive_sponsor')!
+    expect(complianceCard.needsAttention).toBe(false)
+    expect(executiveCard.needsAttention).toBe(false)
+  })
+
+  it('returns sensible metrics for empty work item list', () => {
+    const health = deriveQueueHealth([], FIXED_NOW)
+    const summaries = deriveRoleSummaries([], health, FIXED_NOW)
+    expect(summaries).toHaveLength(3)
+    summaries.forEach((card) => {
+      card.metrics.forEach((metric) => {
+        expect(typeof metric.value).toBe('number')
+        expect(metric.value).toBe(0)
+      })
+    })
+  })
+
+  it('COCKPIT_PERSONA_LABELS covers all three personas', () => {
+    expect(COCKPIT_PERSONA_LABELS.compliance_manager).toBeTruthy()
+    expect(COCKPIT_PERSONA_LABELS.operations_lead).toBeTruthy()
+    expect(COCKPIT_PERSONA_LABELS.executive_sponsor).toBeTruthy()
+  })
+
+  it('COCKPIT_TEST_IDS includes ROLE_SUMMARY_PANEL and ROLE_SUMMARY_CARD', () => {
+    expect(COCKPIT_TEST_IDS.ROLE_SUMMARY_PANEL).toBe('role-summary-panel')
+    expect(COCKPIT_TEST_IDS.ROLE_SUMMARY_CARD).toBe('role-summary-card')
   })
 })
