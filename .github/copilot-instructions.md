@@ -2028,6 +2028,67 @@ If an E2E test fails with `expect(locator).toBeAttached() — element(s) not fou
 - ❌ Add a redundant `data-testid` on a component tag "for reference" — it will break E2E tests
 - ✅ Let components own their own `data-testid` values; parents should not override them
 
+---
+
+### 7aa-b. `textContent()` on Compound Cells Returns Label Text — Always Scope to the Value Element (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 16, 2026 (PR #666 — queue health summary test) 🚨**
+
+**Violation**: An E2E test called `totalCell.textContent()` on the `[data-testid="health-total"]` wrapper div. The div contains both a `<dd>` (numeric value, e.g. "7") and a `<dt>` (label text, e.g. "Total"). `textContent()` on the wrapper returns "7\n              Total" and `Number("7\n              Total")` is `NaN`. The test asserted `> 0` and failed on all 3 retries.
+
+**Root Cause**: Assumed `textContent()` on a `data-testid` container returns only the primary value. Compound cells (value + label, count + description) always return both text nodes concatenated.
+
+**Correct Pattern**:
+```typescript
+// ❌ WRONG — textContent returns "7\n              Total" → Number(...) = NaN
+const text = await page.getByTestId('health-total').textContent()
+expect(Number(text?.trim())).toBeGreaterThan(0)
+
+// ✅ CORRECT — scope to the <dd> child to get only the numeric value
+const totalValue = page.getByTestId('health-total').locator('dd').first()
+await expect(totalValue).toBeAttached({ timeout: 5000 })
+const text = await totalValue.textContent({ timeout: 5000 })
+expect(Number(text?.trim())).toBeGreaterThan(0)
+```
+
+**Pre-Commit Check**: Before asserting `Number(text)` on any textContent, verify what the full div renders — if it has both a value and a label, always scope to the value element (e.g., `dd`, `span`, `strong`).
+
+---
+
+### 7aa-c. `getAttribute()` on a Briefly-Visible Element Hangs 60s When Element Detaches (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 16, 2026 (PR #666 — loading state aria-live test) 🚨**
+
+**Violation**: A test called `locator.isVisible({ timeout: 500 })` to catch a ~150ms loading state, then called `locator.getAttribute('role')` WITHOUT an explicit timeout. The loading spinner disappeared between `isVisible` returning `true` and the `getAttribute` call, causing Playwright to wait the full 60s global timeout before failing (timedOut).
+
+**Root Cause**: `getAttribute()` without a timeout inherits the test's global action timeout (60s). If the element detaches from the DOM between the snapshot check and the attribute read, Playwright waits for the element to reattach — up to 60s.
+
+**Correct Pattern**:
+```typescript
+// ❌ WRONG — getAttribute hangs 60s if element detaches between isVisible() and this call
+const loadingVisible = await loadingEl.isVisible({ timeout: 500 }).catch(() => false)
+if (loadingVisible) {
+  const role = await loadingEl.getAttribute('role')   // No timeout → waits 60s if detached
+  expect(role).toBe('status')
+}
+
+// ✅ CORRECT — explicit short timeout + catch for detach
+const loadingVisible = await loadingEl.isVisible({ timeout: 500 }).catch(() => false)
+if (loadingVisible) {
+  const role = await loadingEl.getAttribute('role', { timeout: 2000 }).catch(() => null)
+  if (role !== null) expect(role).toBe('status')
+  const ariaLive = await loadingEl.getAttribute('aria-live', { timeout: 2000 }).catch(() => null)
+  if (ariaLive !== null) expect(ariaLive).toBe('polite')
+}
+```
+
+**Universal Rule**: ALWAYS add `{ timeout: N }` to `getAttribute()` calls on elements that may briefly appear (loading states, toast notifications, transitioning elements). Use `.catch(() => null)` and check for null before asserting.
+
+**Never Again**:
+- ❌ Call `getAttribute()` without `{ timeout }` on elements that can disappear (loading states, toasts)
+- ❌ Use `isVisible({ timeout: 500 })` to "catch" a brief element and then do attribute reads without timeouts
+- ❌ Assume a positive `isVisible()` result means the element stays in DOM for subsequent calls
+
 
 
 

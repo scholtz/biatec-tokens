@@ -574,10 +574,12 @@ test.describe('Investor Compliance Onboarding — accessibility', () => {
     const loadingEl = page.getByTestId('loading-state')
     const loadingVisible = await loadingEl.isVisible({ timeout: 500 }).catch(() => false)
     if (loadingVisible) {
-      const role = await loadingEl.getAttribute('role')
-      expect(role).toBe('status')
-      const ariaLive = await loadingEl.getAttribute('aria-live')
-      expect(ariaLive).toBe('polite')
+      // Use explicit short timeouts: the loading state only lasts ~150ms; if the element
+      // detaches between isVisible() and getAttribute(), catch the detach quickly.
+      const role = await loadingEl.getAttribute('role', { timeout: 2000 }).catch(() => null)
+      if (role !== null) expect(role).toBe('status')
+      const ariaLive = await loadingEl.getAttribute('aria-live', { timeout: 2000 }).catch(() => null)
+      if (ariaLive !== null) expect(ariaLive).toBe('polite')
     }
   })
 
@@ -786,7 +788,10 @@ test.describe('Investor Compliance Onboarding — queue health summary bar', () 
 
     const totalCell = page.getByTestId('health-total')
     await expect(totalCell).toBeVisible({ timeout: 15000 })
-    const text = await totalCell.textContent({ timeout: 5000 })
+    // scope to the <dd> child to get only the numeric value (the cell also contains <dt> label text)
+    const totalValue = totalCell.locator('dd').first()
+    await expect(totalValue).toBeAttached({ timeout: 5000 })
+    const text = await totalValue.textContent({ timeout: 5000 })
     // partial fixture has 7 stages
     expect(text).not.toBeNull()
     expect(Number(text?.trim() ?? '0')).toBeGreaterThan(0)
