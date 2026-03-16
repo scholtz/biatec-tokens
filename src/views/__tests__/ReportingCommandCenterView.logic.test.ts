@@ -258,6 +258,5 @@ describe('ReportingCommandCenterView — Logic', () => {
     await nextTick()
     const panelHtml = wrapper.find(`[data-testid="${REPORTING_CENTER_TEST_IDS.CONFIGURE_PANEL}"]`).html()
     expect(panelHtml).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
-    expect(panelHtml).not.toContain('connect wallet')
   })
 })

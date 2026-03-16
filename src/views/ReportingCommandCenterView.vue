@@ -384,7 +384,7 @@ function audienceIcon(audience: ReportAudience) {
                 v-if="template.nextRunAt"
                 class="text-xs text-gray-500"
               >
-                {{ buildCadenceLabel(template.cadence, template.nextRunAt) }}
+                {{ buildCadenceLabel(template.cadence, template.nextRunAt) || 'Schedule not configured' }}
               </p>
 
               <!-- Stale/missing evidence warning -->

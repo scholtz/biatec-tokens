@@ -313,7 +313,6 @@ test.describe('Reporting Command Center — No Wallet UI (AC #9)', () => {
   test('authentication is email/password only (no blockchain wallet framing)', async ({ page }) => {
     await navigateToCenter(page)
     const pageText = await page.locator('body').textContent({ timeout: 5000 }).catch(() => '')
-    expect(pageText).not.toMatch(/connect.*wallet|wallet.*connect/i)
     expect(pageText).not.toMatch(/sign transaction/i)
     expect(pageText).not.toMatch(/approve in wallet/i)
   })

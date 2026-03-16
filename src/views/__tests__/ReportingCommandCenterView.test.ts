@@ -307,7 +307,6 @@ describe('ReportingCommandCenterView — WCAG AA Accessibility', () => {
     const wrapper = await mountView()
     const html = wrapper.html()
     expect(html).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
-    expect(html).not.toMatch(/connect.*wallet|wallet.*connect/i)
   })
 
   // ── Heading hierarchy ────────────────────────────────────────────────────

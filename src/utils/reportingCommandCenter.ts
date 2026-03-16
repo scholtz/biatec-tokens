@@ -385,7 +385,7 @@ export function buildCadenceLabel(cadence: ReportCadence, nextRunAt: string | nu
   if (!nextRunAt) return cadenceLabel
   const date = new Date(nextRunAt)
   if (isNaN(date.getTime())) return cadenceLabel
-  const formatted = date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+  const formatted = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
   return `${cadenceLabel} — Next run: ${formatted}`
 }
 
