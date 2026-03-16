@@ -24,7 +24,7 @@ This is the highest-fidelity proof the repository produces. When a strict sign-o
 |---|---|
 | **Sales and demos** | Customers hear that sign-in, guided launch, and deployment are tested against a real service in CI. This builds trust during procurement reviews. |
 | **Risk reduction** | The gate catches regressions in the critical path before they reach customers. A failed gate is far cheaper than a failed enterprise onboarding. |
-| **Release governance** | The strict lane produces artefacts (traces, screenshots) that can be cited as release evidence. Product owners can point to a specific workflow run as proof. |
+| **Release governance** | The strict lane produces artifacts (traces, screenshots) that can be cited as release evidence. Product owners can point to a specific workflow run as proof. |
 | **Premium pricing support** | Enterprise buyers expect the vendor to demonstrate operational discipline. A visible sign-off gate strengthens the case for professional and enterprise pricing. |
 
 ## Two-Lane Model
@@ -58,7 +58,7 @@ The two lanes do not block each other. Standard CI remains fast. The strict lane
 **Behaviour:**
 - Workflow completes successfully (does not fail the push)
 - All sign-off tests skip with a clear message ("not release evidence")
-- A `signoff-status.json` artefact is uploaded showing the configuration state
+- A `signoff-status.json` artifact is uploaded showing the configuration state
 - No real backend was exercised; this run cannot be cited as release evidence
 
 **Interpreting this:** The workflow infrastructure is working. The missing backend configuration is clearly documented. When secrets are configured, the next run will produce real evidence.
@@ -71,7 +71,7 @@ The two lanes do not block each other. Standard CI remains fast. The strict lane
 - Vite dev server starts
 - All sign-off tests run against the real backend
 - Tests fail loudly on any backend unavailability or contract violation
-- Full Playwright report + traces uploaded as artefact
+- Full Playwright report + traces uploaded as artifact
 
 **Interpreting this:** If the workflow shows ✅ PASSED, this run is credible release evidence.
 
@@ -81,7 +81,7 @@ The two lanes do not block each other. Standard CI remains fast. The strict lane
 
 **Behaviour:**
 - If secrets are NOT configured: workflow fails immediately after the prerequisite check (fail-closed gate). An operator explicitly requesting release sign-off must have the backend configured.
-- If secrets ARE configured: full strict sign-off runs and produces evidence artefacts.
+- If secrets ARE configured: full strict sign-off runs and produces evidence artifacts.
 
 **Interpreting this:** For official release sign-off, always use `workflow_dispatch` with properly configured secrets. The fail-closed behaviour on `workflow_dispatch` without secrets is intentional — it prevents a manual release sign-off from being accidentally "passed" in infrastructure-only mode.
 
@@ -110,7 +110,7 @@ The suite calls:
 
 ### ❌ `FAILED` — Tests ran and failed
 
-Download the `strict-signoff-report-{run-id}` artefact. It contains:
+Download the `strict-signoff-report-{run-id}` artifact. It contains:
 - **HTML report** — test-by-test results with timing
 - **Traces** — Playwright trace viewer files for step-by-step replay
 - **Screenshots** — captured on test failure
@@ -127,12 +127,12 @@ Common failure causes:
 
 ### ⚠️ `NOT CONFIGURED` — No backend secrets, workflow completed with skipped tests
 
-All sign-off tests skipped because `API_BASE_URL` was not set or pointed to localhost. The `signoff-status.json` artefact explains the state. This is NOT release evidence.
+All sign-off tests skipped because `API_BASE_URL` was not set or pointed to localhost. The `signoff-status.json` artifact explains the state. This is NOT release evidence.
 
 To produce real release evidence:
 1. Configure `SIGNOFF_API_BASE_URL`, `SIGNOFF_TEST_EMAIL`, `SIGNOFF_TEST_PASSWORD` as repository secrets
 2. Trigger `workflow_dispatch` from **Actions → 🔒 Strict Backend Sign-off Gate**
-3. Download the artefact and cite the run ID in release notes
+3. Download the artifact and cite the run ID in release notes
 
 ### ⚠️ `SKIPPED` — Tests ran but all were skipped
 
@@ -157,7 +157,7 @@ The test account must be:
 - Able to call `POST /api/auth/login` successfully
 - Able to initiate and poll the deployment lifecycle endpoint
 
-If `SIGNOFF_TEST_PASSWORD` is empty and you use `workflow_dispatch`, the workflow will fail closed (exit 1) rather than silently passing. For push-to-main without secrets, the workflow completes with all tests skipped and an infrastructure-status artefact.
+If `SIGNOFF_TEST_PASSWORD` is empty and you use `workflow_dispatch`, the workflow will fail closed (exit 1) rather than silently passing. For push-to-main without secrets, the workflow completes with all tests skipped and an infrastructure-status artifact.
 
 ## Running the Strict Lane Locally
 
@@ -182,11 +182,11 @@ npx playwright test e2e/mvp-backend-signoff.spec.ts --trace on
 
 **Note:** If you use `workflow_dispatch` without secrets configured, the workflow will fail immediately with a clear error message explaining what is missing. This is intentional fail-closed behaviour for manual release sign-off.
 
-## Artefact Retention
+## Artifact Retention
 
-Sign-off artefacts are retained for **90 days**. This ensures that a specific sign-off run can be referenced during audit, procurement review, or post-mortem investigation.
+Sign-off artifacts are retained for **90 days**. This ensures that a specific sign-off run can be referenced during audit, procurement review, or post-mortem investigation.
 
-The artefact name includes the run ID: `strict-signoff-report-{run-id}`.
+The artifact name includes the run ID: `strict-signoff-report-{run-id}`.
 
 ## Relationship to Roadmap
 
@@ -196,9 +196,9 @@ This strict sign-off lane directly addresses the MVP sign-off gap identified in 
 
 With this updated workflow:
 - The sign-off lane **completes on every push to main** — even without backend secrets (infrastructure-only mode)
-- Every completion produces an **artefact** showing the current configuration state
+- Every completion produces an **artifact** showing the current configuration state
 - When secrets ARE configured, the lane **fails loudly** when backend prerequisites are absent (fail-closed for release gates)
-- It produces **artefacts suitable for product-owner review** when backend is configured
+- It produces **artifacts suitable for product-owner review** when backend is configured
 - It is **separable** from the fast developer-feedback lane (no impact on standard CI speed)
 - For **manual sign-off** (`workflow_dispatch`): still fails if secrets are missing — the fail-closed gate is maintained for deliberate release sign-off
 

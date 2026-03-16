@@ -338,7 +338,7 @@ jobs:
           echo "============================================"
 
       - name: Fail if manual sign-off triggered without prerequisites
-        if: github.event_name == 'workflow_dispatch' && steps.prereqs.outputs.prereqs_met != 'true'
+        if: github.event_name == 'workflow_dispatch' && steps.prereqs.conclusion == 'success' && steps.prereqs.outputs.prereqs_met != 'true'
         run: |
           echo ""
           echo "❌ STRICT SIGN-OFF PREREQUISITE FAILURE (workflow_dispatch)"
