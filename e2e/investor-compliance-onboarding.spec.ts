@@ -773,19 +773,19 @@ test.describe('Investor Compliance Onboarding — queue health summary bar', () 
   test('queue health summary bar is visible on page load', async ({ page }) => {
     await openWorkspace(page)
     const heading = page.getByTestId('onboarding-workspace-heading')
-    await expect(heading).toBeVisible({ timeout: 30000 })
+    await expect(heading).toBeVisible({ timeout: 20000 })
 
     const bar = page.getByTestId('queue-health-summary')
-    await expect(bar).toBeVisible({ timeout: 20000 })
+    await expect(bar).toBeVisible({ timeout: 15000 })
   })
 
   test('queue health summary shows total count', async ({ page }) => {
     await openWorkspace(page)
     const heading = page.getByTestId('onboarding-workspace-heading')
-    await expect(heading).toBeVisible({ timeout: 30000 })
+    await expect(heading).toBeVisible({ timeout: 20000 })
 
     const totalCell = page.getByTestId('health-total')
-    await expect(totalCell).toBeVisible({ timeout: 20000 })
+    await expect(totalCell).toBeVisible({ timeout: 15000 })
     const text = await totalCell.textContent({ timeout: 5000 })
     // partial fixture has 7 stages
     expect(text).not.toBeNull()
@@ -795,13 +795,13 @@ test.describe('Investor Compliance Onboarding — queue health summary bar', () 
   test('queue health summary has escalated and overdue counters', async ({ page }) => {
     await openWorkspace(page)
     const heading = page.getByTestId('onboarding-workspace-heading')
-    await expect(heading).toBeVisible({ timeout: 30000 })
+    await expect(heading).toBeVisible({ timeout: 20000 })
 
     const escalated = page.getByTestId('health-escalated')
-    await expect(escalated).toBeVisible({ timeout: 20000 })
+    await expect(escalated).toBeVisible({ timeout: 15000 })
 
     const overdue = page.getByTestId('health-overdue')
-    await expect(overdue).toBeVisible({ timeout: 20000 })
+    await expect(overdue).toBeVisible({ timeout: 15000 })
   })
 })
 
@@ -813,19 +813,19 @@ test.describe('Investor Compliance Onboarding — approval handoff button', () =
   test('"Hand Off to Approval" button is visible', async ({ page }) => {
     await openWorkspace(page)
     const heading = page.getByTestId('onboarding-workspace-heading')
-    await expect(heading).toBeVisible({ timeout: 30000 })
+    await expect(heading).toBeVisible({ timeout: 20000 })
 
     const btn = page.getByTestId('handoff-to-approval-btn')
-    await expect(btn).toBeVisible({ timeout: 20000 })
+    await expect(btn).toBeVisible({ timeout: 15000 })
   })
 
   test('"Hand Off to Approval" button links to /compliance/approval', async ({ page }) => {
     await openWorkspace(page)
     const heading = page.getByTestId('onboarding-workspace-heading')
-    await expect(heading).toBeVisible({ timeout: 30000 })
+    await expect(heading).toBeVisible({ timeout: 20000 })
 
     const btn = page.getByTestId('handoff-to-approval-btn')
-    await expect(btn).toBeAttached({ timeout: 20000 })
+    await expect(btn).toBeAttached({ timeout: 15000 })
     const href = await btn.getAttribute('href')
     expect(href).toContain('/compliance/approval')
   })
@@ -833,10 +833,10 @@ test.describe('Investor Compliance Onboarding — approval handoff button', () =
   test('"View Cases" button is visible and links to approval', async ({ page }) => {
     await openWorkspace(page)
     const heading = page.getByTestId('onboarding-workspace-heading')
-    await expect(heading).toBeVisible({ timeout: 30000 })
+    await expect(heading).toBeVisible({ timeout: 20000 })
 
     const btn = page.getByTestId('view-cases-btn')
-    await expect(btn).toBeVisible({ timeout: 20000 })
+    await expect(btn).toBeVisible({ timeout: 15000 })
     const href = await btn.getAttribute('href')
     expect(href).toContain('/compliance/approval')
   })
@@ -850,7 +850,7 @@ test.describe('Investor Compliance Onboarding — degraded state banner', () => 
   test('degraded state banner is NOT shown by default (fixtures available)', async ({ page }) => {
     await openWorkspace(page)
     const heading = page.getByTestId('onboarding-workspace-heading')
-    await expect(heading).toBeVisible({ timeout: 30000 })
+    await expect(heading).toBeVisible({ timeout: 20000 })
 
     // In dev/demo mode with fixtures loaded, the degraded banner is rendered by v-if,
     // so it should not exist in the DOM at all (count = 0).
@@ -862,9 +862,9 @@ test.describe('Investor Compliance Onboarding — degraded state banner', () => 
   test('filter controls are visible', async ({ page }) => {
     await openWorkspace(page)
     const heading = page.getByTestId('onboarding-workspace-heading')
-    await expect(heading).toBeVisible({ timeout: 30000 })
+    await expect(heading).toBeVisible({ timeout: 20000 })
 
     const filters = page.getByTestId('queue-filter-controls')
-    await expect(filters).toBeVisible({ timeout: 20000 })
+    await expect(filters).toBeVisible({ timeout: 15000 })
   })
 })
