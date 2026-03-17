@@ -548,10 +548,18 @@
                       </p>
                     </div>
                   </div>
-                  <div class="flex-shrink-0 flex items-center gap-3">
+                  <div class="flex-shrink-0 flex items-center gap-2">
                     <span class="text-xs text-gray-500 hidden sm:block">
                       {{ COCKPIT_STAGE_LABELS[item.stage] }}
                     </span>
+                    <button
+                      class="text-xs text-teal-400 hover:text-teal-300 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded whitespace-nowrap"
+                      :data-testid="`view-case-details-${item.id}`"
+                      :aria-label="`View case details for: ${item.title}`"
+                      @click="openDrillDown(item)"
+                    >
+                      View details
+                    </button>
                     <router-link
                       :to="item.workspacePath"
                       class="text-xs text-teal-400 hover:text-teal-300 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded whitespace-nowrap"
@@ -712,11 +720,27 @@
       </div>
     </div>
   </MainLayout>
+
+  <!-- Case Drill-Down Panel -->
+  <CaseDrillDownPanel
+    v-model="drillDownOpen"
+    :item="selectedWorkItem"
+    @escalate="openEscalation"
+  />
+
+  <!-- Guided Escalation Modal -->
+  <EscalationFlowModal
+    v-model="escalationOpen"
+    :item="escalationItem"
+    @submitted="onEscalationSubmitted"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import MainLayout from '../layout/MainLayout.vue'
+import CaseDrillDownPanel from '../components/compliance/CaseDrillDownPanel.vue'
+import EscalationFlowModal from '../components/compliance/EscalationFlowModal.vue'
 import {
   ChartBarSquareIcon,
   ArrowPathIcon,
@@ -771,6 +795,12 @@ const workItems = ref<WorkItem[]>([])
 const refreshedAt = ref<string>(MOCK_COCKPIT_REFRESHED_AT)
 const worklistFilter = ref<string>('all')
 const activePersona = ref<OperatorRole>('compliance_analyst')
+
+// Drill-down and escalation state
+const drillDownOpen = ref(false)
+const selectedWorkItem = ref<WorkItem | null>(null)
+const escalationOpen = ref(false)
+const escalationItem = ref<WorkItem | null>(null)
 
 // ---------------------------------------------------------------------------
 // Lifecycle
@@ -899,6 +929,22 @@ function getItemSlaUrgency(item: WorkItem) {
 
 function getHandoffContext(item: WorkItem) {
   return deriveWorkItemHandoffContext(item, now.value)
+}
+
+function openDrillDown(item: WorkItem) {
+  selectedWorkItem.value = item
+  drillDownOpen.value = true
+}
+
+function openEscalation(item: WorkItem) {
+  escalationItem.value = item
+  drillDownOpen.value = false
+  escalationOpen.value = true
+}
+
+function onEscalationSubmitted(_payload: { item: WorkItem; reason: string; note: string; destination: string }) {
+  // In production, this would call the compliance case management API.
+  // For now, just close the escalation modal after a brief confirmation display.
 }
 
 function handoffCardBorderClass(readiness: HandoffReadiness): string {
