@@ -74,7 +74,7 @@ test.describe('Case Drill-Down — analyst journey', () => {
     await goToCockpit(page)
     await openFirstCaseDrillDown(page)
 
-    const nextAction = page.locator('[data-testid="drill-down-next-action-box"]')
+    const nextAction = page.locator('[data-testid="drill-down-next-action"]')
     await nextAction.waitFor({ state: 'visible', timeout: 10000 })
     const text = await nextAction.textContent({ timeout: 5000 })
     expect(text!.trim().length).toBeGreaterThan(10)
@@ -84,7 +84,7 @@ test.describe('Case Drill-Down — analyst journey', () => {
     await goToCockpit(page)
     await openFirstCaseDrillDown(page)
 
-    const timelineSection = page.locator('[data-testid="drill-down-timeline-section"]')
+    const timelineSection = page.locator('[data-testid="drill-down-timeline"]')
     await timelineSection.waitFor({ state: 'visible', timeout: 10000 })
 
     const events = page.locator('[data-testid="drill-down-timeline-event"]')
@@ -157,7 +157,7 @@ test.describe('Case Drill-Down — approver journey', () => {
     await goToCockpit(page)
     await openFirstCaseDrillDown(page)
 
-    const historySection = page.locator('[data-testid="drill-down-approval-history-section"]')
+    const historySection = page.locator('[data-testid="drill-down-approval-history"]')
     await historySection.waitFor({ state: 'visible', timeout: 10000 })
     expect(await historySection.isVisible()).toBe(true)
   })
@@ -186,7 +186,7 @@ test.describe('Case Drill-Down — approver journey', () => {
     await goToCockpit(page)
     await openFirstCaseDrillDown(page)
 
-    const link = page.locator('[data-testid="drill-down-open-workspace-link"]')
+    const link = page.locator('[data-testid="drill-down-open-workspace"]')
     await link.waitFor({ state: 'visible', timeout: 10000 })
     expect(await link.getAttribute('href', { timeout: 3000 })).toBeTruthy()
   })
@@ -332,7 +332,7 @@ test.describe('Degraded data handling', () => {
     await goToCockpit(page)
     await openFirstCaseDrillDown(page)
 
-    const box = page.locator('[data-testid="drill-down-next-action-box"]')
+    const box = page.locator('[data-testid="drill-down-next-action"]')
     await box.waitFor({ state: 'visible', timeout: 10000 })
     const text = await box.textContent({ timeout: 5000 })
     // Must have real guidance, not just whitespace
