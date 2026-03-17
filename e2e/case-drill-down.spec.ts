@@ -14,7 +14,7 @@ import { test, expect } from '@playwright/test'
 import { withAuth, suppressBrowserErrors, getNavText } from './helpers/auth'
 
 const BASE = 'http://localhost:5173'
-const COCKPIT_URL = `${BASE}/compliance/cockpit`
+const COCKPIT_URL = `${BASE}/compliance/operations`
 
 // ---------------------------------------------------------------------------
 // Helpers

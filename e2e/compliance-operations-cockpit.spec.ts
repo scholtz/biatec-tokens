@@ -549,6 +549,8 @@ test.describe('Compliance Operations Cockpit — work item handoff context', () 
   test('handoff context section is present in every visible work item', async ({ page }) => {
     await openCockpit(page)
     const rows = page.getByTestId('work-item-row')
+    // Wait for at least one row to be visible — mock data loads after ~120ms async delay
+    await expect(rows.first()).toBeVisible({ timeout: 20000 })
     const count = await rows.count()
     expect(count).toBeGreaterThan(0)
     for (let i = 0; i < count; i++) {
