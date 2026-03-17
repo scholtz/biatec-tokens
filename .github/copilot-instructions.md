@@ -3899,6 +3899,91 @@ async function mountWorkspace() {
 - ❌ Create a new view component without a matching `.test.ts` file in the same commit (see section 7m)
 - ❌ Write component tests for loading-state views without `vi.useFakeTimers()` to advance the loading timeout
 
+### 7ab. Utility + Component Pairs Need Integration Tests AND Component `.logic.test.ts` In the Same Commit (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 17, 2026 (PR build-evidence-linked-drill-down) 🚨**
+
+**Violation**: Copilot delivered `caseDrillDown.ts` (utility), `CaseDrillDownPanel.vue` (Teleport component), and `EscalationFlowModal.vue` with separate unit tests, but WITHOUT:
+1. A `.logic.test.ts` file for `CaseDrillDownPanel.vue` — Teleport component with accordion toggles, computed slaBadge, evidenceGroupBorderClass, formatTimestamp functions. Branch coverage was only 71.62%.
+2. Integration tests proving the derived state from `caseDrillDown.ts` flows correctly into the components.
+3. Correct E2E testid strings — 5 testids in `case-drill-down.spec.ts` used assumed strings that didn't match the actual constants (e.g., `drill-down-next-action-box` vs the real `drill-down-next-action`).
+
+**Root Cause**:
+- Section 7m says "new VIEW components need `.logic.test.ts`" — but `CaseDrillDownPanel.vue` is a **component**, not a view. The pattern was not applied because it lived in `src/components/` not `src/views/`.
+- Section 7f says "API client + UI component need integration tests" — but `caseDrillDown.ts` is a utility (not an API client), so the rule wasn't applied even though the same wiring concern exists.
+- Section 7q says "use exact testid values from source constants" — but constants weren't verified before writing E2E assertions.
+
+**Extended Rules** (supplements existing sections 7m, 7f, 7q, 7s):
+
+**Rule 1: `.logic.test.ts` applies to ALL components with interaction logic, not just views**
+
+```
+Any component in src/components/ that has:
+  - Internal computed properties (e.g. slaBadge, evidenceReadinessLabel)
+  - Toggle/accordion functions (e.g. toggleGroup)
+  - watch() handlers that initialise or reset state
+  - Helper functions used in :class or :style bindings
+  - <Teleport> (makes DOM-click simulation unreliable)
+→ MUST have a .logic.test.ts file testing these via (wrapper.vm as any)
+```
+
+**Rule 2: Utility + component pair ALWAYS needs integration tests**
+
+Section 7f was written for "API client + component". This rule extends it to ANY utility + component pair:
+
+```
+If you create:
+  - myFeature.ts (utility with deriveMyCaseState(), buildMyOptions() functions)
+  - MyPanel.vue  (component consuming the utility's output)
+→ MUST create src/__tests__/integration/MyFeatureWiring.integration.test.ts proving:
+  a) Each key property from the utility's derived state is rendered in the component
+  b) Edge cases (isDegraded=true, empty lists, null items) show the correct UI
+  c) The component emits the correct payloads with data from utility options
+```
+
+**Rule 3: E2E testids must be verified from source constants, not assumed**
+
+```bash
+# BEFORE writing any E2E assertion like:
+#   page.locator('[data-testid="my-feature-button"]')
+# ALWAYS verify the actual constant value:
+grep -n "BUTTON\|BTN" src/utils/myFeature.ts | grep "'"
+# Then use the EXACT string from the constant — not your assumed expansion of the constant name
+```
+
+**Pre-Commit Checklist for Utility + Component PRs**:
+```bash
+# 1. Check that .logic.test.ts exists for ALL components with internal logic in this PR:
+ls src/components/compliance/__tests__/*.logic.test.ts
+ls src/components/*/  __tests__/*.logic.test.ts
+
+# 2. Check that integration tests exist for each utility + component pair:
+ls src/__tests__/integration/*Wiring*.integration.test.ts
+
+# 3. Verify E2E testids match constants:
+# For each page.locator('[data-testid="..."]') in the E2E spec,
+# verify the string value appears in the utility constants file:
+grep -n '"drill-down-next-action"' src/utils/myFeature.ts
+# If not found → the testid is WRONG
+
+# 4. Check branch coverage for new components:
+npx vitest run --coverage \
+  src/components/compliance/__tests__/MyComponent.test.ts \
+  src/components/compliance/__tests__/MyComponent.logic.test.ts 2>&1 | grep "MyComponent.vue"
+# Must show: % Branch ≥80%
+```
+
+**Coverage Impact**:
+- Without `.logic.test.ts`: `CaseDrillDownPanel.vue` had 71.62% branches
+- With `.logic.test.ts` (25 tests via vm): 91.89% branches, 94.11% functions
+- Integration tests (24 tests) proved all 5 evidence groups and timeline events render correctly
+
+**Never Again**:
+- ❌ Submit a Teleport component in `src/components/` without a `.logic.test.ts`
+- ❌ Submit a utility + component pair without an integration test in `src/__tests__/integration/`
+- ❌ Write E2E testids by assuming the string value — always grep the constant from source
+- ❌ Apply the `.logic.test.ts` rule only to `src/views/` — it applies to ALL components with interaction logic
+
 ## Additional Notes
 
 - The application uses Vue Router for navigation
