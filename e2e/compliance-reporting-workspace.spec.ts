@@ -424,3 +424,54 @@ test.describe('Compliance Reporting Workspace — sidebar navigation', () => {
     await expect(reportingLink).toBeAttached({ timeout: 10000 })
   })
 })
+
+// ---------------------------------------------------------------------------
+// Section 13: Evidence truthfulness banner (degraded-state sign-off UX)
+// ---------------------------------------------------------------------------
+
+test.describe('Compliance Reporting Workspace — evidence truthfulness banner', () => {
+  test('evidence-truth-banner is present on the page', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const banner = page.getByTestId('evidence-truth-banner')
+    await expect(banner).toBeAttached({ timeout: 20000 })
+  })
+
+  test('truth badge shows a truth class label', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const badge = page.getByTestId('evidence-truth-badge')
+    await expect(badge).toBeVisible({ timeout: 20000 })
+    const text = await badge.textContent({ timeout: 5000 })
+    expect(text).toBeTruthy()
+    expect(text).toMatch(/backend.confirmed|partial.hydration|stale|unavailable|environment.blocked/i)
+  })
+
+  test('truth banner title is present', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const title = page.getByTestId('evidence-truth-title')
+    await expect(title).toBeAttached({ timeout: 20000 })
+    const text = await title.textContent({ timeout: 5000 })
+    expect(text && text.length).toBeGreaterThan(0)
+  })
+
+  test('truth banner next-action guidance is shown', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const nextAction = page.getByTestId('evidence-truth-next-action')
+    await expect(nextAction).toBeAttached({ timeout: 20000 })
+    const text = await nextAction.textContent({ timeout: 5000 })
+    expect(text && text.length).toBeGreaterThan(0)
+  })
+
+  test('truth banner provenance label is present', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const provenance = page.getByTestId('evidence-truth-provenance')
+    await expect(provenance).toBeAttached({ timeout: 20000 })
+  })
+
+  test('banner does not show wallet connector UI', async ({ page }) => {
+    await openReportingWorkspace(page)
+    const banner = page.getByTestId('evidence-truth-banner')
+    await expect(banner).toBeAttached({ timeout: 20000 })
+    const bannerText = await banner.textContent({ timeout: 5000 }).catch(() => '')
+    expect(bannerText).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
+  })
+})
