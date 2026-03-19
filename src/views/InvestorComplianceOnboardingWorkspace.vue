@@ -103,6 +103,42 @@
             </div>
           </div>
 
+          <!-- ── Evidence Truth Class Banner ── -->
+          <div
+            class="mb-6 rounded-xl border p-4"
+            :class="evidenceTruthBannerClass(evidenceTruthClass)"
+            :data-testid="EVIDENCE_TRUTH_TEST_IDS.BANNER"
+            role="status"
+            aria-live="polite"
+            :aria-label="`Investor onboarding data source: ${EVIDENCE_TRUTH_LABELS[evidenceTruthClass]}`"
+          >
+            <div class="flex items-start gap-3">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                  <p class="text-sm font-semibold" :class="evidenceTruthTitleClass(evidenceTruthClass)" :data-testid="EVIDENCE_TRUTH_TEST_IDS.TITLE">
+                    Data Provenance:
+                    <span
+                      class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ml-1"
+                      :class="evidenceTruthBadgeClass(evidenceTruthClass)"
+                      :data-testid="EVIDENCE_TRUTH_TEST_IDS.BADGE"
+                    >{{ EVIDENCE_TRUTH_LABELS[evidenceTruthClass] }}</span>
+                  </p>
+                </div>
+                <p class="text-xs" :class="evidenceTruthBodyClass(evidenceTruthClass)" :data-testid="EVIDENCE_TRUTH_TEST_IDS.DESCRIPTION">
+                  {{ EVIDENCE_TRUTH_DESCRIPTIONS[evidenceTruthClass] }}
+                </p>
+                <p
+                  v-if="evidenceTruthClass !== 'backend_confirmed'"
+                  class="text-xs mt-1.5 font-medium"
+                  :class="evidenceTruthTitleClass(evidenceTruthClass)"
+                  :data-testid="EVIDENCE_TRUTH_TEST_IDS.NEXT_ACTION"
+                >
+                  Next action: {{ EVIDENCE_TRUTH_NEXT_ACTIONS[evidenceTruthClass] }}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <!-- ── Queue Health Summary Bar ── -->
           <div
             class="mb-6 rounded-xl border border-gray-700 bg-gray-800/60 p-4"
@@ -839,6 +875,20 @@ import {
   MOCK_ONBOARDING_STAGES_PARTIAL,
   MOCK_ONBOARDING_STAGES_STALE,
 } from '../utils/investorComplianceOnboarding'
+import {
+  type EvidenceTruthClass,
+  deriveFixtureTruthClass,
+  deriveBackendResponseTruthClass,
+  evidenceTruthBannerClass,
+  evidenceTruthTitleClass,
+  evidenceTruthBodyClass,
+  evidenceTruthBadgeClass,
+  EVIDENCE_TRUTH_LABELS,
+  EVIDENCE_TRUTH_DESCRIPTIONS,
+  EVIDENCE_TRUTH_NEXT_ACTIONS,
+  EVIDENCE_TRUTH_TEST_IDS,
+  buildProvenanceLabel,
+} from '../utils/evidenceTruthfulness'
 
 import {
   createComplianceCaseClient,
@@ -864,6 +914,9 @@ const loadError = ref<string | null>(null)
 
 /** True when the backend could not be reached and we show degraded state. */
 const isDegraded = ref(false)
+
+/** Evidence truth classification for the partial-hydration signal banner. */
+const evidenceTruthClass = ref<EvidenceTruthClass>('partial_hydration')
 
 /** Show fixture selector in dev / demo environments. */
 const isDemoMode = ref(import.meta.env.DEV)
@@ -1063,6 +1116,7 @@ function applyFixture(key: FixtureKey): void {
   refreshedAt.value = new Date()
   loadError.value = null
   isDegraded.value = false
+  evidenceTruthClass.value = deriveFixtureTruthClass(true)
 }
 
 // ---------------------------------------------------------------------------
@@ -1084,6 +1138,7 @@ async function loadLiveData(): Promise<void> {
     loadError.value = null
     isDegraded.value = false
     workspaceState.value = deriveOnboardingWorkspaceState(fixtureStages[activeFixture.value])
+    evidenceTruthClass.value = deriveFixtureTruthClass(true)
     return
   }
 
@@ -1097,6 +1152,7 @@ async function loadLiveData(): Promise<void> {
       isDegraded.value = degraded.isDegraded
       const degradedStages = buildDegradedOnboardingStages(degraded.message)
       workspaceState.value = deriveOnboardingWorkspaceState(degradedStages)
+      evidenceTruthClass.value = 'unavailable'
       return
     }
 
@@ -1111,6 +1167,7 @@ async function loadLiveData(): Promise<void> {
       workspaceState.value = deriveOnboardingWorkspaceState(liveStages)
       loadError.value = null
       isDegraded.value = false
+      evidenceTruthClass.value = deriveBackendResponseTruthClass({ isDegraded: false, isPartial: false, isStale: false })
     } else {
       // Empty cohort list — no cases yet, show not_started state gracefully
       workspaceState.value = deriveOnboardingWorkspaceState(
@@ -1123,6 +1180,7 @@ async function loadLiveData(): Promise<void> {
       )
       loadError.value = null
       isDegraded.value = false
+      evidenceTruthClass.value = deriveFixtureTruthClass(true)
     }
   } catch (err) {
     const degraded = deriveDegradedState(err)
@@ -1130,6 +1188,7 @@ async function loadLiveData(): Promise<void> {
     isDegraded.value = degraded.isDegraded
     const degradedStages = buildDegradedOnboardingStages(degraded.message)
     workspaceState.value = deriveOnboardingWorkspaceState(degradedStages)
+    evidenceTruthClass.value = 'unavailable'
   }
 }
 

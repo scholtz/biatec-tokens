@@ -47,6 +47,20 @@ import {
   type ReleaseReadinessState,
   type SignOffReadinessState,
 } from '../utils/releaseReadiness'
+import {
+  type EvidenceTruthClass,
+  deriveFixtureTruthClass,
+  deriveBackendResponseTruthClass,
+  evidenceTruthBannerClass,
+  evidenceTruthTitleClass,
+  evidenceTruthBodyClass,
+  evidenceTruthBadgeClass,
+  EVIDENCE_TRUTH_LABELS,
+  EVIDENCE_TRUTH_DESCRIPTIONS,
+  EVIDENCE_TRUTH_NEXT_ACTIONS,
+  EVIDENCE_TRUTH_TEST_IDS,
+  buildProvenanceLabel,
+} from '../utils/evidenceTruthfulness'
 
 // ---------------------------------------------------------------------------
 // State
@@ -61,6 +75,7 @@ const lastRefreshed = ref<string | null>(null)
 let exportResetTimeout: ReturnType<typeof setTimeout> | null = null
 
 const readiness = ref<ReleaseReadinessState>(buildDefaultReleaseReadiness())
+const evidenceTruthClass = ref<EvidenceTruthClass>('partial_hydration')
 
 // ---------------------------------------------------------------------------
 // Computed
@@ -153,9 +168,11 @@ function loadData(): void {
     readiness.value = buildDefaultReleaseReadiness()
     isDegraded.value = false
     loadError.value = null
+    evidenceTruthClass.value = deriveFixtureTruthClass(true)
   } catch (err) {
     isDegraded.value = true
     loadError.value = err instanceof Error ? err.message : 'Unknown error'
+    evidenceTruthClass.value = 'unavailable'
   }
   lastRefreshed.value = new Date().toISOString()
 }
@@ -357,6 +374,49 @@ onBeforeUnmount(() => {
           <!-- ── Sign-Off Readiness Panel (hero) ── -->
           <div :data-testid="RELEASE_CENTER_TEST_IDS.READINESS_PANEL">
             <SignOffReadinessPanel :readiness="readiness" />
+          </div>
+
+          <!-- ── Evidence Truth Class Banner (AC #2 fail-closed) ── -->
+          <div
+            class="mt-6 mb-6 rounded-xl border p-4"
+            :class="evidenceTruthBannerClass(evidenceTruthClass)"
+            :data-testid="EVIDENCE_TRUTH_TEST_IDS.BANNER"
+            role="status"
+            aria-live="polite"
+            :aria-label="`Evidence data source: ${EVIDENCE_TRUTH_LABELS[evidenceTruthClass]}`"
+          >
+            <div class="flex items-start gap-3">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                  <p class="text-sm font-semibold" :class="evidenceTruthTitleClass(evidenceTruthClass)" :data-testid="EVIDENCE_TRUTH_TEST_IDS.TITLE">
+                    Data Provenance:
+                    <span
+                      class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ml-1"
+                      :class="evidenceTruthBadgeClass(evidenceTruthClass)"
+                      :data-testid="EVIDENCE_TRUTH_TEST_IDS.BADGE"
+                    >{{ EVIDENCE_TRUTH_LABELS[evidenceTruthClass] }}</span>
+                  </p>
+                </div>
+                <p class="text-xs" :class="evidenceTruthBodyClass(evidenceTruthClass)" :data-testid="EVIDENCE_TRUTH_TEST_IDS.DESCRIPTION">
+                  {{ EVIDENCE_TRUTH_DESCRIPTIONS[evidenceTruthClass] }}
+                </p>
+                <p
+                  v-if="evidenceTruthClass !== 'backend_confirmed'"
+                  class="text-xs mt-1.5 font-medium"
+                  :class="evidenceTruthTitleClass(evidenceTruthClass)"
+                  :data-testid="EVIDENCE_TRUTH_TEST_IDS.NEXT_ACTION"
+                >
+                  Next action: {{ EVIDENCE_TRUTH_NEXT_ACTIONS[evidenceTruthClass] }}
+                </p>
+                <p
+                  class="text-xs mt-1 opacity-70"
+                  :class="evidenceTruthBodyClass(evidenceTruthClass)"
+                  :data-testid="EVIDENCE_TRUTH_TEST_IDS.PROVENANCE_LABEL"
+                >
+                  {{ buildProvenanceLabel(evidenceTruthClass, 'Release Evidence Center') }}
+                </p>
+              </div>
+            </div>
           </div>
 
           <!-- ── Permissive vs Protected Distinction Notice ── -->
