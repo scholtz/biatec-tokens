@@ -15,7 +15,7 @@
  *  - COCKPIT_HARDENING_TEST_IDS: all expected constants present
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import {
   detectStaleness,
   stalenessBadgeClass,
@@ -65,32 +65,35 @@ function makeWorkItem(overrides: Partial<WorkItem> = {}): WorkItem {
   }
 }
 
+/** Create an EvidenceItem matching the actual caseDrillDown.ts interface. */
 function makeEvidenceItem(status: EvidenceItem['status'], label = 'Test Doc'): EvidenceItem {
   return {
-    id: 'ev-001',
+    id: `ev-${label.replace(/\s/g, '-').toLowerCase()}`,
     label,
-    category: 'kyc',
     status,
-    lastVerifiedAt: null,
-    expiresAt: null,
-    reviewerNotes: null,
-    documentUrl: null,
-    reviewedBy: null,
+    lastUpdatedAt: null,
+    note: null,
   }
 }
 
+/** Create an EvidenceGroup matching the actual caseDrillDown.ts interface. */
 function makeEvidenceGroup(
   label: string,
   items: EvidenceItem[],
-  isRequired = true,
+  overallStatus?: EvidenceGroup['overallStatus'],
 ): EvidenceGroup {
+  // If overallStatus is not provided, derive it from items (same logic as deriveGroupOverallStatus)
+  let derived: EvidenceGroup['overallStatus'] = 'available'
+  if (items.some((i) => i.status === 'degraded')) derived = 'degraded'
+  else if (items.some((i) => i.status === 'missing')) derived = 'missing'
+  else if (items.some((i) => i.status === 'stale')) derived = 'stale'
+
   return {
-    id: `group-${label}`,
+    category: 'identity_kyc',
     label,
-    category: 'kyc',
+    description: `Evidence group: ${label}`,
     items,
-    isRequired,
-    overallStatus: items.some((i) => i.status === 'missing' || i.status === 'rejected') ? 'missing' : 'present',
+    overallStatus: overallStatus ?? derived,
   }
 }
 
@@ -277,11 +280,16 @@ describe('classifyEvidenceCompleteness()', () => {
     expect(result.missingItems.length).toBeGreaterThan(0)
   })
 
-  it('returns complete when all items are present', () => {
+  it('returns unavailable when groups have no items', () => {
+    const result = classifyEvidenceCompleteness([makeEvidenceGroup('KYC', [])])
+    expect(result.level).toBe('unavailable')
+  })
+
+  it('returns complete when all items are available', () => {
     const groups = [
       makeEvidenceGroup('KYC', [
-        makeEvidenceItem('present', 'Passport'),
-        makeEvidenceItem('present', 'Address Proof'),
+        makeEvidenceItem('available', 'Passport'),
+        makeEvidenceItem('available', 'Address Proof'),
       ]),
     ]
     const result = classifyEvidenceCompleteness(groups)
@@ -289,69 +297,95 @@ describe('classifyEvidenceCompleteness()', () => {
     expect(result.missingItems).toHaveLength(0)
   })
 
-  it('returns critical_gaps when required evidence is missing', () => {
+  it('returns critical_gaps when any group has overallStatus degraded', () => {
     const groups = [
-      makeEvidenceGroup(
-        'KYC',
-        [makeEvidenceItem('missing', 'Passport')],
-        true, // isRequired
-      ),
+      makeEvidenceGroup('KYC', [makeEvidenceItem('degraded', 'Passport')]),
     ]
+    // overallStatus will be auto-derived as 'degraded'
     const result = classifyEvidenceCompleteness(groups)
     expect(result.level).toBe('critical_gaps')
     expect(result.missingItems).toHaveLength(1)
-    expect(result.nextAction).toContain('required')
+    expect(result.nextAction).toContain('backend')
   })
 
-  it('returns significant_gaps for > 30% missing items', () => {
+  it('returns critical_gaps for degraded overallStatus regardless of item count', () => {
     const groups = [
-      makeEvidenceGroup('KYC', [
-        makeEvidenceItem('missing', 'Doc 1'),
-        makeEvidenceItem('missing', 'Doc 2'),
-        makeEvidenceItem('present', 'Doc 3'),
-        makeEvidenceItem('present', 'Doc 4'),
-        // 2/4 = 50% missing → significant_gaps (required=false so no critical)
-      ], false),
+      // overallStatus explicitly set to 'degraded' (backend unavailable for group)
+      makeEvidenceGroup('KYC', [makeEvidenceItem('available', 'Passport')], 'degraded'),
+    ]
+    const result = classifyEvidenceCompleteness(groups)
+    expect(result.level).toBe('critical_gaps')
+  })
+
+  it('returns significant_gaps when any group has overallStatus missing', () => {
+    const groups = [
+      makeEvidenceGroup('KYC', [makeEvidenceItem('missing', 'Passport')]),
+    ]
+    // overallStatus will be auto-derived as 'missing'
+    const result = classifyEvidenceCompleteness(groups)
+    expect(result.level).toBe('significant_gaps')
+    expect(result.missingItems).toHaveLength(1)
+    expect(result.nextAction).toContain('missing')
+  })
+
+  it('returns significant_gaps for multiple missing groups', () => {
+    const groups = [
+      makeEvidenceGroup('KYC', [makeEvidenceItem('missing', 'Doc 1')]),
+      makeEvidenceGroup('AML', [makeEvidenceItem('missing', 'Doc 2')]),
     ]
     const result = classifyEvidenceCompleteness(groups)
     expect(result.level).toBe('significant_gaps')
     expect(result.missingItems).toHaveLength(2)
   })
 
-  it('returns minor_gaps for <= 30% missing items without required items', () => {
+  it('degraded takes priority over missing', () => {
     const groups = [
-      makeEvidenceGroup('KYC', [
-        makeEvidenceItem('missing', 'Optional Doc'),
-        makeEvidenceItem('present', 'Main Doc 1'),
-        makeEvidenceItem('present', 'Main Doc 2'),
-        makeEvidenceItem('present', 'Main Doc 3'),
-        // 1/4 = 25% missing, not required
-      ], false),
-    ]
-    const result = classifyEvidenceCompleteness(groups)
-    expect(result.level).toBe('minor_gaps')
-    expect(result.missingItems).toHaveLength(1)
-  })
-
-  it('treats rejected items same as missing for completeness scoring', () => {
-    const groups = [
-      makeEvidenceGroup('KYC', [makeEvidenceItem('rejected', 'Rejected Doc')], true),
+      makeEvidenceGroup('KYC', [makeEvidenceItem('degraded', 'Failed Doc')]),
+      makeEvidenceGroup('AML', [makeEvidenceItem('missing', 'Missing Doc')]),
     ]
     const result = classifyEvidenceCompleteness(groups)
     expect(result.level).toBe('critical_gaps')
   })
 
-  it('returns unavailable for groups with no items', () => {
-    const result = classifyEvidenceCompleteness([
-      makeEvidenceGroup('KYC', []),
-    ])
-    expect(result.level).toBe('unavailable')
+  it('returns minor_gaps when only stale evidence present', () => {
+    const groups = [
+      makeEvidenceGroup('KYC', [
+        makeEvidenceItem('stale', 'Stale Doc'),
+        makeEvidenceItem('available', 'Current Doc'),
+      ]),
+    ]
+    // overallStatus will be auto-derived as 'stale' (one stale item)
+    const result = classifyEvidenceCompleteness(groups)
+    expect(result.level).toBe('minor_gaps')
+    expect(result.nextAction).toContain('stale')
   })
 
-  it('badge classes are non-empty for all levels', () => {
-    const groups = [makeEvidenceGroup('KYC', [makeEvidenceItem('present', 'Doc')])]
+  it('complete group with only available items does not flag stale', () => {
+    const groups = [
+      makeEvidenceGroup('KYC', [
+        makeEvidenceItem('available', 'Doc 1'),
+        makeEvidenceItem('available', 'Doc 2'),
+      ]),
+      makeEvidenceGroup('AML', [
+        makeEvidenceItem('available', 'Screen 1'),
+      ]),
+    ]
     const result = classifyEvidenceCompleteness(groups)
-    expect(result.badgeClass.trim().length).toBeGreaterThan(0)
+    expect(result.level).toBe('complete')
+  })
+
+  it('badge classes are non-empty for all level scenarios', () => {
+    const scenarios: Array<EvidenceGroup[]> = [
+      [],
+      [makeEvidenceGroup('KYC', [makeEvidenceItem('available', 'Doc')])],
+      [makeEvidenceGroup('KYC', [makeEvidenceItem('degraded', 'Doc')])],
+      [makeEvidenceGroup('KYC', [makeEvidenceItem('missing', 'Doc')])],
+      [makeEvidenceGroup('KYC', [makeEvidenceItem('stale', 'Doc')])],
+    ]
+    for (const groups of scenarios) {
+      const result = classifyEvidenceCompleteness(groups)
+      expect(result.badgeClass.trim().length).toBeGreaterThan(0)
+    }
   })
 })
 

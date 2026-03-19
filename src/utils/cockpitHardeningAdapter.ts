@@ -22,7 +22,7 @@
  * - caseDrillDown.ts: evidence group types
  */
 
-import type { EvidenceGroup, EvidenceItem } from './caseDrillDown'
+import type { EvidenceGroup } from './caseDrillDown'
 import type { WorkItem } from './complianceOperationsCockpit'
 
 // ---------------------------------------------------------------------------
@@ -203,8 +203,15 @@ export interface EvidenceCompletenessResult {
 
 /**
  * Classify the completeness of evidence groups for a case.
- * Distinguishes between completely unavailable data (backend not reachable)
- * and partially missing evidence (some docs not uploaded or not yet verified).
+ *
+ * Uses each group's pre-derived `overallStatus` (from caseDrillDown.ts) to
+ * produce a prioritised completeness level:
+ *   degraded  → critical_gaps  (backend data unavailable for that group)
+ *   missing   → significant_gaps (required evidence not yet submitted/present)
+ *   stale     → minor_gaps     (evidence exists but may be outdated)
+ *   available → complete
+ *
+ * Also collects item-level detail for operator-visible missing-item lists.
  */
 export function classifyEvidenceCompleteness(groups: EvidenceGroup[]): EvidenceCompletenessResult {
   if (groups.length === 0) {
@@ -213,22 +220,20 @@ export function classifyEvidenceCompleteness(groups: EvidenceGroup[]): EvidenceC
       label: 'Evidence unavailable',
       badgeClass: 'bg-gray-800 text-gray-400 border border-gray-600',
       missingItems: ['All evidence groups failed to load'],
-      nextAction: 'Check backend connectivity or contact your platform administrator. Do not approve this case until evidence is confirmed.',
+      nextAction:
+        'Check backend connectivity or contact your platform administrator. Do not approve this case until evidence is confirmed.',
     }
   }
 
+  // Collect item-level descriptions for the missing-item display list
   const missingItems: string[] = []
-  let criticalMissing = 0
   let totalItems = 0
-  let missingCount = 0
 
   for (const group of groups) {
     for (const item of group.items) {
       totalItems++
-      if (item.status === 'missing' || item.status === 'rejected') {
+      if (item.status === 'missing' || item.status === 'degraded') {
         missingItems.push(`${group.label}: ${item.label}`)
-        missingCount++
-        if (group.isRequired) criticalMissing++
       }
     }
   }
@@ -239,39 +244,47 @@ export function classifyEvidenceCompleteness(groups: EvidenceGroup[]): EvidenceC
       label: 'Evidence unavailable',
       badgeClass: 'bg-gray-800 text-gray-400 border border-gray-600',
       missingItems: ['No evidence records found'],
-      nextAction: 'Request the investor to upload required documents, or contact support if this error persists.',
+      nextAction:
+        'Request the investor to upload required documents, or contact support if this error persists.',
     }
   }
 
-  const missingRatio = missingCount / totalItems
-
-  if (criticalMissing > 0) {
+  // Priority 1 — any group has degraded overall status (backend completely unavailable)
+  const degradedGroups = groups.filter((g) => g.overallStatus === 'degraded')
+  if (degradedGroups.length > 0) {
     return {
       level: 'critical_gaps',
-      label: `Critical evidence missing (${criticalMissing} required)`,
+      label: `Critical: evidence data unavailable (${degradedGroups.length} group${degradedGroups.length !== 1 ? 's' : ''})`,
       badgeClass: 'bg-red-900/50 text-red-300 border border-red-700',
       missingItems,
-      nextAction: `${criticalMissing} required evidence item(s) are missing or rejected. This case cannot be approved until they are resolved. Review each item below and follow the listed remediation steps.`,
+      nextAction: `${degradedGroups.length} evidence group(s) could not be loaded from the backend. This case cannot be approved until all evidence is accessible. Check backend connectivity and contact your platform administrator.`,
     }
   }
 
-  if (missingRatio > 0.3) {
+  // Priority 2 — any group has missing overall status (required docs not present)
+  const missingGroups = groups.filter((g) => g.overallStatus === 'missing')
+  if (missingGroups.length > 0) {
     return {
       level: 'significant_gaps',
-      label: `Significant evidence gaps (${missingCount} items)`,
+      label: `Evidence missing in ${missingGroups.length} group${missingGroups.length !== 1 ? 's' : ''}`,
       badgeClass: 'bg-orange-900/50 text-orange-300 border border-orange-700',
       missingItems,
-      nextAction: `${missingCount} evidence items are missing or rejected. Review each group below and contact the investor or your AML provider to resolve the gaps before proceeding.`,
+      nextAction: `${missingGroups.length} evidence group(s) have missing documents. Review each group below and contact the investor or your AML provider to resolve the gaps before proceeding.`,
     }
   }
 
-  if (missingCount > 0) {
+  // Priority 3 — some evidence is stale (exists but may be outdated)
+  const staleGroups = groups.filter((g) => g.overallStatus === 'stale')
+  if (staleGroups.length > 0) {
+    const staleItems = groups.flatMap((g) =>
+      g.items.filter((i) => i.status === 'stale').map((i) => `${g.label}: ${i.label}`),
+    )
     return {
       level: 'minor_gaps',
-      label: `Minor evidence gaps (${missingCount} items)`,
+      label: `${staleGroups.length} evidence group${staleGroups.length !== 1 ? 's' : ''} may be outdated`,
       badgeClass: 'bg-yellow-900/40 text-yellow-300 border border-yellow-700',
-      missingItems,
-      nextAction: `${missingCount} evidence item(s) need attention. Review the highlighted entries below. These may not block approval but should be resolved for a complete compliance record.`,
+      missingItems: staleItems,
+      nextAction: `${staleGroups.length} evidence group(s) contain stale data. Verify with the investor and refresh stale documents before making an approval decision.`,
     }
   }
 

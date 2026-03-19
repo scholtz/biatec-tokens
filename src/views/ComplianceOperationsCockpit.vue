@@ -106,6 +106,30 @@
             </div>
           </div>
 
+          <!-- ── Stale Data Alert ── -->
+          <div
+            v-if="!isDegraded && showStalenessAlert"
+            role="status"
+            aria-live="polite"
+            :data-testid="COCKPIT_HARDENING_TEST_IDS.STALE_DATA_BANNER"
+            class="rounded-xl border border-yellow-700/50 bg-yellow-900/20 p-4 mb-6 flex items-start gap-3"
+          >
+            <ExclamationCircleIcon class="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <div>
+              <p class="font-medium text-yellow-300 text-sm">Queue data may be out of date</p>
+              <p class="text-gray-300 text-xs mt-1">
+                {{ dataFreshnessLabel.label }} — use the Refresh button to load the latest case and queue state before making operational decisions.
+              </p>
+            </div>
+            <span
+              :class="['ml-auto text-xs px-2 py-0.5 rounded font-medium self-start', stalenessBadge]"
+              :data-testid="COCKPIT_HARDENING_TEST_IDS.STALENESS_BADGE"
+              :aria-label="`Data freshness: ${dataFreshnessLabel.label}`"
+            >
+              {{ dataFreshnessLabel.label }}
+            </span>
+          </div>
+
           <!-- ── Posture Banner ── -->
           <section
             class="rounded-2xl border p-6 mb-8 shadow-lg"
@@ -802,6 +826,13 @@ import {
   dataSourceBadgeClass,
   type DataSource,
 } from '../utils/liveComplianceIntegration'
+import {
+  detectStaleness,
+  stalenessBadgeClass,
+  stalenessRequiresAlert,
+  formatDataFreshnessLabel,
+  COCKPIT_HARDENING_TEST_IDS,
+} from '../utils/cockpitHardeningAdapter'
 import { useAuthStore } from '../stores/auth'
 
 // ---------------------------------------------------------------------------
@@ -917,6 +948,18 @@ const formattedRefreshedAt = computed(() => {
     return 'Unknown'
   }
 })
+
+/** Staleness classification for the current data fetch timestamp. */
+const stalenessLevel = computed(() => detectStaleness(refreshedAt.value, now.value))
+
+/** CSS classes for the staleness badge. */
+const stalenessBadge = computed(() => stalenessBadgeClass(stalenessLevel.value))
+
+/** Whether the staleness level warrants a visible alert banner. */
+const showStalenessAlert = computed(() => stalenessRequiresAlert(stalenessLevel.value))
+
+/** Human-readable freshness label combining relative time + staleness level. */
+const dataFreshnessLabel = computed(() => formatDataFreshnessLabel(refreshedAt.value, now.value))
 
 // ---------------------------------------------------------------------------
 // Worklist filtering
