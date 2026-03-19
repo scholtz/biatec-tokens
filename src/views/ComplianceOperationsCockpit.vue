@@ -48,6 +48,13 @@
               >
                 Last refreshed: {{ formattedRefreshedAt }}
               </span>
+              <span
+                :class="['text-xs px-2 py-0.5 rounded font-medium', dataSourceBadgeClass(dataSource, isDegraded)]"
+                :data-testid="COCKPIT_TEST_IDS.DATA_SOURCE_BADGE"
+                :aria-label="`Data source: ${dataSourceLabel(dataSource, isDegraded)}`"
+              >
+                {{ dataSourceLabel(dataSource, isDegraded) }}
+              </span>
               <button
                 class="text-xs text-teal-400 hover:text-teal-300 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 rounded"
                 :data-testid="COCKPIT_TEST_IDS.REFRESH_BTN"
@@ -89,9 +96,12 @@
             <div>
               <p class="font-semibold text-yellow-300">Operations cockpit is operating in degraded mode</p>
               <p class="text-gray-300 text-sm mt-1">
-                Some queue metrics or work items may be unavailable or incomplete.
+                {{ degradedReason ?? 'Some queue metrics or work items may be unavailable or incomplete.' }}
                 Queue data shown below is based on available frontend-derived state.
                 Contact your platform administrator if this condition persists.
+              </p>
+              <p v-if="escalationError" class="text-red-300 text-sm mt-2 font-medium">
+                {{ escalationError }}
               </p>
             </div>
           </div>
@@ -725,6 +735,7 @@
   <CaseDrillDownPanel
     v-model="drillDownOpen"
     :item="selectedWorkItem"
+    :bearer-token="bearerToken"
     @escalate="openEscalation"
   />
 
@@ -732,6 +743,7 @@
   <EscalationFlowModal
     v-model="escalationOpen"
     :item="escalationItem"
+    :submit-error="escalationError"
     @submitted="onEscalationSubmitted"
   />
 </template>
@@ -777,20 +789,36 @@ import {
   classifySlaUrgency,
   filterWorkItemsByPersona,
   deriveWorkItemHandoffContext,
-  MOCK_WORK_ITEMS_DEGRADED,
   MOCK_COCKPIT_REFRESHED_AT,
   type WorkItem,
   type CockpitPosture,
   type HandoffReadiness,
   type OperatorRole,
 } from '../utils/complianceOperationsCockpit'
+import {
+  loadLiveOperatorWorkQueue,
+  submitLiveEscalation,
+  dataSourceLabel,
+  dataSourceBadgeClass,
+  type DataSource,
+} from '../utils/liveComplianceIntegration'
+import { useAuthStore } from '../stores/auth'
 
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
 
+const authStore = useAuthStore()
+
+/** Bearer token derived from auth store. Returns null when not authenticated. */
+const bearerToken = computed<string | null>(
+  () => authStore.session || (typeof window !== 'undefined' ? localStorage.getItem('arc76_session') : null),
+)
+
 const isLoading = ref(true)
 const isDegraded = ref(false)
+const degradedReason = ref<string | null>(null)
+const dataSource = ref<DataSource>('mock')
 const workItems = ref<WorkItem[]>([])
 const refreshedAt = ref<string>(MOCK_COCKPIT_REFRESHED_AT)
 const worklistFilter = ref<string>('all')
@@ -801,6 +829,8 @@ const drillDownOpen = ref(false)
 const selectedWorkItem = ref<WorkItem | null>(null)
 const escalationOpen = ref(false)
 const escalationItem = ref<WorkItem | null>(null)
+const escalationSubmitting = ref(false)
+const escalationError = ref<string | null>(null)
 
 // ---------------------------------------------------------------------------
 // Lifecycle
@@ -812,16 +842,20 @@ onMounted(async () => {
 
 async function loadData() {
   isLoading.value = true
-  isDegraded.value = false
+  escalationError.value = null
   try {
-    // In production this would call the compliance case management API.
-    // Using deterministic mock data for CI/dev preview.
-    await new Promise<void>((resolve) => setTimeout(resolve, 120))
-    workItems.value = MOCK_WORK_ITEMS_DEGRADED
-    refreshedAt.value = new Date().toISOString()
+    const token = bearerToken.value
+    const result = await loadLiveOperatorWorkQueue(token)
+    workItems.value = result.data
+    isDegraded.value = result.isDegraded
+    degradedReason.value = result.degradedReason
+    dataSource.value = result.source
+    refreshedAt.value = result.fetchedAt
   } catch {
     isDegraded.value = true
+    degradedReason.value = 'Unexpected error loading cockpit data.'
     workItems.value = []
+    dataSource.value = 'mock'
     refreshedAt.value = MOCK_COCKPIT_REFRESHED_AT
   } finally {
     isLoading.value = false
@@ -942,9 +976,31 @@ function openEscalation(item: WorkItem) {
   escalationOpen.value = true
 }
 
-function onEscalationSubmitted(_payload: { item: WorkItem; reason: string; note: string; destination: string }) {
-  // In production, this would call the compliance case management API.
-  // For now, just close the escalation modal after a brief confirmation display.
+function onEscalationSubmitted(payload: { item: WorkItem; reason: string; note: string; destination: string }) {
+  const token = bearerToken.value
+  escalationSubmitting.value = true
+  escalationError.value = null
+  submitLiveEscalation(
+    {
+      caseId: payload.item.id,
+      reason: payload.reason,
+      note: payload.note,
+      destination: payload.destination,
+    },
+    token,
+  ).then((result) => {
+    if (!result.success) {
+      escalationError.value = result.errorMessage ?? 'Escalation submission failed.'
+    } else {
+      escalationOpen.value = false
+      // Refresh queue to reflect the escalated case
+      loadData()
+    }
+  }).catch(() => {
+    escalationError.value = 'Unexpected error during escalation. Please try again.'
+  }).finally(() => {
+    escalationSubmitting.value = false
+  })
 }
 
 function handoffCardBorderClass(readiness: HandoffReadiness): string {

@@ -841,6 +841,8 @@ export const DRILL_DOWN_TEST_IDS = {
   BLOCKER_LIST: 'drill-down-blocker-list',
   BLOCKER_ITEM: 'drill-down-blocker-item',
   DEGRADED_NOTICE: 'drill-down-degraded-notice',
+  DATA_SOURCE_BADGE: 'drill-down-data-source-badge',
+  LIVE_LOADING: 'drill-down-live-loading',
   TIMELINE_SECTION: 'drill-down-timeline',
   TIMELINE_EMPTY: 'drill-down-timeline-empty',
   TIMELINE_EVENT: 'drill-down-timeline-event',
@@ -866,4 +868,7 @@ export const ESCALATION_MODAL_TEST_IDS = {
   SUBMIT_BTN: 'escalation-submit-btn',
   CANCEL_BTN: 'escalation-cancel-btn',
   CONFIRMATION_BANNER: 'escalation-confirmation',
+  CASE_CONTEXT: 'escalation-case-context',
+  CURRENT_OWNER: 'escalation-current-owner',
+  SUBMIT_ERROR: 'escalation-submit-error',
 } as const

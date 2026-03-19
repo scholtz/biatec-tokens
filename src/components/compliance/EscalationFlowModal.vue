@@ -72,6 +72,31 @@
         <!-- Form -->
         <div v-else class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
+          <!-- Case context: SLA / ownership -->
+          <div
+            v-if="slaInfo || ownerLabel"
+            :data-testid="ESCALATION_MODAL_TEST_IDS.CASE_CONTEXT"
+            class="rounded-lg border border-gray-700 bg-gray-800/50 px-4 py-3 flex flex-wrap gap-3 items-center"
+            aria-label="Case context"
+          >
+            <span
+              v-if="slaInfo"
+              :class="['inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded font-medium', slaInfo.badgeClass]"
+              :aria-label="`SLA status: ${slaInfo.label}`"
+            >
+              <ClockIcon class="w-3 h-3" aria-hidden="true" />
+              {{ slaInfo.label }}
+            </span>
+            <span
+              v-if="ownerLabel"
+              :data-testid="ESCALATION_MODAL_TEST_IDS.CURRENT_OWNER"
+              class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-gray-700 text-gray-300 border border-gray-600"
+              :aria-label="`Current ownership: ${ownerLabel}`"
+            >
+              {{ ownerLabel }}
+            </span>
+          </div>
+
           <!-- Intro text -->
           <p class="text-sm text-gray-300 leading-relaxed">
             Select a reason for escalation. The system will record the escalation and route
@@ -147,6 +172,18 @@
             <p class="text-xs text-gray-600 mt-1 text-right">{{ note.length }}/500</p>
           </div>
 
+          <!-- Submit error (from parent) -->
+          <div
+            v-if="submitError"
+            :data-testid="ESCALATION_MODAL_TEST_IDS.SUBMIT_ERROR"
+            role="alert"
+            aria-live="assertive"
+            class="rounded-lg border border-red-700 bg-red-900/20 px-4 py-3 flex items-start gap-2"
+          >
+            <ExclamationTriangleIcon class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <p class="text-red-300 text-xs">{{ submitError }}</p>
+          </div>
+
         </div>
 
         <!-- Footer actions -->
@@ -180,7 +217,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { XMarkIcon, ArrowUpRightIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, ArrowUpRightIcon, CheckCircleIcon, ExclamationTriangleIcon, ClockIcon } from '@heroicons/vue/24/outline'
 import {
   ESCALATION_MODAL_TEST_IDS,
   buildEscalationOptions,
@@ -188,7 +225,13 @@ import {
   type EscalationReason,
   type EscalationOption,
 } from '../../utils/caseDrillDown'
-import type { WorkItem } from '../../utils/complianceOperationsCockpit'
+import {
+  OWNERSHIP_STATE_LABELS,
+  classifySlaUrgency,
+  SLA_URGENCY_LABELS,
+  slaUrgencyBadgeClass,
+  type WorkItem,
+} from '../../utils/complianceOperationsCockpit'
 
 // ---------------------------------------------------------------------------
 // Props / emits
@@ -197,6 +240,8 @@ import type { WorkItem } from '../../utils/complianceOperationsCockpit'
 const props = defineProps<{
   modelValue: boolean
   item: WorkItem | null
+  /** Error message from the parent after a failed escalation submission */
+  submitError?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -222,6 +267,21 @@ const options = computed<EscalationOption[]>(() =>
 
 const selectedOption = computed<EscalationOption | undefined>(() =>
   options.value.find((o) => o.reason === selectedReason.value),
+)
+
+const slaInfo = computed(() => {
+  if (!props.item?.dueAt) return null
+  const urgency = classifySlaUrgency(props.item.dueAt)
+  if (urgency === 'no_deadline') return null
+  return {
+    label: SLA_URGENCY_LABELS[urgency],
+    badgeClass: slaUrgencyBadgeClass(urgency),
+    urgency,
+  }
+})
+
+const ownerLabel = computed(() =>
+  props.item ? OWNERSHIP_STATE_LABELS[props.item.ownership] : null,
 )
 
 // Reset state when item changes or modal opens

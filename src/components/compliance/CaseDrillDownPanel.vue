@@ -79,9 +79,31 @@
       <!-- ── Scrollable body ── -->
       <div class="flex-1 overflow-y-auto px-6 py-5 space-y-8">
 
+        <!-- Loading indicator for live backend fetch -->
+        <div
+          v-if="liveLoading"
+          :data-testid="DRILL_DOWN_TEST_IDS.LIVE_LOADING"
+          class="flex items-center gap-2 text-xs text-gray-400"
+          role="status"
+          aria-live="polite"
+        >
+          <ArrowPathIcon class="w-4 h-4 animate-spin text-teal-400" aria-hidden="true" />
+          Loading live backend data…
+        </div>
+
+        <!-- Data-provenance badge -->
+        <div
+          v-if="!liveLoading"
+          :data-testid="DRILL_DOWN_TEST_IDS.DATA_SOURCE_BADGE"
+          :class="['inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded font-medium', dataSourceBadgeClass(displaySource, displayIsDegraded)]"
+          :aria-label="`Data source: ${dataSourceLabel(displaySource, displayIsDegraded)}`"
+        >
+          {{ dataSourceLabel(displaySource, displayIsDegraded) }}
+        </div>
+
         <!-- Degraded notice -->
         <div
-          v-if="state?.isDegraded"
+          v-if="displayIsDegraded"
           :data-testid="DRILL_DOWN_TEST_IDS.DEGRADED_NOTICE"
           role="alert"
           aria-live="assertive"
@@ -91,8 +113,8 @@
           <div>
             <p class="font-semibold text-yellow-300 text-sm">Evidence data is partially unavailable</p>
             <p class="text-yellow-200/80 text-xs mt-1">
-              Some evidence records could not be retrieved. Do not treat this case as ready until
-              all data is confirmed with your platform administrator.
+              {{ displayDegradedReason ?? 'Some evidence records could not be retrieved.' }}
+              Do not treat this case as ready until all data is confirmed with your platform administrator.
             </p>
           </div>
         </div>
@@ -399,6 +421,7 @@ import {
   DocumentCheckIcon,
   ChevronDownIcon,
   ArrowUpRightIcon,
+  ArrowPathIcon,
 } from '@heroicons/vue/24/outline'
 import { CheckBadgeIcon as UserCheckIcon } from '@heroicons/vue/24/solid'
 import {
@@ -411,6 +434,7 @@ import {
   EVIDENCE_STATUS_LABELS,
   APPROVAL_DECISION_LABELS,
   type EvidenceCategory,
+  type CaseDrillDownState,
 } from '../../utils/caseDrillDown'
 import {
   COCKPIT_STAGE_LABELS,
@@ -423,6 +447,12 @@ import {
   SLA_URGENCY_LABELS,
   type WorkItem,
 } from '../../utils/complianceOperationsCockpit'
+import {
+  loadLiveCaseDrillDown,
+  dataSourceLabel,
+  dataSourceBadgeClass,
+  type DataSource,
+} from '../../utils/liveComplianceIntegration'
 
 // ---------------------------------------------------------------------------
 // Props / emits
@@ -433,6 +463,8 @@ const props = defineProps<{
   modelValue: boolean
   /** The work item to show detail for */
   item: WorkItem | null
+  /** Bearer token for live backend calls. Null = mock mode. */
+  bearerToken?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -441,16 +473,62 @@ const emit = defineEmits<{
 }>()
 
 // ---------------------------------------------------------------------------
+// Live backend state
+// ---------------------------------------------------------------------------
+
+const liveState = ref<CaseDrillDownState | null>(null)
+const liveSource = ref<DataSource>('mock')
+const liveIsDegraded = ref(false)
+const liveDegradedReason = ref<string | null>(null)
+const liveLoading = ref(false)
+
+async function fetchLiveState(item: WorkItem) {
+  if (!item) return
+  liveLoading.value = true
+  try {
+    const result = await loadLiveCaseDrillDown(item.id, item, props.bearerToken)
+    liveState.value = result.data
+    liveSource.value = result.source
+    // Only mark as degraded when the backend was actually attempted and had issues.
+    // When source='mock' it means we are in demo mode (no token) — not a backend failure.
+    liveIsDegraded.value = result.isDegraded && result.source === 'live'
+    liveDegradedReason.value = result.isDegraded && result.source === 'live' ? result.degradedReason : null
+  } catch {
+    liveState.value = null
+    liveSource.value = 'mock'
+    liveIsDegraded.value = true
+    liveDegradedReason.value = 'Case detail could not be loaded from backend.'
+  } finally {
+    liveLoading.value = false
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Derived state
 // ---------------------------------------------------------------------------
 
-const state = computed(() =>
-  props.item ? deriveCaseDrillDown(props.item, Date.now()) : null,
+/** Merged state: live backend data takes precedence; fall back to mock derivation */
+const state = computed<CaseDrillDownState | null>(() => {
+  if (!props.item) return null
+  if (liveState.value) return liveState.value
+  return deriveCaseDrillDown(props.item, Date.now())
+})
+
+const displaySource = computed<DataSource>(() =>
+  liveState.value ? liveSource.value : 'mock',
+)
+
+const displayIsDegraded = computed(() =>
+  liveIsDegraded.value || (state.value?.isDegraded ?? false),
+)
+
+const displayDegradedReason = computed(() =>
+  liveDegradedReason.value ?? (displayIsDegraded.value ? 'Evidence data is partially unavailable' : null),
 )
 
 const expandedGroups = ref<Set<EvidenceCategory>>(new Set())
 
-// Expand all groups on open
+// Expand all groups on open; fetch live backend data when item changes
 watch(
   () => props.item,
   (newItem) => {
@@ -459,8 +537,11 @@ watch(
         'identity_kyc',
         'aml_sanctions',
       ])
+      liveState.value = null
+      fetchLiveState(newItem)
     } else {
       expandedGroups.value = new Set()
+      liveState.value = null
     }
   },
   { immediate: true },

@@ -1096,6 +1096,7 @@ export const COCKPIT_TEST_IDS = {
   DEGRADED_ALERT: 'degraded-alert',
   REFRESH_BTN: 'cockpit-refresh-btn',
   REFRESHED_AT: 'cockpit-refreshed-at',
+  DATA_SOURCE_BADGE: 'cockpit-data-source-badge',
   FILTER_SELECT: 'worklist-filter-select',
   LOADING_STATE: 'cockpit-loading-state',
   ROLE_SUMMARY_PANEL: 'role-summary-panel',
