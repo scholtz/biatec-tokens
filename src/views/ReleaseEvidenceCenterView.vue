@@ -50,7 +50,6 @@ import {
 import {
   type EvidenceTruthClass,
   deriveFixtureTruthClass,
-  deriveBackendResponseTruthClass,
   evidenceTruthBannerClass,
   evidenceTruthTitleClass,
   evidenceTruthBodyClass,

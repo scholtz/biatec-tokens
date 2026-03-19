@@ -1152,7 +1152,6 @@ import {
 } from '../utils/auditExportPackage'
 import {
   type EvidenceTruthClass,
-  deriveFixtureTruthClass,
   evidenceTruthBannerClass,
   evidenceTruthTitleClass,
   evidenceTruthBodyClass,

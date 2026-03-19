@@ -887,7 +887,6 @@ import {
   EVIDENCE_TRUTH_DESCRIPTIONS,
   EVIDENCE_TRUTH_NEXT_ACTIONS,
   EVIDENCE_TRUTH_TEST_IDS,
-  buildProvenanceLabel,
 } from '../utils/evidenceTruthfulness'
 
 import {
