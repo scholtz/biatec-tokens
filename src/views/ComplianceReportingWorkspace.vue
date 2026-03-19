@@ -80,6 +80,49 @@
             </p>
           </section>
 
+          <!-- ── Data Provenance Banner (AC #2 fail-closed) ── -->
+          <div
+            class="mb-6 rounded-xl border p-4"
+            :class="evidenceTruthBannerClass(reportingTruthClass)"
+            :data-testid="EVIDENCE_TRUTH_TEST_IDS.BANNER"
+            role="status"
+            aria-live="polite"
+            :aria-label="`Reporting data source: ${EVIDENCE_TRUTH_LABELS[reportingTruthClass]}`"
+          >
+            <div class="flex items-start gap-3">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                  <p
+                    class="text-sm font-semibold"
+                    :class="evidenceTruthTitleClass(reportingTruthClass)"
+                    :data-testid="EVIDENCE_TRUTH_TEST_IDS.TITLE"
+                  >
+                    Data Provenance:
+                    <span
+                      class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ml-1"
+                      :class="evidenceTruthBadgeClass(reportingTruthClass)"
+                      :data-testid="EVIDENCE_TRUTH_TEST_IDS.BADGE"
+                    >{{ EVIDENCE_TRUTH_LABELS[reportingTruthClass] }}</span>
+                  </p>
+                </div>
+                <p
+                  class="text-xs"
+                  :class="evidenceTruthBodyClass(reportingTruthClass)"
+                  :data-testid="EVIDENCE_TRUTH_TEST_IDS.DESCRIPTION"
+                >
+                  {{ EVIDENCE_TRUTH_DESCRIPTIONS[reportingTruthClass] }}
+                </p>
+                <p
+                  class="text-xs mt-1 opacity-70"
+                  :class="evidenceTruthBodyClass(reportingTruthClass)"
+                  :data-testid="EVIDENCE_TRUTH_TEST_IDS.PROVENANCE_LABEL"
+                >
+                  {{ buildProvenanceLabel(reportingTruthClass, 'Compliance Reporting') }}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <!-- ── Overall Readiness Banner ── -->
           <section
             class="mb-6 rounded-2xl border p-6 shadow-lg"
@@ -1107,6 +1150,18 @@ import {
   type EvidenceManifestEntry,
   type ContradictionFlag,
 } from '../utils/auditExportPackage'
+import {
+  type EvidenceTruthClass,
+  deriveFixtureTruthClass,
+  evidenceTruthBannerClass,
+  evidenceTruthTitleClass,
+  evidenceTruthBodyClass,
+  evidenceTruthBadgeClass,
+  EVIDENCE_TRUTH_LABELS,
+  EVIDENCE_TRUTH_DESCRIPTIONS,
+  EVIDENCE_TRUTH_TEST_IDS,
+  buildProvenanceLabel,
+} from '../utils/evidenceTruthfulness'
 
 // ---------------------------------------------------------------------------
 // Sub-components (inline for simplicity)
@@ -1436,6 +1491,7 @@ function loadApprovalSummary(): ApprovalHistorySummary | null {
 
 const isLoading = ref(true)
 const bundle = ref<ComplianceReportBundle>(buildDefaultBundle())
+const reportingTruthClass = ref<EvidenceTruthClass>('partial_hydration')
 const clipboardCopied = ref(false)
 let clipboardTimer: ReturnType<typeof setTimeout> | null = null
 
