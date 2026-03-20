@@ -125,6 +125,18 @@ describe('evidenceTruthBannerClass', () => {
     expect(cls).toContain('bg-green')
   })
 
+  it('returns blue border for partial_hydration', () => {
+    const cls = evidenceTruthBannerClass('partial_hydration')
+    expect(cls).toContain('border-blue')
+    expect(cls).toContain('bg-blue')
+  })
+
+  it('returns orange border for stale', () => {
+    const cls = evidenceTruthBannerClass('stale')
+    expect(cls).toContain('border-orange')
+    expect(cls).toContain('bg-orange')
+  })
+
   it('returns red border for unavailable', () => {
     const cls = evidenceTruthBannerClass('unavailable')
     expect(cls).toContain('border-red')
@@ -134,6 +146,18 @@ describe('evidenceTruthBannerClass', () => {
   it('returns yellow for environment_blocked', () => {
     const cls = evidenceTruthBannerClass('environment_blocked')
     expect(cls).toContain('yellow')
+  })
+
+  it('returns a distinct class for each of the 5 truth classes', () => {
+    const classes = [
+      evidenceTruthBannerClass('backend_confirmed'),
+      evidenceTruthBannerClass('partial_hydration'),
+      evidenceTruthBannerClass('stale'),
+      evidenceTruthBannerClass('unavailable'),
+      evidenceTruthBannerClass('environment_blocked'),
+    ]
+    const unique = new Set(classes)
+    expect(unique.size).toBe(5)
   })
 })
 

@@ -332,8 +332,10 @@ jobs:
           JSONEOF
           echo "📋 Full-strict sign-off status written to playwright-report/signoff-status.json"
           cat playwright-report/signoff-status.json
+
+      - name: Upload sign-off report artifact
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           # Include run ID for audit trail — sign-off artifacts are kept for 90 days
           name: strict-signoff-report-${{ github.run_id }}

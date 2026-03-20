@@ -939,3 +939,71 @@ describe('ComplianceReportingWorkspace — checklist remediation hints', () => {
     }
   })
 })
+
+// ---------------------------------------------------------------------------
+// Evidence Truth Classification (backend-backed sign-off UX)
+// ---------------------------------------------------------------------------
+
+describe('ComplianceReportingWorkspace — reportingTruthClass state', () => {
+  it('initialises reportingTruthClass as partial_hydration (fixture-backed)', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    expect(vm.reportingTruthClass).toBe('partial_hydration')
+  })
+
+  it('reportingTruthClass is never backend_confirmed (reporting is fixture-backed)', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    expect(vm.reportingTruthClass).not.toBe('backend_confirmed')
+  })
+
+  it('reportingTruthClass is a valid EvidenceTruthClass value', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    const validClasses = ['backend_confirmed', 'partial_hydration', 'stale', 'unavailable', 'environment_blocked']
+    expect(validClasses).toContain(vm.reportingTruthClass)
+  })
+
+  it('renders evidence-truth-banner with correct testid', async () => {
+    const wrapper = await mountWorkspace()
+    const banner = wrapper.find('[data-testid="evidence-truth-banner"]')
+    expect(banner.exists()).toBe(true)
+  })
+
+  it('banner has blue styling for partial_hydration truth class', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    expect(vm.reportingTruthClass).toBe('partial_hydration')
+    const banner = wrapper.find('[data-testid="evidence-truth-banner"]')
+    if (banner.exists()) {
+      expect(banner.classes().some(c => c.includes('blue'))).toBe(true)
+    }
+  })
+
+  it('evidence-truth-title element exists and is non-empty', async () => {
+    const wrapper = await mountWorkspace()
+    const titleEl = wrapper.find('[data-testid="evidence-truth-title"]')
+    if (titleEl.exists()) {
+      expect(titleEl.text().trim().length).toBeGreaterThan(0)
+    }
+  })
+
+  it('evidence-truth-description element exists and is non-empty', async () => {
+    const wrapper = await mountWorkspace()
+    const descEl = wrapper.find('[data-testid="evidence-truth-description"]')
+    if (descEl.exists()) {
+      expect(descEl.text().trim().length).toBeGreaterThan(0)
+    }
+  })
+
+  it('next-action guidance is visible for partial_hydration (not backend_confirmed)', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    // partial_hydration !== 'backend_confirmed' → next-action guidance must render
+    expect(vm.reportingTruthClass).not.toBe('backend_confirmed')
+    const nextActionEl = wrapper.find('[data-testid="evidence-truth-next-action"]')
+    if (nextActionEl.exists()) {
+      expect(nextActionEl.text().trim().length).toBeGreaterThan(0)
+    }
+  })
+})

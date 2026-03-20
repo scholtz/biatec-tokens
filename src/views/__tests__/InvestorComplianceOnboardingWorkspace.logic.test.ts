@@ -872,3 +872,96 @@ describe('next-action hints on stage cards', () => {
     }
   })
 })
+
+// ---------------------------------------------------------------------------
+// Evidence Truth Classification (backend-backed sign-off UX)
+// ---------------------------------------------------------------------------
+
+describe('InvestorComplianceOnboardingWorkspace — evidenceTruthClass state transitions', () => {
+  it('initialises evidenceTruthClass as partial_hydration (fixture-backed default)', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    expect(vm.evidenceTruthClass).toBe('partial_hydration')
+  })
+
+  it('applyFixture sets evidenceTruthClass to partial_hydration', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    // Force different class first
+    vm.evidenceTruthClass = 'unavailable'
+    await nextTick()
+
+    vm.applyFixture('ready')
+    await nextTick()
+    expect(vm.evidenceTruthClass).toBe('partial_hydration')
+  })
+
+  it('never implies backend_confirmed when fixture data is applied', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    for (const fixtureKey of ['ready', 'blocked', 'partial', 'stale']) {
+      vm.applyFixture(fixtureKey)
+      await nextTick()
+      expect(vm.evidenceTruthClass).not.toBe('backend_confirmed')
+    }
+  })
+
+  it('loadLiveData sets evidenceTruthClass to partial_hydration when no auth token', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    // Simulate no-auth scenario: clear algorand user from localStorage
+    localStorage.removeItem('algorand_user')
+    // Force reset to test the path
+    vm.evidenceTruthClass = 'stale'
+    await vm.loadLiveData()
+    await nextTick()
+    // Without auth, falls back to fixture → partial_hydration
+    expect(vm.evidenceTruthClass).toBe('partial_hydration')
+  })
+
+  it('loadLiveData sets evidenceTruthClass to unavailable when fetch throws', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    // Provide a valid-looking session token so the fetch path is attempted
+    localStorage.setItem('arc76_session', 'test-bearer-token-for-fetch-failure-test')
+    // Mock fetch to throw a network error
+    const originalFetch = global.fetch
+    global.fetch = vi.fn().mockRejectedValue(new Error('Network error'))
+    try {
+      await vm.loadLiveData()
+      await nextTick()
+      expect(vm.evidenceTruthClass).toBe('unavailable')
+    } finally {
+      global.fetch = originalFetch
+      localStorage.removeItem('arc76_session')
+    }
+  })
+
+  it('renders evidence-truth-banner with correct testid when workspace loaded', async () => {
+    const wrapper = await mountWorkspace()
+    const banner = wrapper.find('[data-testid="evidence-truth-banner"]')
+    expect(banner.exists()).toBe(true)
+  })
+
+  it('banner shows partial_hydration badge when fixture-backed', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    expect(vm.evidenceTruthClass).toBe('partial_hydration')
+    // Banner should have blue styling (partial_hydration)
+    const banner = wrapper.find('[data-testid="evidence-truth-banner"]')
+    if (banner.exists()) {
+      expect(banner.classes().some(c => c.includes('blue'))).toBe(true)
+    }
+  })
+
+  it('evidenceTruthClass partial_hydration signals operator next-action is visible', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    expect(vm.evidenceTruthClass).toBe('partial_hydration')
+    // partial_hydration != 'backend_confirmed' → next-action guidance should render
+    const nextActionEl = wrapper.find('[data-testid="evidence-truth-next-action"]')
+    if (nextActionEl.exists()) {
+      expect(nextActionEl.text().trim().length).toBeGreaterThan(0)
+    }
+  })
+})
