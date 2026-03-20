@@ -113,6 +113,14 @@
                   {{ EVIDENCE_TRUTH_DESCRIPTIONS[reportingTruthClass] }}
                 </p>
                 <p
+                  v-if="reportingTruthClass !== 'backend_confirmed'"
+                  class="text-xs mt-1.5 font-medium"
+                  :class="evidenceTruthTitleClass(reportingTruthClass)"
+                  :data-testid="EVIDENCE_TRUTH_TEST_IDS.NEXT_ACTION"
+                >
+                  Next action: {{ EVIDENCE_TRUTH_NEXT_ACTIONS[reportingTruthClass] }}
+                </p>
+                <p
                   class="text-xs mt-1 opacity-70"
                   :class="evidenceTruthBodyClass(reportingTruthClass)"
                   :data-testid="EVIDENCE_TRUTH_TEST_IDS.PROVENANCE_LABEL"
@@ -1158,6 +1166,7 @@ import {
   evidenceTruthBadgeClass,
   EVIDENCE_TRUTH_LABELS,
   EVIDENCE_TRUTH_DESCRIPTIONS,
+  EVIDENCE_TRUTH_NEXT_ACTIONS,
   EVIDENCE_TRUTH_TEST_IDS,
   buildProvenanceLabel,
 } from '../utils/evidenceTruthfulness'

@@ -2089,8 +2089,82 @@ if (loadingVisible) {
 - ❌ Use `isVisible({ timeout: 500 })` to "catch" a brief element and then do attribute reads without timeouts
 - ❌ Assume a positive `isVisible()` result means the element stays in DOM for subsequent calls
 
+---
 
+### 7aa-d. E2E Regex Patterns Must Match Actual Rendered Label Strings — Never Use Internal Type Names (MANDATORY) 🆕
 
+**🚨 CRITICAL PAST VIOLATION - March 20, 2026 (PR #727) 🚨**
+
+**Violation**: Copilot wrote 22 E2E tests that used snake_case regex patterns like `/partial.hydration|backend.confirmed|stale|unavailable|environment.blocked/i` to match badge text rendered in the browser. The actual rendered strings from `EVIDENCE_TRUTH_LABELS` are human-readable: `"Partially Hydrated"`, `"Backend Confirmed"`, `"Stale Evidence"`, `"Unavailable"`, `"Environment Blocked"`. All 22 tests failed in CI with `Expected pattern: /partial.hydration|.../` / `Received string: "Partially Hydrated"`.
+
+**Root Cause**:
+- TypeScript union type `EvidenceTruthClass = 'backend_confirmed' | 'partial_hydration' | ...` uses snake_case
+- The utility defines `EVIDENCE_TRUTH_LABELS` mapping each type to a human-readable string
+- E2E tests were written using the TS type name patterns instead of the actual display strings
+- No pre-commit verification was done to confirm the regex actually matched what the browser renders
+
+**Correct Approach — MANDATORY Before Writing Any E2E Text/Pattern Assertion**:
+
+```bash
+# 1. Find the actual display label for each type:
+grep -n "EVIDENCE_TRUTH_LABELS\|Partially Hydrated\|Backend Confirmed" src/utils/evidenceTruthfulness.ts
+# Output:
+# EVIDENCE_TRUTH_LABELS: {
+#   backend_confirmed: 'Backend Confirmed',
+#   partial_hydration: 'Partially Hydrated',
+#   stale: 'Stale Evidence',
+#   unavailable: 'Unavailable',
+#   environment_blocked: 'Environment Blocked',
+# }
+
+# 2. Use the ACTUAL display string in the regex — not the type name:
+# ❌ WRONG: /partial.hydration|backend.confirmed/i   ← uses internal type name
+# ✅ CORRECT: /Partially Hydrated|Backend Confirmed/i  ← uses actual rendered text
+
+# 3. Verify the pattern doesn't false-positive on similar words:
+node -e "
+const text = 'Partially Hydrated';
+const bad  = /partial.hydration|backend.confirmed/i;
+const good = /Partially Hydrated|Backend Confirmed/i;
+console.log('bad matches:', bad.test(text));   // false → test ALWAYS fails
+console.log('good matches:', good.test(text)); // true  → test passes
+"
+```
+
+**Pattern: Internal Type Names vs Rendered Strings**:
+```typescript
+// ✅ CORRECT — always use the actual rendered label, not the internal type name
+const badge = page.getByTestId('evidence-truth-badge')
+const text = await badge.textContent({ timeout: 5000 })
+expect(text).toMatch(/Backend Confirmed|Partially Hydrated|Stale Evidence|Unavailable|Environment Blocked/i)
+
+// ❌ WRONG — internal type name from TypeScript code, never appears in DOM
+expect(text).toMatch(/backend_confirmed|partial_hydration|stale|unavailable|environment_blocked/i)
+// ❌ ALSO WRONG — dot as wildcard doesn't help (partial.hydration matches "partialXhydration")
+expect(text).toMatch(/partial.hydration|backend.confirmed/i)
+```
+
+**Universal Rule**: Before writing ANY E2E text assertion against a rendered label, read the DISPLAY LABEL from the source file (e.g., `EVIDENCE_TRUTH_LABELS`, `STATUS_LABELS`, `STATE_DESCRIPTIONS`). Never assume the internal identifier matches the visible text.
+
+**Pre-Commit Verification Checklist**:
+```bash
+# For each text pattern you assert in E2E tests:
+# 1. Find the source constant that produces the label:
+grep -rn "Partially Hydrated\|Backend Confirmed" src/utils/ src/views/ src/components/
+# 2. Copy the EXACT string including capital letters and spaces
+# 3. Test your regex against the string:
+node -e "const s = 'Partially Hydrated'; console.log(/Partially Hydrated/i.test(s)); // must be true"
+# 4. Run the affected spec locally if possible (or check the pattern in the rendered component)
+```
+
+**Never Again**:
+- ❌ Write E2E regex patterns using internal TypeScript type names (e.g., `partial_hydration`)
+- ❌ Assume a TypeScript union value like `'partial_hydration'` matches what the UI renders
+- ❌ Use dot-wildcard patterns like `partial.hydration` as a shortcut — use explicit display strings
+- ❌ Commit E2E tests without verifying at least one pattern against the actual rendered string value
+- ✅ Always find the display label constant first, then write the pattern to match it
+
+---
 
 ### PR Quality Checklist (MUST ALL BE ✅ BEFORE SUBMISSION)
 
