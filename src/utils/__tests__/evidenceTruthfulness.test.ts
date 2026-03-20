@@ -142,18 +142,42 @@ describe('evidenceTruthTitleClass', () => {
     expect(evidenceTruthTitleClass('backend_confirmed')).toContain('text-green')
   })
 
+  it('returns text-blue for partial_hydration', () => {
+    expect(evidenceTruthTitleClass('partial_hydration')).toContain('text-blue')
+  })
+
+  it('returns text-orange for stale', () => {
+    expect(evidenceTruthTitleClass('stale')).toContain('text-orange')
+  })
+
   it('returns text-red for unavailable', () => {
     expect(evidenceTruthTitleClass('unavailable')).toContain('text-red')
+  })
+
+  it('returns text-yellow for environment_blocked', () => {
+    expect(evidenceTruthTitleClass('environment_blocked')).toContain('text-yellow')
   })
 })
 
 describe('evidenceTruthBodyClass', () => {
-  it('returns text-orange for stale', () => {
-    expect(evidenceTruthBodyClass('stale')).toContain('text-orange')
+  it('returns text-green for backend_confirmed', () => {
+    expect(evidenceTruthBodyClass('backend_confirmed')).toContain('text-green')
   })
 
   it('returns text-blue for partial_hydration', () => {
     expect(evidenceTruthBodyClass('partial_hydration')).toContain('text-blue')
+  })
+
+  it('returns text-orange for stale', () => {
+    expect(evidenceTruthBodyClass('stale')).toContain('text-orange')
+  })
+
+  it('returns text-red for unavailable', () => {
+    expect(evidenceTruthBodyClass('unavailable')).toContain('text-red')
+  })
+
+  it('returns text-yellow for environment_blocked', () => {
+    expect(evidenceTruthBodyClass('environment_blocked')).toContain('text-yellow')
   })
 })
 
