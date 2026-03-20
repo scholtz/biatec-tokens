@@ -546,7 +546,7 @@ test.describe('Release Evidence Center — evidence truthfulness banner', () => 
     const text = await badge.textContent({ timeout: 5000 })
     expect(text).toBeTruthy()
     // Should match one of the known truth class labels
-    expect(text).toMatch(/backend.confirmed|partial.hydration|stale|unavailable|environment.blocked/i)
+    expect(text).toMatch(/Backend Confirmed|Partially Hydrated|Stale Evidence|Unavailable|Environment Blocked/i)
   })
 
   test('truth banner title is present', async ({ page }) => {
@@ -578,8 +578,8 @@ test.describe('Release Evidence Center — evidence truthfulness banner', () => 
     const text = await badge.textContent({ timeout: 5000 })
     // In non-backend environments fixture-backed data MUST NOT claim backend_confirmed
     // It should show partial_hydration, unavailable, stale, or environment_blocked
-    const isPartialOrWorse = /partial.hydration|unavailable|stale|environment.blocked/i.test(text ?? '')
-    const isBackendConfirmed = /backend.confirmed/i.test(text ?? '')
+    const isPartialOrWorse = /Partially Hydrated|Unavailable|Stale Evidence|Environment Blocked/i.test(text ?? '')
+    const isBackendConfirmed = /Backend Confirmed/i.test(text ?? '')
     // Accept either: fixture-backed (partial) or if somehow backend is live (backend_confirmed)
     expect(isPartialOrWorse || isBackendConfirmed).toBe(true)
   })

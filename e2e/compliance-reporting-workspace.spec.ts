@@ -442,7 +442,7 @@ test.describe('Compliance Reporting Workspace — evidence truthfulness banner',
     await expect(badge).toBeVisible({ timeout: 20000 })
     const text = await badge.textContent({ timeout: 5000 })
     expect(text).toBeTruthy()
-    expect(text).toMatch(/backend.confirmed|partial.hydration|stale|unavailable|environment.blocked/i)
+    expect(text).toMatch(/Backend Confirmed|Partially Hydrated|Stale Evidence|Unavailable|Environment Blocked/i)
   })
 
   test('truth banner title is present', async ({ page }) => {

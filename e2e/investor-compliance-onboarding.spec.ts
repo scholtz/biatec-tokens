@@ -891,7 +891,7 @@ test.describe('Investor Compliance Onboarding — evidence truthfulness banner',
     await expect(badge).toBeVisible({ timeout: 20000 })
     const text = await badge.textContent({ timeout: 5000 })
     expect(text).toBeTruthy()
-    expect(text).toMatch(/backend.confirmed|partial.hydration|stale|unavailable|environment.blocked/i)
+    expect(text).toMatch(/Backend Confirmed|Partially Hydrated|Stale Evidence|Unavailable|Environment Blocked/i)
   })
 
   test('truth banner title is present', async ({ page }) => {
@@ -921,8 +921,8 @@ test.describe('Investor Compliance Onboarding — evidence truthfulness banner',
     const badge = page.getByTestId('evidence-truth-badge')
     await expect(badge).toBeVisible({ timeout: 20000 })
     const text = await badge.textContent({ timeout: 5000 })
-    const isPartialOrWorse = /partial.hydration|unavailable|stale|environment.blocked/i.test(text ?? '')
-    const isBackendConfirmed = /backend.confirmed/i.test(text ?? '')
+    const isPartialOrWorse = /Partially Hydrated|Unavailable|Stale Evidence|Environment Blocked/i.test(text ?? '')
+    const isBackendConfirmed = /Backend Confirmed/i.test(text ?? '')
     expect(isPartialOrWorse || isBackendConfirmed).toBe(true)
   })
 
