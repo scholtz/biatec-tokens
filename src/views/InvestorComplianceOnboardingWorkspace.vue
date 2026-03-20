@@ -135,6 +135,13 @@
                 >
                   Next action: {{ EVIDENCE_TRUTH_NEXT_ACTIONS[evidenceTruthClass] }}
                 </p>
+                <p
+                  class="text-xs mt-1 opacity-70"
+                  :class="evidenceTruthBodyClass(evidenceTruthClass)"
+                  :data-testid="EVIDENCE_TRUTH_TEST_IDS.PROVENANCE_LABEL"
+                >
+                  {{ buildProvenanceLabel(evidenceTruthClass, 'Investor Compliance Onboarding') }}
+                </p>
               </div>
             </div>
           </div>
@@ -887,6 +894,7 @@ import {
   EVIDENCE_TRUTH_DESCRIPTIONS,
   EVIDENCE_TRUTH_NEXT_ACTIONS,
   EVIDENCE_TRUTH_TEST_IDS,
+  buildProvenanceLabel,
 } from '../utils/evidenceTruthfulness'
 
 import {
