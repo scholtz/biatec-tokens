@@ -2,9 +2,16 @@
 
 ## Current Status: ✅ All Tests Passing (Chromium CI)
 
-_Last updated: March 2026 — reflects state after Issue #728 (Promote frontend release evidence from truthfulness UX to artifact-backed strict sign-off readiness)_
+_Last updated: March 2026 — reflects state after Issue #728 (Promote frontend release evidence from truthfulness UX to artifact-backed strict sign-off readiness) and PR #729 (141 new unit tests for 6 uncovered utility files)_
 
-**Latest CI evidence (main branch):**
+**Latest CI evidence (PR #729 branch — `copilot/promote-frontend-release-evidence`, head `a0915d74`):**
+
+| Workflow | Run ID | Status | Commit |
+|----------|--------|--------|--------|
+| Run Tests | [23388835999](https://github.com/scholtz/biatec-tokens/actions/runs/23388835999) | ✅ success | `a0915d74` |
+| Playwright Tests | [23388836005](https://github.com/scholtz/biatec-tokens/actions/runs/23388836005) | ✅ success | `a0915d74` |
+
+**Previous CI evidence (main branch, `8a73807`):**
 
 | Workflow | Run ID | Status | Commit |
 |----------|--------|--------|--------|

@@ -29,7 +29,7 @@ manual forensic investigation.
 | #6 | Highest-value E2E suites use semantic waits and reduce permissive helpers | ✅ CLOSED | `mvp-backend-signoff.spec.ts`, `release-evidence-center.spec.ts` — 0 `waitForTimeout` calls | All assertions in sign-off-critical specs use `toBeVisible()`, `toBeAttached()`, `waitFor({ state })` |
 | #7 | `PLAYWRIGHT_STATUS.md` and `MVP_SIGNOFF_READINESS_BLOCKER_MAPPING.md` updated to current | ✅ CLOSED | This document and `docs/testing/PLAYWRIGHT_STATUS.md` | Run IDs, suite shape, and blocker analysis current as of March 21, 2026 |
 | #8 | No new wallet-based authentication paths introduced | ✅ CLOSED | All new views and helpers use email/password only | `grep -r "WalletConnect\|Pera\|MetaMask\|Defly" src/` → 0 results in new files |
-| #9 | CI remains green for all existing required checks on implementation PR | ✅ CLOSED | No regressions introduced; unit tests 13025/13025 passing | Run Tests `main`: [23383071338](https://github.com/scholtz/biatec-tokens/actions/runs/23383071338) ✅ |
+| #9 | CI remains green for all existing required checks on implementation PR | ✅ CLOSED | No regressions introduced; unit tests 13166/13166 passing (PR #729 adds 141 new tests) | Run Tests `main`: [23383071338](https://github.com/scholtz/biatec-tokens/actions/runs/23383071338) ✅; PR #729: [23388835999](https://github.com/scholtz/biatec-tokens/actions/runs/23388835999) ✅ |
 | #10 | PR description and tests explain business risk of missing/stale strict evidence | ✅ CLOSED | `evidenceTruthfulness.ts` `EVIDENCE_TRUTH_DESCRIPTIONS`, operator-facing copy | Utility descriptions drive `evidenceTruthBannerBody` in all three release-critical surfaces |
 
 ---
@@ -50,7 +50,7 @@ manual forensic investigation.
 
 3. **Evidence truthfulness integration**: `ReleaseEvidenceCenterView.vue`, `InvestorComplianceOnboardingWorkspace.vue`, and `ComplianceReportingWorkspace.vue` now surface `evidenceTruthfulness` banners showing plain-language descriptions for `environment_blocked`, `unavailable`, `stale`, `partial_hydration`, and `backend_confirmed` states.
 
-4. **Documentation refresh**: `PLAYWRIGHT_STATUS.md` and this document updated with current run IDs, actual suite shape (80 spec files, 13025 unit tests), and remaining backend-configuration gap analysis.
+4. **Documentation refresh**: `PLAYWRIGHT_STATUS.md` and this document updated with current run IDs, actual suite shape (80 spec files, 13025 unit tests on `main`; 13166 unit tests after PR #729), and remaining backend-configuration gap analysis.
 
 ---
 
@@ -65,7 +65,7 @@ manual forensic investigation.
 | #5 | Invalid/expired session covered with explicit user-guidance checks | ✅ CLOSED | `src/utils/launchErrorMessages.ts`, `src/utils/arc76SessionContract.ts` | `src/utils/__tests__/mvpSignoffSessionEdgeCases.test.ts` AC#5 group; `e2e/mvp-signoff-readiness.spec.ts` AC#5 group |
 | #6 | Critical-path `waitForTimeout` reduced to semantic waits | ✅ CLOSED | `e2e/competitive-platform-enhancements.spec.ts` (11 calls replaced) | Zero `await page.waitForTimeout()` in `mvp-signoff-readiness.spec.ts` and `mvp-hardening-canonical-launch.spec.ts` |
 | #7 | Skip usage in blocker-relevant suites reduced, documented | ✅ CLOSED | All CI skips retain documented justification (`#495` reference) | `e2e/mvp-signoff-readiness.spec.ts` has zero `test.skip()`; existing skips all documented |
-| #8 | Testing status docs reflect actual current metrics | ✅ CLOSED | This document | 13025 unit tests passing (verified locally: `npm run test:coverage` → `Tests 13025 passed`; CI run [23383071338](https://github.com/scholtz/biatec-tokens/actions/runs/23383071338) ✅); E2E specs above pass in CI without flaky rerun |
+| #8 | Testing status docs reflect actual current metrics | ✅ CLOSED | This document | 13025 unit tests passing on `main` (CI run [23383071338](https://github.com/scholtz/biatec-tokens/actions/runs/23383071338) ✅); 13166 after PR #729 (CI run [23388835999](https://github.com/scholtz/biatec-tokens/actions/runs/23388835999) ✅); E2E specs above pass in CI without flaky rerun |
 | #9 | Accessibility checks pass for auth/launch interactions | ✅ CLOSED | Navbar skip-to-content, `id="main-content"`, `aria-label` on nav | `e2e/mvp-signoff-readiness.spec.ts` AC#9 group; `src/utils/__tests__/mvpSignoffSessionEdgeCases.test.ts` AC#9 group |
 | #10 | CI for updated frontend tests is green | ✅ CLOSED | All test files run via existing `.github/workflows/test.yml` and `playwright.yml` | CI run [23383071338](https://github.com/scholtz/biatec-tokens/actions/runs/23383071338): success |
 | #11 | Changes map to MVP blocker closure (this document) | ✅ CLOSED | This document | See blocker rows above |
