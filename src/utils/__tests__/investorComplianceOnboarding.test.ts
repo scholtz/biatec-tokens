@@ -216,10 +216,11 @@ describe('isOnboardingEvidenceStale', () => {
     expect(isOnboardingEvidenceStale(old)).toBe(true)
   })
 
-  it('returns false at exactly the boundary (30 days)', () => {
-    // 30 * DAY_MS is not strictly > 30 days
-    const boundary = new Date(Date.now() - 30 * DAY_MS).toISOString()
-    expect(isOnboardingEvidenceStale(boundary)).toBe(false)
+  it('returns false just inside the boundary (30 days - 1 hour)', () => {
+    // Use 30 days minus 1 hour to avoid flakiness from the few ms elapsed
+    // between computing the timestamp and calling Date.now() inside the function
+    const justBeforeBoundary = new Date(Date.now() - 30 * DAY_MS + 60 * 60 * 1000).toISOString()
+    expect(isOnboardingEvidenceStale(justBeforeBoundary)).toBe(false)
   })
 })
 
