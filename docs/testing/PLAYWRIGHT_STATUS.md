@@ -21,7 +21,7 @@ _Last updated: March 2026 — reflects state after Issue #728 (Promote frontend 
 - **44 `test.skip()` calls** (browser-specific skip × 1, timeout-ceiling conditional skips documented in specs, sign-off-backend skips for unprovisioned secrets)
 - **0 tests failing**
 
-`grep -r "test\.skip(" e2e/ | wc -l` → **22** (20 conditional CI skips + 1 Firefox skip + 1 viewport skip)
+`grep -r "test\.skip(" e2e/ | wc -l` → **44** (browser-specific × 1, timeout-ceiling conditional skips, sign-off-backend skips, and other documented skips)
 
 ### Auth Pattern Status
 
