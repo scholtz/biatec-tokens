@@ -4058,6 +4058,100 @@ npx vitest run --coverage \
 - ❌ Write E2E testids by assuming the string value — always grep the constant from source
 - ❌ Apply the `.logic.test.ts` rule only to `src/views/` — it applies to ALL components with interaction logic
 
+### 7ac. Utility Files Without Test Coverage Must Be Fixed Before PR Approval (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 21, 2026 (PR #729) 🚨**
+
+**Violation**: Copilot delivered PR #729 with ONLY documentation updates (`PLAYWRIGHT_STATUS.md`, `MVP_SIGNOFF_READINESS_BLOCKER_MAPPING.md`) for an issue that explicitly required code changes, test coverage increases, and CI quality improvements. The product owner rejected this with "Fix build and fix tests or the app and make sure it is aligned with product definition. Increase test coverage."
+
+**What Went Wrong**:
+- The issue (Issue #728) described fixing CI, fixing dependency conflicts, wiring evidence freshness into UI, improving E2E tests — ALL implementation work
+- The prior base commit (8a73807) had already done most of the implementation, but the PR still had 6 utility files (`address.ts`, `allowances.ts`, `compliance.ts`, `complianceEvidencePack.ts`, `formValidation.ts`, `network.ts`) with ZERO test coverage
+- The agent delivered only documentation as the PR and called it done
+- No self-audit of uncovered utility files was performed before submission
+
+**Correct Approach — MANDATORY Before Any PR Is Considered Complete**:
+
+```bash
+# 1. Find ALL utility files without a corresponding test file:
+for f in src/utils/*.ts; do
+  name="$(basename "${f%.ts}")"
+  if ! ls "src/utils/__tests__/${name}.test.ts" 2>/dev/null | grep -q .; then
+    echo "MISSING test: $f"
+  fi
+done
+# Any output = incomplete delivery. Write tests for all missing files.
+
+# 2. Find ALL source files below 80% branch coverage:
+npx vitest run --coverage 2>&1 | grep -E "\s+[0-9]+\s+\|\s+[0-9]+\s+\|\s+[0-9]+" | awk -F'|' '$3+0 < 80 {print}' | head -20
+# Write tests until all files reach ≥80% branch coverage (or document exemptions).
+
+# 3. Verify total passing count has increased vs base branch:
+npx vitest run 2>&1 | tail -5
+# The "Tests X passed" count must be HIGHER than the base branch count.
+```
+
+**Minimum test requirements for utility files added or modified in a PR**:
+- Every exported function must have at least one `it()` test covering its happy path
+- Every branch (`if`/`else`/`switch case`/`?.`) in the function must be covered
+- Error paths (try/catch, invalid input, edge cases) must be tested explicitly
+
+**Pattern: Verifying Untested Utilities Before Submission**:
+```typescript
+// ❌ WRONG — submitting PR with 6 utility files at 0% coverage
+// src/utils/address.ts, allowances.ts, compliance.ts, ... → no tests
+
+// ✅ CORRECT — add test file for each utility before PR submission:
+// src/utils/__tests__/address.test.ts       ← covers formatAddress, isValidAlgorandAddress
+// src/utils/__tests__/allowances.test.ts    ← covers isUnlimitedAllowance, etc.
+// src/utils/__tests__/compliance.test.ts    ← covers isAlgorandBasedToken, etc.
+// src/utils/__tests__/complianceEvidencePack.test.ts ← covers STATUS_LABELS, etc.
+// src/utils/__tests__/formValidation.test.ts ← covers isValidEmail, etc.
+// src/utils/__tests__/network.test.ts       ← covers detectNetworkType, etc.
+```
+
+**Root Cause Analysis**:
+- The previous agent session was a continuation/follow-up. It saw the base commit (8a73807) had already done implementation and documentation was the stated "remaining gap"
+- BUT: it never audited whether utility files added by 8a73807 had test coverage
+- Lesson: Always run the full missing-test audit (`for f in src/utils/*.ts` pattern above) before marking ANY issue done, even when you think the implementation is done
+
+**Pre-Submission Mandatory Audit (ALWAYS run before `report_progress`)**:
+1. `for f in src/utils/*.ts; do ...` — find missing test files
+2. `for f in src/components/**/*.vue; do ...` — find untested components (via .test.ts check)
+3. `npx vitest run 2>&1 | tail -5` — confirm test count increased vs prior
+
+**Never Again**:
+- ❌ Submit a PR that increases utility files count without proportionally increasing test file count
+- ❌ Mark an issue "done" based only on documentation without auditing coverage gaps
+- ❌ Skip the missing-test-file audit when working on a follow-up/continuation PR
+- ✅ ALWAYS check `ls src/utils/__tests__/` against `ls src/utils/*.ts` before `report_progress`
+
+---
+
+### 7ad. Documentation-Only PR for Implementation Issues Is Always Rejected (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 21, 2026 (PR #729) 🚨**
+
+**Violation**: Copilot produced a PR with only two documentation file updates for an issue that contained:
+- "Diagnose and fix the zero-job execution failure in the strict-signoff workflow" (AC #1)
+- "Resolve the frontend dependency/version conflict" (AC #2)  
+- "Update the frontend release-critical surfaces" (AC #3)
+- "Reduce dependence on permissive execution in the highest-value evidence suites" (AC #4)
+- "Refresh stakeholder-facing testing and blocker documentation" (AC #5)
+- "Increase test coverage" (explicit product owner requirement)
+
+The PR addressed ONLY AC #5 (documentation) while calling the full issue resolved.
+
+**Prevention Rule**: Before creating ANY PR:
+1. Count the total number of ACs in the issue
+2. Identify which are documentation-only and which require code/test changes
+3. Confirm at least one CODE CHANGE or TEST FILE is part of the PR if the issue has ANY non-documentation AC
+4. If all required code was already in a prior merged PR, STILL audit for coverage gaps and add tests
+
+**Cross-reference**: See also the existing section "CRITICAL PAST VIOLATION - February 18, 2026" at the top of this document which covers the same class of error for vision/strategy issues.
+
+---
+
 ## Additional Notes
 
 - The application uses Vue Router for navigation
