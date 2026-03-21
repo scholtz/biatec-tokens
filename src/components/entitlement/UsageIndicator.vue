@@ -126,6 +126,8 @@ const handleUpgradeClick = () => {
 </template>
 
 <style scoped>
+@reference "../../style.css";
+
 .usage-indicator {
   @apply space-y-2;
 }

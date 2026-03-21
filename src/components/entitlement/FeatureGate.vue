@@ -160,6 +160,8 @@ const closeModal = () => {
 </template>
 
 <style scoped>
+@reference "../../style.css";
+
 .feature-gate {
   @apply w-full;
 }
