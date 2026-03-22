@@ -120,12 +120,11 @@ describe('VisionInsightsWorkspace', () => {
   it('shows export menu when export button clicked', async () => {
     const wrapper = await mountView()
     const exportBtn = wrapper.findAll('button').find(b => /export/i.test(b.text()))
+    expect(exportBtn).toBeTruthy()
     if (exportBtn) {
       await exportBtn.trigger('click')
       await wrapper.vm.$nextTick()
       expect(wrapper.text()).toMatch(/export as json|export as csv/i)
-    } else {
-      expect(wrapper.exists()).toBe(true)
     }
   })
 

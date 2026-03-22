@@ -93,8 +93,7 @@ describe('OnboardingFlow', () => {
     const wrapper = await mountView()
     // First step has organization name field
     const input = wrapper.find('input[type="text"], input:not([type])')
-    // Either input or step form elements should be visible
-    expect(wrapper.exists()).toBe(true)
+    expect(input.exists()).toBe(true)
   })
 
   it('has token type selection options on first or second step', async () => {

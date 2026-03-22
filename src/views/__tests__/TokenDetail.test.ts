@@ -140,6 +140,27 @@ describe('TokenDetail', () => {
     expect(html).toMatch(/red|bg-red/)
   })
 
+  it('renders whitelist tab button', async () => {
+    const token = {
+      id: 'token-1',
+      name: 'WL Token',
+      symbol: 'WL',
+      standard: 'ARC200' as const,
+      type: 'FT' as const,
+      supply: 1,
+      status: 'deployed' as const,
+      network: 'VOI',
+      createdAt: new Date(),
+      decimals: 6,
+      description: '',
+      imageUrl: '',
+    }
+    const wrapper = await mountView('token-1', [token])
+    const tabs = wrapper.findAll('button')
+    const whitelistTab = tabs.find(b => /whitelist/i.test(b.text()))
+    expect(whitelistTab).toBeTruthy()
+  })
+
   it('renders whitelist tab content when tab selected', async () => {
     const token = {
       id: 'token-1',
@@ -163,8 +184,6 @@ describe('TokenDetail', () => {
       await whitelistTab.trigger('click')
       await wrapper.vm.$nextTick()
       expect(wrapper.find('[data-testid="whitelist-management"]').exists()).toBe(true)
-    } else {
-      expect(wrapper.exists()).toBe(true)
     }
   })
 })

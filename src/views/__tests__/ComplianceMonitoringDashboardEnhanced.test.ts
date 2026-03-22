@@ -99,13 +99,13 @@ describe('ComplianceMonitoringDashboardEnhanced', () => {
     expect(text).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
   })
 
-  it('generates a CSV filename containing today\'s date', async () => {
-    // The generateCsvFilename function in the view uses ISO date format
-    const today = new Date().toISOString().split('T')[0]
+  it('renders without error (CSV generation uses ISO date format)', async () => {
     const wrapper = await mountComponent()
-    // The function is internal, verify component renders without error as proxy
+    // generateCsvFilename() inside the view uses new Date().toISOString().split('T')[0]
+    // Verify the view mounts and the internal function doesn't throw
     expect(wrapper.exists()).toBe(true)
-    // Ensure date pattern is sensible
+    // Verify the ISO date format pattern used for the filename is valid
+    const today = new Date().toISOString().split('T')[0]
     expect(today).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
 
@@ -113,15 +113,13 @@ describe('ComplianceMonitoringDashboardEnhanced', () => {
     const wrapper = await mountComponent()
     // Switch to export tab
     const exportBtn = wrapper.findAll('button').find(b => /export/i.test(b.text()))
+    expect(exportBtn).toBeTruthy()
     if (exportBtn) {
       await exportBtn.trigger('click')
       await wrapper.vm.$nextTick()
       // Audit export component should be visible now
       const exportSection = wrapper.find('[data-testid="audit-evidence-export"]')
       expect(exportSection.exists()).toBe(true)
-    } else {
-      // View renders without errors
-      expect(wrapper.exists()).toBe(true)
     }
   })
 
