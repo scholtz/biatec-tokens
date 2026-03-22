@@ -509,15 +509,16 @@ describe('ReleaseEvidenceCenterView — Export status rendering', () => {
 // ---------------------------------------------------------------------------
 
 describe('ReleaseEvidenceCenterView — evidenceTruthClass state transitions', () => {
-  it('initialises evidenceTruthClass as partial_hydration before loadData runs', () => {
+  it('evidenceTruthClass starts as partial_hydration (initial ref value, before loadStrictArtifact resolves)', () => {
     const router = makeRouter()
+    // Do NOT advance timers — check the synchronous initial value
     const wrapper = mount(ReleaseEvidenceCenterView, {
       global: { plugins: [createTestingPinia({ createSpy: vi.fn }), router] },
     })
     const vm = wrapper.vm as any
-    // Default state before any loading — no artifact loaded yet → partial_hydration initial ref value
-    // (will transition to environment_blocked once loadData + loadStrictArtifact complete)
-    expect(['partial_hydration', 'environment_blocked']).toContain(vm.evidenceTruthClass)
+    // Initial ref value is 'partial_hydration'; loadStrictArtifact() will overwrite it
+    // to 'environment_blocked' once the async fetch resolves (fail-closed)
+    expect(vm.evidenceTruthClass).toBe('partial_hydration')
   })
 
   it('sets evidenceTruthClass to environment_blocked after loadData when no artifact is available (fail-closed)', async () => {
@@ -588,22 +589,22 @@ describe('ReleaseEvidenceCenterView — evidenceTruthClass state transitions', (
     }
   })
 
-  it('evidenceTruthClass transitions back from unavailable to environment_blocked on successful loadData (fail-closed)', async () => {
+  it('evidenceTruthClass stays at environment_blocked after artifact fetch (no artifact URL configured)', async () => {
     const wrapper = await mountLoaded()
     const vm = wrapper.vm as any
 
-    // Force to unavailable
-    vm.evidenceTruthClass = 'unavailable'
-    vm.isDegraded = true
-    await nextTick()
-    expect(vm.evidenceTruthClass).toBe('unavailable')
+    // After mounting and loading, without VITE_SIGNOFF_STATUS_URL, state should be environment_blocked
+    // (loadStrictArtifact resolves null → state 'missing' → evidence truth 'environment_blocked')
+    expect(vm.evidenceTruthClass).toBe('environment_blocked')
 
-    // loadData resets degraded state, and since no artifact is loaded, truth class becomes environment_blocked
+    // loadData() itself does NOT touch evidenceTruthClass (managed by loadStrictArtifact)
+    // Verify isDegraded resets on success
+    vm.isDegraded = true
     vm.loadData()
     await nextTick()
-    // Without a configured artifact URL, state is environment_blocked (fail-closed)
-    expect(vm.evidenceTruthClass).toBe('environment_blocked')
     expect(vm.isDegraded).toBe(false)
+    // evidenceTruthClass is managed by loadStrictArtifact, not loadData — unchanged
+    expect(vm.evidenceTruthClass).toBe('environment_blocked')
   })
 })
 

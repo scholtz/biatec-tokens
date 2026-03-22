@@ -407,10 +407,7 @@ export function parseSignoffStatusArtifact(raw: unknown): SignoffStatusArtifact 
  * The caller should treat `null` as the `'missing'` state.
  */
 export async function fetchSignoffStatusArtifact(): Promise<SignoffStatusArtifact | null> {
-  const artifactUrl =
-    typeof import.meta !== 'undefined' && import.meta.env?.VITE_SIGNOFF_STATUS_URL
-      ? (import.meta.env.VITE_SIGNOFF_STATUS_URL as string)
-      : ''
+  const artifactUrl = (import.meta.env?.VITE_SIGNOFF_STATUS_URL as string | undefined) ?? ''
 
   if (!artifactUrl) return null
 

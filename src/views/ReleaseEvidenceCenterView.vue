@@ -230,11 +230,9 @@ function loadData(): void {
     readiness.value = buildDefaultReleaseReadiness()
     isDegraded.value = false
     loadError.value = null
-    // evidenceTruthClass is updated by loadStrictArtifact; default to environment_blocked
-    // until the artifact is fetched (fail-closed initial state)
-    if (strictArtifactState.value === 'missing' && !isArtifactLoading.value) {
-      evidenceTruthClass.value = 'environment_blocked'
-    }
+    // evidenceTruthClass is managed exclusively by loadStrictArtifact() — no update here.
+    // The initial ref value is 'partial_hydration'; loadStrictArtifact() overwrites it
+    // (fail-closed: 'environment_blocked' when no artifact, 'backend_confirmed' only when proven).
   } catch (err) {
     isDegraded.value = true
     loadError.value = err instanceof Error ? err.message : 'Unknown error'

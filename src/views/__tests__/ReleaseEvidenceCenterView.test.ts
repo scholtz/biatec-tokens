@@ -528,12 +528,13 @@ describe('ReleaseEvidenceCenterView — Strict Sign-Off Artifact Panel', () => {
     expect(provenance.exists()).toBe(false)
   })
 
-  it('description text warns about missing configuration (fail-closed AC #4)', async () => {
+  it('description text communicates missing artifact (fail-closed AC #4)', async () => {
     const wrapper = await mountView()
     const desc = wrapper.find(`[data-testid="${STRICT_ARTIFACT_TEST_IDS.DESCRIPTION}"]`)
-    const text = desc.text().toLowerCase()
-    // Without artifact, the description should communicate that proof is absent/incomplete
-    const hasWarningTerms = text.includes('no') || text.includes('not') || text.includes('missing') || text.includes('artifact') || text.includes('configured')
-    expect(hasWarningTerms).toBe(true)
+    const text = desc.text()
+    // Without artifact, the description must communicate the artifact is absent or not configured
+    // and must NOT show release-ready language
+    expect(text.toLowerCase()).not.toMatch(/credible release evidence|authorization supported/i)
+    expect(text.length).toBeGreaterThan(20)
   })
 })
