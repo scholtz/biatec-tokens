@@ -19,7 +19,7 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { withAuth, suppressBrowserErrors } from './helpers/auth'
+import { loginWithCredentials, suppressBrowserErrorsNarrow } from './helpers/auth'
 
 const BASE = 'http://localhost:5173'
 const ROUTE = `${BASE}/compliance/reporting-center`
@@ -29,7 +29,8 @@ const ROUTE = `${BASE}/compliance/reporting-center`
 // ---------------------------------------------------------------------------
 
 async function navigateToCenter(page: any) {
-  await withAuth(page)
+  suppressBrowserErrorsNarrow(page)
+  await loginWithCredentials(page)
   await page.goto(ROUTE, { timeout: 15000 })
   await page.waitForLoadState('load', { timeout: 10000 })
   const heading = page.getByRole('heading', { name: /Reporting Command Center/i, level: 1 })
@@ -42,7 +43,7 @@ async function navigateToCenter(page: any) {
 
 test.describe('Reporting Command Center — Navigation Reachability (AC #1)', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('authenticated user can navigate to /compliance/reporting-center', async ({ page }) => {
@@ -73,7 +74,7 @@ test.describe('Reporting Command Center — Navigation Reachability (AC #1)', ()
 
 test.describe('Reporting Command Center — Unauthenticated Redirect', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   // Separate describe for unauthenticated tests (no withAuth in beforeEach)
@@ -84,7 +85,15 @@ test.describe('Reporting Command Center — Unauthenticated Redirect', () => {
     })
     await page.goto(ROUTE, { timeout: 15000 })
     await page.waitForLoadState('load', { timeout: 10000 })
-    await page.waitForTimeout(3000)
+    // Wait semantically for auth guard redirect or modal — no fixed sleep
+    await page.waitForFunction(
+      (route: string) =>
+        !window.location.href.includes(route) ||
+        (document.querySelector('[data-testid="auth-modal"]') !== null) ||
+        document.body.textContent?.includes('showAuth'),
+      '/compliance/reporting-center',
+      { timeout: 8000 },
+    ).catch(() => {})
 
     const url = page.url()
     const redirectedAway = !url.includes('/compliance/reporting-center')
@@ -98,7 +107,7 @@ test.describe('Reporting Command Center — Unauthenticated Redirect', () => {
 
 test.describe('Reporting Command Center — Summary Cards (AC #2, #4)', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('renders all four summary cards', async ({ page }) => {
@@ -120,7 +129,7 @@ test.describe('Reporting Command Center — Summary Cards (AC #2, #4)', () => {
 
 test.describe('Reporting Command Center — Report Templates (AC #2, #5)', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('shows saved report template cards', async ({ page }) => {
@@ -166,7 +175,7 @@ test.describe('Reporting Command Center — Report Templates (AC #2, #5)', () =>
 
 test.describe('Reporting Command Center — Schedule Configuration (AC #3, #13)', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('clicking "New Report Run" opens the configuration panel', async ({ page }) => {
@@ -211,7 +220,7 @@ test.describe('Reporting Command Center — Schedule Configuration (AC #3, #13)'
 
 test.describe('Reporting Command Center — Run Status & Lifecycle (AC #4)', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('in-flight runs section is visible', async ({ page }) => {
@@ -240,7 +249,7 @@ test.describe('Reporting Command Center — Run Status & Lifecycle (AC #4)', () 
 
 test.describe('Reporting Command Center — Stale Evidence Warnings (AC #5)', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('page does not present any blocked state as "ready" without explicit evidence status', async ({ page }) => {
@@ -254,7 +263,7 @@ test.describe('Reporting Command Center — Stale Evidence Warnings (AC #5)', ()
 
 test.describe('Reporting Command Center — Change Summary (AC #6)', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('change-since-last-report summary section is visible', async ({ page }) => {
@@ -277,7 +286,7 @@ test.describe('Reporting Command Center — Change Summary (AC #6)', () => {
 
 test.describe('Reporting Command Center — Blocker Deep Links (AC #7)', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('blocked runs show remediation links to compliance surfaces', async ({ page }) => {
@@ -298,7 +307,7 @@ test.describe('Reporting Command Center — Blocker Deep Links (AC #7)', () => {
 
 test.describe('Reporting Command Center — No Wallet UI (AC #9)', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('page does not contain wallet connector UI elements', async ({ page }) => {
@@ -320,7 +329,7 @@ test.describe('Reporting Command Center — No Wallet UI (AC #9)', () => {
 
 test.describe('Reporting Command Center — Accessibility (AC #10)', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('page has a single h1 heading', async ({ page }) => {

@@ -11,7 +11,11 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { withAuth, suppressBrowserErrors, getNavText } from './helpers/auth'
+import {
+  loginWithCredentials,
+  suppressBrowserErrorsNarrow,
+  getNavText,
+} from './helpers/auth'
 
 const BASE = 'http://localhost:5173'
 const COCKPIT_URL = `${BASE}/compliance/operations`
@@ -21,7 +25,8 @@ const COCKPIT_URL = `${BASE}/compliance/operations`
 // ---------------------------------------------------------------------------
 
 async function goToCockpit(page: import('@playwright/test').Page) {
-  await withAuth(page)
+  suppressBrowserErrorsNarrow(page)
+  await loginWithCredentials(page)
   await page.goto(COCKPIT_URL, { timeout: 15000 })
   await page.waitForLoadState('load', { timeout: 10000 })
 }
@@ -39,7 +44,7 @@ async function openFirstCaseDrillDown(page: import('@playwright/test').Page) {
 
 test.describe('Case Drill-Down — analyst journey', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('analyst can open case drill-down panel from the cockpit worklist', async ({ page }) => {
@@ -150,7 +155,7 @@ test.describe('Case Drill-Down — analyst journey', () => {
 
 test.describe('Case Drill-Down — approver journey', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('approver can see approval history section in case detail', async ({ page }) => {
@@ -198,7 +203,7 @@ test.describe('Case Drill-Down — approver journey', () => {
 
 test.describe('Guided Escalation Flow', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('analyst can open the escalation modal from the drill-down panel', async ({ page }) => {
@@ -298,7 +303,7 @@ test.describe('Guided Escalation Flow', () => {
 
 test.describe('Degraded data handling', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('evidence items show a data-status attribute indicating actual state', async ({ page }) => {
@@ -314,7 +319,10 @@ test.describe('Degraded data handling', () => {
         await t.click({ timeout: 3000 })
       }
     }
-    await page.waitForTimeout(500)
+    // Wait for evidence items to appear after expanding groups — catch is intentional: the
+    // subsequent count() assertion validates the items are present; the catch prevents
+    // a hard timeout if the render hasn't completed yet after the accordion expansion.
+    await page.locator('[data-testid="drill-down-evidence-item"]').first().waitFor({ state: 'attached', timeout: 5000 }).catch(() => {})
 
     const items = page.locator('[data-testid="drill-down-evidence-item"]')
     const count = await items.count()
@@ -346,7 +354,7 @@ test.describe('Degraded data handling', () => {
 
 test.describe('Keyboard navigation', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
   })
 
   test('close button is keyboard-focusable (Tab reachable)', async ({ page }) => {
@@ -385,8 +393,8 @@ test.describe('Keyboard navigation', () => {
 
 test.describe('No wallet UI — regression check', () => {
   test('compliance cockpit with drill-down does not show wallet connector UI', async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
+    suppressBrowserErrorsNarrow(page)
+    await loginWithCredentials(page)
     await page.goto('/', { timeout: 10000 })
     await page.waitForLoadState('load', { timeout: 5000 })
 

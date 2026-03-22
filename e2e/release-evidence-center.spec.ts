@@ -16,15 +16,19 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { withAuth, suppressBrowserErrors, clearAuthScript } from './helpers/auth'
+import {
+  loginWithCredentials,
+  suppressBrowserErrorsNarrow,
+  clearAuthScript,
+} from './helpers/auth'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function openWorkspace(page: Parameters<typeof withAuth>[0]) {
-  suppressBrowserErrors(page)
-  await withAuth(page)
+async function openWorkspace(page: import('@playwright/test').Page) {
+  suppressBrowserErrorsNarrow(page)
+  await loginWithCredentials(page)
   await page.goto('/compliance/release', { timeout: 15000 })
   await page.waitForLoadState('load', { timeout: 10000 })
 }
@@ -373,8 +377,8 @@ test.describe('Release Evidence Center — accessibility (AC #8)', () => {
   })
 
   test('loading indicator has role="status" and aria-live="polite" (SC 4.1.3)', async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
+    suppressBrowserErrorsNarrow(page)
+    await loginWithCredentials(page)
     // Navigate to the page — capture loading state before it resolves
     await page.goto('/compliance/release', { timeout: 15000 })
     // Check loading state immediately (before 150ms onMounted fires)
@@ -508,14 +512,22 @@ test.describe('Release Evidence Center — refresh functionality', () => {
 
 test.describe('Release Evidence Center — unauthenticated redirect', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
     await clearAuthScript(page)
   })
 
   test('redirects unauthenticated users away from /compliance/release', async ({ page }) => {
     await page.goto('http://localhost:5173/compliance/release', { timeout: 15000 })
     await page.waitForLoadState('load', { timeout: 10000 })
-    await page.waitForTimeout(3000)
+    // Wait semantically for auth guard redirect or modal — no fixed sleep
+    await page.waitForFunction(
+      (route: string) =>
+        !window.location.href.includes(route) ||
+        (document.querySelector('[data-testid="auth-modal"]') !== null) ||
+        document.body.textContent?.includes('showAuth'),
+      '/compliance/release',
+      { timeout: 8000 },
+    ).catch(() => {})
 
     const url = page.url()
     const redirectedAway = !url.includes('/compliance/release')

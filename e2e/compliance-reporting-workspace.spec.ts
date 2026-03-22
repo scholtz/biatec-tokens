@@ -6,20 +6,24 @@
  * export actions, workspace navigation, wallet-free language, and keyboard
  * accessibility.
  *
- * Auth strategy: withAuth() (localStorage seeding — no wallet connectors)
+ * Auth strategy: loginWithCredentials() (backend-backed with localStorage fallback)
  * Route: /compliance/reporting
  */
 
 import { test, expect } from '@playwright/test'
-import { withAuth, suppressBrowserErrors, clearAuthScript } from './helpers/auth'
+import {
+  loginWithCredentials,
+  suppressBrowserErrorsNarrow,
+  clearAuthScript,
+} from './helpers/auth'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function openReportingWorkspace(page: Parameters<typeof withAuth>[0]) {
-  suppressBrowserErrors(page)
-  await withAuth(page)
+async function openReportingWorkspace(page: import('@playwright/test').Page) {
+  suppressBrowserErrorsNarrow(page)
+  await loginWithCredentials(page)
   await page.goto('http://localhost:5173/compliance/reporting', { timeout: 15000 })
   await page.waitForLoadState('load', { timeout: 10000 })
 }
@@ -248,14 +252,22 @@ test.describe('Compliance Reporting Workspace — keyboard navigation', () => {
 
 test.describe('Compliance Reporting Workspace — unauthenticated redirect', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
     await clearAuthScript(page)
   })
 
   test('redirects unauthenticated users away from /compliance/reporting', async ({ page }) => {
     await page.goto('http://localhost:5173/compliance/reporting', { timeout: 15000 })
     await page.waitForLoadState('load', { timeout: 10000 })
-    await page.waitForTimeout(3000)
+    // Wait semantically for auth guard redirect or modal — no fixed sleep
+    await page.waitForFunction(
+      (route: string) =>
+        !window.location.href.includes(route) ||
+        (document.querySelector('[data-testid="auth-modal"]') !== null) ||
+        document.body.textContent?.includes('showAuth'),
+      '/compliance/reporting',
+      { timeout: 8000 },
+    ).catch(() => {})
 
     const url = page.url()
     const redirectedAway = !url.includes('/compliance/reporting')
@@ -308,9 +320,8 @@ test.describe('Compliance Reporting Workspace — audience presets', () => {
     const complianceBtn = page.getByTestId('audience-btn-compliance')
     await expect(complianceBtn).toBeAttached({ timeout: 15000 })
     await complianceBtn.click({ timeout: 5000 })
-    await page.waitForTimeout(300)
-    const pressed = await complianceBtn.getAttribute('aria-pressed', { timeout: 5000 })
-    expect(pressed).toBe('true')
+    // Wait for Vue reactive update to reflect the new aria-pressed state (semantic wait)
+    await expect(complianceBtn).toHaveAttribute('aria-pressed', 'true', { timeout: 5000 })
   })
 })
 
@@ -351,9 +362,9 @@ test.describe('Compliance Reporting Workspace — approval history', () => {
     await toggle.waitFor({ state: 'visible', timeout: 20000 })
     const expandedBefore = await toggle.getAttribute('aria-expanded', { timeout: 5000 })
     await toggle.click({ timeout: 5000 })
-    await page.waitForTimeout(300)
-    const expandedAfter = await toggle.getAttribute('aria-expanded', { timeout: 5000 })
-    expect(expandedBefore).not.toBe(expandedAfter)
+    // Wait for the aria-expanded attribute to change — semantic replacement for fixed 300ms sleep
+    const expectedExpanded = expandedBefore === 'true' ? 'false' : 'true'
+    await expect(toggle).toHaveAttribute('aria-expanded', expectedExpanded, { timeout: 5000 })
   })
 })
 

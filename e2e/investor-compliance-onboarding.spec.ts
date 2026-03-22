@@ -18,15 +18,19 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { withAuth, suppressBrowserErrors, clearAuthScript } from './helpers/auth'
+import {
+  loginWithCredentials,
+  suppressBrowserErrorsNarrow,
+  clearAuthScript,
+} from './helpers/auth'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function openWorkspace(page: Parameters<typeof withAuth>[0]) {
-  suppressBrowserErrors(page)
-  await withAuth(page)
+async function openWorkspace(page: import('@playwright/test').Page) {
+  suppressBrowserErrorsNarrow(page)
+  await loginWithCredentials(page)
   await page.goto('/compliance/onboarding', { timeout: 15000 })
   await page.waitForLoadState('load', { timeout: 10000 })
 }
@@ -313,16 +317,14 @@ test.describe('Investor Compliance Onboarding — blockers (AC #4)', () => {
       const ariaRole = await banner.getAttribute('role')
       expect(ariaRole).toBe('alert')
     }
-    // Pass either way — partial fixture may or may not have launch-blocking blockers
-    expect(true).toBe(true)
+    // Pass either way — partial fixture may or may not have launch-blocking blockers.
+    // The workspace must be loaded regardless of banner presence.
+    const workspaceRoot = page.getByTestId('investor-onboarding-workspace')
+    await expect(workspaceRoot).toBeAttached({ timeout: 5000 })
   })
 
   test('blocked fixture shows critical blockers banner with launch-blocking issues', async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
-    await page.goto('/compliance/onboarding', { timeout: 15000 })
-    await page.waitForLoadState('load', { timeout: 10000 })
-
+    await openWorkspace(page)
     const heading = page.getByTestId('onboarding-workspace-heading')
     await expect(heading).toBeVisible({ timeout: 30000 })
 
@@ -339,11 +341,7 @@ test.describe('Investor Compliance Onboarding — blockers (AC #4)', () => {
   })
 
   test('blocked fixture shows blockers with severity badges', async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
-    await page.goto('/compliance/onboarding', { timeout: 15000 })
-    await page.waitForLoadState('load', { timeout: 10000 })
-
+    await openWorkspace(page)
     const heading = page.getByTestId('onboarding-workspace-heading')
     await expect(heading).toBeVisible({ timeout: 30000 })
 
@@ -361,11 +359,7 @@ test.describe('Investor Compliance Onboarding — blockers (AC #4)', () => {
   })
 
   test('blocked fixture shows blockers with remediation links', async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
-    await page.goto('/compliance/onboarding', { timeout: 15000 })
-    await page.waitForLoadState('load', { timeout: 10000 })
-
+    await openWorkspace(page)
     const heading = page.getByTestId('onboarding-workspace-heading')
     await expect(heading).toBeVisible({ timeout: 30000 })
 
@@ -387,11 +381,7 @@ test.describe('Investor Compliance Onboarding — blockers (AC #4)', () => {
   })
 
   test('stale fixture shows stale evidence warning in blocker details', async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
-    await page.goto('/compliance/onboarding', { timeout: 15000 })
-    await page.waitForLoadState('load', { timeout: 10000 })
-
+    await openWorkspace(page)
     const heading = page.getByTestId('onboarding-workspace-heading')
     await expect(heading).toBeVisible({ timeout: 30000 })
 
@@ -441,11 +431,7 @@ test.describe('Investor Compliance Onboarding — approval handoff', () => {
   })
 
   test('ready fixture shows green handoff CTA', async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
-    await page.goto('/compliance/onboarding', { timeout: 15000 })
-    await page.waitForLoadState('load', { timeout: 10000 })
-
+    await openWorkspace(page)
     const heading = page.getByTestId('onboarding-workspace-heading')
     await expect(heading).toBeVisible({ timeout: 30000 })
 
@@ -532,14 +518,22 @@ test.describe('Investor Compliance Onboarding — no wallet UI (AC #9)', () => {
 
 test.describe('Investor Compliance Onboarding — unauthenticated redirect', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
     await clearAuthScript(page)
   })
 
   test('redirects unauthenticated users away from /compliance/onboarding (AC #10)', async ({ page }) => {
     await page.goto('http://localhost:5173/compliance/onboarding', { timeout: 15000 })
     await page.waitForLoadState('load', { timeout: 10000 })
-    await page.waitForTimeout(3000)
+    // Wait semantically for the auth guard redirect or modal to appear
+    await page.waitForFunction(
+      (route: string) =>
+        !window.location.href.includes(route) ||
+        (document.querySelector('[data-testid="auth-modal"]') !== null) ||
+        document.body.textContent?.includes('showAuth'),
+      '/compliance/onboarding',
+      { timeout: 8000 },
+    ).catch(() => {})
 
     const url = page.url()
     const redirectedAway = !url.includes('/compliance/onboarding')
@@ -566,8 +560,8 @@ test.describe('Investor Compliance Onboarding — accessibility', () => {
   })
 
   test('loading state has role="status" and aria-live', async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
+    suppressBrowserErrorsNarrow(page)
+    await loginWithCredentials(page)
     // Navigate before loading finishes to observe loading state
     await page.goto('/compliance/onboarding', { timeout: 15000 })
     // The loading state is briefly visible — check it has the right attributes
@@ -584,10 +578,7 @@ test.describe('Investor Compliance Onboarding — accessibility', () => {
   })
 
   test('critical blockers banner (when visible) has role="alert"', async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
-    await page.goto('/compliance/onboarding', { timeout: 15000 })
-    await page.waitForLoadState('load', { timeout: 10000 })
+    await openWorkspace(page)
 
     const heading = page.getByTestId('onboarding-workspace-heading')
     await expect(heading).toBeVisible({ timeout: 30000 })
@@ -644,17 +635,14 @@ test.describe('Investor Compliance Onboarding — accessibility', () => {
 
 test.describe('Investor Compliance Onboarding — sidebar navigation (AC #12)', () => {
   test('sidebar link "Investor Onboarding" is present when authenticated', async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
+    suppressBrowserErrorsNarrow(page)
+    await loginWithCredentials(page)
     await page.goto('/', { timeout: 15000 })
     await page.waitForLoadState('load', { timeout: 10000 })
 
-    // Wait for sidebar to be rendered
-    await page.waitForTimeout(1000)
-
-    // Find the sidebar link
+    // Find the sidebar link — wait semantically for it to be rendered
     const link = page.locator('a[href="/compliance/onboarding"]').first()
-    const isPresent = await link.isVisible({ timeout: 5000 }).catch(() => false)
+    const isPresent = await link.isVisible({ timeout: 10000 }).catch(() => false)
 
     if (isPresent) {
       const text = await link.textContent({ timeout: 5000 })
@@ -674,15 +662,13 @@ test.describe('Investor Compliance Onboarding — sidebar navigation (AC #12)', 
 // ---------------------------------------------------------------------------
 
 test.describe('Investor Compliance Onboarding — fixture state differentiation', () => {
+  test.beforeEach(async ({ page }) => {
+    await openWorkspace(page)
+    // Confirm workspace heading is visible before each fixture test
+    await expect(page.getByTestId('onboarding-workspace-heading')).toBeVisible({ timeout: 30000 })
+  })
+
   test('ready fixture shows ready_for_handoff posture badge', async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
-    await page.goto('/compliance/onboarding', { timeout: 15000 })
-    await page.waitForLoadState('load', { timeout: 10000 })
-
-    const heading = page.getByTestId('onboarding-workspace-heading')
-    await expect(heading).toBeVisible({ timeout: 30000 })
-
     const readyBtn = page.getByTestId('fixture-btn-ready')
     await expect(readyBtn).toBeVisible({ timeout: 10000 })
     await readyBtn.click()
@@ -694,14 +680,6 @@ test.describe('Investor Compliance Onboarding — fixture state differentiation'
   })
 
   test('blocked fixture shows blocked posture badge', async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
-    await page.goto('/compliance/onboarding', { timeout: 15000 })
-    await page.waitForLoadState('load', { timeout: 10000 })
-
-    const heading = page.getByTestId('onboarding-workspace-heading')
-    await expect(heading).toBeVisible({ timeout: 30000 })
-
     const blockedBtn = page.getByTestId('fixture-btn-blocked')
     await expect(blockedBtn).toBeVisible({ timeout: 10000 })
     await blockedBtn.click()
@@ -713,14 +691,6 @@ test.describe('Investor Compliance Onboarding — fixture state differentiation'
   })
 
   test('stale fixture shows stale posture badge', async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
-    await page.goto('/compliance/onboarding', { timeout: 15000 })
-    await page.waitForLoadState('load', { timeout: 10000 })
-
-    const heading = page.getByTestId('onboarding-workspace-heading')
-    await expect(heading).toBeVisible({ timeout: 30000 })
-
     const staleBtn = page.getByTestId('fixture-btn-stale')
     await expect(staleBtn).toBeVisible({ timeout: 10000 })
     await staleBtn.click()
@@ -732,14 +702,6 @@ test.describe('Investor Compliance Onboarding — fixture state differentiation'
   })
 
   test('partial fixture shows partially_ready posture badge', async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
-    await page.goto('/compliance/onboarding', { timeout: 15000 })
-    await page.waitForLoadState('load', { timeout: 10000 })
-
-    const heading = page.getByTestId('onboarding-workspace-heading')
-    await expect(heading).toBeVisible({ timeout: 30000 })
-
     // Partial is the default — just verify the badge is present
     const badge = page.getByTestId('posture-badge')
     await expect(badge).toBeVisible({ timeout: 10000 })
@@ -748,14 +710,6 @@ test.describe('Investor Compliance Onboarding — fixture state differentiation'
   })
 
   test('ready fixture shows 100% readiness score', async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
-    await page.goto('/compliance/onboarding', { timeout: 15000 })
-    await page.waitForLoadState('load', { timeout: 10000 })
-
-    const heading = page.getByTestId('onboarding-workspace-heading')
-    await expect(heading).toBeVisible({ timeout: 30000 })
-
     const readyBtn = page.getByTestId('fixture-btn-ready')
     await expect(readyBtn).toBeVisible({ timeout: 10000 })
     await readyBtn.click()

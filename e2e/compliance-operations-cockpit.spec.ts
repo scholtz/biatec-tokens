@@ -18,15 +18,19 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { withAuth, suppressBrowserErrors, clearAuthScript } from './helpers/auth'
+import {
+  loginWithCredentials,
+  suppressBrowserErrorsNarrow,
+  clearAuthScript,
+} from './helpers/auth'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function openCockpit(page: Parameters<typeof withAuth>[0]) {
-  suppressBrowserErrors(page)
-  await withAuth(page)
+async function openCockpit(page: import('@playwright/test').Page) {
+  suppressBrowserErrorsNarrow(page)
+  await loginWithCredentials(page)
   await page.goto('/compliance/operations', { timeout: 15000 })
   await page.waitForLoadState('load', { timeout: 10000 })
 }
@@ -182,11 +186,15 @@ test.describe('Compliance Operations Cockpit — worklist panel', () => {
     await expect(select).toBeVisible({ timeout: 25000 })
     // Change to all (show all active items)
     await select.selectOption('all')
-    await page.waitForTimeout(500)
+    // Wait for the worklist to re-render after scope change — catch is intentional: the mock
+    // fixture always has items for 'all', but if the component renders an empty state first
+    // this prevents a hard failure before count() below validates the actual content.
+    await page.getByTestId('work-item-row').first().waitFor({ state: 'attached', timeout: 5000 }).catch(() => {})
     // Work items should now be rendered
     const rows = page.getByTestId('work-item-row')
     const count = await rows.count()
-    expect(count).toBeGreaterThanOrEqual(0) // At least some items visible
+    // 'all' filter should show work items from the mock fixture
+    expect(count).toBeGreaterThan(0)
   })
 })
 
@@ -304,8 +312,7 @@ test.describe('Compliance Operations Cockpit — refresh', () => {
     const text1 = await ts1.textContent({ timeout: 5000 })
     const btn = page.getByTestId('cockpit-refresh-btn')
     await btn.click({ timeout: 5000 })
-    await page.waitForTimeout(300)
-    // After refresh the timestamp should still be visible
+    // After refresh the timestamp should remain visible — no fixed sleep needed
     await expect(ts1).toBeVisible({ timeout: 10000 })
     const text2 = await ts1.textContent({ timeout: 5000 })
     // Timestamp updated or stayed the same (depends on timing resolution)
@@ -370,7 +377,7 @@ test.describe('Compliance Operations Cockpit — accessibility', () => {
 
 test.describe('Compliance Operations Cockpit — unauthenticated redirect', () => {
   test.beforeEach(async ({ page }) => {
-    suppressBrowserErrors(page)
+    suppressBrowserErrorsNarrow(page)
     await clearAuthScript(page)
   })
 
@@ -379,7 +386,15 @@ test.describe('Compliance Operations Cockpit — unauthenticated redirect', () =
   }) => {
     await page.goto('http://localhost:5173/compliance/operations', { timeout: 15000 })
     await page.waitForLoadState('load', { timeout: 10000 })
-    await page.waitForTimeout(3000)
+    // Wait semantically for auth guard redirect or modal — no fixed sleep
+    await page.waitForFunction(
+      (route: string) =>
+        !window.location.href.includes(route) ||
+        (document.querySelector('[data-testid="auth-modal"]') !== null) ||
+        document.body.textContent?.includes('showAuth'),
+      '/compliance/operations',
+      { timeout: 8000 },
+    ).catch(() => {})
 
     const url = page.url()
     const redirectedAway = !url.includes('/compliance/operations')
@@ -401,8 +416,8 @@ test.describe('Compliance Operations Cockpit — unauthenticated redirect', () =
 
 test.describe('Compliance Operations Cockpit — sidebar navigation', () => {
   test('sidebar contains "Operations Cockpit" link (AC #12)', async ({ page }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
+    suppressBrowserErrorsNarrow(page)
+    await loginWithCredentials(page)
     await page.goto('/', { timeout: 15000 })
     await page.waitForLoadState('load', { timeout: 10000 })
 
@@ -417,8 +432,8 @@ test.describe('Compliance Operations Cockpit — sidebar navigation', () => {
   test('clicking "Operations Cockpit" sidebar link navigates to /compliance/operations (AC #12)', async ({
     page,
   }) => {
-    suppressBrowserErrors(page)
-    await withAuth(page)
+    suppressBrowserErrorsNarrow(page)
+    await loginWithCredentials(page)
     await page.goto('/', { timeout: 15000 })
     await page.waitForLoadState('load', { timeout: 10000 })
 
@@ -486,11 +501,9 @@ test.describe('Compliance Operations Cockpit — persona selector', () => {
     const tabs = page.getByTestId('persona-tab')
     await expect(tabs.nth(1)).toBeVisible({ timeout: 25000 })
     await tabs.nth(1).click({ timeout: 5000 })
-    await page.waitForTimeout(300)
     const heading = page.locator('#worklist-heading')
-    await expect(heading).toBeVisible({ timeout: 10000 })
-    const headingText = await heading.textContent({ timeout: 5000 })
-    expect(headingText).toContain('Operations Lead')
+    // Wait for the heading to update after tab click — semantic wait for Vue reactivity
+    await expect(heading).toContainText('Operations Lead', { timeout: 5000 })
   })
 
   test('clicking the Approver tab changes the worklist heading', async ({ page }) => {
@@ -498,11 +511,9 @@ test.describe('Compliance Operations Cockpit — persona selector', () => {
     const tabs = page.getByTestId('persona-tab')
     await expect(tabs.nth(2)).toBeVisible({ timeout: 25000 })
     await tabs.nth(2).click({ timeout: 5000 })
-    await page.waitForTimeout(300)
     const heading = page.locator('#worklist-heading')
-    await expect(heading).toBeVisible({ timeout: 10000 })
-    const headingText = await heading.textContent({ timeout: 5000 })
-    expect(headingText).toContain('Approver')
+    // Wait for the heading to update after tab click — semantic wait for Vue reactivity
+    await expect(heading).toContainText('Approver', { timeout: 5000 })
   })
 })
 
@@ -528,7 +539,9 @@ test.describe('Compliance Operations Cockpit — work item handoff context', () 
     const filterSelect = page.getByTestId('worklist-filter-select')
     await filterSelect.waitFor({ state: 'visible', timeout: 20000 })
     await filterSelect.selectOption('blocked')
-    await page.waitForTimeout(500)
+    // Wait for the worklist to reflect the 'blocked' filter — catch is intentional: if no
+    // blocked items exist in the fixture, the row will never attach (valid empty state).
+    await page.getByTestId('work-item-row').first().waitFor({ state: 'attached', timeout: 5000 }).catch(() => {})
 
     const rows = page.getByTestId('work-item-row')
     const count = await rows.count()
