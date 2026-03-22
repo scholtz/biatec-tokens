@@ -91,16 +91,12 @@ describe('GuidedActionsWidget', () => {
       props: { actions: [makeAction({ id: 'act-42' })] },
       global: { stubs },
     })
-    await w.find('[data-action-clickable]').trigger('click').catch(() => {
-      // Find the clickable div differently
-    })
-    // Click the action row (first div with cursor-pointer)
+    // Click the action row (first div with cursor-pointer class)
     const rows = w.findAll('.cursor-pointer')
-    if (rows.length > 0) {
-      await rows[0].trigger('click')
-      const emitted = w.emitted('action-selected')
-      expect(emitted).toBeDefined()
-    }
+    expect(rows.length).toBeGreaterThan(0)
+    await rows[0].trigger('click')
+    const emitted = w.emitted('action-selected')
+    expect(emitted).toBeDefined()
   })
 
   it('limits displayed actions to 5 by default', () => {
