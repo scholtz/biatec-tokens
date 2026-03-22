@@ -12,6 +12,7 @@ import DiscoveryDashboard from '../DiscoveryDashboard.vue'
 
 vi.mock('../../services/TelemetryService', () => ({
   telemetryService: {
+    trackDiscoveryDashboardViewed: vi.fn(),
     trackDiscoveryFilterApplied: vi.fn(),
     trackDiscoveryFilterSaved: vi.fn(),
     trackDiscoveryFilterCleared: vi.fn(),

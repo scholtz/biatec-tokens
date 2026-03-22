@@ -50,7 +50,7 @@ describe('WhitelistService', () => {
     })
 
     it('applies pagination (page 1, perPage 1)', async () => {
-      const result = await service.getWhitelistEntries({}, 1, 1)
+      const result = await service.getWhitelistEntries({ page: 1, perPage: 1 })
       expect(result.data.length).toBeLessThanOrEqual(1)
       expect(result.perPage).toBe(1)
     })
@@ -111,10 +111,10 @@ describe('WhitelistService', () => {
 
   describe('approveWhitelistEntry', () => {
     it('approves an existing pending entry', async () => {
-      const entries = await service.getWhitelistEntries({ status: 'pending' })
+      const entries = await service.getWhitelistEntries({ status: ['pending'] })
       if (entries.data.length > 0) {
         const id = entries.data[0].id
-        const result = await service.approveWhitelistEntry({ entryId: id, approvedBy: 'admin@test.com', notes: 'Approved' })
+        const result = await service.approveWhitelistEntry({ id, notes: 'Approved' })
         expect(result?.status).toBe('approved')
       }
     })
@@ -127,10 +127,10 @@ describe('WhitelistService', () => {
 
   describe('rejectWhitelistEntry', () => {
     it('rejects an existing pending entry', async () => {
-      const entries = await service.getWhitelistEntries({ status: 'pending' })
+      const entries = await service.getWhitelistEntries({ status: ['pending'] })
       if (entries.data.length > 0) {
         const id = entries.data[0].id
-        const result = await service.rejectWhitelistEntry({ entryId: id, rejectedBy: 'admin@test.com', reason: 'Docs missing' })
+        const result = await service.rejectWhitelistEntry({ id, reason: 'Docs missing' })
         expect(result?.status).toBe('rejected')
       }
     })
@@ -143,10 +143,10 @@ describe('WhitelistService', () => {
 
   describe('requestMoreInfo', () => {
     it('updates entry status to under_review', async () => {
-      const entries = await service.getWhitelistEntries({ status: 'pending' })
+      const entries = await service.getWhitelistEntries({ status: ['pending'] })
       if (entries.data.length > 0) {
         const id = entries.data[0].id
-        const result = await service.requestMoreInfo({ entryId: id, requestedBy: 'admin@test.com', infoRequested: 'Need docs' })
+        const result = await service.requestMoreInfo({ id, requestedInfo: ['Need docs'] })
         expect(result.status).toBe('under_review')
       }
     })
