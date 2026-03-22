@@ -49,7 +49,6 @@ import {
 } from '../utils/releaseReadiness'
 import {
   type EvidenceTruthClass,
-  deriveFixtureTruthClass,
   evidenceTruthBannerClass,
   evidenceTruthTitleClass,
   evidenceTruthBodyClass,
@@ -60,6 +59,25 @@ import {
   EVIDENCE_TRUTH_TEST_IDS,
   buildProvenanceLabel,
 } from '../utils/evidenceTruthfulness'
+import {
+  type SignoffStatusArtifact,
+  type StrictArtifactState,
+  classifyArtifactState,
+  artifactStateToEvidenceTruth,
+  isArtifactReleaseEvidence,
+  STRICT_ARTIFACT_STATE_LABELS,
+  STRICT_ARTIFACT_STATE_DESCRIPTIONS,
+  STRICT_ARTIFACT_NEXT_ACTIONS,
+  artifactStateBannerClass,
+  artifactStateTitleClass,
+  artifactStateBodyClass,
+  artifactStateBadgeClass,
+  formatCommitSha,
+  formatArtifactTimestamp,
+  buildArtifactProvenanceLabel,
+  fetchSignoffStatusArtifact,
+  STRICT_ARTIFACT_TEST_IDS,
+} from '../utils/strictSignoffArtifact'
 
 // ---------------------------------------------------------------------------
 // State
@@ -75,6 +93,12 @@ let exportResetTimeout: ReturnType<typeof setTimeout> | null = null
 
 const readiness = ref<ReleaseReadinessState>(buildDefaultReleaseReadiness())
 const evidenceTruthClass = ref<EvidenceTruthClass>('partial_hydration')
+
+// Strict sign-off artifact state
+const strictArtifact = ref<SignoffStatusArtifact | null>(null)
+const strictArtifactState = ref<StrictArtifactState>('missing')
+const strictArtifactFetchError = ref<string | null>(null)
+const isArtifactLoading = ref(false)
 
 // ---------------------------------------------------------------------------
 // Computed
@@ -135,6 +159,23 @@ const exportStatusMessage = computed(() => {
   }
 })
 
+// Derived from the strict artifact
+const artifactProvenance = computed(() =>
+  buildArtifactProvenanceLabel(strictArtifact.value, strictArtifactState.value),
+)
+
+const artifactShortSha = computed(() =>
+  strictArtifact.value ? formatCommitSha(strictArtifact.value.commit_sha) : null,
+)
+
+const artifactFormattedTs = computed(() =>
+  strictArtifact.value ? formatArtifactTimestamp(strictArtifact.value.timestamp) : null,
+)
+
+const artifactIsReleaseEvidence = computed(() =>
+  isArtifactReleaseEvidence(strictArtifactState.value),
+)
+
 // ---------------------------------------------------------------------------
 // State icon helpers
 // ---------------------------------------------------------------------------
@@ -159,6 +200,28 @@ function dimensionStateLabel(state: SignOffReadinessState): string {
 }
 
 // ---------------------------------------------------------------------------
+// Strict artifact fetch
+// ---------------------------------------------------------------------------
+
+async function loadStrictArtifact(): Promise<void> {
+  isArtifactLoading.value = true
+  strictArtifactFetchError.value = null
+  try {
+    const artifact = await fetchSignoffStatusArtifact()
+    strictArtifact.value = artifact
+    strictArtifactState.value = artifact ? classifyArtifactState(artifact) : 'missing'
+    // Update the composite evidence truth class from the artifact
+    evidenceTruthClass.value = artifactStateToEvidenceTruth(strictArtifactState.value)
+  } catch (err) {
+    strictArtifactFetchError.value = err instanceof Error ? err.message : 'Unknown error fetching artifact'
+    strictArtifactState.value = 'missing'
+    evidenceTruthClass.value = 'environment_blocked'
+  } finally {
+    isArtifactLoading.value = false
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Data loading
 // ---------------------------------------------------------------------------
 
@@ -167,7 +230,11 @@ function loadData(): void {
     readiness.value = buildDefaultReleaseReadiness()
     isDegraded.value = false
     loadError.value = null
-    evidenceTruthClass.value = deriveFixtureTruthClass(true)
+    // evidenceTruthClass is updated by loadStrictArtifact; default to environment_blocked
+    // until the artifact is fetched (fail-closed initial state)
+    if (strictArtifactState.value === 'missing' && !isArtifactLoading.value) {
+      evidenceTruthClass.value = 'environment_blocked'
+    }
   } catch (err) {
     isDegraded.value = true
     loadError.value = err instanceof Error ? err.message : 'Unknown error'
@@ -178,8 +245,9 @@ function loadData(): void {
 
 function refresh(): void {
   isLoading.value = true
-  setTimeout(() => {
+  setTimeout(async () => {
     loadData()
+    await loadStrictArtifact()
     isLoading.value = false
   }, 300)
 }
@@ -257,8 +325,9 @@ function navigateTo(path: string): void {
 // ---------------------------------------------------------------------------
 
 onMounted(() => {
-  setTimeout(() => {
+  setTimeout(async () => {
     loadData()
+    await loadStrictArtifact()
     isLoading.value = false
   }, 150)
 })
@@ -374,6 +443,142 @@ onBeforeUnmount(() => {
           <div :data-testid="RELEASE_CENTER_TEST_IDS.READINESS_PANEL">
             <SignOffReadinessPanel :readiness="readiness" />
           </div>
+
+          <!-- ── Strict Sign-Off Artifact Status Panel (AC #1 — backend-confirmed vs infrastructure-only) ── -->
+          <section
+            class="mt-6 rounded-2xl border p-5 shadow-md"
+            :class="artifactStateBannerClass(strictArtifactState)"
+            :data-testid="STRICT_ARTIFACT_TEST_IDS.PANEL"
+            aria-labelledby="strict-artifact-heading"
+            role="region"
+          >
+            <div class="flex items-start gap-3">
+              <ShieldCheckIcon
+                class="w-6 h-6 flex-shrink-0 mt-0.5"
+                :class="artifactStateTitleClass(strictArtifactState)"
+                aria-hidden="true"
+              />
+              <div class="flex-1 min-w-0">
+                <!-- Header row -->
+                <div class="flex items-center gap-2 flex-wrap mb-1">
+                  <h2
+                    id="strict-artifact-heading"
+                    class="text-base font-bold"
+                    :class="artifactStateTitleClass(strictArtifactState)"
+                  >
+                    Strict Sign-Off Artifact
+                  </h2>
+                  <span
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold"
+                    :class="artifactStateBadgeClass(strictArtifactState)"
+                    :data-testid="STRICT_ARTIFACT_TEST_IDS.STATE_BADGE"
+                    :aria-label="`Strict sign-off status: ${STRICT_ARTIFACT_STATE_LABELS[strictArtifactState]}`"
+                  >
+                    {{ STRICT_ARTIFACT_STATE_LABELS[strictArtifactState] }}
+                  </span>
+                  <!-- is_release_evidence indicator -->
+                  <span
+                    v-if="strictArtifact"
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                    :class="artifactIsReleaseEvidence ? 'bg-green-800 text-green-100' : 'bg-red-900 text-red-200'"
+                    :data-testid="STRICT_ARTIFACT_TEST_IDS.RELEASE_EVIDENCE_INDICATOR"
+                    :aria-label="`is_release_evidence: ${artifactIsReleaseEvidence}`"
+                  >
+                    {{ artifactIsReleaseEvidence ? 'is_release_evidence: true' : 'is_release_evidence: false' }}
+                  </span>
+                </div>
+
+                <!-- Description -->
+                <p
+                  class="text-sm mb-2"
+                  :class="artifactStateBodyClass(strictArtifactState)"
+                  :data-testid="STRICT_ARTIFACT_TEST_IDS.DESCRIPTION"
+                >
+                  {{ STRICT_ARTIFACT_STATE_DESCRIPTIONS[strictArtifactState] }}
+                </p>
+
+                <!-- Provenance details (when artifact is available) -->
+                <dl
+                  v-if="strictArtifact"
+                  class="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-1 text-xs mt-2 mb-3 opacity-80"
+                  :data-testid="STRICT_ARTIFACT_TEST_IDS.PROVENANCE_LABEL"
+                  :aria-label="artifactProvenance"
+                >
+                  <div>
+                    <dt class="font-semibold" :class="artifactStateTitleClass(strictArtifactState)">Commit</dt>
+                    <dd
+                      class="font-mono"
+                      :class="artifactStateBodyClass(strictArtifactState)"
+                      :data-testid="STRICT_ARTIFACT_TEST_IDS.COMMIT_SHA"
+                    >{{ artifactShortSha }}</dd>
+                  </div>
+                  <div>
+                    <dt class="font-semibold" :class="artifactStateTitleClass(strictArtifactState)">Run</dt>
+                    <dd
+                      class="font-mono"
+                      :class="artifactStateBodyClass(strictArtifactState)"
+                      :data-testid="STRICT_ARTIFACT_TEST_IDS.RUN_ID"
+                    >{{ strictArtifact.run_id || '—' }}</dd>
+                  </div>
+                  <div>
+                    <dt class="font-semibold" :class="artifactStateTitleClass(strictArtifactState)">Produced at</dt>
+                    <dd
+                      :class="artifactStateBodyClass(strictArtifactState)"
+                      :data-testid="STRICT_ARTIFACT_TEST_IDS.TIMESTAMP"
+                    >{{ artifactFormattedTs }}</dd>
+                  </div>
+                </dl>
+
+                <!-- Next action guidance -->
+                <div
+                  class="mt-2 p-3 rounded-lg"
+                  :class="artifactIsReleaseEvidence ? 'bg-black/10' : 'bg-black/20'"
+                >
+                  <p
+                    class="text-xs font-semibold mb-1"
+                    :class="artifactStateTitleClass(strictArtifactState)"
+                  >
+                    {{ artifactIsReleaseEvidence ? '✅ Release authorization is supported by this artifact.' : '⚠ Operator action required:' }}
+                  </p>
+                  <p
+                    class="text-xs"
+                    :class="artifactStateBodyClass(strictArtifactState)"
+                    :data-testid="STRICT_ARTIFACT_TEST_IDS.NEXT_ACTION"
+                  >
+                    {{ STRICT_ARTIFACT_NEXT_ACTIONS[strictArtifactState] }}
+                  </p>
+                </div>
+
+                <!-- next_steps list (not_configured artifacts include remediation steps) -->
+                <ul
+                  v-if="strictArtifact?.next_steps?.length"
+                  class="mt-3 space-y-1"
+                  :data-testid="STRICT_ARTIFACT_TEST_IDS.NEXT_STEPS_LIST"
+                  aria-label="Configuration remediation steps"
+                >
+                  <li
+                    v-for="(step, i) in strictArtifact.next_steps"
+                    :key="i"
+                    class="flex items-start gap-2 text-xs"
+                    :class="artifactStateBodyClass(strictArtifactState)"
+                  >
+                    <span class="font-mono font-bold flex-shrink-0">{{ i + 1 }}.</span>
+                    <span>{{ step }}</span>
+                  </li>
+                </ul>
+
+                <!-- Fetch error notice -->
+                <p
+                  v-if="strictArtifactFetchError"
+                  class="mt-2 text-xs text-red-300"
+                  :data-testid="STRICT_ARTIFACT_TEST_IDS.FETCH_ERROR"
+                  role="alert"
+                >
+                  Artifact fetch error: {{ strictArtifactFetchError }}
+                </p>
+              </div>
+            </div>
+          </section>
 
           <!-- ── Evidence Truth Class Banner (AC #2 fail-closed) ── -->
           <div

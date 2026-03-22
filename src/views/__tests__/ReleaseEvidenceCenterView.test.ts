@@ -21,6 +21,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { nextTick } from 'vue'
 import ReleaseEvidenceCenterView from '../ReleaseEvidenceCenterView.vue'
 import { RELEASE_CENTER_TEST_IDS } from '../../utils/releaseReadiness'
+import { STRICT_ARTIFACT_TEST_IDS } from '../../utils/strictSignoffArtifact'
 
 // ---------------------------------------------------------------------------
 // Router helper
@@ -446,5 +447,93 @@ describe('ReleaseEvidenceCenterView — Sidebar Integration', () => {
     await nextTick()
     vi.useRealTimers()
     expect(wrapper.find(`[data-testid="${RELEASE_CENTER_TEST_IDS.ROOT}"]`).exists()).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Strict sign-off artifact panel (AC #1, #2, #4, #5)
+// ---------------------------------------------------------------------------
+
+describe('ReleaseEvidenceCenterView — Strict Sign-Off Artifact Panel', () => {
+  it('renders the strict artifact panel when loaded', async () => {
+    const wrapper = await mountView()
+    const panel = wrapper.find(`[data-testid="${STRICT_ARTIFACT_TEST_IDS.PANEL}"]`)
+    expect(panel.exists()).toBe(true)
+  })
+
+  it('strict artifact panel has role="region" (WCAG landmark)', async () => {
+    const wrapper = await mountView()
+    const panel = wrapper.find(`[data-testid="${STRICT_ARTIFACT_TEST_IDS.PANEL}"]`)
+    expect(panel.attributes('role')).toBe('region')
+  })
+
+  it('strict artifact panel is labelled for screen readers (aria-labelledby)', async () => {
+    const wrapper = await mountView()
+    const panel = wrapper.find(`[data-testid="${STRICT_ARTIFACT_TEST_IDS.PANEL}"]`)
+    expect(panel.attributes('aria-labelledby')).toBeTruthy()
+  })
+
+  it('renders state badge with accessible aria-label', async () => {
+    const wrapper = await mountView()
+    const badge = wrapper.find(`[data-testid="${STRICT_ARTIFACT_TEST_IDS.STATE_BADGE}"]`)
+    expect(badge.exists()).toBe(true)
+    const ariaLabel = badge.attributes('aria-label')
+    expect(ariaLabel).toMatch(/strict sign-off status/i)
+  })
+
+  it('shows "Not Configured" or "No Artifact Available" label when no artifact URL is configured', async () => {
+    const wrapper = await mountView()
+    const badge = wrapper.find(`[data-testid="${STRICT_ARTIFACT_TEST_IDS.STATE_BADGE}"]`)
+    expect(badge.exists()).toBe(true)
+    // Without VITE_SIGNOFF_STATUS_URL, state is 'missing' (no artifact available)
+    expect(badge.text()).toMatch(/Not Configured|No Artifact Available/i)
+  })
+
+  it('shows next-action guidance in the strict artifact panel', async () => {
+    const wrapper = await mountView()
+    const nextAction = wrapper.find(`[data-testid="${STRICT_ARTIFACT_TEST_IDS.NEXT_ACTION}"]`)
+    expect(nextAction.exists()).toBe(true)
+    expect(nextAction.text().length).toBeGreaterThan(10)
+  })
+
+  it('shows description text in the strict artifact panel', async () => {
+    const wrapper = await mountView()
+    const desc = wrapper.find(`[data-testid="${STRICT_ARTIFACT_TEST_IDS.DESCRIPTION}"]`)
+    expect(desc.exists()).toBe(true)
+    expect(desc.text().length).toBeGreaterThan(20)
+  })
+
+  it('strict artifact panel precedes the evidence truth banner in the DOM (AC #1)', async () => {
+    const wrapper = await mountView()
+    const html = wrapper.html()
+    const artifactIdx = html.indexOf(`data-testid="${STRICT_ARTIFACT_TEST_IDS.PANEL}"`)
+    const truthBannerIdx = html.indexOf('data-testid="evidence-truth-banner"')
+    expect(artifactIdx).toBeGreaterThan(-1)
+    expect(truthBannerIdx).toBeGreaterThan(-1)
+    // Strict artifact panel must appear before the evidence truth banner
+    expect(artifactIdx).toBeLessThan(truthBannerIdx)
+  })
+
+  it('does NOT show is_release_evidence indicator when no artifact is loaded', async () => {
+    const wrapper = await mountView()
+    // The release evidence indicator is v-if="strictArtifact" — absent when no artifact
+    const indicator = wrapper.find(`[data-testid="${STRICT_ARTIFACT_TEST_IDS.RELEASE_EVIDENCE_INDICATOR}"]`)
+    expect(indicator.exists()).toBe(false)
+  })
+
+  it('does NOT show provenance details when no artifact is loaded', async () => {
+    const wrapper = await mountView()
+    // Provenance dl is v-if="strictArtifact" — absent when no artifact
+    const provenance = wrapper.find(`[data-testid="${STRICT_ARTIFACT_TEST_IDS.PROVENANCE_LABEL}"]`)
+    expect(provenance.exists()).toBe(false)
+  })
+
+  it('description text warns about missing configuration (fail-closed AC #4)', async () => {
+    const wrapper = await mountView()
+    const desc = wrapper.find(`[data-testid="${STRICT_ARTIFACT_TEST_IDS.DESCRIPTION}"]`)
+    const text = desc.text().toLowerCase()
+    // Without artifact, the description should communicate that proof is absent/incomplete
+    const hasWarningTerms = text.includes('no') || text.includes('not') || text.includes('missing') || text.includes('artifact') || text.includes('configured')
+    expect(hasWarningTerms).toBe(true)
   })
 })
