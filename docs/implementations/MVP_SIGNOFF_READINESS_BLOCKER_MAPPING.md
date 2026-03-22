@@ -74,7 +74,7 @@ PR #729 added **480 new unit tests across 22 previously uncovered files**. The f
 | `src/components/ComplianceBadge.vue` + `LandingEntryModule.vue` + compliance step components (85 tests) | Badge rendering, no-wallet-UI invariant, onboarding step logic | Compliance badge shows operator sign-off readiness; `hasAnyFlags` must be deterministic; LandingEntryModule must never show wallet-connector UI (product-definition invariant) |
 
 **CI evidence for final head `09fe0cf`:**
-- Run Tests: [23394199204](https://github.com/scholtz/biatec-tokens/actions/runs/23394199204) — ✅ 13,478 tests, 0 failures
+- Run Tests: [23394199204](https://github.com/scholtz/biatec-tokens/actions/runs/23394199204) — ✅ 13,478 tests, 0 failures (for commit `09fe0cf`); locally verified 13,521+ tests passing after additional view tests added
 - Playwright Tests: [23394199218](https://github.com/scholtz/biatec-tokens/actions/runs/23394199218) — ✅ success
 
 ---

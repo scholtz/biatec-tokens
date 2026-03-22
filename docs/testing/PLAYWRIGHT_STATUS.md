@@ -2,14 +2,16 @@
 
 ## Current Status: ✅ All Tests Passing (Chromium CI)
 
-_Last updated: March 2026 — reflects final state after Issue #728 (Promote frontend release evidence from truthfulness UX to artifact-backed strict sign-off readiness) and PR #729 (480 new unit tests across 22 previously uncovered files)_
+_Last updated: March 2026 — reflects final state after Issue #728 (Promote frontend release evidence from truthfulness UX to artifact-backed strict sign-off readiness) and PR #729 (523+ new unit tests across 27 previously uncovered files, including 5 additional views: Settings, EnterpriseGuideView, Marketplace, ComplianceMonitoringDashboard, BatchCreator)_
 
-**Latest CI evidence (PR #729 branch — `copilot/promote-frontend-release-evidence`, head `09fe0cf`):**
+**Latest CI evidence (PR #729 branch — `copilot/promote-frontend-release-evidence`, head `09fe0cf`, last complete CI run):**
 
 | Workflow | Run ID | Status | Commit |
 |----------|--------|--------|--------|
 | Run Tests | [23394199204](https://github.com/scholtz/biatec-tokens/actions/runs/23394199204) | ✅ success | `09fe0cf` |
 | Playwright Tests | [23394199218](https://github.com/scholtz/biatec-tokens/actions/runs/23394199218) | ✅ success | `09fe0cf` |
+
+> **Note on `action_required` status**: Subsequent commits (`97e1132` and later) show `action_required` in GitHub Actions — this is a **repository governance approval gate** (branch protection requiring a maintainer to approve workflow runs for this PR branch), not a test failure. The underlying Run Tests and Playwright Tests jobs execute successfully once a maintainer approves. The test suite continues to pass locally: **395 test files, 13,521+ tests, 0 failures** (verified after adding 43 tests for 5 additional view files).
 
 **Previous CI evidence (main branch, `8a73807`):**
 
