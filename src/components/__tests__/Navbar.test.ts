@@ -167,12 +167,21 @@ describe('Navbar', () => {
       }
     })
     await router.isReady()
-    // Mobile menu toggle button
-    const mobileToggle = wrapper.findAll('button').find(b =>
-      b.attributes('aria-label')?.toLowerCase().includes('menu') ||
-      b.html().includes('pi-bars') || b.html().includes('pi-times')
+    // Navbar renders a mobile hamburger menu button (visible on small screens)
+    // It's the button that includes the pi-bars or pi-times icon, or has aria-label containing "menu"
+    const allButtons = wrapper.findAll('button')
+    const mobileToggle = allButtons.find(b =>
+      (b.attributes('aria-label') ?? '').toLowerCase().includes('menu') ||
+      b.html().includes('pi-bars') ||
+      b.html().includes('pi-times')
     )
-    expect(mobileToggle?.exists() ?? wrapper.findAll('button').length > 0).toBe(true)
+    // If a dedicated mobile toggle exists, verify it; otherwise verify the nav rendered buttons
+    if (mobileToggle) {
+      expect(mobileToggle.exists()).toBe(true)
+    } else {
+      // Navbar renders at least the sign-in button; mobile toggle may be CSS-hidden
+      expect(allButtons.length).toBeGreaterThanOrEqual(1)
+    }
   })
 
   it('uses email/password auth only — no wallet-specific UI text', async () => {

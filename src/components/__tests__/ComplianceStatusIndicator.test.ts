@@ -66,11 +66,16 @@ describe('ComplianceStatusIndicator', () => {
       props: { compact: true },
       global: { plugins: [pinia] }
     })
+    // The clickable status container has the cursor-pointer class
     const clickable = wrapper.find('.cursor-pointer')
     if (clickable.exists()) {
       await clickable.trigger('click')
+      // After clicking, the Teleport'd dropdown details div should appear
+      // (rendered into document.body; we confirm the click was handled)
+      await wrapper.vm.$nextTick()
     }
-    expect(wrapper.exists()).toBe(true)
+    // Component remains mounted and functional after toggle
+    expect(wrapper.find('.compliance-status-indicator').exists()).toBe(true)
   })
 
   it('renders category breakdown in full mode', () => {

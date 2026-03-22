@@ -79,6 +79,8 @@ describe('TokenCard', () => {
   })
 
   it('does NOT render OnChain badge for ERC20 tokens (EVM-based)', () => {
+    // Business rule: OnChain compliance badge only shows for Algorand-based standards
+    // (ASA, ARC3, ARC19, ARC69, ARC200, ARC72) — not for EVM standards (ERC20, ERC721)
     const wrapper = mountCard(makeToken({ standard: 'ERC20' }))
     expect(wrapper.find('[data-testid="on-chain-badge"]').exists()).toBe(false)
   })
