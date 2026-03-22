@@ -59,16 +59,16 @@ describe('WhitelistService', () => {
   describe('getWhitelistSummary', () => {
     it('returns summary object with counts', async () => {
       const summary = await service.getWhitelistSummary()
-      expect(summary).toHaveProperty('total')
-      expect(summary).toHaveProperty('approved')
-      expect(summary).toHaveProperty('pending')
-      expect(summary).toHaveProperty('rejected')
+      expect(summary).toHaveProperty('totalEntries')
+      expect(summary).toHaveProperty('approvedCount')
+      expect(summary).toHaveProperty('pendingCount')
+      expect(summary).toHaveProperty('rejectedCount')
     })
 
-    it('summary total matches sum of statuses', async () => {
+    it('summary totalEntries is a number', async () => {
       const summary = await service.getWhitelistSummary()
-      expect(typeof summary.total).toBe('number')
-      expect(typeof summary.approved).toBe('number')
+      expect(typeof summary.totalEntries).toBe('number')
+      expect(typeof summary.approvedCount).toBe('number')
     })
   })
 
@@ -188,9 +188,9 @@ describe('WhitelistService', () => {
   describe('getJurisdictionCoverage', () => {
     it('returns coverage object', async () => {
       const coverage = await service.getJurisdictionCoverage()
-      expect(coverage).toHaveProperty('totalCountries')
-      expect(coverage).toHaveProperty('allowedCountries')
-      expect(coverage).toHaveProperty('blockedCountries')
+      expect(coverage).toHaveProperty('totalJurisdictions')
+      expect(coverage).toHaveProperty('allowedJurisdictions')
+      expect(coverage).toHaveProperty('blockedJurisdictions')
     })
   })
 
@@ -239,7 +239,7 @@ describe('WhitelistService', () => {
     it('returns validation result object', async () => {
       const file = new File(['name,email\nJohn,john@example.com'], 'test.csv', { type: 'text/csv' })
       const result = await service.validateCsv(file)
-      expect(result).toHaveProperty('isValid')
+      expect(result).toHaveProperty('valid')
       expect(result).toHaveProperty('totalRows')
     })
   })
@@ -247,8 +247,8 @@ describe('WhitelistService', () => {
   describe('bulkImport', () => {
     it('returns bulk import response', async () => {
       const result = await service.bulkImport({ entries: [], dryRun: true })
-      expect(result).toHaveProperty('successful')
-      expect(result).toHaveProperty('failed')
+      expect(result).toHaveProperty('success')
+      expect(result).toHaveProperty('totalProcessed')
     })
   })
 
