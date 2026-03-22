@@ -29,7 +29,7 @@ manual forensic investigation.
 | #6 | Highest-value E2E suites use semantic waits and reduce permissive helpers | ✅ CLOSED | `mvp-backend-signoff.spec.ts`, `release-evidence-center.spec.ts` — 0 `waitForTimeout` calls | All assertions in sign-off-critical specs use `toBeVisible()`, `toBeAttached()`, `waitFor({ state })` |
 | #7 | `PLAYWRIGHT_STATUS.md` and `MVP_SIGNOFF_READINESS_BLOCKER_MAPPING.md` updated to current | ✅ CLOSED | This document and `docs/testing/PLAYWRIGHT_STATUS.md` | Run IDs, suite shape, and blocker analysis current as of March 21, 2026 |
 | #8 | No new wallet-based authentication paths introduced | ✅ CLOSED | All new views and helpers use email/password only | `grep -r "WalletConnect\|Pera\|MetaMask\|Defly" src/` → 0 results in new files |
-| #9 | CI remains green for all existing required checks on implementation PR | ✅ CLOSED | No regressions introduced; unit tests 13166/13166 passing (PR #729 adds 141 new tests) | Run Tests `main`: [23383071338](https://github.com/scholtz/biatec-tokens/actions/runs/23383071338) ✅; PR #729: [23388835999](https://github.com/scholtz/biatec-tokens/actions/runs/23388835999) ✅ |
+| #9 | CI remains green for all existing required checks on implementation PR | ✅ CLOSED | No regressions introduced; unit tests 13478/13478 passing (PR #729 adds 480 new tests across 22 uncovered files) | Run Tests `main`: [23383071338](https://github.com/scholtz/biatec-tokens/actions/runs/23383071338) ✅; PR #729 final: [23394199204](https://github.com/scholtz/biatec-tokens/actions/runs/23394199204) ✅; Playwright final: [23394199218](https://github.com/scholtz/biatec-tokens/actions/runs/23394199218) ✅ |
 | #10 | PR description and tests explain business risk of missing/stale strict evidence | ✅ CLOSED | `evidenceTruthfulness.ts` `EVIDENCE_TRUTH_DESCRIPTIONS`, operator-facing copy | Utility descriptions drive `evidenceTruthBannerBody` in all three release-critical surfaces |
 
 ---
@@ -50,7 +50,32 @@ manual forensic investigation.
 
 3. **Evidence truthfulness integration**: `ReleaseEvidenceCenterView.vue`, `InvestorComplianceOnboardingWorkspace.vue`, and `ComplianceReportingWorkspace.vue` now surface `evidenceTruthfulness` banners showing plain-language descriptions for `environment_blocked`, `unavailable`, `stale`, `partial_hydration`, and `backend_confirmed` states.
 
-4. **Documentation refresh**: `PLAYWRIGHT_STATUS.md` and this document updated with current run IDs, actual suite shape (80 spec files, 13025 unit tests on `main`; 13166 unit tests after PR #729), and remaining backend-configuration gap analysis.
+4. **Documentation refresh**: `PLAYWRIGHT_STATUS.md` and this document updated with current run IDs, actual suite shape (80 spec files, 13025 unit tests on `main`; 13478 unit tests after PR #729 — 480 new tests across 22 uncovered utility, service, store, view, and component files), and remaining backend-configuration gap analysis.
+
+---
+
+## PR #729 Unit Test Coverage — Release-Evidence Business Risk Traceability
+
+PR #729 added **480 new unit tests across 22 previously uncovered files**. The following table maps the highest-risk file groups to the specific operator trust problems described in Issue #728.
+
+| File Group | New Tests | Business Risk Protected |
+|------------|-----------|------------------------|
+| `src/utils/compliance.ts` (21 tests) | `isAlgorandBasedToken`, `calculateComplianceScore`, `getDefaultNetwork` | Incorrect compliance score calculation would silently misrepresent operator readiness — a release-blocking trust failure for regulated RWA issuance |
+| `src/utils/complianceEvidencePack.ts` (20 tests) | `STATUS_LABELS` constants, `EvidenceTruthClass` discriminated union shapes | Wrong status labels shown to an operator/auditor is a commercial-trust defect; constant coverage ensures label strings match what evidence surfaces display |
+| `src/utils/address.ts` (16 tests) | `formatAddress`, `isValidAlgorandAddress` | Invalid Algorand addresses passed to deployment flows would produce incorrect backend-signed transactions — directly tied to the "trustworthy deployment" guarantee |
+| `src/utils/allowances.ts` (56 tests) | All 12 allowance-management functions (approve, revoke, check, format) | Allowance logic errors are invisible to operators until a transfer fails; these 56 tests protect the invariants used in ARC20 compliance reporting |
+| `src/utils/network.ts` (10 tests) + `formValidation.ts` (18 tests) | Network detection, email/form validation | Stale network-state or form-validation bypass could route evidence to the wrong chain or accept invalid operator email — both undermine audit trail integrity |
+| `src/services/teamManagement.ts` (51 tests) | `hasPermission`, `getRoleDefinition`, invitation lifecycle | Permission guard failures expose enterprise compliance operations to unauthorized users — a direct breach of the "operator trust" requirement |
+| `src/services/BatchDeploymentService.ts` (36 tests) | `createBatch`, `retryFailedTokens`, `exportBatchAudit` (JSON + CSV) | Export audit trail correctness is a hard release-readiness requirement for regulated token issuance; retry-count and state-reset logic determines what operators see in the Evidence Center |
+| `src/services/whitelistService.ts` (28 tests) | Pagination, `approve`/`reject`/`requestMoreInfo` operations | Whitelist approval flows guard which investors can participate; incorrect status shapes or stale counts would create false compliance signals |
+| `src/services/attestation.ts` (7 tests) | Attestation object shapes and field presence | Attestation records feed the Release Evidence Center; missing fields would cause the frontend to show misleading provenance labels |
+| `src/stores/complianceDashboard.ts` (43 tests) | localStorage persistence, filter state, metric computation | Dashboard metrics must survive page reload and accurately aggregate compliance evidence — operators and auditors rely on these numbers for sign-off decisions |
+| `src/views/AttestationsDashboard.vue` + `TokenStandardsView.vue` + `DiscoveryDashboard.vue` (36 tests) | Heading structure, store rendering, network/filter logic | These views are entry points for compliance leads reviewing evidence; display regressions here directly erode operator confidence in release evidence quality |
+| `src/components/ComplianceBadge.vue` + `LandingEntryModule.vue` + compliance step components (85 tests) | Badge rendering, no-wallet-UI invariant, onboarding step logic | Compliance badge shows operator sign-off readiness; `hasAnyFlags` must be deterministic; LandingEntryModule must never show wallet-connector UI (product-definition invariant) |
+
+**CI evidence for final head `09fe0cf`:**
+- Run Tests: [23394199204](https://github.com/scholtz/biatec-tokens/actions/runs/23394199204) — ✅ 13,478 tests, 0 failures
+- Playwright Tests: [23394199218](https://github.com/scholtz/biatec-tokens/actions/runs/23394199218) — ✅ success
 
 ---
 
@@ -65,7 +90,7 @@ manual forensic investigation.
 | #5 | Invalid/expired session covered with explicit user-guidance checks | ✅ CLOSED | `src/utils/launchErrorMessages.ts`, `src/utils/arc76SessionContract.ts` | `src/utils/__tests__/mvpSignoffSessionEdgeCases.test.ts` AC#5 group; `e2e/mvp-signoff-readiness.spec.ts` AC#5 group |
 | #6 | Critical-path `waitForTimeout` reduced to semantic waits | ✅ CLOSED | `e2e/competitive-platform-enhancements.spec.ts` (11 calls replaced) | Zero `await page.waitForTimeout()` in `mvp-signoff-readiness.spec.ts` and `mvp-hardening-canonical-launch.spec.ts` |
 | #7 | Skip usage in blocker-relevant suites reduced, documented | ✅ CLOSED | All CI skips retain documented justification (`#495` reference) | `e2e/mvp-signoff-readiness.spec.ts` has zero `test.skip()`; existing skips all documented |
-| #8 | Testing status docs reflect actual current metrics | ✅ CLOSED | This document | 13025 unit tests passing on `main` (CI run [23383071338](https://github.com/scholtz/biatec-tokens/actions/runs/23383071338) ✅); 13166 after PR #729 (CI run [23388835999](https://github.com/scholtz/biatec-tokens/actions/runs/23388835999) ✅); E2E specs above pass in CI without flaky rerun |
+| #8 | Testing status docs reflect actual current metrics | ✅ CLOSED | This document | 13025 unit tests passing on `main` (CI run [23383071338](https://github.com/scholtz/biatec-tokens/actions/runs/23383071338) ✅); 13478 after PR #729 — 480 new tests across 22 files (CI run [23394199204](https://github.com/scholtz/biatec-tokens/actions/runs/23394199204) ✅); E2E specs pass in CI without flaky rerun (Playwright run [23394199218](https://github.com/scholtz/biatec-tokens/actions/runs/23394199218) ✅) |
 | #9 | Accessibility checks pass for auth/launch interactions | ✅ CLOSED | Navbar skip-to-content, `id="main-content"`, `aria-label` on nav | `e2e/mvp-signoff-readiness.spec.ts` AC#9 group; `src/utils/__tests__/mvpSignoffSessionEdgeCases.test.ts` AC#9 group |
 | #10 | CI for updated frontend tests is green | ✅ CLOSED | All test files run via existing `.github/workflows/test.yml` and `playwright.yml` | CI run [23383071338](https://github.com/scholtz/biatec-tokens/actions/runs/23383071338): success |
 | #11 | Changes map to MVP blocker closure (this document) | ✅ CLOSED | This document | See blocker rows above |
