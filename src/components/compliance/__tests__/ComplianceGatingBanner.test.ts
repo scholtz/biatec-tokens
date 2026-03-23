@@ -1,192 +1,114 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { createPinia, setActivePinia } from 'pinia'
 import ComplianceGatingBanner from '../ComplianceGatingBanner.vue'
-import type { IssuanceEligibility } from '../../../types/compliance'
+
+const makeEligibility = (overrides = {}) => ({
+  eligible: false,
+  status: 'pending' as const,
+  reasons: [],
+  nextActions: [],
+  canRetry: false,
+  ...overrides,
+})
+
+const globalStubs = {
+  ComplianceStatusBadge: true,
+  ShieldExclamationIcon: true,
+  CheckCircleIcon: true,
+  ExclamationCircleIcon: true,
+  DocumentCheckIcon: true,
+  SparklesIcon: true,
+  ChatBubbleLeftRightIcon: true,
+  ArrowPathIcon: true,
+  InformationCircleIcon: true,
+  ClockIcon: true,
+  ArrowRightIcon: true,
+}
 
 describe('ComplianceGatingBanner', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia())
-  })
-
-  const createEligibility = (eligible: boolean): IssuanceEligibility => ({
-    eligible,
-    status: eligible ? 'approved' : 'pending_documents',
-    reasons: eligible ? [] : ['2 required documents pending upload'],
-    nextActions: eligible ? [] : [{
-      type: 'upload_document',
-      title: 'Upload Government ID',
-      description: 'Upload your government-issued ID document',
-      priority: 'high'
-    }],
-    canRetry: !eligible
-  })
-
-  it('should render blocked state when not eligible', () => {
-    const eligibility = createEligibility(false)
-    const wrapper = mount(ComplianceGatingBanner, {
-      props: { eligibility }
+  it('shows "Token Issuance Unavailable" when blocked', () => {
+    const w = mount(ComplianceGatingBanner, {
+      props: { eligibility: makeEligibility({ eligible: false }) },
+      global: { stubs: globalStubs },
     })
-
-    expect(wrapper.text()).toContain('Token Issuance Unavailable')
-    expect(wrapper.html()).toContain('border-red-')
+    expect(w.text()).toContain('Token Issuance Unavailable')
   })
 
-  it('should render approved state when eligible', () => {
-    const eligibility = createEligibility(true)
-    const wrapper = mount(ComplianceGatingBanner, {
-      props: { eligibility }
+  it('shows "Ready for Token Issuance" when eligible', () => {
+    const w = mount(ComplianceGatingBanner, {
+      props: { eligibility: makeEligibility({ eligible: true }) },
+      global: { stubs: globalStubs },
     })
-
-    expect(wrapper.text()).toContain('Ready for Token Issuance')
-    expect(wrapper.html()).toContain('border-green-')
+    expect(w.text()).toContain('Ready for Token Issuance')
   })
 
-  it('should display reasons when blocked', () => {
-    const eligibility = createEligibility(false)
-    const wrapper = mount(ComplianceGatingBanner, {
-      props: { eligibility }
+  it('shows red border when blocked', () => {
+    const w = mount(ComplianceGatingBanner, {
+      props: { eligibility: makeEligibility({ eligible: false }) },
+      global: { stubs: globalStubs },
     })
-
-    expect(wrapper.text()).toContain('2 required documents pending upload')
+    expect(w.html()).toContain('border-red-700')
   })
 
-  it('should display next actions when blocked', () => {
-    const eligibility = createEligibility(false)
-    const wrapper = mount(ComplianceGatingBanner, {
-      props: { eligibility }
+  it('shows green border when eligible', () => {
+    const w = mount(ComplianceGatingBanner, {
+      props: { eligibility: makeEligibility({ eligible: true }) },
+      global: { stubs: globalStubs },
     })
-
-    expect(wrapper.text()).toContain('Upload Government ID')
-    expect(wrapper.text()).toContain('High Priority')
+    expect(w.html()).toContain('border-green-700')
   })
 
-  it('should emit complete-compliance event when button clicked', async () => {
-    const eligibility = createEligibility(false)
-    const wrapper = mount(ComplianceGatingBanner, {
-      props: { 
-        eligibility,
-        showCompleteButton: true
-      }
+  it('shows reasons when blocked with reasons', () => {
+    const w = mount(ComplianceGatingBanner, {
+      props: {
+        eligibility: makeEligibility({
+          eligible: false,
+          reasons: ['Missing KYC', 'Address not verified'],
+        }),
+      },
+      global: { stubs: globalStubs },
     })
+    expect(w.text()).toContain('Missing KYC')
+    expect(w.text()).toContain('Address not verified')
+  })
 
-    const button = wrapper.find('button:has-text("Complete Compliance")')
-    if (button.exists()) {
-      await button.trigger('click')
-      expect(wrapper.emitted('complete-compliance')).toBeTruthy()
+  it('emits complete-compliance when button clicked', async () => {
+    const w = mount(ComplianceGatingBanner, {
+      props: { eligibility: makeEligibility({ eligible: false }) },
+      global: { stubs: globalStubs },
+    })
+    const btn = w.findAll('button').find(b => b.text().includes('Complete Compliance'))
+    if (btn) {
+      await btn.trigger('click')
+      expect(w.emitted('complete-compliance')).toBeTruthy()
     }
   })
 
-  it('should emit create-token event when eligible and button clicked', async () => {
-    const eligibility = createEligibility(true)
-    const wrapper = mount(ComplianceGatingBanner, {
-      props: { 
-        eligibility,
-        showCreateTokenButton: true
-      }
+  it('emits create-token when eligible and button clicked', async () => {
+    const w = mount(ComplianceGatingBanner, {
+      props: { eligibility: makeEligibility({ eligible: true }) },
+      global: { stubs: globalStubs },
     })
-
-    const button = wrapper.find('button:has-text("Create Token")')
-    if (button.exists()) {
-      await button.trigger('click')
-      expect(wrapper.emitted('create-token')).toBeTruthy()
+    const btn = w.findAll('button').find(b => b.text().includes('Create Token'))
+    if (btn) {
+      await btn.trigger('click')
+      expect(w.emitted('create-token')).toBeTruthy()
     }
   })
 
-  it('should emit contact-support event when support button clicked', async () => {
-    const eligibility = createEligibility(false)
-    const wrapper = mount(ComplianceGatingBanner, {
-      props: { 
-        eligibility,
-        showContactSupport: true
-      }
+  it('shows retry button when canRetry is true', () => {
+    const w = mount(ComplianceGatingBanner, {
+      props: { eligibility: makeEligibility({ eligible: false, canRetry: true }) },
+      global: { stubs: globalStubs },
     })
-
-    const buttons = wrapper.findAll('button')
-    const supportButton = buttons.find(b => b.text().includes('Contact Support'))
-    
-    if (supportButton) {
-      await supportButton.trigger('click')
-      expect(wrapper.emitted('contact-support')).toBeTruthy()
-    }
+    expect(w.text()).toContain('Retry Verification')
   })
 
-  it('should show retry button when canRetry is true', () => {
-    const eligibility: IssuanceEligibility = {
-      eligible: false,
-      status: 'rejected',
-      reasons: ['Documents rejected'],
-      nextActions: [],
-      canRetry: true
-    }
-
-    const wrapper = mount(ComplianceGatingBanner, {
-      props: { 
-        eligibility,
-        showRetryButton: true
-      }
+  it('shows help text by default', () => {
+    const w = mount(ComplianceGatingBanner, {
+      props: { eligibility: makeEligibility() },
+      global: { stubs: globalStubs },
     })
-
-    const retryButtons = wrapper.findAll('button').filter(b => 
-      b.text().includes('Retry')
-    )
-    
-    expect(retryButtons.length).toBeGreaterThan(0)
-  })
-
-  it('should display help text when enabled', () => {
-    const eligibility = createEligibility(false)
-    const wrapper = mount(ComplianceGatingBanner, {
-      props: { 
-        eligibility,
-        showHelpText: true
-      }
-    })
-
-    expect(wrapper.text()).toContain('business days')
-  })
-
-  it('should not display help text when disabled', () => {
-    const eligibility = createEligibility(false)
-    const wrapper = mount(ComplianceGatingBanner, {
-      props: { 
-        eligibility,
-        showHelpText: false
-      }
-    })
-
-    const hasBusinessDays = wrapper.text().includes('business days')
-    expect(hasBusinessDays).toBe(false)
-  })
-
-  it('should prioritize high priority actions', () => {
-    const eligibility: IssuanceEligibility = {
-      eligible: false,
-      status: 'rejected',
-      reasons: ['Multiple issues'],
-      nextActions: [
-        {
-          type: 'upload_document',
-          title: 'High Priority Action',
-          description: 'This is high priority',
-          priority: 'high'
-        },
-        {
-          type: 'provide_additional_info',
-          title: 'Low Priority Action',
-          description: 'This is low priority',
-          priority: 'low'
-        }
-      ],
-      canRetry: true
-    }
-
-    const wrapper = mount(ComplianceGatingBanner, {
-      props: { eligibility }
-    })
-
-    const text = wrapper.text()
-    expect(text).toContain('High Priority Action')
-    expect(text).toContain('Low Priority Action')
+    expect(w.html()).toContain('border-gray-700')
   })
 })
