@@ -26,6 +26,15 @@ const makeRouter = () =>
     ],
   })
 
+/**
+ * Get the mock router that the most recently mounted component received via useRouter().
+ * The global src/test/setup.ts mock creates a separate router object per useRouter() call,
+ * so we must read it from the call records rather than from the test's createRouter() result.
+ */
+function getComponentRouter() {
+  return vi.mocked(useRouter).mock.results.at(-1)?.value
+}
+
 async function mountChecklist(stateOverrides: Record<string, unknown> = {}) {
   const router = makeRouter()
   await router.isReady()
@@ -199,7 +208,7 @@ describe('OnboardingChecklist', () => {
     await nextTick()
     // The global setup.ts mock returns a fresh router per useRouter() call.
     // Access the component's actual router via vi.mocked(useRouter).mock.results.
-    const componentRouter = vi.mocked(useRouter).mock.results.at(-1)?.value
+    const componentRouter = getComponentRouter()
     expect(componentRouter?.push).toHaveBeenCalledWith(
       expect.objectContaining({ query: { showAuth: 'true' } }),
     )
@@ -211,7 +220,7 @@ describe('OnboardingChecklist', () => {
     const vm = wrapper.vm as any
     vm.handleStepClick({ id: 'select-standards', title: 'Select Standards', completed: false })
     await nextTick()
-    const componentRouter = vi.mocked(useRouter).mock.results.at(-1)?.value
+    const componentRouter = getComponentRouter()
     expect(componentRouter?.push).toHaveBeenCalledWith({ name: 'DiscoveryDashboard' })
     wrapper.unmount()
   })
@@ -221,7 +230,7 @@ describe('OnboardingChecklist', () => {
     const vm = wrapper.vm as any
     vm.handleStepClick({ id: 'save-filters', title: 'Save Filters', completed: false })
     await nextTick()
-    const componentRouter = vi.mocked(useRouter).mock.results.at(-1)?.value
+    const componentRouter = getComponentRouter()
     expect(componentRouter?.push).toHaveBeenCalledWith({ name: 'DiscoveryDashboard' })
     wrapper.unmount()
   })
@@ -231,7 +240,7 @@ describe('OnboardingChecklist', () => {
     const vm = wrapper.vm as any
     vm.handleStepClick({ id: 'explore-tokens', title: 'Explore Tokens', completed: false })
     await nextTick()
-    const componentRouter = vi.mocked(useRouter).mock.results.at(-1)?.value
+    const componentRouter = getComponentRouter()
     expect(componentRouter?.push).toHaveBeenCalledWith({ name: 'Marketplace' })
     wrapper.unmount()
   })

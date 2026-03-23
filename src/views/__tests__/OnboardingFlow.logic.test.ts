@@ -324,6 +324,18 @@ describe('OnboardingFlow — logic', () => {
     wrapper.unmount()
   })
 
+  it('recommendedPlan returns enterprise when MICA+KYC+mainnet selected', async () => {
+    const { wrapper } = await mountFlow()
+    const vm = wrapper.vm as any
+    vm.formData.selectedNetworks = ['algorand_mainnet']
+    vm.formData.requiresMICA = true
+    vm.formData.requiresKYC = true
+    await nextTick()
+    // needsAdvancedCompliance && hasMainnetNeeds → enterprise
+    expect(vm.recommendedPlan.tier).toBe('enterprise')
+    wrapper.unmount()
+  })
+
   // ── saveOnboardingData ────────────────────────────────────────────────────
 
   it('saveOnboardingData() persists form to localStorage', async () => {
