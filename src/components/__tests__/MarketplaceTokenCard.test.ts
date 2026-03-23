@@ -64,7 +64,7 @@ describe('MarketplaceTokenCard', () => {
 
   it('formats supply >= 1K and < 1M as xK', () => {
     const wrapper = mount(MarketplaceTokenCard, {
-      props: { token: { ...baseToken, totalSupply: 5000 } },
+      props: { token: { ...baseToken, supply: 5000 } },
       global: { stubs },
     })
     expect(wrapper.text()).toContain('5.0K')
@@ -72,7 +72,7 @@ describe('MarketplaceTokenCard', () => {
 
   it('formats small supply as plain number', () => {
     const wrapper = mount(MarketplaceTokenCard, {
-      props: { token: { ...baseToken, totalSupply: 500 } },
+      props: { token: { ...baseToken, supply: 500 } },
       global: { stubs },
     })
     expect(wrapper.text()).toContain('500')
@@ -106,7 +106,7 @@ describe('MarketplaceTokenCard', () => {
 
   it('shows Whitelisted badge styling for whitelist badge', () => {
     const wrapper = mount(MarketplaceTokenCard, {
-      props: { token: { ...baseToken, badges: ['Whitelisted'] } },
+      props: { token: { ...baseToken, complianceBadges: ['Whitelisted'] } },
       global: { stubs },
     })
     expect(wrapper.html()).toContain('Whitelisted')
