@@ -71,12 +71,18 @@ describe('FeatureGate', () => {
       ;(wrapper.vm as any).hasAccess
     })
 
-    it('does not render feature-gate overlay when hasAccess=true', async () => {
+    it('does not render feature-gate overlay when hasAccess=true', () => {
+      // Spy must be set BEFORE mount so the computed picks it up during component setup
+      const pinia = createPinia()
+      setActivePinia(pinia)
+      const sub = useSubscriptionStore(pinia)
+      vi.spyOn(sub, 'hasFeatureAccess').mockReturnValue(true)
+
       const wrapper = mount(FeatureGate, {
         props: { requiredTier: 'basic' },
         slots: { default: '<span>OK</span>' },
         global: {
-          plugins: [createPinia(), router],
+          plugins: [pinia, router],
           stubs: {
             LockClosedIcon: { template: '<svg />' },
             ArrowUpCircleIcon: { template: '<svg />' },
@@ -84,33 +90,29 @@ describe('FeatureGate', () => {
           },
         },
       })
-      const sub = useSubscriptionStore()
-      vi.spyOn(sub, 'hasFeatureAccess').mockReturnValue(true)
-      await wrapper.vm.$nextTick()
 
       expect(wrapper.find('[data-testid="feature-gate"]').exists()).toBe(false)
     })
   })
 
   describe('when user does NOT have access', () => {
+    // Spy must be set BEFORE mount so the computed uses it during component setup
     const mountLocked = (props: Record<string, unknown> = {}) => {
+      const pinia = createPinia()
+      setActivePinia(pinia)
+      const sub = useSubscriptionStore(pinia)
+      vi.spyOn(sub, 'hasFeatureAccess').mockReturnValue(false)
+
       const wrapper = mount(FeatureGate, {
         props: { requiredTier: 'professional', ...props },
         slots: { default: '<span data-testid="slot-content">Locked</span>' },
         global: {
-          plugins: [createPinia(), router],
+          plugins: [pinia, router],
           stubs: {
-            LockClosedIcon: { template: '<svg data-testid="lock-icon" />' },
-            ArrowUpCircleIcon: { template: '<svg />' },
-            RouterLink: {
-              props: ['to'],
-              template: '<a :data-href="to" data-testid="upgrade-cta"><slot /></a>',
-            },
+            ArrowUpCircleIcon: { template: '<svg data-testid="arrow-icon" />' },
           },
         },
       })
-      const sub = useSubscriptionStore()
-      vi.spyOn(sub, 'hasFeatureAccess').mockReturnValue(false)
       return wrapper
     }
 
@@ -121,12 +123,13 @@ describe('FeatureGate', () => {
 
     it('shows lock icon in overlay', () => {
       const wrapper = mountLocked()
-      expect(wrapper.find('[data-testid="lock-icon"]').exists()).toBe(true)
+      // LockClosedIcon renders as SVG; check for svg inside the overlay div
+      expect(wrapper.find('[data-testid="feature-gate-overlay"] svg').exists()).toBe(true)
     })
 
     it('shows upgrade CTA link', () => {
       const wrapper = mountLocked()
-      expect(wrapper.find('[data-testid="upgrade-cta"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="feature-gate-upgrade-cta"]').exists()).toBe(true)
     })
 
     it('uses default title for professional tier', () => {
@@ -155,13 +158,13 @@ describe('FeatureGate', () => {
 
     it('uses default CTA text for professional tier', () => {
       const wrapper = mountLocked()
-      const cta = wrapper.find('[data-testid="upgrade-cta"]')
+      const cta = wrapper.find('[data-testid="feature-gate-upgrade-cta"]')
       expect(cta.text()).toContain('Professional')
     })
 
     it('uses custom CTA text when provided', () => {
       const wrapper = mountLocked({ ctaText: 'Upgrade Now!' })
-      const cta = wrapper.find('[data-testid="upgrade-cta"]')
+      const cta = wrapper.find('[data-testid="feature-gate-upgrade-cta"]')
       expect(cta.text()).toBe('Upgrade Now!')
     })
 
