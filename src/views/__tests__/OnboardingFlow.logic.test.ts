@@ -312,14 +312,14 @@ describe('OnboardingFlow — logic', () => {
     wrapper.unmount()
   })
 
-  it('recommendedPlan returns professional when MICA + KYC + mainnet selected', async () => {
+  it('recommendedPlan returns professional when only mainnet (no advanced compliance) selected', async () => {
     const { wrapper } = await mountFlow()
     const vm = wrapper.vm as any
     vm.formData.selectedNetworks = ['algorand_mainnet']
-    vm.formData.requiresMICA = true
-    vm.formData.requiresKYC = true
+    vm.formData.requiresMICA = false
+    vm.formData.requiresKYC = false
     await nextTick()
-    // hasMainnetNeeds true, needsAdvancedCompliance true → professional
+    // hasMainnetNeeds true, needsAdvancedCompliance false → professional
     expect(vm.recommendedPlan.tier).toBe('professional')
     wrapper.unmount()
   })

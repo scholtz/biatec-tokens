@@ -11,6 +11,7 @@ import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import { createRouter, createWebHistory } from 'vue-router'
+import { useComplianceOrchestrationStore } from '../../stores/complianceOrchestration'
 
 // ── Mock all child components ────────────────────────────────────────────────
 vi.mock('../../layout/MainLayout.vue', () => ({ default: { template: '<div><slot /></div>' } }))
@@ -192,15 +193,17 @@ describe('ComplianceOrchestrationView — logic', () => {
   // ── Computed: currentEligibility ───────────────────────────────────────────
 
   it('currentEligibility returns store result when store has a value', async () => {
-    const { wrapper } = await mountView({
-      checkIssuanceEligibility: vi.fn(() => ({
-        eligible: true,
-        status: 'approved',
-        reasons: [],
-        nextActions: [],
-        canRetry: false,
-      })),
-    } as any)
+    // createTestingPinia stubs all actions with vi.fn() — override after mounting
+    const { wrapper } = await mountView()
+    const store = useComplianceOrchestrationStore()
+    ;(store.checkIssuanceEligibility as ReturnType<typeof vi.fn>).mockReturnValue({
+      eligible: true,
+      status: 'approved',
+      reasons: [],
+      nextActions: [],
+      canRetry: false,
+    })
+    await nextTick()
     const vm = wrapper.vm as any
     expect(vm.currentEligibility.eligible).toBe(true)
     expect(vm.currentEligibility.status).toBe('approved')
@@ -208,9 +211,13 @@ describe('ComplianceOrchestrationView — logic', () => {
   })
 
   it('currentEligibility returns fail-closed state when store throws', async () => {
-    const { wrapper } = await mountView({
-      checkIssuanceEligibility: vi.fn(() => { throw new Error('Store unavailable') }),
-    } as any)
+    // createTestingPinia stubs all actions with vi.fn() — override after mounting
+    const { wrapper } = await mountView()
+    const store = useComplianceOrchestrationStore()
+    ;(store.checkIssuanceEligibility as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      throw new Error('Store unavailable')
+    })
+    await nextTick()
     const vm = wrapper.vm as any
     expect(vm.currentEligibility.eligible).toBe(false)
     expect(vm.currentEligibility.canRetry).toBe(true)
@@ -229,6 +236,7 @@ describe('ComplianceOrchestrationView — logic', () => {
   it('totalRequiredDocuments counts only required documents', async () => {
     const { wrapper } = await mountView({
       userComplianceState: {
+        events: [],
         kycDocuments: [
           { id: '1', required: true, type: 'passport' },
           { id: '2', required: false, type: 'utility_bill' },

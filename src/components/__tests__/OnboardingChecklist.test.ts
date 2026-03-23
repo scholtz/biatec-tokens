@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createMemoryHistory, useRouter } from 'vue-router'
 
 // Mock telemetry service
 vi.mock('../../services/TelemetryService', () => ({
@@ -17,7 +17,7 @@ import { telemetryService } from '../../services/TelemetryService'
 
 const makeRouter = () =>
   createRouter({
-    history: createWebHistory(),
+    history: createMemoryHistory(),
     routes: [
       { path: '/', name: 'Home', component: { template: '<div />' } },
       { path: '/dashboard', name: 'Dashboard', component: { template: '<div />' } },
@@ -193,42 +193,46 @@ describe('OnboardingChecklist', () => {
   })
 
   it('handleStepClick("authenticate") navigates to Home with showAuth=true', async () => {
-    const { wrapper, router } = await mountChecklist()
+    const { wrapper } = await mountChecklist()
     const vm = wrapper.vm as any
     vm.handleStepClick({ id: 'authenticate', title: 'Sign In', completed: false })
-    await router.isReady()
     await nextTick()
-    expect(router.currentRoute.value.query?.showAuth).toBe('true')
+    // The global setup.ts mock returns a fresh router per useRouter() call.
+    // Access the component's actual router via vi.mocked(useRouter).mock.results.
+    const componentRouter = vi.mocked(useRouter).mock.results.at(-1)?.value
+    expect(componentRouter?.push).toHaveBeenCalledWith(
+      expect.objectContaining({ query: { showAuth: 'true' } }),
+    )
     wrapper.unmount()
   })
 
   it('handleStepClick("select-standards") navigates to DiscoveryDashboard', async () => {
-    const { wrapper, router } = await mountChecklist()
+    const { wrapper } = await mountChecklist()
     const vm = wrapper.vm as any
     vm.handleStepClick({ id: 'select-standards', title: 'Select Standards', completed: false })
-    await router.isReady()
     await nextTick()
-    expect(router.currentRoute.value.name).toBe('DiscoveryDashboard')
+    const componentRouter = vi.mocked(useRouter).mock.results.at(-1)?.value
+    expect(componentRouter?.push).toHaveBeenCalledWith({ name: 'DiscoveryDashboard' })
     wrapper.unmount()
   })
 
   it('handleStepClick("save-filters") navigates to DiscoveryDashboard', async () => {
-    const { wrapper, router } = await mountChecklist()
+    const { wrapper } = await mountChecklist()
     const vm = wrapper.vm as any
     vm.handleStepClick({ id: 'save-filters', title: 'Save Filters', completed: false })
-    await router.isReady()
     await nextTick()
-    expect(router.currentRoute.value.name).toBe('DiscoveryDashboard')
+    const componentRouter = vi.mocked(useRouter).mock.results.at(-1)?.value
+    expect(componentRouter?.push).toHaveBeenCalledWith({ name: 'DiscoveryDashboard' })
     wrapper.unmount()
   })
 
   it('handleStepClick("explore-tokens") navigates to Marketplace', async () => {
-    const { wrapper, router } = await mountChecklist()
+    const { wrapper } = await mountChecklist()
     const vm = wrapper.vm as any
     vm.handleStepClick({ id: 'explore-tokens', title: 'Explore Tokens', completed: false })
-    await router.isReady()
     await nextTick()
-    expect(router.currentRoute.value.name).toBe('Marketplace')
+    const componentRouter = vi.mocked(useRouter).mock.results.at(-1)?.value
+    expect(componentRouter?.push).toHaveBeenCalledWith({ name: 'Marketplace' })
     wrapper.unmount()
   })
 

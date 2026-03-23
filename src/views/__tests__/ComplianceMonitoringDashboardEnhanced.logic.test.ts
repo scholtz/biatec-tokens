@@ -309,48 +309,48 @@ describe('ComplianceMonitoringDashboardEnhanced — logic', () => {
   // ── loadMetricsData error handling ────────────────────────────────────────
 
   it('loadMetricsData() sets error on 401', async () => {
-    getMetricsMock.mockRejectedValueOnce({ response: { status: 401 } })
     const { wrapper } = await mountDashboard()
     const vm = wrapper.vm as any
+    getMetricsMock.mockRejectedValueOnce({ response: { status: 401 } })
     await vm.loadMetricsData()
     expect(vm.error).toContain('Unauthorized')
     wrapper.unmount()
   })
 
   it('loadMetricsData() sets error on 403', async () => {
-    getMetricsMock.mockRejectedValueOnce({ response: { status: 403 } })
     const { wrapper } = await mountDashboard()
     const vm = wrapper.vm as any
+    getMetricsMock.mockRejectedValueOnce({ response: { status: 403 } })
     await vm.loadMetricsData()
     expect(vm.error).toContain('Access denied')
     wrapper.unmount()
   })
 
   it('loadMetricsData() sets error on 404', async () => {
-    getMetricsMock.mockRejectedValueOnce({ response: { status: 404 } })
     const { wrapper } = await mountDashboard()
     const vm = wrapper.vm as any
+    getMetricsMock.mockRejectedValueOnce({ response: { status: 404 } })
     await vm.loadMetricsData()
     expect(vm.error).toContain('not found')
     wrapper.unmount()
   })
 
   it('loadMetricsData() sets error on network failure', async () => {
+    const { wrapper } = await mountDashboard()
+    const vm = wrapper.vm as any
     getMetricsMock.mockRejectedValueOnce({
       code: 'ECONNREFUSED',
       message: 'Network Error',
     })
-    const { wrapper } = await mountDashboard()
-    const vm = wrapper.vm as any
     await vm.loadMetricsData()
     expect(vm.error).toContain('Cannot connect')
     wrapper.unmount()
   })
 
   it('loadMetricsData() sets generic error message for unknown errors', async () => {
-    getMetricsMock.mockRejectedValueOnce(new Error('Something exploded'))
     const { wrapper } = await mountDashboard()
     const vm = wrapper.vm as any
+    getMetricsMock.mockRejectedValueOnce(new Error('Something exploded'))
     await vm.loadMetricsData()
     expect(vm.error).toContain('Something exploded')
     wrapper.unmount()
@@ -383,6 +383,10 @@ describe('ComplianceMonitoringDashboardEnhanced — logic', () => {
   })
 
   it('allComplianceGaps adds whitelist violation gap from metrics', async () => {
+    // Mount first (onMounted will consume the default mock), then set the custom mock
+    // before calling loadMetricsData explicitly so metrics.value has recentViolations > 0
+    const { wrapper } = await mountDashboard()
+    const vm = wrapper.vm as any
     getMetricsMock.mockResolvedValueOnce({
       activeTokens: 2,
       complianceRate: 0.9,
@@ -391,9 +395,6 @@ describe('ComplianceMonitoringDashboardEnhanced — logic', () => {
       whitelistEnforcement: { recentViolations: 3 },
       auditHealth: { criticalIssues: 0 },
     })
-    const { wrapper } = await mountDashboard()
-    const vm = wrapper.vm as any
-    await vm.loadTokenData()
     await vm.loadMetricsData()
     await nextTick()
     const gaps = vm.allComplianceGaps
@@ -404,6 +405,10 @@ describe('ComplianceMonitoringDashboardEnhanced — logic', () => {
   })
 
   it('allComplianceGaps adds critical audit gap from metrics', async () => {
+    // Mount first (onMounted will consume the default mock), then set the custom mock
+    // before calling loadMetricsData explicitly so metrics.value has criticalIssues > 0
+    const { wrapper } = await mountDashboard()
+    const vm = wrapper.vm as any
     getMetricsMock.mockResolvedValueOnce({
       activeTokens: 2,
       complianceRate: 0.9,
@@ -412,8 +417,6 @@ describe('ComplianceMonitoringDashboardEnhanced — logic', () => {
       whitelistEnforcement: { recentViolations: 0 },
       auditHealth: { criticalIssues: 2 },
     })
-    const { wrapper } = await mountDashboard()
-    const vm = wrapper.vm as any
     await vm.loadMetricsData()
     await nextTick()
     const gaps = vm.allComplianceGaps
