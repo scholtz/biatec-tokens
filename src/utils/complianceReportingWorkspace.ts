@@ -258,13 +258,14 @@ function isStatusPresent(status: string): boolean {
 // Export package readiness derivation
 // ---------------------------------------------------------------------------
 
-const STALE_THRESHOLD_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
+const STALE_THRESHOLD_MS = 24 * 60 * 60 * 1000 // 24 hours
 
 /**
- * Returns true if a timestamp is older than STALE_THRESHOLD_MS.
+ * Returns true if a timestamp is older than STALE_THRESHOLD_MS (24h).
+ * Pass the freshness/last-refresh timestamp; returns true when data is stale.
  * Accepts an optional `now` parameter for deterministic testing.
  */
-export function isTimestampStale(timestamp: string | null, now: number = Date.now()): boolean {
+export function isTimestampStale(timestamp: string | null | undefined, now: number = Date.now()): boolean {
   if (!timestamp) return false
   return now - new Date(timestamp).getTime() > STALE_THRESHOLD_MS
 }
