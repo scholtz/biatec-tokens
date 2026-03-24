@@ -7,14 +7,27 @@ export type EvidenceStatus = 'ready' | 'warning' | 'failed' | 'pending' | 'unava
 
 export interface EvidenceSection {
   id: string
-  title: string
+  /** Display name for this evidence section (preferred). Legacy: title */
+  label?: string
+  /** Legacy display name — use label if available */
+  title?: string
   status: EvidenceStatus
-  releaseGrade: boolean
-  summary: string
-  details: string[]
-  timestamp: string | null
-  actionLabel: string | null
-  actionPath: string | null
+  /** Letter grade like 'A', 'B', 'C' (preferred). Legacy: releaseGrade (boolean) */
+  grade?: string
+  /** Legacy boolean grade flag — use grade if available */
+  releaseGrade?: boolean
+  /** Short summary detail string (preferred). Legacy: summary */
+  detail?: string
+  /** Legacy summary field */
+  summary?: string
+  /** Legacy multi-item details list */
+  details?: string[]
+  /** ISO timestamp of last refresh (preferred). Legacy: timestamp */
+  freshnessTimestamp?: string | null
+  /** Legacy timestamp field */
+  timestamp?: string | null
+  actionLabel?: string | null
+  actionPath?: string | null
 }
 
 export const STATUS_LABELS: Record<EvidenceStatus, string> = {
@@ -42,21 +55,36 @@ export const PERMISSIVE_GRADE_LABEL = 'Developer Feedback — Not Release Sign-o
 // Compliance Reporting Workspace types
 // ---------------------------------------------------------------------------
 
+/** Entry in a jurisdiction list, with status annotation. */
+export interface JurisdictionEntry {
+  code: string
+  name: string
+  status: 'permitted' | 'restricted' | 'unknown'
+}
+
 export interface JurisdictionSummary {
   configured: boolean
-  jurisdictions: string[]
+  /** Permitted/restricted jurisdiction list. Accepts both string[] and JurisdictionEntry[] */
+  jurisdictions: string[] | JurisdictionEntry[]
   restrictedCount: number
   permittedCount: number
-  staleSince: string | null
+  /** ISO timestamp of last data refresh (preferred) */
+  freshnessTimestamp?: string | null
+  /** Legacy field: when the data became stale (set only when stale) */
+  staleSince?: string | null
 }
 
 export interface KYCAMLSummary {
   status: EvidenceStatus
   kycRequired: boolean
-  amlRequired: boolean
+  amlRequired?: boolean
   providerConfigured: boolean
   pendingReviewCount: number
-  staleSince: string | null
+  completedReviewCount?: number
+  /** ISO timestamp of last data refresh (preferred) */
+  freshnessTimestamp?: string | null
+  /** Legacy field: when the data became stale */
+  staleSince?: string | null
 }
 
 export interface WhitelistSummary {
@@ -65,7 +93,10 @@ export interface WhitelistSummary {
   approvedInvestorCount: number
   pendingInvestorCount: number
   activeWhitelistId: string | null
-  staleSince: string | null
+  /** ISO timestamp of last data refresh (preferred) */
+  freshnessTimestamp?: string | null
+  /** Legacy field: when the data became stale */
+  staleSince?: string | null
 }
 
 export interface InvestorEligibilitySummary {
@@ -73,7 +104,10 @@ export interface InvestorEligibilitySummary {
   accreditedRequired: boolean
   retailPermitted: boolean
   eligibilityCategories: string[]
-  staleSince: string | null
+  /** ISO timestamp of last data refresh (preferred) */
+  freshnessTimestamp?: string | null
+  /** Legacy field: when the data became stale */
+  staleSince?: string | null
 }
 
 export interface ComplianceReportBundle {
