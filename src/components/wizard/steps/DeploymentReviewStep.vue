@@ -14,8 +14,7 @@
           <div>
             <h5 class="text-sm font-semibold text-yellow-400 mb-2">Important: Review Before Deployment</h5>
             <p class="text-sm text-gray-300">
-              Please verify all information below is correct. Once your token is deployed to the blockchain, 
-              certain settings (like token symbol and total supply) cannot be modified.
+              Please verify all information below is correct. Once your token is deployed to the blockchain, certain settings (like token symbol and total supply) cannot be modified.
             </p>
           </div>
         </div>
@@ -35,11 +34,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span class="text-xs text-gray-500">Project Name</span>
-                <p class="text-sm font-medium text-gray-900 dark:text-white mt-1">{{ (projectSetup as any).projectName || 'Not specified' }}</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white mt-1">{{ (projectSetup as any).projectName || "Not specified" }}</p>
               </div>
               <div>
                 <span class="text-xs text-gray-500">Organization</span>
-                <p class="text-sm font-medium text-gray-900 dark:text-white mt-1">{{ (projectSetup as any).organizationName || 'Not specified' }}</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white mt-1">{{ (projectSetup as any).organizationName || "Not specified" }}</p>
               </div>
               <div class="md:col-span-2">
                 <span class="text-xs text-gray-500">Purpose</span>
@@ -54,11 +53,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span class="text-xs text-gray-500">Token Name</span>
-                <p class="text-sm font-medium text-gray-900 dark:text-white mt-1">{{ (tokenDetails as any).name || 'Not specified' }}</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white mt-1">{{ (tokenDetails as any).name || "Not specified" }}</p>
               </div>
               <div>
                 <span class="text-xs text-gray-500">Token Symbol</span>
-                <p class="text-sm font-medium text-gray-900 dark:text-white mt-1 font-mono">{{ (tokenDetails as any).symbol || 'Not specified' }}</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white mt-1 font-mono">{{ (tokenDetails as any).symbol || "Not specified" }}</p>
               </div>
               <div>
                 <span class="text-xs text-gray-500">Network</span>
@@ -80,30 +79,20 @@
             <h5 class="text-sm font-semibold text-gray-400 mb-3">Compliance Status</h5>
             <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg">
               <div class="flex items-center gap-3">
-                <div :class="[
-                  'w-10 h-10 rounded-full flex items-center justify-center',
-                  complianceScore >= 80 ? 'bg-green-500/20' :
-                  complianceScore >= 50 ? 'bg-yellow-500/20' :
-                  'bg-red-500/20'
-                ]">
-                  <i :class="[
-                    'pi pi-shield text-xl',
-                    complianceScore >= 80 ? 'text-green-400' :
-                    complianceScore >= 50 ? 'text-yellow-400' :
-                    'text-red-400'
-                  ]"></i>
+                <div :class="['w-10 h-10 rounded-full flex items-center justify-center', complianceScore >= 80 ? 'bg-green-500/20' : complianceScore >= 50 ? 'bg-yellow-500/20' : 'bg-red-500/20']">
+                  <i :class="['pi pi-shield text-xl', complianceScore >= 80 ? 'text-green-400' : complianceScore >= 50 ? 'text-yellow-400' : 'text-red-400']"></i>
                 </div>
                 <div>
                   <p class="text-sm font-medium text-gray-900 dark:text-white">MICA Readiness</p>
                   <p class="text-xs text-gray-500">Compliance score based on completed requirements</p>
                 </div>
               </div>
-              <div :class="[
-                'px-4 py-2 rounded-full text-sm font-semibold',
-                complianceScore >= 80 ? 'bg-green-500/20 text-green-400' :
-                complianceScore >= 50 ? 'bg-yellow-500/20 text-yellow-400' :
-                'bg-red-500/20 text-red-400'
-              ]">
+              <div
+                :class="[
+                  'px-4 py-2 rounded-full text-sm font-semibold',
+                  complianceScore >= 80 ? 'bg-green-500/20 text-green-400' : complianceScore >= 50 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400',
+                ]"
+              >
                 {{ complianceScore }}%
               </div>
             </div>
@@ -116,13 +105,11 @@
               <div class="flex items-center gap-3">
                 <i class="pi pi-credit-card text-biatec-accent text-xl"></i>
                 <div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-white">{{ selectedPlan || 'Not selected' }}</p>
+                  <p class="text-sm font-medium text-gray-900 dark:text-white">{{ selectedPlan || "Not selected" }}</p>
                   <p class="text-xs text-gray-500">Your current subscription plan</p>
                 </div>
               </div>
-              <span v-if="subscriptionStore.isActive" class="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">
-                Active
-              </span>
+              <span v-if="subscriptionStore.isActive" class="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium"> Active </span>
             </div>
           </div>
         </div>
@@ -162,9 +149,7 @@
             <span class="text-lg font-bold text-biatec-accent">$0.00</span>
           </div>
         </div>
-        <p class="text-xs text-gray-500 mt-3">
-          All blockchain transaction fees are covered by your subscription. No hidden costs.
-        </p>
+        <p class="text-xs text-gray-500 mt-3">All blockchain transaction fees are covered by your subscription. No hidden costs.</p>
       </div>
 
       <!-- Backend-Only Deployment Notice (ARC76) -->
@@ -174,8 +159,7 @@
           <div>
             <h5 class="text-sm font-semibold text-purple-400 mb-2">Backend-Managed Deployment (ARC76)</h5>
             <p class="text-sm text-gray-300 mb-3">
-              Your token will be deployed by our secure backend infrastructure using <strong class="text-purple-400">ARC76-derived accounts</strong>. 
-              This means:
+              Your token will be deployed by our secure backend infrastructure using <strong class="text-purple-400">ARC76-derived accounts</strong>. This means:
             </p>
             <ul class="text-sm text-gray-400 space-y-2 mb-3">
               <li class="flex items-start gap-2">
@@ -212,7 +196,7 @@
               Your token will be deployed to: <strong class="text-blue-400">{{ formatNetwork((tokenDetails as any).selectedNetwork) }}</strong>
             </p>
             <p class="text-xs text-gray-400">
-              {{ isMainnet ? 'This is a mainnet deployment. Your token will be live and publicly accessible.' : 'This is a testnet deployment for testing purposes.' }}
+              {{ isMainnet ? "This is a mainnet deployment. Your token will be live and publicly accessible." : "This is a testnet deployment for testing purposes." }}
             </p>
           </div>
         </div>
@@ -228,9 +212,7 @@
               type="checkbox"
               class="mt-1 w-5 h-5 rounded border-gray-700 bg-gray-800 text-biatec-accent focus:ring-biatec-accent focus:ring-offset-0"
             />
-            <label for="confirm-information" class="flex-1 text-sm text-gray-300 cursor-pointer">
-              I confirm that all information provided is accurate and complete to the best of my knowledge.
-            </label>
+            <label for="confirm-information" class="flex-1 text-sm text-gray-300 cursor-pointer"> I confirm that all information provided is accurate and complete to the best of my knowledge. </label>
           </div>
 
           <div class="flex items-start gap-3">
@@ -253,7 +235,8 @@
               class="mt-1 w-5 h-5 rounded border-gray-700 bg-gray-800 text-biatec-accent focus:ring-biatec-accent focus:ring-offset-0"
             />
             <label for="confirm-backend-signing" class="flex-1 text-sm text-gray-300 cursor-pointer">
-              <strong>I understand and consent to backend-only deployment:</strong> I acknowledge that Biatec will deploy this token using secure, backend-managed ARC76 accounts. All blockchain transactions will be signed by Biatec's infrastructure on my behalf, and I will not need to provide my own wallet or signing keys.
+              <strong>I understand and consent to backend-only deployment:</strong> I acknowledge that Biatec will deploy this token using secure, backend-managed ARC76 accounts. All blockchain
+              transactions will be signed by Biatec's infrastructure on my behalf, and I will not need to provide my own wallet or signing keys.
             </label>
           </div>
 
@@ -275,18 +258,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useTokenDraftStore } from '../../../stores/tokenDraft'
-import { useSubscriptionStore } from '../../../stores/subscription'
-import { useComplianceStore } from '../../../stores/compliance'
-import WizardStep from '../WizardStep.vue'
+import { ref, computed } from "vue";
+import { useTokenDraftStore } from "../../../stores/tokenDraft";
+import { useSubscriptionStore } from "../../../stores/subscription";
+import { useComplianceStore } from "../../../stores/compliance";
+import WizardStep from "../WizardStep.vue";
 
-const tokenDraftStore = useTokenDraftStore()
-const subscriptionStore = useSubscriptionStore()
-const complianceStore = useComplianceStore()
+const tokenDraftStore = useTokenDraftStore();
+const subscriptionStore = useSubscriptionStore();
+const complianceStore = useComplianceStore();
 
-const showErrors = ref(false)
-const errors = ref<string[]>([])
+const showErrors = ref(false);
+const errors = ref<string[]>([]);
 
 // Confirmations
 const confirmations = ref({
@@ -294,112 +277,109 @@ const confirmations = ref({
   understandCompliance: false,
   understandBackendSigning: false,
   readyToDeploy: false,
-})
+});
 
 // Extract data from draft store
-const projectSetup = computed(() => tokenDraftStore.currentDraft?.projectSetup || {})
-const tokenDetails = computed(() => tokenDraftStore.currentDraft || {})
-const selectedPlan = computed(() => subscriptionStore.currentProduct?.name || 'Basic')
-const complianceScore = computed(() => complianceStore.metrics.completionPercentage || 0)
+const projectSetup = computed(() => tokenDraftStore.currentDraft?.projectSetup || {});
+const tokenDetails = computed(() => tokenDraftStore.currentDraft || {});
+const selectedPlan = computed(() => subscriptionStore.currentProduct?.name || "Basic");
+const complianceScore = computed(() => complianceStore.metrics.completionPercentage || 0);
 
 // Network and standard formatting
 const formatNetwork = (network: string | undefined): string => {
   const networkMap: Record<string, string> = {
-    'algorand-mainnet': 'Algorand Mainnet',
-    'algorand-testnet': 'Algorand Testnet',
-    'voi-testnet': 'VOI Testnet',
-    'aramid-testnet': 'Aramid Testnet',
-    'ethereum-mainnet': 'Ethereum Mainnet',
-    'ethereum-sepolia': 'Ethereum Sepolia Testnet',
-    'arbitrum-mainnet': 'Arbitrum One',
-    'base-mainnet': 'Base',
-  }
-  return networkMap[network || ''] || network || 'Not selected'
-}
+    "algorand-mainnet": "Algorand Mainnet",
+    "algorand-testnet": "Algorand Testnet",
+    "voi-testnet": "VOI Testnet",
+    "aramid-testnet": "Aramid Testnet",
+    "ethereum-mainnet": "Ethereum Mainnet",
+    "ethereum-sepolia": "Ethereum Sepolia Testnet",
+    "arbitrum-mainnet": "Arbitrum One",
+    "base-mainnet": "Base",
+  };
+  return networkMap[network || ""] || network || "Not selected";
+};
 
 const formatStandard = (standard: string | undefined): string => {
   const standardMap: Record<string, string> = {
-    'asa': 'ASA (Algorand Standard Asset)',
-    'arc3': 'ARC3 (NFT with Metadata)',
-    'arc19': 'ARC19 (Tradable NFT)',
-    'arc69': 'ARC69 (Mutable NFT)',
-    'arc200': 'ARC200 (Smart Contract Token)',
-    'arc72': 'ARC72 (Advanced NFT)',
-    'erc20': 'ERC20 (Fungible Token)',
-    'erc721': 'ERC721 (NFT)',
-  }
-  return standardMap[standard || ''] || standard || 'Not selected'
-}
+    asa: "ASA (Algorand Standard Asset)",
+    arc3: "ARC3 (NFT with Metadata)",
+    arc19: "ARC19 (Tradable NFT)",
+    arc69: "ARC69 (Mutable NFT)",
+    arc200: "ARC200 (Smart Contract Token)",
+    arc72: "ARC72 (Advanced NFT)",
+    erc20: "ERC20 (Fungible Token)",
+    erc721: "ERC721 (NFT)",
+  };
+  return standardMap[standard || ""] || standard || "Not selected";
+};
 
 const formatPurpose = (purpose: string | undefined): string => {
   const purposeMap: Record<string, string> = {
-    'utility': 'Utility Token - Access to services or features',
-    'asset': 'Asset Token - Represents real-world assets',
-    'security': 'Security Token - Investment instrument',
-    'governance': 'Governance Token - Voting rights',
-    'reward': 'Reward/Loyalty Token - Customer incentives',
-    'other': 'Other',
-  }
-  return purposeMap[purpose || ''] || 'Not specified'
-}
+    utility: "Utility Token - Access to services or features",
+    asset: "Asset Token - Represents real-world assets",
+    security: "Security Token - Investment instrument",
+    governance: "Governance Token - Voting rights",
+    reward: "Reward/Loyalty Token - Customer incentives",
+    other: "Other",
+  };
+  return purposeMap[purpose || ""] || "Not specified";
+};
 
 const formatNumber = (num: number | string | undefined): string => {
-  if (!num) return '0'
-  return new Intl.NumberFormat('en-US').format(Number(num))
-}
+  if (!num) return "0";
+  return new Intl.NumberFormat("en-US").format(Number(num));
+};
 
 // Check if mainnet
 const isMainnet = computed(() => {
-  const network = (tokenDetails.value as any).selectedNetwork
-  return network?.includes('mainnet') || false
-})
+  const network = (tokenDetails.value as any).selectedNetwork;
+  return network?.includes("mainnet") || false;
+});
 
 // Plan limitations
 const planLimitations = computed(() => {
-  const limitations: string[] = []
-  const plan = selectedPlan.value.toLowerCase()
-  
-  if (plan === 'basic') {
-    limitations.push('Up to 5 token deployments per month')
-    limitations.push('Standard token templates only')
-    limitations.push('Email support (48-hour response time)')
-  } else if (plan === 'professional') {
-    limitations.push('Up to 25 token deployments per month')
-    limitations.push('Priority email support (24-hour response time)')
+  const limitations: string[] = [];
+  const plan = selectedPlan.value.toLowerCase();
+
+  if (plan === "basic") {
+    limitations.push("Up to 5 token deployments per month");
+    limitations.push("Standard token templates only");
+    limitations.push("Email support (48-hour response time)");
+  } else if (plan === "professional") {
+    limitations.push("Up to 25 token deployments per month");
+    limitations.push("Priority email support (24-hour response time)");
   }
-  
+
   if (!subscriptionStore.isActive) {
-    limitations.push('Subscription activation required before deployment')
+    limitations.push("Subscription activation required before deployment");
   }
-  
-  return limitations
-})
+
+  return limitations;
+});
 
 // Show costs section (could be expanded based on plan)
-const showCosts = computed(() => true)
+const showCosts = computed(() => true);
 
 // Validation
 const isValid = computed(() => {
-  return confirmations.value.informationCorrect &&
-         confirmations.value.understandCompliance &&
-         confirmations.value.understandBackendSigning &&
-         confirmations.value.readyToDeploy
-})
+  return confirmations.value.informationCorrect && confirmations.value.understandCompliance && confirmations.value.understandBackendSigning && confirmations.value.readyToDeploy;
+});
 
 const validateAll = (): boolean => {
   if (!isValid.value) {
-    errors.value = ['Please confirm all checkboxes to proceed with deployment']
-    showErrors.value = true
-    return false
+    errors.value = ["Please confirm all checkboxes to proceed with deployment"];
+    showErrors.value = true;
+    return false;
   }
-  
-  errors.value = []
-  showErrors.value = false
-  return true
-}
+
+  errors.value = [];
+  showErrors.value = false;
+  return true;
+};
 
 defineExpose({
   isValid,
   validateAll,
-})
+});
 </script>

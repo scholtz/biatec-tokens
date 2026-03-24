@@ -29,11 +29,7 @@ export const useAuthStore = defineStore("auth", () => {
   const provisioningError = ref<string | null>(null);
 
   const isAuthenticated = computed(() => !!user.value && isConnected.value);
-  const isAccountReady = computed(() => 
-    isAuthenticated.value && 
-    provisioningStatus.value === "active" && 
-    user.value?.canDeploy === true
-  );
+  const isAccountReady = computed(() => isAuthenticated.value && provisioningStatus.value === "active" && user.value?.canDeploy === true);
 
   const initialize = async () => {
     loading.value = true;
@@ -103,12 +99,12 @@ export const useAuthStore = defineStore("auth", () => {
   const authenticateWithARC76 = async (email: string, p: string) => {
     loading.value = true;
     provisioningError.value = null;
-    
+
     try {
       // Step 1: Generate ARC76 account
       const arc76account: algosdk.Account = await generateAlgorandAccount(p, email, 1);
       const derivedAddress = arc76account.addr.toString();
-      
+
       // Step 2: Create user from ARC76 authentication
       const newUser: AlgorandUser = {
         address: derivedAddress,
@@ -123,7 +119,7 @@ export const useAuthStore = defineStore("auth", () => {
       arc76email.value = email;
       account.value = derivedAddress;
       formattedAddress.value = `${derivedAddress.slice(0, 4)}...${derivedAddress.slice(-4)}`;
-      
+
       const params: algosdk.SuggestedParams = {
         fee: 1000n,
         genesisHash: new Uint8Array(Buffer.from("wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8=", "base64")),
@@ -140,7 +136,7 @@ export const useAuthStore = defineStore("auth", () => {
 
       // Step 3: Provision account on backend
       provisioningStatus.value = "provisioning";
-      
+
       try {
         const provisioningResponse = await accountProvisioningService.provisionAccount({
           email,
@@ -154,7 +150,7 @@ export const useAuthStore = defineStore("auth", () => {
           provisioningStatus: provisioningResponse.status,
           canDeploy: provisioningResponse.status === "active",
         };
-        
+
         provisioningStatus.value = provisioningResponse.status;
 
         // Log audit event
@@ -164,17 +160,14 @@ export const useAuthStore = defineStore("auth", () => {
           { address: derivedAddress, email, name: newUser.name },
           { type: "account", id: derivedAddress },
           "ARC76 account created and provisioned",
-          { status: provisioningResponse.status }
+          { status: provisioningResponse.status },
         );
-
       } catch (provisioningErr: unknown) {
         console.error("Account provisioning failed:", provisioningErr);
         provisioningStatus.value = "failed";
-        const errorMessage = provisioningErr instanceof Error ? 
-          provisioningErr.message : 
-          "Account provisioning failed. Please try again.";
+        const errorMessage = provisioningErr instanceof Error ? provisioningErr.message : "Account provisioning failed. Please try again.";
         provisioningError.value = errorMessage;
-        
+
         // Still allow user to continue, but mark as not ready for deployment
         user.value = {
           ...newUser,
@@ -221,13 +214,13 @@ export const useAuthStore = defineStore("auth", () => {
       const savedAccount = localStorage.getItem("arc76_account");
       account.value = savedAccount || "";
       formattedAddress.value = savedAccount ? `${savedAccount.slice(0, 4)}...${savedAccount.slice(-4)}` : "";
-      
+
       // Check account provisioning status if we have an account
       if (savedAccount && savedSession) {
         try {
           const accountStatus = await accountProvisioningService.getAccountStatus(savedAccount);
           provisioningStatus.value = accountStatus.status;
-          
+
           if (user.value) {
             user.value.provisioningStatus = accountStatus.status;
             user.value.canDeploy = accountStatus.canDeploy;
@@ -238,7 +231,7 @@ export const useAuthStore = defineStore("auth", () => {
           provisioningStatus.value = "active"; // Assume active for backward compatibility
         }
       }
-      
+
       return !!savedSession;
     } catch (error) {
       console.error("Error restoring ARC76 session:", error);
@@ -258,7 +251,7 @@ export const useAuthStore = defineStore("auth", () => {
     try {
       const accountStatus = await accountProvisioningService.getAccountStatus(account.value);
       provisioningStatus.value = accountStatus.status;
-      
+
       if (user.value) {
         user.value.provisioningStatus = accountStatus.status;
         user.value.canDeploy = accountStatus.canDeploy;
