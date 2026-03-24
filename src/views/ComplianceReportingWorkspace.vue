@@ -1032,45 +1032,85 @@
 
           <!-- ── Workspace Navigation ── -->
           <nav
-            class="mt-6 p-4 bg-gray-800/60 rounded-xl border border-white/10 flex flex-wrap gap-3"
+            class="mt-6 p-4 bg-gray-800/60 rounded-xl border border-white/10"
             aria-label="Compliance workspace navigation"
             data-testid="workspace-nav"
           >
-            <router-link
-              to="/compliance/launch"
-              class="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
-              data-testid="nav-launch-console"
-            >
-              Launch Console
-            </router-link>
-            <router-link
-              to="/compliance/setup"
-              class="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
-              data-testid="nav-setup"
-            >
-              Compliance Setup
-            </router-link>
-            <router-link
-              to="/compliance/evidence"
-              class="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
-              data-testid="nav-evidence"
-            >
-              Evidence Pack
-            </router-link>
-            <router-link
-              to="/compliance/policy"
-              class="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
-              data-testid="nav-policy"
-            >
-              Whitelist Policy
-            </router-link>
-            <router-link
-              to="/compliance/risk-report"
-              class="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
-              data-testid="nav-risk-report"
-            >
-              Risk Report Builder
-            </router-link>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3" aria-hidden="true">
+              Navigate to source surfaces
+            </p>
+            <div class="flex flex-wrap gap-x-5 gap-y-2">
+              <router-link
+                to="/compliance/launch"
+                class="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
+                data-testid="nav-launch-console"
+              >
+                Launch Console
+              </router-link>
+              <router-link
+                to="/compliance/setup"
+                class="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
+                data-testid="nav-setup"
+              >
+                Compliance Setup
+              </router-link>
+              <router-link
+                to="/compliance/evidence"
+                class="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
+                data-testid="nav-evidence"
+              >
+                Evidence Pack
+              </router-link>
+              <router-link
+                to="/compliance/release"
+                class="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
+                data-testid="nav-release-evidence"
+              >
+                Release Evidence
+              </router-link>
+              <router-link
+                to="/compliance/onboarding"
+                class="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
+                data-testid="nav-onboarding"
+              >
+                Onboarding Queue
+              </router-link>
+              <router-link
+                to="/compliance/approval"
+                class="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
+                data-testid="nav-approval"
+              >
+                Approval Queue
+              </router-link>
+              <router-link
+                to="/compliance/policy"
+                class="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
+                data-testid="nav-policy"
+              >
+                Whitelist Policy
+              </router-link>
+              <router-link
+                to="/compliance-monitoring"
+                class="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
+                data-testid="nav-monitoring"
+              >
+                Compliance Monitoring
+              </router-link>
+              <router-link
+                to="/compliance/risk-report"
+                class="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
+                data-testid="nav-risk-report"
+              >
+                Risk Report Builder
+              </router-link>
+              <router-link
+                to="/compliance/reporting-center"
+                class="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded"
+                data-testid="nav-reporting-center"
+              >
+                Reporting Center
+              </router-link>
+            </div>
           </nav>
 
         </template>
