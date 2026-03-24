@@ -38,6 +38,12 @@ function makeRouter() {
       { path: '/compliance/launch', component: { template: '<div />' } },
       { path: '/compliance/evidence', component: { template: '<div />' } },
       { path: '/compliance/policy', component: { template: '<div />' } },
+      { path: '/compliance/release', component: { template: '<div />' } },
+      { path: '/compliance/onboarding', component: { template: '<div />' } },
+      { path: '/compliance/approval', component: { template: '<div />' } },
+      { path: '/compliance-monitoring', component: { template: '<div />' } },
+      { path: '/compliance/risk-report', component: { template: '<div />' } },
+      { path: '/compliance/reporting-center', component: { template: '<div />' } },
     ],
   })
 }

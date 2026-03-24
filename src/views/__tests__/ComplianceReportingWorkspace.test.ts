@@ -29,6 +29,12 @@ function makeRouter() {
       { path: '/compliance/launch', component: { template: '<div />' } },
       { path: '/compliance/evidence', component: { template: '<div />' } },
       { path: '/compliance/policy', component: { template: '<div />' } },
+      { path: '/compliance/release', component: { template: '<div />' } },
+      { path: '/compliance/onboarding', component: { template: '<div />' } },
+      { path: '/compliance/approval', component: { template: '<div />' } },
+      { path: '/compliance-monitoring', component: { template: '<div />' } },
+      { path: '/compliance/risk-report', component: { template: '<div />' } },
+      { path: '/compliance/reporting-center', component: { template: '<div />' } },
     ],
   })
 }
@@ -289,6 +295,40 @@ describe('ComplianceReportingWorkspace — workspace nav', () => {
   it('workspace nav has link to /compliance/policy', async () => {
     const wrapper = await mountWorkspace()
     expect(wrapper.find('[data-testid="nav-policy"]').exists()).toBe(true)
+  })
+
+  it('workspace nav has link to /compliance/release (release evidence)', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="nav-release-evidence"]').exists()).toBe(true)
+  })
+
+  it('workspace nav has link to /compliance/onboarding (onboarding queue)', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="nav-onboarding"]').exists()).toBe(true)
+  })
+
+  it('workspace nav has link to /compliance/approval (approval queue)', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="nav-approval"]').exists()).toBe(true)
+  })
+
+  it('workspace nav has link to /compliance-monitoring', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="nav-monitoring"]').exists()).toBe(true)
+  })
+
+  it('workspace nav has link to /compliance/reporting-center', async () => {
+    const wrapper = await mountWorkspace()
+    expect(wrapper.find('[data-testid="nav-reporting-center"]').exists()).toBe(true)
+  })
+
+  it('workspace nav has all 10 source surface links', async () => {
+    const wrapper = await mountWorkspace()
+    const nav = wrapper.find('[data-testid="workspace-nav"]')
+    const links = nav.findAll('a, [data-testid^="nav-"]')
+    // Should have at least 10 links (launch, setup, evidence, release, onboarding,
+    // approval, policy, monitoring, risk-report, reporting-center)
+    expect(links.length).toBeGreaterThanOrEqual(10)
   })
 })
 
