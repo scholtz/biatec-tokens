@@ -1,8 +1,8 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { generateAlgorandAccount } from "arc76";
+import { generateAlgorandAccount } from "../utils/arc76Account";
 import algosdk from "algosdk";
-import { makeArc14AuthHeader, makeArc14TxWithSuggestedParams } from "arc14";
+import { makeArc14AuthHeader, makeArc14TxWithSuggestedParams } from "../utils/arc14Auth";
 import { accountProvisioningService } from "../services/AccountProvisioningService";
 import { auditTrailService } from "../services/AuditTrailService";
 import type { AccountProvisioningStatus } from "../types/accountProvisioning";

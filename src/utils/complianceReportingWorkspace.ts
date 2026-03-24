@@ -95,6 +95,40 @@ export interface ApprovalHistorySummary {
   lastActionAt: string | null
 }
 
+type ApprovalStageInput = ApprovalHistoryEntry | {
+  id: string
+  label: string
+  role: string
+  status: string
+  lastActionAt: string | null
+  conditions: string | null
+  summary: string | null
+  blockers: Array<{ isLaunchBlocking: boolean }>
+}
+
+type FreshnessCarrier = {
+  freshnessTimestamp?: string | null
+  staleSince?: string | null
+}
+
+function hasApprovalOutcome(stage: ApprovalStageInput): stage is ApprovalHistoryEntry {
+  return 'outcome' in stage && 'reviewerRole' in stage
+}
+
+function getFreshnessTimestamp(value: FreshnessCarrier): string | null {
+  return value.freshnessTimestamp ?? value.staleSince ?? null
+}
+
+function formatJurisdictionLabel(
+  jurisdiction: string | { code: string; name: string; status: 'permitted' | 'restricted' | 'unknown' },
+): string {
+  if (typeof jurisdiction === 'string') {
+    return jurisdiction
+  }
+
+  return jurisdiction.name || jurisdiction.code
+}
+
 // ---------------------------------------------------------------------------
 // Export package readiness
 // ---------------------------------------------------------------------------
@@ -169,31 +203,24 @@ export interface ExportPackageReadiness {
  * Accepts the same `ApprovalStage[]` shape used by the approval cockpit so
  * the reporting workspace can be wired to the same backend data source.
  */
-export function deriveApprovalHistorySummary(
-  stages: Array<{
-    id: string
-    label: string
-    role: string
-    status: string
-    lastActionAt: string | null
-    conditions: string | null
-    summary: string
-    blockers: Array<{ isLaunchBlocking: boolean }>
-  }>,
-): ApprovalHistorySummary {
-  const entries: ApprovalHistoryEntry[] = stages.map((s) => {
-    const outcome = mapStageStatusToOutcome(s.status)
-    const isLaunchBlocking =
-      outcome === 'blocked' && s.blockers.some((b) => b.isLaunchBlocking)
+export function deriveApprovalHistorySummary(stages: ApprovalStageInput[]): ApprovalHistorySummary {
+  const entries: ApprovalHistoryEntry[] = stages.map((stage) => {
+    if (hasApprovalOutcome(stage)) {
+      return {
+        ...stage,
+        summary: stage.summary ?? '',
+      }
+    }
+
     return {
-      id: s.id,
-      label: s.label,
-      reviewerRole: s.role,
-      outcome,
-      actionedAt: s.lastActionAt,
-      conditions: s.conditions,
-      summary: s.summary,
-      isLaunchBlocking,
+      id: stage.id,
+      label: stage.label,
+      reviewerRole: stage.role,
+      outcome: mapStageStatusToOutcome(stage.status),
+      actionedAt: stage.lastActionAt,
+      conditions: stage.conditions,
+      summary: stage.summary ?? '',
+      isLaunchBlocking: stage.blockers.some((blocker) => blocker.isLaunchBlocking),
     }
   })
 
@@ -205,7 +232,9 @@ export function deriveApprovalHistorySummary(
   const pendingCount = entries.filter(
     (e) => e.outcome === 'pending' || e.outcome === 'not_started',
   ).length
-  const allLaunchCriticalSigned = entries.every(
+  const allLaunchCriticalSigned = entries
+    .filter((e) => e.isLaunchBlocking)
+    .every(
     (e) => e.outcome === 'approved' || e.outcome === 'conditionally_approved',
   )
 
@@ -258,10 +287,10 @@ function isStatusPresent(status: string): boolean {
 // Export package readiness derivation
 // ---------------------------------------------------------------------------
 
-const STALE_THRESHOLD_MS = 24 * 60 * 60 * 1000 // 24 hours
+const STALE_THRESHOLD_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 
 /**
- * Returns true if a timestamp is older than STALE_THRESHOLD_MS (24h).
+ * Returns true if a timestamp is older than STALE_THRESHOLD_MS (30 days).
  * Pass the freshness/last-refresh timestamp; returns true when data is stale.
  * Accepts an optional `now` parameter for deterministic testing.
  */
@@ -289,7 +318,7 @@ export function deriveExportPackageReadiness(
       // Jurisdiction has no "failed" state — it is either configured or not yet set up
       isBlocked: false,
       isRequiredForExternal: true,
-      isStale: isTimestampStale(bundle.jurisdiction.staleSince),
+      isStale: isTimestampStale(getFreshnessTimestamp(bundle.jurisdiction)),
       remediationHint: bundle.jurisdiction.configured
         ? null
         : 'Configure jurisdiction coverage in Compliance Setup before exporting.',
@@ -302,7 +331,7 @@ export function deriveExportPackageReadiness(
       // KYC is an active blocker when it has been configured but is in a failed state
       isBlocked: bundle.kycAml.status === 'failed',
       isRequiredForExternal: true,
-      isStale: isTimestampStale(bundle.kycAml.staleSince),
+      isStale: isTimestampStale(getFreshnessTimestamp(bundle.kycAml)),
       remediationHint:
         bundle.kycAml.status === 'failed'
           ? 'KYC is required but no provider is configured. Add a provider in Compliance Setup.'
@@ -320,7 +349,7 @@ export function deriveExportPackageReadiness(
       // Whitelist is an active blocker when required and has no approved investors
       isBlocked: bundle.whitelist.status === 'failed',
       isRequiredForExternal: true,
-      isStale: isTimestampStale(bundle.whitelist.staleSince),
+      isStale: isTimestampStale(getFreshnessTimestamp(bundle.whitelist)),
       remediationHint:
         bundle.whitelist.status === 'failed'
           ? 'Whitelist is required but has no approved investors. Add investors in Whitelist Policy.'
@@ -339,7 +368,7 @@ export function deriveExportPackageReadiness(
       // Eligibility is an active blocker when it has been configured but failed
       isBlocked: bundle.investorEligibility.status === 'failed',
       isRequiredForExternal: true,
-      isStale: isTimestampStale(bundle.investorEligibility.staleSince),
+      isStale: isTimestampStale(getFreshnessTimestamp(bundle.investorEligibility)),
       remediationHint:
         bundle.investorEligibility.status === 'failed'
           ? 'Investor eligibility configuration has failed. Review and correct the policy settings in Compliance Setup.'
@@ -475,13 +504,13 @@ export function buildAudienceReportText(
     lines.push(`Restricted  : ${bundle.jurisdiction?.restrictedCount ?? 0}`)
     const jurisdictions = bundle.jurisdiction?.jurisdictions ?? []
     if (jurisdictions.length > 0) {
-      lines.push(`Jurisdictions: ${jurisdictions.join(', ')}`)
+      lines.push(`Jurisdictions: ${jurisdictions.map(formatJurisdictionLabel).join(', ')}`)
     }
     lines.push('')
   }
 
   if (priorities.includes('kyc_aml')) {
-    lines.push('KYC / AML REVIEW STATUS')
+    lines.push('KYC/AML REVIEW STATUS')
     lines.push(line)
     lines.push(`Status             : ${(bundle.kycAml?.status ?? 'unknown').toUpperCase()}`)
     lines.push(`KYC Required       : ${bundle.kycAml?.kycRequired ? 'Yes' : 'No'}`)

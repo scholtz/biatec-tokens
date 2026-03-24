@@ -96,18 +96,18 @@
           <div class="bg-gray-800/50 rounded-lg p-4">
             <p class="text-xs text-gray-400 mb-1">Projected Adoption</p>
             <p class="text-2xl font-bold text-white">
-              {{ outputs.projectedAdoption.toLocaleString() }}
+              {{ formatNumber(outputs.projectedAdoption) }}
             </p>
             <p class="text-xs text-gray-500 mt-1">
-              Range: {{ outputs.confidenceRange.low.toLocaleString() }} - 
-              {{ outputs.confidenceRange.high.toLocaleString() }}
+              Range: {{ formatNumber(outputs.confidenceRange.low) }} - 
+              {{ formatNumber(outputs.confidenceRange.high) }}
             </p>
           </div>
 
           <div class="bg-gray-800/50 rounded-lg p-4">
             <p class="text-xs text-gray-400 mb-1">Projected Volume</p>
             <p class="text-2xl font-bold text-white">
-              ${{ outputs.projectedVolume.toLocaleString() }}
+              ${{ formatNumber(outputs.projectedVolume) }}
             </p>
             <p class="text-xs text-gray-500 mt-1">
               Based on liquidity contribution
@@ -156,6 +156,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const numberFormatter = new Intl.NumberFormat('en-US')
 
 const localInputs = ref<ScenarioInput>({
   campaignLift: props.inputs.campaignLift,
@@ -179,6 +180,10 @@ const isValidInput = computed(() => {
     localInputs.value.retentionChange <= 100
   )
 })
+
+function formatNumber(value: number): string {
+  return numberFormatter.format(value)
+}
 
 function handleRunScenario() {
   if (!isValidInput.value) return

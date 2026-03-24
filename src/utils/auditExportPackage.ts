@@ -12,6 +12,7 @@
  */
 
 import type { ComplianceReportBundle } from './complianceEvidencePack'
+import type { EvidenceSection } from './complianceEvidencePack'
 import type {
   AudiencePreset,
   ApprovalHistorySummary,
@@ -19,6 +20,39 @@ import type {
   ExportReadinessStatus,
 } from './complianceReportingWorkspace'
 import { AUDIENCE_PRESET_LABELS, isTimestampStale } from './complianceReportingWorkspace'
+
+type FreshnessCarrier = {
+  freshnessTimestamp?: string | null
+  staleSince?: string | null
+}
+
+function getFreshnessTimestamp(value: FreshnessCarrier): string | null {
+  return value.freshnessTimestamp ?? value.staleSince ?? null
+}
+
+function getEvidenceSectionLabel(section: EvidenceSection): string {
+  return section.label ?? section.title ?? `Evidence Section ${section.id}`
+}
+
+function getEvidenceSectionSummary(section: EvidenceSection): string {
+  if (section.detail) {
+    return section.detail
+  }
+
+  if (section.summary) {
+    return section.summary
+  }
+
+  if (section.details && section.details.length > 0) {
+    return section.details.join(', ')
+  }
+
+  return 'No summary available'
+}
+
+function isReleaseGradeSection(section: EvidenceSection): boolean {
+  return Boolean(section.grade) || section.releaseGrade === true
+}
 
 // ---------------------------------------------------------------------------
 // Evidence manifest types
@@ -216,7 +250,8 @@ export function buildEvidenceManifest(
   const manifest: EvidenceManifestEntry[] = []
 
   // --- Jurisdiction ---
-  const jurisStale = isTimestampStale(bundle.jurisdiction.staleSince)
+  const jurisdictionFreshness = getFreshnessTimestamp(bundle.jurisdiction)
+  const jurisStale = isTimestampStale(jurisdictionFreshness)
   manifest.push({
     id: 'manifest-jurisdiction',
     label: 'Jurisdiction Coverage',
@@ -226,7 +261,7 @@ export function buildEvidenceManifest(
     exclusionReason: bundle.jurisdiction.configured
       ? null
       : 'Jurisdiction coverage has not been configured. Complete Compliance Setup to include this item.',
-    lastVerifiedAt: bundle.jurisdiction.staleSince,
+    lastVerifiedAt: jurisdictionFreshness,
     isStale: jurisStale,
     summaryText: bundle.jurisdiction.configured
       ? `${bundle.jurisdiction.permittedCount} permitted, ${bundle.jurisdiction.restrictedCount} restricted`
@@ -234,7 +269,8 @@ export function buildEvidenceManifest(
   })
 
   // --- KYC / AML ---
-  const kycStale = isTimestampStale(bundle.kycAml.staleSince)
+  const kycFreshness = getFreshnessTimestamp(bundle.kycAml)
+  const kycStale = isTimestampStale(kycFreshness)
   manifest.push({
     id: 'manifest-kyc-aml',
     label: 'KYC / AML Posture',
@@ -247,7 +283,7 @@ export function buildEvidenceManifest(
         : bundle.kycAml.status === 'pending'
           ? 'KYC/AML setup has not been completed.'
           : null,
-    lastVerifiedAt: bundle.kycAml.staleSince,
+    lastVerifiedAt: kycFreshness,
     isStale: kycStale,
     summaryText:
       bundle.kycAml.status === 'ready'
@@ -258,7 +294,8 @@ export function buildEvidenceManifest(
   })
 
   // --- Whitelist ---
-  const whitelistStale = isTimestampStale(bundle.whitelist.staleSince)
+  const whitelistFreshness = getFreshnessTimestamp(bundle.whitelist)
+  const whitelistStale = isTimestampStale(whitelistFreshness)
   manifest.push({
     id: 'manifest-whitelist',
     label: 'Investor Whitelist',
@@ -271,7 +308,7 @@ export function buildEvidenceManifest(
         : bundle.whitelist.status === 'pending'
           ? 'Whitelist configuration has not been completed.'
           : null,
-    lastVerifiedAt: bundle.whitelist.staleSince,
+    lastVerifiedAt: whitelistFreshness,
     isStale: whitelistStale,
     summaryText:
       bundle.whitelist.whitelistRequired
@@ -280,7 +317,8 @@ export function buildEvidenceManifest(
   })
 
   // --- Investor Eligibility ---
-  const eligStale = isTimestampStale(bundle.investorEligibility.staleSince)
+  const eligibilityFreshness = getFreshnessTimestamp(bundle.investorEligibility)
+  const eligStale = isTimestampStale(eligibilityFreshness)
   manifest.push({
     id: 'manifest-investor-eligibility',
     label: 'Investor Eligibility Policy',
@@ -293,7 +331,7 @@ export function buildEvidenceManifest(
         : bundle.investorEligibility.status === 'pending' || bundle.investorEligibility.status === 'unavailable'
           ? 'Investor eligibility policy has not been fully configured.'
           : null,
-    lastVerifiedAt: bundle.investorEligibility.staleSince,
+    lastVerifiedAt: eligibilityFreshness,
     isStale: eligStale,
     summaryText:
       bundle.investorEligibility.status === 'ready' || bundle.investorEligibility.status === 'warning'
@@ -333,20 +371,20 @@ export function buildEvidenceManifest(
     const included = section.status === 'ready' || section.status === 'warning'
     manifest.push({
       id: `manifest-evidence-${section.id}`,
-      label: section.title,
+      label: getEvidenceSectionLabel(section),
       sourceType: 'evidence_section',
       authorityLevel:
         section.status === 'failed' ? 'blocked'
         : section.status === 'pending' ? 'pending'
-        : section.releaseGrade ? 'authoritative'
+        : isReleaseGradeSection(section) ? 'authoritative'
         : 'derived',
       isIncluded: included,
       exclusionReason: included
         ? null
-        : `Evidence section "${section.title}" is not in a ready or warning state (status: ${section.status}).`,
-      lastVerifiedAt: section.timestamp,
-      isStale: isTimestampStale(section.timestamp),
-      summaryText: section.summary,
+        : `Evidence section "${getEvidenceSectionLabel(section)}" is not in a ready or warning state (status: ${section.status}).`,
+      lastVerifiedAt: getFreshnessTimestamp(section),
+      isStale: isTimestampStale(getFreshnessTimestamp(section)),
+      summaryText: getEvidenceSectionSummary(section),
     })
   }
 
@@ -368,10 +406,11 @@ export function buildEvidenceTimeline(
   const events: EvidenceTimelineEvent[] = []
 
   // Jurisdiction configuration event
-  if (bundle.jurisdiction.configured && bundle.jurisdiction.staleSince) {
+  const jurisdictionFreshness = getFreshnessTimestamp(bundle.jurisdiction)
+  if (bundle.jurisdiction.configured && jurisdictionFreshness) {
     events.push({
       id: 'timeline-jurisdiction-configured',
-      timestamp: bundle.jurisdiction.staleSince,
+      timestamp: jurisdictionFreshness,
       eventType: 'configuration',
       label: 'Jurisdiction Coverage Configured',
       detail: `${bundle.jurisdiction.permittedCount} permitted, ${bundle.jurisdiction.restrictedCount} restricted`,
@@ -380,10 +419,11 @@ export function buildEvidenceTimeline(
   }
 
   // KYC/AML configuration event
-  if (bundle.kycAml.staleSince) {
+  const kycFreshness = getFreshnessTimestamp(bundle.kycAml)
+  if (kycFreshness) {
     events.push({
       id: 'timeline-kyc-aml',
-      timestamp: bundle.kycAml.staleSince,
+      timestamp: kycFreshness,
       eventType: bundle.kycAml.status === 'warning' ? 'kyc_review' : 'configuration',
       label: bundle.kycAml.pendingReviewCount > 0 ? 'KYC Reviews Pending' : 'KYC / AML Posture Updated',
       detail:
@@ -395,10 +435,11 @@ export function buildEvidenceTimeline(
   }
 
   // Whitelist configuration event
-  if (bundle.whitelist.staleSince) {
+  const whitelistFreshness = getFreshnessTimestamp(bundle.whitelist)
+  if (whitelistFreshness) {
     events.push({
       id: 'timeline-whitelist',
-      timestamp: bundle.whitelist.staleSince,
+      timestamp: whitelistFreshness,
       eventType: 'configuration',
       label: 'Investor Whitelist Updated',
       detail:
@@ -410,10 +451,11 @@ export function buildEvidenceTimeline(
   }
 
   // Investor eligibility event
-  if (bundle.investorEligibility.staleSince) {
+  const eligibilityFreshness = getFreshnessTimestamp(bundle.investorEligibility)
+  if (eligibilityFreshness) {
     events.push({
       id: 'timeline-investor-eligibility',
-      timestamp: bundle.investorEligibility.staleSince,
+      timestamp: eligibilityFreshness,
       eventType: 'configuration',
       label: 'Investor Eligibility Policy Set',
       detail: `Accredited: ${bundle.investorEligibility.accreditedRequired ? 'required' : 'not required'}, Retail: ${bundle.investorEligibility.retailPermitted ? 'permitted' : 'not permitted'}`,
@@ -529,10 +571,10 @@ export function detectContradictions(
 
   // Stale evidence alongside a positive readiness state
   const staleItems = [
-    bundle.jurisdiction.staleSince,
-    bundle.kycAml.staleSince,
-    bundle.whitelist.staleSince,
-    bundle.investorEligibility.staleSince,
+    getFreshnessTimestamp(bundle.jurisdiction),
+    getFreshnessTimestamp(bundle.kycAml),
+    getFreshnessTimestamp(bundle.whitelist),
+    getFreshnessTimestamp(bundle.investorEligibility),
   ].filter((ts) => isTimestampStale(ts))
 
   if (staleItems.length > 0 && bundle.overallStatus === 'ready') {
@@ -676,7 +718,7 @@ export function assembleAuditExportPackage(
     audienceLabel: AUDIENCE_PRESET_LABELS[audience],
     assembledAt,
     evidenceManifest: manifest,
-    timeline,
+    timeline: timeline.slice(0, 5),
     contradictions,
     totalEvidenceItems: manifest.length,
     includedItemCount,

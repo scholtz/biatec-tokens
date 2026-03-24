@@ -28,7 +28,7 @@
           <!-- Total Holders -->
           <div class="bg-white/5 rounded-lg p-4">
             <div class="text-sm text-gray-400 mb-1">Total Holders</div>
-            <div class="text-2xl font-bold text-white">{{ telemetry.totalHolders.toLocaleString() }}</div>
+            <div class="text-2xl font-bold text-white">{{ formatNumber(telemetry.totalHolders) }}</div>
             <div class="flex items-center gap-2 mt-2 text-xs">
               <span class="text-green-400">{{ telemetry.activeHolders }} active</span>
               <span class="text-gray-500">•</span>
@@ -39,7 +39,7 @@
           <!-- Total Transactions -->
           <div class="bg-white/5 rounded-lg p-4">
             <div class="text-sm text-gray-400 mb-1">Total Transactions</div>
-            <div class="text-2xl font-bold text-white">{{ telemetry.totalTransactions.toLocaleString() }}</div>
+            <div class="text-2xl font-bold text-white">{{ formatNumber(telemetry.totalTransactions) }}</div>
             <div class="flex items-center gap-2 mt-2 text-xs">
               <span class="text-blue-400">{{ telemetry.transactionsLast24h }} last 24h</span>
             </div>
@@ -136,6 +136,12 @@ import Badge from '../ui/Badge.vue'
 defineProps<{
   telemetry: LifecycleTelemetry | null
 }>()
+
+const numberFormatter = new Intl.NumberFormat('en-US')
+
+function formatNumber(value: number): string {
+  return numberFormatter.format(value)
+}
 
 function formatTimestamp(date: Date): string {
   return new Intl.DateTimeFormat('en-US', {

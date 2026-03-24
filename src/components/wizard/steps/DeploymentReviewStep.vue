@@ -345,7 +345,7 @@ const formatPurpose = (purpose: string | undefined): string => {
 
 const formatNumber = (num: number | string | undefined): string => {
   if (!num) return '0'
-  return Number(num).toLocaleString()
+  return new Intl.NumberFormat('en-US').format(Number(num))
 }
 
 // Check if mainnet

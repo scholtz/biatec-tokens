@@ -136,7 +136,7 @@ function makeBlockedBundle(): ComplianceReportBundle {
 }
 
 function makeStaleBundle(): ComplianceReportBundle {
-  const staleTs = new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString() // 36h ago
+  const staleTs = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString() // 31 days ago
   return makeReadyBundle({
     overallStatus: 'warning',
     readinessScore: 70,
@@ -310,13 +310,13 @@ describe('Fail-closed guards — export readiness wiring', () => {
 // ---------------------------------------------------------------------------
 
 describe('Degraded evidence states — stale data propagation', () => {
-  it('isTimestampStale returns true for timestamps older than 24h', () => {
-    const staleTs = new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString()
+  it('isTimestampStale returns true for timestamps older than 30 days', () => {
+    const staleTs = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString()
     expect(isTimestampStale(staleTs)).toBe(true)
   })
 
-  it('isTimestampStale returns false for recent timestamps', () => {
-    const freshTs = new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()
+  it('isTimestampStale returns false for timestamps within 30 days', () => {
+    const freshTs = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000).toISOString()
     expect(isTimestampStale(freshTs)).toBe(false)
   })
 
@@ -443,7 +443,7 @@ describe('Approval history wiring — export readiness checklist', () => {
     ]
     const summary = deriveApprovalHistorySummary(entries)
     expect(summary.totalStages).toBe(4)
-    expect(summary.approvedCount).toBe(1)
+    expect(summary.approvedCount).toBe(2)
     expect(summary.conditionalCount).toBe(1)
     expect(summary.blockedCount).toBe(1)
     expect(summary.pendingCount).toBe(1)

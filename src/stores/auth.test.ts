@@ -481,14 +481,14 @@ describe('Auth Store', () => {
   describe('authenticateWithARC76 — derivation determinism', () => {
     beforeEach(() => {
       // Mock the arc76 generateAlgorandAccount to return a deterministic address
-      vi.mock('arc76', () => ({
+      vi.mock('../utils/arc76Account', () => ({
         generateAlgorandAccount: vi.fn().mockImplementation(async (_password: string, _email: string, _index: number) => ({
           addr: { toString: () => 'ARC76TESTADDRESSAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', publicKey: new Uint8Array(32) },
           sk: new Uint8Array(64),
         })),
       }))
       // Mock arc14 helpers
-      vi.mock('arc14', () => ({
+      vi.mock('../utils/arc14Auth', () => ({
         makeArc14AuthHeader: vi.fn().mockReturnValue('arc14-session-token'),
         makeArc14TxWithSuggestedParams: vi.fn().mockResolvedValue({
           signTxn: vi.fn().mockReturnValue(new Uint8Array(0)),
@@ -627,7 +627,7 @@ describe('Auth Store', () => {
       // This test validates the determinism property of ARC76 derivation:
       // the same (email, password) tuple must always produce the same Algorand address.
       // Mocked implementation always returns the same address to simulate this contract.
-      vi.mock('arc76', () => ({
+      vi.mock('../utils/arc76Account', () => ({
         generateAlgorandAccount: vi.fn().mockImplementation(async () => ({
           addr: { toString: () => 'DETERMINISTIC_ADDRESS_SAME_EVERY_TIME', publicKey: new Uint8Array(32) },
           sk: new Uint8Array(64),
@@ -660,7 +660,7 @@ describe('Auth Store', () => {
     })
 
     it('should store and restore the derived address via restoreARC76Session', async () => {
-      vi.mock('arc76', () => ({
+      vi.mock('../utils/arc76Account', () => ({
         generateAlgorandAccount: vi.fn().mockImplementation(async () => ({
           addr: { toString: () => 'RESTORE_TEST_ADDRESS', publicKey: new Uint8Array(32) },
           sk: new Uint8Array(64),
