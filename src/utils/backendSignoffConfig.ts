@@ -30,6 +30,13 @@
  */
 
 // ---------------------------------------------------------------------------
+// TypeScript 6 compatibility: process global not available without @types/node
+// ---------------------------------------------------------------------------
+/* eslint-disable @typescript-eslint/no-explicit-any */
+declare const process: { env: Record<string, string | undefined> }
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 

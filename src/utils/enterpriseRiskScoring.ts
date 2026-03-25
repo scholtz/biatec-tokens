@@ -379,7 +379,7 @@ export function deriveKycAmlFactors(
     return { factors, incompleteSources }
   }
 
-  const staleDays = daysSince(kycAml.staleSince)
+  const staleDays = daysSince(kycAml.staleSince ?? null)
   const isStale = staleDays !== null && staleDays > STALE_DAYS_THRESHOLD
 
   if (kycAml.kycRequired && !kycAml.providerConfigured) {
@@ -464,7 +464,7 @@ export function deriveWhitelistFactors(
     return { factors, incompleteSources }
   }
 
-  const staleDays = daysSince(whitelist.staleSince)
+  const staleDays = daysSince(whitelist.staleSince ?? null)
   const isStale = staleDays !== null && staleDays > STALE_DAYS_THRESHOLD
 
   if (whitelist.whitelistRequired && !whitelist.activeWhitelistId) {
@@ -559,7 +559,7 @@ export function deriveJurisdictionFactors(
     })
   }
 
-  const staleDays = daysSince(jurisdiction.staleSince)
+  const staleDays = daysSince(jurisdiction.staleSince ?? null)
   const isStale = staleDays !== null && staleDays > STALE_DAYS_THRESHOLD
 
   if (isStale && staleDays !== null) {
@@ -665,7 +665,7 @@ export function deriveInvestorEligibilityFactors(
     return { factors, incompleteSources }
   }
 
-  const staleDays = daysSince(investorEligibility.staleSince)
+  const staleDays = daysSince(investorEligibility.staleSince ?? null)
   const isStale = staleDays !== null && staleDays > STALE_DAYS_THRESHOLD
 
   if (isStale && staleDays !== null) {
@@ -791,44 +791,44 @@ function buildSectionContent(
         configured: bundle.jurisdiction.configured,
         permitted: bundle.jurisdiction.permittedCount,
         restricted: bundle.jurisdiction.restrictedCount,
-        jurisdictions: bundle.jurisdiction.jurisdictions,
-        staleSince: bundle.jurisdiction.staleSince,
-        isStale: (daysSince(bundle.jurisdiction.staleSince) ?? 0) > STALE_DAYS_THRESHOLD,
+        jurisdictions: (bundle.jurisdiction.jurisdictions as string[]) ?? [],
+        staleSince: bundle.jurisdiction.staleSince ?? null,
+        isStale: (daysSince(bundle.jurisdiction.staleSince ?? null) ?? 0) > STALE_DAYS_THRESHOLD,
       } satisfies JurisdictionContent
 
     case 'kyc-aml-status':
       return {
         type: 'kyc-aml-status',
         status: bundle.kycAml.status,
-        kycRequired: bundle.kycAml.kycRequired,
-        amlRequired: bundle.kycAml.amlRequired,
-        providerConfigured: bundle.kycAml.providerConfigured,
+        kycRequired: bundle.kycAml.kycRequired ?? false,
+        amlRequired: bundle.kycAml.amlRequired ?? false,
+        providerConfigured: bundle.kycAml.providerConfigured ?? false,
         pendingReviewCount: bundle.kycAml.pendingReviewCount,
-        staleSince: bundle.kycAml.staleSince,
-        isStale: (daysSince(bundle.kycAml.staleSince) ?? 0) > STALE_DAYS_THRESHOLD,
+        staleSince: bundle.kycAml.staleSince ?? null,
+        isStale: (daysSince(bundle.kycAml.staleSince ?? null) ?? 0) > STALE_DAYS_THRESHOLD,
       } satisfies KycAmlContent
 
     case 'whitelist-posture':
       return {
         type: 'whitelist-posture',
         status: bundle.whitelist.status,
-        whitelistRequired: bundle.whitelist.whitelistRequired,
+        whitelistRequired: bundle.whitelist.whitelistRequired ?? false,
         approvedCount: bundle.whitelist.approvedInvestorCount,
         pendingCount: bundle.whitelist.pendingInvestorCount,
-        activeId: bundle.whitelist.activeWhitelistId,
-        staleSince: bundle.whitelist.staleSince,
-        isStale: (daysSince(bundle.whitelist.staleSince) ?? 0) > STALE_DAYS_THRESHOLD,
+        activeId: bundle.whitelist.activeWhitelistId ?? null,
+        staleSince: bundle.whitelist.staleSince ?? null,
+        isStale: (daysSince(bundle.whitelist.staleSince ?? null) ?? 0) > STALE_DAYS_THRESHOLD,
       } satisfies WhitelistContent
 
     case 'investor-eligibility':
       return {
         type: 'investor-eligibility',
         status: bundle.investorEligibility.status,
-        accreditedRequired: bundle.investorEligibility.accreditedRequired,
-        retailPermitted: bundle.investorEligibility.retailPermitted,
+        accreditedRequired: bundle.investorEligibility.accreditedRequired ?? false,
+        retailPermitted: bundle.investorEligibility.retailPermitted ?? false,
         categories: bundle.investorEligibility.eligibilityCategories,
-        staleSince: bundle.investorEligibility.staleSince,
-        isStale: (daysSince(bundle.investorEligibility.staleSince) ?? 0) > STALE_DAYS_THRESHOLD,
+        staleSince: bundle.investorEligibility.staleSince ?? null,
+        isStale: (daysSince(bundle.investorEligibility.staleSince ?? null) ?? 0) > STALE_DAYS_THRESHOLD,
       } satisfies InvestorEligibilityContent
 
     case 'evidence-inventory':
@@ -836,10 +836,10 @@ function buildSectionContent(
         type: 'evidence-inventory',
         sections: bundle.evidenceSections.map(s => ({
           id: s.id,
-          title: s.title,
+          title: s.title ?? '',
           status: s.status,
-          releaseGrade: s.releaseGrade,
-          summary: s.summary,
+          releaseGrade: s.releaseGrade ?? false,
+          summary: s.summary ?? '',
         })),
       } satisfies EvidenceInventoryContent
 
@@ -847,10 +847,10 @@ function buildSectionContent(
       const staleItems: StaleEvidenceContent['staleItems'] = []
       const checkStaleness = (
         label: string,
-        staleSince: string | null,
+        staleSince: string | null | undefined,
         path: string | null,
       ) => {
-        const days = daysSince(staleSince)
+        const days = daysSince(staleSince ?? null)
         if (days !== null && days > STALE_DAYS_THRESHOLD && staleSince) {
           staleItems.push({ label, staleSince, staleDays: days, path })
         }
