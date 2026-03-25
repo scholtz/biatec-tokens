@@ -242,9 +242,9 @@
               <div v-if="bundle.jurisdiction.jurisdictions.length > 0" class="flex flex-wrap gap-1.5" data-testid="jurisdiction-list">
                 <span
                   v-for="jur in bundle.jurisdiction.jurisdictions.slice(0, 8)"
-                  :key="jur"
+                  :key="typeof jur === 'string' ? jur : jur.code"
                   class="text-xs px-2 py-0.5 bg-gray-700 text-gray-200 rounded"
-                >{{ jur }}</span>
+                >{{ typeof jur === 'string' ? jur : jur.name }}</span>
                 <span
                   v-if="bundle.jurisdiction.jurisdictions.length > 8"
                   class="text-xs px-2 py-0.5 bg-gray-700 text-gray-400 rounded"

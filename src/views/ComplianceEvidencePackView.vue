@@ -363,7 +363,7 @@ function exportCSV(): void {
         s.statusLabel,
         s.releaseGrade ? 'Yes' : 'No',
         s.gradeLabel,
-        `"${s.summary.replace(/"/g, '""')}"`,
+        `"${(s.summary ?? '').replace(/"/g, '""')}"`,
         s.timestamp ?? '',
       ]),
     ]
@@ -850,7 +850,7 @@ onMounted(() => {
                       </span>
                     </td>
                     <td class="px-4 py-3 text-gray-400 text-xs hidden sm:table-cell">
-                      {{ formatTimestamp(section.timestamp) }}
+                      {{ formatTimestamp(section.timestamp ?? null) }}
                     </td>
                   </tr>
                 </tbody>
