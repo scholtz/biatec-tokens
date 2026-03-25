@@ -1,6 +1,7 @@
 import { ref, computed } from "vue";
 import algosdk from "algosdk";
 import axios from "axios";
+import { Buffer } from "buffer";
 import { useNetworkStore } from "../stores/network";
 
 export interface ARC3Metadata {

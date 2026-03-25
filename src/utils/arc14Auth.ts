@@ -1,4 +1,5 @@
 import algosdk from "algosdk";
+import { Buffer } from "buffer";
 
 function bytesToBase64(bytes: Uint8Array): string {
   if (typeof Buffer !== "undefined") {
