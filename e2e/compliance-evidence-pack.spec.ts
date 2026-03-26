@@ -378,7 +378,18 @@ test.describe('Compliance Evidence Pack — unauthenticated redirect', () => {
   test('redirects unauthenticated users away from /compliance/evidence', async ({ page }) => {
     await page.goto('http://localhost:5173/compliance/evidence', { timeout: 15000 })
     await page.waitForLoadState('load', { timeout: 10000 })
-    await page.waitForTimeout(3000)
+    // Semantic wait: poll until the URL has changed away from the protected route
+    // or an auth form / auth query param has appeared (all are valid redirect signals).
+    await page.waitForFunction(
+      () => {
+        const url = window.location.href
+        const redirectedAway = !url.includes('/compliance/evidence')
+        const hasAuthParam = url.includes('showAuth=true')
+        const showsAuthModal = !!document.querySelector('form')
+        return redirectedAway || hasAuthParam || showsAuthModal
+      },
+      { timeout: 8000 },
+    ).catch(() => {/* still assert below — allows partial signal */})
 
     const url = page.url()
     const redirectedAway = !url.includes('/compliance/evidence')

@@ -983,7 +983,14 @@ test.describe(
           timeout: 15000,
         });
         await page.waitForLoadState("load", { timeout: 10000 });
-        await page.waitForTimeout(3000);
+        // Semantic wait: poll until URL changes or auth surface appears
+        await page.waitForFunction(
+          () => {
+            const url = window.location.href
+            return !url.includes("/compliance") || url.includes("showAuth=true") || !!document.querySelector("form")
+          },
+          { timeout: 8000 },
+        ).catch(() => {})
 
         const url = page.url();
         const redirectedAway = !url.includes("/compliance");
@@ -1006,7 +1013,14 @@ test.describe(
           timeout: 15000,
         });
         await page.waitForLoadState("load", { timeout: 10000 });
-        await page.waitForTimeout(3000);
+        // Semantic wait: poll until URL changes or auth surface appears
+        await page.waitForFunction(
+          () => {
+            const url = window.location.href
+            return !url.includes("/team") || url.includes("showAuth=true") || !!document.querySelector("form")
+          },
+          { timeout: 8000 },
+        ).catch(() => {})
 
         const url = page.url();
         const redirectedAway = !url.includes("/team");

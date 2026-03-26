@@ -180,9 +180,8 @@ test.describe('Enterprise Risk Report Builder — preset selector', () => {
     const execBtn = page.getByTestId('preset-btn-executive')
     await execBtn.waitFor({ state: 'visible', timeout: 30000 })
     await execBtn.click()
-    await page.waitForTimeout(500)
-    const checked = await execBtn.getAttribute('aria-checked')
-    expect(checked).toBe('true')
+    // Semantic wait: attribute must reflect the new state before asserting
+    await expect(execBtn).toHaveAttribute('aria-checked', 'true', { timeout: 5000 })
   })
 
   test('selecting a preset deselects the previous one', async ({ page }) => {
@@ -191,9 +190,8 @@ test.describe('Enterprise Risk Report Builder — preset selector', () => {
     const execBtn = page.getByTestId('preset-btn-executive')
     await execBtn.waitFor({ state: 'visible', timeout: 30000 })
     await execBtn.click()
-    await page.waitForTimeout(500)
-    const operatorChecked = await operatorBtn.getAttribute('aria-checked')
-    expect(operatorChecked).toBe('false')
+    // Semantic wait: operatorBtn aria-checked must be false after executive is selected
+    await expect(operatorBtn).toHaveAttribute('aria-checked', 'false', { timeout: 5000 })
   })
 
   test('preset buttons have accessible role="radio"', async ({ page }) => {
@@ -237,10 +235,14 @@ test.describe('Enterprise Risk Report Builder — section controls', () => {
     const toggle = page.getByTestId('section-toggle-risk-overview')
     await toggle.waitFor({ state: 'visible', timeout: 20000 })
     const before = await toggle.getAttribute('aria-checked')
+    const expectedAfter = before === 'true' ? 'false' : 'true'
     await toggle.click()
-    await page.waitForTimeout(300)
-    const after = await page.getByTestId('section-toggle-risk-overview').getAttribute('aria-checked')
-    expect(after).toBe(before === 'true' ? 'false' : 'true')
+    // Semantic wait: attribute must reflect toggled state before asserting
+    await expect(page.getByTestId('section-toggle-risk-overview')).toHaveAttribute(
+      'aria-checked',
+      expectedAfter,
+      { timeout: 5000 },
+    )
   })
 })
 
@@ -377,7 +379,18 @@ test.describe('Enterprise Risk Report Builder — unauthenticated redirect', () 
   test('redirects unauthenticated users away from /compliance/risk-report', async ({ page }) => {
     await page.goto('http://localhost:5173/compliance/risk-report', { timeout: 15000 })
     await page.waitForLoadState('load', { timeout: 10000 })
-    await page.waitForTimeout(3000)
+    // Semantic wait: poll until the URL has changed away from the protected route
+    // or an auth form / auth query param has appeared (all are valid redirect signals).
+    await page.waitForFunction(
+      () => {
+        const url = window.location.href
+        const redirectedAway = !url.includes('/compliance/risk-report')
+        const hasAuthParam = url.includes('showAuth=true')
+        const showsAuthModal = !!document.querySelector('form')
+        return redirectedAway || hasAuthParam || showsAuthModal
+      },
+      { timeout: 8000 },
+    ).catch(() => {/* still assert below — allows partial signal */})
 
     const url = page.url()
     const redirectedAway = !url.includes('/compliance/risk-report')

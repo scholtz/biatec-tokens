@@ -761,7 +761,14 @@ test.describe('Negative paths — accessibility robustness (AC #9)', () => {
     // no addInitScript re-seeds auth. The router guard should redirect to home.
     await page.goto('/portfolio')
     await page.waitForLoadState('load')
-    await page.waitForTimeout(3000)
+    // Semantic wait: poll until the URL changes or auth modal appears
+    await page.waitForFunction(
+      () => {
+        const url = window.location.href
+        return !url.includes('/portfolio') || url.includes('?') || !!document.querySelector('form')
+      },
+      { timeout: 8000 },
+    ).catch(() => {})
 
     const url = page.url()
     const redirectedAway = !url.includes('/portfolio') || url.includes('?')

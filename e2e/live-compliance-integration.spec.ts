@@ -105,8 +105,7 @@ test.describe('Live data states — Investor Compliance Onboarding Workspace', (
     const isVisible = await blockedBtn.isVisible({ timeout: 5000 }).catch(() => false)
     if (isVisible) {
       await blockedBtn.click({ timeout: 5000 })
-      await page.waitForTimeout(300)
-      // After clicking "Blocked", the posture banner should reflect blocked state
+      // Semantic wait: posture banner must appear before asserting its content
       const posture = page.getByTestId('readiness-posture-banner')
       await expect(posture).toBeVisible({ timeout: 10000 })
     }

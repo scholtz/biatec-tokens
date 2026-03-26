@@ -169,10 +169,8 @@ test.describe('Team Operations Workspace — authenticated', () => {
 
     const toggle = page.locator('[data-testid="completed-section-toggle"]')
     await toggle.click()
-    await page.waitForTimeout(300)
-
-    const expanded = await toggle.getAttribute('aria-expanded', { timeout: 5000 })
-    expect(expanded).toBe('true')
+    // Semantic wait: aria-expanded must reflect the toggled state before asserting
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true', { timeout: 5000 })
   })
 
   // ── Mobile viewport ───────────────────────────────────────────────────
@@ -232,7 +230,17 @@ test.describe('Team Operations Workspace — unauthenticated redirect', () => {
   test('redirects unauthenticated users away from /team/workspace', async ({ page }) => {
     await page.goto(WORKSPACE_URL, { timeout: 15000 })
     await page.waitForLoadState('load', { timeout: 10000 })
-    await page.waitForTimeout(3000)
+    // Semantic wait: poll until URL changes or auth surface appears
+    await page.waitForFunction(
+      () => {
+        const url = window.location.href
+        const redirectedAway = !url.includes('/team/workspace')
+        const hasAuthParam = url.includes('showAuth=true')
+        const showsAuthModal = !!document.querySelector('form')
+        return redirectedAway || hasAuthParam || showsAuthModal
+      },
+      { timeout: 8000 },
+    ).catch(() => {})
 
     const url = page.url()
     const redirectedAway = !url.includes('/team/workspace')

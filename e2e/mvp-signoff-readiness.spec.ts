@@ -25,7 +25,7 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { withAuth, suppressBrowserErrorsNarrow, clearAuthScript, getNavText } from './helpers/auth'
+import { loginWithCredentials, withAuth, suppressBrowserErrorsNarrow, clearAuthScript, getNavText } from './helpers/auth'
 
 // ---------------------------------------------------------------------------
 // AC #1: Guided Launch is the only primary token creation entry
