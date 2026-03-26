@@ -17,7 +17,7 @@
  *   AC #10 — CI for updated frontend tests is green and reproducible from PR.
  *
  * Auth model: email/password only — no wallet connectors.
- * Session bootstrap: withAuth() validates ARC76 contract before seeding localStorage.
+ * Session bootstrap: loginWithCredentials() tries backend auth, falls back to ARC76-validated localStorage seeding.
  *
  * Issue: MVP Sign-off readiness: canonical guided flow, backend-verified auth E2E,
  *        and accessibility trust hardening
@@ -25,7 +25,7 @@
  */
 
 import { test, expect } from '@playwright/test'
-import { loginWithCredentials, withAuth, suppressBrowserErrorsNarrow, clearAuthScript, getNavText } from './helpers/auth'
+import { loginWithCredentials, suppressBrowserErrorsNarrow, clearAuthScript, getNavText } from './helpers/auth'
 
 // ---------------------------------------------------------------------------
 // AC #1: Guided Launch is the only primary token creation entry
@@ -58,7 +58,7 @@ test.describe('AC #1: Guided Launch is canonical token creation entry', () => {
   })
 
   test('home page CTA routes to /launch/workspace when authenticated', async ({ page }) => {
-    await withAuth(page)
+    await loginWithCredentials(page)
     await page.goto('/')
     await page.waitForLoadState('load')
 
@@ -94,7 +94,7 @@ test.describe('AC #1: Guided Launch is canonical token creation entry', () => {
   test('TokenDashboard Create Token button in header points to /launch/guided', async ({
     page,
   }) => {
-    await withAuth(page)
+    await loginWithCredentials(page)
     await page.goto('/dashboard')
     await page.waitForLoadState('load')
 
@@ -123,9 +123,9 @@ test.describe('AC #3 + #4: Auth session contract and determinism', () => {
     suppressBrowserErrorsNarrow(page)
   })
 
-  test('withAuth seeds a structurally valid ARC76 session in localStorage', async ({ page }) => {
-    // AC #3: withAuth validates the ARC76 contract before seeding localStorage
-    await withAuth(page)
+  test('loginWithCredentials seeds a structurally valid ARC76 session in localStorage', async ({ page }) => {
+    // AC #3: loginWithCredentials validates the ARC76 contract before seeding localStorage
+    await loginWithCredentials(page)
     await page.goto('/')
     await page.waitForLoadState('load')
 
@@ -142,11 +142,11 @@ test.describe('AC #3 + #4: Auth session contract and determinism', () => {
     expect(session.isConnected).toBe(true)
   })
 
-  test('same withAuth call produces stable session identity across two navigations', async ({
+  test('same loginWithCredentials call produces stable session identity across two navigations', async ({
     page,
   }) => {
     // AC #4: deterministic auth — repeated session bootstrap → same identity
-    await withAuth(page)
+    await loginWithCredentials(page)
     await page.goto('/')
     await page.waitForLoadState('load')
 
@@ -166,7 +166,7 @@ test.describe('AC #3 + #4: Auth session contract and determinism', () => {
   })
 
   test('authenticated user can access /launch/guided without redirect', async ({ page }) => {
-    await withAuth(page)
+    await loginWithCredentials(page)
     await page.goto('/launch/guided')
     await page.waitForLoadState('load')
 
@@ -345,7 +345,7 @@ test.describe('AC #9: Accessibility baseline for critical paths', () => {
   })
 
   test('guided launch page has main landmark with id="main-content"', async ({ page }) => {
-    await withAuth(page)
+    await loginWithCredentials(page)
     await page.goto('/launch/guided')
     await page.waitForLoadState('load')
 
@@ -380,7 +380,7 @@ test.describe('AC #9: Accessibility baseline for critical paths', () => {
   })
 
   test('guided launch page body text contains no wallet connector UI', async ({ page }) => {
-    await withAuth(page)
+    await loginWithCredentials(page)
     await page.goto('/launch/guided')
     await page.waitForLoadState('load')
 

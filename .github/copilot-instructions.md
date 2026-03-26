@@ -4152,6 +4152,76 @@ The PR addressed ONLY AC #5 (documentation) while calling the full issue resolve
 
 ---
 
+### 7ae. Partial Auth-Helper Migrations Must Be Completed In the Same Commit (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - (PR copilot/harden-release-readiness-milestone) 🚨**
+
+**Root cause of repeated partial delivery**: When an E2E spec is partially migrated (e.g., `withAuth` → `loginWithCredentials`) the import list is updated but the individual call-sites are not all replaced. The next session sees the import change but none of the call-sites, and re-delivers documentation work rather than finishing the migration.
+
+**Violation**: `e2e/mvp-signoff-readiness.spec.ts` had both `loginWithCredentials` AND `withAuth` in its import. The spec comment and PR description said "migration complete," but 7 `await withAuth(page)` call-sites were still in the file. Two follow-up commits were required to finish the work.
+
+**Why This Happens Repeatedly**:
+1. The initial commit changes the import statement → grep for `withAuth` in imports returns 0 → agent concludes migration is done
+2. The call-site grep (`grep "await withAuth"`) is NOT run — only the import grep is run
+3. Documentation is written about the "completed" migration
+4. Code review or CI catches the remaining call-sites
+
+**Correct Approach for Any Auth-Helper Migration**:
+
+```bash
+# ALWAYS verify BOTH import removal AND call-site removal:
+
+# 1. Import must be removed (no longer imported):
+grep "import.*withAuth" e2e/mvp-signoff-readiness.spec.ts
+# Must return: no output
+
+# 2. ALL call-sites must be replaced (no remaining await withAuth calls):
+grep "await withAuth" e2e/mvp-signoff-readiness.spec.ts
+# Must return: no output
+
+# 3. Update test names that embed the old function name:
+grep "withAuth seeds\|withAuth call" e2e/mvp-signoff-readiness.spec.ts
+# Must return: no output (rename to loginWithCredentials seeds, etc.)
+
+# 4. Only then write "migration complete" in the PR description
+```
+
+**Pattern for withAuth → loginWithCredentials migration**:
+```typescript
+// ❌ BEFORE (partially migrated — import updated but call-sites remain)
+import { loginWithCredentials, withAuth, ... } from './helpers/auth'
+// ...
+await withAuth(page)   // ← still present — migration INCOMPLETE
+
+// ✅ AFTER (fully migrated)
+import { loginWithCredentials, ... } from './helpers/auth'  // withAuth removed
+// ...
+await loginWithCredentials(page)  // all call-sites replaced
+
+// Also: update test names that reference the old function:
+// "withAuth seeds a valid ARC76 session" → "loginWithCredentials seeds a valid ARC76 session"
+```
+
+**Why `loginWithCredentials` is preferred over `withAuth` in spec files**:
+- `loginWithCredentials()` is the Tier 1 recommended helper — it attempts real backend auth and falls back to `withAuth()` seeding automatically
+- Using `withAuth()` directly skips the backend attempt and goes straight to seeding
+- The auth.ts docs explicitly state: "use `loginWithCredentials()` (permissive — falls back to seeding)" as the preferred Tier 1 approach
+- Replacing `withAuth()` with `loginWithCredentials()` makes the spec forward-compatible with real backend CI environments
+
+**Pre-Commit Verification Checklist for Auth Migrations**:
+- [ ] `grep "import.*withAuth" e2e/*.spec.ts` — must return 0 results for migrated files
+- [ ] `grep "await withAuth" e2e/*.spec.ts` — must return 0 results for migrated files
+- [ ] Test names updated to remove references to old helper name
+- [ ] Spec header comment updated to remove `withAuth()` from session bootstrap description
+- [ ] `npm run build` passes (no unused import errors in .ts files under `src/`)
+
+**Never Again**:
+- ❌ Update the import line of an auth helper migration without checking ALL `await` call-sites
+- ❌ Write "migration complete" in a PR description without running the grep verification checklist
+- ❌ Use `withAuth()` directly in new spec files — always use `loginWithCredentials()` for Tier 1
+
+---
+
 ## Additional Notes
 
 - The application uses Vue Router for navigation
