@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { withAuth, suppressBrowserErrors } from './helpers/auth'
+import { loginWithCredentials, suppressBrowserErrors } from './helpers/auth'
 
 /**
  * Compliance Notification Center — E2E operator journeys.
@@ -8,14 +8,16 @@ import { withAuth, suppressBrowserErrors } from './helpers/auth'
  * AC #4 (queue summaries), AC #5 (fail-closed messaging), AC #6 (drill-down),
  * AC #7 (reuses existing patterns), AC #8 (accessibility), AC #9 (automated coverage).
  *
- * Session bootstrap: withAuth() seeds localStorage so the Vue auth guard
- * passes and the notification center renders.
+ * Session bootstrap: loginWithCredentials() attempts real backend auth and
+ * falls back to localStorage seeding so the Vue auth guard passes and the
+ * notification center renders. This is the Tier 1 standard per the auth
+ * helper docs and business-owner roadmap.
  */
 
 test.describe('Compliance Notification Center — operator journeys', () => {
   test.beforeEach(async ({ page }) => {
     suppressBrowserErrors(page)
-    await withAuth(page)
+    await loginWithCredentials(page)
   })
 
   // ===========================================================================
@@ -340,5 +342,87 @@ test.describe('Compliance Notification Center — operator journeys', () => {
     const badges = page.getByTestId('notification-center-severity-badge')
     const badgeCount = await badges.count()
     expect(badgeCount).toBe(7)
+  })
+
+  // ===========================================================================
+  // AC #2 — Category filter narrows events to a specific category
+  // ===========================================================================
+  test('filters events by category', async ({ page }) => {
+    await page.goto('/compliance/notifications', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    await expect(page.getByTestId('notification-center-event-list')).toBeAttached({ timeout: 30000 })
+
+    // Filter by kyc_review — MOCK_EVENTS_MIXED has exactly 2 kyc_review events (evt-011, evt-014)
+    const categoryFilter = page.getByTestId('notification-center-filter-category')
+    await categoryFilter.selectOption('kyc_review', { timeout: 5000 })
+    await page.waitForTimeout(500)
+
+    const filteredCount = await page.getByTestId('notification-center-event-item').count()
+    expect(filteredCount).toBe(2)
+  })
+
+  // ===========================================================================
+  // AC #4 — Queue action-needed card shows exact count
+  // ===========================================================================
+  test('queue action-needed card shows exact count from mock data', async ({ page }) => {
+    await page.goto('/compliance/notifications', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    const actionNeeded = page.getByTestId('notification-center-queue-action-needed')
+    await expect(actionNeeded).toBeAttached({ timeout: 30000 })
+    // MOCK_EVENTS_MIXED has exactly 2 action_needed events (evt-011, evt-014)
+    const text = await actionNeeded.locator('dd').first().textContent({ timeout: 5000 })
+    expect(Number(text?.trim())).toBe(2)
+  })
+
+  // ===========================================================================
+  // AC #4 — Queue waiting-on-provider card shows exact count
+  // ===========================================================================
+  test('queue waiting card shows exact count from mock data', async ({ page }) => {
+    await page.goto('/compliance/notifications', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    const waiting = page.getByTestId('notification-center-queue-waiting')
+    await expect(waiting).toBeAttached({ timeout: 30000 })
+    // MOCK_EVENTS_MIXED has exactly 1 waiting_on_provider event (evt-012)
+    const text = await waiting.locator('dd').first().textContent({ timeout: 5000 })
+    expect(Number(text?.trim())).toBe(1)
+  })
+
+  // ===========================================================================
+  // AC #4 — Queue stale card shows exact count
+  // ===========================================================================
+  test('queue stale card shows exact count from mock data', async ({ page }) => {
+    await page.goto('/compliance/notifications', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    const stale = page.getByTestId('notification-center-queue-stale')
+    await expect(stale).toBeAttached({ timeout: 30000 })
+    // MOCK_EVENTS_MIXED has exactly 1 critical-freshness event (evt-013)
+    const text = await stale.locator('dd').first().textContent({ timeout: 5000 })
+    expect(Number(text?.trim())).toBe(1)
+  })
+
+  // ===========================================================================
+  // AC #2 — All four filter controls are rendered
+  // ===========================================================================
+  test('renders exactly four filter controls', async ({ page }) => {
+    await page.goto('/compliance/notifications', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    await expect(page.getByTestId('notification-center-event-list')).toBeAttached({ timeout: 30000 })
+
+    const categoryFilter = page.getByTestId('notification-center-filter-category')
+    await expect(categoryFilter).toBeAttached({ timeout: 5000 })
+
+    const severityFilter = page.getByTestId('notification-center-filter-severity')
+    await expect(severityFilter).toBeAttached({ timeout: 5000 })
+
+    const freshnessFilter = page.getByTestId('notification-center-filter-freshness')
+    await expect(freshnessFilter).toBeAttached({ timeout: 5000 })
+
+    const readStateFilter = page.getByTestId('notification-center-filter-read-state')
+    await expect(readStateFilter).toBeAttached({ timeout: 5000 })
   })
 })
