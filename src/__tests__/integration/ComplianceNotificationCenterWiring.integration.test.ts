@@ -251,6 +251,8 @@ describe('ComplianceNotificationCenter — utility→view wiring', () => {
       expect(vm.centerState.queueSummary.total).toBe(utilSummary.total)
       expect(vm.centerState.queueSummary.blocked).toBe(utilSummary.blocked)
       expect(vm.centerState.queueSummary.actionNeeded).toBe(utilSummary.actionNeeded)
+      expect(vm.centerState.queueSummary.unread).toBe(utilSummary.unread)
+      expect(vm.centerState.queueSummary.waitingOnProvider).toBe(utilSummary.waitingOnProvider)
     })
 
     it('queue summaries remain accurate when feed degrades to unavailable', async () => {
@@ -264,6 +266,8 @@ describe('ComplianceNotificationCenter — utility→view wiring', () => {
       const utilSummary = deriveQueueSummary(MOCK_EVENTS_MIXED, new Date())
       expect(vm.centerState.queueSummary.total).toBe(utilSummary.total)
       expect(vm.centerState.queueSummary.blocked).toBe(utilSummary.blocked)
+      expect(vm.centerState.queueSummary.actionNeeded).toBe(utilSummary.actionNeeded)
+      expect(vm.centerState.queueSummary.unread).toBe(utilSummary.unread)
     })
 
     it('feed health banner renders when feed is stale (not hidden)', async () => {
@@ -299,6 +303,11 @@ describe('ComplianceNotificationCenter — utility→view wiring', () => {
       const drillLinks = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_DRILL_DOWN}"]`)
       const eventsWithPath = MOCK_EVENTS_MIXED.filter(e => e.drillDownPath !== null)
       expect(drillLinks.length).toBe(eventsWithPath.length)
+      // Verify actual href values remain correct under degradation
+      for (let i = 0; i < eventsWithPath.length; i++) {
+        const href = drillLinks[i].attributes('href') || drillLinks[i].attributes('to')
+        expect(href).toBe(eventsWithPath[i].drillDownPath)
+      }
     })
 
     it('filter controls remain functional under stale feed health', async () => {
