@@ -273,6 +273,7 @@
                         <!-- Launch blocking -->
                         <span
                           v-if="event.isLaunchBlocking"
+                          :data-testid="TEST_IDS.EVENT_LAUNCH_BLOCKING"
                           class="text-xs font-semibold text-red-400 bg-red-900/30 px-2 py-0.5 rounded-full"
                           role="alert"
                         >

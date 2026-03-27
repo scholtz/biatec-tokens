@@ -611,21 +611,21 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       const groups = wrapper.findAll(`[data-testid="${TEST_IDS.TIMELINE_GROUP}"]`)
       expect(groups.length).toBe(2) // Today + Yesterday groups
       // Each group should have a date heading
-      for (const group of groups) {
-        const heading = group.find('h3')
-        expect(heading.exists()).toBe(true)
-        expect(heading.text().length).toBeGreaterThan(0)
-      }
+      // Timeline groups are "Today" and "Yesterday" (deterministic from MOCK_TIMELINE_ENTRIES dates)
+      const headingTexts = groups.map(g => g.find('h3').text())
+      expect(headingTexts).toContain('Today')
+      expect(headingTexts).toContain('Yesterday')
     })
 
     it('renders timeline entries with actor and transition text', async () => {
       const wrapper = await mountCenter()
       const entries = wrapper.findAll(`[data-testid="${TEST_IDS.TIMELINE_ENTRY}"]`)
       expect(entries.length).toBe(4) // 4 timeline entries total (MOCK_TIMELINE_ENTRIES)
-      // Each entry should have transition text
-      for (const entry of entries) {
-        expect(entry.text().length).toBeGreaterThan(0)
-      }
+      // Each entry should contain its deterministic transition text from MOCK_TIMELINE_ENTRIES
+      expect(entries[0].text()).toContain('KYC status changed')
+      expect(entries[1].text()).toContain('AML screening completed')
+      expect(entries[2].text()).toContain('Onboarding case created')
+      expect(entries[3].text()).toContain('Evidence package scheduled')
     })
 
     it('renders timeline dot with severity-appropriate colors', async () => {
@@ -654,16 +654,15 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       }
     })
 
-    it('renders launch-blocking label for blocked events with role="alert"', async () => {
+    it('renders launch-blocking label for isLaunchBlocking events with role="alert"', async () => {
       const wrapper = await mountCenter()
-      const blockedEvents = MOCK_EVENTS_MIXED.filter(e => e.launchBlocking)
-      if (blockedEvents.length > 0) {
-        const alerts = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_LAUNCH_BLOCKING}"]`)
-        expect(alerts.length).toBe(blockedEvents.length)
-        for (const alert of alerts) {
-          expect(alert.attributes('role')).toBe('alert')
-          expect(alert.text()).toContain('Launch Blocking')
-        }
+      const launchBlockingEvents = MOCK_EVENTS_MIXED.filter(e => e.isLaunchBlocking)
+      expect(launchBlockingEvents.length).toBe(2) // evt-010, evt-013 — guard against vacuous test
+      const alerts = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_LAUNCH_BLOCKING}"]`)
+      expect(alerts.length).toBe(2)
+      for (const alert of alerts) {
+        expect(alert.attributes('role')).toBe('alert')
+        expect(alert.text()).toContain('Blocks Issuance')
       }
     })
   })

@@ -527,6 +527,7 @@ export const NOTIFICATION_CENTER_TEST_IDS = {
   TIMELINE_ENTRY: 'notification-center-timeline-entry',
   REFRESH_BUTTON: 'notification-center-refresh',
   LAST_UPDATED: 'notification-center-last-updated',
+  EVENT_LAUNCH_BLOCKING: 'notification-center-launch-blocking',
 } as const
 
 // ---------------------------------------------------------------------------
