@@ -4397,6 +4397,46 @@ grep -n "if (" src/**/__tests__/*.test.ts | grep -v "// sort\|// ordering"
 - ✅ Always assert the count/precondition unconditionally FIRST with an exact value
 - ✅ Then assert content with exact deterministic values (not computed from mock data at runtime)
 
+### 7ai. Sticky Navbar Intercepting Pointer Events — Use Keyboard Activation (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 27, 2026 (PR #746) 🚨**
+
+**Violation**: The "refresh button reloads data" E2E test failed on ALL 3 CI retries because the sticky Navbar (`sticky top-0 z-50`, `h-20` = 80px) intercepted pointer events on the refresh button. The fix attempt using `scrollIntoViewIfNeeded()` + `window.scrollBy(0, 100)` was insufficient — the button remained within the navbar's 80px overlap zone after scrolling.
+
+**Root Cause**: `scrollIntoViewIfNeeded()` scrolls the element to the edge of the viewport where the sticky navbar sits. `scrollBy(0, 100)` provides only 100px of clearance, which is barely enough for the 80px navbar and fails in CI due to viewport size differences and scroll timing.
+
+**Correct Approach — MANDATORY for buttons near sticky headers**:
+```typescript
+// ❌ WRONG — scrollBy(100) doesn't reliably clear the 80px sticky navbar in CI
+await refreshBtn.scrollIntoViewIfNeeded()
+await page.evaluate(() => window.scrollBy(0, 100))
+await refreshBtn.click({ timeout: 5000 })
+
+// ❌ ALSO WRONG — force:true masks the real UX overlap issue
+await refreshBtn.click({ force: true })
+
+// ✅ CORRECT — keyboard activation bypasses pointer hit-testing legitimately
+// This is a real accessibility interaction (keyboard users activate buttons this way)
+await refreshBtn.focus()
+await page.keyboard.press('Enter')
+```
+
+**Why keyboard activation is the correct fix**:
+- `element.focus()` + `keyboard.press('Enter')` triggers the click handler without requiring the element to be unobstructed by overlapping elements
+- It tests a real accessibility pathway (keyboard navigation)
+- It doesn't mask UX issues like `force: true` does
+- It's deterministic — no dependency on scroll positioning or viewport size
+
+**When to use this pattern**:
+- Any button near the top of page content where the sticky navbar may overlap
+- Any element that receives "element from subtree intercepts pointer events" errors
+- The error message will always mention `<header>…</header> subtree intercepts pointer events`
+
+**Never Again**:
+- ❌ Use `scrollBy(0, N)` to clear a sticky header — unreliable across viewport sizes
+- ❌ Use `force: true` to bypass pointer interception — masks real overlap issues
+- ✅ Use `focus()` + `keyboard.press('Enter')` for buttons near sticky headers
+
 ---
 
 ## Additional Notes

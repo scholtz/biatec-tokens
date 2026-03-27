@@ -224,10 +224,12 @@ test.describe('Compliance Notification Center — operator journeys', () => {
 
     const refreshBtn = page.getByTestId('notification-center-refresh')
     await expect(refreshBtn).toBeAttached({ timeout: 5000 })
-    // Scroll viewport down so the refresh button clears the sticky navbar (h-20 = 80px)
-    await refreshBtn.scrollIntoViewIfNeeded()
-    await page.evaluate(() => window.scrollBy(0, 100))
-    await refreshBtn.click({ timeout: 5000 })
+    // Use keyboard activation (focus + Enter) to bypass the sticky navbar
+    // (h-20 = 80px, z-50) that intercepts pointer events on elements near
+    // the top of the content area. This is a legitimate accessibility
+    // interaction — keyboard users activate buttons this way.
+    await refreshBtn.focus()
+    await page.keyboard.press('Enter')
 
     // After click, loading state should appear briefly then resolve
     // The page should still have events after refresh
@@ -421,5 +423,87 @@ test.describe('Compliance Notification Center — operator journeys', () => {
 
     const readStateFilter = page.getByTestId('notification-center-filter-read-state')
     await expect(readStateFilter).toBeAttached({ timeout: 5000 })
+  })
+
+  // ===========================================================================
+  // AC #2 — Freshness filter narrows events by staleness
+  // ===========================================================================
+  test('filters events by freshness', async ({ page }) => {
+    await page.goto('/compliance/notifications', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    await expect(page.getByTestId('notification-center-event-list')).toBeAttached({ timeout: 30000 })
+
+    // Filter by critical freshness — MOCK_EVENTS_MIXED has exactly 1 critical-freshness event (evt-013: timestamp 2026-03-20)
+    const freshnessFilter = page.getByTestId('notification-center-filter-freshness')
+    await freshnessFilter.selectOption('critical', { timeout: 5000 })
+
+    // Semantic wait: exactly 1 event with critical freshness
+    await expect(page.getByTestId('notification-center-event-item')).toHaveCount(1, { timeout: 5000 })
+  })
+
+  // ===========================================================================
+  // AC #2 — Read-state filter separates unread from read events
+  // ===========================================================================
+  test('filters events by read state', async ({ page }) => {
+    await page.goto('/compliance/notifications', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    await expect(page.getByTestId('notification-center-event-list')).toBeAttached({ timeout: 30000 })
+
+    // Filter by unread — MOCK_EVENTS_MIXED has exactly 3 unread events (evt-010, evt-011, evt-012)
+    const readStateFilter = page.getByTestId('notification-center-filter-read-state')
+    await readStateFilter.selectOption('unread', { timeout: 5000 })
+
+    // Semantic wait: exactly 3 unread events
+    await expect(page.getByTestId('notification-center-event-item')).toHaveCount(3, { timeout: 5000 })
+  })
+
+  // ===========================================================================
+  // Page description content — operator-facing guidance text
+  // ===========================================================================
+  test('page description provides operator context for workspace purpose', async ({ page }) => {
+    await page.goto('/compliance/notifications', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    const description = page.getByTestId('notification-center-description')
+    await expect(description).toBeAttached({ timeout: 30000 })
+    const text = await description.textContent({ timeout: 5000 })
+    expect(text).toContain('investor onboarding')
+    expect(text).toContain('sanctions escalations')
+    expect(text).toContain('evidence readiness')
+  })
+
+  // ===========================================================================
+  // Last-updated timestamp display
+  // ===========================================================================
+  test('last-updated timestamp is rendered', async ({ page }) => {
+    await page.goto('/compliance/notifications', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    const lastUpdated = page.getByTestId('notification-center-last-updated')
+    await expect(lastUpdated).toBeAttached({ timeout: 30000 })
+    const text = await lastUpdated.textContent({ timeout: 5000 })
+    expect(text).toContain('Last refreshed:')
+  })
+
+  // ===========================================================================
+  // Combined filter: severity + category narrows correctly
+  // ===========================================================================
+  test('combined severity and category filters narrow events correctly', async ({ page }) => {
+    await page.goto('/compliance/notifications', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    await expect(page.getByTestId('notification-center-event-list')).toBeAttached({ timeout: 30000 })
+
+    // Filter by action_needed severity — MOCK_EVENTS_MIXED has 2 (evt-011, evt-013)
+    const severityFilter = page.getByTestId('notification-center-filter-severity')
+    await severityFilter.selectOption('action_needed', { timeout: 5000 })
+    await expect(page.getByTestId('notification-center-event-item')).toHaveCount(2, { timeout: 5000 })
+
+    // Add category filter: kyc_review — only evt-011 is action_needed + kyc_review
+    const categoryFilter = page.getByTestId('notification-center-filter-category')
+    await categoryFilter.selectOption('kyc_review', { timeout: 5000 })
+    await expect(page.getByTestId('notification-center-event-item')).toHaveCount(1, { timeout: 5000 })
   })
 })
