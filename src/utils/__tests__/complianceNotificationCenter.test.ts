@@ -693,14 +693,16 @@ describe('complianceNotificationCenter', () => {
 
     it('queue summary counts stale events based on timestamp age', () => {
       const summary = deriveQueueSummary(MOCK_EVENTS_MIXED, NOW)
-      // evt-013 from 2026-03-20 is >7 days old = critical freshness, counted as stale
-      expect(summary.staleCount).toBeGreaterThanOrEqual(1)
+      // evt-013 from 2026-03-20 is 7 days old = critical freshness → counted as stale
+      // All other events are from 2026-03-27 (same day as NOW) → fresh
+      expect(summary.staleCount).toBe(1)
     })
 
     it('queue summary tracks oldest unresolved event age in days', () => {
       const summary = deriveQueueSummary(MOCK_EVENTS_MIXED, NOW)
-      // evt-013 from 2026-03-20 = 7 days ago → oldestUnresolvedDays >= 7
-      expect(summary.oldestUnresolvedDays).toBeGreaterThanOrEqual(7)
+      // evt-013 from 2026-03-20T10:00:00Z → NOW 2026-03-27T15:00:00Z = 7 days, 5 hours
+      // Math.floor(7.2 * DAY_MS / DAY_MS) = 7
+      expect(summary.oldestUnresolvedDays).toBe(7)
     })
 
     it('filterEvents with category=all and severity=all returns all events', () => {

@@ -118,6 +118,8 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       await nextTick()
       const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
       // Only KYC review events should remain
+      const expectedCount = MOCK_EVENTS_MIXED.filter(e => e.category === 'kyc_review').length
+      expect(items.length).toBe(expectedCount)
       for (const item of items) {
         expect(item.text()).toMatch(/KYC/i)
       }
@@ -130,8 +132,9 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       await select.setValue('critical')
       await nextTick()
       const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
-      // The stale evidence event is from 2026-03-20 → should be critical freshness
-      expect(items.length).toBeGreaterThanOrEqual(0)
+      // evt-013 from 2026-03-20 is >7 days old = critical freshness
+      // Exact count depends on current date vs mock timestamps, but at least 1 stale event
+      expect(items.length).toBe(1)
     })
 
     it('filters by read state when read-state filter is changed', async () => {
