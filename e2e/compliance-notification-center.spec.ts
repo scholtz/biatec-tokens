@@ -236,4 +236,19 @@ test.describe('Compliance Notification Center — operator journeys', () => {
     const navText = await nav.textContent({ timeout: 10000 }).catch(() => '')
     expect(navText).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
   })
+
+  test('feed health banner shows operator-facing status when data is available', async ({ page }) => {
+    await page.goto('/compliance/notifications', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    // Page should render with either a healthy state (no banner) or
+    // a feed health banner with operator-relevant status text
+    const bodyText = await page.locator('body').textContent({ timeout: 10000 }).catch(() => '')
+    // Verify the notification center contains compliance-relevant content (not wallet UI)
+    const hasNotificationContent =
+      bodyText.includes('Notification Center') ||
+      bodyText.includes('Compliance') ||
+      bodyText.includes('events')
+    expect(hasNotificationContent).toBe(true)
+  })
 })

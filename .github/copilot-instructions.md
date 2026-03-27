@@ -4288,6 +4288,75 @@ const hasIndigoParagraph = (item) =>
 - ❌ Use text content (`includes('→')`) to detect specific elements when other elements share the same character
 - ❌ Accept 98.8% branch coverage without investigating which line is uncovered
 
+### 7ag. All Test Assertions on Deterministic Mock Data Must Use Exact Values (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 27, 2026 (PR #746 continuation) 🚨**
+
+**Violation**: Copilot submitted tests across 7 review cycles with 30+ imprecise assertions (`toBeGreaterThan(0)`, `toBeGreaterThanOrEqual(1)`, `toBeLessThan(N)`) on deterministic mock data where the exact expected values were computable. Product owner rejected the work each cycle because these weak assertions mask regression bugs — a test asserting `toBeGreaterThan(0)` passes whether the count is 1 or 100, hiding logic errors.
+
+**What Went Wrong**:
+- MOCK_EVENTS_MIXED has 7 events with fully deterministic properties (severity, category, readState, timestamp, nextAction, isLaunchBlocking)
+- MOCK_TIMELINE_ENTRIES has 4 entries in 2 date groups (Today + Yesterday)
+- Tests used `expect(groups.length).toBeGreaterThan(0)` instead of `expect(groups.length).toBe(2)` (2 groups: Today + Yesterday)
+- Tests used `expect(badges.length).toBeGreaterThan(0)` instead of `expect(badges.length).toBe(7)` (one badge per event)
+- Tests used `expect(items.length).toBeLessThan(MOCK_EVENTS_MIXED.length)` instead of `expect(items.length).toBe(1)` (exactly 1 blocked event)
+- The imprecise assertions survived 6 product owner review cycles before being identified
+
+**Root Cause**:
+- Developer wrote assertions based on "something should exist" rather than "exactly N items should exist"
+- No pre-commit audit step to find and replace imprecise assertions on deterministic data
+- `toBeGreaterThan(0)` is a copy-paste habit from non-deterministic contexts (live APIs, randomized data) that does not belong in tests with known mock data
+
+**Correct Approach — MANDATORY for all tests using deterministic mock data**:
+
+```typescript
+// ❌ WRONG — imprecise, masks regression bugs
+expect(groups.length).toBeGreaterThan(0)          // could be 1, 2, 100
+expect(entries.length).toBeGreaterThan(0)          // could be 1, 2, 100
+expect(badges.length).toBeGreaterThan(0)           // could be 1, 2, 100
+expect(alerts.length).toBeGreaterThanOrEqual(1)    // could be 1, 2, 100
+expect(items.length).toBeLessThan(TOTAL)           // could be 1 or TOTAL-1
+
+// ✅ CORRECT — exact values computed from deterministic mock data
+expect(groups.length).toBe(2)                      // Today + Yesterday = 2 groups
+expect(entries.length).toBe(4)                     // 4 timeline entries
+expect(badges.length).toBe(7)                      // 7 events = 7 badges
+expect(alerts.length).toBe(2)                      // 2 isLaunchBlocking events
+expect(items.length).toBe(1)                       // exactly 1 blocked event
+
+// ✅ EXCEPTION — ordering comparisons are legitimately imprecise:
+expect(severityRank('blocked')).toBeLessThan(severityRank('action_needed'))  // relative order
+expect(prevTimestamp).toBeGreaterThanOrEqual(currTimestamp)                  // sort verification
+expect(text.length).toBeGreaterThan(0)                                       // non-deterministic content
+```
+
+**Pre-Commit Audit** (MANDATORY before committing any test file):
+```bash
+# Find imprecise assertions in test files that use deterministic mock data:
+grep -n "toBeGreaterThan(0)\|toBeGreaterThanOrEqual(1)\|toBeLessThan(" src/**/__tests__/*.test.ts
+# For each result: determine if the expected value is computable from mock data
+# If yes: replace with exact toBe(N) with a comment explaining the count
+# If no (ordering/sorting test): leave as is
+```
+
+**When `toBeGreaterThan(0)` IS acceptable**:
+- Text content length (`expect(text.length).toBeGreaterThan(0)`) — non-deterministic
+- Sort ordering verification (`expect(prevTs).toBeGreaterThanOrEqual(currTs)`) — relative comparison
+- Tests against live APIs or randomized data — unpredictable counts
+
+**When `toBeGreaterThan(0)` is NEVER acceptable**:
+- Timeline group counts (computed from deterministic timestamps)
+- Event badge counts (one per mock event)
+- Filter result counts (computed from mock event properties)
+- Queue summary values (computed from mock event severity/readState)
+- Timeline entry counts (from MOCK_TIMELINE_ENTRIES array length)
+
+**Never Again**:
+- ❌ Use `toBeGreaterThan(0)` on counts derived from known mock data arrays
+- ❌ Use `toBeGreaterThanOrEqual(1)` when the exact count is computable
+- ❌ Use `toBeLessThan(TOTAL)` when the exact filtered count is known
+- ❌ Skip the pre-commit grep audit for imprecise assertions
+
 ---
 
 ## Additional Notes
