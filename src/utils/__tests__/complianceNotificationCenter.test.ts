@@ -266,13 +266,13 @@ describe('complianceNotificationCenter', () => {
     it('counts stale events based on timestamp freshness', () => {
       const summary = deriveQueueSummary(MOCK_EVENTS_MIXED, NOW)
       // evt-013 is 7+ days old, should be stale or critical
-      expect(summary.staleCount).toBeGreaterThanOrEqual(1)
+      expect(summary.staleCount).toBe(1) // evt-013 is 7+ days old (critical freshness)
     })
 
     it('calculates oldest unresolved days', () => {
       const summary = deriveQueueSummary(MOCK_EVENTS_MIXED, NOW)
       // evt-013 is ~7 days old
-      expect(summary.oldestUnresolvedDays).toBeGreaterThanOrEqual(7)
+      expect(summary.oldestUnresolvedDays).toBe(7) // evt-013 is exactly 7+ days old
     })
 
     it('tracks oldest unresolved age across multiple unresolved events', () => {
@@ -367,7 +367,7 @@ describe('complianceNotificationCenter', () => {
       const filters: NotificationFilters = { ...DEFAULT_FILTERS, freshness: 'critical' }
       const filtered = filterEvents(MOCK_EVENTS_MIXED, filters, NOW)
       // evt-013 is 7+ days old (critical)
-      expect(filtered.length).toBeGreaterThanOrEqual(1)
+      expect(filtered.length).toBe(1) // evt-013 is the only critical freshness event
     })
 
     it('combines multiple filters', () => {
@@ -427,7 +427,7 @@ describe('complianceNotificationCenter', () => {
   describe('groupTimelineByDate', () => {
     it('groups entries by date', () => {
       const groups = groupTimelineByDate(MOCK_TIMELINE_ENTRIES, NOW)
-      expect(groups.length).toBeGreaterThanOrEqual(1)
+      expect(groups.length).toBe(2) // Today (tl-001, tl-002, tl-003) + Yesterday (tl-004)
     })
 
     it('labels today correctly', () => {
@@ -742,7 +742,7 @@ describe('complianceNotificationCenter', () => {
 
     it('mock events contain launch-blocking events in mixed set', () => {
       const blocking = MOCK_EVENTS_MIXED.filter((e) => e.isLaunchBlocking)
-      expect(blocking.length).toBeGreaterThanOrEqual(1)
+      expect(blocking.length).toBe(2) // evt-010 and evt-013 are launch-blocking
     })
 
     it('MOCK_REFRESHED_AT is a valid ISO timestamp', () => {

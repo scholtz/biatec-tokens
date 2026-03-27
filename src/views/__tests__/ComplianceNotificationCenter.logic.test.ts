@@ -235,7 +235,7 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
     it('timelineGroups returns grouped timeline entries', async () => {
       const wrapper = await mountCenter()
       const vm = wrapper.vm as any
-      expect(vm.timelineGroups.length).toBeGreaterThan(0)
+      expect(vm.timelineGroups.length).toBe(2) // Today + Yesterday groups
     })
   })
 
@@ -363,6 +363,20 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       expect(text).toContain('Submit identity documents')
     })
 
+    it('timeline entries without nextAction suppress the next-action paragraph', async () => {
+      const wrapper = await mountCenter()
+      const entries = wrapper.findAll(`[data-testid="${TEST_IDS.TIMELINE_ENTRY}"]`)
+      // MOCK_TIMELINE_ENTRIES: tl-001 and tl-002 have nextAction: null, tl-003 and tl-004 have strings
+      const entriesWithNA = entries.filter(
+        (e: any) => e.findAll('p').filter((p: any) => p.classes().includes('text-indigo-300')).length > 0,
+      )
+      const entriesWithoutNA = entries.filter(
+        (e: any) => e.findAll('p').filter((p: any) => p.classes().includes('text-indigo-300')).length === 0,
+      )
+      expect(entriesWithNA.length).toBe(2) // tl-003, tl-004 have string nextAction
+      expect(entriesWithoutNA.length).toBe(2) // tl-001, tl-002 have null nextAction
+    })
+
     it('timeline has vertical connecting line', async () => {
       const wrapper = await mountCenter()
       const line = wrapper.find('aside .bg-gray-700')
@@ -372,7 +386,7 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
     it('timeline dots have severity-appropriate colors', async () => {
       const wrapper = await mountCenter()
       const dots = wrapper.findAll('aside .rounded-full')
-      expect(dots.length).toBeGreaterThan(0)
+      expect(dots.length).toBe(4) // 4 timeline entries = 4 severity dots
     })
   })
 
@@ -391,7 +405,7 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       const wrapper = await mountCenter()
       const vm = wrapper.vm as any
       // Default mock data has timeline entries
-      expect(vm.timelineGroups.length).toBeGreaterThan(0)
+      expect(vm.timelineGroups.length).toBe(2) // Today + Yesterday groups
       // The empty-state text should NOT appear when timeline has entries
       const aside = wrapper.find('aside')
       expect(aside.text()).not.toContain('No timeline events available')
@@ -433,7 +447,7 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       const wrapper = await mountCenter()
       const allItems = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
       const itemsWithNextAction = allItems.filter(hasIndigoParagraph)
-      expect(itemsWithNextAction.length).toBeGreaterThan(0)
+      expect(itemsWithNextAction.length).toBe(5) // 5 events have string nextAction
       for (const item of itemsWithNextAction) {
         const nextActionParagraphs = item.findAll('p').filter((p: any) => p.classes().includes('text-indigo-300'))
         expect(nextActionParagraphs.length).toBe(1)
@@ -549,8 +563,8 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       const unreadCount = MOCK_EVENTS_MIXED.filter(e => e.readState === 'unread').length
       const readCount = MOCK_EVENTS_MIXED.filter(e => e.readState === 'read').length
       // Verify we have both unread and read events
-      expect(unreadCount).toBeGreaterThan(0)
-      expect(readCount).toBeGreaterThan(0)
+      expect(unreadCount).toBe(3) // evt-010, evt-011, evt-012
+      expect(readCount).toBe(4) // evt-013, evt-014, evt-015, evt-016
       // Total items should match
       expect(items.length).toBe(unreadCount + readCount)
     })
@@ -595,7 +609,7 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
     it('renders timeline groups with date labels', async () => {
       const wrapper = await mountCenter()
       const groups = wrapper.findAll(`[data-testid="${TEST_IDS.TIMELINE_GROUP}"]`)
-      expect(groups.length).toBeGreaterThan(0)
+      expect(groups.length).toBe(2) // Today + Yesterday groups
       // Each group should have a date heading
       for (const group of groups) {
         const heading = group.find('h3')
@@ -607,7 +621,7 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
     it('renders timeline entries with actor and transition text', async () => {
       const wrapper = await mountCenter()
       const entries = wrapper.findAll(`[data-testid="${TEST_IDS.TIMELINE_ENTRY}"]`)
-      expect(entries.length).toBeGreaterThan(0)
+      expect(entries.length).toBe(4) // 4 timeline entries total (MOCK_TIMELINE_ENTRIES)
       // Each entry should have transition text
       for (const entry of entries) {
         expect(entry.text().length).toBeGreaterThan(0)
@@ -846,7 +860,7 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       await select.setValue('blocked')
       await nextTick()
       let items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
-      expect(items.length).toBeLessThan(MOCK_EVENTS_MIXED.length)
+      expect(items.length).toBe(1) // 1 blocked event (evt-010)
       // Reset to all
       await select.setValue('all')
       await nextTick()
@@ -860,7 +874,7 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       await select.setValue('kyc_review')
       await nextTick()
       let items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
-      expect(items.length).toBeLessThan(MOCK_EVENTS_MIXED.length)
+      expect(items.length).toBe(2) // 2 kyc_review events (evt-011, evt-015)
       await select.setValue('all')
       await nextTick()
       items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
@@ -1050,6 +1064,109 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       const unreadCard = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_UNREAD}"]`)
       expect(unreadCard.exists()).toBe(true)
       expect(unreadCard.text()).toContain('3')
+    })
+  })
+
+  // =========================================================================
+  // Exact event ordering verification
+  // =========================================================================
+  describe('event ordering precision', () => {
+    it('events are rendered in exact severity priority order', async () => {
+      const wrapper = await mountCenter()
+      const badges = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_SEVERITY_BADGE}"]`)
+      const severityOrder = badges.map((b: any) => b.text())
+      // Blocked (1), Action needed (2), Waiting on provider (1), Review complete (1), Informational (2)
+      expect(severityOrder[0]).toContain('Blocked')
+      expect(severityOrder[1]).toContain('Action needed')
+      expect(severityOrder[2]).toContain('Action needed')
+      expect(severityOrder[3]).toContain('Waiting')
+      expect(severityOrder[4]).toContain('Review complete')
+      expect(severityOrder[5]).toContain('Informational')
+      expect(severityOrder[6]).toContain('Informational')
+    })
+
+    it('drill-down links point to correct compliance surfaces', async () => {
+      const wrapper = await mountCenter()
+      const links = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_DRILL_DOWN}"]`)
+      const paths = links.map((link: any) => link.attributes('href'))
+      // Events with drillDownPath: evt-011→/compliance/onboarding, evt-013→/compliance/release, evt-014→/compliance/onboarding
+      expect(paths).toContain('/compliance/onboarding')
+      expect(paths).toContain('/compliance/release')
+    })
+
+    it('events with null drillDownPath have no drill-down link rendered', async () => {
+      const wrapper = await mountCenter()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      const links = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_DRILL_DOWN}"]`)
+      const eventsWithPath = MOCK_EVENTS_MIXED.filter((e) => e.drillDownPath !== null)
+      const eventsWithoutPath = MOCK_EVENTS_MIXED.filter((e) => e.drillDownPath === null)
+      expect(links.length).toBe(eventsWithPath.length)
+      expect(items.length - links.length).toBe(eventsWithoutPath.length)
+    })
+  })
+
+  // =========================================================================
+  // Exact queue summary card labels
+  // =========================================================================
+  describe('queue summary card labels', () => {
+    it('total card displays "Total" label', async () => {
+      const wrapper = await mountCenter()
+      const card = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_TOTAL}"]`)
+      expect(card.text()).toContain('Total')
+    })
+
+    it('unread card displays "Unread" label', async () => {
+      const wrapper = await mountCenter()
+      const card = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_UNREAD}"]`)
+      expect(card.text()).toContain('Unread')
+    })
+
+    it('blocked card displays "Blocked" label', async () => {
+      const wrapper = await mountCenter()
+      const card = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_BLOCKED}"]`)
+      expect(card.text()).toContain('Blocked')
+    })
+
+    it('action needed card displays "Action Needed" label', async () => {
+      const wrapper = await mountCenter()
+      const card = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_ACTION_NEEDED}"]`)
+      expect(card.text()).toContain('Action Needed')
+    })
+
+    it('waiting card displays "Waiting" label', async () => {
+      const wrapper = await mountCenter()
+      const card = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_WAITING}"]`)
+      expect(card.text()).toContain('Waiting')
+    })
+
+    it('stale card displays "Stale" label', async () => {
+      const wrapper = await mountCenter()
+      const card = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_STALE}"]`)
+      expect(card.text()).toContain('Stale')
+    })
+  })
+
+  // =========================================================================
+  // Skip link and page description
+  // =========================================================================
+  describe('page structure', () => {
+    it('skip link navigates to main content', async () => {
+      const wrapper = await mountCenter()
+      const skipLink = wrapper.find('a[href="#notification-center-main"]')
+      expect(skipLink.exists()).toBe(true)
+      expect(skipLink.text()).toContain('Skip to main content')
+    })
+
+    it('page description includes prioritized compliance events wording', async () => {
+      const wrapper = await mountCenter()
+      expect(wrapper.text()).toContain('Prioritized compliance events')
+    })
+
+    it('refresh button has accessible text', async () => {
+      const wrapper = await mountCenter()
+      const refreshBtn = wrapper.find(`[data-testid="${TEST_IDS.REFRESH_BUTTON}"]`)
+      expect(refreshBtn.exists()).toBe(true)
+      expect(refreshBtn.text()).toContain('Refresh')
     })
   })
 })

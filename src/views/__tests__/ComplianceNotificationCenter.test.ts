@@ -187,7 +187,7 @@ describe('ComplianceNotificationCenter.vue', () => {
     it('renders severity badges on events', async () => {
       const wrapper = await mountCenter()
       const badges = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_SEVERITY_BADGE}"]`)
-      expect(badges.length).toBeGreaterThan(0)
+      expect(badges.length).toBe(MOCK_EVENTS_MIXED.length) // one severity badge per event
     })
 
     it('renders drill-down links for events with drillDownPath', async () => {
@@ -271,13 +271,13 @@ describe('ComplianceNotificationCenter.vue', () => {
     it('renders timeline groups', async () => {
       const wrapper = await mountCenter()
       const groups = wrapper.findAll(`[data-testid="${TEST_IDS.TIMELINE_GROUP}"]`)
-      expect(groups.length).toBeGreaterThan(0)
+      expect(groups.length).toBe(2) // Today + Yesterday groups
     })
 
     it('renders timeline entries', async () => {
       const wrapper = await mountCenter()
       const entries = wrapper.findAll(`[data-testid="${TEST_IDS.TIMELINE_ENTRY}"]`)
-      expect(entries.length).toBeGreaterThan(0)
+      expect(entries.length).toBe(4) // 4 timeline entries (MOCK_TIMELINE_ENTRIES)
     })
 
     it('displays transition text in timeline entries', async () => {
@@ -313,7 +313,7 @@ describe('ComplianceNotificationCenter.vue', () => {
     it('has labeled filter selects with sr-only labels', async () => {
       const wrapper = await mountCenter()
       const labels = wrapper.findAll('label.sr-only')
-      expect(labels.length).toBeGreaterThanOrEqual(4) // 4 filters
+      expect(labels.length).toBe(4) // exactly 4 filter controls
     })
 
     it('event list has role="list" with list items', async () => {
@@ -326,7 +326,7 @@ describe('ComplianceNotificationCenter.vue', () => {
     it('timeline entries use semantic list markup', async () => {
       const wrapper = await mountCenter()
       const timelineLists = wrapper.findAll('aside ul[role="list"]')
-      expect(timelineLists.length).toBeGreaterThan(0)
+      expect(timelineLists.length).toBe(2) // 2 timeline groups, each with a list
     })
 
     it('severity badges have role="status"', async () => {
@@ -341,7 +341,7 @@ describe('ComplianceNotificationCenter.vue', () => {
       const wrapper = await mountCenter()
       const alerts = wrapper.findAll('[role="alert"]')
       // At least one for the launch-blocking event
-      expect(alerts.length).toBeGreaterThanOrEqual(1)
+      expect(alerts.length).toBe(2) // 2 launch-blocking events (evt-010, evt-013)
     })
 
     it('drill-down links have descriptive aria-labels', async () => {
