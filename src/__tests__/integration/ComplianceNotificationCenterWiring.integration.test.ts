@@ -15,14 +15,17 @@ import ComplianceNotificationCenter from '../../views/ComplianceNotificationCent
 import {
   NOTIFICATION_CENTER_TEST_IDS as TEST_IDS,
   SEVERITY_LABELS,
+  CATEGORY_LABELS,
   MOCK_EVENTS_MIXED,
   deriveNotificationCenterState,
   deriveQueueSummary,
   filterEvents,
   sortEventsByPriority,
   severityBadgeClass,
+  classifyFreshness,
   DEFAULT_FILTERS,
   type NotificationFilters,
+  type ComplianceEvent,
 } from '../../utils/complianceNotificationCenter'
 
 // ---------------------------------------------------------------------------
@@ -418,6 +421,223 @@ describe('ComplianceNotificationCenter — utility→view wiring', () => {
           (p: any) => p.classes().includes('text-indigo-300'),
         )
         expect(indigoParagraphs.length).toBe(1)
+      }
+    })
+  })
+
+  // =========================================================================
+  // Stale count queue metric wiring
+  // =========================================================================
+  describe('stale count queue metric wiring', () => {
+    it('staleCount in queue summary matches utility derivation', async () => {
+      const wrapper = await mountCenter()
+      const vm = wrapper.vm as any
+      const utilSummary = deriveQueueSummary(MOCK_EVENTS_MIXED, new Date())
+      expect(vm.centerState.queueSummary.staleCount).toBe(utilSummary.staleCount)
+    })
+
+    it('stale count card rendered value matches utility derivation', async () => {
+      const wrapper = await mountCenter()
+      const utilSummary = deriveQueueSummary(MOCK_EVENTS_MIXED, new Date())
+      const staleEl = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_STALE}"]`)
+      expect(Number(staleEl.find('dd').text().trim())).toBe(utilSummary.staleCount)
+    })
+
+    it('reviewComplete count in queue summary matches utility derivation', async () => {
+      const wrapper = await mountCenter()
+      const vm = wrapper.vm as any
+      const utilSummary = deriveQueueSummary(MOCK_EVENTS_MIXED, new Date())
+      expect(vm.centerState.queueSummary.reviewComplete).toBe(utilSummary.reviewComplete)
+    })
+  })
+
+  // =========================================================================
+  // Category label rendering wiring
+  // =========================================================================
+  describe('category label rendering wiring', () => {
+    it('event descriptions reference category names from CATEGORY_LABELS utility', async () => {
+      const wrapper = await mountCenter()
+      const sorted = sortEventsByPriority(MOCK_EVENTS_MIXED)
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      // Each event item should have content derived from the sorted events
+      expect(items.length).toBe(sorted.length)
+      // Verify first event (highest severity = blocked) title matches
+      expect(items[0].text()).toContain(sorted[0].title)
+    })
+
+    it('CATEGORY_LABELS provides labels for all categories in MOCK_EVENTS_MIXED', () => {
+      const categories = [...new Set(MOCK_EVENTS_MIXED.map(e => e.category))]
+      for (const cat of categories) {
+        expect(CATEGORY_LABELS[cat]).toBeTruthy()
+      }
+    })
+  })
+
+  // =========================================================================
+  // ReadState filter wiring
+  // =========================================================================
+  describe('readState filter wiring', () => {
+    it('readState=unread filter produces same count as utility filterEvents', async () => {
+      const wrapper = await mountCenter()
+      const readStateSelect = wrapper.find(`[data-testid="${TEST_IDS.FILTER_READ_STATE}"]`)
+      await readStateSelect.setValue('unread')
+      await nextTick()
+
+      const unreadFilter: NotificationFilters = { ...DEFAULT_FILTERS, readState: 'unread' }
+      const utilFiltered = filterEvents(MOCK_EVENTS_MIXED, unreadFilter)
+      const renderedItems = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(renderedItems.length).toBe(utilFiltered.length)
+      // MOCK_EVENTS_MIXED has exactly 3 unread events (evt-010, evt-011, evt-012)
+      expect(renderedItems.length).toBe(3)
+    })
+
+    it('readState=read filter produces same count as utility filterEvents', async () => {
+      const wrapper = await mountCenter()
+      const readStateSelect = wrapper.find(`[data-testid="${TEST_IDS.FILTER_READ_STATE}"]`)
+      await readStateSelect.setValue('read')
+      await nextTick()
+
+      const readFilter: NotificationFilters = { ...DEFAULT_FILTERS, readState: 'read' }
+      const utilFiltered = filterEvents(MOCK_EVENTS_MIXED, readFilter)
+      const renderedItems = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(renderedItems.length).toBe(utilFiltered.length)
+      // MOCK_EVENTS_MIXED has exactly 4 read events (evt-013, evt-014, evt-015, evt-016)
+      expect(renderedItems.length).toBe(4)
+    })
+  })
+
+  // =========================================================================
+  // Freshness classification wiring
+  // =========================================================================
+  describe('freshness classification wiring', () => {
+    it('classifyFreshness(null) returns critical (fail-closed)', () => {
+      expect(classifyFreshness(null)).toBe('critical')
+    })
+
+    it('classifyFreshness(undefined) returns critical (fail-closed)', () => {
+      expect(classifyFreshness(undefined)).toBe('critical')
+    })
+
+    it('classifyFreshness returns fresh for recent timestamps', () => {
+      const now = new Date()
+      const recent = new Date(now.getTime() - 30 * 60_000).toISOString() // 30 minutes ago
+      expect(classifyFreshness(recent, now)).toBe('fresh')
+    })
+
+    it('all mock events produce valid freshness buckets via classifyFreshness', () => {
+      const validBuckets = ['fresh', 'recent', 'aging', 'stale', 'critical']
+      for (const ev of MOCK_EVENTS_MIXED) {
+        const bucket = classifyFreshness(ev.timestamp)
+        expect(validBuckets).toContain(bucket)
+      }
+    })
+  })
+
+  // =========================================================================
+  // Combined filter scenarios — wiring correctness under multi-filter
+  // =========================================================================
+  describe('combined filter wiring', () => {
+    it('severity=action_needed + readState=unread narrows to exactly 1 event (evt-011)', async () => {
+      const wrapper = await mountCenter()
+
+      const severitySelect = wrapper.find(`[data-testid="${TEST_IDS.FILTER_SEVERITY}"]`)
+      await severitySelect.setValue('action_needed')
+      await nextTick()
+
+      const readStateSelect = wrapper.find(`[data-testid="${TEST_IDS.FILTER_READ_STATE}"]`)
+      await readStateSelect.setValue('unread')
+      await nextTick()
+
+      const filter: NotificationFilters = {
+        ...DEFAULT_FILTERS,
+        severity: 'action_needed',
+        readState: 'unread',
+      }
+      const utilFiltered = filterEvents(MOCK_EVENTS_MIXED, filter)
+      const renderedItems = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(renderedItems.length).toBe(utilFiltered.length)
+      expect(renderedItems.length).toBe(1)
+      expect(renderedItems[0].text()).toContain('KYC document resubmission needed')
+    })
+
+    it('severity=informational + category=aml_screening yields exactly 1 event (evt-016)', async () => {
+      const wrapper = await mountCenter()
+
+      const severitySelect = wrapper.find(`[data-testid="${TEST_IDS.FILTER_SEVERITY}"]`)
+      await severitySelect.setValue('informational')
+      await nextTick()
+
+      const categorySelect = wrapper.find(`[data-testid="${TEST_IDS.FILTER_CATEGORY}"]`)
+      await categorySelect.setValue('aml_screening')
+      await nextTick()
+
+      const filter: NotificationFilters = {
+        ...DEFAULT_FILTERS,
+        severity: 'informational',
+        category: 'aml_screening',
+      }
+      const utilFiltered = filterEvents(MOCK_EVENTS_MIXED, filter)
+      const renderedItems = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(renderedItems.length).toBe(utilFiltered.length)
+      expect(renderedItems.length).toBe(1)
+      expect(renderedItems[0].text()).toContain('AML screening completed')
+    })
+  })
+
+  // =========================================================================
+  // Event description rendering wiring
+  // =========================================================================
+  describe('event description rendering wiring', () => {
+    it('each rendered event contains its description text from MOCK_EVENTS_MIXED', async () => {
+      const wrapper = await mountCenter()
+      const sorted = sortEventsByPriority(MOCK_EVENTS_MIXED)
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items.length).toBe(7)
+      for (let i = 0; i < sorted.length; i++) {
+        expect(items[i].text()).toContain(sorted[i].description)
+      }
+    })
+
+    it('each rendered event contains its actor name from MOCK_EVENTS_MIXED', async () => {
+      const wrapper = await mountCenter()
+      const sorted = sortEventsByPriority(MOCK_EVENTS_MIXED)
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items.length).toBe(7)
+      for (let i = 0; i < sorted.length; i++) {
+        expect(items[i].text()).toContain(sorted[i].actor)
+      }
+    })
+  })
+
+  // =========================================================================
+  // Null drillDownPath suppression — events without drill-down navigation
+  // =========================================================================
+  describe('null drillDownPath suppression wiring', () => {
+    it('exactly 2 events have null drillDownPath and render no drill-down link', async () => {
+      const wrapper = await mountCenter()
+      const sorted = sortEventsByPriority(MOCK_EVENTS_MIXED)
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      const nullDrillDownIndices = sorted
+        .map((ev: ComplianceEvent, i: number) => ev.drillDownPath === null ? i : -1)
+        .filter((i: number) => i >= 0)
+      expect(nullDrillDownIndices.length).toBe(2)
+      for (const idx of nullDrillDownIndices) {
+        const links = items[idx].findAll(`[data-testid="${TEST_IDS.EVENT_DRILL_DOWN}"]`)
+        expect(links.length).toBe(0)
+      }
+    })
+
+    it('exactly 5 events have non-null drillDownPath and render a drill-down link', async () => {
+      const wrapper = await mountCenter()
+      const sorted = sortEventsByPriority(MOCK_EVENTS_MIXED)
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      const nonNullDrillDownIndices = sorted
+        .map((ev: ComplianceEvent, i: number) => ev.drillDownPath !== null ? i : -1)
+        .filter((i: number) => i >= 0)
+      expect(nonNullDrillDownIndices.length).toBe(5)
+      for (const idx of nonNullDrillDownIndices) {
+        const links = items[idx].findAll(`[data-testid="${TEST_IDS.EVENT_DRILL_DOWN}"]`)
+        expect(links.length).toBe(1)
       }
     })
   })

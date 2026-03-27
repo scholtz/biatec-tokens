@@ -4437,6 +4437,69 @@ await page.keyboard.press('Enter')
 - ❌ Use `force: true` to bypass pointer interception — masks real overlap issues
 - ✅ Use `focus()` + `keyboard.press('Enter')` for buttons near sticky headers
 
+### 7aj. E2E Assertion Quality Must Match Unit/Integration Assertion Quality From the First Commit (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 27, 2026 (PR #746 — 8+ review cycles) 🚨**
+
+**Violation**: Copilot delivered a Compliance Notification Center feature with 100/100/100/100% utility and view coverage, exact assertions in unit tests, exact assertions in integration tests — but the E2E layer shipped with 7+ imprecise assertions (`toBeGreaterThan(0)`, `toBeLessThan(N)`) on deterministic mock data. This contradiction required 8+ product owner review cycles to resolve, wasting significant engineering time on the exact same quality gaps that were already fixed in unit/integration layers.
+
+**What Went Wrong Across 8+ Cycles**:
+1. **Cycle 1-2**: E2E tests used imprecise assertions while unit/integration used exact values — nobody audited E2E at the same rigor
+2. **Cycle 3**: Conditional guards (`if (array.length > 0) { expect(...) }`) silently passed in logic tests — discovered only after PO rejection
+3. **Cycle 4**: Mock data had zero null-nextAction events — v-if false branch was never exercised (vacuous tests passed)
+4. **Cycle 5-6**: E2E refresh button failed due to sticky navbar pointer interception — tried `scrollBy`, `force:true` before finding keyboard activation
+5. **Cycle 7**: E2E `waitForTimeout(500)` replaced with semantic waits — arbitrary timing should have been caught in cycle 1
+6. **Cycle 8**: E2E still had 3 imprecise assertions missed in previous cycle's audit
+
+**Root Cause Meta-Pattern**: E2E tests are written LAST and receive the LEAST assertion-quality scrutiny. Developers assume "if unit tests are exact, E2E can be approximate" — but this is wrong because:
+- E2E tests verify the SAME deterministic mock data rendered in the browser
+- Imprecise E2E assertions mask real regressions just as badly as imprecise unit assertions
+- Each E2E quality gap requires a full CI cycle to fix (15+ minutes per iteration)
+- PO reviews ALL test layers with equal rigor — weak E2E blocks merge even if unit/integration is perfect
+
+**Correct Approach — MANDATORY quality parity across all test layers**:
+
+```bash
+# After writing E2E tests, run the SAME audit checks as unit/integration:
+
+# 1. Check for imprecise assertions on deterministic data (section 7ag):
+grep -n "toBeGreaterThan(0)\|toBeGreaterThanOrEqual(1)\|toBeLessThan(" e2e/my-feature.spec.ts
+# Must return 0 results. If data is deterministic, use toBe(N).
+
+# 2. Check for conditional guards around assertions (section 7ah):
+grep -n "if (" e2e/my-feature.spec.ts | grep -v "// skip\|test.skip\|process.env"
+# Any conditional wrapping expect() calls is WRONG.
+
+# 3. Check for arbitrary waits (section 7i):
+grep -n "waitForTimeout" e2e/my-feature.spec.ts
+# Replace with semantic waits: toHaveCount(), toBeAttached(), toBeVisible().
+
+# 4. Check for withAuth instead of loginWithCredentials (section 7ae):
+grep -n "withAuth" e2e/my-feature.spec.ts
+# Must use loginWithCredentials() (Tier 1 standard).
+
+# 5. Verify mock data exercises all template v-if branches (section 7af):
+# For each v-if="event.prop" in the template, verify mock data has both truthy and falsy values.
+```
+
+**Pre-Commit E2E Quality Checklist** (MANDATORY — run BEFORE first E2E commit):
+- [ ] Zero imprecise assertions on deterministic data (all counts use exact `toBe(N)`)
+- [ ] Zero conditional guards around assertions
+- [ ] Zero arbitrary `waitForTimeout()` calls (use semantic waits)
+- [ ] Uses `loginWithCredentials()` not `withAuth()` for auth setup
+- [ ] Mock data exercises both branches of every template `v-if`
+- [ ] Keyboard activation for buttons near sticky headers (section 7ai)
+- [ ] All `textContent()` / `click()` calls have explicit `{ timeout }` in test.setTimeout tests
+- [ ] Word-boundary `\b` on `Pera` in wallet-pattern assertions (section 7e)
+
+**Why This Pattern Repeats**: Developers treat E2E as "smoke tests" where approximate assertions are acceptable. In a product with deterministic mock data (no live API, no randomization), E2E assertions MUST be as precise as unit assertions because the rendered output is fully predictable. The 8-cycle fix history for PR #746 proves this conclusively.
+
+**Never Again**:
+- ❌ Ship E2E tests with weaker assertion quality than unit/integration tests
+- ❌ Assume "E2E is just smoke testing" — it must be as rigorous as unit tests when data is deterministic
+- ❌ Fix assertion quality in unit tests without auditing E2E for the same pattern
+- ❌ Add new E2E tests without running the pre-commit quality checklist above
+
 ---
 
 ## Additional Notes
