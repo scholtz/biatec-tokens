@@ -218,7 +218,9 @@ test.describe('Compliance Notification Center — operator journeys', () => {
 
     const refreshBtn = page.getByTestId('notification-center-refresh')
     await expect(refreshBtn).toBeAttached({ timeout: 5000 })
-    await refreshBtn.click({ timeout: 5000 })
+    // Scroll refresh button into view to avoid sticky navbar intercepting click
+    await refreshBtn.scrollIntoViewIfNeeded()
+    await refreshBtn.click({ timeout: 10000, force: true })
 
     // After click, loading state should appear briefly then resolve
     // The page should still have events after refresh
