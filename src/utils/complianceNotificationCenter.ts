@@ -504,6 +504,7 @@ export function categoryIconName(category: ComplianceEventCategory): string {
 export const NOTIFICATION_CENTER_TEST_IDS = {
   ROOT: 'notification-center-root',
   HEADING: 'notification-center-heading',
+  DESCRIPTION: 'notification-center-description',
   FEED_HEALTH_BANNER: 'notification-center-feed-health',
   QUEUE_SUMMARY: 'notification-center-queue-summary',
   QUEUE_TOTAL: 'notification-center-queue-total',

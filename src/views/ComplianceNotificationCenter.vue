@@ -34,7 +34,10 @@
                 >
                   Compliance Notification Center
                 </h1>
-                <p class="text-gray-300 text-sm mt-1">
+                <p
+                  class="text-gray-300 text-sm mt-1"
+                  :data-testid="TEST_IDS.DESCRIPTION"
+                >
                   Prioritized compliance events, case timelines, and operator guidance.
                   Monitor investor onboarding, sanctions escalations, evidence readiness,
                   and delivery status in one workspace.

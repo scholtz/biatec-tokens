@@ -42,10 +42,10 @@ test.describe('Compliance Notification Center — operator journeys', () => {
     const eventList = page.getByTestId('notification-center-event-list')
     await expect(eventList).toBeAttached({ timeout: 30000 })
 
-    // First event should be the most severe (blocked)
+    // MOCK_EVENTS_MIXED has exactly 7 events
     const items = page.getByTestId('notification-center-event-item')
     const count = await items.count()
-    expect(count).toBeGreaterThan(0)
+    expect(count).toBe(7)
 
     // First severity badge should indicate the most urgent status
     const firstBadge = page.getByTestId('notification-center-severity-badge').first()
@@ -65,19 +65,18 @@ test.describe('Compliance Notification Center — operator journeys', () => {
     const eventList = page.getByTestId('notification-center-event-list')
     await expect(eventList).toBeAttached({ timeout: 30000 })
 
-    // Get initial count
+    // Get initial count — MOCK_EVENTS_MIXED has exactly 7 events
     const initialCount = await page.getByTestId('notification-center-event-item').count()
-    expect(initialCount).toBeGreaterThan(1)
+    expect(initialCount).toBe(7)
 
     // Filter by blocked severity
     const severityFilter = page.getByTestId('notification-center-filter-severity')
     await severityFilter.selectOption('blocked', { timeout: 5000 })
     await page.waitForTimeout(500)
 
-    // Should show fewer items
+    // MOCK_EVENTS_MIXED has exactly 1 blocked event (evt-010)
     const filteredCount = await page.getByTestId('notification-center-event-item').count()
-    expect(filteredCount).toBeLessThan(initialCount)
-    expect(filteredCount).toBeGreaterThan(0)
+    expect(filteredCount).toBe(1)
   })
 
   test('shows empty state when filters match nothing', async ({ page }) => {
@@ -105,13 +104,15 @@ test.describe('Compliance Notification Center — operator journeys', () => {
     const timeline = page.getByTestId('notification-center-timeline-root')
     await expect(timeline).toBeAttached({ timeout: 30000 })
 
+    // MOCK_TIMELINE_ENTRIES has 4 entries across 2 dates (2026-03-27, 2026-03-26) → 2 groups
     const groups = page.getByTestId('notification-center-timeline-group')
     const groupCount = await groups.count()
-    expect(groupCount).toBeGreaterThan(0)
+    expect(groupCount).toBe(2)
 
+    // Exactly 4 timeline entries
     const entries = page.getByTestId('notification-center-timeline-entry')
     const entryCount = await entries.count()
-    expect(entryCount).toBeGreaterThan(0)
+    expect(entryCount).toBe(4)
   })
 
   // ===========================================================================
@@ -124,11 +125,11 @@ test.describe('Compliance Notification Center — operator journeys', () => {
     const summary = page.getByTestId('notification-center-queue-summary')
     await expect(summary).toBeAttached({ timeout: 30000 })
 
-    // Verify key queue metrics are present
+    // Verify key queue metrics — MOCK_EVENTS_MIXED has 7 total events
     const total = page.getByTestId('notification-center-queue-total')
     await expect(total).toBeAttached({ timeout: 5000 })
     const totalText = await total.locator('dd').first().textContent({ timeout: 5000 })
-    expect(Number(totalText?.trim())).toBeGreaterThan(0)
+    expect(Number(totalText?.trim())).toBe(7)
 
     const blocked = page.getByTestId('notification-center-queue-blocked')
     await expect(blocked).toBeAttached({ timeout: 5000 })
@@ -158,9 +159,9 @@ test.describe('Compliance Notification Center — operator journeys', () => {
     await expect(empty).toBeAttached({ timeout: 5000 })
 
     const bodyText = await empty.textContent({ timeout: 5000 })
-    // Fail-closed messaging: should guide user, not suggest everything is fine
-    expect(bodyText).toBeTruthy()
-    expect(bodyText!.length).toBeGreaterThan(20)
+    // Fail-closed messaging: must guide operator with specific copy, not suggest everything is fine
+    expect(bodyText).toContain('No matching events')
+    expect(bodyText).toContain('Try adjusting filters')
   })
 
   // ===========================================================================
@@ -173,10 +174,15 @@ test.describe('Compliance Notification Center — operator journeys', () => {
     const drillDown = page.getByTestId('notification-center-drill-down').first()
     await expect(drillDown).toBeAttached({ timeout: 30000 })
 
-    // Verify link has an href attribute pointing to a compliance surface
+    // First drill-down (blocked event evt-010) points to operations surface
     const href = await drillDown.getAttribute('href', { timeout: 5000 })
-    expect(href).toBeTruthy()
-    expect(href).toContain('/compliance/')
+    expect(href).toBe('/compliance/operations')
+
+    // Count drill-down links — 5 events have non-null drillDownPath
+    // (evt-010→operations, evt-011→onboarding, evt-013→release, evt-014→onboarding, evt-015→onboarding)
+    const allDrillDowns = page.getByTestId('notification-center-drill-down')
+    const drillDownCount = await allDrillDowns.count()
+    expect(drillDownCount).toBe(5)
   })
 
   // ===========================================================================
@@ -244,14 +250,95 @@ test.describe('Compliance Notification Center — operator journeys', () => {
     await page.goto('/compliance/notifications', { timeout: 15000 })
     await page.waitForLoadState('load', { timeout: 10000 })
 
-    // Page should render with either a healthy state (no banner) or
-    // a feed health banner with operator-relevant status text
-    const bodyText = await page.locator('body').textContent({ timeout: 10000 }).catch(() => '')
-    // Verify the notification center contains compliance-relevant content (not wallet UI)
-    const hasNotificationContent =
-      bodyText.includes('Notification Center') ||
-      bodyText.includes('Compliance') ||
-      bodyText.includes('events')
-    expect(hasNotificationContent).toBe(true)
+    // Wait for page to render
+    const heading = page.getByTestId('notification-center-heading')
+    await expect(heading).toBeAttached({ timeout: 30000 })
+
+    // Verify the page contains the expected heading and description text
+    const headingText = await heading.textContent({ timeout: 5000 })
+    expect(headingText).toContain('Compliance Notification Center')
+
+    const description = page.getByTestId('notification-center-description')
+    await expect(description).toBeAttached({ timeout: 5000 })
+    const descText = await description.textContent({ timeout: 5000 })
+    expect(descText).toContain('compliance events')
+
+    // Verify no wallet connector UI in the page content
+    const nav = page.getByRole('navigation').first()
+    const navText = await nav.textContent({ timeout: 5000 }).catch(() => '')
+    expect(navText).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
+  })
+
+  // ===========================================================================
+  // Queue card value accuracy
+  // ===========================================================================
+  test('queue blocked card shows exact count from mock data', async ({ page }) => {
+    await page.goto('/compliance/notifications', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    const blocked = page.getByTestId('notification-center-queue-blocked')
+    await expect(blocked).toBeAttached({ timeout: 30000 })
+    // MOCK_EVENTS_MIXED has exactly 1 blocked event (evt-010)
+    const blockedText = await blocked.locator('dd').first().textContent({ timeout: 5000 })
+    expect(Number(blockedText?.trim())).toBe(1)
+  })
+
+  test('queue unread card shows exact count from mock data', async ({ page }) => {
+    await page.goto('/compliance/notifications', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    const unread = page.getByTestId('notification-center-queue-unread')
+    await expect(unread).toBeAttached({ timeout: 30000 })
+    // MOCK_EVENTS_MIXED has exactly 3 unread events (evt-010, evt-011, evt-012)
+    const unreadText = await unread.locator('dd').first().textContent({ timeout: 5000 })
+    expect(Number(unreadText?.trim())).toBe(3)
+  })
+
+  // ===========================================================================
+  // Launch-blocking event rendering
+  // ===========================================================================
+  test('launch-blocking events display issuance-blocking badge', async ({ page }) => {
+    await page.goto('/compliance/notifications', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    await expect(page.getByTestId('notification-center-event-list')).toBeAttached({ timeout: 30000 })
+
+    // MOCK_EVENTS_MIXED has exactly 2 launch-blocking events (evt-010, evt-013)
+    const launchBlocking = page.getByTestId('notification-center-launch-blocking')
+    const count = await launchBlocking.count()
+    expect(count).toBe(2)
+
+    // First launch-blocking badge text
+    const text = await launchBlocking.first().textContent({ timeout: 5000 })
+    expect(text).toContain('Blocks Issuance')
+  })
+
+  // ===========================================================================
+  // First event title accuracy
+  // ===========================================================================
+  test('first event title matches highest-severity mock event', async ({ page }) => {
+    await page.goto('/compliance/notifications', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    const firstItem = page.getByTestId('notification-center-event-item').first()
+    await expect(firstItem).toBeAttached({ timeout: 30000 })
+    // evt-010 is blocked (highest severity) → sorted first
+    const title = await firstItem.textContent({ timeout: 5000 })
+    expect(title).toContain('Sanctions screening escalation opened')
+  })
+
+  // ===========================================================================
+  // Severity badge count matches event count
+  // ===========================================================================
+  test('each event has exactly one severity badge', async ({ page }) => {
+    await page.goto('/compliance/notifications', { timeout: 15000 })
+    await page.waitForLoadState('load', { timeout: 10000 })
+
+    await expect(page.getByTestId('notification-center-event-list')).toBeAttached({ timeout: 30000 })
+
+    // 7 events → 7 severity badges
+    const badges = page.getByTestId('notification-center-severity-badge')
+    const badgeCount = await badges.count()
+    expect(badgeCount).toBe(7)
   })
 })
