@@ -387,6 +387,64 @@ describe('complianceNotificationCenter', () => {
       const groups = groupTimelineByDate([], NOW)
       expect(groups.length).toBe(0)
     })
+
+    it('labels dates older than yesterday with month and day format', () => {
+      // Create entries for a date 5 days ago (neither today nor yesterday)
+      const fiveDaysAgo = new Date(NOW.getTime() - 5 * 86_400_000)
+      const oldEntry = {
+        id: 'tl-old-001',
+        timestamp: fiveDaysAgo.toISOString(),
+        actor: 'test@biatec.io',
+        actorType: 'operator' as const,
+        transition: 'Old event',
+        description: 'An old timeline event for date label testing.',
+        nextAction: null,
+        category: 'system' as const,
+        severity: 'informational' as const,
+      }
+      const groups = groupTimelineByDate([oldEntry], NOW)
+      expect(groups.length).toBe(1)
+      // Should use "Mon DD" format (e.g., "Mar 22")
+      expect(groups[0].dateLabel).not.toBe('Today')
+      expect(groups[0].dateLabel).not.toBe('Yesterday')
+      expect(groups[0].dateLabel).toMatch(/\w{3}\s+\d{1,2}/)
+    })
+
+    it('groups entries from multiple different older dates', () => {
+      const threeDaysAgo = new Date(NOW.getTime() - 3 * 86_400_000)
+      const fiveDaysAgo = new Date(NOW.getTime() - 5 * 86_400_000)
+      const entries = [
+        {
+          id: 'tl-multi-001',
+          timestamp: threeDaysAgo.toISOString(),
+          actor: 'test1@biatec.io',
+          actorType: 'operator' as const,
+          transition: 'Event A',
+          description: 'Three days ago.',
+          nextAction: null,
+          category: 'kyc_review' as const,
+          severity: 'action_needed' as const,
+        },
+        {
+          id: 'tl-multi-002',
+          timestamp: fiveDaysAgo.toISOString(),
+          actor: 'test2@biatec.io',
+          actorType: 'system' as const,
+          transition: 'Event B',
+          description: 'Five days ago.',
+          nextAction: null,
+          category: 'aml_screening' as const,
+          severity: 'informational' as const,
+        },
+      ]
+      const groups = groupTimelineByDate(entries, NOW)
+      expect(groups.length).toBe(2)
+      // Both should have formatted date labels (not Today or Yesterday)
+      for (const g of groups) {
+        expect(g.dateLabel).not.toBe('Today')
+        expect(g.dateLabel).not.toBe('Yesterday')
+      }
+    })
   })
 
   // =========================================================================
@@ -605,6 +663,63 @@ describe('complianceNotificationCenter', () => {
       expect(DEFAULT_FILTERS.severity).toBe('all')
       expect(DEFAULT_FILTERS.freshness).toBe('all')
       expect(DEFAULT_FILTERS.readState).toBe('all')
+    })
+  })
+
+  // =========================================================================
+  // Integration: state derivation edge cases
+  // =========================================================================
+  describe('state derivation edge cases', () => {
+    it('derives stale feed health for refresh 10 minutes ago', () => {
+      const staleRefresh = new Date(NOW.getTime() - 10 * 60_000).toISOString()
+      const state = deriveNotificationCenterState(MOCK_EVENTS_HEALTHY, staleRefresh, NOW)
+      expect(state.feedHealth).toBe('stale')
+      expect(state.feedHealthMessage).toContain('outdated')
+    })
+
+    it('derives degraded feed health for refresh 60 minutes ago', () => {
+      const degradedRefresh = new Date(NOW.getTime() - 60 * 60_000).toISOString()
+      const state = deriveNotificationCenterState(MOCK_EVENTS_HEALTHY, degradedRefresh, NOW)
+      expect(state.feedHealth).toBe('degraded')
+      expect(state.feedHealthMessage).toContain('limited-data')
+    })
+
+    it('derives unavailable feed health for refresh 3 hours ago', () => {
+      const oldRefresh = new Date(NOW.getTime() - 3 * 3_600_000).toISOString()
+      const state = deriveNotificationCenterState(MOCK_EVENTS_HEALTHY, oldRefresh, NOW)
+      expect(state.feedHealth).toBe('unavailable')
+      expect(state.feedHealthMessage).toContain('unavailable')
+    })
+
+    it('queue summary counts stale events based on timestamp age', () => {
+      const summary = deriveQueueSummary(MOCK_EVENTS_MIXED, NOW)
+      // evt-013 from 2026-03-20 is >7 days old = critical freshness, counted as stale
+      expect(summary.staleCount).toBeGreaterThanOrEqual(1)
+    })
+
+    it('queue summary tracks oldest unresolved event age in days', () => {
+      const summary = deriveQueueSummary(MOCK_EVENTS_MIXED, NOW)
+      // evt-013 from 2026-03-20 = 7 days ago → oldestUnresolvedDays >= 7
+      expect(summary.oldestUnresolvedDays).toBeGreaterThanOrEqual(7)
+    })
+
+    it('filterEvents with category=all and severity=all returns all events', () => {
+      const all = filterEvents(MOCK_EVENTS_MIXED, DEFAULT_FILTERS, NOW)
+      expect(all.length).toBe(MOCK_EVENTS_MIXED.length)
+    })
+
+    it('filterEvents with readState=read returns only read events', () => {
+      const readFilter: NotificationFilters = { ...DEFAULT_FILTERS, readState: 'read' }
+      const result = filterEvents(MOCK_EVENTS_MIXED, readFilter, NOW)
+      const expected = MOCK_EVENTS_MIXED.filter(e => e.readState === 'read').length
+      expect(result.length).toBe(expected)
+    })
+
+    it('filterEvents with readState=unread returns only unread events', () => {
+      const unreadFilter: NotificationFilters = { ...DEFAULT_FILTERS, readState: 'unread' }
+      const result = filterEvents(MOCK_EVENTS_MIXED, unreadFilter, NOW)
+      const expected = MOCK_EVENTS_MIXED.filter(e => e.readState === 'unread').length
+      expect(result.length).toBe(expected)
     })
   })
 })
