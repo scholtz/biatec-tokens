@@ -440,6 +440,11 @@ test.describe('Compliance Notification Center — operator journeys', () => {
 
     // Semantic wait: exactly 1 event with critical freshness
     await expect(page.getByTestId('notification-center-event-item')).toHaveCount(1, { timeout: 5000 })
+
+    // Verify it's the expected event (evt-013: Release evidence freshness expired)
+    const item = page.getByTestId('notification-center-event-item').first()
+    const text = await item.textContent({ timeout: 5000 })
+    expect(text).toContain('Release evidence freshness expired')
   })
 
   // ===========================================================================
@@ -457,6 +462,11 @@ test.describe('Compliance Notification Center — operator journeys', () => {
 
     // Semantic wait: exactly 3 unread events
     await expect(page.getByTestId('notification-center-event-item')).toHaveCount(3, { timeout: 5000 })
+
+    // Verify the first unread event is the highest-severity one (evt-010: Sanctions screening)
+    const firstItem = page.getByTestId('notification-center-event-item').first()
+    const text = await firstItem.textContent({ timeout: 5000 })
+    expect(text).toContain('Sanctions screening escalation opened')
   })
 
   // ===========================================================================
@@ -505,5 +515,10 @@ test.describe('Compliance Notification Center — operator journeys', () => {
     const categoryFilter = page.getByTestId('notification-center-filter-category')
     await categoryFilter.selectOption('kyc_review', { timeout: 5000 })
     await expect(page.getByTestId('notification-center-event-item')).toHaveCount(1, { timeout: 5000 })
+
+    // Verify the remaining event is evt-011 (KYC document resubmission needed)
+    const item = page.getByTestId('notification-center-event-item').first()
+    const text = await item.textContent({ timeout: 5000 })
+    expect(text).toContain('KYC document resubmission needed')
   })
 })
