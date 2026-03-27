@@ -7,7 +7,6 @@
  */
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
-import { createRouter, createMemoryHistory } from 'vue-router'
 import { nextTick } from 'vue'
 import ComplianceNotificationCenter from '../ComplianceNotificationCenter.vue'
 import {
@@ -16,21 +15,12 @@ import {
 } from '../../utils/complianceNotificationCenter'
 
 // ---------------------------------------------------------------------------
-// Router mock
+// Stubs
 // ---------------------------------------------------------------------------
 
-function makeRouter() {
-  return createRouter({
-    history: createMemoryHistory(),
-    routes: [
-      { path: '/', component: { template: '<div>Home</div>' } },
-      { path: '/compliance/notifications', component: ComplianceNotificationCenter },
-      { path: '/compliance/onboarding', component: { template: '<div>Onboarding</div>' } },
-      { path: '/compliance/operations', component: { template: '<div>Operations</div>' } },
-      { path: '/compliance/evidence', component: { template: '<div>Evidence</div>' } },
-      { path: '/compliance/release', component: { template: '<div>Release</div>' } },
-    ],
-  })
+const RouterLinkStub = {
+  template: '<a :href="to"><slot /></a>',
+  props: ['to'],
 }
 
 const MainLayoutStub = { template: '<div><slot /></div>' }
@@ -38,12 +28,9 @@ const iconStub = { template: '<svg />' }
 
 async function mountCenter(): Promise<VueWrapper> {
   vi.useFakeTimers()
-  const router = makeRouter()
-  router.push('/compliance/notifications')
-  await router.isReady()
   const wrapper = mount(ComplianceNotificationCenter, {
     global: {
-      plugins: [router],
+      components: { RouterLink: RouterLinkStub },
       stubs: {
         MainLayout: MainLayoutStub,
         BellAlertIcon: iconStub,
@@ -200,12 +187,9 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
   describe('computed properties', () => {
     it('formattedRefreshedAt returns "Not available" when lastRefreshedAt is null', async () => {
       vi.useFakeTimers()
-      const router = makeRouter()
-      router.push('/compliance/notifications')
-      await router.isReady()
       const wrapper = mount(ComplianceNotificationCenter, {
         global: {
-          plugins: [router],
+          components: { RouterLink: RouterLinkStub },
           stubs: {
             MainLayout: MainLayoutStub,
             BellAlertIcon: iconStub,
