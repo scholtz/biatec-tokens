@@ -410,6 +410,30 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       // These events have nextAction values
       expect(text).toContain('Review sanctions match')
     })
+
+    it('event items with null nextAction do not have indigo next-action paragraph', async () => {
+      const wrapper = await mountCenter()
+      const allItems = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      // Find items that DON'T have the "→" indicator
+      const itemsWithoutNextAction = allItems.filter(item => !item.text().includes('→'))
+      expect(itemsWithoutNextAction.length).toBe(MOCK_EVENTS_MIXED.filter(e => e.nextAction === null).length)
+      // Each of these should NOT have the indigo next-action paragraph in DOM
+      for (const item of itemsWithoutNextAction) {
+        const nextActionParagraph = item.findAll('p').filter(p => p.classes().includes('text-indigo-300'))
+        expect(nextActionParagraph.length).toBe(0)
+      }
+    })
+
+    it('event items with nextAction contain the indigo next-action paragraph', async () => {
+      const wrapper = await mountCenter()
+      const allItems = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      const itemsWithNextAction = allItems.filter(item => item.text().includes('→'))
+      expect(itemsWithNextAction.length).toBeGreaterThan(0)
+      for (const item of itemsWithNextAction) {
+        const nextActionParagraphs = item.findAll('p').filter(p => p.classes().includes('text-indigo-300'))
+        expect(nextActionParagraphs.length).toBe(1)
+      }
+    })
   })
 
   // =========================================================================
@@ -748,6 +772,202 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       if (links.length > 0 && eventsWithPath.length > 0) {
         const firstLink = links[0]
         expect(firstLink.attributes('href')).toBe(eventsWithPath[0].drillDownPath)
+      }
+    })
+  })
+
+  // =========================================================================
+  // Additional filter coverage — all severity levels
+  // =========================================================================
+  describe('severity filter — all levels', () => {
+    const severityLevels = ['blocked', 'action_needed', 'waiting_on_provider', 'review_complete', 'informational'] as const
+
+    for (const sev of severityLevels) {
+      it(`filters by severity="${sev}" correctly`, async () => {
+        const wrapper = await mountCenter()
+        const select = wrapper.find(`[data-testid="${TEST_IDS.FILTER_SEVERITY}"]`)
+        await select.setValue(sev)
+        await nextTick()
+        const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+        const expected = MOCK_EVENTS_MIXED.filter(e => e.severity === sev).length
+        expect(items.length).toBe(expected)
+      })
+    }
+  })
+
+  // =========================================================================
+  // Category filter — individual categories
+  // =========================================================================
+  describe('category filter — individual categories', () => {
+    it('filters by category="kyc_review"', async () => {
+      const wrapper = await mountCenter()
+      const select = wrapper.find(`[data-testid="${TEST_IDS.FILTER_CATEGORY}"]`)
+      await select.setValue('kyc_review')
+      await nextTick()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      const expected = MOCK_EVENTS_MIXED.filter(e => e.category === 'kyc_review').length
+      expect(items.length).toBe(expected)
+    })
+
+    it('filters by category="aml_screening"', async () => {
+      const wrapper = await mountCenter()
+      const select = wrapper.find(`[data-testid="${TEST_IDS.FILTER_CATEGORY}"]`)
+      await select.setValue('aml_screening')
+      await nextTick()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      const expected = MOCK_EVENTS_MIXED.filter(e => e.category === 'aml_screening').length
+      expect(items.length).toBe(expected)
+    })
+
+    it('filters by category="evidence_export"', async () => {
+      const wrapper = await mountCenter()
+      const select = wrapper.find(`[data-testid="${TEST_IDS.FILTER_CATEGORY}"]`)
+      await select.setValue('evidence_export')
+      await nextTick()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      const expected = MOCK_EVENTS_MIXED.filter(e => e.category === 'evidence_export').length
+      expect(items.length).toBe(expected)
+    })
+  })
+
+  // =========================================================================
+  // Combined filter reset — verify filter reset restores all events
+  // =========================================================================
+  describe('filter reset behavior', () => {
+    it('restoring severity to "all" after filtering shows all events', async () => {
+      const wrapper = await mountCenter()
+      const select = wrapper.find(`[data-testid="${TEST_IDS.FILTER_SEVERITY}"]`)
+      // Filter to blocked
+      await select.setValue('blocked')
+      await nextTick()
+      let items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items.length).toBeLessThan(MOCK_EVENTS_MIXED.length)
+      // Reset to all
+      await select.setValue('all')
+      await nextTick()
+      items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items.length).toBe(MOCK_EVENTS_MIXED.length)
+    })
+
+    it('restoring category to "all" after filtering shows all events', async () => {
+      const wrapper = await mountCenter()
+      const select = wrapper.find(`[data-testid="${TEST_IDS.FILTER_CATEGORY}"]`)
+      await select.setValue('kyc_review')
+      await nextTick()
+      let items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items.length).toBeLessThan(MOCK_EVENTS_MIXED.length)
+      await select.setValue('all')
+      await nextTick()
+      items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items.length).toBe(MOCK_EVENTS_MIXED.length)
+    })
+
+    it('restoring read-state to "all" after filtering shows all events', async () => {
+      const wrapper = await mountCenter()
+      const select = wrapper.find(`[data-testid="${TEST_IDS.FILTER_READ_STATE}"]`)
+      await select.setValue('unread')
+      await nextTick()
+      let items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      const unreadOnly = MOCK_EVENTS_MIXED.filter(e => e.readState === 'unread').length
+      expect(items.length).toBe(unreadOnly)
+      await select.setValue('all')
+      await nextTick()
+      items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items.length).toBe(MOCK_EVENTS_MIXED.length)
+    })
+  })
+
+  // =========================================================================
+  // Queue summary card label text verification
+  // =========================================================================
+  describe('queue summary card labels', () => {
+    it('renders correct label text for each queue card', async () => {
+      const wrapper = await mountCenter()
+      expect(wrapper.find(`[data-testid="${TEST_IDS.QUEUE_TOTAL}"]`).text()).toContain('Total Events')
+      expect(wrapper.find(`[data-testid="${TEST_IDS.QUEUE_UNREAD}"]`).text()).toContain('Unread')
+      expect(wrapper.find(`[data-testid="${TEST_IDS.QUEUE_BLOCKED}"]`).text()).toContain('Blocked')
+      expect(wrapper.find(`[data-testid="${TEST_IDS.QUEUE_ACTION_NEEDED}"]`).text()).toContain('Action Needed')
+      expect(wrapper.find(`[data-testid="${TEST_IDS.QUEUE_WAITING}"]`).text()).toContain('Waiting on Provider')
+      expect(wrapper.find(`[data-testid="${TEST_IDS.QUEUE_STALE}"]`).text()).toContain('Stale')
+    })
+  })
+
+  // =========================================================================
+  // Page heading and description
+  // =========================================================================
+  describe('page heading and description', () => {
+    it('renders the page heading with "Compliance Notification Center"', async () => {
+      const wrapper = await mountCenter()
+      const heading = wrapper.find(`[data-testid="${TEST_IDS.HEADING}"]`)
+      expect(heading.exists()).toBe(true)
+      expect(heading.text()).toBe('Compliance Notification Center')
+    })
+
+    it('renders operator-facing description text', async () => {
+      const wrapper = await mountCenter()
+      expect(wrapper.text()).toContain('Prioritized compliance events')
+      expect(wrapper.text()).toContain('operator guidance')
+    })
+
+    it('renders last-refreshed timestamp', async () => {
+      const wrapper = await mountCenter()
+      const lastUpdated = wrapper.find(`[data-testid="${TEST_IDS.LAST_UPDATED}"]`)
+      expect(lastUpdated.exists()).toBe(true)
+      expect(lastUpdated.text()).toContain('Last refreshed')
+    })
+  })
+
+  // =========================================================================
+  // Triple-filter combination test
+  // =========================================================================
+  describe('triple filter combination', () => {
+    it('combines severity + category + read-state filters', async () => {
+      const wrapper = await mountCenter()
+      const sevSelect = wrapper.find(`[data-testid="${TEST_IDS.FILTER_SEVERITY}"]`)
+      const catSelect = wrapper.find(`[data-testid="${TEST_IDS.FILTER_CATEGORY}"]`)
+      const readSelect = wrapper.find(`[data-testid="${TEST_IDS.FILTER_READ_STATE}"]`)
+      await sevSelect.setValue('action_needed')
+      await catSelect.setValue('kyc_review')
+      await readSelect.setValue('unread')
+      await nextTick()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      const expected = MOCK_EVENTS_MIXED.filter(
+        e => e.severity === 'action_needed' && e.category === 'kyc_review' && e.readState === 'unread',
+      ).length
+      expect(items.length).toBe(expected)
+    })
+  })
+
+  // =========================================================================
+  // Timeline sidebar landmark and heading
+  // =========================================================================
+  describe('timeline sidebar', () => {
+    it('timeline root section exists with data-testid', async () => {
+      const wrapper = await mountCenter()
+      const timelineRoot = wrapper.find(`[data-testid="${TEST_IDS.TIMELINE_ROOT}"]`)
+      expect(timelineRoot.exists()).toBe(true)
+    })
+
+    it('timeline section has "Event Timeline" heading', async () => {
+      const wrapper = await mountCenter()
+      expect(wrapper.text()).toContain('Event Timeline')
+    })
+  })
+
+  // =========================================================================
+  // Priority ordering — blocked events first
+  // =========================================================================
+  describe('event priority ordering', () => {
+    it('renders blocked events before informational events', async () => {
+      const wrapper = await mountCenter()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items.length).toBe(MOCK_EVENTS_MIXED.length)
+      // First event should be one of the highest-severity events
+      const firstItem = items[0]
+      const blockedEvents = MOCK_EVENTS_MIXED.filter(e => e.severity === 'blocked')
+      if (blockedEvents.length > 0) {
+        // The first rendered item should contain a blocked event's title
+        expect(firstItem.text()).toContain(blockedEvents[0].title)
       }
     })
   })

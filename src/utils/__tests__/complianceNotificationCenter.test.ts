@@ -541,6 +541,11 @@ describe('complianceNotificationCenter', () => {
       expect(formatRelativeTime(threeHrsAgo, NOW)).toBe('3 hours ago')
     })
 
+    it('returns singular "1 hour ago" for exactly 1 hour', () => {
+      const oneHrAgo = new Date(NOW.getTime() - 3_600_000).toISOString()
+      expect(formatRelativeTime(oneHrAgo, NOW)).toBe('1 hour ago')
+    })
+
     it('returns Yesterday for 1-2 days ago', () => {
       const oneDayAgo = new Date(NOW.getTime() - 30 * 3_600_000).toISOString()
       expect(formatRelativeTime(oneDayAgo, NOW)).toBe('Yesterday')
@@ -551,10 +556,21 @@ describe('complianceNotificationCenter', () => {
       expect(formatRelativeTime(fourDaysAgo, NOW)).toBe('4 days ago')
     })
 
+    it('returns singular "2 days ago" for exactly 2 days', () => {
+      const twoDaysAgo = new Date(NOW.getTime() - 2 * 86_400_000).toISOString()
+      expect(formatRelativeTime(twoDaysAgo, NOW)).toBe('2 days ago')
+    })
+
     it('returns date string for > 7 days', () => {
       const tenDaysAgo = new Date(NOW.getTime() - 10 * 86_400_000).toISOString()
       const result = formatRelativeTime(tenDaysAgo, NOW)
       expect(result).toMatch(/\w+ \d+/) // e.g. "Mar 17"
+    })
+
+    it('returns date string for exactly 7 days', () => {
+      const sevenDaysAgo = new Date(NOW.getTime() - 7 * 86_400_000).toISOString()
+      const result = formatRelativeTime(sevenDaysAgo, NOW)
+      expect(result).toMatch(/\w+ \d+/) // e.g. "Mar 20"
     })
 
     it('returns Unknown for invalid timestamp', () => {
@@ -564,6 +580,14 @@ describe('complianceNotificationCenter', () => {
     it('returns "Just now" for future timestamp', () => {
       const future = new Date(NOW.getTime() + 60_000).toISOString()
       expect(formatRelativeTime(future, NOW)).toBe('Just now')
+    })
+
+    it('returns "Just now" for timestamp exactly now', () => {
+      expect(formatRelativeTime(NOW.toISOString(), NOW)).toBe('Just now')
+    })
+
+    it('returns Unknown for empty string', () => {
+      expect(formatRelativeTime('', NOW)).toBe('Unknown')
     })
   })
 
@@ -792,6 +816,137 @@ describe('complianceNotificationCenter', () => {
       const result = filterEvents(MOCK_EVENTS_MIXED, unreadFilter, NOW)
       const expected = MOCK_EVENTS_MIXED.filter(e => e.readState === 'unread').length
       expect(result.length).toBe(expected)
+    })
+
+    it('filterEvents with freshness=fresh returns only fresh events', () => {
+      const freshFilter: NotificationFilters = { ...DEFAULT_FILTERS, freshness: 'fresh' }
+      const result = filterEvents(MOCK_EVENTS_MIXED, freshFilter, NOW)
+      // Fresh events are those with timestamps < 1 hour from NOW
+      for (const ev of result) {
+        const ageMs = NOW.getTime() - new Date(ev.timestamp).getTime()
+        expect(ageMs).toBeLessThan(3_600_000)
+      }
+    })
+
+    it('filterEvents with freshness=critical returns only critical-age events', () => {
+      const criticalFilter: NotificationFilters = { ...DEFAULT_FILTERS, freshness: 'critical' }
+      const result = filterEvents(MOCK_EVENTS_MIXED, criticalFilter, NOW)
+      // Critical events are those with timestamps >= 7 days old
+      for (const ev of result) {
+        const ageMs = NOW.getTime() - new Date(ev.timestamp).getTime()
+        expect(ageMs).toBeGreaterThanOrEqual(7 * 86_400_000)
+      }
+    })
+
+    it('filterEvents with combined severity and category', () => {
+      const combo: NotificationFilters = { ...DEFAULT_FILTERS, severity: 'blocked', category: 'sanctions_escalation' }
+      const result = filterEvents(MOCK_EVENTS_MIXED, combo, NOW)
+      const expected = MOCK_EVENTS_MIXED.filter(e => e.severity === 'blocked' && e.category === 'sanctions_escalation').length
+      expect(result.length).toBe(expected)
+    })
+
+    it('sortEventsByPriority sorts by severity first, then by timestamp', () => {
+      const sorted = sortEventsByPriority(MOCK_EVENTS_MIXED)
+      // Verify severity ordering: each event's severity rank should be <= next event's
+      for (let i = 0; i < sorted.length - 1; i++) {
+        const rankA = severityRank(sorted[i].severity)
+        const rankB = severityRank(sorted[i + 1].severity)
+        if (rankA === rankB) {
+          // Same severity — newer timestamp should come first
+          const tsA = new Date(sorted[i].timestamp).getTime()
+          const tsB = new Date(sorted[i + 1].timestamp).getTime()
+          expect(tsA).toBeGreaterThanOrEqual(tsB)
+        } else {
+          expect(rankA).toBeLessThan(rankB)
+        }
+      }
+    })
+
+    it('sortEventsByPriority returns empty array for empty input', () => {
+      expect(sortEventsByPriority([]).length).toBe(0)
+    })
+
+    it('sortEventsByPriority returns single-element array unchanged', () => {
+      const single = [MOCK_EVENTS_MIXED[0]]
+      const sorted = sortEventsByPriority(single)
+      expect(sorted.length).toBe(1)
+      expect(sorted[0].id).toBe(single[0].id)
+    })
+
+    it('buildFeedHealthMessage returns correct stale message with null lastRefreshedAt', () => {
+      const msg = buildFeedHealthMessage('stale', null)
+      expect(msg).toContain('outdated')
+      expect(msg).toContain('unknown')
+    })
+
+    it('buildFeedHealthMessage returns correct healthy message', () => {
+      const msg = buildFeedHealthMessage('healthy', MOCK_REFRESHED_AT)
+      expect(msg).toContain('operational')
+    })
+
+    it('buildFeedHealthMessage returns correct degraded message', () => {
+      const msg = buildFeedHealthMessage('degraded', MOCK_REFRESHED_AT)
+      expect(msg).toContain('limited-data')
+    })
+
+    it('classifyFreshness returns aging for 2-day-old timestamp', () => {
+      const twoDays = new Date(NOW.getTime() - 2 * 86_400_000).toISOString()
+      expect(classifyFreshness(twoDays, NOW)).toBe('aging')
+    })
+
+    it('classifyFreshness returns recent for 12-hour-old timestamp', () => {
+      const halfDay = new Date(NOW.getTime() - 12 * 3_600_000).toISOString()
+      expect(classifyFreshness(halfDay, NOW)).toBe('recent')
+    })
+
+    it('deriveFeedHealth returns healthy for future timestamp', () => {
+      const future = new Date(NOW.getTime() + 60_000).toISOString()
+      expect(deriveFeedHealth(future, NOW)).toBe('healthy')
+    })
+
+    it('deriveFeedHealth returns stale for 15-minute-old refresh', () => {
+      const fifteenMin = new Date(NOW.getTime() - 15 * 60_000).toISOString()
+      expect(deriveFeedHealth(fifteenMin, NOW)).toBe('stale')
+    })
+
+    it('deriveFeedHealth returns degraded for 90-minute-old refresh', () => {
+      const ninetyMin = new Date(NOW.getTime() - 90 * 60_000).toISOString()
+      expect(deriveFeedHealth(ninetyMin, NOW)).toBe('degraded')
+    })
+
+    it('SEVERITY_LABELS has human-readable labels for all severities', () => {
+      expect(SEVERITY_LABELS.blocked).toBe('Blocked — Issuance halted')
+      expect(SEVERITY_LABELS.action_needed).toBe('Action needed')
+      expect(SEVERITY_LABELS.waiting_on_provider).toBe('Waiting on provider')
+      expect(SEVERITY_LABELS.review_complete).toBe('Review complete')
+      expect(SEVERITY_LABELS.informational).toBe('Informational')
+    })
+
+    it('CATEGORY_LABELS has human-readable labels for all categories', () => {
+      expect(CATEGORY_LABELS.investor_onboarding).toBeTruthy()
+      expect(CATEGORY_LABELS.kyc_review).toBeTruthy()
+      expect(CATEGORY_LABELS.aml_screening).toBeTruthy()
+      expect(CATEGORY_LABELS.sanctions_escalation).toBeTruthy()
+      expect(CATEGORY_LABELS.evidence_export).toBeTruthy()
+      expect(CATEGORY_LABELS.release_evidence).toBeTruthy()
+      expect(CATEGORY_LABELS.compliance_proof).toBeTruthy()
+      expect(CATEGORY_LABELS.webhook_delivery).toBeTruthy()
+      expect(CATEGORY_LABELS.system).toBeTruthy()
+    })
+
+    it('FEED_HEALTH_LABELS has labels for all health states', () => {
+      expect(FEED_HEALTH_LABELS.healthy).toBeTruthy()
+      expect(FEED_HEALTH_LABELS.stale).toBeTruthy()
+      expect(FEED_HEALTH_LABELS.degraded).toBeTruthy()
+      expect(FEED_HEALTH_LABELS.unavailable).toBeTruthy()
+    })
+
+    it('FRESHNESS_LABELS has labels for all freshness buckets', () => {
+      expect(FRESHNESS_LABELS.fresh).toBeTruthy()
+      expect(FRESHNESS_LABELS.recent).toBeTruthy()
+      expect(FRESHNESS_LABELS.aging).toBeTruthy()
+      expect(FRESHNESS_LABELS.stale).toBeTruthy()
+      expect(FRESHNESS_LABELS.critical).toBeTruthy()
     })
   })
 })
