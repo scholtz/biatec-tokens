@@ -60,8 +60,8 @@ export interface ComplianceEvent {
   timestamp: string // ISO-8601
   actor: string
   actorType: 'operator' | 'system' | 'provider' | 'automation'
-  /** Recommended next operator action. */
-  nextAction: string
+  /** Recommended next operator action. Null when no action is required. */
+  nextAction: string | null
   /** Navigation target for drill-down. */
   drillDownPath: string | null
   /** Whether this event blocks issuance. */
@@ -664,6 +664,38 @@ export const MOCK_EVENTS_MIXED: ComplianceEvent[] = [
     drillDownPath: '/compliance/onboarding',
     isLaunchBlocking: false,
     caseRef: 'CASE-2004',
+  },
+  {
+    id: 'evt-015',
+    title: 'KYC approved — standard review',
+    description:
+      'Investor Eta Holdings passed standard KYC review. Identity documents verified by provider.',
+    category: 'kyc_review',
+    severity: 'informational',
+    readState: 'read',
+    timestamp: '2026-03-27T11:30:00.000Z',
+    actor: 'kyc-provider@external.com',
+    actorType: 'provider',
+    nextAction: null,
+    drillDownPath: '/compliance/onboarding',
+    isLaunchBlocking: false,
+    caseRef: 'CASE-2005',
+  },
+  {
+    id: 'evt-016',
+    title: 'AML screening completed — no flags',
+    description:
+      'Automated AML screening returned clean results for investor Theta Corp. No further action needed.',
+    category: 'aml_screening',
+    severity: 'informational',
+    readState: 'read',
+    timestamp: '2026-03-27T11:00:00.000Z',
+    actor: 'System',
+    actorType: 'system',
+    nextAction: null,
+    drillDownPath: null,
+    isLaunchBlocking: false,
+    caseRef: 'CASE-2006',
   },
 ]
 

@@ -4220,6 +4220,74 @@ await loginWithCredentials(page)  // all call-sites replaced
 - ❌ Write "migration complete" in a PR description without running the grep verification checklist
 - ❌ Use `withAuth()` directly in new spec files — always use `loginWithCredentials()` for Tier 1
 
+### 7af. Mock Data Must Exercise Both Branches of Every Template `v-if` (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 27, 2026 (PR #746) 🚨**
+
+**Violation**: `ComplianceNotificationCenter.vue` had `v-if="event.nextAction"` at line 285, but `MOCK_EVENTS_MIXED` contained 5 events ALL with `nextAction` set to a non-null string. The false branch (no next-action paragraph rendered) was never exercised, leaving view branch coverage at 98.8% instead of 100%. Tests that claimed to verify "events without nextAction" passed vacuously — they filtered for `nextAction === null` events and found 0, so the assertion `expect(0).toBe(0)` was trivially true without exercising any template code.
+
+**Root Cause**:
+1. **Type mismatch**: `ComplianceEvent.nextAction` was typed as `string` (not nullable) even though the template checked for truthiness — the type system prevented null values in mock data
+2. **Vacuous test assertions**: Tests filtered mock data for `nextAction === null` and asserted count matched, but with 0 null entries the loop body never executed
+3. **Arrow character collision**: Tests used `item.text().includes('→')` to detect nextAction presence, but "View details →" in drill-down links also contains "→", causing false positives when events without nextAction DO have drill-down links
+
+**Correct Approach — MANDATORY for every new view with `v-if` on optional fields**:
+
+```bash
+# 1. For every v-if="prop" in the template, verify mock data has BOTH truthy AND falsy values:
+grep -n 'v-if="event\.\|v-if="entry\.' src/views/MyView.vue
+# For each result: check mock data has entries where the property is null/undefined/empty AND non-null
+
+# 2. Verify type allows null if template checks for it:
+grep "nextAction:" src/utils/myUtility.ts | head -3
+# If template has v-if="event.nextAction", type MUST be: nextAction: string | null
+
+# 3. Verify tests are NOT vacuously true:
+# Look for patterns like: items.filter(condition) → expect(items.length).toBe(N)
+# If N could be 0, the test proves nothing. Ensure N > 0 for meaningful coverage.
+```
+
+**Detection Pattern for Vacuous Tests**:
+```typescript
+// ❌ VACUOUS — if MOCK_DATA has 0 items matching the filter, this always passes
+const itemsWithout = allItems.filter(item => !item.text().includes('→'))
+expect(itemsWithout.length).toBe(MOCK_DATA.filter(e => e.nextAction === null).length)
+// If filter returns 0: expect(0).toBe(0) — trivially true, no branch exercised
+
+// ✅ NON-VACUOUS — ensure mock data has items matching BOTH branches
+// First: verify mock data has null-nextAction items
+expect(MOCK_DATA.filter(e => e.nextAction === null).length).toBeGreaterThan(0)
+// Then: use element-based detection (not text-based "→" which collides with drill-down links)
+const hasIndigoParagraph = (item) =>
+  item.findAll('p').filter(p => p.classes().includes('text-indigo-300')).length > 0
+const itemsWithout = allItems.filter(item => !hasIndigoParagraph(item))
+expect(itemsWithout.length).toBe(MOCK_DATA.filter(e => e.nextAction === null).length)
+```
+
+**Text-Based Detection Pitfall** (applies to any "→" or icon-based detection):
+```typescript
+// ❌ WRONG — "→" appears in BOTH nextAction prefix AND "View details →" drill-down link
+const itemsWithNextAction = allItems.filter(item => item.text().includes('→'))
+// An event with nextAction: null but drillDownPath: '/some/path' would match (false positive)
+
+// ✅ CORRECT — detect the specific CSS class of the nextAction paragraph element
+const hasIndigoParagraph = (item) =>
+  item.findAll('p').filter(p => p.classes().includes('text-indigo-300')).length > 0
+```
+
+**Pre-Commit Checklist for Views with v-if on Optional Fields**:
+- [ ] Type allows null/undefined for every field used in `v-if` (e.g., `nextAction: string | null`)
+- [ ] Mock data has entries exercising BOTH truthy and falsy values for every `v-if` field
+- [ ] Tests verify `filter(...).length > 0` before iterating (no vacuous assertions)
+- [ ] Element detection uses CSS class or data-testid, not text content that may collide with other elements
+- [ ] Coverage shows 100% branches (or documents why a branch is unreachable)
+
+**Never Again**:
+- ❌ Type a field as `string` when the template uses `v-if` on it — use `string | null`
+- ❌ Write tests that filter mock data and assert count without ensuring the count is non-zero
+- ❌ Use text content (`includes('→')`) to detect specific elements when other elements share the same character
+- ❌ Accept 98.8% branch coverage without investigating which line is uncovered
+
 ---
 
 ## Additional Notes

@@ -393,13 +393,15 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
   // Events without nextAction — covers v-if="event.nextAction" branch
   // =========================================================================
   describe('events without nextAction', () => {
-    it('does not render next-action text for events with null nextAction', async () => {
+    // Helper: detect the indigo next-action paragraph (more precise than text-based "→" check
+    // which also matches "View details →" in drill-down links).
+    const hasIndigoParagraph = (item: any) =>
+      item.findAll('p').filter((p: any) => p.classes().includes('text-indigo-300')).length > 0
+
+    it('renders indigo next-action paragraph only for events with nextAction', async () => {
       const wrapper = await mountCenter()
-      // Mock data has events with nextAction: null (KYC approved, AML screening completed)
-      // The "→" prefix is only shown for events WITH nextAction
       const allItems = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
-      // Count items with "→" prefix (nextAction text)
-      const itemsWithNextAction = allItems.filter(item => item.text().includes('→'))
+      const itemsWithNextAction = allItems.filter(hasIndigoParagraph)
       const expectedWithNextAction = MOCK_EVENTS_MIXED.filter(e => e.nextAction !== null).length
       expect(itemsWithNextAction.length).toBe(expectedWithNextAction)
     })
@@ -414,12 +416,11 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
     it('event items with null nextAction do not have indigo next-action paragraph', async () => {
       const wrapper = await mountCenter()
       const allItems = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
-      // Find items that DON'T have the "→" indicator
-      const itemsWithoutNextAction = allItems.filter(item => !item.text().includes('→'))
+      const itemsWithoutNextAction = allItems.filter(item => !hasIndigoParagraph(item))
       expect(itemsWithoutNextAction.length).toBe(MOCK_EVENTS_MIXED.filter(e => e.nextAction === null).length)
       // Each of these should NOT have the indigo next-action paragraph in DOM
       for (const item of itemsWithoutNextAction) {
-        const nextActionParagraph = item.findAll('p').filter(p => p.classes().includes('text-indigo-300'))
+        const nextActionParagraph = item.findAll('p').filter((p: any) => p.classes().includes('text-indigo-300'))
         expect(nextActionParagraph.length).toBe(0)
       }
     })
@@ -427,10 +428,10 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
     it('event items with nextAction contain the indigo next-action paragraph', async () => {
       const wrapper = await mountCenter()
       const allItems = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
-      const itemsWithNextAction = allItems.filter(item => item.text().includes('→'))
+      const itemsWithNextAction = allItems.filter(hasIndigoParagraph)
       expect(itemsWithNextAction.length).toBeGreaterThan(0)
       for (const item of itemsWithNextAction) {
-        const nextActionParagraphs = item.findAll('p').filter(p => p.classes().includes('text-indigo-300'))
+        const nextActionParagraphs = item.findAll('p').filter((p: any) => p.classes().includes('text-indigo-300'))
         expect(nextActionParagraphs.length).toBe(1)
       }
     })
@@ -969,6 +970,80 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
         // The first rendered item should contain a blocked event's title
         expect(firstItem.text()).toContain(blockedEvents[0].title)
       }
+    })
+  })
+
+  // =========================================================================
+  // null-nextAction view rendering (exercises v-if="event.nextAction" false branch)
+  // =========================================================================
+  describe('null-nextAction view rendering', () => {
+    it('renders 7 event items matching MOCK_EVENTS_MIXED length', async () => {
+      const wrapper = await mountCenter()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items.length).toBe(7)
+    })
+
+    it('null-nextAction event still renders title and description', async () => {
+      const wrapper = await mountCenter()
+      const text = wrapper.text()
+      // evt-015: KYC approved — standard review
+      expect(text).toContain('KYC approved')
+      // evt-016: AML screening completed — no flags
+      expect(text).toContain('AML screening completed')
+    })
+
+    it('null-nextAction event with drillDownPath still renders drill-down link', async () => {
+      const wrapper = await mountCenter()
+      const drillDownLinks = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_DRILL_DOWN}"]`)
+      // evt-015 has drillDownPath: '/compliance/onboarding', even though nextAction is null
+      const paths = drillDownLinks.map(link => link.attributes('href') || link.attributes('to'))
+      expect(paths).toContain('/compliance/onboarding')
+    })
+
+    it('null-nextAction event without drillDownPath does not render drill-down link', async () => {
+      const wrapper = await mountCenter()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      // evt-016 has both nextAction: null and drillDownPath: null
+      // Find the item containing "AML screening completed — no flags"
+      const amlItem = items.find(item => item.text().includes('AML screening completed'))
+      expect(amlItem).toBeTruthy()
+      // It should NOT have a drill-down link
+      const links = amlItem!.findAll(`[data-testid="${TEST_IDS.EVENT_DRILL_DOWN}"]`)
+      expect(links.length).toBe(0)
+    })
+
+    it('null-nextAction events render severity badge with informational label', async () => {
+      const wrapper = await mountCenter()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      const amlItem = items.find(item => item.text().includes('AML screening completed'))
+      expect(amlItem).toBeTruthy()
+      const badge = amlItem!.find(`[data-testid="${TEST_IDS.EVENT_SEVERITY_BADGE}"]`)
+      expect(badge.exists()).toBe(true)
+      expect(badge.text()).toContain('Informational')
+    })
+
+    it('informational events without nextAction are rendered at the end (low priority)', async () => {
+      const wrapper = await mountCenter()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      // Last two items should be informational (null nextAction events)
+      const lastItem = items[items.length - 1]
+      const secondLastItem = items[items.length - 2]
+      expect(lastItem.text()).toMatch(/KYC approved|AML screening completed/)
+      expect(secondLastItem.text()).toMatch(/KYC approved|AML screening completed/)
+    })
+
+    it('queue summary total card reflects 7 events', async () => {
+      const wrapper = await mountCenter()
+      const totalCard = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_TOTAL}"]`)
+      expect(totalCard.exists()).toBe(true)
+      expect(totalCard.text()).toContain('7')
+    })
+
+    it('queue summary unread count remains 3 after adding read null-nextAction events', async () => {
+      const wrapper = await mountCenter()
+      const unreadCard = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_UNREAD}"]`)
+      expect(unreadCard.exists()).toBe(true)
+      expect(unreadCard.text()).toContain('3')
     })
   })
 })

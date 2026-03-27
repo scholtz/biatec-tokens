@@ -256,7 +256,7 @@ describe('complianceNotificationCenter', () => {
 
     it('counts mixed severity events correctly', () => {
       const summary = deriveQueueSummary(MOCK_EVENTS_MIXED, NOW)
-      expect(summary.total).toBe(5)
+      expect(summary.total).toBe(7)
       expect(summary.blocked).toBe(1)
       expect(summary.actionNeeded).toBe(2)
       expect(summary.waitingOnProvider).toBe(1)
@@ -714,8 +714,10 @@ describe('complianceNotificationCenter', () => {
       expect(MOCK_EVENTS_HEALTHY.length).toBe(3)
     })
 
-    it('MOCK_EVENTS_MIXED has 5 events', () => {
-      expect(MOCK_EVENTS_MIXED.length).toBe(5)
+    it('MOCK_EVENTS_MIXED has 7 events (5 with nextAction, 2 without)', () => {
+      expect(MOCK_EVENTS_MIXED.length).toBe(7)
+      expect(MOCK_EVENTS_MIXED.filter(e => e.nextAction === null).length).toBe(2)
+      expect(MOCK_EVENTS_MIXED.filter(e => e.nextAction !== null).length).toBe(5)
     })
 
     it('MOCK_EVENTS_DEGRADED is empty', () => {
@@ -947,6 +949,84 @@ describe('complianceNotificationCenter', () => {
       expect(FRESHNESS_LABELS.aging).toBeTruthy()
       expect(FRESHNESS_LABELS.stale).toBeTruthy()
       expect(FRESHNESS_LABELS.critical).toBeTruthy()
+    })
+  })
+
+  // =========================================================================
+  // null-nextAction events (close v-if branch gap — ComplianceEvent.nextAction: string | null)
+  // =========================================================================
+  describe('null-nextAction event handling', () => {
+    it('MOCK_EVENTS_MIXED contains events with null nextAction', () => {
+      const nullNextActions = MOCK_EVENTS_MIXED.filter(e => e.nextAction === null)
+      expect(nullNextActions.length).toBe(2)
+      expect(nullNextActions[0].id).toBe('evt-015')
+      expect(nullNextActions[1].id).toBe('evt-016')
+    })
+
+    it('null-nextAction events have correct categories', () => {
+      const evt015 = MOCK_EVENTS_MIXED.find(e => e.id === 'evt-015')
+      const evt016 = MOCK_EVENTS_MIXED.find(e => e.id === 'evt-016')
+      expect(evt015?.category).toBe('kyc_review')
+      expect(evt016?.category).toBe('aml_screening')
+    })
+
+    it('null-nextAction events have informational severity', () => {
+      const nullNextActions = MOCK_EVENTS_MIXED.filter(e => e.nextAction === null)
+      for (const evt of nullNextActions) {
+        expect(evt.severity).toBe('informational')
+      }
+    })
+
+    it('null-nextAction events are included in deriveQueueSummary total', () => {
+      const summary = deriveQueueSummary(MOCK_EVENTS_MIXED, NOW)
+      expect(summary.total).toBe(7)
+    })
+
+    it('null-nextAction events pass through filterEvents with default filters', () => {
+      const filtered = filterEvents(MOCK_EVENTS_MIXED, DEFAULT_FILTERS, NOW)
+      const nullNextActions = filtered.filter(e => e.nextAction === null)
+      expect(nullNextActions.length).toBe(2)
+    })
+
+    it('null-nextAction events can be filtered by category', () => {
+      const filters: NotificationFilters = { ...DEFAULT_FILTERS, category: 'aml_screening' }
+      const filtered = filterEvents(MOCK_EVENTS_MIXED, filters, NOW)
+      const nullEvt = filtered.find(e => e.id === 'evt-016')
+      expect(nullEvt).toBeTruthy()
+      expect(nullEvt?.nextAction).toBeNull()
+    })
+
+    it('null-nextAction events can be filtered by severity=informational', () => {
+      const filters: NotificationFilters = { ...DEFAULT_FILTERS, severity: 'informational' }
+      const filtered = filterEvents(MOCK_EVENTS_MIXED, filters, NOW)
+      expect(filtered.filter(e => e.nextAction === null).length).toBe(2)
+    })
+
+    it('null-nextAction events are sorted correctly by priority', () => {
+      const sorted = sortEventsByPriority(MOCK_EVENTS_MIXED)
+      // Informational events should be at the end (lowest priority)
+      const lastTwo = sorted.slice(-2)
+      for (const evt of lastTwo) {
+        expect(evt.severity).toBe('informational')
+      }
+    })
+
+    it('evt-016 has null drillDownPath alongside null nextAction', () => {
+      const evt = MOCK_EVENTS_MIXED.find(e => e.id === 'evt-016')
+      expect(evt?.nextAction).toBeNull()
+      expect(evt?.drillDownPath).toBeNull()
+    })
+
+    it('evt-015 has non-null drillDownPath with null nextAction', () => {
+      const evt = MOCK_EVENTS_MIXED.find(e => e.id === 'evt-015')
+      expect(evt?.nextAction).toBeNull()
+      expect(evt?.drillDownPath).toBe('/compliance/onboarding')
+    })
+
+    it('deriveNotificationCenterState includes null-nextAction events in state', () => {
+      const state = deriveNotificationCenterState(MOCK_EVENTS_MIXED, MOCK_REFRESHED_AT, NOW)
+      const nullEvents = state.events.filter(e => e.nextAction === null)
+      expect(nullEvents.length).toBe(2)
     })
   })
 })
