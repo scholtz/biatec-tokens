@@ -69,7 +69,7 @@
           aria-live="polite"
         >
           <div class="text-center">
-            <div class="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" aria-hidden="true"></div>
+            <div class="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" role="presentation"></div>
             <p class="text-gray-400 text-sm">Loading compliance events…</p>
           </div>
         </div>

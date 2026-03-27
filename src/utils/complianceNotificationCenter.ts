@@ -182,6 +182,7 @@ export function severityRank(s: EventSeverity): number {
 // Freshness Calculation
 // ---------------------------------------------------------------------------
 
+const MINUTE_MS = 60_000
 const HOUR_MS = 3_600_000
 const DAY_MS = 86_400_000
 
@@ -218,8 +219,8 @@ export function deriveFeedHealth(
   if (isNaN(ts.getTime())) return 'unavailable'
   const ageMs = now.getTime() - ts.getTime()
   if (ageMs < 0) return 'healthy'
-  if (ageMs < 5 * 60_000) return 'healthy' // < 5 minutes
-  if (ageMs < 30 * 60_000) return 'stale' // 5-30 minutes
+  if (ageMs < 5 * MINUTE_MS) return 'healthy' // < 5 minutes
+  if (ageMs < 30 * MINUTE_MS) return 'stale' // 5-30 minutes
   if (ageMs < 2 * HOUR_MS) return 'degraded' // 30 min - 2 hours
   return 'unavailable' // > 2 hours
 }
@@ -399,9 +400,9 @@ export function formatRelativeTime(isoTimestamp: string, now: Date = new Date())
   if (isNaN(ts.getTime())) return 'Unknown'
   const diffMs = now.getTime() - ts.getTime()
   if (diffMs < 0) return 'Just now'
-  if (diffMs < 60_000) return 'Just now'
+  if (diffMs < MINUTE_MS) return 'Just now'
   if (diffMs < HOUR_MS) {
-    const mins = Math.floor(diffMs / 60_000)
+    const mins = Math.floor(diffMs / MINUTE_MS)
     return `${mins} minute${mins !== 1 ? 's' : ''} ago`
   }
   if (diffMs < DAY_MS) {
