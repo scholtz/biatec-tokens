@@ -46,6 +46,15 @@ async function mountCenter(): Promise<VueWrapper> {
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Detect the indigo next-action paragraph (more precise than text-based "→" check
+ * which also matches "View details →" in drill-down links). */
+const hasIndigoParagraph = (item: any) =>
+  item.findAll('p').filter((p: any) => p.classes().includes('text-indigo-300')).length > 0
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -393,11 +402,6 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
   // Events without nextAction — covers v-if="event.nextAction" branch
   // =========================================================================
   describe('events without nextAction', () => {
-    // Helper: detect the indigo next-action paragraph (more precise than text-based "→" check
-    // which also matches "View details →" in drill-down links).
-    const hasIndigoParagraph = (item: any) =>
-      item.findAll('p').filter((p: any) => p.classes().includes('text-indigo-300')).length > 0
-
     it('renders indigo next-action paragraph only for events with nextAction', async () => {
       const wrapper = await mountCenter()
       const allItems = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
@@ -1030,6 +1034,8 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       const secondLastItem = items[items.length - 2]
       expect(lastItem.text()).toMatch(/KYC approved|AML screening completed/)
       expect(secondLastItem.text()).toMatch(/KYC approved|AML screening completed/)
+      // Verify the two events are distinct (not the same event rendered twice)
+      expect(lastItem.text()).not.toBe(secondLastItem.text())
     })
 
     it('queue summary total card reflects 7 events', async () => {
