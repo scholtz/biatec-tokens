@@ -103,6 +103,11 @@ describe('complianceNotificationCenter', () => {
       expect(severityRank('waiting_on_provider')).toBeLessThan(severityRank('review_complete'))
       expect(severityRank('review_complete')).toBeLessThan(severityRank('informational'))
     })
+
+    it('returns SEVERITY_ORDER.length for unknown severity (fail-closed fallback)', () => {
+      // Unknown severities get the worst rank so they sort to the bottom
+      expect(severityRank('unknown_severity' as EventSeverity)).toBe(5)
+    })
   })
 
   // =========================================================================
@@ -219,6 +224,12 @@ describe('complianceNotificationCenter', () => {
       const msg = buildFeedHealthMessage('healthy', MOCK_REFRESHED_AT)
       expect(msg).toContain('operational')
     })
+
+    it('returns "unknown" label when stale and lastRefreshedAt is null', () => {
+      const msg = buildFeedHealthMessage('stale', null)
+      expect(msg).toContain('unknown')
+      expect(msg).toContain('outdated')
+    })
   })
 
   // =========================================================================
@@ -262,6 +273,64 @@ describe('complianceNotificationCenter', () => {
       const summary = deriveQueueSummary(MOCK_EVENTS_MIXED, NOW)
       // evt-013 is ~7 days old
       expect(summary.oldestUnresolvedDays).toBeGreaterThanOrEqual(7)
+    })
+
+    it('tracks oldest unresolved age across multiple unresolved events', () => {
+      // Two blocked events at different ages; older one should win
+      const older: ComplianceEvent = {
+        id: 'age-old',
+        title: 'Old blocked event',
+        description: 'Older event',
+        severity: 'blocked',
+        category: 'sanctions_screening',
+        timestamp: new Date(NOW.getTime() - 14 * 86_400_000).toISOString(), // 14 days ago
+        readState: 'unread',
+        isLaunchBlocking: true,
+        actor: 'test@biatec.io',
+        transition: 'Status changed',
+        nextAction: 'Review',
+        drillDownPath: null,
+      }
+      const newer: ComplianceEvent = {
+        id: 'age-new',
+        title: 'Newer blocked event',
+        description: 'Newer event',
+        severity: 'blocked',
+        category: 'sanctions_screening',
+        timestamp: new Date(NOW.getTime() - 2 * 86_400_000).toISOString(), // 2 days ago
+        readState: 'unread',
+        isLaunchBlocking: true,
+        actor: 'test@biatec.io',
+        transition: 'Status changed',
+        nextAction: 'Review',
+        drillDownPath: null,
+      }
+      // Older event first → newer event won't update oldestUnresolvedMs
+      const summary1 = deriveQueueSummary([older, newer], NOW)
+      expect(summary1.oldestUnresolvedDays).toBe(14)
+
+      // Newer event first → older event updates oldestUnresolvedMs
+      const summary2 = deriveQueueSummary([newer, older], NOW)
+      expect(summary2.oldestUnresolvedDays).toBe(14)
+    })
+
+    it('does not count review_complete or informational toward oldest unresolved', () => {
+      const reviewEvent: ComplianceEvent = {
+        id: 'resolved-1',
+        title: 'Review complete',
+        description: 'Resolved',
+        severity: 'review_complete',
+        category: 'kyc_review',
+        timestamp: new Date(NOW.getTime() - 30 * 86_400_000).toISOString(), // 30 days ago
+        readState: 'read',
+        isLaunchBlocking: false,
+        actor: 'test@biatec.io',
+        transition: 'Review completed',
+        nextAction: null,
+        drillDownPath: null,
+      }
+      const summary = deriveQueueSummary([reviewEvent], NOW)
+      expect(summary.oldestUnresolvedDays).toBe(0)
     })
   })
 
