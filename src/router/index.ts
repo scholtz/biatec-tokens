@@ -38,6 +38,7 @@ import EnterpriseRiskReportBuilder from "../views/EnterpriseRiskReportBuilder.vu
 import EnterpriseApprovalCockpit from "../views/EnterpriseApprovalCockpit.vue";
 import InvestorComplianceOnboardingWorkspace from "../views/InvestorComplianceOnboardingWorkspace.vue";
 import ComplianceOperationsCockpit from "../views/ComplianceOperationsCockpit.vue";
+import ComplianceNotificationCenter from "../views/ComplianceNotificationCenter.vue";
 import ReleaseEvidenceCenterView from "../views/ReleaseEvidenceCenterView.vue";
 import ReportingCommandCenterView from "../views/ReportingCommandCenterView.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
@@ -215,6 +216,13 @@ const router = createRouter({
       name: "ComplianceOperationsCockpit",
       component: ComplianceOperationsCockpit,
       meta: { requiresAuth: true, title: "Compliance Operations Cockpit" },
+    },
+    // Compliance Notification Center — prioritized events, case timelines, queue health
+    {
+      path: "/compliance/notifications",
+      name: "ComplianceNotificationCenter",
+      component: ComplianceNotificationCenter,
+      meta: { requiresAuth: true, title: "Compliance Notification Center" },
     },
     // Reporting Command Center — scheduled recurring compliance reporting for enterprise audiences
     {

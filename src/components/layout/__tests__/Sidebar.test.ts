@@ -41,6 +41,9 @@ vi.mock('@heroicons/vue/24/outline', () => ({
   CalendarDaysIcon: {
     template: '<svg class="h-5 w-5"></svg>',
   },
+  BellAlertIcon: {
+    template: '<svg class="h-5 w-5"></svg>',
+  },
   CurrencyDollarIcon: {
     template: '<svg class="h-5 w-5"></svg>',
   },
@@ -139,7 +142,7 @@ describe('Sidebar Component', () => {
       });
 
       const links = wrapper.findAll('a');
-      expect(links).toHaveLength(16); // Includes Release Evidence, Sign-off Readiness, Investor Onboarding, Compliance Reporting, Compliance Monitoring, Whitelist Management, Risk Report, Approval Queue, Operations Cockpit, Reporting Center
+      expect(links).toHaveLength(17); // Includes Release Evidence, Sign-off Readiness, Investor Onboarding, Compliance Reporting, Compliance Monitoring, Whitelist Management, Risk Report, Approval Queue, Operations Cockpit, Notification Center, Reporting Center
 
       // Check link texts and routes
       expect(links[0].text()).toContain('Guided Token Launch');
@@ -181,14 +184,17 @@ describe('Sidebar Component', () => {
       expect(links[12].text()).toContain('Operations Cockpit');
       expect(links[12].attributes('to')).toBe('/compliance/operations');
 
-      expect(links[13].text()).toContain('Compliance Monitoring');
-      expect(links[13].attributes('to')).toBe('/compliance-monitoring');
-      
-      expect(links[14].text()).toContain('Whitelist Management');
-      expect(links[14].attributes('to')).toBe('/compliance/whitelists');
+      expect(links[13].text()).toContain('Notification Center');
+      expect(links[13].attributes('to')).toBe('/compliance/notifications');
 
-      expect(links[15].text()).toContain('Reporting Center');
-      expect(links[15].attributes('to')).toBe('/compliance/reporting-center');
+      expect(links[14].text()).toContain('Compliance Monitoring');
+      expect(links[14].attributes('to')).toBe('/compliance-monitoring');
+      
+      expect(links[15].text()).toContain('Whitelist Management');
+      expect(links[15].attributes('to')).toBe('/compliance/whitelists');
+
+      expect(links[16].text()).toContain('Reporting Center');
+      expect(links[16].attributes('to')).toBe('/compliance/reporting-center');
     });
 
     it('should render icons for quick actions', () => {
@@ -203,8 +209,8 @@ describe('Sidebar Component', () => {
       });
 
       const svgs = wrapper.findAll('svg');
-      // 16 links each with an SVG icon
-      expect(svgs).toHaveLength(16);
+      // 17 links each with an SVG icon
+      expect(svgs).toHaveLength(17);
     });
   });
 
