@@ -411,13 +411,13 @@ describe('complianceNotificationCenter', () => {
 
     it('sorts by timestamp within same severity (newest first)', () => {
       const sorted = sortEventsByPriority(MOCK_EVENTS_MIXED)
-      // Find two action_needed items
+      // MOCK_EVENTS_MIXED has exactly 2 action_needed events: evt-011 (2026-03-27) and evt-013 (2026-03-20)
       const actionNeeded = sorted.filter((e) => e.severity === 'action_needed')
-      if (actionNeeded.length >= 2) {
-        expect(new Date(actionNeeded[0].timestamp).getTime()).toBeGreaterThanOrEqual(
-          new Date(actionNeeded[1].timestamp).getTime(),
-        )
-      }
+      expect(actionNeeded.length).toBe(2)
+      // evt-011 (newer) should come before evt-013 (older)
+      expect(new Date(actionNeeded[0].timestamp).getTime()).toBeGreaterThanOrEqual(
+        new Date(actionNeeded[1].timestamp).getTime(),
+      )
     })
   })
 

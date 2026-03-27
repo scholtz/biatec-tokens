@@ -785,12 +785,11 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       const wrapper = await mountCenter()
       const links = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_DRILL_DOWN}"]`)
       const eventsWithPath = MOCK_EVENTS_MIXED.filter(e => e.drillDownPath !== null)
-      expect(links.length).toBe(eventsWithPath.length)
-      // The first drill-down link should match the first event with a path
-      if (links.length > 0 && eventsWithPath.length > 0) {
-        const firstLink = links[0]
-        expect(firstLink.attributes('href')).toBe(eventsWithPath[0].drillDownPath)
-      }
+      expect(eventsWithPath.length).toBe(5) // evt-010, evt-011, evt-013, evt-014, evt-015
+      expect(links.length).toBe(5)
+      // The first drill-down link should match the highest-priority event with a path (evt-010 blocked)
+      const firstLink = links[0]
+      expect(firstLink.attributes('href')).toBe('/compliance/operations')
     })
   })
 
@@ -980,13 +979,9 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       const wrapper = await mountCenter()
       const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
       expect(items.length).toBe(MOCK_EVENTS_MIXED.length)
-      // First event should be one of the highest-severity events
+      // First event must be the blocked event (highest severity) — exactly 1 blocked event in mock data
       const firstItem = items[0]
-      const blockedEvents = MOCK_EVENTS_MIXED.filter(e => e.severity === 'blocked')
-      if (blockedEvents.length > 0) {
-        // The first rendered item should contain a blocked event's title
-        expect(firstItem.text()).toContain(blockedEvents[0].title)
-      }
+      expect(firstItem.text()).toContain('Sanctions screening escalation opened')
     })
   })
 
@@ -1166,6 +1161,234 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       const refreshBtn = wrapper.find(`[data-testid="${TEST_IDS.REFRESH_BUTTON}"]`)
       expect(refreshBtn.exists()).toBe(true)
       expect(refreshBtn.text()).toContain('Refresh')
+    })
+  })
+
+  // =========================================================================
+  // Queue summary card exact values
+  // =========================================================================
+  describe('queue summary card exact values', () => {
+    it('total card displays exactly 7', async () => {
+      const wrapper = await mountCenter()
+      const totalCard = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_TOTAL}"]`)
+      expect(totalCard.text()).toContain('7')
+    })
+
+    it('unread card displays exactly 3', async () => {
+      const wrapper = await mountCenter()
+      const unreadCard = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_UNREAD}"]`)
+      // 3 unread events: evt-010, evt-011, evt-012
+      expect(unreadCard.text()).toContain('3')
+    })
+
+    it('blocked card displays exactly 1', async () => {
+      const wrapper = await mountCenter()
+      const blockedCard = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_BLOCKED}"]`)
+      // 1 blocked event: evt-010
+      expect(blockedCard.text()).toContain('1')
+    })
+
+    it('action needed card displays exactly 2', async () => {
+      const wrapper = await mountCenter()
+      const card = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_ACTION_NEEDED}"]`)
+      // 2 action_needed events: evt-011, evt-013
+      expect(card.text()).toContain('2')
+    })
+
+    it('waiting card displays exactly 1', async () => {
+      const wrapper = await mountCenter()
+      const card = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_WAITING}"]`)
+      // 1 waiting_on_provider event: evt-012
+      expect(card.text()).toContain('1')
+    })
+  })
+
+  // =========================================================================
+  // Event titles in exact priority order
+  // =========================================================================
+  describe('event titles in exact priority order', () => {
+    it('renders all 7 events in severity-then-timestamp order', async () => {
+      const wrapper = await mountCenter()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items.length).toBe(7)
+      // Expected order: blocked (evt-010), action_needed newest (evt-011), action_needed older (evt-013),
+      // waiting_on_provider (evt-012), review_complete (evt-014), informational newest (evt-015), informational oldest (evt-016)
+      expect(items[0].text()).toContain('Sanctions screening escalation opened')
+      expect(items[1].text()).toContain('KYC document resubmission needed')
+      expect(items[2].text()).toContain('Release evidence freshness expired')
+      expect(items[3].text()).toContain('Webhook delivery delayed')
+      expect(items[4].text()).toContain('Investor onboarding completed')
+      expect(items[5].text()).toContain('KYC approved')
+      expect(items[6].text()).toContain('AML screening completed')
+    })
+  })
+
+  // =========================================================================
+  // Category filter — evidence_export and investor_onboarding
+  // =========================================================================
+  describe('category filter — additional categories', () => {
+    it('filters by category="sanctions_escalation" shows 1 event', async () => {
+      const wrapper = await mountCenter()
+      const select = wrapper.find(`[data-testid="${TEST_IDS.FILTER_CATEGORY}"]`)
+      await select.setValue('sanctions_escalation')
+      await nextTick()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items.length).toBe(1)
+    })
+
+    it('filters by category="webhook_delivery" shows 1 event', async () => {
+      const wrapper = await mountCenter()
+      const select = wrapper.find(`[data-testid="${TEST_IDS.FILTER_CATEGORY}"]`)
+      await select.setValue('webhook_delivery')
+      await nextTick()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items.length).toBe(1)
+    })
+
+    it('filters by category="investor_onboarding" shows 1 event', async () => {
+      const wrapper = await mountCenter()
+      const select = wrapper.find(`[data-testid="${TEST_IDS.FILTER_CATEGORY}"]`)
+      await select.setValue('investor_onboarding')
+      await nextTick()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items.length).toBe(1)
+    })
+
+    it('filters by category="release_evidence" shows 1 event', async () => {
+      const wrapper = await mountCenter()
+      const select = wrapper.find(`[data-testid="${TEST_IDS.FILTER_CATEGORY}"]`)
+      await select.setValue('release_evidence')
+      await nextTick()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items.length).toBe(1)
+    })
+  })
+
+  // =========================================================================
+  // Launch-blocking event rendering
+  // =========================================================================
+  describe('launch-blocking event rendering', () => {
+    it('exactly 2 events have isLaunchBlocking=true', async () => {
+      const wrapper = await mountCenter()
+      const launchBlockingSpans = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_LAUNCH_BLOCKING}"]`)
+      expect(launchBlockingSpans.length).toBe(2) // evt-010, evt-013
+    })
+
+    it('launch-blocking spans contain "Blocks Issuance" text', async () => {
+      const wrapper = await mountCenter()
+      const launchBlockingSpans = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_LAUNCH_BLOCKING}"]`)
+      expect(launchBlockingSpans.length).toBe(2)
+      expect(launchBlockingSpans[0].text()).toContain('Blocks Issuance')
+      expect(launchBlockingSpans[1].text()).toContain('Blocks Issuance')
+    })
+
+    it('launch-blocking items have role="alert" for screen readers', async () => {
+      const wrapper = await mountCenter()
+      const launchBlockingSpans = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_LAUNCH_BLOCKING}"]`)
+      expect(launchBlockingSpans.length).toBe(2)
+      expect(launchBlockingSpans[0].attributes('role')).toBe('alert')
+      expect(launchBlockingSpans[1].attributes('role')).toBe('alert')
+    })
+  })
+
+  // =========================================================================
+  // Actor rendering per event
+  // =========================================================================
+  describe('actor rendering', () => {
+    it('renders system actor for evt-010 (blocked sanctions screening)', async () => {
+      const wrapper = await mountCenter()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items[0].text()).toContain('System')
+    })
+
+    it('renders provider actor for evt-011 (KYC resubmission)', async () => {
+      const wrapper = await mountCenter()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items[1].text()).toContain('kyc-provider@external.com')
+    })
+
+    it('renders operator actor for evt-014 (onboarding completed)', async () => {
+      const wrapper = await mountCenter()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items[4].text()).toContain('compliance-lead@biatec.io')
+    })
+  })
+
+  // =========================================================================
+  // Drill-down paths point to correct compliance surfaces
+  // =========================================================================
+  describe('drill-down path accuracy', () => {
+    it('evt-010 (blocked) links to /compliance/operations', async () => {
+      const wrapper = await mountCenter()
+      const links = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_DRILL_DOWN}"]`)
+      expect(links[0].attributes('href')).toBe('/compliance/operations')
+    })
+
+    it('evt-011 (action_needed KYC) links to /compliance/onboarding', async () => {
+      const wrapper = await mountCenter()
+      const links = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_DRILL_DOWN}"]`)
+      expect(links[1].attributes('href')).toBe('/compliance/onboarding')
+    })
+
+    it('evt-013 (action_needed release) links to /compliance/release', async () => {
+      const wrapper = await mountCenter()
+      const links = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_DRILL_DOWN}"]`)
+      expect(links[2].attributes('href')).toBe('/compliance/release')
+    })
+
+    it('evt-014 (review_complete) links to /compliance/onboarding', async () => {
+      const wrapper = await mountCenter()
+      const links = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_DRILL_DOWN}"]`)
+      expect(links[3].attributes('href')).toBe('/compliance/onboarding')
+    })
+
+    it('evt-015 (informational KYC) links to /compliance/onboarding', async () => {
+      const wrapper = await mountCenter()
+      const links = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_DRILL_DOWN}"]`)
+      expect(links[4].attributes('href')).toBe('/compliance/onboarding')
+    })
+  })
+
+  // =========================================================================
+  // Read/unread state styling
+  // =========================================================================
+  describe('read/unread state', () => {
+    it('exactly 3 events have unread indicator (aria-label="Unread")', async () => {
+      const wrapper = await mountCenter()
+      const unreadIndicators = wrapper.findAll('[aria-label="Unread"]')
+      // 3 unread events: evt-010, evt-011, evt-012
+      expect(unreadIndicators.length).toBe(3)
+    })
+  })
+
+  // =========================================================================
+  // Combined filter interactions
+  // =========================================================================
+  describe('combined filter precision', () => {
+    it('severity=informational + category=aml_screening yields exactly 1 event (evt-016)', async () => {
+      const wrapper = await mountCenter()
+      const sevSelect = wrapper.find(`[data-testid="${TEST_IDS.FILTER_SEVERITY}"]`)
+      const catSelect = wrapper.find(`[data-testid="${TEST_IDS.FILTER_CATEGORY}"]`)
+      await sevSelect.setValue('informational')
+      await nextTick()
+      await catSelect.setValue('aml_screening')
+      await nextTick()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items.length).toBe(1)
+      expect(items[0].text()).toContain('AML screening completed')
+    })
+
+    it('severity=blocked + readState=unread yields exactly 1 event (evt-010)', async () => {
+      const wrapper = await mountCenter()
+      const sevSelect = wrapper.find(`[data-testid="${TEST_IDS.FILTER_SEVERITY}"]`)
+      const readSelect = wrapper.find(`[data-testid="${TEST_IDS.FILTER_READ_STATE}"]`)
+      await sevSelect.setValue('blocked')
+      await nextTick()
+      await readSelect.setValue('unread')
+      await nextTick()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      expect(items.length).toBe(1)
+      expect(items[0].text()).toContain('Sanctions screening escalation opened')
     })
   })
 })

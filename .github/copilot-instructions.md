@@ -4357,6 +4357,46 @@ grep -n "toBeGreaterThan(0)\|toBeGreaterThanOrEqual(1)\|toBeLessThan(" src/**/__
 - ❌ Use `toBeLessThan(TOTAL)` when the exact filtered count is known
 - ❌ Skip the pre-commit grep audit for imprecise assertions
 
+### 7ah. Test Assertions Must Never Be Wrapped in Conditional Guards (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - March 27, 2026 (PR #746) 🚨**
+
+**Violation**: Copilot submitted tests with assertions inside `if (array.length > 0)` guards that silently skipped the assertion when the array was empty. These conditional guards create **vacuous tests** — the test passes regardless of whether the assertion block is entered. This pattern survived 8 product owner review cycles before being caught.
+
+**What Went Wrong**:
+- `if (blockedEvents.length > 0) { expect(firstItem.text()).toContain(blockedEvents[0].title) }` — if `blockedEvents` was empty due to a wrong property name (`e.launchBlocking` instead of `e.isLaunchBlocking`), the assertion was silently skipped
+- `if (links.length > 0 && eventsWithPath.length > 0) { expect(firstLink.attributes('href')).toBe(eventsWithPath[0].drillDownPath) }` — if no drill-down links rendered due to a bug, the href check was silently skipped
+- `if (actionNeeded.length >= 2) { expect(timestamps).toBeOrdered() }` — if filter returned fewer than 2 items, ordering check was silently skipped
+
+**Correct Approach — MANDATORY for all test assertions**:
+```typescript
+// ❌ WRONG — conditional guard silently skips assertion
+const blockedEvents = MOCK_DATA.filter(e => e.severity === 'blocked')
+if (blockedEvents.length > 0) {
+  expect(firstItem.text()).toContain(blockedEvents[0].title)  // NEVER RUNS if filter returns []
+}
+
+// ✅ CORRECT — assert the count first (unconditionally), then assert content
+const blockedEvents = MOCK_DATA.filter(e => e.severity === 'blocked')
+expect(blockedEvents.length).toBe(1)  // Proves the filter works
+expect(firstItem.text()).toContain('Sanctions screening escalation opened')  // Exact expected value
+```
+
+**Pre-Commit Check** (MANDATORY before committing any test file):
+```bash
+# Find conditional guards around assertions in test files:
+grep -n "if (" src/**/__tests__/*.test.ts | grep -v "// sort\|// ordering"
+# Any result inside a test body that wraps expect() calls is WRONG.
+# Exception: sort-verification loops (if rankA === rankB) are acceptable per section 7ag.
+```
+
+**Never Again**:
+- ❌ Wrap `expect()` calls inside `if (array.length > 0)` guards
+- ❌ Use `if (condition) { expect(...) }` patterns in deterministic tests
+- ❌ Trust a test that passes without verifying the assertion block was entered
+- ✅ Always assert the count/precondition unconditionally FIRST with an exact value
+- ✅ Then assert content with exact deterministic values (not computed from mock data at runtime)
+
 ---
 
 ## Additional Notes
