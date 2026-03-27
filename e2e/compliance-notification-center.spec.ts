@@ -74,11 +74,9 @@ test.describe('Compliance Notification Center — operator journeys', () => {
     // Filter by blocked severity
     const severityFilter = page.getByTestId('notification-center-filter-severity')
     await severityFilter.selectOption('blocked', { timeout: 5000 })
-    await page.waitForTimeout(500)
 
-    // MOCK_EVENTS_MIXED has exactly 1 blocked event (evt-010)
-    const filteredCount = await page.getByTestId('notification-center-event-item').count()
-    expect(filteredCount).toBe(1)
+    // MOCK_EVENTS_MIXED has exactly 1 blocked event (evt-010) — semantic wait replaces arbitrary timeout
+    await expect(page.getByTestId('notification-center-event-item')).toHaveCount(1, { timeout: 5000 })
   })
 
   test('shows empty state when filters match nothing', async ({ page }) => {
@@ -90,8 +88,8 @@ test.describe('Compliance Notification Center — operator journeys', () => {
     // Filter by system category (no events match)
     const categoryFilter = page.getByTestId('notification-center-filter-category')
     await categoryFilter.selectOption('system', { timeout: 5000 })
-    await page.waitForTimeout(500)
 
+    // Semantic wait: empty state appears when filter matches nothing
     const empty = page.getByTestId('notification-center-empty-state')
     await expect(empty).toBeAttached({ timeout: 5000 })
   })
@@ -155,8 +153,8 @@ test.describe('Compliance Notification Center — operator journeys', () => {
     // Force empty state via filter
     const categoryFilter = page.getByTestId('notification-center-filter-category')
     await categoryFilter.selectOption('system', { timeout: 5000 })
-    await page.waitForTimeout(500)
 
+    // Semantic wait: empty state renders when no events match
     const empty = page.getByTestId('notification-center-empty-state')
     await expect(empty).toBeAttached({ timeout: 5000 })
 
@@ -356,10 +354,9 @@ test.describe('Compliance Notification Center — operator journeys', () => {
     // Filter by kyc_review — MOCK_EVENTS_MIXED has exactly 2 kyc_review events (evt-011, evt-014)
     const categoryFilter = page.getByTestId('notification-center-filter-category')
     await categoryFilter.selectOption('kyc_review', { timeout: 5000 })
-    await page.waitForTimeout(500)
 
-    const filteredCount = await page.getByTestId('notification-center-event-item').count()
-    expect(filteredCount).toBe(2)
+    // Semantic wait: exactly 2 items after filter — replaces arbitrary timeout
+    await expect(page.getByTestId('notification-center-event-item')).toHaveCount(2, { timeout: 5000 })
   })
 
   // ===========================================================================
