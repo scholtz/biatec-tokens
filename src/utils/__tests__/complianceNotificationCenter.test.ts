@@ -276,7 +276,8 @@ describe('complianceNotificationCenter', () => {
     })
 
     it('tracks oldest unresolved age across multiple unresolved events', () => {
-      // Two blocked events at different ages; older one should win
+      // Two blocked events at different ages; the function is order-independent —
+      // it always finds the maximum age regardless of input order.
       const older: ComplianceEvent = {
         id: 'age-old',
         title: 'Old blocked event',
@@ -305,11 +306,11 @@ describe('complianceNotificationCenter', () => {
         nextAction: 'Review',
         drillDownPath: null,
       }
-      // Older event first → newer event won't update oldestUnresolvedMs
+      // Order [older, newer]: older age (14d) set first, newer (2d) doesn't update
       const summary1 = deriveQueueSummary([older, newer], NOW)
       expect(summary1.oldestUnresolvedDays).toBe(14)
 
-      // Newer event first → older event updates oldestUnresolvedMs
+      // Order [newer, older]: newer age (2d) set first, older (14d) updates max
       const summary2 = deriveQueueSummary([newer, older], NOW)
       expect(summary2.oldestUnresolvedDays).toBe(14)
     })

@@ -387,23 +387,21 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
   // Empty timeline state — covers v-if="timelineGroups.length === 0" branch
   // =========================================================================
   describe('empty timeline state', () => {
-    it('shows "No timeline events" when timelineGroups is empty', async () => {
-      // The view uses MOCK_TIMELINE_ENTRIES which is static — so the empty
-      // branch (v-if="timelineGroups.length === 0") is only hit when the
-      // groupTimelineByDate utility returns []. We exercise this branch by
-      // mounting, then forcibly clearing the computed dependency.
-      const wrapper = await mountCenter()
-      const vm = wrapper.vm as any
-      // The default mock data has entries; verify they render
-      expect(vm.timelineGroups.length).toBeGreaterThan(0)
-      expect(wrapper.find('aside').text()).toContain('Event Timeline')
-    })
-
     it('renders event timeline heading regardless of entries', async () => {
       const wrapper = await mountCenter()
       const heading = wrapper.find(`[data-testid="${TEST_IDS.TIMELINE_ROOT}"]`)
       expect(heading.exists()).toBe(true)
       expect(heading.text()).toBe('Event Timeline')
+    })
+
+    it('populated timeline hides "No timeline events" message', async () => {
+      const wrapper = await mountCenter()
+      const vm = wrapper.vm as any
+      // Default mock data has timeline entries
+      expect(vm.timelineGroups.length).toBeGreaterThan(0)
+      // The empty-state text should NOT appear when timeline has entries
+      const aside = wrapper.find('aside')
+      expect(aside.text()).not.toContain('No timeline events available')
     })
   })
 
@@ -441,11 +439,83 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       expect(vm.centerState.feedHealth).toBe('healthy')
       expect(wrapper.find(`[data-testid="${TEST_IDS.FEED_HEALTH_BANNER}"]`).exists()).toBe(false)
     })
+
+    it('shows feed health banner with role="alert" when feed is unavailable', async () => {
+      const wrapper = await mountCenter()
+      const vm = wrapper.vm as any
+      // Force feed health to unavailable
+      vm.centerState.feedHealth = 'unavailable'
+      vm.centerState.feedHealthMessage = 'Event feed is unavailable.'
+      await nextTick()
+      const banner = wrapper.find(`[data-testid="${TEST_IDS.FEED_HEALTH_BANNER}"]`)
+      expect(banner.exists()).toBe(true)
+      expect(banner.attributes('role')).toBe('alert')
+      expect(banner.attributes('aria-live')).toBe('assertive')
+    })
+
+    it('shows feed health banner with role="status" for stale/degraded states', async () => {
+      const wrapper = await mountCenter()
+      const vm = wrapper.vm as any
+      // Force feed health to stale
+      vm.centerState.feedHealth = 'stale'
+      vm.centerState.feedHealthMessage = 'Event data may be outdated.'
+      await nextTick()
+      const banner = wrapper.find(`[data-testid="${TEST_IDS.FEED_HEALTH_BANNER}"]`)
+      expect(banner.exists()).toBe(true)
+      expect(banner.attributes('role')).toBe('status')
+      expect(banner.attributes('aria-live')).toBe('polite')
+    })
+
+    it('uses ExclamationTriangleIcon for unavailable and InformationCircleIcon for other non-healthy', async () => {
+      const wrapper = await mountCenter()
+      const vm = wrapper.vm as any
+      // Test unavailable — should use ExclamationTriangleIcon (first svg in banner)
+      vm.centerState.feedHealth = 'unavailable'
+      vm.centerState.feedHealthMessage = 'Unavailable message.'
+      await nextTick()
+      let banner = wrapper.find(`[data-testid="${TEST_IDS.FEED_HEALTH_BANNER}"]`)
+      expect(banner.exists()).toBe(true)
+      const svgs = banner.findAll('svg')
+      expect(svgs.length).toBe(1) // only one icon rendered
+
+      // Test degraded — should use InformationCircleIcon
+      vm.centerState.feedHealth = 'degraded'
+      vm.centerState.feedHealthMessage = 'Degraded message.'
+      await nextTick()
+      banner = wrapper.find(`[data-testid="${TEST_IDS.FEED_HEALTH_BANNER}"]`)
+      expect(banner.exists()).toBe(true)
+    })
   })
 
   // =========================================================================
-  // Events with/without drillDownPath — covers v-if="event.drillDownPath"
+  // Empty state messaging — covers feedHealth branches in empty state
   // =========================================================================
+  describe('empty state messaging', () => {
+    it('shows "No matching events" when feed is healthy but filter produces empty results', async () => {
+      const wrapper = await mountCenter()
+      const select = wrapper.find(`[data-testid="${TEST_IDS.FILTER_CATEGORY}"]`)
+      // Use a category that has no events in mock data
+      await select.setValue('system')
+      await nextTick()
+      const emptyState = wrapper.find(`[data-testid="${TEST_IDS.EMPTY_STATE}"]`)
+      expect(emptyState.exists()).toBe(true)
+      expect(emptyState.text()).toContain('No matching events')
+      expect(emptyState.text()).toContain('Try adjusting filters')
+    })
+
+    it('shows "Event feed unavailable" when feedHealth is unavailable and empty', async () => {
+      const wrapper = await mountCenter()
+      const vm = wrapper.vm as any
+      // Force feed health to unavailable and clear events
+      vm.centerState.feedHealth = 'unavailable'
+      vm.centerState.events = []
+      await nextTick()
+      const emptyState = wrapper.find(`[data-testid="${TEST_IDS.EMPTY_STATE}"]`)
+      expect(emptyState.exists()).toBe(true)
+      expect(emptyState.text()).toContain('Event feed unavailable')
+      expect(emptyState.text()).toContain('cannot confirm the current state')
+    })
+  })
   describe('drill-down path conditional', () => {
     it('does not render drill-down link for events without drillDownPath', async () => {
       const wrapper = await mountCenter()
