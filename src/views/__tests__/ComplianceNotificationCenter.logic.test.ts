@@ -526,4 +526,229 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
       expect(items.length).toBe(unreadCount + readCount)
     })
   })
+
+  // =========================================================================
+  // Queue summary card content accuracy
+  // =========================================================================
+  describe('queue summary content', () => {
+    it('renders correct queue summary totals after loadEvents', async () => {
+      const wrapper = await mountCenter()
+      const vm = wrapper.vm as any
+      const qs = vm.centerState.queueSummary
+      // Verify total
+      const totalCard = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_TOTAL}"]`)
+      expect(totalCard.text()).toContain(String(qs.total))
+      // Verify unread
+      const unreadCard = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_UNREAD}"]`)
+      expect(unreadCard.text()).toContain(String(qs.unread))
+      // Verify blocked
+      const blockedCard = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_BLOCKED}"]`)
+      expect(blockedCard.text()).toContain(String(qs.blocked))
+    })
+
+    it('renders actionNeeded, waitingOnProvider, and stale queue counts', async () => {
+      const wrapper = await mountCenter()
+      const vm = wrapper.vm as any
+      const qs = vm.centerState.queueSummary
+      const actionCard = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_ACTION_NEEDED}"]`)
+      expect(actionCard.text()).toContain(String(qs.actionNeeded))
+      const waitingCard = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_WAITING}"]`)
+      expect(waitingCard.text()).toContain(String(qs.waitingOnProvider))
+      const staleCard = wrapper.find(`[data-testid="${TEST_IDS.QUEUE_STALE}"]`)
+      expect(staleCard.text()).toContain(String(qs.staleCount))
+    })
+  })
+
+  // =========================================================================
+  // Timeline rendering details
+  // =========================================================================
+  describe('timeline rendering', () => {
+    it('renders timeline groups with date labels', async () => {
+      const wrapper = await mountCenter()
+      const groups = wrapper.findAll(`[data-testid="${TEST_IDS.TIMELINE_GROUP}"]`)
+      expect(groups.length).toBeGreaterThan(0)
+      // Each group should have a date heading
+      for (const group of groups) {
+        const heading = group.find('h3')
+        expect(heading.exists()).toBe(true)
+        expect(heading.text().length).toBeGreaterThan(0)
+      }
+    })
+
+    it('renders timeline entries with actor and transition text', async () => {
+      const wrapper = await mountCenter()
+      const entries = wrapper.findAll(`[data-testid="${TEST_IDS.TIMELINE_ENTRY}"]`)
+      expect(entries.length).toBeGreaterThan(0)
+      // Each entry should have transition text
+      for (const entry of entries) {
+        expect(entry.text().length).toBeGreaterThan(0)
+      }
+    })
+
+    it('renders timeline dot with severity-appropriate colors', async () => {
+      const wrapper = await mountCenter()
+      const vm = wrapper.vm as any
+      // Verify every severity returns a non-empty class string
+      const severities = ['blocked', 'action_needed', 'waiting_on_provider', 'review_complete', 'informational'] as const
+      for (const sev of severities) {
+        const cls = vm.timelineDotClass(sev)
+        expect(cls).toContain('bg-')
+        expect(cls).toContain('border-')
+      }
+    })
+  })
+
+  // =========================================================================
+  // Severity badge rendering
+  // =========================================================================
+  describe('severity badges', () => {
+    it('renders severity badge with role="status" for each event', async () => {
+      const wrapper = await mountCenter()
+      const badges = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_SEVERITY_BADGE}"]`)
+      expect(badges.length).toBe(MOCK_EVENTS_MIXED.length)
+      for (const badge of badges) {
+        expect(badge.attributes('role')).toBe('status')
+      }
+    })
+
+    it('renders launch-blocking label for blocked events with role="alert"', async () => {
+      const wrapper = await mountCenter()
+      const blockedEvents = MOCK_EVENTS_MIXED.filter(e => e.launchBlocking)
+      if (blockedEvents.length > 0) {
+        const alerts = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_LAUNCH_BLOCKING}"]`)
+        expect(alerts.length).toBe(blockedEvents.length)
+        for (const alert of alerts) {
+          expect(alert.attributes('role')).toBe('alert')
+          expect(alert.text()).toContain('Launch Blocking')
+        }
+      }
+    })
+  })
+
+  // =========================================================================
+  // Filter combinations
+  // =========================================================================
+  describe('filter combinations', () => {
+    it('filters by severity=action_needed shows only action_needed events', async () => {
+      const wrapper = await mountCenter()
+      const select = wrapper.find(`[data-testid="${TEST_IDS.FILTER_SEVERITY}"]`)
+      await select.setValue('action_needed')
+      await nextTick()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      const expected = MOCK_EVENTS_MIXED.filter(e => e.severity === 'action_needed').length
+      expect(items.length).toBe(expected)
+    })
+
+    it('combines category and readState filters', async () => {
+      const wrapper = await mountCenter()
+      const catSelect = wrapper.find(`[data-testid="${TEST_IDS.FILTER_CATEGORY}"]`)
+      const readSelect = wrapper.find(`[data-testid="${TEST_IDS.FILTER_READ_STATE}"]`)
+      await catSelect.setValue('kyc_review')
+      await readSelect.setValue('unread')
+      await nextTick()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      const expected = MOCK_EVENTS_MIXED.filter(
+        e => e.category === 'kyc_review' && e.readState === 'unread',
+      ).length
+      expect(items.length).toBe(expected)
+    })
+  })
+
+  // =========================================================================
+  // Accessibility: ARIA attributes
+  // =========================================================================
+  describe('accessibility', () => {
+    it('has skip link targeting main content', async () => {
+      const wrapper = await mountCenter()
+      const skipLink = wrapper.find('a[href="#notification-center-main"]')
+      expect(skipLink.exists()).toBe(true)
+      expect(skipLink.text()).toContain('Skip to main content')
+    })
+
+    it('main region has aria-label', async () => {
+      const wrapper = await mountCenter()
+      const main = wrapper.find(`[data-testid="${TEST_IDS.ROOT}"]`)
+      expect(main.attributes('role')).toBe('region')
+      expect(main.attributes('aria-label')).toContain('Compliance Notification Center')
+    })
+
+    it('event list has aria-label and role="list"', async () => {
+      const wrapper = await mountCenter()
+      const list = wrapper.find(`[data-testid="${TEST_IDS.EVENT_LIST}"]`)
+      expect(list.attributes('role')).toBe('list')
+      expect(list.attributes('aria-label')).toContain('Compliance event list')
+    })
+
+    it('loading state has role="status" and aria-live', async () => {
+      vi.useFakeTimers()
+      const wrapper = mount(ComplianceNotificationCenter, {
+        global: {
+          components: { RouterLink: RouterLinkStub },
+          stubs: {
+            MainLayout: MainLayoutStub,
+            BellAlertIcon: iconStub,
+            ExclamationTriangleIcon: iconStub,
+            InformationCircleIcon: iconStub,
+            InboxIcon: iconStub,
+          },
+        },
+      })
+      await nextTick()
+      const loading = wrapper.find(`[data-testid="${TEST_IDS.LOADING_STATE}"]`)
+      expect(loading.attributes('role')).toBe('status')
+      expect(loading.attributes('aria-live')).toBe('polite')
+      await vi.advanceTimersByTimeAsync(200)
+      await nextTick()
+    })
+
+    it('feed health banner uses role="alert" for unavailable state', async () => {
+      const wrapper = await mountCenter()
+      const vm = wrapper.vm as any
+      vm.centerState.feedHealth = 'unavailable'
+      vm.centerState.feedHealthMessage = 'Feed unavailable'
+      await nextTick()
+      const banner = wrapper.find(`[data-testid="${TEST_IDS.FEED_HEALTH_BANNER}"]`)
+      expect(banner.attributes('role')).toBe('alert')
+      expect(banner.attributes('aria-live')).toBe('assertive')
+    })
+
+    it('feed health banner uses role="status" for stale state', async () => {
+      const wrapper = await mountCenter()
+      const vm = wrapper.vm as any
+      vm.centerState.feedHealth = 'stale'
+      vm.centerState.feedHealthMessage = 'Data may be stale'
+      await nextTick()
+      const banner = wrapper.find(`[data-testid="${TEST_IDS.FEED_HEALTH_BANNER}"]`)
+      expect(banner.attributes('role')).toBe('status')
+      expect(banner.attributes('aria-live')).toBe('polite')
+    })
+  })
+
+  // =========================================================================
+  // Event item details
+  // =========================================================================
+  describe('event item details', () => {
+    it('renders event title, description, and actor for each event', async () => {
+      const wrapper = await mountCenter()
+      const items = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_ITEM}"]`)
+      // Spot-check the first event
+      const firstEvent = MOCK_EVENTS_MIXED[0]
+      const firstItem = items[0]
+      expect(firstItem.text()).toContain(firstEvent.title)
+      expect(firstItem.text()).toContain(firstEvent.description)
+      expect(firstItem.text()).toContain(firstEvent.actor)
+    })
+
+    it('renders drill-down link with correct path for events that have one', async () => {
+      const wrapper = await mountCenter()
+      const links = wrapper.findAll(`[data-testid="${TEST_IDS.EVENT_DRILL_DOWN}"]`)
+      const eventsWithPath = MOCK_EVENTS_MIXED.filter(e => e.drillDownPath !== null)
+      expect(links.length).toBe(eventsWithPath.length)
+      // The first drill-down link should match the first event with a path
+      if (links.length > 0 && eventsWithPath.length > 0) {
+        const firstLink = links[0]
+        expect(firstLink.attributes('href')).toBe(eventsWithPath[0].drillDownPath)
+      }
+    })
+  })
 })
