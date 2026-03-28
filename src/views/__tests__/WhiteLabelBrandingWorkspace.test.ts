@@ -285,8 +285,17 @@ describe('WhiteLabelBrandingWorkspace', () => {
   })
 
   describe('change history section', () => {
-    it('renders change history section with correct data-testid', async () => {
+    it('renders change history section with correct data-testid after a draft save', async () => {
       const wrapper = await mountWorkspace()
+      // The section is conditionally rendered (v-if="changeHistory.length > 0").
+      // Trigger a save to populate change history, then verify the section appears.
+      const vm = wrapper.vm as any
+      vm.isDirty = true
+      await nextTick()
+      const savePromise = vm.saveDraft()
+      await vi.advanceTimersByTimeAsync(200)
+      await savePromise
+      await nextTick()
       const section = wrapper.find(`[data-testid="${BRAND_TEST_IDS.CHANGE_HISTORY_SECTION}"]`)
       expect(section.exists()).toBe(true)
     })
