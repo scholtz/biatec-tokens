@@ -23,8 +23,12 @@ const iconStub = { template: '<svg />' }
 // Helpers
 // ---------------------------------------------------------------------------
 
+// Pin system time to match MOCK_TIMELINE_ENTRIES / MOCK_EVENTS_MIXED hardcoded dates
+const MOCK_NOW = new Date('2026-03-27T15:00:00.000Z')
+
 async function mountCenter(): Promise<VueWrapper> {
   vi.useFakeTimers()
+  vi.setSystemTime(MOCK_NOW)
   const wrapper = mount(ComplianceNotificationCenter, {
     global: {
       components: { RouterLink: RouterLinkStub },
@@ -101,6 +105,7 @@ describe('ComplianceNotificationCenter.vue', () => {
   describe('loading state', () => {
     it('shows loading state initially before timer completes', async () => {
       vi.useFakeTimers()
+      vi.setSystemTime(MOCK_NOW)
       const wrapper = mount(ComplianceNotificationCenter, {
         global: {
           components: { RouterLink: { template: '<a :href="to"><slot /></a>', props: ['to'] } },

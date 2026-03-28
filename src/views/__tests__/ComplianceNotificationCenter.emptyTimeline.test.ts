@@ -31,8 +31,12 @@ const RouterLinkStub = {
 const MainLayoutStub = { template: '<div><slot /></div>' }
 const iconStub = { template: '<svg />' }
 
+// Pin system time to match MOCK_TIMELINE_ENTRIES / MOCK_EVENTS_MIXED hardcoded dates
+const MOCK_NOW = new Date('2026-03-27T15:00:00.000Z')
+
 async function mountCenter() {
   vi.useFakeTimers()
+  vi.setSystemTime(MOCK_NOW)
   const wrapper = mount(ComplianceNotificationCenter, {
     global: {
       components: { RouterLink: RouterLinkStub },

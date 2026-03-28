@@ -26,8 +26,12 @@ const RouterLinkStub = {
 const MainLayoutStub = { template: '<div><slot /></div>' }
 const iconStub = { template: '<svg />' }
 
+// Pin system time to match MOCK_TIMELINE_ENTRIES / MOCK_EVENTS_MIXED hardcoded dates
+const MOCK_NOW = new Date('2026-03-27T15:00:00.000Z')
+
 async function mountCenter(): Promise<VueWrapper> {
   vi.useFakeTimers()
+  vi.setSystemTime(MOCK_NOW)
   const wrapper = mount(ComplianceNotificationCenter, {
     global: {
       components: { RouterLink: RouterLinkStub },
@@ -196,6 +200,7 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
   describe('computed properties', () => {
     it('formattedRefreshedAt returns "Not available" when lastRefreshedAt is null', async () => {
       vi.useFakeTimers()
+      vi.setSystemTime(MOCK_NOW)
       const wrapper = mount(ComplianceNotificationCenter, {
         global: {
           components: { RouterLink: RouterLinkStub },
@@ -723,6 +728,7 @@ describe('ComplianceNotificationCenter.vue — logic tests', () => {
 
     it('loading state has role="status" and aria-live', async () => {
       vi.useFakeTimers()
+      vi.setSystemTime(MOCK_NOW)
       const wrapper = mount(ComplianceNotificationCenter, {
         global: {
           components: { RouterLink: RouterLinkStub },
