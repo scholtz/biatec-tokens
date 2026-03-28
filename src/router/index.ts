@@ -41,6 +41,7 @@ import ComplianceOperationsCockpit from "../views/ComplianceOperationsCockpit.vu
 import ComplianceNotificationCenter from "../views/ComplianceNotificationCenter.vue";
 import ReleaseEvidenceCenterView from "../views/ReleaseEvidenceCenterView.vue";
 import ReportingCommandCenterView from "../views/ReportingCommandCenterView.vue";
+import WhiteLabelBrandingWorkspace from "../views/WhiteLabelBrandingWorkspace.vue";
 import { AUTH_STORAGE_KEYS } from "../constants/auth";
 import { isIssuanceSessionValid, storeIssuanceReturnPath } from "../utils/authFirstIssuanceWorkspace";
 
@@ -361,6 +362,13 @@ const router = createRouter({
       path: "/account/usage",
       name: "UsageTracking",
       component: UsageTracking,
+      meta: { requiresAuth: true },
+    },
+    // White-Label Branding Workspace — enterprise brand configuration
+    {
+      path: "/enterprise/branding",
+      name: "WhiteLabelBrandingWorkspace",
+      component: WhiteLabelBrandingWorkspace,
       meta: { requiresAuth: true },
     },
   ],
