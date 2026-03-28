@@ -433,7 +433,7 @@ export function brandConfigFromApi(raw: unknown): BrandConfig {
     id: '',
     tenantId: '',
     primitives: { ...DEFAULT_BRAND_CONFIG },
-    publishState: 'unknown',
+    publishState: 'draft',
     lastUpdatedAt: null,
     lastPublishedAt: null,
     hasDraftChanges: false,

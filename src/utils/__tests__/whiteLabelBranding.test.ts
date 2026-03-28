@@ -674,7 +674,7 @@ describe('brandConfigFromApi', () => {
   it('returns fallback for null input', () => {
     const config = brandConfigFromApi(null)
     expect(config.primitives.organizationName).toBe(DEFAULT_BRAND_CONFIG.organizationName)
-    expect(config.publishState).toBe('unknown')
+    expect(config.publishState).toBe('draft')
   })
 
   it('returns fallback for undefined input', () => {
