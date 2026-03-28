@@ -49,6 +49,9 @@ vi.mock('@heroicons/vue/24/outline', () => ({
   PhotoIcon: {
     template: '<svg class="h-5 w-5"></svg>',
   },
+  SwatchIcon: {
+    template: '<svg class="h-5 w-5"></svg>',
+  },
 }));
 
 // Mock router-link — passes 'to' as a prop; class and other attributes fall through naturally
@@ -117,7 +120,7 @@ describe('Sidebar Component', () => {
       });
 
       const links = wrapper.findAll('a');
-      expect(links).toHaveLength(17); // Includes Release Evidence, Sign-off Readiness, Investor Onboarding, Compliance Reporting, Compliance Monitoring, Whitelist Management, Risk Report, Approval Queue, Operations Cockpit, Notification Center, Reporting Center
+      expect(links).toHaveLength(18); // Includes Release Evidence, Sign-off Readiness, Investor Onboarding, Compliance Reporting, Compliance Monitoring, Whitelist Management, Risk Report, Approval Queue, Operations Cockpit, Notification Center, Reporting Center, Enterprise Branding
 
       // Check link texts and routes
       expect(links[0].text()).toContain('Guided Token Launch');
@@ -170,6 +173,9 @@ describe('Sidebar Component', () => {
 
       expect(links[16].text()).toContain('Reporting Center');
       expect(links[16].attributes('to')).toBe('/compliance/reporting-center');
+
+      expect(links[17].text()).toContain('Enterprise Branding');
+      expect(links[17].attributes('to')).toBe('/enterprise/branding');
     });
 
     it('should render icons for quick actions', () => {
@@ -184,8 +190,8 @@ describe('Sidebar Component', () => {
       });
 
       const svgs = wrapper.findAll('svg');
-      // 17 links each with an SVG icon
-      expect(svgs).toHaveLength(17);
+      // 18 links each with an SVG icon
+      expect(svgs).toHaveLength(18);
     });
   });
 
