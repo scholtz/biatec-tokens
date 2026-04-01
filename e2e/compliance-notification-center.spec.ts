@@ -398,9 +398,28 @@ test.describe('Compliance Notification Center — operator journeys', () => {
 
     const stale = page.getByTestId('notification-center-queue-stale')
     await expect(stale).toBeAttached({ timeout: 30000 })
-    // MOCK_EVENTS_MIXED has exactly 1 critical-freshness event (evt-013)
+    // Compute expected stale+critical count dynamically from MOCK_EVENTS_MIXED timestamps.
+    // The utility (src/utils/complianceNotificationCenter.ts) counts events where
+    // classifyFreshness() returns 'stale' (3–7 days old) OR 'critical' (>7 days old).
+    // THREE_DAYS_MS mirrors the 'aging→stale' boundary in classifyFreshness().
+    // Using Date.now() avoids hardcoded assertions that break as mock timestamps age over CI runs.
+    // NOTE: If the classifyFreshness() 3-day boundary changes in the utility, update THREE_DAYS_MS here.
+    const MOCK_TIMESTAMPS = [
+      '2026-03-27T14:45:00.000Z', // evt-010
+      '2026-03-27T14:20:00.000Z', // evt-011
+      '2026-03-27T13:30:00.000Z', // evt-012
+      '2026-03-20T10:00:00.000Z', // evt-013
+      '2026-03-27T12:00:00.000Z', // evt-014
+      '2026-03-27T11:30:00.000Z', // evt-015
+      '2026-03-27T11:00:00.000Z', // evt-016
+    ]
+    const THREE_DAYS_MS = 3 * 86_400_000 // mirrors classifyFreshness() aging→stale threshold
+    const now = Date.now()
+    const expectedStaleCount = MOCK_TIMESTAMPS.filter(
+      (ts) => now - new Date(ts).getTime() >= THREE_DAYS_MS,
+    ).length
     const text = await stale.locator('dd').first().textContent({ timeout: 5000 })
-    expect(Number(text?.trim())).toBe(1)
+    expect(Number(text?.trim())).toBe(expectedStaleCount)
   })
 
   // ===========================================================================

@@ -79,7 +79,7 @@
                   ? 'bg-green-500 text-white cursor-pointer hover:scale-105'
                   : step.status === 'blocked'
                   ? 'bg-red-500 text-white'
-                  : 'bg-gray-700 text-gray-400 cursor-not-allowed',
+                  : 'bg-gray-700 text-gray-300 cursor-not-allowed',
               ]"
             >
               <i
