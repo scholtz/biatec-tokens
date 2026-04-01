@@ -24,7 +24,7 @@ vi.mock('axios', () => {
 const mockedAxios = axios as any;
 
 // Import after mocking
-import { BiatecTokensApiClient } from '../BiatecTokensApiClient';
+import { BiatecTokensApiClient, getApiClient } from '../BiatecTokensApiClient';
 
 describe('BiatecTokensApiClient', () => {
   let client: BiatecTokensApiClient;
@@ -469,6 +469,51 @@ describe('BiatecTokensApiClient', () => {
       );
     });
   });
+
+  describe('getApiClient singleton cache (line 143 false-branch)', () => {
+    it('should return the same cached instance on subsequent calls', () => {
+      // apiClient = getApiClient() already ran at module load, setting defaultClient.
+      // A second call hits the if (!defaultClient) false branch and returns the cached instance.
+      const first = getApiClient()
+      const second = getApiClient()
+      expect(second).toBe(first)
+    })
+
+    it('should return a BiatecTokensApiClient instance', () => {
+      const instance = getApiClient()
+      expect(instance).toBeInstanceOf(BiatecTokensApiClient)
+    })
+  })
+
+  describe('error interceptor — error.response false branch (line 62)', () => {
+    it('should handle error without response in DEV mode (no error.response branch)', () => {
+      const mockInstance = {
+        get: vi.fn(),
+        interceptors: {
+          request: { use: vi.fn() },
+          response: { use: vi.fn() },
+        },
+      }
+      mockedAxios.create.mockReturnValue(mockInstance)
+      const origDev = import.meta.env.DEV
+      import.meta.env.DEV = true
+      client = new BiatecTokensApiClient()
+
+      const errorHandler = mockInstance.interceptors.response.use.mock.calls[0][1]
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      // No .response property — exercises the if (error.response) false branch
+      const fakeError = { message: 'connection refused', isAxiosError: true }
+      // Intentionally suppress the rejection — we only want to exercise the synchronous
+      // console.error call inside the error handler, not the returned Promise.
+      errorHandler(fakeError as any).catch((_e: unknown) => { /* expected rejection */ })
+      expect(consoleSpy).toHaveBeenCalledWith('[API Error]', 'connection refused')
+      // Should NOT have been called with "Response data:" because error.response is missing
+      const calls = consoleSpy.mock.calls.map((c) => c[0])
+      expect(calls).not.toContain('Response data:')
+      consoleSpy.mockRestore()
+      import.meta.env.DEV = origDev
+    })
+  })
 
   describe('DEV mode interceptor branches', () => {
     it('should log request in DEV mode', () => {

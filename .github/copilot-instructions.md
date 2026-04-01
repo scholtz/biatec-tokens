@@ -3895,6 +3895,39 @@ Before marking ANY dependency update complete:
 - Shows inadequate verification
 - Missing test results summary
 
+### 🚨 CRITICAL PAST VIOLATION — April 1, 2026 (Dependabot axios PR) 🚨
+
+**Violation**: Copilot was assigned to a Dependabot PR bumping axios from 1.13.6 to 1.14.0. The agent created an "Initial plan" commit as the first `report_progress` call but then produced **no further code or documentation changes**. No business value document was created, no test execution evidence was provided, and no coverage improvements were made. Product owner had to follow up with "Fix build and fix tests or the app and make sure it is aligned with product definition. Increase test coverage."
+
+**Root Cause**:
+1. **"Initial plan" treated as deliverable**: The first `report_progress` call (labelled "Initial plan") was mistaken for a completed work item. The agent stopped after verifying build/tests pass, without producing the MANDATORY business value document and coverage improvements.
+2. **Protocol not completed**: The Dependency Update Protocol (section above) explicitly requires: install → test → build → business-value document → CI verification → reply to comment. Only the first three steps were verified; the rest were skipped.
+3. **No reply to product owner comment**: The agent never called `reply_to_comment`, leaving the product owner without acknowledgement or summary.
+
+**Correct Approach for Every Dependabot PR**:
+```
+MANDATORY COMPLETION CHECKLIST (all must be done before any reply):
+1. npm install  → verify no peer conflicts
+2. npm test     → document exact pass count (e.g. "15,127 tests passing")
+3. npm run build → document success
+4. npm audit    → document any NEW vulnerabilities (pre-existing are OK to note)
+5. Read node_modules/<pkg>/CHANGELOG.md for the exact version being introduced
+6. Create docs/implementations/DEPENDENCY_UPDATE_<PKG>_<VERSION>.md with ALL required sections
+7. Improve any test coverage gaps in FILES THAT USE the updated package
+8. report_progress with the doc + test improvements committed
+9. reply_to_comment with build status, test count, and doc link
+```
+
+**Red Flags This Pattern Is Repeating**:
+- ✅ First `report_progress` is labelled "Initial plan" with a checklist but no actual changes
+- ✅ No `DEPENDENCY_UPDATE_*.md` file is created
+- ✅ No `reply_to_comment` is called
+
+**Never Again**:
+- ❌ Stop after verifying build/tests for a Dependabot PR — you MUST also create the business value document
+- ❌ Create a `report_progress` "Initial plan" commit with only a checklist and no deliverables — push the checklist only when the first real change is ready
+- ❌ Leave a Dependabot PR without a `reply_to_comment` acknowledging the work done
+
 ### 7aa. Sidebar Link Tests Must Be Updated When New Nav Links Are Added (MANDATORY) 🆕
 
 **🚨 CRITICAL PAST VIOLATION - March 15, 2026 (PR build-investor-compliance-workspace) 🚨**
