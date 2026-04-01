@@ -4535,6 +4535,92 @@ grep -n "withAuth" e2e/my-feature.spec.ts
 
 ---
 
+### 7aa-e. Mock Data With Absolute Timestamps Ages Over CI Runs — Always Use Relative Builder Functions (MANDATORY) 🆕
+
+**🚨 CRITICAL PAST VIOLATION - April 2026 (PR #752 / dependabot/azure/setup-kubectl-5) 🚨**
+
+**Violation**: `MOCK_EVENTS_MIXED` and `MOCK_TIMELINE_ENTRIES` exported hardcoded ISO timestamps from March 27, 2026. The view consumed them directly. By April 1, 2026 (5 days later), those events had aged past the `stale` threshold and 6 of the 7 events fell into the `critical` freshness bucket, making the E2E test `queue stale card shows exact count from mock data` fail with `Expected: 1, Received: 7`.
+
+**Why This Is Insidious**:
+- The fix commit (March 2026) hardcoded specific timestamps that were correct at write time
+- Unit tests used `vi.setSystemTime()` to pin system time → they stayed green
+- E2E tests ran against the live view which used real `new Date()` → they drifted
+- The mismatch was invisible until calendar time crossed the freshness threshold
+
+**Correct Approach — MANDATORY for any feature that classifies events by age**:
+
+1. **Builder functions over static fixtures for runtime consumption**:
+
+```typescript
+// ❌ WRONG — view consumes a constant with hardcoded timestamps
+import { MOCK_TIMELINE_ENTRIES } from '../utils/complianceNotificationCenter'
+const timelineGroups = computed(() => groupTimelineByDate(MOCK_TIMELINE_ENTRIES))
+// → MOCK_TIMELINE_ENTRIES.timestamps age → Today/Yesterday groups break after midnight
+
+// ✅ CORRECT — view calls a builder that generates timestamps relative to now
+import { buildMockTimelineEntries } from '../utils/complianceNotificationCenter'
+const timelineGroups = computed(() => groupTimelineByDate(buildMockTimelineEntries()))
+// → always uses offsets from current time → groups stay stable
+```
+
+2. **Unit tests may keep static constants with vi.setSystemTime pinning** (acceptable):
+
+```typescript
+// ✅ OK for unit tests — system time is pinned, constants are deterministic
+const MOCK_NOW = new Date('2026-03-27T15:00:00.000Z')
+vi.useFakeTimers()
+vi.setSystemTime(MOCK_NOW)
+const summary = deriveQueueSummary(MOCK_EVENTS_MIXED, MOCK_NOW)
+expect(summary.staleCount).toBe(1) // stable: constant + pinned time
+```
+
+3. **Builder functions must be tested to verify relative-offset correctness**:
+
+```typescript
+it('evt-013 always classifies as critical freshness (173 h offset)', () => {
+  const anchor = new Date()
+  const events = buildMockEventsMixed(anchor)
+  const evt013 = events.find(e => e.id === 'evt-013')!
+  expect(classifyFreshness(evt013.timestamp, anchor)).toBe('critical')
+})
+
+it('exactly 2 date groups (Today and Yesterday) regardless of anchor', () => {
+  const anchor = new Date()
+  const entries = buildMockTimelineEntries(anchor)
+  const groups = groupTimelineByDate(entries, anchor)
+  expect(groups.length).toBe(2)
+})
+```
+
+4. **emptyTimeline test must mock the builder function (not just the constant)**:
+
+```typescript
+// ✅ CORRECT — mock buildMockTimelineEntries since the view calls the function
+vi.mock('../../utils/complianceNotificationCenter', async () => ({
+  ...await vi.importActual('../../utils/complianceNotificationCenter'),
+  MOCK_TIMELINE_ENTRIES: [],           // backward compat
+  buildMockTimelineEntries: () => [],  // view now calls this function!
+}))
+```
+
+**Root Cause Pattern** (how to detect at PR review time):
+```bash
+# Find views/components that consume hardcoded mock timestamp constants directly:
+grep -rn "MOCK_EVENTS_MIXED\|MOCK_TIMELINE_ENTRIES" src/views/ src/components/ --include="*.vue"
+# If any .vue file imports MOCK_* directly AND the utility classifies by age → red flag
+# The fix: replace constant with a builder function call
+```
+
+**Never Again**:
+- ❌ Export hardcoded-timestamp mock arrays and consume them directly in Vue views
+- ❌ Assume unit tests staying green means E2E tests stay green (vi.setSystemTime masks the drift)
+- ❌ Write E2E assertions like `expect(staleCount).toBe(1)` without ensuring the view uses builder functions
+- ✅ Always provide `buildMock*()` builder functions for any mock data that classifies events by age
+- ✅ Unit tests: use static constants + `vi.setSystemTime()` for pinned determinism
+- ✅ Views/E2E: use builder functions with `anchor = new Date()` so runtime always sees stable offsets
+
+---
+
 ## Additional Notes
 
 - The application uses Vue Router for navigation

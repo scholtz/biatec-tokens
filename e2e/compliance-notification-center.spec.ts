@@ -104,7 +104,7 @@ test.describe('Compliance Notification Center — operator journeys', () => {
     const timeline = page.getByTestId('notification-center-timeline-root')
     await expect(timeline).toBeAttached({ timeout: 30000 })
 
-    // MOCK_TIMELINE_ENTRIES has 4 entries across 2 dates (2026-03-27, 2026-03-26) → 2 groups
+    // buildMockTimelineEntries() produces 4 entries across 2 relative-date groups (Today + Yesterday)
     const groups = page.getByTestId('notification-center-timeline-group')
     const groupCount = await groups.count()
     expect(groupCount).toBe(2)
@@ -453,7 +453,7 @@ test.describe('Compliance Notification Center — operator journeys', () => {
 
     await expect(page.getByTestId('notification-center-event-list')).toBeAttached({ timeout: 30000 })
 
-    // Filter by critical freshness — MOCK_EVENTS_MIXED has exactly 1 critical-freshness event (evt-013: timestamp 2026-03-20)
+    // Filter by critical freshness — buildMockEventsMixed() always sets evt-013 to 173h ago (critical threshold)
     const freshnessFilter = page.getByTestId('notification-center-filter-freshness')
     await freshnessFilter.selectOption('critical', { timeout: 5000 })
 

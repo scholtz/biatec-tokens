@@ -16,7 +16,8 @@ vi.mock('../../utils/complianceNotificationCenter', async () => {
   )
   return {
     ...actual,
-    MOCK_TIMELINE_ENTRIES: [], // empty timeline
+    MOCK_TIMELINE_ENTRIES: [], // empty timeline (backward compat)
+    buildMockTimelineEntries: () => [], // view now uses this function
   }
 })
 

@@ -408,8 +408,8 @@ import {
   CATEGORY_LABELS,
   FRESHNESS_LABELS,
   DEFAULT_FILTERS,
-  MOCK_EVENTS_MIXED,
-  MOCK_TIMELINE_ENTRIES,
+  buildMockEventsMixed,
+  buildMockTimelineEntries,
   deriveNotificationCenterState,
   filterEvents,
   groupTimelineByDate,
@@ -458,7 +458,7 @@ const formattedRefreshedAt = computed(() => {
 
 const filteredEvents = computed(() => filterEvents(centerState.value.events, filters))
 
-const timelineGroups = computed(() => groupTimelineByDate(MOCK_TIMELINE_ENTRIES))
+const timelineGroups = computed(() => groupTimelineByDate(buildMockTimelineEntries()))
 
 // ---------------------------------------------------------------------------
 // Methods
@@ -485,7 +485,7 @@ function loadEvents(): void {
   setTimeout(() => {
     lastRefreshedAt.value = new Date().toISOString()
     centerState.value = deriveNotificationCenterState(
-      MOCK_EVENTS_MIXED,
+      buildMockEventsMixed(),
       lastRefreshedAt.value,
     )
     isLoading.value = false

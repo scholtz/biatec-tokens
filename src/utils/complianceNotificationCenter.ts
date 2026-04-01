@@ -537,6 +537,197 @@ export const NOTIFICATION_CENTER_TEST_IDS = {
 
 export const MOCK_REFRESHED_AT = '2026-03-27T14:55:00.000Z'
 
+/**
+ * Build a set of mixed compliance events with timestamps relative to `anchor`
+ * so that freshness buckets stay stable regardless of when tests run.
+ *
+ * Relative offsets (matching the original March 27 fixture):
+ *   evt-010: 15 min ago  → fresh
+ *   evt-011: 40 min ago  → fresh
+ *   evt-012: 90 min ago  → recent
+ *   evt-013: 173 hours ago (~7.2 days) → critical   ← always the stale/critical marker
+ *   evt-014:  3 hours ago → recent
+ *   evt-015:  3.5 hours ago → recent
+ *   evt-016:  4 hours ago → recent
+ */
+export function buildMockEventsMixed(anchor: Date = new Date()): ComplianceEvent[] {
+  const t = anchor.getTime()
+  return [
+    {
+      id: 'evt-010',
+      title: 'Sanctions screening escalation opened',
+      description:
+        'Investor Gamma Holdings matched a watchlist entry. Manual review required before onboarding can continue.',
+      category: 'sanctions_escalation',
+      severity: 'blocked',
+      readState: 'unread',
+      timestamp: new Date(t - 15 * MINUTE_MS).toISOString(),
+      actor: 'System',
+      actorType: 'system',
+      nextAction: 'Review sanctions match and either clear or escalate to compliance lead.',
+      drillDownPath: '/compliance/operations',
+      isLaunchBlocking: true,
+      caseRef: 'CASE-2001',
+    },
+    {
+      id: 'evt-011',
+      title: 'KYC document resubmission needed',
+      description:
+        'Identity document for Delta Fund investor was rejected due to low quality. Awaiting resubmission.',
+      category: 'kyc_review',
+      severity: 'action_needed',
+      readState: 'unread',
+      timestamp: new Date(t - 40 * MINUTE_MS).toISOString(),
+      actor: 'kyc-provider@external.com',
+      actorType: 'provider',
+      nextAction: 'Contact investor to request higher-quality identity document.',
+      drillDownPath: '/compliance/onboarding',
+      isLaunchBlocking: false,
+      caseRef: 'CASE-2002',
+    },
+    {
+      id: 'evt-012',
+      title: 'Webhook delivery delayed',
+      description:
+        'KYC provider webhook has not delivered results for investor Epsilon Corp after 45 minutes.',
+      category: 'webhook_delivery',
+      severity: 'waiting_on_provider',
+      readState: 'unread',
+      timestamp: new Date(t - 90 * MINUTE_MS).toISOString(),
+      actor: 'System',
+      actorType: 'system',
+      nextAction:
+        'Wait for provider delivery. If not received within 2 hours, check provider status page.',
+      drillDownPath: null,
+      isLaunchBlocking: false,
+      caseRef: 'CASE-2003',
+    },
+    {
+      id: 'evt-013',
+      title: 'Release evidence freshness expired',
+      description:
+        'Release evidence package for Token Alpha has not been refreshed in over 7 days. Evidence may be stale.',
+      category: 'release_evidence',
+      severity: 'action_needed',
+      readState: 'read',
+      // Always 173 hours ago (~7.2 days) → critical freshness bucket
+      timestamp: new Date(t - 173 * HOUR_MS).toISOString(),
+      actor: 'System',
+      actorType: 'automation',
+      nextAction: 'Regenerate release evidence package from the Release Evidence Center.',
+      drillDownPath: '/compliance/release',
+      isLaunchBlocking: true,
+      caseRef: null,
+    },
+    {
+      id: 'evt-014',
+      title: 'Investor onboarding completed',
+      description:
+        'All compliance checks for investor Zeta Partners passed. Ready for token allocation.',
+      category: 'investor_onboarding',
+      severity: 'review_complete',
+      readState: 'read',
+      timestamp: new Date(t - 3 * HOUR_MS).toISOString(),
+      actor: 'compliance-lead@biatec.io',
+      actorType: 'operator',
+      nextAction: 'No action required. Investor cleared for allocation.',
+      drillDownPath: '/compliance/onboarding',
+      isLaunchBlocking: false,
+      caseRef: 'CASE-2004',
+    },
+    {
+      id: 'evt-015',
+      title: 'KYC approved — standard review',
+      description:
+        'Investor Eta Holdings passed standard KYC review. Identity documents verified by provider.',
+      category: 'kyc_review',
+      severity: 'informational',
+      readState: 'read',
+      timestamp: new Date(t - 3.5 * HOUR_MS).toISOString(),
+      actor: 'kyc-provider@external.com',
+      actorType: 'provider',
+      nextAction: null,
+      drillDownPath: '/compliance/onboarding',
+      isLaunchBlocking: false,
+      caseRef: 'CASE-2005',
+    },
+    {
+      id: 'evt-016',
+      title: 'AML screening completed — no flags',
+      description:
+        'Automated AML screening returned clean results for investor Theta Corp. No further action needed.',
+      category: 'aml_screening',
+      severity: 'informational',
+      readState: 'read',
+      timestamp: new Date(t - 4 * HOUR_MS).toISOString(),
+      actor: 'System',
+      actorType: 'system',
+      nextAction: null,
+      drillDownPath: null,
+      isLaunchBlocking: false,
+      caseRef: 'CASE-2006',
+    },
+  ]
+}
+
+/**
+ * Build timeline entries with timestamps relative to `anchor` so that
+ * the "Today" / "Yesterday" grouping stays stable regardless of run date.
+ *
+ * Groups:
+ *   Today    (3 entries): tl-001 (10 min), tl-002 (30 min), tl-003 (5 hours)
+ *   Yesterday (1 entry): tl-004 (23 hours)
+ */
+export function buildMockTimelineEntries(anchor: Date = new Date()): TimelineEntry[] {
+  const t = anchor.getTime()
+  return [
+    {
+      id: 'tl-001',
+      timestamp: new Date(t - 10 * MINUTE_MS).toISOString(),
+      actor: 'compliance-analyst@biatec.io',
+      actorType: 'operator',
+      transition: 'KYC status changed: Pending Review → Approved',
+      description: 'Identity verification documents reviewed and accepted.',
+      nextAction: null,
+      category: 'kyc_review',
+      severity: 'review_complete',
+    },
+    {
+      id: 'tl-002',
+      timestamp: new Date(t - 30 * MINUTE_MS).toISOString(),
+      actor: 'System',
+      actorType: 'system',
+      transition: 'AML screening completed',
+      description: 'Automated screening returned no flags for this investor.',
+      nextAction: null,
+      category: 'aml_screening',
+      severity: 'informational',
+    },
+    {
+      id: 'tl-003',
+      timestamp: new Date(t - 5 * HOUR_MS).toISOString(),
+      actor: 'onboarding-team@biatec.io',
+      actorType: 'operator',
+      transition: 'Onboarding case created',
+      description: 'New investor onboarding case initiated for compliance review.',
+      nextAction: 'Submit identity documents for KYC verification.',
+      category: 'investor_onboarding',
+      severity: 'action_needed',
+    },
+    {
+      id: 'tl-004',
+      timestamp: new Date(t - 23 * HOUR_MS).toISOString(),
+      actor: 'System',
+      actorType: 'automation',
+      transition: 'Evidence package scheduled',
+      description: 'Quarterly evidence export scheduled for compliance reporting.',
+      nextAction: 'Review evidence package when generated.',
+      category: 'evidence_export',
+      severity: 'informational',
+    },
+  ]
+}
+
 export const MOCK_EVENTS_HEALTHY: ComplianceEvent[] = [
   {
     id: 'evt-001',

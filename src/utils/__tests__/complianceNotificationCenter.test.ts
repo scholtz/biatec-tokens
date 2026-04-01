@@ -24,6 +24,8 @@ import {
   MOCK_EVENTS_DEGRADED,
   MOCK_TIMELINE_ENTRIES,
   MOCK_REFRESHED_AT,
+  buildMockEventsMixed,
+  buildMockTimelineEntries,
   type ComplianceEvent,
   type NotificationFilters,
   type EventSeverity,
@@ -1028,5 +1030,141 @@ describe('complianceNotificationCenter', () => {
       const nullEvents = state.events.filter(e => e.nextAction === null)
       expect(nullEvents.length).toBe(2)
     })
+  })
+})
+
+// ===========================================================================
+// buildMockEventsMixed — relative-timestamp builder (April 2026 addition)
+// These tests ensure freshness buckets remain stable regardless of run date.
+// ===========================================================================
+describe('buildMockEventsMixed', () => {
+  it('returns exactly 7 events', () => {
+    expect(buildMockEventsMixed().length).toBe(7)
+  })
+
+  it('preserves the same IDs as the static MOCK_EVENTS_MIXED fixture', () => {
+    const ids = buildMockEventsMixed().map(e => e.id)
+    expect(ids).toEqual(['evt-010', 'evt-011', 'evt-012', 'evt-013', 'evt-014', 'evt-015', 'evt-016'])
+  })
+
+  it('evt-013 always classifies as critical freshness (173 h offset)', () => {
+    const anchor = new Date()
+    const events = buildMockEventsMixed(anchor)
+    const evt013 = events.find(e => e.id === 'evt-013')!
+    // 173 hours > 7 days threshold → critical
+    expect(classifyFreshness(evt013.timestamp, anchor)).toBe('critical')
+  })
+
+  it('evt-010 always classifies as fresh (15 min offset)', () => {
+    const anchor = new Date()
+    const events = buildMockEventsMixed(anchor)
+    const evt010 = events.find(e => e.id === 'evt-010')!
+    expect(classifyFreshness(evt010.timestamp, anchor)).toBe('fresh')
+  })
+
+  it('exactly 1 event has critical freshness at any anchor date', () => {
+    const anchor = new Date()
+    const events = buildMockEventsMixed(anchor)
+    const critical = events.filter(e => classifyFreshness(e.timestamp, anchor) === 'critical')
+    expect(critical.length).toBe(1)
+    expect(critical[0].id).toBe('evt-013')
+  })
+
+  it('exactly 1 blocked event (isLaunchBlocking sanctions escalation)', () => {
+    const events = buildMockEventsMixed()
+    expect(events.filter(e => e.severity === 'blocked').length).toBe(1)
+  })
+
+  it('exactly 2 launch-blocking events', () => {
+    const events = buildMockEventsMixed()
+    expect(events.filter(e => e.isLaunchBlocking).length).toBe(2)
+  })
+
+  it('exactly 3 unread events', () => {
+    const events = buildMockEventsMixed()
+    expect(events.filter(e => e.readState === 'unread').length).toBe(3)
+  })
+
+  it('exactly 2 null-nextAction events', () => {
+    const events = buildMockEventsMixed()
+    expect(events.filter(e => e.nextAction === null).length).toBe(2)
+  })
+
+  it('exactly 5 events with drillDownPath', () => {
+    const events = buildMockEventsMixed()
+    expect(events.filter(e => e.drillDownPath !== null).length).toBe(5)
+  })
+
+  it('staleCount from deriveQueueSummary is exactly 1 regardless of anchor', () => {
+    const anchor = new Date()
+    const events = buildMockEventsMixed(anchor)
+    const summary = deriveQueueSummary(events, anchor)
+    // evt-013 is always in the critical bucket (173h offset)
+    expect(summary.staleCount).toBe(1)
+  })
+
+  it('accepts a custom anchor date and produces correct relative offsets', () => {
+    const customAnchor = new Date('2030-06-15T12:00:00.000Z')
+    const events = buildMockEventsMixed(customAnchor)
+    const evt010 = events.find(e => e.id === 'evt-010')!
+    const ageMs = customAnchor.getTime() - new Date(evt010.timestamp).getTime()
+    // Should be exactly 15 min in ms
+    expect(ageMs).toBe(15 * 60 * 1000)
+  })
+})
+
+// ===========================================================================
+// buildMockTimelineEntries — relative-timestamp builder (April 2026 addition)
+// ===========================================================================
+describe('buildMockTimelineEntries', () => {
+  it('returns exactly 4 entries', () => {
+    expect(buildMockTimelineEntries().length).toBe(4)
+  })
+
+  it('preserves the same IDs as the static MOCK_TIMELINE_ENTRIES fixture', () => {
+    const ids = buildMockTimelineEntries().map(e => e.id)
+    expect(ids).toEqual(['tl-001', 'tl-002', 'tl-003', 'tl-004'])
+  })
+
+  it('produces exactly 2 date groups (Today and Yesterday) when grouped', () => {
+    const anchor = new Date()
+    const entries = buildMockTimelineEntries(anchor)
+    const groups = groupTimelineByDate(entries, anchor)
+    expect(groups.length).toBe(2)
+  })
+
+  it('Today group has exactly 3 entries', () => {
+    const anchor = new Date()
+    const entries = buildMockTimelineEntries(anchor)
+    const groups = groupTimelineByDate(entries, anchor)
+    const today = groups.find(g => g.dateLabel === 'Today')!
+    expect(today).toBeDefined()
+    expect(today.entries.length).toBe(3)
+  })
+
+  it('Yesterday group has exactly 1 entry', () => {
+    const anchor = new Date()
+    const entries = buildMockTimelineEntries(anchor)
+    const groups = groupTimelineByDate(entries, anchor)
+    const yesterday = groups.find(g => g.dateLabel === 'Yesterday')!
+    expect(yesterday).toBeDefined()
+    expect(yesterday.entries.length).toBe(1)
+  })
+
+  it('tl-004 always falls in Yesterday group (23 h offset)', () => {
+    const anchor = new Date()
+    const entries = buildMockTimelineEntries(anchor)
+    const groups = groupTimelineByDate(entries, anchor)
+    const yesterday = groups.find(g => g.dateLabel === 'Yesterday')!
+    expect(yesterday.entries[0].id).toBe('tl-004')
+  })
+
+  it('accepts a custom anchor date and generates offsets relative to it', () => {
+    const customAnchor = new Date('2030-06-15T12:00:00.000Z')
+    const entries = buildMockTimelineEntries(customAnchor)
+    const tl001 = entries.find(e => e.id === 'tl-001')!
+    const ageMs = customAnchor.getTime() - new Date(tl001.timestamp).getTime()
+    // tl-001 is 10 min in ms
+    expect(ageMs).toBe(10 * 60 * 1000)
   })
 })
