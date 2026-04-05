@@ -88,9 +88,9 @@ function mountPanel(entry = MOCK_ENTRY, storeState = {}) {
           emits: ["click"],
         },
         Modal: {
-          template: `<div v-if="modelValue" data-testid="modal"><slot /><slot name="footer" /></div>`,
-          props: ["modelValue", "title"],
-          emits: ["update:modelValue"],
+          template: `<div v-if="show" data-testid="modal"><slot /><slot name="footer" /></div>`,
+          props: ["show", "title", "size"],
+          emits: ["close"],
         },
         Input: {
           template: '<input :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" :placeholder="placeholder" />',

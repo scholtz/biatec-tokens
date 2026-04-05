@@ -554,5 +554,60 @@ describe('BiatecTokensApiClient', () => {
       consoleSpy.mockRestore();
       import.meta.env.DEV = origDev;
     });
+
+    it('should log request in DEV mode (request success handler, lines 39-42)', () => {
+      const mockInstance = {
+        get: vi.fn(),
+        interceptors: {
+          request: { use: vi.fn() },
+          response: { use: vi.fn() },
+        },
+      };
+      mockedAxios.create.mockReturnValue(mockInstance);
+      const origDev = import.meta.env.DEV;
+      import.meta.env.DEV = true;
+      client = new BiatecTokensApiClient();
+      const requestSuccessHandler = mockInstance.interceptors.request.use.mock.calls[0][0];
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const fakeConfig = { method: 'get', url: '/test' };
+      const result = requestSuccessHandler(fakeConfig);
+      expect(result).toBe(fakeConfig);
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[API Request]'));
+      consoleSpy.mockRestore();
+      import.meta.env.DEV = origDev;
+    });
+
+    it('should log response in DEV mode (response success handler, lines 53-56)', () => {
+      const mockInstance = {
+        get: vi.fn(),
+        interceptors: {
+          request: { use: vi.fn() },
+          response: { use: vi.fn() },
+        },
+      };
+      mockedAxios.create.mockReturnValue(mockInstance);
+      const origDev = import.meta.env.DEV;
+      import.meta.env.DEV = true;
+      client = new BiatecTokensApiClient();
+      const responseSuccessHandler = mockInstance.interceptors.response.use.mock.calls[0][0];
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const fakeResponse = { status: 200, config: { url: '/test' }, data: {} };
+      const result = responseSuccessHandler(fakeResponse);
+      expect(result).toBe(fakeResponse);
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[API Response]'));
+      consoleSpy.mockRestore();
+      import.meta.env.DEV = origDev;
+    });
+  });
+});
+
+describe('getApiClient singleton', () => {
+  it('returns same instance on repeated calls (line 143 false branch)', async () => {
+    // Reset module to clear the cached defaultClient
+    vi.resetModules();
+    const { getApiClient } = await import('../BiatecTokensApiClient');
+    const first = getApiClient();
+    const second = getApiClient();
+    expect(first).toBe(second);
   });
 });

@@ -174,4 +174,12 @@ describe('restoreWatchlistFromStorage', () => {
     const result = restoreWatchlistFromStorage()
     expect(result).toHaveLength(1)
   })
+
+  it('returns empty array when loadWatchlist throws (catch branch, line 73)', () => {
+    // Store corrupt JSON that causes JSON.parse to throw
+    storageMock.setItem(WATCHLIST_STORAGE_KEY, 'NOT_VALID_JSON:::')
+    // restoreWatchlistFromStorage wraps loadWatchlist in try/catch — should not throw
+    const result = restoreWatchlistFromStorage()
+    expect(result).toEqual([])
+  })
 })

@@ -300,4 +300,25 @@ describe('Token Compliance Store', () => {
       expect(store.getReadinessStatus('token-1')).not.toBe(store.getReadinessStatus('token-2'))
     })
   })
+
+  describe('saveToStorage error branch', () => {
+    it('catches and logs errors when localStorage.setItem throws (line 69)', () => {
+      const store = useTokenComplianceStore()
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      // Mock localStorage.setItem to always throw (covers the catch branch in saveToStorage)
+      const setItemSpy = vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+        throw new Error('QuotaExceededError')
+      })
+
+      // getTokenCompliance creates a new entry and immediately calls saveToStorage
+      store.getTokenCompliance('save-error-token')
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Failed to save token compliance to localStorage:',
+        expect.any(Error)
+      )
+      setItemSpy.mockRestore()
+      consoleSpy.mockRestore()
+    })
+  })
 })

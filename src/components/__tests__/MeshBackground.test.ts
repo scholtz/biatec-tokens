@@ -145,4 +145,21 @@ describe('MeshBackground.vue', () => {
     // Watch triggered without errors — particles updated
     expect(themeStore.isDark).toBe(true)
   })
+
+  it('animation frame triggers particle color update when Math.random < 0.001 (line 75 branch)', async () => {
+    // Mock Math.random to return a value < 0.001 so the "Occasionally update color" branch fires
+    const mathRandomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.0005)
+    mount(MeshBackground, {
+      attachTo: document.body,
+      global: { plugins: [createPinia()] },
+    })
+    await nextTick()
+    // Trigger the animation frame callback (which calls animate())
+    if (rafCallback) {
+      rafCallback(performance.now())
+    }
+    await nextTick()
+    expect(mockCtx.clearRect).toHaveBeenCalled()
+    mathRandomSpy.mockRestore()
+  })
 })

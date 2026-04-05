@@ -415,4 +415,43 @@ describe("EntitlementService", () => {
       expect(result.upgradeRequired).toBe(SubscriptionTier.ENTERPRISE);
     });
   });
+
+  describe("determineTierFromSubscription — null subscriptionData branch (line 248)", () => {
+    it("should return FREE when subscriptionData is null (line 248 first condition)", () => {
+      // Calling initialize with null triggers determineTierFromSubscription(null)
+      // which hits the !subscriptionData branch (line 248)
+      service.initialize(null as any);
+      const entitlement = service.getEntitlement();
+      expect(entitlement?.tier).toBe(SubscriptionTier.FREE);
+    });
+
+    it("should return FREE when subscriptionData is undefined (line 248 first condition)", () => {
+      service.initialize(undefined as any);
+      const entitlement = service.getEntitlement();
+      expect(entitlement?.tier).toBe(SubscriptionTier.FREE);
+    });
+  });
+
+  describe("getFeatureDescriptions — all feature flags covered (lines 340-342)", () => {
+    it("covers CUSTOM_BRANDING, PRIORITY_SUPPORT, ADVANCED_ANALYTICS descriptions via ENTERPRISE upgrade prompt", () => {
+      // getFeatureDescriptions is private — call it directly via (service as any)
+      // to exercise the lookup paths for lines 340-342
+      const svc = service as any;
+      const descriptions = svc.getFeatureDescriptions([
+        FeatureFlag.CUSTOM_BRANDING,
+        FeatureFlag.PRIORITY_SUPPORT,
+        FeatureFlag.ADVANCED_ANALYTICS,
+      ]);
+      expect(descriptions).toContain("Custom branding");
+      expect(descriptions).toContain("Priority support");
+      expect(descriptions).toContain("Advanced analytics");
+    });
+
+    it("covers || f fallback when feature not in descriptions object (line 351)", () => {
+      const svc = service as any;
+      const unknownFlag = "unknown_flag_for_test" as any;
+      const descriptions = svc.getFeatureDescriptions([unknownFlag]);
+      expect(descriptions).toContain(unknownFlag);
+    });
+  });
 });
