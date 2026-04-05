@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import ComplianceReportsPanel from '../ComplianceReportsPanel.vue';
 
@@ -282,6 +282,80 @@ describe('ComplianceReportsPanel', () => {
         const ts = new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString();
         expect(vm.formatTimestamp(ts)).toBe('Yesterday');
       });
+    });
+  });
+
+  describe('downloadReport (lines 300-317)', () => {
+    beforeEach(() => {
+      // alert is not available in happy-dom; stub it
+      vi.stubGlobal('alert', vi.fn());
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('downloadReport sets downloading to report id and then clears it', async () => {
+      const wrapper = mount(ComplianceReportsPanel, { props: { tokenId: 'tok-1' } });
+      await wrapper.vm.$nextTick();
+      await new Promise(resolve => setTimeout(resolve, 700));
+
+      const vm = wrapper.vm as any;
+      const report = vm.reports[0];
+
+      const downloadPromise = vm.downloadReport(report);
+      expect(vm.downloading).toBe(report.id);
+      await downloadPromise;
+      expect(vm.downloading).toBeNull();
+    });
+
+    it('downloadReport catch block clears downloading on error', async () => {
+      const wrapper = mount(ComplianceReportsPanel, { props: { tokenId: 'tok-1' } });
+      await wrapper.vm.$nextTick();
+      await new Promise(resolve => setTimeout(resolve, 700));
+
+      const vm = wrapper.vm as any;
+      const report = { ...vm.reports[0], id: 'err-report', title: 'Error Report' };
+
+      // Make alert throw to exercise catch path
+      vi.stubGlobal('alert', vi.fn().mockImplementation(() => { throw new Error('alert failed'); }));
+      await vm.downloadReport(report);
+      expect(vm.downloading).toBeNull();
+    });
+  });
+
+  describe('retryReport (lines 322-334)', () => {
+    it('retryReport sets status to generating immediately', async () => {
+      const wrapper = mount(ComplianceReportsPanel, { props: { tokenId: 'tok-1' } });
+      await wrapper.vm.$nextTick();
+      await new Promise(resolve => setTimeout(resolve, 700));
+
+      const vm = wrapper.vm as any;
+      // Use a failed report to test retry
+      const failedReport = vm.reports.find((r: any) => r.status === 'failed') ?? {
+        id: 'retry-test',
+        status: 'failed',
+        errorMessage: 'previous error',
+        title: 'Test Report',
+        type: 'monthly',
+        format: 'PDF',
+        generatedAt: new Date().toISOString(),
+      };
+      if (!vm.reports.find((r: any) => r.id === 'retry-test')) {
+        vm.reports.push(failedReport);
+      }
+
+      vi.useFakeTimers();
+      vm.retryReport(failedReport);
+      expect(failedReport.status).toBe('generating');
+      expect(failedReport.errorMessage).toBeUndefined();
+
+      // Advance timer to trigger the setTimeout callback
+      vi.advanceTimersByTime(2001);
+      vi.useRealTimers();
+
+      // Status should have been updated to available or failed
+      expect(['available', 'failed']).toContain(failedReport.status);
     });
   });
 });
