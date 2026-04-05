@@ -356,4 +356,63 @@ describe("EntitlementService", () => {
       expect(afterReset?.getTime()).toBeGreaterThanOrEqual(beforeReset?.getTime() || 0);
     });
   });
+
+  describe("determineTierFromSubscription — uncovered branches", () => {
+    it("should return FREE for a price_id that matches no known tier keyword", () => {
+      service.initialize({
+        subscription_status: "active",
+        price_id: "price_unknown_plan_xyz",
+      });
+      const entitlement = service.getEntitlement();
+      expect(entitlement?.tier).toBe(SubscriptionTier.FREE);
+    });
+
+    it("should return FREE for a subscription with undefined price_id", () => {
+      service.initialize({
+        subscription_status: "active",
+        price_id: undefined,
+      });
+      const entitlement = service.getEntitlement();
+      expect(entitlement?.tier).toBe(SubscriptionTier.FREE);
+    });
+  });
+
+  describe("findMinimumTierForFeature — ENTERPRISE fallback", () => {
+    it("should return ENTERPRISE when feature is not in any tier config", () => {
+      // Cast an unknown feature string so findMinimumTierForFeature exhausts all tiers
+      const unknownFeature = "nonexistent_feature_xyz_abc" as FeatureFlag;
+      // getUpgradePrompt calls findMinimumTierForFeature internally
+      const prompt = service.getUpgradePrompt(unknownFeature);
+      // The prompt title should reflect ENTERPRISE as the required tier
+      expect(prompt.title.toLowerCase()).toContain("enterprise");
+    });
+  });
+
+  describe("findNextTier — edge cases", () => {
+    it("should return BASIC when currentEntitlement is null (no subscription)", () => {
+      // Re-create instance; do not call initialize → currentEntitlement stays null
+      const freshService = new (EntitlementService as any)();
+      // checkUsageLimit with a limit exceeded calls findNextTier internally
+      // Since there is no entitlement, checkUsageLimit returns allowed:false with upgradeRequired BASIC (line 111)
+      const result = freshService.checkUsageLimit("tokensPerMonth", 1);
+      expect(result.allowed).toBe(false);
+      expect(result.upgradeRequired).toBe(SubscriptionTier.BASIC);
+    });
+
+    it("should return ENTERPRISE when current tier is already ENTERPRISE (no higher tier)", () => {
+      service.initialize({
+        subscription_status: "active",
+        price_id: "price_enterprise_yearly",
+      });
+      // Force usage to exceed the limit so findNextTier is invoked
+      const entitlement = service.getEntitlement()!;
+      // Set a finite limit so we can exceed it
+      entitlement.limits.tokensPerMonth = 1;
+      entitlement.usage.tokensThisMonth = 1;
+      const result = service.checkUsageLimit("tokensPerMonth", 1);
+      expect(result.allowed).toBe(false);
+      // At ENTERPRISE there is no higher tier — findNextTier returns ENTERPRISE
+      expect(result.upgradeRequired).toBe(SubscriptionTier.ENTERPRISE);
+    });
+  });
 });

@@ -350,6 +350,53 @@ describe('AuditTrailService', () => {
       
       consoleErrorSpy.mockRestore();
     });
+
+    it('should re-throw AuditTrailError unchanged from getDeploymentAuditTrail catch block', async () => {
+      const originalError = new AuditTrailError('Already an audit error', 'AUDIT_ERROR', 422);
+      vi.spyOn(service as any, 'mockGetAuditTrail').mockRejectedValue(originalError);
+
+      await expect(service.getDeploymentAuditTrail('dep-err-1')).rejects.toBeInstanceOf(AuditTrailError);
+      await expect(service.getDeploymentAuditTrail('dep-err-2')).rejects.toMatchObject({
+        message: 'Already an audit error',
+        code: 'AUDIT_ERROR',
+      });
+    });
+
+    it('should wrap a plain Error in AuditTrailError from getDeploymentAuditTrail catch block', async () => {
+      vi.spyOn(service as any, 'mockGetAuditTrail').mockRejectedValue(new Error('Plain error'));
+
+      await expect(service.getDeploymentAuditTrail('dep-plain-err')).rejects.toBeInstanceOf(AuditTrailError);
+      await expect(service.getDeploymentAuditTrail('dep-plain-err-2')).rejects.toMatchObject({
+        message: 'Plain error',
+        code: 'UNKNOWN_ERROR',
+      });
+    });
+
+    it('should wrap an unknown (non-Error) throw in AuditTrailError from getDeploymentAuditTrail', async () => {
+      vi.spyOn(service as any, 'mockGetAuditTrail').mockRejectedValue('string error value');
+
+      await expect(service.getDeploymentAuditTrail('dep-unknown')).rejects.toBeInstanceOf(AuditTrailError);
+      await expect(service.getDeploymentAuditTrail('dep-unknown-2')).rejects.toMatchObject({
+        message: 'An unknown error occurred',
+      });
+    });
+
+    it('should propagate AuditTrailError from generateAuditReport catch block', async () => {
+      const originalError = new AuditTrailError('Report generation failed', 'REPORT_ERROR', 503);
+      vi.spyOn(service as any, 'mockGetAuditTrail').mockRejectedValue(originalError);
+
+      await expect(
+        service.generateAuditReport({ deploymentId: 'dep-report-err', format: 'json', includeMetadata: true })
+      ).rejects.toBeInstanceOf(AuditTrailError);
+    });
+
+    it('should wrap a plain Error from generateAuditReport catch block', async () => {
+      vi.spyOn(service as any, 'mockGetAuditTrail').mockRejectedValue(new Error('Report plain error'));
+
+      await expect(
+        service.generateAuditReport({ deploymentId: 'dep-report-plain', format: 'csv', includeMetadata: false })
+      ).rejects.toMatchObject({ message: 'Report plain error', code: 'UNKNOWN_ERROR' });
+    });
   });
 
   describe('audit trail immutability', () => {

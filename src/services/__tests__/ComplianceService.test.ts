@@ -908,6 +908,79 @@ describe("ComplianceService", () => {
       expect(result.networks[1].responseTime).toBe(52);
       expect(result.overallHealth).toBe("healthy");
     });
+
+    it("should handle critical network health when all networks are down", async () => {
+      const mockApiResponse = {
+        networks: [
+          {
+            network: "voimain-v1.0",
+            isOnline: false,
+            averageResponseTime: null,
+            lastChecked: "2024-01-31T23:59:59Z",
+            knownIssues: ["Outage"],
+          },
+          {
+            network: "aramidmain-v1.0",
+            isOnline: false,
+            averageResponseTime: null,
+            lastChecked: "2024-01-31T23:59:59Z",
+            knownIssues: ["Maintenance"],
+          },
+        ],
+      };
+
+      mockApiClient.api.v1ComplianceNetworksList.mockResolvedValue({ data: mockApiResponse });
+
+      const result = await service.getNetworkHealth();
+
+      expect(result.networks[0].isHealthy).toBe(false);
+      expect(result.networks[1].isHealthy).toBe(false);
+      expect(result.overallHealth).toBe("critical");
+    });
+
+    it("should fall back to current ISO timestamp when lastChecked is absent", async () => {
+      const mockApiResponse = {
+        networks: [
+          {
+            network: "voimain-v1.0",
+            isOnline: true,
+            averageResponseTime: 30,
+            lastChecked: undefined, // triggers `|| new Date().toISOString()`
+            knownIssues: undefined, // triggers `|| []`
+          },
+        ],
+      };
+
+      mockApiClient.api.v1ComplianceNetworksList.mockResolvedValue({ data: mockApiResponse });
+
+      const before = Date.now();
+      const result = await service.getNetworkHealth();
+      const after = Date.now();
+
+      const ts = new Date(result.networks[0].lastChecked).getTime();
+      expect(ts).toBeGreaterThanOrEqual(before);
+      expect(ts).toBeLessThanOrEqual(after);
+      expect(result.networks[0].issues).toEqual([]);
+    });
+
+    it("should preserve unknown network names unchanged (third ternary branch)", async () => {
+      const mockApiResponse = {
+        networks: [
+          {
+            network: "custom-network-v1.0",
+            isOnline: true,
+            averageResponseTime: 10,
+            lastChecked: "2024-06-01T00:00:00Z",
+            knownIssues: [],
+          },
+        ],
+      };
+
+      mockApiClient.api.v1ComplianceNetworksList.mockResolvedValue({ data: mockApiResponse });
+
+      const result = await service.getNetworkHealth();
+      expect(result.networks[0].network).toBe("custom-network-v1.0");
+    });
   });
 
   describe("getSubscriptionTierGating", () => {

@@ -454,4 +454,38 @@ A23456723456723456723456723456723456723456723456723456723A,KYC passed`;
       await expect(service.importFromCsv("token123", invalidCsv)).rejects.toThrow("address");
     });
   });
+
+  describe("importFromCsv — uncovered branches", () => {
+    it("should return empty result immediately when CSV has no data rows (only whitespace)", async () => {
+      // Only whitespace lines — filter removes all, lines.length === 0
+      const csvData = "\n   \n\t\n";
+      const result = await service.importFromCsv("token123", csvData);
+      expect(result.success).toBe(0);
+      expect(result.failed).toBe(0);
+      expect(result.results).toEqual([]);
+    });
+
+    it("should mark row as failed when address column value is empty string", async () => {
+      // CSV has the address column but the value in a row is empty
+      const csvData = `address,reason\n,KYC Passed`;
+      const result = await service.importFromCsv("token123", csvData);
+      expect(result.failed).toBe(1);
+      expect(result.success).toBe(0);
+      const row = result.results.find((r) => r.row === 2);
+      expect(row).toBeDefined();
+      expect(row!.valid).toBe(false);
+      expect(row!.error).toBe("Empty address");
+    });
+  });
+
+  describe("exportComplianceReport — API success path", () => {
+    it("should return the API response data directly when API call succeeds", async () => {
+      const mockReport = { reportId: "rpt-001", tokenId: "tok-1", summary: { totalWhitelisted: 5 } };
+      mockApiClient.instance.get.mockResolvedValueOnce({ data: mockReport });
+
+      const result = await service.exportComplianceReport("tok-1", "VOI", "json");
+
+      expect(result).toEqual(mockReport);
+    });
+  });
 });
