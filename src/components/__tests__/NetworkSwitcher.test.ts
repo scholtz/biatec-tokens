@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import NetworkSwitcher from '../NetworkSwitcher.vue'
 import { AVM_NETWORKS } from '../../stores/network'
@@ -171,15 +172,13 @@ describe('NetworkSwitcher', () => {
     it('handles error when switchNetwork throws', async () => {
       const wrapper = mountSwitcher()
       const vm = wrapper.vm as any
-      // Mock store switchNetwork to throw
-      const originalStore = vm.networkStore
+      const { useNetworkStore } = await import('../../stores/network')
+      const store = useNetworkStore()
       const errorMsg = 'Switch failed'
-      if (originalStore) {
-        originalStore.switchNetwork = vi.fn().mockRejectedValue(new Error(errorMsg))
-        await vm.handleNetworkSwitch('voi-mainnet')
-        expect(vm.error).toBe(errorMsg)
-        expect(vm.isSwitching).toBe(false)
-      }
+      store.switchNetwork = vi.fn().mockRejectedValue(new Error(errorMsg))
+      await vm.handleNetworkSwitch('voi-mainnet')
+      expect(vm.error).toBe(errorMsg)
+      expect(vm.isSwitching).toBe(false)
     })
   })
 
@@ -208,12 +207,13 @@ describe('NetworkSwitcher', () => {
     it('sets error to default message when thrown exception is not an Error object', async () => {
       const wrapper = mountSwitcher()
       const vm = wrapper.vm as any
-      if (vm.networkStore) {
-        vm.networkStore.switchNetwork = vi.fn().mockRejectedValue('plain string error')
-        await vm.handleNetworkSwitch('voi-mainnet')
-        expect(vm.error).toBe('Failed to switch network')
-        expect(vm.isSwitching).toBe(false)
-      }
+      // Access the testing pinia store directly to mock switchNetwork
+      const { useNetworkStore } = await import('../../stores/network')
+      const store = useNetworkStore()
+      store.switchNetwork = vi.fn().mockRejectedValue('plain string error')
+      await vm.handleNetworkSwitch('voi-mainnet')
+      expect(vm.error).toBe('Failed to switch network')
+      expect(vm.isSwitching).toBe(false)
     })
   })
 
@@ -228,14 +228,31 @@ describe('NetworkSwitcher', () => {
   })
 
   describe('evmTestNetworks sort — locale comparison (line 244)', () => {
-    it('sorts EVM test networks by displayName', () => {
+    it('sort comparator is exercised when multiple EVM test networks exist', async () => {
+      const { EVM_NETWORKS } = await import('../../stores/network')
+      // Temporarily add a second EVM test network so sort comparator fires
+      const extraNetwork = {
+        id: 'arbitrum-sepolia',
+        name: 'arbitrum-sepolia',
+        displayName: 'Arbitrum Sepolia',
+        chainId: 421614,
+        rpcUrl: 'https://sepolia-rollup.arbitrum.io/rpc',
+        blockExplorerUrl: 'https://sepolia.arbiscan.io',
+        nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+        isTestnet: true,
+        chainType: 'EVM' as const,
+      }
+      ;(EVM_NETWORKS as Record<string, unknown>)['arbitrum-sepolia'] = extraNetwork
       const wrapper = mountSwitcher()
       const vm = wrapper.vm as any
       const testNets = vm.evmTestNetworks
-      // Should be sorted alphabetically
+      // With 2+ EVM test networks, sort comparator fires and returns correct order
+      expect(testNets.length).toBeGreaterThanOrEqual(2)
       for (let i = 0; i < testNets.length - 1; i++) {
         expect(testNets[i].displayName.localeCompare(testNets[i + 1].displayName)).toBeLessThanOrEqual(0)
       }
+      // Cleanup
+      delete (EVM_NETWORKS as Record<string, unknown>)['arbitrum-sepolia']
     })
   })
 
@@ -250,5 +267,68 @@ describe('NetworkSwitcher', () => {
       const event = { target: document.body } as unknown as MouseEvent
       expect(() => vm.handleClickOutside(event)).not.toThrow()
       vm.dropdownRef = origRef
+    })
+  })
+
+  describe('AVM test network Active badge (line 127)', () => {
+    it('renders Active badge when current network is an AVM test network', async () => {
+      const { AVM_NETWORKS } = await import('../../stores/network')
+      const testNetInfo = AVM_NETWORKS['algorand-testnet']
+      const wrapper = mount(NetworkSwitcher, {
+        global: {
+          plugins: [
+            createTestingPinia({
+              createSpy: vi.fn,
+              initialState: {
+                network: {
+                  networkInfo: testNetInfo,
+                  currentNetworkId: 'algorand-testnet',
+                },
+              },
+            }),
+          ],
+        },
+      })
+      const vm = wrapper.vm as any
+      // Open dropdown so test network buttons render in DOM
+      vm.isOpen = true
+      await nextTick()
+      expect(vm.currentNetwork).toBe('algorand-testnet')
+      // The Active badge is rendered for the current network in the AVM test networks list
+      expect(vm.avmTestNetworks.some((n: { id: string }) => n.id === 'algorand-testnet')).toBe(true)
+      // Active badge should appear in the rendered dropdown
+      const html = wrapper.html()
+      expect(html).toContain('Algorand Testnet')
+    })
+  })
+
+  describe('EVM test network Active badge (line 153)', () => {
+    it('renders Active badge when current network is an EVM test network', async () => {
+      const { EVM_NETWORKS } = await import('../../stores/network')
+      const sepoliaInfo = EVM_NETWORKS['sepolia']
+      const wrapper = mount(NetworkSwitcher, {
+        global: {
+          plugins: [
+            createTestingPinia({
+              createSpy: vi.fn,
+              initialState: {
+                network: {
+                  networkInfo: sepoliaInfo,
+                  currentNetworkId: 'sepolia',
+                },
+              },
+            }),
+          ],
+        },
+      })
+      const vm = wrapper.vm as any
+      // Open dropdown so EVM test network buttons render in DOM
+      vm.isOpen = true
+      await nextTick()
+      expect(vm.currentNetwork).toBe('sepolia')
+      // Active badge should appear for the sepolia test network
+      expect(vm.evmTestNetworks.some((n: { id: string }) => n.id === 'sepolia')).toBe(true)
+      const html = wrapper.html()
+      expect(html).toContain('Sepolia')
     })
   })

@@ -117,8 +117,7 @@
           </h3>
         </template>
 
-        <template #body>
-          <div v-if="selectedSupport" class="space-y-4">
+        <div v-if="selectedSupport" class="space-y-4">
             <!-- Support Badge -->
             <div>
               <Badge 
@@ -154,7 +153,6 @@
               </div>
             </div>
           </div>
-        </template>
 
         <template #footer>
           <div class="flex justify-end">

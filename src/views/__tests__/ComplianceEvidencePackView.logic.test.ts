@@ -788,3 +788,124 @@ describe('ComplianceEvidencePackView — navigateTo via section action button', 
     expect(html).toBeTruthy()
   })
 })
+
+// ---------------------------------------------------------------------------
+// summaryBannerClass — all 3 non-default branches (lines 282-284)
+// ---------------------------------------------------------------------------
+
+describe('ComplianceEvidencePackView — summaryBannerClass branch coverage', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  it('summaryBannerClass ready: renders green border when overallStatus is ready (all sections ready)', async () => {
+    // Make all sections 'ready' by seeding all required localStorage items
+    const complianceData = JSON.stringify({ currentForm: { currentStepIndex: 2, organizationType: 'financial_institution' } })
+    const strictSignoff = JSON.stringify({ state: 'Completed', assetId: '12345', idempotencyKey: 'key-abc', completedAt: new Date().toISOString() })
+    const accessibilityData = JSON.stringify({ passed: true, timestamp: new Date().toISOString() })
+    const teamApprovals = JSON.stringify({ approved: true, approver: 'admin', approvedAt: new Date().toISOString() })
+    const wrapper = mountView({
+      biatec_compliance_setup: complianceData,
+      biatec_strict_signoff: strictSignoff,
+      biatec_accessibility_evidence: accessibilityData,
+      biatec_team_approvals: teamApprovals,
+    })
+    await nextTick()
+    const html = wrapper.html()
+    // All sections ready → overallStatus = 'ready' → summaryBannerClass returns green border classes
+    expect(html).toContain('border-green-700')
+    expect(html).toContain('bg-green-900')
+  })
+
+  it('summaryBannerClass warning: renders yellow border when backend sign-off is in-progress (warning state)', async () => {
+    // strictSignoff with non-Completed, non-Failed state → backend section = 'warning' → overallStatus = 'warning'
+    const strictSignoff = JSON.stringify({ state: 'InProgress', assetId: null, idempotencyKey: 'key-xyz' })
+    const wrapper = mountView({ biatec_strict_signoff: strictSignoff })
+    await nextTick()
+    const html = wrapper.html()
+    // Backend section is 'warning' → overallStatus = 'warning' → summaryBannerClass returns yellow
+    expect(html).toContain('border-yellow-600')
+    expect(html).toContain('bg-yellow-900')
+  })
+
+  it('summaryBannerClass failed: renders red border when backend sign-off state is Failed', async () => {
+    // strictSignoff with state 'Failed' → backend section = 'failed' → overallStatus = 'failed'
+    const strictSignoff = JSON.stringify({ state: 'Failed', assetId: null, idempotencyKey: 'key-fail' })
+    const wrapper = mountView({ biatec_strict_signoff: strictSignoff })
+    await nextTick()
+    const html = wrapper.html()
+    // Backend section is 'failed' → overallStatus = 'failed' → summaryBannerClass returns red
+    expect(html).toContain('border-red-700')
+    expect(html).toContain('bg-red-900')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// hasComplianceSetup — true branch coverage (lines 164, 173)
+// ---------------------------------------------------------------------------
+
+describe('ComplianceEvidencePackView — hasComplianceSetup true branch', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  it('renders compliance policy section as ready when currentStepIndex is set', async () => {
+    const complianceData = JSON.stringify({ currentForm: { currentStepIndex: 3, organizationType: 'financial_institution' } })
+    const wrapper = mountView({ biatec_compliance_setup: complianceData })
+    await nextTick()
+    const html = wrapper.html()
+    // When hasComplianceSetup is true, the compliance policy section shows ready state details
+    expect(html).toContain('Compliance setup workspace completed')
+  })
+
+  it('formatTimestamp with null returns "Not recorded"', async () => {
+    // Team approvals with null approvedAt causes formatTimestamp(null) to return 'Not recorded'
+    const teamApprovals = JSON.stringify({ approved: true, approver: 'admin', approvedAt: null })
+    const wrapper = mountView({ biatec_team_approvals: teamApprovals })
+    await nextTick()
+    const html = wrapper.html()
+    // formatTimestamp(null) → 'Not recorded' — covers the if (!iso) branch
+    expect(html).toContain('Not recorded')
+  })
+
+  it('accessibility warning branch: renders warning when accessibility data exists but passed is false', async () => {
+    const accessibilityData = JSON.stringify({ passed: false, hasIssues: true, timestamp: new Date().toISOString() })
+    const wrapper = mountView({ biatec_accessibility_evidence: accessibilityData })
+    await nextTick()
+    const html = wrapper.html()
+    // Accessibility section shows warning state (data exists but passed=false)
+    expect(html).toBeTruthy()
+    expect(html).toContain('Accessibility evidence not yet recorded')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// exportJSON error branch (line 350) — catch block when downloadBlob throws
+// ---------------------------------------------------------------------------
+
+describe('ComplianceEvidencePackView — exportJSON error branch', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  it('exportJSON sets exportStatus to error when URL.createObjectURL throws', async () => {
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn(() => { throw new Error('json blob fail') }),
+      revokeObjectURL: vi.fn(),
+    })
+    const wrapper = mountView()
+    await nextTick()
+    // Find and click export JSON button directly via vm
+    const vm = wrapper.vm as any
+    await vm.exportJSON()
+    await nextTick()
+    expect(vm.exportStatus).toBe('error')
+    vi.unstubAllGlobals()
+  })
+})
