@@ -2,7 +2,8 @@
  * portfolioWatchlist utility tests
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import * as portfolioWatchlistModule from '../portfolioWatchlist'
 import {
   WATCHLIST_STORAGE_KEY,
   loadWatchlist,
@@ -29,6 +30,10 @@ const storageMock = (() => {
 beforeEach(() => {
   storageMock.clear()
   vi.stubGlobal('localStorage', storageMock)
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
 })
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
@@ -180,6 +185,17 @@ describe('restoreWatchlistFromStorage', () => {
     storageMock.setItem(WATCHLIST_STORAGE_KEY, 'NOT_VALID_JSON:::')
     // restoreWatchlistFromStorage wraps loadWatchlist in try/catch — should not throw
     const result = restoreWatchlistFromStorage()
+    expect(result).toEqual([])
+  })
+
+  it('catch branch (line 73) — covered by spying on loadWatchlist to throw directly', () => {
+    // loadWatchlist has its own try/catch so it never throws normally.
+    // Spy on the module export to force an exception that reaches
+    // restoreWatchlistFromStorage's catch block.
+    vi.spyOn(portfolioWatchlistModule, 'loadWatchlist').mockImplementationOnce(() => {
+      throw new Error('forced loadWatchlist failure')
+    })
+    const result = portfolioWatchlistModule.restoreWatchlistFromStorage()
     expect(result).toEqual([])
   })
 })

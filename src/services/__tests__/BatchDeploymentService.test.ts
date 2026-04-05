@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BatchDeploymentService, batchDeploymentService } from '../BatchDeploymentService';
 import type { CreateBatchRequest } from '../../types/batch';
 import { TokenStandard } from '../../types/api';
+import type { TokenDeploymentService } from '../TokenDeploymentService';
 
 // Valid 40-char hex Ethereum address
 const VALID_ETH_ADDRESS = '0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B';
@@ -16,6 +17,11 @@ function makeToken(name: string, symbol = 'TEST') {
     totalSupply: '1000000',
     walletAddress: VALID_ETH_ADDRESS,
   };
+}
+
+/** Build a mock TokenDeploymentService with a controllable deployToken */
+function makeMockTokenService(deployFn: () => Promise<any>): TokenDeploymentService {
+  return { deployToken: deployFn } as unknown as TokenDeploymentService;
 }
 
 function makeBatchRequest(overrides: Partial<CreateBatchRequest> = {}): CreateBatchRequest {
@@ -331,6 +337,214 @@ describe('BatchDeploymentService', () => {
     it('can create a batch', async () => {
       const result = await batchDeploymentService.createBatch(makeBatchRequest());
       expect(result.batchId).toBeTruthy();
+    });
+  });
+
+  // ==================== executeBatchDeployment — success path (lines 138-141) ====================
+  describe('executeBatchDeployment — success path', () => {
+    it('marks token completed and sets tokenId from tokenId field on success', async () => {
+      const mockDeploy = vi.fn().mockResolvedValue({
+        transactionId: 'tx-001',
+        tokenId: 'token-abc',
+        assetId: undefined,
+        contractAddress: undefined,
+      });
+      const svc = new BatchDeploymentService(undefined, makeMockTokenService(mockDeploy));
+      const created = await svc.createBatch(makeBatchRequest({ tokens: [makeToken('T1')] }));
+      await svc.startBatchDeployment({ batchId: created.batchId });
+
+      // Wait for the background deployment to finish
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const batch = await svc.getBatch(created.batchId);
+      expect(batch.tokens[0].status).toBe('completed');
+      expect(batch.tokens[0].transactionId).toBe('tx-001');
+      expect(batch.tokens[0].tokenId).toBe('token-abc');
+      expect(batch.completedCount).toBe(1);
+      expect(batch.status).toBe('completed');
+    });
+
+    it('falls back to assetId.toString() when tokenId is absent', async () => {
+      const mockDeploy = vi.fn().mockResolvedValue({
+        transactionId: 'tx-002',
+        tokenId: undefined,
+        assetId: 99999,
+        contractAddress: undefined,
+      });
+      const svc = new BatchDeploymentService(undefined, makeMockTokenService(mockDeploy));
+      const created = await svc.createBatch(makeBatchRequest({ tokens: [makeToken('T1')] }));
+      await svc.startBatchDeployment({ batchId: created.batchId });
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const batch = await svc.getBatch(created.batchId);
+      expect(batch.tokens[0].tokenId).toBe('99999');
+    });
+
+    it('falls back to contractAddress when tokenId and assetId are absent', async () => {
+      const mockDeploy = vi.fn().mockResolvedValue({
+        transactionId: 'tx-003',
+        tokenId: undefined,
+        assetId: undefined,
+        contractAddress: '0xContractAddr',
+      });
+      const svc = new BatchDeploymentService(undefined, makeMockTokenService(mockDeploy));
+      const created = await svc.createBatch(makeBatchRequest({ tokens: [makeToken('T1')] }));
+      await svc.startBatchDeployment({ batchId: created.batchId });
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const batch = await svc.getBatch(created.batchId);
+      expect(batch.tokens[0].tokenId).toBe('0xContractAddr');
+    });
+
+    it('sets batch status to completed when all tokens succeed', async () => {
+      const mockDeploy = vi.fn().mockResolvedValue({ transactionId: 'tx', tokenId: 'tid' });
+      const svc = new BatchDeploymentService(undefined, makeMockTokenService(mockDeploy));
+      const created = await svc.createBatch(
+        makeBatchRequest({ tokens: [makeToken('T1'), makeToken('T2', 'TK2')] })
+      );
+      await svc.startBatchDeployment({ batchId: created.batchId });
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const summary = await svc.getBatchStatus(created.batchId);
+      expect(summary.status).toBe('completed');
+      expect(summary.completedCount).toBe(2);
+      expect(summary.failedCount).toBe(0);
+    });
+  });
+
+  // ==================== executeBatchDeployment — error path (lines 148-165) ====================
+  describe('executeBatchDeployment — error path', () => {
+    it('marks token failed with error message when deployToken throws Error', async () => {
+      const mockDeploy = vi.fn().mockRejectedValue(new Error('Deployment failed: insufficient funds'));
+      const svc = new BatchDeploymentService(undefined, makeMockTokenService(mockDeploy));
+      const created = await svc.createBatch(makeBatchRequest({ tokens: [makeToken('T1')] }));
+      await svc.startBatchDeployment({ batchId: created.batchId });
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const batch = await svc.getBatch(created.batchId);
+      expect(batch.tokens[0].status).toBe('failed');
+      expect(batch.tokens[0].error).toBe('Deployment failed: insufficient funds');
+      expect(batch.failedCount).toBe(1);
+    });
+
+    it('records "Unknown error" when deployToken throws a non-Error value', async () => {
+      const mockDeploy = vi.fn().mockRejectedValue('plain string error');
+      const svc = new BatchDeploymentService(undefined, makeMockTokenService(mockDeploy));
+      const created = await svc.createBatch(makeBatchRequest({ tokens: [makeToken('T1')] }));
+      await svc.startBatchDeployment({ batchId: created.batchId });
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const batch = await svc.getBatch(created.batchId);
+      expect(batch.tokens[0].error).toBe('Unknown error');
+    });
+
+    it('sets batch status to failed when all tokens fail', async () => {
+      const mockDeploy = vi.fn().mockRejectedValue(new Error('network error'));
+      const svc = new BatchDeploymentService(undefined, makeMockTokenService(mockDeploy));
+      const created = await svc.createBatch(
+        makeBatchRequest({ tokens: [makeToken('T1'), makeToken('T2', 'TK2')] })
+      );
+      await svc.startBatchDeployment({ batchId: created.batchId });
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const summary = await svc.getBatchStatus(created.batchId);
+      expect(summary.status).toBe('failed');
+      expect(summary.failedCount).toBe(2);
+      expect(summary.completedCount).toBe(0);
+    });
+
+    it('sets batch status to partial when some tokens succeed and some fail', async () => {
+      let callCount = 0;
+      const mockDeploy = vi.fn().mockImplementation(async () => {
+        callCount++;
+        if (callCount === 1) return { transactionId: 'tx-ok', tokenId: 'tok-ok' };
+        throw new Error('second token failed');
+      });
+      const svc = new BatchDeploymentService(undefined, makeMockTokenService(mockDeploy));
+      const created = await svc.createBatch(
+        makeBatchRequest({ tokens: [makeToken('T1'), makeToken('T2', 'TK2')] })
+      );
+      await svc.startBatchDeployment({ batchId: created.batchId });
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const summary = await svc.getBatchStatus(created.batchId);
+      expect(summary.status).toBe('partial');
+      expect(summary.completedCount).toBe(1);
+      expect(summary.failedCount).toBe(1);
+    });
+  });
+  describe('exportBatchAudit — ARC3 unitName branch', () => {
+    it('uses unitName as tokenSymbol for ARC3 tokens (else-if branch)', async () => {
+      const arc3Token = {
+        standard: TokenStandard.ARC3,
+        name: 'My ARC3 NFT',
+        unitName: 'NFTUNIT',
+        total: 1,
+        decimals: 0,
+        walletAddress: VALID_ETH_ADDRESS,
+      };
+      const created = await service.createBatch(
+        makeBatchRequest({ tokens: [arc3Token as any] })
+      );
+      const csvResult = await service.exportBatchAudit(created.batchId, 'csv');
+      expect(csvResult).toContain('NFTUNIT');
+    });
+
+    it('uses unitName in JSON export for ARC3 tokens', async () => {
+      const arc3Token = {
+        standard: TokenStandard.ARC3,
+        name: 'ARC3 Token',
+        unitName: 'ARC3SYM',
+        total: 100,
+        decimals: 2,
+        walletAddress: VALID_ETH_ADDRESS,
+      };
+      const created = await service.createBatch(
+        makeBatchRequest({ tokens: [arc3Token as any] })
+      );
+      const jsonResult = await service.exportBatchAudit(created.batchId, 'json');
+      const parsed = JSON.parse(jsonResult);
+      expect(parsed.tokens[0].tokenSymbol).toBe('ARC3SYM');
+    });
+  });
+
+  // ==================== generateStatusSummary — estimatedTimeRemaining (lines 340-342) ====================
+  describe('getBatchStatus — estimatedTimeRemaining computation', () => {
+    it('computes estimatedTimeRemaining when deploying with some completed tokens', async () => {
+      const created = await service.createBatch(
+        makeBatchRequest({ tokens: [makeToken('T1'), makeToken('T2', 'TK2'), makeToken('T3', 'TK3')] })
+      );
+      const batch = await service.getBatch(created.batchId);
+
+      // Simulate mid-deployment state: started, 1 still deploying, 1 completed
+      batch.status = 'deploying';
+      batch.startedAt = Date.now() - 10000; // Started 10 seconds ago
+      batch.deployingCount = 1;             // 1 token still in flight
+      batch.completedCount = 1;             // 1 token finished successfully
+      batch.failedCount = 0;
+
+      const summary = await service.getBatchStatus(created.batchId);
+
+      expect(typeof summary.estimatedTimeRemaining).toBe('number');
+      expect(summary.estimatedTimeRemaining).toBeGreaterThan(0);
+    });
+
+    it('estimatedTimeRemaining accounts for both completed and failed tokens', async () => {
+      const created = await service.createBatch(
+        makeBatchRequest({ tokens: [makeToken('T1'), makeToken('T2', 'TK2'), makeToken('T3', 'TK3')] })
+      );
+      const batch = await service.getBatch(created.batchId);
+
+      batch.status = 'deploying';
+      batch.startedAt = Date.now() - 8000;
+      batch.deployingCount = 1;
+      batch.completedCount = 1;
+      batch.failedCount = 1; // 1 failed also counts toward "completed" in ETA calc
+
+      const summary = await service.getBatchStatus(created.batchId);
+
+      expect(summary.estimatedTimeRemaining).toBeDefined();
+      expect(typeof summary.estimatedTimeRemaining).toBe('number');
     });
   });
 });

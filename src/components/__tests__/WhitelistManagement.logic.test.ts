@@ -445,3 +445,110 @@ describe('WhitelistManagement — computed: validCount, invalidCount, duplicateC
     expect(vm.duplicateCount).toBe(1)
   })
 })
+
+// ── Template inline-handler coverage (lines 54, 378, 394, 409) ───────────────
+//
+// These tests cover compiled template arrow-functions that remain uncovered
+// when only vm.prop assignments are used in other tests.  We need to actually
+// trigger the DOM events so V8 records the functions as executed.
+//
+describe('WhitelistManagement — template inline handlers', () => {
+  let attachedDiv: HTMLDivElement
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(whitelistService.getWhitelist).mockResolvedValue([])
+    // Attach to document.body so Teleport targets render correctly
+    attachedDiv = document.createElement('div')
+    document.body.appendChild(attachedDiv)
+  })
+
+  afterEach(() => {
+    // Clean up any teleported modal content left in body
+    document.body.innerHTML = ''
+  })
+
+  it('search input setValue triggers v-model update handler (line 54)', async () => {
+    const w = mount(WhitelistManagement, {
+      props: { tokenId: 'token123' },
+      attachTo: attachedDiv,
+    })
+    await nextTick()
+
+    const input = w.find('[data-testid="search-input"]')
+    // setValue triggers the native input event → calls the compiled v-model handler
+    await input.setValue('algo search')
+    await nextTick()
+
+    expect((w.vm as any).searchQuery).toBe('algo search')
+    w.unmount()
+  })
+
+  it('Back to Edit button click sets showPreview to false (line 378)', async () => {
+    const w = mount(WhitelistManagement, {
+      props: { tokenId: 'token123' },
+      attachTo: attachedDiv,
+    })
+    const vm = w.vm as any
+
+    // Activate the bulk-upload modal and move to preview step
+    vm.showBulkUploadModal = true
+    vm.showPreview = true
+    await nextTick()
+
+    // The modal is teleported to document.body — find the Back to Edit button there
+    const buttons = Array.from(document.body.querySelectorAll('button'))
+    const backBtn = buttons.find(b => b.textContent?.includes('Back to Edit'))
+    expect(backBtn).toBeTruthy()
+    backBtn!.click()
+    await nextTick()
+
+    expect(vm.showPreview).toBe(false)
+    w.unmount()
+  })
+
+  it('Cancel button in remove modal click sets showRemoveModal to false (line 409)', async () => {
+    const w = mount(WhitelistManagement, {
+      props: { tokenId: 'token123' },
+      attachTo: attachedDiv,
+    })
+    const vm = w.vm as any
+
+    // Open the remove confirmation modal
+    vm.showRemoveModal = true
+    vm.addressToRemove = 'SOMEADDRESS'
+    await nextTick()
+
+    // Find Cancel button inside the teleported modal content
+    const buttons = Array.from(document.body.querySelectorAll('button'))
+    const cancelBtn = buttons.find(b => b.textContent?.trim() === 'Cancel')
+    expect(cancelBtn).toBeTruthy()
+    cancelBtn!.click()
+    await nextTick()
+
+    expect(vm.showRemoveModal).toBe(false)
+    w.unmount()
+  })
+
+  it('Modal @close event on remove modal sets showRemoveModal to false (line 394)', async () => {
+    const w = mount(WhitelistManagement, {
+      props: { tokenId: 'token123' },
+      attachTo: attachedDiv,
+    })
+    const vm = w.vm as any
+
+    // Open remove modal so the @close listener on <Modal> (line 394) is active
+    vm.showRemoveModal = true
+    await nextTick()
+
+    // Clicking the backdrop triggers Modal's internal closeModal → emits 'close'
+    // which calls the @close="showRemoveModal = false" handler at line 394
+    const backdrop = document.body.querySelector('[aria-hidden="true"]') as HTMLElement | null
+    expect(backdrop).toBeTruthy()
+    backdrop!.click()
+    await nextTick()
+
+    expect(vm.showRemoveModal).toBe(false)
+    w.unmount()
+  })
+})
