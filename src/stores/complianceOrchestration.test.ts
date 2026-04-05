@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useComplianceOrchestrationStore } from './complianceOrchestration'
 import type { UserComplianceStatus } from '../types/compliance'
@@ -521,6 +521,121 @@ describe('complianceOrchestration store', () => {
       
       const result = store.checkIssuanceEligibility()
       expect(result.reasons).toContain('Custom block reason')
+    })
+  })
+
+  describe('startAMLScreening catch block coverage', () => {
+    it('should set error.message and rethrow when events.push throws an Error', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user@example.com')
+      // Patch the specific events array's push method to throw once
+      const events = store.userComplianceState!.events as unknown as { push: (...args: unknown[]) => unknown }
+      const originalPush = events.push
+      events.push = (..._args: unknown[]) => {
+        events.push = originalPush // restore before throwing to avoid recursion
+        throw new Error('mock push error')
+      }
+      await expect(store.startAMLScreening()).rejects.toThrow('mock push error')
+      expect(store.error).toBe('mock push error')
+    })
+
+    it('should set fallback message when events.push throws a non-Error value', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user@example.com')
+      // Throw a plain string (non-Error) to hit the false branch of instanceof check
+      const events = store.userComplianceState!.events as unknown as { push: (...args: unknown[]) => unknown }
+      const originalPush = events.push
+      events.push = (..._args: unknown[]) => {
+        events.push = originalPush // restore before throwing to avoid recursion
+        // eslint-disable-next-line @typescript-eslint/no-throw-literal
+        throw 'plain string error'
+      }
+      await expect(store.startAMLScreening()).rejects.toBe('plain string error')
+      expect(store.error).toBe('Failed to start AML screening')
+    })
+  })
+
+  describe('initializeComplianceState catch block coverage', () => {
+    it('should set error.message when try block throws an Error (no rethrow)', async () => {
+      const store = useComplianceOrchestrationStore()
+      // Make Date.prototype.toISOString throw to trigger the catch block during lastUpdated assignment
+      const spy = vi.spyOn(Date.prototype, 'toISOString').mockImplementationOnce(() => {
+        throw new Error('date error')
+      })
+      await store.initializeComplianceState('user1', 'user@example.com')
+      expect(store.error).toBe('date error')
+      expect(store.userComplianceState).toBeNull()
+      spy.mockRestore()
+    })
+
+    it('should set fallback message when try block throws a non-Error value', async () => {
+      const store = useComplianceOrchestrationStore()
+      // Throw a plain string to hit the false branch of instanceof check
+      const spy = vi.spyOn(Date.prototype, 'toISOString').mockImplementationOnce(() => {
+        // eslint-disable-next-line @typescript-eslint/no-throw-literal
+        throw 'non-error string'
+      })
+      await store.initializeComplianceState('user1', 'user@example.com')
+      expect(store.error).toBe('Failed to initialize compliance state')
+      spy.mockRestore()
+    })
+  })
+
+  describe('uploadKYCDocument catch block coverage', () => {
+    it('should set error.message and rethrow when events.push throws an Error', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user@example.com')
+      const events = store.userComplianceState!.events as unknown as { push: (...args: unknown[]) => unknown }
+      const originalPush = events.push
+      events.push = (..._args: unknown[]) => {
+        events.push = originalPush
+        throw new Error('upload push error')
+      }
+      const fakeFile = new File(['content'], 'test.pdf', { type: 'application/pdf' })
+      await expect(store.uploadKYCDocument('government_id', fakeFile)).rejects.toThrow('upload push error')
+      expect(store.error).toBe('upload push error')
+    })
+
+    it('should set fallback message when events.push throws a non-Error value', async () => {
+      const store = useComplianceOrchestrationStore()
+      await store.initializeComplianceState('user1', 'user@example.com')
+      const events = store.userComplianceState!.events as unknown as { push: (...args: unknown[]) => unknown }
+      const originalPush = events.push
+      events.push = (..._args: unknown[]) => {
+        events.push = originalPush
+        // eslint-disable-next-line @typescript-eslint/no-throw-literal
+        throw 'upload-string-error'
+      }
+      const fakeFile = new File(['content'], 'test.pdf', { type: 'application/pdf' })
+      await expect(store.uploadKYCDocument('government_id', fakeFile)).rejects.toBe('upload-string-error')
+      expect(store.error).toBe('Failed to upload document')
+    })
+  })
+
+  describe('fetchAdminComplianceList catch block coverage', () => {
+    it('should set error.message and rethrow when filters property access throws an Error', async () => {
+      const store = useComplianceOrchestrationStore()
+      // Use a getter that throws an Error to enter the catch block
+      const badFilters = Object.defineProperty({}, 'limit', {
+        get() { throw new Error('bad limit') },
+        enumerable: true,
+      }) as Parameters<typeof store.fetchAdminComplianceList>[0]
+      await expect(store.fetchAdminComplianceList(badFilters)).rejects.toThrow('bad limit')
+      expect(store.error).toBe('bad limit')
+    })
+
+    it('should set fallback message when filters property access throws a non-Error value', async () => {
+      const store = useComplianceOrchestrationStore()
+      // Use a getter that throws a non-Error to hit the false branch of instanceof check
+      const badFilters = Object.defineProperty({}, 'limit', {
+        get() {
+          // eslint-disable-next-line @typescript-eslint/no-throw-literal
+          throw 'non-error limit'
+        },
+        enumerable: true,
+      }) as Parameters<typeof store.fetchAdminComplianceList>[0]
+      await expect(store.fetchAdminComplianceList(badFilters)).rejects.toBe('non-error limit')
+      expect(store.error).toBe('Failed to fetch compliance list')
     })
   })
 });
