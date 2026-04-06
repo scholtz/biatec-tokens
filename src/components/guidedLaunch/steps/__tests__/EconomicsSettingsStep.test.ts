@@ -180,4 +180,54 @@ describe('EconomicsSettingsStep', () => {
     // The onMounted should have picked up the initial state
     expect(vm.formData).toBeDefined()
   })
+
+  it('distributionTotal computed returns sum of all distribution fields', async () => {
+    const wrapper = mount(EconomicsSettingsStep, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+    const vm = wrapper.vm as any
+    vm.formData.initialDistribution = { team: 10, investors: 10, community: 10, reserve: 70 }
+    await wrapper.vm.$nextTick()
+    expect(vm.distributionTotal).toBe(100)
+  })
+
+  it('distributionTotal returns non-100 when distribution does not sum to 100', async () => {
+    const wrapper = mount(EconomicsSettingsStep, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+    const vm = wrapper.vm as any
+    vm.formData.initialDistribution = { team: 10, investors: 10, community: 10, reserve: 10 }
+    await wrapper.vm.$nextTick()
+    expect(vm.distributionTotal).toBe(40)
+    expect(wrapper.text()).toContain('Total must equal 100%')
+    expect(wrapper.text()).toContain('40')
+  })
+
+  it('watch triggers update emit when decimals change', async () => {
+    const wrapper = mount(EconomicsSettingsStep, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+    const vm = wrapper.vm as any
+    vm.formData.decimals = 18
+    await wrapper.vm.$nextTick()
+    const updates = wrapper.emitted('update')
+    expect(updates).toBeTruthy()
+    const lastUpdate = updates![updates!.length - 1][0] as any
+    expect(lastUpdate.decimals).toBe(18)
+  })
+
+  it('handleSubmit adds warning when distribution is not 100 and emits isValid:true', async () => {
+    const wrapper = mount(EconomicsSettingsStep, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] }
+    })
+    const vm = wrapper.vm as any
+    vm.formData.initialDistribution = { team: 0, investors: 0, community: 0, reserve: 0 }
+    await wrapper.vm.$nextTick()
+    await wrapper.find('form').trigger('submit')
+    const complete = wrapper.emitted('complete')!
+    expect(complete).toBeTruthy()
+    // isValid is always true; warning added when dist != 100
+    expect((complete[0][0] as any).isValid).toBe(true)
+    expect((complete[0][0] as any).warnings.length).toBeGreaterThan(0)
+  })
 })
