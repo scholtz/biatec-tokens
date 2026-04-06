@@ -259,4 +259,64 @@ describe('ReportingCommandCenterView — Logic', () => {
     const panelHtml = wrapper.find(`[data-testid="${REPORTING_CENTER_TEST_IDS.CONFIGURE_PANEL}"]`).html()
     expect(panelHtml).not.toMatch(/WalletConnect|MetaMask|\bPera\b|Defly/i)
   })
+
+  // ── navigateToRemediation (covers line 601 button click) ─────────────────
+
+  it('navigateToRemediation routes to the given remediation path', async () => {
+    const { wrapper, router } = await mountLoaded()
+    const vm = wrapper.vm as any
+    await vm.navigateToRemediation('/compliance/kyc')
+    expect(router.currentRoute.value.path).toBe('/compliance/kyc')
+  })
+
+  it('navigateToRemediation routes to whitelist remediation path', async () => {
+    const { wrapper, router } = await mountLoaded()
+    const vm = wrapper.vm as any
+    await vm.navigateToRemediation('/compliance/whitelist')
+    expect(router.currentRoute.value.path).toBe('/compliance/whitelist')
+  })
+
+  // ── configAudience and configCadence bindings (covers lines 690-711) ─────
+
+  it('configAudience can be changed to executive', async () => {
+    const { wrapper } = await mountLoaded()
+    const vm = wrapper.vm as any
+    vm.openConfigurePanel()
+    await nextTick()
+    vm.configAudience = 'executive'
+    await nextTick()
+    expect(vm.configAudience).toBe('executive')
+  })
+
+  it('configAudience can be changed to auditor', async () => {
+    const { wrapper } = await mountLoaded()
+    const vm = wrapper.vm as any
+    vm.configAudience = 'auditor'
+    await nextTick()
+    expect(vm.configAudience).toBe('auditor')
+  })
+
+  it('configAudience can be changed to regulator', async () => {
+    const { wrapper } = await mountLoaded()
+    const vm = wrapper.vm as any
+    vm.configAudience = 'regulator'
+    await nextTick()
+    expect(vm.configAudience).toBe('regulator')
+  })
+
+  it('configCadence can be set to quarterly', async () => {
+    const { wrapper } = await mountLoaded()
+    const vm = wrapper.vm as any
+    vm.configCadence = 'quarterly'
+    await nextTick()
+    expect(vm.configCadence).toBe('quarterly')
+  })
+
+  it('configCadence can be set to weekly', async () => {
+    const { wrapper } = await mountLoaded()
+    const vm = wrapper.vm as any
+    vm.configCadence = 'weekly'
+    await nextTick()
+    expect(vm.configCadence).toBe('weekly')
+  })
 })
