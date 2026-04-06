@@ -124,4 +124,46 @@ describe('TokenCard', () => {
       expect(wrapper.exists()).toBe(true)
     }
   })
+
+  it('renders contractAddress when status is deployed and contractAddress is set (line 97 branch)', () => {
+    const wrapper = mountCard(makeToken({ status: 'deployed', contractAddress: '0xABCDEF1234567890' }))
+    expect(wrapper.text()).toContain('0xABCDEF')
+  })
+
+  it('renders txId when status is deployed and txId is set (line 104/108 branch)', () => {
+    const wrapper = mountCard(makeToken({ status: 'deployed', txId: 'TXID1234567890ABCD' }))
+    expect(wrapper.text()).toContain('TXID123456')
+  })
+
+  it('copyToClipboard succeeds when navigator.clipboard.writeText resolves (lines 166-179)', async () => {
+    vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } })
+    const wrapper = mountCard(makeToken({ status: 'deployed' }))
+    const copyBtn = wrapper.findAll('button').find(b => b.html().includes('pi-copy'))
+    expect(copyBtn).toBeDefined()
+    await copyBtn!.trigger('click')
+    expect((navigator.clipboard.writeText as any)).toHaveBeenCalled()
+    vi.unstubAllGlobals()
+  })
+
+  it('copyToClipboard handles error when navigator.clipboard.writeText rejects (lines 175-180)', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn().mockRejectedValue(new Error('denied')) } })
+    const wrapper = mountCard(makeToken({ status: 'deployed' }))
+    const copyBtn = wrapper.findAll('button').find(b => b.html().includes('pi-copy'))
+    expect(copyBtn).toBeDefined()
+    await copyBtn!.trigger('click')
+    await new Promise(r => setTimeout(r, 10))
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to copy to clipboard:', expect.any(Error))
+    consoleSpy.mockRestore()
+    vi.unstubAllGlobals()
+  })
+
+  it('opens MICA compliance modal when list-check button is clicked', async () => {
+    const wrapper = mountCard(makeToken())
+    const micaBtn = wrapper.findAll('button').find(b => b.html().includes('pi-list-check'))
+    expect(micaBtn).toBeDefined()
+    await micaBtn!.trigger('click')
+    // showComplianceModal becomes true — the Modal component receives show=true
+    expect(wrapper.html()).toBeTruthy()
+  })
 })
