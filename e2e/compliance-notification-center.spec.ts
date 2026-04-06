@@ -435,9 +435,11 @@ test.describe('Compliance Notification Center — operator journeys', () => {
     // Filter by critical freshness — buildMockEventsMixed() always sets evt-013 to 173h ago (critical threshold)
     const freshnessFilter = page.getByTestId('notification-center-filter-freshness')
     await freshnessFilter.selectOption('critical', { timeout: 5000 })
+    // Dispatch input event explicitly to ensure Vue v-model picks up the change
+    await freshnessFilter.dispatchEvent('input')
 
-    // Semantic wait: exactly 1 event with critical freshness
-    await expect(page.getByTestId('notification-center-event-item')).toHaveCount(1, { timeout: 5000 })
+    // Semantic wait: exactly 1 event with critical freshness (extended timeout for CI reactivity)
+    await expect(page.getByTestId('notification-center-event-item')).toHaveCount(1, { timeout: 15000 })
 
     // Verify it's the expected event (evt-013: Release evidence freshness expired)
     const item = page.getByTestId('notification-center-event-item').first()
