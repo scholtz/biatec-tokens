@@ -408,3 +408,93 @@ describe('TokenComplianceSummaryCard Component', () => {
     });
   });
 });
+
+// ─── Additional branch coverage (lines 69, 227, 232, 239) ───────────────────
+
+const standaloneToken: any = {
+  id: 'token-standalone',
+  name: 'Standalone Token',
+  symbol: 'STK',
+  standard: 'ARC200',
+  type: 'FT',
+  supply: 1000000,
+  decimals: 6,
+  description: 'Standalone token for isolated tests',
+  status: 'deployed',
+  createdAt: new Date(),
+  assetId: 99999,
+  complianceMetadata: {
+    issuerLegalName: 'Standalone Corp',
+    issuerRegistrationNumber: 'SC-001',
+    issuerJurisdiction: 'DE',
+    micaTokenClassification: 'utility',
+    tokenPurpose: 'Test',
+    kycRequired: true,
+    complianceContactEmail: 'test@standalone.io',
+    micaReady: true,
+    whitelistRequired: true,
+    jurisdictionRestrictions: [],
+    issuerVerified: true,
+  },
+}
+
+describe('TokenComplianceSummaryCard - additional gap branches', () => {
+  const mountCard = (gaps: any) =>
+    mount(TokenComplianceSummaryCard, {
+      props: { token: standaloneToken, gaps },
+      global: { components: { Badge: MockBadge, RiskIndicatorBadge: MockRiskIndicatorBadge } },
+    })
+
+  it('shows "View all X gaps" button when gaps.length > 3 (line 69)', async () => {
+    const wrapper = mountCard({
+      missingAttestations: ['att1', 'att2', 'att3', 'att4'],
+      incompleteJurisdiction: true,
+      expiredEvidence: true,
+      failedValidations: ['v1'],
+    })
+    const viewAllBtn = wrapper.find('button.text-xs')
+    expect(viewAllBtn.exists()).toBe(true)
+    expect(viewAllBtn.text()).toMatch(/View all/)
+    await viewAllBtn.trigger('click')
+    expect(wrapper.emitted('view-details')).toBeTruthy()
+  })
+
+  it('pushes "expired evidence" gap when expiredEvidence is true (line 227)', () => {
+    const wrapper = mountCard({
+      missingAttestations: [],
+      incompleteJurisdiction: false,
+      expiredEvidence: true,
+      failedValidations: [],
+    })
+    expect(wrapper.text()).toContain('attestation evidence has expired')
+  })
+
+  it('pushes "validation failed" gap when failedValidations is non-empty (line 232)', () => {
+    const wrapper = mountCard({
+      missingAttestations: [],
+      incompleteJurisdiction: false,
+      expiredEvidence: false,
+      failedValidations: ['check-a', 'check-b'],
+    })
+    expect(wrapper.text()).toContain('2 validation check(s) failed')
+  })
+
+  it('pushes "No compliance controls" gap when both whitelistRequired and kycRequired are false (line 239)', () => {
+    const tokenNoControls = {
+      ...standaloneToken,
+      complianceMetadata: {
+        ...standaloneToken.complianceMetadata,
+        whitelistRequired: false,
+        kycRequired: false,
+      },
+    }
+    const wrapper = mount(TokenComplianceSummaryCard, {
+      props: {
+        token: tokenNoControls,
+        gaps: { missingAttestations: [], incompleteJurisdiction: false, expiredEvidence: false, failedValidations: [] },
+      },
+      global: { components: { Badge: MockBadge, RiskIndicatorBadge: MockRiskIndicatorBadge } },
+    })
+    expect(wrapper.text()).toContain('No compliance controls configured')
+  })
+})

@@ -147,3 +147,32 @@ describe('GuidedNextStepModule - step list styling', () => {
   })
 })
 
+
+// ─── nextStepCardClass default branch (line 170) ─────────────────────────────
+
+describe('GuidedNextStepModule - nextStepCardClass default branch', () => {
+  it('returns blue class when nextStep status is "in_progress"', () => {
+    const steps = makeSteps(['completed', 'in_progress', 'pending', 'pending', 'pending', 'pending', 'pending'])
+    const wrapper = mountModule(steps)
+    const vm = wrapper.vm as any
+    expect(vm.nextStepCardClass).toBe(
+      'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800',
+    )
+  })
+
+  it('returns red class when nextStep status is "blocked"', () => {
+    const steps = [step('sign_in', 'blocked', {})]
+    const wrapper = mountModule(steps)
+    const vm = wrapper.vm as any
+    expect(vm.nextStepCardClass).toBe(
+      'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800',
+    )
+  })
+
+  it('returns empty string when there is no nextStep (all completed)', () => {
+    const steps = makeSteps(['completed', 'completed', 'completed', 'completed', 'completed', 'completed', 'completed'])
+    const wrapper = mountModule(steps)
+    const vm = wrapper.vm as any
+    expect(vm.nextStepCardClass).toBe('')
+  })
+})

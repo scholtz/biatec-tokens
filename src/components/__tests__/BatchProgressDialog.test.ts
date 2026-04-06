@@ -422,3 +422,28 @@ describe('BatchProgressDialog — additional branch coverage', () => {
     })
   })
 })
+
+// ─── hasErrors header icon branch (line 11-17) ───────────────────────────────
+
+describe('BatchProgressDialog - hasErrors header icon branch', () => {
+  it('computed hasErrors is true and neither deploying nor completed (covers v-else-if hasErrors branch)', () => {
+    // status='failed' means isDeploying=false, isCompleted=false, failedCount>0 → hasErrors=true
+    const wrapper = mountDialog({
+      summary: makeSummary({ status: 'failed' as any, failedCount: 2, completedCount: 0 }),
+    })
+    const vm = wrapper.vm as any
+    // Verify all conditions for the v-else-if="hasErrors" branch (line 11-17)
+    expect(vm.hasErrors).toBe(true)
+    expect(vm.isDeploying).toBe(false)
+    expect(vm.isCompleted).toBe(false)
+  })
+
+  it('isCompleted is true when status is completed', () => {
+    const wrapper = mountDialog({
+      summary: makeSummary({ status: 'completed', failedCount: 0, completedCount: 3 }),
+    })
+    const vm = wrapper.vm as any
+    expect(vm.isCompleted).toBe(true)
+    expect(vm.isDeploying).toBe(false)
+  })
+})

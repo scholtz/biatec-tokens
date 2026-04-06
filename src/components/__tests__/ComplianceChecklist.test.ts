@@ -260,3 +260,29 @@ describe('ComplianceChecklist — template rendering', () => {
     expect(html).not.toMatch(/MetaMask/i)
   })
 })
+
+// ─── Network filter button click (line 53-55) ─────────────────────────────────
+
+describe('ComplianceChecklist — network filter buttons', () => {
+  it('calls complianceStore.setNetwork when a network button is clicked', async () => {
+    const wrapper = mountChecklist()
+    // Find the 'VOI' button among the three network filter buttons
+    const networkButtons = wrapper.findAll('button').filter(b => ['Both', 'VOI', 'Aramid'].includes(b.text()))
+    const voiBtn = networkButtons.find(b => b.text() === 'VOI')
+    expect(voiBtn).toBeDefined()
+    await voiBtn!.trigger('click')
+    // setNetwork should have been called - check via store
+    const vm = wrapper.vm as any
+    expect(vm.complianceStore.setNetwork).toHaveBeenCalledWith('VOI')
+  })
+
+  it('calls complianceStore.setNetwork with "Aramid" when Aramid button is clicked', async () => {
+    const wrapper = mountChecklist()
+    const networkButtons = wrapper.findAll('button').filter(b => ['Both', 'VOI', 'Aramid'].includes(b.text()))
+    const aramidBtn = networkButtons.find(b => b.text() === 'Aramid')
+    expect(aramidBtn).toBeDefined()
+    await aramidBtn!.trigger('click')
+    const vm = wrapper.vm as any
+    expect(vm.complianceStore.setNetwork).toHaveBeenCalledWith('Aramid')
+  })
+})

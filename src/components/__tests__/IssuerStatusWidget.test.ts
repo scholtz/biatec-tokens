@@ -196,3 +196,54 @@ describe('IssuerStatusWidget', () => {
     })
   })
 })
+
+// ─── formatTimestamp months branch (line 149) ────────────────────────────────
+
+describe('IssuerStatusWidget - formatTimestamp months branch', () => {
+  it('returns "N months ago" for a date 60 days ago', async () => {
+    const { mount } = await import('@vue/test-utils')
+    const { createTestingPinia } = await import('@pinia/testing')
+    const { vi } = await import('vitest')
+    const IssuerStatusWidget = (await import('../IssuerStatusWidget.vue')).default
+
+    const wrapper = mount(IssuerStatusWidget, {
+      props: { issuerAddress: 'ADDR-MONTHS' },
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] },
+    })
+    const vm = wrapper.vm as any
+
+    const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+    const result = vm.formatTimestamp(sixtyDaysAgo)
+    expect(result).toMatch(/months? ago/i)
+  })
+
+  it('returns "today" for a timestamp from earlier today', async () => {
+    const { mount } = await import('@vue/test-utils')
+    const { createTestingPinia } = await import('@pinia/testing')
+    const { vi } = await import('vitest')
+    const IssuerStatusWidget = (await import('../IssuerStatusWidget.vue')).default
+
+    const wrapper = mount(IssuerStatusWidget, {
+      props: { issuerAddress: 'ADDR-TODAY' },
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] },
+    })
+    const vm = wrapper.vm as any
+    const today = new Date().toISOString()
+    expect(vm.formatTimestamp(today)).toBe('today')
+  })
+
+  it('returns "yesterday" for a timestamp from 25 hours ago', async () => {
+    const { mount } = await import('@vue/test-utils')
+    const { createTestingPinia } = await import('@pinia/testing')
+    const { vi } = await import('vitest')
+    const IssuerStatusWidget = (await import('../IssuerStatusWidget.vue')).default
+
+    const wrapper = mount(IssuerStatusWidget, {
+      props: { issuerAddress: 'ADDR-YESTERDAY' },
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn })] },
+    })
+    const vm = wrapper.vm as any
+    const yesterday = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString()
+    expect(vm.formatTimestamp(yesterday)).toBe('yesterday')
+  })
+})
