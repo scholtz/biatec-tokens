@@ -301,7 +301,6 @@ describe('WhitelistEntryForm', () => {
       expect(vm.isSubmitting).toBe(false);
     });
   });
-});
 
   describe('validateForm - entityType, jurisdictionCode, riskLevel required', () => {
     it('returns error when entityType is missing (line 270)', () => {
@@ -357,3 +356,69 @@ describe('WhitelistEntryForm', () => {
       expect(vm.isSubmitting).toBe(false)
     })
   })
+
+  describe('onMounted with initialData', () => {
+    it('populates formData from initialData prop on mount', async () => {
+      const initialData = {
+        name: 'Test User',
+        email: 'test@example.com',
+        walletAddress: 'ABCDEF123456',
+        entityType: 'institutional' as const,
+        jurisdictionCode: 'GB',
+        riskLevel: 'medium' as const,
+      };
+      const wrapper = mountForm({ initialData });
+      await nextTick();
+      const vm = wrapper.vm as any;
+      expect(vm.formData.name).toBe('Test User');
+      expect(vm.formData.email).toBe('test@example.com');
+      expect(vm.formData.entityType).toBe('institutional');
+    });
+
+    it('does not fail when initialData is undefined on mount', async () => {
+      const wrapper = mountForm({ initialData: undefined });
+      await nextTick();
+      const vm = wrapper.vm as any;
+      // formData keeps its defaults
+      expect(vm.formData.name).toBe('');
+    });
+  });
+
+  describe('watch initialData', () => {
+    it('updates formData reactively when initialData prop changes', async () => {
+      const wrapper = mountForm({ initialData: undefined });
+      const vm = wrapper.vm as any;
+      expect(vm.formData.name).toBe('');
+
+      // Update prop to trigger watch
+      await wrapper.setProps({
+        initialData: {
+          name: 'Updated Name',
+          email: 'updated@example.com',
+          jurisdictionCode: 'DE',
+          riskLevel: 'high' as const,
+        },
+      });
+      await nextTick();
+
+      expect(vm.formData.name).toBe('Updated Name');
+      expect(vm.formData.email).toBe('updated@example.com');
+    });
+
+    it('does not update formData when initialData changes to undefined', async () => {
+      const wrapper = mountForm({
+        initialData: { name: 'Initial Name' },
+      });
+      await nextTick();
+      const vm = wrapper.vm as any;
+      expect(vm.formData.name).toBe('Initial Name');
+
+      // Set initialData to null-ish — watch callback has `if (newData)` guard
+      await wrapper.setProps({ initialData: undefined });
+      await nextTick();
+
+      // Name stays as is because watch guard prevents overwrite
+      expect(vm.formData.name).toBe('Initial Name');
+    });
+  });
+});

@@ -400,4 +400,91 @@ describe('WhitelistTable', () => {
       expect((wrapper.vm as any).hasConflict('e1')).toBe(false);
     });
   });
+
+  describe('applyFilters', () => {
+    it('calls setFilters with search query and status filter', async () => {
+      const wrapper = mountTable();
+      const vm = wrapper.vm as any;
+      const { useWhitelistStore } = await import('../../../stores/whitelist');
+      const store = useWhitelistStore();
+
+      vm.searchQuery = 'test search';
+      vm.selectedStatus = ['approved'];
+      await wrapper.vm.$nextTick();
+
+      vm.applyFilters();
+      expect(store.setFilters).toHaveBeenCalled();
+      expect(store.fetchWhitelistEntries).toHaveBeenCalled();
+    });
+
+    it('calls setFilters without filters when selections are empty', async () => {
+      const wrapper = mountTable();
+      const vm = wrapper.vm as any;
+      const { useWhitelistStore } = await import('../../../stores/whitelist');
+      const store = useWhitelistStore();
+
+      vm.selectedStatus = [];
+      vm.selectedEntityType = [];
+      vm.selectedRiskLevel = [];
+      vm.searchQuery = '';
+      vm.applyFilters();
+      expect(store.setFilters).toHaveBeenCalledWith(expect.objectContaining({ page: 1 }));
+    });
+  });
+
+  describe('clearFilters', () => {
+    it('resets all filters and calls resetFilters and fetchWhitelistEntries', async () => {
+      const wrapper = mountTable();
+      const vm = wrapper.vm as any;
+      const { useWhitelistStore } = await import('../../../stores/whitelist');
+      const store = useWhitelistStore();
+
+      vm.searchQuery = 'some search';
+      vm.selectedStatus = ['approved', 'pending'];
+      vm.clearFilters();
+      await wrapper.vm.$nextTick();
+
+      expect(vm.searchQuery).toBe('');
+      expect(vm.selectedStatus).toEqual([]);
+      expect(store.resetFilters).toHaveBeenCalled();
+      expect(store.fetchWhitelistEntries).toHaveBeenCalled();
+    });
+  });
+
+  describe('debouncedSearch', () => {
+    it('calls setFilters after debounce timeout', async () => {
+      vi.useFakeTimers();
+      const wrapper = mountTable();
+      const vm = wrapper.vm as any;
+      const { useWhitelistStore } = await import('../../../stores/whitelist');
+      const store = useWhitelistStore();
+
+      vm.debouncedSearch();
+      expect(store.setFilters).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(400);
+      await wrapper.vm.$nextTick();
+
+      expect(store.setFilters).toHaveBeenCalled();
+      vi.useRealTimers();
+    });
+
+    it('cancels previous timer when called multiple times', async () => {
+      vi.useFakeTimers();
+      const wrapper = mountTable();
+      const vm = wrapper.vm as any;
+      const { useWhitelistStore } = await import('../../../stores/whitelist');
+      const store = useWhitelistStore();
+
+      vm.debouncedSearch();
+      vi.advanceTimersByTime(100);
+      vm.debouncedSearch(); // cancel previous
+      vi.advanceTimersByTime(400);
+      await wrapper.vm.$nextTick();
+
+      // Should only have been called once despite two invocations
+      expect(store.setFilters).toHaveBeenCalledTimes(1);
+      vi.useRealTimers();
+    });
+  });
 });

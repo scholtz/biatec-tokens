@@ -1328,4 +1328,140 @@ describe('AttestationPanel', () => {
       consoleSpy.mockRestore();
     });
   });
+
+  describe('generateAttestation - additional coverage', () => {
+    it('should show error toast when tokenId is empty (line 376-382)', async () => {
+      vi.useFakeTimers();
+      wrapper = mount(AttestationPanel, {
+        props: { tokenId: '', network: 'VOI' },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        jurisdiction: 'EU',
+        walletAddress: 'A'.repeat(58),
+      };
+
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      expect(vm.errorMessage).toBe('Token ID is required');
+      expect(vm.showErrorToast).toBe(true);
+
+      // Advance timers to cover the setTimeout callback (line 379-381)
+      vi.advanceTimersByTime(5001);
+      await wrapper.vm.$nextTick();
+
+      expect(vm.showErrorToast).toBe(false);
+      vi.useRealTimers();
+    });
+
+    it('should hide success toast after 5s via setTimeout callback (line 439-441)', async () => {
+      vi.useFakeTimers();
+      wrapper = mount(AttestationPanel, {
+        props: { tokenId: 'token123', network: 'VOI' },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        jurisdiction: 'EU',
+        walletAddress: 'A'.repeat(58),
+      };
+      await wrapper.vm.$nextTick();
+
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      expect(vm.showSuccessToast).toBe(true);
+
+      // Advance timers to cover the setTimeout that hides success toast
+      vi.advanceTimersByTime(5001);
+      await wrapper.vm.$nextTick();
+
+      expect(vm.showSuccessToast).toBe(false);
+      vi.useRealTimers();
+    });
+
+    it('should handle saveToHistory error during success path (line 439 catch)', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockReturnValue(undefined);
+      (attestationService.saveToHistory as any).mockRejectedValue(new Error('Save failed'));
+
+      wrapper = mount(AttestationPanel, {
+        props: { tokenId: 'token123', network: 'VOI' },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        jurisdiction: 'EU',
+        walletAddress: 'A'.repeat(58),
+      };
+      await wrapper.vm.$nextTick();
+
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      // Should still succeed despite saveToHistory failure
+      expect(vm.showSuccessToast).toBe(true);
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to save to history:', expect.any(Error));
+      consoleSpy.mockRestore();
+    });
+
+    it('should handle saveToHistory error during failure path (line 457 catch)', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockReturnValue(undefined);
+      (attestationService.generateAttestation as any).mockRejectedValue(new Error('Gen failed'));
+      (attestationService.saveToHistory as any).mockRejectedValue(new Error('Save also failed'));
+
+      wrapper = mount(AttestationPanel, {
+        props: { tokenId: 'token123', network: 'VOI' },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        jurisdiction: 'EU',
+        walletAddress: 'A'.repeat(58),
+      };
+      await wrapper.vm.$nextTick();
+
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      // Should still show error toast despite both failures
+      expect(vm.showErrorToast).toBe(true);
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to save failed attestation to history:', expect.any(Error));
+      consoleSpy.mockRestore();
+    });
+
+    it('should hide error toast after 5s via setTimeout callback (line 465 area)', async () => {
+      vi.useFakeTimers();
+      (attestationService.generateAttestation as any).mockRejectedValue(new Error('Generate failed'));
+
+      wrapper = mount(AttestationPanel, {
+        props: { tokenId: 'token123', network: 'VOI' },
+      });
+
+      const vm = wrapper.vm as any;
+      vm.issuerCredentials = {
+        name: 'Test Company',
+        jurisdiction: 'EU',
+        walletAddress: 'A'.repeat(58),
+      };
+      await wrapper.vm.$nextTick();
+
+      await vm.generateAttestation();
+      await wrapper.vm.$nextTick();
+
+      expect(vm.showErrorToast).toBe(true);
+
+      // Advance timers to cover the setTimeout that hides error toast
+      vi.advanceTimersByTime(5001);
+      await wrapper.vm.$nextTick();
+
+      expect(vm.showErrorToast).toBe(false);
+      vi.useRealTimers();
+    });
+  });
 });
