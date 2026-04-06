@@ -333,3 +333,70 @@ describe('ReportingCommandCenterView — WCAG AA Accessibility', () => {
     expect(ctaButtons.length).toBeGreaterThan(0)
   })
 })
+
+// ---------------------------------------------------------------------------
+// Branch coverage: configure-panel select bindings and view_blockers CTA
+// ---------------------------------------------------------------------------
+
+describe('ReportingCommandCenterView — configure-panel selects and view_blockers branch', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  it('renders configAudience select when configure panel is open', async () => {
+    const wrapper = await mountView()
+    const vm = wrapper.vm as any
+
+    // Open the configure panel to show the hidden selects
+    vm.openConfigurePanel()
+    await nextTick()
+
+    const audienceSelect = wrapper.find(`[data-testid="${REPORTING_CENTER_TEST_IDS.PANEL_AUDIENCE_SELECT}"]`)
+    expect(audienceSelect.exists()).toBe(true)
+    expect(audienceSelect.element.tagName).toBe('SELECT')
+  })
+
+  it('renders configCadence select when configure panel is open', async () => {
+    const wrapper = await mountView()
+    const vm = wrapper.vm as any
+
+    vm.openConfigurePanel()
+    await nextTick()
+
+    const cadenceSelect = wrapper.find(`[data-testid="${REPORTING_CENTER_TEST_IDS.PANEL_CADENCE_SELECT}"]`)
+    expect(cadenceSelect.exists()).toBe(true)
+    expect(cadenceSelect.element.tagName).toBe('SELECT')
+    // Verify cadence options are rendered (monthly, quarterly, event_driven, manual)
+    const options = cadenceSelect.findAll('option')
+    expect(options.length).toBe(4)
+    expect(options[0].attributes('value')).toBe('monthly')
+    expect(options[1].attributes('value')).toBe('quarterly')
+  })
+
+  it('configAudience select renders all four audience options when panel is open', async () => {
+    const wrapper = await mountView()
+    const vm = wrapper.vm as any
+
+    vm.openConfigurePanel()
+    await nextTick()
+
+    const audienceSelect = wrapper.find(`[data-testid="${REPORTING_CENTER_TEST_IDS.PANEL_AUDIENCE_SELECT}"]`)
+    const options = audienceSelect.findAll('option')
+    expect(options.length).toBe(4)
+    expect(options[0].attributes('value')).toBe('internal_compliance')
+    expect(options[1].attributes('value')).toBe('executive')
+  })
+
+  it('renders Resolve Blockers CTA button for blocked run with remediationPath (view_blockers branch)', async () => {
+    const wrapper = await mountView()
+
+    // run-002 in MOCK_RUNS_ACTIVE has status='blocked' with remediationPath='/compliance/setup'
+    // → getRunCta returns 'view_blockers' → "Resolve Blockers" button is rendered
+    const ctaButtons = wrapper.findAll(`[data-testid="${REPORTING_CENTER_TEST_IDS.RUN_CTA_BUTTON}"]`)
+    const resolveBtn = ctaButtons.find((btn) => btn.text().includes('Resolve Blockers'))
+    expect(resolveBtn).toBeDefined()
+    expect(resolveBtn!.exists()).toBe(true)
+  })
+})

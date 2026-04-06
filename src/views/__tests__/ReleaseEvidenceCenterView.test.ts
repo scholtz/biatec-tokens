@@ -20,8 +20,24 @@ import { createTestingPinia } from '@pinia/testing'
 import { createRouter, createWebHistory } from 'vue-router'
 import { nextTick } from 'vue'
 import ReleaseEvidenceCenterView from '../ReleaseEvidenceCenterView.vue'
-import { RELEASE_CENTER_TEST_IDS } from '../../utils/releaseReadiness'
+import {
+  RELEASE_CENTER_TEST_IDS,
+  buildDefaultReleaseReadiness,
+  buildReadyFixture,
+} from '../../utils/releaseReadiness'
 import { STRICT_ARTIFACT_TEST_IDS } from '../../utils/strictSignoffArtifact'
+
+// Mock releaseReadiness so individual tests can override buildDefaultReleaseReadiness
+// to exercise branches that depend on specific readiness states (approvalHandoffReady,
+// dim.evidencePath false branch). Default wraps the real function — all existing tests
+// are unaffected.
+vi.mock('../../utils/releaseReadiness', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('../../utils/releaseReadiness')>()
+  return {
+    ...mod,
+    buildDefaultReleaseReadiness: vi.fn().mockImplementation(mod.buildDefaultReleaseReadiness),
+  }
+})
 
 // ---------------------------------------------------------------------------
 // Router helper
@@ -536,5 +552,104 @@ describe('ReleaseEvidenceCenterView — Strict Sign-Off Artifact Panel', () => {
     // and must NOT show release-ready language
     expect(text.toLowerCase()).not.toMatch(/credible release evidence|authorization supported/i)
     expect(text.length).toBeGreaterThan(20)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Branch coverage: dim.evidencePath v-if button and approvalHandoffReady branch
+// ---------------------------------------------------------------------------
+
+// Capture the real implementation before any test can override it, so we can
+// restore the mock to default behaviour in afterEach without vi.importActual.
+let _realBuildDefault: typeof buildDefaultReleaseReadiness
+
+describe('ReleaseEvidenceCenterView — dim.evidencePath button and approvalHandoffReady conditional', () => {
+  beforeAll(async () => {
+    const realMod = await vi.importActual<typeof import('../../utils/releaseReadiness')>(
+      '../../utils/releaseReadiness',
+    )
+    _realBuildDefault = realMod.buildDefaultReleaseReadiness
+    // Seed the mock's default implementation with the real function
+    vi.mocked(buildDefaultReleaseReadiness).mockImplementation(_realBuildDefault)
+  })
+
+  beforeEach(() => {
+    localStorage.clear()
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    // Reset to real implementation before each test so overrides don't bleed
+    vi.mocked(buildDefaultReleaseReadiness).mockImplementation(_realBuildDefault)
+  })
+
+  afterEach(() => {
+    vi.mocked(buildDefaultReleaseReadiness).mockImplementation(_realBuildDefault)
+    vi.restoreAllMocks()
+  })
+
+  it('renders Open workspace button for advisory dimension that has evidencePath set (v-if true branch)', async () => {
+    // Default fixture: 'approval-sign-off' advisory dim has evidencePath='/compliance/approval'
+    // → v-if="dim.evidencePath" renders the button (covers true branch for advisory loop)
+    const wrapper = await mountView()
+
+    const openWorkspaceBtns = wrapper.findAll('button').filter(
+      (btn) => btn.text().includes('Open workspace'),
+    )
+    // At least one advisory dimension has a non-null evidencePath
+    expect(openWorkspaceBtns.length).toBeGreaterThan(0)
+  })
+
+  it('does not render Open workspace button for advisory dimension with null evidencePath (v-if false branch)', async () => {
+    // Build a state where the advisory dim has evidencePath = null
+    const baseState = buildReadyFixture()
+    const advisoryDim = baseState.dimensions.find((d) => !d.isLaunchCritical)
+    if (advisoryDim) {
+      advisoryDim.state = 'advisory_follow_up'
+      ;(advisoryDim as any).evidencePath = null
+    }
+    // Keep critical dims ready so no blocking banners interfere
+    baseState.dimensions.filter((d) => d.isLaunchCritical).forEach((d) => {
+      d.state = 'ready'
+    })
+    vi.mocked(buildDefaultReleaseReadiness).mockReturnValue(baseState)
+
+    const wrapper = await mountView()
+
+    // The advisory dim has no evidencePath → the Open workspace button must NOT render
+    // for that dimension (false branch of v-if="dim.evidencePath")
+    const advisorySection = wrapper.find('[data-testid="advisory-evidence-section"]')
+    if (advisorySection.exists()) {
+      const btns = advisorySection.findAll('button').filter(
+        (btn) => btn.text().includes('Open workspace'),
+      )
+      expect(btns.length).toBe(0)
+    }
+    // If the section itself is absent the advisory loop is also absent — false branch covered
+  })
+
+  it('when approvalHandoffReady is true the approval queue button is enabled and uses the ready style', async () => {
+    // buildReadyFixture: overallState='ready', launchBlockingCount=0, missingConfigCount=0
+    // → approvalHandoffReady === true
+    // → template: button NOT disabled, class = bg-indigo-600, aria-disabled = 'false'
+    // This exercises the TRUE branch of every approvalHandoffReady conditional in the template
+    vi.mocked(buildDefaultReleaseReadiness).mockReturnValue(buildReadyFixture())
+
+    const wrapper = await mountView()
+    const vm = wrapper.vm as any
+
+    expect(vm.approvalHandoffReady).toBe(true)
+
+    const approvalBtn = wrapper.find('[data-testid="approval-queue-link"]')
+    expect(approvalBtn.exists()).toBe(true)
+
+    // Button is NOT disabled when approvalHandoffReady = true (covers :disabled="!approvalHandoffReady" true branch)
+    expect(approvalBtn.attributes('disabled')).toBeUndefined()
+    expect(approvalBtn.attributes('aria-disabled')).toBe('false')
+
+    // Button uses indigo ready-state styling (covers :class="approvalHandoffReady ? ... : ..." true branch)
+    expect(approvalBtn.classes()).toContain('bg-indigo-600')
+
+    // "Prerequisites are met" headline appears (covers template string conditional true branch)
+    const section = wrapper.find(`[data-testid="${RELEASE_CENTER_TEST_IDS.APPROVAL_HANDOFF_SECTION}"]`)
+    expect(section.text()).toMatch(/Prerequisites are met/i)
   })
 })

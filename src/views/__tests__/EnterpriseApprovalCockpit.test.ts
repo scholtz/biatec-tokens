@@ -25,6 +25,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { nextTick } from 'vue'
 import { createTestingPinia } from '@pinia/testing'
 import EnterpriseApprovalCockpit from '../EnterpriseApprovalCockpit.vue'
+import { createComplianceCaseClient } from '../../lib/api/complianceCaseManagement'
 
 // ---------------------------------------------------------------------------
 // Stubs & router
@@ -32,6 +33,13 @@ import EnterpriseApprovalCockpit from '../EnterpriseApprovalCockpit.vue'
 
 vi.mock('../../layout/MainLayout.vue', () => ({
   default: { template: '<div><slot /></div>' },
+}))
+
+// Mock complianceCaseManagement so loadOnboardingReadiness error branches can be
+// exercised by direct vm calls. Default returns null (same as real impl with no token)
+// so all existing tests remain unaffected — they never set arc76_session.
+vi.mock('../../lib/api/complianceCaseManagement', () => ({
+  createComplianceCaseClient: vi.fn().mockReturnValue(null),
 }))
 
 function makeRouter() {
@@ -1092,5 +1100,139 @@ describe('loadOnboardingReadiness branches', () => {
     await nextTick()
     expect(wrapper.exists()).toBe(true)
     vi.doUnmock('../../lib/api/complianceCaseManagement')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Branch coverage: loadOnboardingReadiness error branches (direct vm calls)
+// ---------------------------------------------------------------------------
+// These tests set localStorage['arc76_session'] to provide a bearer token so
+// loadOnboardingReadiness() proceeds past the early-return guard, then configure
+// the vi.mock'd createComplianceCaseClient to return controlled clients.
+// ---------------------------------------------------------------------------
+
+describe('EnterpriseApprovalCockpit — loadOnboardingReadiness error branches', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    // Provide a bearer token so the function doesn't return early
+    localStorage.setItem('arc76_session', 'test-bearer-token')
+    // Reset mock to null (safe default) before each test
+    vi.mocked(createComplianceCaseClient).mockReturnValue(null)
+  })
+
+  afterEach(() => {
+    localStorage.clear()
+    vi.mocked(createComplianceCaseClient).mockReturnValue(null)
+  })
+
+  it('sets Error state with exact message when getMonitoringDashboard rejects with an Error instance', async () => {
+    const mockClient = {
+      getMonitoringDashboard: vi.fn().mockRejectedValue(new Error('Network timeout')),
+    }
+    vi.mocked(createComplianceCaseClient).mockReturnValue(mockClient as any)
+
+    const wrapper = await mountLoaded()
+    const vm = wrapper.vm as any
+
+    // Confirm mock is still active, then call the function directly
+    vi.mocked(createComplianceCaseClient).mockReturnValue(mockClient as any)
+    await vm.loadOnboardingReadiness()
+
+    expect(vm.onboardingReadinessLoaded).toBe(true)
+    expect(vm.onboardingReadinessBlocked).toBe(true)
+    expect(vm.onboardingStatusLabel).toBe('Error')
+    expect(vm.onboardingHeadline).toBe('Failed to load onboarding readiness data.')
+    expect(vm.onboardingDegradedMessage).toBe('Network timeout')
+  })
+
+  it('sets Error state with fallback message when thrown value is not an Error instance', async () => {
+    const mockClient = {
+      // Reject with a non-Error value (string) to exercise the else branch of the catch
+      getMonitoringDashboard: vi.fn().mockRejectedValue('unexpected string rejection'),
+    }
+    vi.mocked(createComplianceCaseClient).mockReturnValue(mockClient as any)
+
+    const wrapper = await mountLoaded()
+    const vm = wrapper.vm as any
+
+    vi.mocked(createComplianceCaseClient).mockReturnValue(mockClient as any)
+    await vm.loadOnboardingReadiness()
+
+    expect(vm.onboardingStatusLabel).toBe('Error')
+    expect(vm.onboardingDegradedMessage).toBe('Unexpected error loading compliance data.')
+  })
+
+  it('sets Data Unavailable state when getMonitoringDashboard returns ok: false', async () => {
+    const mockClient = {
+      getMonitoringDashboard: vi.fn().mockResolvedValue({
+        ok: false,
+        error: { userGuidance: 'Service temporarily unavailable. Try again later.' },
+      }),
+    }
+    vi.mocked(createComplianceCaseClient).mockReturnValue(mockClient as any)
+
+    const wrapper = await mountLoaded()
+    const vm = wrapper.vm as any
+
+    vi.mocked(createComplianceCaseClient).mockReturnValue(mockClient as any)
+    await vm.loadOnboardingReadiness()
+
+    expect(vm.onboardingReadinessLoaded).toBe(true)
+    expect(vm.onboardingReadinessBlocked).toBe(true)
+    expect(vm.onboardingStatusLabel).toBe('Data Unavailable')
+    expect(vm.onboardingHeadline).toBe('Onboarding readiness cannot be confirmed.')
+    expect(vm.onboardingDegradedMessage).toBe('Service temporarily unavailable. Try again later.')
+  })
+
+  it('sets No Cohorts state when cohortSummaries array is empty', async () => {
+    const mockClient = {
+      getMonitoringDashboard: vi.fn().mockResolvedValue({
+        ok: true,
+        data: { cohortSummaries: [] },
+      }),
+    }
+    vi.mocked(createComplianceCaseClient).mockReturnValue(mockClient as any)
+
+    const wrapper = await mountLoaded()
+    const vm = wrapper.vm as any
+
+    vi.mocked(createComplianceCaseClient).mockReturnValue(mockClient as any)
+    await vm.loadOnboardingReadiness()
+
+    expect(vm.onboardingReadinessLoaded).toBe(true)
+    expect(vm.onboardingStatusLabel).toBe('No Cohorts')
+    expect(vm.onboardingHeadline).toBe('No investor cohorts have been registered yet.')
+  })
+
+  it('sets Ready for Handoff state when cohortSummaries contains a READY cohort', async () => {
+    const mockCohort = {
+      cohortId: 'cohort-alpha',
+      cohortName: 'Alpha Investors',
+      overallStatus: 'READY' as const,
+      totalCases: 5,
+      completedCases: 5,
+      blockedCases: 0,
+      pendingCases: 0,
+      staleCases: 0,
+      readinessScore: 100,
+      cohortBlockers: [],
+    }
+    const mockClient = {
+      getMonitoringDashboard: vi.fn().mockResolvedValue({
+        ok: true,
+        data: { cohortSummaries: [mockCohort] },
+      }),
+    }
+    vi.mocked(createComplianceCaseClient).mockReturnValue(mockClient as any)
+
+    const wrapper = await mountLoaded()
+    const vm = wrapper.vm as any
+
+    vi.mocked(createComplianceCaseClient).mockReturnValue(mockClient as any)
+    await vm.loadOnboardingReadiness()
+
+    expect(vm.onboardingReadinessLoaded).toBe(true)
+    expect(vm.onboardingReadinessReady).toBe(true)
+    expect(vm.onboardingStatusLabel).toBe('Ready for Handoff')
   })
 })

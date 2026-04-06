@@ -1118,3 +1118,87 @@ describe('ComplianceReportingWorkspace — onBeforeUnmount cleanup', () => {
     expect(() => wrapper.unmount()).not.toThrow()
   })
 })
+
+// ---------------------------------------------------------------------------
+// Branch coverage: exportAuditPackageJson and copyToClipboard fallback
+// ---------------------------------------------------------------------------
+
+describe('ComplianceReportingWorkspace — exportAuditPackageJson and copyToClipboard fallback', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('exportAuditPackageJson triggers a file download without throwing', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+
+    // Stub URL methods – happy-dom may lack createObjectURL
+    const origCreateObjectURL = URL.createObjectURL
+    const origRevokeObjectURL = URL.revokeObjectURL
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:test-url')
+    URL.revokeObjectURL = vi.fn()
+
+    // Prevent actual DOM manipulation during test
+    const appendSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((el) => el as Node)
+    const removeSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((el) => el as Node)
+    // Prevent the anchor.click() from attempting navigation in happy-dom
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+
+    expect(() => vm.exportAuditPackageJson()).not.toThrow()
+
+    expect(clickSpy).toHaveBeenCalled()
+    expect(URL.createObjectURL).toHaveBeenCalled()
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:test-url')
+
+    // Restore URL methods
+    URL.createObjectURL = origCreateObjectURL
+    URL.revokeObjectURL = origRevokeObjectURL
+    appendSpy.mockRestore()
+    removeSpy.mockRestore()
+    clickSpy.mockRestore()
+  })
+
+  it('copyToClipboard uses execCommand fallback when navigator.clipboard.writeText rejects', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+
+    // Make the clipboard API throw so the fallback branch runs
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: vi.fn().mockRejectedValue(new Error('Clipboard API unavailable')),
+      },
+      configurable: true,
+      writable: true,
+    })
+
+    // happy-dom does not define execCommand — define it before spying
+    if (!('execCommand' in document)) {
+      Object.defineProperty(document, 'execCommand', {
+        value: vi.fn().mockReturnValue(true),
+        configurable: true,
+        writable: true,
+      })
+    }
+
+    // The fallback uses textarea + execCommand('copy')
+    const execCommandSpy = vi.spyOn(document, 'execCommand').mockReturnValue(true)
+    const appendSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((el) => el as Node)
+    const removeSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((el) => el as Node)
+
+    await vm.copyToClipboard()
+    await nextTick()
+
+    // Fallback branch executes execCommand('copy')
+    expect(execCommandSpy).toHaveBeenCalledWith('copy')
+
+    appendSpy.mockRestore()
+    removeSpy.mockRestore()
+    execCommandSpy.mockRestore()
+  })
+})
