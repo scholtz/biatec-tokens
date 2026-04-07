@@ -1224,13 +1224,16 @@ describe('ComplianceReportingWorkspace — formattedGeneratedAt catch and assemb
     // Override bundle.generatedAt with a value that Date.prototype.toLocaleString may throw on
     // by temporarily making toLocaleString throw, then triggering the computed
     const origToLocaleString = Date.prototype.toLocaleString
-    Date.prototype.toLocaleString = function () {
-      throw new Error('toLocaleString unavailable')
+    try {
+      Date.prototype.toLocaleString = function () {
+        throw new Error('toLocaleString unavailable')
+      }
+      const result = vm.formattedGeneratedAt
+      // Should return the raw string (the catch branch)
+      expect(typeof result).toBe('string')
+    } finally {
+      Date.prototype.toLocaleString = origToLocaleString
     }
-    const result = vm.formattedGeneratedAt
-    Date.prototype.toLocaleString = origToLocaleString
-    // Should return the raw string (the catch branch)
-    expect(typeof result).toBe('string')
   })
 
   it('assemblePackage sets auditPackage and opens preview', async () => {
@@ -1260,7 +1263,7 @@ describe('ComplianceReportingWorkspace — formattedGeneratedAt catch and assemb
     const removeSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((el) => el as Node)
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
 
-    // Pre-assemble the package so exportAuditPackageJson uses the cached value (the ?? false branch)
+    // Pre-assemble the package so exportAuditPackageJson reuses it (the ?? right-hand branch is skipped)
     vm.assemblePackage()
     await nextTick()
     const cachedPkg = vm.auditPackage
@@ -1298,7 +1301,7 @@ describe('ComplianceReportingWorkspace — blockers and nextStepsText computed b
     const vm = wrapper.vm as any
     // Default state has overallStatus = 'pending'
     vm.bundle = { ...vm.bundle, overallStatus: 'pending' }
-    await (await import('vue')).nextTick()
+    await nextTick()
     expect(vm.nextStepsText).toContain('Compliance Setup workflow')
   })
 
@@ -1306,7 +1309,7 @@ describe('ComplianceReportingWorkspace — blockers and nextStepsText computed b
     const wrapper = await mountWorkspace()
     const vm = wrapper.vm as any
     vm.bundle = { ...vm.bundle, overallStatus: 'failed' }
-    await (await import('vue')).nextTick()
+    await nextTick()
     expect(vm.nextStepsText).toContain('critical blockers')
   })
 
@@ -1314,7 +1317,7 @@ describe('ComplianceReportingWorkspace — blockers and nextStepsText computed b
     const wrapper = await mountWorkspace()
     const vm = wrapper.vm as any
     vm.bundle = { ...vm.bundle, overallStatus: 'warning' }
-    await (await import('vue')).nextTick()
+    await nextTick()
     expect(vm.nextStepsText).toContain('flagged items')
   })
 
@@ -1322,7 +1325,7 @@ describe('ComplianceReportingWorkspace — blockers and nextStepsText computed b
     const wrapper = await mountWorkspace()
     const vm = wrapper.vm as any
     vm.bundle = { ...vm.bundle, overallStatus: 'ready' }
-    await (await import('vue')).nextTick()
+    await nextTick()
     expect(vm.nextStepsText).toContain('Review the evidence')
   })
 })
