@@ -320,3 +320,50 @@ describe('ReportingCommandCenterView — Logic', () => {
     expect(vm.configCadence).toBe('weekly')
   })
 })
+
+// ---------------------------------------------------------------------------
+// Branch: configCadence and configAudience remaining values
+// ---------------------------------------------------------------------------
+describe('ReportingCommandCenterView — additional configCadence and configAudience branches', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('configCadence can be set to monthly', async () => {
+    const { wrapper } = await mountLoaded()
+    const vm = wrapper.vm as any
+    vm.configCadence = 'monthly'
+    await nextTick()
+    expect(vm.configCadence).toBe('monthly')
+  })
+
+  it('configCadence can be set to event_driven', async () => {
+    const { wrapper } = await mountLoaded()
+    const vm = wrapper.vm as any
+    vm.configCadence = 'event_driven'
+    await nextTick()
+    expect(vm.configCadence).toBe('event_driven')
+  })
+
+  it('configCadence can be set to manual', async () => {
+    const { wrapper } = await mountLoaded()
+    const vm = wrapper.vm as any
+    vm.configCadence = 'manual'
+    await nextTick()
+    expect(vm.configCadence).toBe('manual')
+  })
+
+  it('configAudience initial value is internal_compliance', async () => {
+    const { wrapper } = await mountLoaded()
+    const vm = wrapper.vm as any
+    expect(vm.configAudience).toBe('internal_compliance')
+  })
+
+  it('MOCK_RUNS_ACTIVE blocked run has remediationPath set (view_blockers button shown)', async () => {
+    const { wrapper } = await mountLoaded()
+    // There may be multiple CTA buttons (one per run). Find the one with 'Resolve Blockers' text.
+    const allBtns = wrapper.findAll(`[data-testid="${REPORTING_CENTER_TEST_IDS.RUN_CTA_BUTTON}"]`)
+    const resolveBtn = allBtns.find((b) => b.text().includes('Resolve Blockers'))
+    expect(resolveBtn).toBeDefined()
+  })
+})

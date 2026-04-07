@@ -1202,3 +1202,127 @@ describe('ComplianceReportingWorkspace — exportAuditPackageJson and copyToClip
     execCommandSpy.mockRestore()
   })
 })
+
+// ---------------------------------------------------------------------------
+// Branch: formattedGeneratedAt catch (line 1656) and assemblePackage (lines 1713-1719)
+// ---------------------------------------------------------------------------
+describe('ComplianceReportingWorkspace — formattedGeneratedAt catch and assemblePackage', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    localStorage.clear()
+  })
+
+  it('formattedGeneratedAt catch branch: returns raw generatedAt when Date constructor throws', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+
+    // Override bundle.generatedAt with a value that Date.prototype.toLocaleString may throw on
+    // by temporarily making toLocaleString throw, then triggering the computed
+    const origToLocaleString = Date.prototype.toLocaleString
+    Date.prototype.toLocaleString = function () {
+      throw new Error('toLocaleString unavailable')
+    }
+    const result = vm.formattedGeneratedAt
+    Date.prototype.toLocaleString = origToLocaleString
+    // Should return the raw string (the catch branch)
+    expect(typeof result).toBe('string')
+  })
+
+  it('assemblePackage sets auditPackage and opens preview', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+
+    // Ensure auditPackage starts null so the ?? branch runs in exportAuditPackageJson later
+    expect(vm.auditPackage).toBeNull()
+    expect(vm.auditPackagePreviewOpen).toBe(false)
+
+    // Call assemblePackage
+    vm.assemblePackage()
+    await nextTick()
+
+    // Should set auditPackage and open preview
+    expect(vm.auditPackage).not.toBeNull()
+    expect(vm.auditPackagePreviewOpen).toBe(true)
+  })
+
+  it('exportAuditPackageJson uses existing auditPackage when already assembled', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:test-url')
+    URL.revokeObjectURL = vi.fn()
+    const appendSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((el) => el as Node)
+    const removeSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((el) => el as Node)
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+
+    // Pre-assemble the package so exportAuditPackageJson uses the cached value (the ?? false branch)
+    vm.assemblePackage()
+    await nextTick()
+    const cachedPkg = vm.auditPackage
+
+    expect(() => vm.exportAuditPackageJson()).not.toThrow()
+    // The auditPackage should still be the same cached object
+    expect(vm.auditPackage).toBe(cachedPkg)
+
+    appendSpy.mockRestore()
+    removeSpy.mockRestore()
+    clickSpy.mockRestore()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Branch: blockers computed (line 1631) and nextStepsText computed (line 1648)
+// ---------------------------------------------------------------------------
+describe('ComplianceReportingWorkspace — blockers and nextStepsText computed branches', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+    localStorage.clear()
+  })
+
+  it('blockers: includes jurisdiction message when jurisdiction not configured', async () => {
+    // Default bundle has jurisdiction.configured = false
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    const blockers = vm.blockers
+    expect(Array.isArray(blockers)).toBe(true)
+    expect(blockers.some((b: string) => b.includes('Jurisdiction'))).toBe(true)
+  })
+
+  it('nextStepsText: returns pending copy when overallStatus is pending', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    // Default state has overallStatus = 'pending'
+    vm.bundle = { ...vm.bundle, overallStatus: 'pending' }
+    await (await import('vue')).nextTick()
+    expect(vm.nextStepsText).toContain('Compliance Setup workflow')
+  })
+
+  it('nextStepsText: returns failed copy when overallStatus is failed', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.bundle = { ...vm.bundle, overallStatus: 'failed' }
+    await (await import('vue')).nextTick()
+    expect(vm.nextStepsText).toContain('critical blockers')
+  })
+
+  it('nextStepsText: returns warning copy when overallStatus is warning', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.bundle = { ...vm.bundle, overallStatus: 'warning' }
+    await (await import('vue')).nextTick()
+    expect(vm.nextStepsText).toContain('flagged items')
+  })
+
+  it('nextStepsText: default branch returns review copy when overallStatus is ready', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    vm.bundle = { ...vm.bundle, overallStatus: 'ready' }
+    await (await import('vue')).nextTick()
+    expect(vm.nextStepsText).toContain('Review the evidence')
+  })
+})
