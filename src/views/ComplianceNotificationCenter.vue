@@ -408,8 +408,8 @@ import {
   CATEGORY_LABELS,
   FRESHNESS_LABELS,
   DEFAULT_FILTERS,
-  MOCK_EVENTS_MIXED,
-  MOCK_TIMELINE_ENTRIES,
+  createDemoEvents,
+  createDemoTimelineEntries,
   deriveNotificationCenterState,
   filterEvents,
   groupTimelineByDate,
@@ -458,7 +458,7 @@ const formattedRefreshedAt = computed(() => {
 
 const filteredEvents = computed(() => filterEvents(centerState.value.events, filters))
 
-const timelineGroups = computed(() => groupTimelineByDate(MOCK_TIMELINE_ENTRIES))
+const timelineGroups = computed(() => groupTimelineByDate(createDemoTimelineEntries()))
 
 // ---------------------------------------------------------------------------
 // Methods
@@ -481,11 +481,14 @@ function timelineDotClass(severity: EventSeverity): string {
 
 function loadEvents(): void {
   isLoading.value = true
-  // Simulate async data load (will be replaced by real API call)
+  // Simulate async data load (will be replaced by real API call).
+  // createDemoEvents() generates events with timestamps relative to Date.now()
+  // so freshness classification (fresh / aging / stale / critical) stays
+  // deterministic regardless of when the page is rendered.
   setTimeout(() => {
     lastRefreshedAt.value = new Date().toISOString()
     centerState.value = deriveNotificationCenterState(
-      MOCK_EVENTS_MIXED,
+      createDemoEvents(),
       lastRefreshedAt.value,
     )
     isLoading.value = false

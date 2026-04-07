@@ -2,8 +2,8 @@
  * ComplianceNotificationCenter.emptyTimeline.test.ts
  *
  * Dedicated test covering the v-if="timelineGroups.length === 0" branch
- * in ComplianceNotificationCenter.vue by mocking MOCK_TIMELINE_ENTRIES
- * to be empty. This ensures the empty-state message renders correctly.
+ * in ComplianceNotificationCenter.vue by mocking createDemoTimelineEntries
+ * to return an empty array. This ensures the empty-state message renders correctly.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
@@ -16,7 +16,7 @@ vi.mock('../../utils/complianceNotificationCenter', async () => {
   )
   return {
     ...actual,
-    MOCK_TIMELINE_ENTRIES: [], // empty timeline
+    createDemoTimelineEntries: () => [], // empty timeline for branch coverage
   }
 })
 
