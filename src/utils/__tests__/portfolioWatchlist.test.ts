@@ -167,6 +167,36 @@ describe('saveWatchlist', () => {
   })
 })
 
+describe('loadWatchlist — null-coalescing branches', () => {
+  it('uses fallback empty string when assetId is missing', () => {
+    // Store JSON with some fields missing to cover the ?? '' branches
+    storageMock.setItem(
+      WATCHLIST_STORAGE_KEY,
+      JSON.stringify([{ symbol: 'A', name: 'A', network: 'Algorand' }]),
+    )
+    const loaded = loadWatchlist()
+    expect(loaded[0].assetId).toBe('')
+  })
+
+  it('uses fallback empty string when symbol/name/network are missing', () => {
+    storageMock.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify([{ assetId: 'x' }]))
+    const loaded = loadWatchlist()
+    expect(loaded[0].symbol).toBe('')
+    expect(loaded[0].name).toBe('')
+    expect(loaded[0].network).toBe('')
+  })
+
+  it('uses fallback ISO date when addedAt is missing', () => {
+    storageMock.setItem(
+      WATCHLIST_STORAGE_KEY,
+      JSON.stringify([{ assetId: 'x', symbol: 'X', name: 'X', network: 'Algorand' }]),
+    )
+    const loaded = loadWatchlist()
+    expect(loaded[0].addedAt).toBeInstanceOf(Date)
+    expect(isNaN(loaded[0].addedAt.getTime())).toBe(false)
+  })
+})
+
 // ─── restoreWatchlistFromStorage ──────────────────────────────────────────────
 
 describe('restoreWatchlistFromStorage', () => {

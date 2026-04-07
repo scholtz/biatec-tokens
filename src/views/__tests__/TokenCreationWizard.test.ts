@@ -262,6 +262,30 @@ describe('TokenCreationWizard', () => {
       expect(vm.step7Ref.validateAll).toHaveBeenCalled()
     })
 
+    it('standards step isValid returns true without validateAll when step7Ref has no validateAll method', () => {
+      const wrapper = mount(TokenCreationWizard)
+      const vm = wrapper.vm as any
+      // step7Ref exists but has no validateAll — covers the "if (step7.validateAll) false" branch
+      vm.step7Ref = { isValid: true }
+      expect(vm.wizardSteps[6].isValid()).toBe(true)
+    })
+
+    it('standards step isValid returns false when step7Ref.isValid is null (?? false branch)', () => {
+      const wrapper = mount(TokenCreationWizard)
+      const vm = wrapper.vm as any
+      // step7Ref.isValid is null → exercises ?? false fallback
+      vm.step7Ref = { isValid: null, validateAll: vi.fn() }
+      expect(vm.wizardSteps[6].isValid()).toBe(false)
+    })
+
+    it('review step isValid returns false when step8Ref.isValid is null (?? false branch)', () => {
+      const wrapper = mount(TokenCreationWizard)
+      const vm = wrapper.vm as any
+      // step8Ref.isValid is null → exercises ?? false fallback on review step
+      vm.step8Ref = { isValid: null, validateAll: vi.fn() }
+      expect(vm.wizardSteps[7].isValid()).toBe(false)
+    })
+
     it('should return false for steps without ref (null ref)', () => {
       const wrapper = mount(TokenCreationWizard)
       const vm = wrapper.vm as any
@@ -669,8 +693,8 @@ describe('TokenCreationWizard', () => {
       const authStore = useAuthStore()
       // user has no email but arc76email is set (covers || authStore.arc76email branch)
       authStore.user = { address: 'TEST_ADDR', email: null } as any
+      authStore.isConnected = true // needed for isAuthenticated computed
       ;(authStore as any).arc76email = 'arc76@example.com'
-      authStore.isAuthenticated = true
 
       const wrapper = mount(TokenCreationWizard)
       await flushPromises()
@@ -680,8 +704,18 @@ describe('TokenCreationWizard', () => {
     it('produces undefined email when both user.email and arc76email are null', async () => {
       const authStore = useAuthStore()
       authStore.user = { address: 'TEST_ADDR', email: null } as any
+      authStore.isConnected = true // needed for isAuthenticated computed
       ;(authStore as any).arc76email = null
-      authStore.isAuthenticated = true
+
+      const wrapper = mount(TokenCreationWizard)
+      await flushPromises()
+      expect(wrapper.exists()).toBe(true)
+    })
+
+    it('uses user.email when set (covers short-circuit ||)', async () => {
+      const authStore = useAuthStore()
+      authStore.user = { address: 'TEST_ADDR', email: 'user@example.com' } as any
+      authStore.isConnected = true // needed for isAuthenticated computed
 
       const wrapper = mount(TokenCreationWizard)
       await flushPromises()

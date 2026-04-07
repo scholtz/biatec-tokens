@@ -329,5 +329,182 @@ describe('ComplianceExports additional coverage', () => {
       appendSpy.mockRestore()
       removeSpy.mockRestore()
     })
+
+    it('creates download link for JSON format (else branch)', async () => {
+      const wrapper = mountExports()
+      const vm = wrapper.vm as any
+      vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-download')
+      vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+      const appendSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(() => document.body)
+      const removeSpy = vi.spyOn(document.body, 'removeChild').mockImplementation(() => document.body)
+      vm.downloadFile('test-export.json', 'json')
+      expect(URL.createObjectURL).toHaveBeenCalled()
+      appendSpy.mockRestore()
+      removeSpy.mockRestore()
+    })
+  })
+
+  describe('previewExport', () => {
+    it('skips when validateFilters returns false (invalid dates)', async () => {
+      const wrapper = mountExports()
+      const vm = wrapper.vm as any
+      // Set invalid date range to make validateFilters return false
+      vm.filters.startDate = '2026-12-01'
+      vm.filters.endDate = '2026-01-01' // end before start
+      await vm.previewExport()
+      // Should return early — isGeneratingPreview should remain false
+      expect(vm.isGeneratingPreview).toBe(false)
+    })
+
+    it('calls API mock and sets exportPreview when valid', async () => {
+      const wrapper = mountExports()
+      const vm = wrapper.vm as any
+      // Set valid dates
+      vm.filters.startDate = '2026-01-01'
+      vm.filters.endDate = '2026-01-31'
+      vm.filters.tokenId = 'token-123'
+      const previewPromise = vm.previewExport()
+      // Advance fake timers past the 1000ms setTimeout in the mock API call
+      await vi.advanceTimersByTimeAsync(1500)
+      await previewPromise
+      expect(vm.exportPreview).not.toBeNull()
+      expect(vm.exportPreview.recordCount).toBeGreaterThan(0)
+      expect(vm.showPreviewModal).toBe(true)
+    })
+
+    it('sets error state when the mock API throws', async () => {
+      const wrapper = mountExports()
+      const vm = wrapper.vm as any
+      vm.filters.startDate = '2026-01-01'
+      vm.filters.endDate = '2026-01-31'
+      vm.filters.tokenId = 'token-123'
+      // Force an error by temporarily replacing Math.random to throw
+      const origRandom = Math.random
+      Math.random = () => { throw new Error('forced error') }
+      const previewPromise = vm.previewExport()
+      await vi.advanceTimersByTimeAsync(1500)
+      await previewPromise
+      Math.random = origRandom
+      expect(vm.showErrorToast).toBe(true)
+      // Advance the 5000ms timeout to reset showErrorToast
+      await vi.advanceTimersByTimeAsync(5500)
+      expect(vm.showErrorToast).toBe(false)
+    })
+  })
+
+  describe('modal close handlers (inline template events)', () => {
+    it('closes preview modal when Cancel button is clicked (line 279)', async () => {
+      const wrapper = mountExports()
+      const vm = wrapper.vm as any
+      vm.showPreviewModal = true
+      await wrapper.vm.$nextTick()
+      const cancelBtn = wrapper.findAll('button').find(b => b.text().trim() === 'Cancel')
+      expect(cancelBtn).toBeDefined()
+      await cancelBtn!.trigger('click')
+      expect(vm.showPreviewModal).toBe(false)
+    })
+  })
+
+  describe('executeExport', () => {
+    it('returns early when exportPreview is null', async () => {
+      const wrapper = mountExports()
+      const vm = wrapper.vm as any
+      vm.exportPreview = null
+      await vm.executeExport()
+      expect(vm.isExporting).toBe(false)
+    })
+
+    it('returns early when exportPreview.recordCount is 0', async () => {
+      const wrapper = mountExports()
+      const vm = wrapper.vm as any
+      vm.exportPreview = { recordCount: 0, estimatedSize: '0KB', sampleData: [] }
+      await vm.executeExport()
+      expect(vm.isExporting).toBe(false)
+    })
+
+    it('executes download when exportPreview is valid', async () => {
+      const wrapper = mountExports()
+      const vm = wrapper.vm as any
+      vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock')
+      vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+      const appendSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(() => document.body)
+      const removeSpy = vi.spyOn(document.body, 'removeChild').mockImplementation(() => document.body)
+      vm.exportPreview = { recordCount: 100, estimatedSize: '50KB', sampleData: [] }
+      vm.filters.tokenId = 'token-123'
+      vm.filters.format = 'csv'
+      const exportPromise = vm.executeExport()
+      await vi.advanceTimersByTimeAsync(2500)
+      await exportPromise
+      expect(vm.showSuccessToast).toBe(true)
+      expect(vm.downloadHistory.length).toBeGreaterThan(0)
+      expect(vm.downloadHistory[0].status).toBe('success')
+      appendSpy.mockRestore()
+      removeSpy.mockRestore()
+      // Advance timeout for success toast
+      await vi.advanceTimersByTimeAsync(5500)
+      expect(vm.showSuccessToast).toBe(false)
+    })
+
+    it('trims download history to 10 items max', async () => {
+      const wrapper = mountExports()
+      const vm = wrapper.vm as any
+      vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock')
+      vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+      const appendSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(() => document.body)
+      const removeSpy = vi.spyOn(document.body, 'removeChild').mockImplementation(() => document.body)
+      // Pre-populate with 10 existing items
+      vm.downloadHistory = Array.from({ length: 10 }, (_, i) => ({
+        id: `old-${i}`, timestamp: new Date().toISOString(), filename: `old-${i}.csv`,
+        format: 'csv', recordCount: 5, status: 'success',
+      }))
+      vm.exportPreview = { recordCount: 50, estimatedSize: '25KB', sampleData: [] }
+      vm.filters.tokenId = 'token-abc'
+      vm.filters.format = 'csv'
+      const exportPromise = vm.executeExport()
+      await vi.advanceTimersByTimeAsync(2500)
+      await exportPromise
+      expect(vm.downloadHistory.length).toBe(10)
+      appendSpy.mockRestore()
+      removeSpy.mockRestore()
+    })
+
+    it('adds failed history item when executeExport throws (catch branch)', async () => {
+      const wrapper = mountExports()
+      const vm = wrapper.vm as any
+      // Make createObjectURL throw so downloadFile throws during executeExport
+      vi.spyOn(URL, 'createObjectURL').mockImplementationOnce(() => {
+        throw new Error('forced download error')
+      })
+      const appendSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(() => document.body)
+      const removeSpy = vi.spyOn(document.body, 'removeChild').mockImplementation(() => document.body)
+      vm.exportPreview = { recordCount: 100, estimatedSize: '50KB', sampleData: [] }
+      vm.filters.tokenId = 'token-fail'
+      vm.filters.format = 'csv'
+      const exportPromise = vm.executeExport()
+      await vi.advanceTimersByTimeAsync(2500)
+      await exportPromise
+      expect(vm.showErrorToast).toBe(true)
+      expect(vm.downloadHistory.length).toBeGreaterThan(0)
+      expect(vm.downloadHistory[0].status).toBe('failed')
+      appendSpy.mockRestore()
+      removeSpy.mockRestore()
+      await vi.advanceTimersByTimeAsync(5500)
+      expect(vm.showErrorToast).toBe(false)
+    })
+  })
+
+  describe('saveDownloadHistory error branch', () => {
+    it('catches and logs error when localStorage.setItem throws', () => {
+      const wrapper = mountExports()
+      const vm = wrapper.vm as any
+      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      vi.spyOn(localStorage, 'setItem').mockImplementationOnce(() => {
+        throw new Error('storage quota exceeded')
+      })
+      // Should not throw
+      expect(() => vm.saveDownloadHistory()).not.toThrow()
+      expect(errSpy).toHaveBeenCalled()
+      errSpy.mockRestore()
+    })
   })
 })
