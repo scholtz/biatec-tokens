@@ -680,4 +680,46 @@ describe("DeploymentStatusStep", () => {
     });
   });
 
+  describe('mockDeploymentProcess / progressStage (fake timers)', () => {
+    it('should advance through stages and reach completed status with fake timers', async () => {
+      vi.useFakeTimers()
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } })
+      const vm = wrapper.vm as any
+
+      // Call mockDeploymentProcess directly to start the simulated progress
+      vm.mockDeploymentProcess()
+      await wrapper.vm.$nextTick()
+
+      // Advance setInterval (300ms per tick, need >4 ticks per stage to reach 100%)
+      // Each tick adds up to 25%; worst case 4 ticks to reach 100%
+      // Advance 5 stages × 5 ticks × 300ms = 7500ms, plus 500ms timeouts = 10000ms
+      vi.advanceTimersByTime(50000)
+      await wrapper.vm.$nextTick()
+
+      // After enough time all stages complete and status should be 'completed'
+      expect(vm.deploymentStatus).toBe('completed')
+
+      vi.useRealTimers()
+    })
+
+    it('should cover pollingInterval.value truthy branch on completion', async () => {
+      vi.useFakeTimers()
+      const wrapper = mount(DeploymentStatusStep, { global: { stubs } })
+      const vm = wrapper.vm as any
+
+      // Set a pollingInterval so the clearInterval branch fires
+      vm.pollingInterval = setInterval(() => {}, 100)
+
+      vm.mockDeploymentProcess()
+      await wrapper.vm.$nextTick()
+
+      vi.advanceTimersByTime(50000)
+      await wrapper.vm.$nextTick()
+
+      expect(vm.deploymentStatus).toBe('completed')
+
+      vi.useRealTimers()
+    })
+  })
+
 })

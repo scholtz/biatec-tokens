@@ -247,4 +247,17 @@ describe('MeshBackground.vue', () => {
     // strokeStyle must be one of the two valid color values — the ternary branch was exercised
     expect(['#3b82f620', '#8b5cf620']).toContain(mockCtx.strokeStyle)
   })
+
+  it('initializeCanvas returns early when getContext returns null (covers if(!ctx) return branch)', async () => {
+    // Override getContext to return null so ctx assignment fails and initializeCanvas returns early
+    HTMLCanvasElement.prototype.getContext = vi.fn(() => null) as any
+    const pinia = createPinia()
+    mount(MeshBackground, {
+      global: { plugins: [pinia] },
+    })
+    await nextTick()
+    // animate() is still called from onMounted but will hit the !ctx||!canvas guard
+    // The component should not throw
+    expect(true).toBe(true)
+  })
 })

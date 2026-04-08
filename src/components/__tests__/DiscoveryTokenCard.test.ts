@@ -279,4 +279,93 @@ describe('DiscoveryTokenCard', () => {
       }
     })
   })
+
+  describe('template v-if branches', () => {
+    it('renders img element when token.imageUrl is set (v-if="token.imageUrl" true branch)', () => {
+      const wrapper = mount(DiscoveryTokenCard, {
+        props: { token: makeToken({ imageUrl: 'https://example.com/logo.png' }) },
+      })
+      const img = wrapper.find('img')
+      expect(img.exists()).toBe(true)
+      expect(img.attributes('src')).toBe('https://example.com/logo.png')
+    })
+
+    it('renders fallback icon when token.imageUrl is absent (v-else branch)', () => {
+      const wrapper = mount(DiscoveryTokenCard, {
+        props: { token: makeToken({ imageUrl: undefined }) },
+      })
+      expect(wrapper.find('img').exists()).toBe(false)
+    })
+
+    it('renders issuer paragraph when token.issuer is set', () => {
+      const wrapper = mount(DiscoveryTokenCard, {
+        props: { token: makeToken({ issuer: 'Biatec Labs' }) },
+      })
+      expect(wrapper.text()).toContain('Biatec Labs')
+    })
+
+    it('renders liquidity section when token.liquidity is set', () => {
+      const wrapper = mount(DiscoveryTokenCard, {
+        props: { token: makeToken({ liquidity: 250000 }) },
+      })
+      expect(wrapper.text()).toContain('Liquidity')
+    })
+
+    it('does not render liquidity section when token.liquidity is absent', () => {
+      const wrapper = mount(DiscoveryTokenCard, {
+        props: { token: makeToken({ liquidity: undefined }) },
+      })
+      expect(wrapper.text()).not.toContain('Liquidity')
+    })
+
+    it('renders issuerIdentityVerified badge when flag is true', () => {
+      const wrapper = mount(DiscoveryTokenCard, {
+        props: { token: makeToken({ issuerIdentityVerified: true }) },
+      })
+      expect(wrapper.text()).toContain('Identity Verified')
+    })
+
+    it('renders auditCompleted badge when flag is true', () => {
+      const wrapper = mount(DiscoveryTokenCard, {
+        props: { token: makeToken({ auditCompleted: true }) },
+      })
+      expect(wrapper.text()).toContain('Audit')
+    })
+
+    it('renders riskFlags section when riskFlags has entries', () => {
+      const wrapper = mount(DiscoveryTokenCard, {
+        props: { token: makeToken({ riskFlags: ['High volatility'] }) },
+      })
+      expect(wrapper.text()).toContain('Risk Flag')
+    })
+  })
+
+  describe('keyboard event handlers', () => {
+    it('handleCardClick emits select event on Enter keydown', async () => {
+      const token = makeToken()
+      const wrapper = mount(DiscoveryTokenCard, { props: { token } })
+      const card = wrapper.find('[role="button"]')
+      if (card.exists()) {
+        await card.trigger('keydown.enter')
+        expect(wrapper.emitted('select')).toBeTruthy()
+      } else {
+        // Fallback: trigger on root element
+        await wrapper.trigger('keydown', { key: 'Enter' })
+        expect(wrapper.emitted('select')).toBeTruthy()
+      }
+    })
+
+    it('handleCardClick emits select event on Space keydown', async () => {
+      const token = makeToken()
+      const wrapper = mount(DiscoveryTokenCard, { props: { token } })
+      const card = wrapper.find('[role="button"]')
+      if (card.exists()) {
+        await card.trigger('keydown.space')
+        expect(wrapper.emitted('select')).toBeTruthy()
+      } else {
+        await wrapper.trigger('keydown', { key: ' ' })
+        expect(wrapper.emitted('select')).toBeTruthy()
+      }
+    })
+  })
 })

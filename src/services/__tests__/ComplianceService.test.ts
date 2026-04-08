@@ -243,6 +243,61 @@ describe("ComplianceService", () => {
         toDate: "2024-01-31",
       });
     });
+
+    it("should fetch audit log with result=failure (covers success:false branch)", async () => {
+      const filters: AuditLogFilters = {
+        result: "failure" as any,
+      };
+      const mockResponse: AuditLogResponse = {
+        entries: [],
+        total: 0,
+        limit: 20,
+        offset: 0,
+        hasMore: false,
+      };
+      mockApiClient.api.v1EnterpriseAuditExportList.mockResolvedValue({ data: mockResponse });
+      await service.getAuditLog(filters);
+      expect(mockApiClient.api.v1EnterpriseAuditExportList).toHaveBeenCalledWith({
+        success: false,
+      });
+    });
+
+    it("should fetch audit log with offset but no limit (nested if-limit false branch)", async () => {
+      const filters: AuditLogFilters = {
+        offset: 40,
+      };
+      const mockResponse: AuditLogResponse = {
+        entries: [],
+        total: 0,
+        limit: 20,
+        offset: 40,
+        hasMore: false,
+      };
+      mockApiClient.api.v1EnterpriseAuditExportList.mockResolvedValue({ data: mockResponse });
+      await service.getAuditLog(filters);
+      // offset defined but no limit → inner if(filters.limit) is false → no page added
+      expect(mockApiClient.api.v1EnterpriseAuditExportList).toHaveBeenCalledWith({
+
+      });
+    });
+
+    it("should fetch audit log with actor filter", async () => {
+      const filters: AuditLogFilters = {
+        actor: "ACTOR7AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      };
+      const mockResponse: AuditLogResponse = {
+        entries: [],
+        total: 0,
+        limit: 20,
+        offset: 0,
+        hasMore: false,
+      };
+      mockApiClient.api.v1EnterpriseAuditExportList.mockResolvedValue({ data: mockResponse });
+      await service.getAuditLog(filters);
+      expect(mockApiClient.api.v1EnterpriseAuditExportList).toHaveBeenCalledWith({
+        performedBy: "ACTOR7AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      });
+    });
   });
 
   describe("getComplianceStatus", () => {
@@ -778,6 +833,45 @@ describe("ComplianceService", () => {
       expect(result.registrationNumber).toBe("GB123456789");
       expect(result.jurisdiction).toBe("United Kingdom");
       expect(result.regulatoryLicense).toBe("FCA-123456");
+    });
+
+    it("should return pending status when issuer not verified but profile is complete", async () => {
+      // Covers line 286: isVerified=false, isProfileComplete===true → "pending"
+      const mockApiResponse = {
+        overallStatus: 1, // Not verified
+        isProfileComplete: true,
+        missingFields: [],
+      };
+      mockApiClient.api.v1IssuerVerificationDetail.mockResolvedValue({ data: mockApiResponse });
+      const result = await service.getIssuerStatus("issuer456");
+      expect(result.isVerified).toBe(false);
+      expect(result.status).toBe("pending");
+      expect(result.missingFields).toEqual([]);
+    });
+
+    it("should return pending status when issuer not verified, profile incomplete, and no missing fields", async () => {
+      // Covers line 286: isVerified=false, isProfileComplete!==true, missingFields.length===0 → "pending"
+      const mockApiResponse = {
+        overallStatus: 1, // Not verified
+        isProfileComplete: false,
+        missingFields: [],
+      };
+      mockApiClient.api.v1IssuerVerificationDetail.mockResolvedValue({ data: mockApiResponse });
+      const result = await service.getIssuerStatus("issuer789");
+      expect(result.isVerified).toBe(false);
+      expect(result.status).toBe("pending");
+    });
+
+    it("should use empty array fallback when missingFields is null", async () => {
+      // Covers line 287: data.missingFields || [] when missingFields is null
+      const mockApiResponse = {
+        overallStatus: 1, // Not verified
+        isProfileComplete: false,
+        missingFields: null,
+      };
+      mockApiClient.api.v1IssuerVerificationDetail.mockResolvedValue({ data: mockApiResponse });
+      const result = await service.getIssuerStatus("issuerNull");
+      expect(result.missingFields).toEqual([]);
     });
   });
 
