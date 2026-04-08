@@ -162,7 +162,6 @@ describe('MeshBackground.vue', () => {
     expect(mockCtx.clearRect).toHaveBeenCalled()
     mathRandomSpy.mockRestore()
   })
-})
 
   it('animate() draws particles when particles array has entries (covers 84-103)', async () => {
     // Access the module to directly push particles
@@ -248,3 +247,4 @@ describe('MeshBackground.vue', () => {
     // strokeStyle must be one of the two valid color values — the ternary branch was exercised
     expect(['#3b82f620', '#8b5cf620']).toContain(mockCtx.strokeStyle)
   })
+})
