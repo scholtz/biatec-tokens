@@ -165,7 +165,14 @@ export function getAMLVerdictMetadata(
     },
   }
 
-  return metadata[verdict]
+  return metadata[verdict] ?? {
+    label: 'Unknown',
+    color: 'gray',
+    icon: 'ClockIcon',
+    description: 'Unknown screening status',
+    isBlocking: false,
+    requiresAction: false,
+  }
 }
 
 /**
