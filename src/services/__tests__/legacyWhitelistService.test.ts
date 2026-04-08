@@ -88,6 +88,34 @@ describe("WhitelistService", () => {
 
       expect(mockApiClient.api.v1WhitelistDetail).toHaveBeenCalledWith(123, { search: "AAAA", status: 0 });
     });
+
+    it("should pass status=1 for pending filter", async () => {
+      mockApiClient.api.v1WhitelistDetail.mockResolvedValue({ data: { entries: [] } });
+      await service.getWhitelist("123", { status: "pending" });
+      expect(mockApiClient.api.v1WhitelistDetail).toHaveBeenCalledWith(123, { status: 1 });
+    });
+
+    it("should pass status=2 for removed filter", async () => {
+      mockApiClient.api.v1WhitelistDetail.mockResolvedValue({ data: { entries: [] } });
+      await service.getWhitelist("123", { status: "removed" });
+      expect(mockApiClient.api.v1WhitelistDetail).toHaveBeenCalledWith(123, { status: 2 });
+    });
+
+    it("should map entry status 1 to pending", async () => {
+      mockApiClient.api.v1WhitelistDetail.mockResolvedValue({
+        data: { entries: [{ address: "ADDR1", status: 1, kycVerified: false, createdAt: "2026-01-01T00:00:00Z" }] },
+      });
+      const result = await service.getWhitelist("123");
+      expect(result[0].status).toBe("pending");
+    });
+
+    it("should map entry status 2 to removed", async () => {
+      mockApiClient.api.v1WhitelistDetail.mockResolvedValue({
+        data: { entries: [{ address: "ADDR2", status: 2, kycVerified: false, createdAt: "2026-01-01T00:00:00Z" }] },
+      });
+      const result = await service.getWhitelist("123");
+      expect(result[0].status).toBe("removed");
+    });
   });
 
   describe("addAddress", () => {

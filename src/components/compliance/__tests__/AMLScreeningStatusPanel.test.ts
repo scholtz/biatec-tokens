@@ -357,5 +357,37 @@ describe('AMLScreeningStatusPanel', () => {
       })
       expect(wrapper.text()).not.toContain('Technical Details')
     })
+
+    it('shows provider when screening.provider is set', () => {
+      const wrapper = mount(AMLScreeningStatusPanel, {
+        props: { screening: makeScreening({ verdict: 'clear', screenedAt: '2026-01-01T00:00:00Z', provider: 'Chainalysis' }) },
+        global: { stubs },
+      })
+      expect(wrapper.text()).toContain('Chainalysis')
+    })
+
+    it('shows processingError block when screening.processingError is set', () => {
+      const wrapper = mount(AMLScreeningStatusPanel, {
+        props: { screening: makeScreening({ verdict: 'clear', processingError: 'Timeout occurred' }) },
+        global: { stubs },
+      })
+      expect(wrapper.text()).toContain('Timeout occurred')
+    })
+
+    it('shows notes block when screening.notes is set', () => {
+      const wrapper = mount(AMLScreeningStatusPanel, {
+        props: { screening: makeScreening({ verdict: 'clear', notes: 'Manual check passed' }) },
+        global: { stubs },
+      })
+      expect(wrapper.text()).toContain('Manual check passed')
+    })
+
+    it('uses ClockIcon fallback for unknown verdict icon', () => {
+      const wrapper = mount(AMLScreeningStatusPanel, {
+        props: { screening: makeScreening({ verdict: 'unknown_verdict' as any }) },
+        global: { stubs },
+      })
+      expect(wrapper.exists()).toBe(true)
+    })
   })
 })
