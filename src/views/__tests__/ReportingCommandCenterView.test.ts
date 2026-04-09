@@ -412,11 +412,13 @@ describe('ReportingCommandCenterView — configure-panel selects and view_blocke
     vi.useRealTimers()
 
     // Call navigateToRemediation directly via the component vm (covers router.push branch, line 126)
+    // Verify by checking the route changed — more reliable than vi.spyOn(router, 'push')
+    // because the component's internal router reference is the injected singleton and
+    // spy wrapping via vi.spyOn does not intercept reads through the injection system.
     const vm = wrapper.vm as any
-    const pushSpy = vi.spyOn(router, 'push').mockResolvedValue(undefined)
     vm.navigateToRemediation('/compliance/setup')
-    await nextTick()
-    expect(pushSpy).toHaveBeenCalledWith('/compliance/setup')
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/compliance/setup')
   })
 
   it('onBeforeUnmount clears the load timer (line 94 clearTimeout branch)', async () => {
