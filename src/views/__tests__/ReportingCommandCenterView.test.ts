@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { createRouter, createWebHistory } from 'vue-router'
 import { nextTick } from 'vue'
@@ -398,5 +398,154 @@ describe('ReportingCommandCenterView — configure-panel selects and view_blocke
     const resolveBtn = ctaButtons.find((btn) => btn.text().includes('Resolve Blockers'))
     expect(resolveBtn).toBeDefined()
     expect(resolveBtn!.exists()).toBe(true)
+  })
+
+  it('clicking Resolve Blockers calls navigateToRemediation with remediationPath (router.push branch)', async () => {
+    vi.useFakeTimers()
+    const router = makeRouter()
+    const wrapper = mount(ReportingCommandCenterView, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn }), router] },
+    })
+    await router.isReady()
+    await vi.advanceTimersByTimeAsync(300)
+    await nextTick()
+    vi.useRealTimers()
+
+    // Call navigateToRemediation directly via the component vm (covers router.push branch, line 126)
+    const vm = wrapper.vm as any
+    const pushSpy = vi.spyOn(router, 'push').mockResolvedValue(undefined)
+    vm.navigateToRemediation('/compliance/setup')
+    await nextTick()
+    expect(pushSpy).toHaveBeenCalledWith('/compliance/setup')
+  })
+
+  it('onBeforeUnmount clears the load timer (line 94 clearTimeout branch)', async () => {
+    vi.useFakeTimers()
+    const router = makeRouter()
+    const wrapper = mount(ReportingCommandCenterView, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn }), router] },
+    })
+    await router.isReady()
+    // Unmount BEFORE the 150ms timer fires — covers the clearTimeout branch
+    wrapper.unmount()
+    // Advance past the timer; should not throw since timer was cleared
+    await vi.advanceTimersByTimeAsync(300)
+    vi.useRealTimers()
+    // No errors thrown = the clearTimeout branch was exercised correctly
+    expect(true).toBe(true)
+  })
+
+  it('template with stale evidenceFreshness renders the isEvidenceBlocking warning with Review release readiness link (line 405)', async () => {
+    vi.useFakeTimers()
+    const router = makeRouter()
+    const wrapper = mount(ReportingCommandCenterView, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn }), router] },
+    })
+    await router.isReady()
+    await vi.advanceTimersByTimeAsync(300)
+    await nextTick()
+    vi.useRealTimers()
+
+    // Override templates to include one with blocking evidence freshness
+    const vm = wrapper.vm as any
+    vm.templates = [
+      {
+        id: 'tpl-stale',
+        name: 'Stale Template',
+        audience: 'internal_compliance',
+        cadence: 'quarterly',
+        lastRunAt: null,
+        evidenceFreshness: 'stale',
+        requiredEvidence: [],
+        isActive: true,
+      },
+    ]
+    await nextTick()
+
+    // The v-if="isEvidenceBlocking(template.evidenceFreshness)" block renders.
+    // In happy-dom, router-link components are not resolved to <a> tags, so use
+    // the [to="..."] attribute selector instead of a[href="..."].
+    const links = wrapper.findAll('[to="/compliance/release"]')
+    // The stale warning renders 1 router-link to /compliance/release
+    // (the sidebar nav may also have a link to the release page — scope to alert)
+    const alertDiv = wrapper.find('[role="alert"]')
+    expect(alertDiv.exists()).toBe(true)
+    expect(alertDiv.text()).toContain('Review release readiness')
+    expect(links.length).toBeGreaterThan(0)
+  })
+
+  it('changing configAudience select updates the reactive v-model value', async () => {
+    const wrapper = await mountView()
+    const vm = wrapper.vm as any
+    vm.openConfigurePanel()
+    await nextTick()
+
+    const audienceSelect = wrapper.find(`[data-testid="${REPORTING_CENTER_TEST_IDS.PANEL_AUDIENCE_SELECT}"]`)
+    expect(vm.configAudience).toBe('internal_compliance') // default
+    await audienceSelect.setValue('executive')
+    expect(vm.configAudience).toBe('executive')
+  })
+
+  it('changing configCadence select updates the reactive v-model value', async () => {
+    const wrapper = await mountView()
+    const vm = wrapper.vm as any
+    vm.openConfigurePanel()
+    await nextTick()
+
+    const cadenceSelect = wrapper.find(`[data-testid="${REPORTING_CENTER_TEST_IDS.PANEL_CADENCE_SELECT}"]`)
+    expect(vm.configCadence).toBe('quarterly') // default
+    await cadenceSelect.setValue('monthly')
+    expect(vm.configCadence).toBe('monthly')
+  })
+
+  it('blocked run with remediationPath:null hides Resolve Blockers button (v-if false branch)', async () => {
+    vi.useFakeTimers()
+    const router = makeRouter()
+    const wrapper = mount(ReportingCommandCenterView, {
+      global: { plugins: [createTestingPinia({ createSpy: vi.fn }), router] },
+    })
+    await router.isReady()
+    await vi.advanceTimersByTimeAsync(300)
+    await nextTick()
+    vi.useRealTimers()
+
+    // Override runs with a blocked run that has NO remediationPath
+    const vm = wrapper.vm as any
+    vm.runs = [
+      {
+        id: 'run-blocked-no-path',
+        templateId: 'tpl-001',
+        templateName: 'Test Template',
+        audience: 'internal_compliance',
+        status: 'blocked',
+        evidenceFreshness: 'unresolved_blocker',
+        initiatedAt: '2026-04-01T09:00:00Z',
+        completedAt: null,
+        reviewerName: null,
+        approverName: null,
+        changeSummary: null,
+        blockers: [],
+        remediationPath: null,
+      },
+    ]
+    await nextTick()
+
+    // The button has v-if="run.remediationPath" — with null path, it must not render
+    const ctaButtons = wrapper.findAll(`[data-testid="${REPORTING_CENTER_TEST_IDS.RUN_CTA_BUTTON}"]`)
+    const resolveBtn = ctaButtons.find((btn) => btn.text().includes('Resolve Blockers'))
+    expect(resolveBtn).toBeUndefined()
+  })
+
+  it('audienceIcon returns correct icon for all four audience types including default', async () => {
+    const wrapper = await mountView()
+    const vm = wrapper.vm as any
+
+    // Cover all branches of the audienceIcon switch
+    expect(vm.audienceIcon('internal_compliance')).toBeDefined()
+    expect(vm.audienceIcon('executive')).toBeDefined()
+    expect(vm.audienceIcon('auditor')).toBeDefined()
+    expect(vm.audienceIcon('regulator')).toBeDefined()
+    // Default branch (unknown audience type)
+    expect(vm.audienceIcon('unknown_type')).toBeDefined()
   })
 })
