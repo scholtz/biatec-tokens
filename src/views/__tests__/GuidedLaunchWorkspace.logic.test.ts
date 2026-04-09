@@ -742,3 +742,116 @@ describe('GuidedLaunchWorkspace — startSimulation canStart=false', () => {
     vi.useRealTimers()
   })
 })
+
+// ---------------------------------------------------------------------------
+// statusBadgeClass — all branch values (called via vm to hit template helper)
+// ---------------------------------------------------------------------------
+
+describe('GuidedLaunchWorkspace — statusBadgeClass direct branch coverage', () => {
+  afterEach(() => vi.useRealTimers())
+
+  it('statusBadgeClass("complete") returns green classes', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    expect(vm.statusBadgeClass('complete')).toContain('green')
+  })
+
+  it('statusBadgeClass("blocked") returns amber classes', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    const cls = vm.statusBadgeClass('blocked')
+    expect(cls).toContain('amber')
+  })
+
+  it('statusBadgeClass("locked") returns gray-500 text class', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    const cls = vm.statusBadgeClass('locked')
+    expect(cls).toContain('gray-500')
+  })
+
+  it('statusBadgeClass("in_progress") returns blue classes', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    expect(vm.statusBadgeClass('in_progress')).toContain('blue')
+  })
+
+  it('statusBadgeClass("available") falls through to default gray-400 class', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    const cls = vm.statusBadgeClass('available')
+    expect(cls).toContain('gray-400')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// selectItem — all branches called directly via vm
+// ---------------------------------------------------------------------------
+
+describe('GuidedLaunchWorkspace — selectItem via vm (branch coverage)', () => {
+  afterEach(() => vi.useRealTimers())
+
+  const MOCK_ITEM_BASE = {
+    id: 'test_item',
+    title: 'Test Item',
+    description: 'desc',
+    estimatedTime: '10 min',
+    dependencies: [],
+    ctaLabel: 'Go',
+    ctaPath: '/test',
+    optional: false,
+  }
+
+  it('selectItem with locked status sets activeItemId and returns early', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    const lockedItem = { ...MOCK_ITEM_BASE, id: 'locked_item', status: 'locked' as const }
+    vm.selectItem(lockedItem)
+    await nextTick()
+    expect(vm.activeItemId).toBe('locked_item')
+  })
+
+  it('selectItem with blocked status sets activeItemId and emits analytics', async () => {
+    const events: CustomEvent[] = []
+    const handler = (e: Event) => events.push(e as CustomEvent)
+    window.addEventListener('workspace:analytics', handler)
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    const blockedItem = { ...MOCK_ITEM_BASE, id: 'blocked_item', status: 'blocked' as const }
+    vm.selectItem(blockedItem)
+    await nextTick()
+    window.removeEventListener('workspace:analytics', handler)
+    expect(vm.activeItemId).toBe('blocked_item')
+    expect(events.length).toBeGreaterThan(0)
+  })
+
+  it('selectItem with available status adds to inProgressIds and calls persistState', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    const availableItem = { ...MOCK_ITEM_BASE, id: 'avail_item', status: 'available' as const }
+    vm.selectItem(availableItem)
+    await nextTick()
+    expect(vm.activeItemId).toBe('avail_item')
+    expect(vm.inProgressIds.has('avail_item')).toBe(true)
+  })
+
+  it('selectItem with in_progress status sets activeItemId without adding to inProgressIds', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    const inProgItem = { ...MOCK_ITEM_BASE, id: 'inprog_item', status: 'in_progress' as const }
+    const beforeSize = vm.inProgressIds.size
+    vm.selectItem(inProgItem)
+    await nextTick()
+    expect(vm.activeItemId).toBe('inprog_item')
+    expect(vm.inProgressIds.size).toBe(beforeSize)
+  })
+
+  it('selectItem with complete status sets activeItemId', async () => {
+    const wrapper = await mountWorkspace()
+    const vm = wrapper.vm as any
+    const completeItem = { ...MOCK_ITEM_BASE, id: 'complete_item', status: 'complete' as const }
+    vm.selectItem(completeItem)
+    await nextTick()
+    expect(vm.activeItemId).toBe('complete_item')
+  })
+})

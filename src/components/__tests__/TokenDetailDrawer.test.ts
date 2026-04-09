@@ -350,5 +350,128 @@ describe('TokenDetailDrawer — v-if branches: issuer and complianceBadges', () 
       const closeBtn = document.body.querySelector('button[aria-label="Close drawer"]')
       expect(closeBtn).not.toBeNull()
     })
+
+    it('clicking close button emits close (line 46 @click branch)', async () => {
+      // Unmount any previous wrappers to avoid stale Teleport portals in document.body
+      document.body.innerHTML = ''
+      const wrapper = mountDrawer()
+      await nextTick()
+      // Teleport renders into document.body — find and click the close button there
+      const closeBtn = document.body.querySelector('button[aria-label="Close drawer"]') as HTMLElement
+      expect(closeBtn).not.toBeNull()
+      closeBtn.click()
+      await nextTick()
+      expect(wrapper.emitted('close')).toBeTruthy()
+    })
+  })
+})
+
+describe('TokenDetailDrawer — contractAddress and whitelistStatus v-if branches', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  it('renders contractAddress block when token.contractAddress is set (line 154 branch)', async () => {
+    const wrapper = mountDrawer({ contractAddress: '0xabc123...' } as any)
+    await nextTick()
+    const html = document.body.innerHTML || wrapper.html()
+    expect(html).toContain('Contract Address')
+    expect(html).toContain('0xabc123...')
+  })
+
+  it('does not render contractAddress block when token.contractAddress is absent', async () => {
+    const wrapper = mountDrawer({})
+    await nextTick()
+    const html = document.body.innerHTML || wrapper.html()
+    expect(html).not.toContain('Contract Address')
+  })
+
+  it('renders whitelistStatus section with enabled status (line 162 branch)', async () => {
+    const wrapper = mountDrawer({ whitelistStatus: 'enabled' })
+    await nextTick()
+    const html = document.body.innerHTML || wrapper.html()
+    expect(html).toContain('Transfer Restrictions')
+    expect(html).toContain('Whitelist Enabled')
+    expect(html).toContain('pi-lock')
+  })
+
+  it('renders whitelistStatus section with partial status', async () => {
+    const wrapper = mountDrawer({ whitelistStatus: 'partial' })
+    await nextTick()
+    const html = document.body.innerHTML || wrapper.html()
+    expect(html).toContain('Partial Restrictions')
+    expect(html).toContain('pi-exclamation-triangle')
+  })
+
+  it('renders whitelistStatus section with disabled status', async () => {
+    const wrapper = mountDrawer({ whitelistStatus: 'disabled' })
+    await nextTick()
+    const html = document.body.innerHTML || wrapper.html()
+    expect(html).toContain('No Restrictions')
+    expect(html).toContain('pi-unlock')
+  })
+
+  it('getWhitelistStatusClass returns correct class for each status', () => {
+    const wrapper = mountDrawer()
+    const vm = wrapper.vm as any
+    expect(vm.getWhitelistStatusClass('enabled')).toBe('text-green-400')
+    expect(vm.getWhitelistStatusClass('partial')).toBe('text-yellow-400')
+    expect(vm.getWhitelistStatusClass('disabled')).toBe('text-gray-400')
+    expect(vm.getWhitelistStatusClass('unknown')).toBe('text-gray-400')
+  })
+
+  it('getWhitelistStatusIcon returns correct icon for each status', () => {
+    const wrapper = mountDrawer()
+    const vm = wrapper.vm as any
+    expect(vm.getWhitelistStatusIcon('enabled')).toBe('pi pi-lock')
+    expect(vm.getWhitelistStatusIcon('partial')).toBe('pi pi-exclamation-triangle')
+    expect(vm.getWhitelistStatusIcon('disabled')).toBe('pi pi-unlock')
+    expect(vm.getWhitelistStatusIcon('unknown')).toBe('pi pi-circle')
+  })
+
+  it('getWhitelistStatusLabel returns correct label for each status', () => {
+    const wrapper = mountDrawer()
+    const vm = wrapper.vm as any
+    expect(vm.getWhitelistStatusLabel('enabled')).toBe('Whitelist Enabled')
+    expect(vm.getWhitelistStatusLabel('partial')).toBe('Partial Restrictions')
+    expect(vm.getWhitelistStatusLabel('disabled')).toBe('No Restrictions')
+    expect(vm.getWhitelistStatusLabel('unknown')).toBe('Unknown Status')
+  })
+
+  it('getWhitelistStatusDescription returns correct description for each status', () => {
+    const wrapper = mountDrawer()
+    const vm = wrapper.vm as any
+    expect(vm.getWhitelistStatusDescription('enabled')).toContain('whitelisted')
+    expect(vm.getWhitelistStatusDescription('partial')).toContain('restrictions')
+    expect(vm.getWhitelistStatusDescription('disabled')).toContain('freely')
+    expect(vm.getWhitelistStatusDescription('unknown')).toBe('Status unknown.')
+  })
+})
+
+describe('TokenDetailDrawer — additional v-if branches (isMicaCompliant, kycRequired, NFT, decimals)', () => {
+  beforeEach(() => { document.body.innerHTML = '' })
+
+  it('renders isMicaCompliant block (line 111 branch)', async () => {
+    const wrapper = mountDrawer({ isMicaCompliant: true, complianceBadges: ['MICA'] } as any)
+    await nextTick()
+    expect((document.body.innerHTML || wrapper.html())).toContain('MICA compliant')
+  })
+
+  it('renders kycRequired block (line 115 branch)', async () => {
+    const wrapper = mountDrawer({ kycRequired: true, complianceBadges: ['KYC'] } as any)
+    await nextTick()
+    expect((document.body.innerHTML || wrapper.html())).toContain('KYC verification')
+  })
+
+  it('renders NFT label when type is not FT (line 146 ternary false branch)', async () => {
+    const wrapper = mountDrawer({ type: 'NFT' })
+    await nextTick()
+    expect((document.body.innerHTML || wrapper.html())).toContain('>NFT<')
+  })
+
+  it('hides decimals row when decimals is undefined (line 150 false branch)', async () => {
+    const wrapper = mountDrawer({ decimals: undefined } as any)
+    await nextTick()
+    expect((document.body.innerHTML || wrapper.html())).not.toContain('>Decimals<')
   })
 })
