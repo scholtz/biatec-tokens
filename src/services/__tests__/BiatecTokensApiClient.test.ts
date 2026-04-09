@@ -598,6 +598,71 @@ describe('BiatecTokensApiClient', () => {
       consoleSpy.mockRestore();
       import.meta.env.DEV = origDev;
     });
+
+    it('should NOT log request in non-DEV mode (line 39 false branch)', () => {
+      const mockInstance = {
+        get: vi.fn(),
+        interceptors: {
+          request: { use: vi.fn() },
+          response: { use: vi.fn() },
+        },
+      };
+      mockedAxios.create.mockReturnValue(mockInstance);
+      const origDev = import.meta.env.DEV;
+      import.meta.env.DEV = false;
+      client = new BiatecTokensApiClient();
+      const requestSuccessHandler = mockInstance.interceptors.request.use.mock.calls[0][0];
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const fakeConfig = { method: 'get', url: '/test' };
+      const result = requestSuccessHandler(fakeConfig);
+      expect(result).toBe(fakeConfig);
+      expect(consoleSpy).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+      import.meta.env.DEV = origDev;
+    });
+
+    it('should NOT log response in non-DEV mode (line 53 false branch)', () => {
+      const mockInstance = {
+        get: vi.fn(),
+        interceptors: {
+          request: { use: vi.fn() },
+          response: { use: vi.fn() },
+        },
+      };
+      mockedAxios.create.mockReturnValue(mockInstance);
+      const origDev = import.meta.env.DEV;
+      import.meta.env.DEV = false;
+      client = new BiatecTokensApiClient();
+      const responseSuccessHandler = mockInstance.interceptors.response.use.mock.calls[0][0];
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const fakeResponse = { status: 200, config: { url: '/test' }, data: {} };
+      const result = responseSuccessHandler(fakeResponse);
+      expect(result).toBe(fakeResponse);
+      expect(consoleSpy).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+      import.meta.env.DEV = origDev;
+    });
+
+    it('should NOT log error in non-DEV mode (line 60 false branch)', () => {
+      const mockInstance = {
+        get: vi.fn(),
+        interceptors: {
+          request: { use: vi.fn() },
+          response: { use: vi.fn() },
+        },
+      };
+      mockedAxios.create.mockReturnValue(mockInstance);
+      const origDev = import.meta.env.DEV;
+      import.meta.env.DEV = false;
+      client = new BiatecTokensApiClient();
+      const errorHandler = mockInstance.interceptors.response.use.mock.calls[0][1];
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const fakeError = { message: 'network error', isAxiosError: true, response: { data: {}, status: 500 } };
+      errorHandler(fakeError).catch(() => {});
+      expect(consoleSpy).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+      import.meta.env.DEV = origDev;
+    });
   });
 });
 
