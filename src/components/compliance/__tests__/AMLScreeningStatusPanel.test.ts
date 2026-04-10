@@ -434,5 +434,35 @@ describe('AMLScreeningStatusPanel', () => {
       // verdictMetadata.description for manual_review
       expect(wrapper.text()).toContain('Requires manual compliance officer review')
     })
+
+    it('getActionGuidance returns manual_review guidance string (lines 230-231 direct call coverage)', () => {
+      // manual_review requires requiresAction=false so the template never calls getActionGuidance for it.
+      // We call the function directly via $.setupState to ensure lines 230-231 are reached.
+      const wrapper = mount(AMLScreeningStatusPanel, {
+        props: { screening: makeScreening({ verdict: 'clear' }) },
+        global: { stubs },
+      })
+      const getActionGuidance = (wrapper.vm as any).$.setupState.getActionGuidance
+      const result = getActionGuidance('manual_review')
+      expect(result).toContain('manual review by our compliance team')
+      expect(result).toContain('1-2 business days')
+    })
+
+    it('getActionGuidance covers every verdict in the guidance lookup table', () => {
+      // Directly invoke getActionGuidance for all 7 verdicts to ensure every property
+      // in the guidance Record (lines 223-231) is accessed at least once.
+      const wrapper = mount(AMLScreeningStatusPanel, {
+        props: { screening: makeScreening({ verdict: 'clear' }) },
+        global: { stubs },
+      })
+      const fn = (wrapper.vm as any).$.setupState.getActionGuidance
+      expect(fn('not_started')).toContain('begin automatically')
+      expect(fn('in_progress')).toContain('in progress')
+      expect(fn('clear')).toContain('clear')
+      expect(fn('potential_match')).toContain('potential match')
+      expect(fn('confirmed_match')).toContain('sanctions list match')
+      expect(fn('error')).toContain('error during screening')
+      expect(fn('manual_review')).toContain('manual review')
+    })
   })
 })
