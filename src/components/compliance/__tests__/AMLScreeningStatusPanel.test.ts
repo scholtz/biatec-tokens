@@ -464,5 +464,16 @@ describe('AMLScreeningStatusPanel', () => {
       expect(fn('error')).toContain('error during screening')
       expect(fn('manual_review')).toContain('manual review')
     })
+
+    it('getActionGuidance returns empty string fallback for unknown verdict (|| branch coverage)', () => {
+      // The guidance[verdict] || '' fallback is unreachable via TypeScript typing but
+      // exists as a JS runtime safety net. Cast to any to cover the false branch.
+      const wrapper = mount(AMLScreeningStatusPanel, {
+        props: { screening: makeScreening({ verdict: 'clear' }) },
+        global: { stubs },
+      })
+      const fn = (wrapper.vm as any).$.setupState.getActionGuidance
+      expect(fn('unknown_verdict_for_coverage' as any)).toBe('')
+    })
   })
 })
