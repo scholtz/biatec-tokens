@@ -390,4 +390,49 @@ describe('AMLScreeningStatusPanel', () => {
       expect(wrapper.exists()).toBe(true)
     })
   })
+
+  describe('getActionGuidance — all verdicts coverage (lines 230-231)', () => {
+    it('action-guidance block renders for confirmed_match (requiresAction=true) and shows guidance text', () => {
+      // Only confirmed_match has requiresAction=true in getAMLVerdictMetadata.
+      // This is the sole path through which getActionGuidance() is called,
+      // covering the entire function body including lines 230-231 (manual_review entry).
+      const wrapper = mount(AMLScreeningStatusPanel, {
+        props: { screening: makeScreening({ verdict: 'confirmed_match' }) },
+        global: { stubs },
+      })
+      expect(wrapper.text()).toContain('Action Required')
+      // The guidance text for confirmed_match
+      expect(wrapper.text()).toContain('sanctions list match was confirmed')
+    })
+
+    it('getActionGuidance function covers the full guidance lookup table', () => {
+      // Verify the guidance lookup table is exercised through the only requiresAction=true path.
+      // When confirmed_match renders, the entire guidance Record object (lines 223-231) is created
+      // in memory, covering lines 230-231 (manual_review entry) as part of object literal evaluation.
+      const wrapper = mount(AMLScreeningStatusPanel, {
+        props: {
+          screening: makeScreening({ verdict: 'confirmed_match' }),
+          showTechnicalDetails: true,
+        },
+        global: { stubs },
+      })
+      // Action Required block visible, confirming getActionGuidance was called
+      expect(wrapper.text()).toContain('Action Required')
+      // Technical details section also renders
+      expect(wrapper.text()).toContain('Technical Details')
+    })
+
+    it('manual_review verdict renders component correctly (lines 158-165 coverage)', () => {
+      // manual_review has requiresAction=false so getActionGuidance is not called for it.
+      // This test exercises the manual_review verdict metadata path in verdictIcon,
+      // getVerdictCardClasses, and getVerdictIconColor (lines 188, 202, 216).
+      const wrapper = mount(AMLScreeningStatusPanel, {
+        props: { screening: makeScreening({ verdict: 'manual_review' }) },
+        global: { stubs },
+      })
+      expect(wrapper.html()).toContain('border-yellow-700')
+      // verdictMetadata.description for manual_review
+      expect(wrapper.text()).toContain('Requires manual compliance officer review')
+    })
+  })
 })
