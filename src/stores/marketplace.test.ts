@@ -600,6 +600,45 @@ describe('useMarketplaceStore', () => {
       expect(result.some((t) => t.id === 'tk-no-badge')).toBe(true);
     });
 
+    it('should filter "MICA Compliant" badge — only returns isMicaCompliant tokens (covers line 86)', () => {
+      const store = useMarketplaceStore();
+      store.tokens = [
+        makeToken({ id: 'tk-mica', isMicaCompliant: true }),
+        makeToken({ id: 'tk-no-mica', isMicaCompliant: false }),
+      ];
+      store.updateFilters({ complianceBadge: 'MICA Compliant' });
+      const result = store.filteredTokens;
+      expect(result.length).toBe(1);
+      expect(result[0].id).toBe('tk-mica');
+    });
+
+    it('should filter "KYC Required" badge — only returns kycRequired tokens (covers line 89)', () => {
+      const store = useMarketplaceStore();
+      store.tokens = [
+        makeToken({ id: 'tk-kyc', kycRequired: true }),
+        makeToken({ id: 'tk-no-kyc', kycRequired: false }),
+      ];
+      store.updateFilters({ complianceBadge: 'KYC Required' });
+      const result = store.filteredTokens;
+      expect(result.length).toBe(1);
+      expect(result[0].id).toBe('tk-kyc');
+    });
+
+    it('should filter "Whitelisted" badge — returns tokens with enabled or partial whitelist (covers line 92)', () => {
+      const store = useMarketplaceStore();
+      store.tokens = [
+        makeToken({ id: 'tk-enabled', whitelistStatus: 'enabled' }),
+        makeToken({ id: 'tk-partial', whitelistStatus: 'partial' }),
+        makeToken({ id: 'tk-disabled', whitelistStatus: 'disabled' }),
+      ];
+      store.updateFilters({ complianceBadge: 'Whitelisted' });
+      const result = store.filteredTokens;
+      expect(result.length).toBe(2);
+      expect(result.some((t) => t.id === 'tk-enabled')).toBe(true);
+      expect(result.some((t) => t.id === 'tk-partial')).toBe(true);
+      expect(result.some((t) => t.id === 'tk-disabled')).toBe(false);
+    });
+
     it('should return true for unknown complianceBadge value', () => {
       const store = useMarketplaceStore();
       store.tokens = [makeToken({ id: 'tk-1' })];

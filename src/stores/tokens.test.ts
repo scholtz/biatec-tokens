@@ -558,6 +558,28 @@ describe('Token Store', () => {
     });
   });
 
+  describe('createToken error handling', () => {
+    it('should rethrow error when createToken fails (covers lines 173-174)', async () => {
+      const store = useTokenStore();
+      vi.useFakeTimers();
+      // Make setTimeout throw to trigger the catch block
+      const spy = vi.spyOn(global, 'setTimeout').mockImplementationOnce(() => {
+        throw new Error('Deployment failed');
+      });
+      await expect(store.createToken({
+        name: 'Error Token',
+        symbol: 'ERR',
+        standard: 'ASA' as const,
+        type: 'FT' as const,
+        supply: 1000,
+        description: '',
+      })).rejects.toThrow('Deployment failed');
+      expect(store.isLoading).toBe(false);
+      spy.mockRestore();
+      vi.useRealTimers();
+    });
+  });
+
   describe('null-path edge cases', () => {
     it('should not throw when deleteToken is called with a non-existent id', () => {
       const store = useTokenStore();

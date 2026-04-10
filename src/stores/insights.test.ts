@@ -436,7 +436,31 @@ describe('useInsightsStore', () => {
     })
   })
 
+  describe('fetchMetrics - error path', () => {
+    it('should catch fetchMetrics errors and set error state (covers lines 151-152)', async () => {
+      const store = useInsightsStore()
+      vi.useFakeTimers()
+      const spy = vi.spyOn(global, 'setTimeout').mockImplementationOnce((_cb: any) => {
+        throw new Error('Metrics fetch failed')
+      })
+      await expect(store.fetchMetrics()).resolves.toBeUndefined()
+      expect(store.error).toBeTruthy()
+      expect(store.loading).toBe(false)
+      spy.mockRestore()
+      vi.useRealTimers()
+    })
+  })
+
   describe('saveFiltersToStorage - error path', () => {
+    it('should handle localStorage.setItem throwing via Storage.prototype spy (covers line 123)', () => {
+      const store = useInsightsStore()
+      const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
+        throw new Error('Storage quota exceeded')
+      })
+      expect(() => store.saveFiltersToStorage()).not.toThrow()
+      spy.mockRestore()
+    })
+
     it('should handle localStorage.setItem throwing', () => {
       const store = useInsightsStore()
       const originalSetItem = localStorage.setItem.bind(localStorage)
