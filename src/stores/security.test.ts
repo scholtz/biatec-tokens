@@ -346,6 +346,7 @@ describe('Security Store', () => {
   })
 
   describe('Activity Event Trimming', () => {
+    // 1001 reactive unshift+slice ops are slow under V8 coverage instrumentation
     it('should trim events to 1000 when limit is exceeded', () => {
       const store = useSecurityStore()
 
@@ -360,7 +361,7 @@ describe('Security Store', () => {
       }
 
       expect(store.activityEvents.length).toBe(1000)
-    })
+    }, 15000)
   })
 
   describe('fetchActivityEvents cache', () => {
