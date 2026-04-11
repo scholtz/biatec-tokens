@@ -768,3 +768,110 @@ describe('submitLiveEscalation — client unavailable branch', () => {
     expect(result.errorMessage).toContain('unavailable')
   })
 })
+
+// ---------------------------------------------------------------------------
+// Branch coverage for uncovered lines 578, 605-621, 700
+// ---------------------------------------------------------------------------
+
+describe('buildDrillDownFromNormalisedDetail — approval history branches (lines 605-621)', () => {
+  it('skips KYC approval record when kycVerifiedAt is "Not verified" (if false branch)', () => {
+    const workItem = makeWorkItem()
+    // kycVerifiedAt === 'Not verified' → the if-block is skipped → no KYC approval record
+    const detail = makeNormalisedDetail({ kycVerifiedAt: 'Not verified', amlScreenedAt: 'Not screened' })
+    const state = buildDrillDownFromNormalisedDetail(workItem, detail)
+    // approvalHistory should be empty since both conditions are false
+    expect(state.approvalHistory).toHaveLength(0)
+  })
+
+  it('skips AML approval record when amlScreenedAt is "Not screened" (if false branch)', () => {
+    const workItem = makeWorkItem()
+    const detail = makeNormalisedDetail({ amlScreenedAt: 'Not screened' })
+    const state = buildDrillDownFromNormalisedDetail(workItem, detail)
+    // Only KYC record should be present (amlScreenedAt skipped)
+    const hasAml = state.approvalHistory.some((r) => r.role === 'AML Screening System')
+    expect(hasAml).toBe(false)
+  })
+
+  it('creates "returned" KYC decision and uses "discrepancy noted" fallback when kycApproved=false and kycDiscrepancyNotes=null', () => {
+    const workItem = makeWorkItem()
+    const detail = makeNormalisedDetail({
+      summary: {
+        id: 'case-001', referenceNumber: 'BT-2026-001', entityName: 'Thorngate Capital',
+        entityType: 'Corporate', status: 'UNDER_REVIEW', riskLevel: 'MEDIUM',
+        kycApproved: false, amlClear: true, isHighRisk: false,
+      },
+      kycDiscrepancyNotes: null,  // triggers the || 'discrepancy noted' fallback
+    })
+    const state = buildDrillDownFromNormalisedDetail(workItem, detail)
+    const kycRecord = state.approvalHistory.find((r) => r.role === 'KYC Compliance Officer')
+    expect(kycRecord).toBeDefined()
+    expect(kycRecord!.decision).toBe('returned')
+    expect(kycRecord!.note).toContain('discrepancy noted')
+  })
+
+  it('creates "returned" KYC decision with actual kycDiscrepancyNotes when non-null', () => {
+    const workItem = makeWorkItem()
+    const detail = makeNormalisedDetail({
+      summary: {
+        id: 'case-001', referenceNumber: 'BT-2026-001', entityName: 'Thorngate Capital',
+        entityType: 'Corporate', status: 'UNDER_REVIEW', riskLevel: 'MEDIUM',
+        kycApproved: false, amlClear: true, isHighRisk: false,
+      },
+      kycDiscrepancyNotes: 'Passport photo mismatch',
+    })
+    const state = buildDrillDownFromNormalisedDetail(workItem, detail)
+    const kycRecord = state.approvalHistory.find((r) => r.role === 'KYC Compliance Officer')
+    expect(kycRecord!.note).toContain('Passport photo mismatch')
+  })
+
+  it('creates "escalated" AML decision and uses "potential match found" fallback when amlClear=false and amlFlagReason=null', () => {
+    const workItem = makeWorkItem()
+    const detail = makeNormalisedDetail({
+      summary: {
+        id: 'case-001', referenceNumber: 'BT-2026-001', entityName: 'Thorngate Capital',
+        entityType: 'Corporate', status: 'UNDER_REVIEW', riskLevel: 'MEDIUM',
+        kycApproved: true, amlClear: false, isHighRisk: false,
+      },
+      amlFlagReason: null,             // triggers the || 'potential match found' fallback
+      amlScreeningProvider: null,      // triggers the ?? 'AML System' fallback
+    })
+    const state = buildDrillDownFromNormalisedDetail(workItem, detail)
+    const amlRecord = state.approvalHistory.find((r) => r.role === 'AML Screening System')
+    expect(amlRecord).toBeDefined()
+    expect(amlRecord!.decision).toBe('escalated')
+    expect(amlRecord!.note).toContain('potential match found')
+    expect(amlRecord!.actor).toBe('AML System')  // ?? fallback
+  })
+})
+
+describe('buildDrillDownFromNormalisedDetail — timeline remediation task branches (line 578)', () => {
+  it('uses "Operations Team" fallback when task.assignedTo is null and null description (lines 576-578)', () => {
+    const workItem = makeWorkItem()
+    const detail = makeNormalisedDetail({
+      remediationTasks: [
+        // description: null exercises task.description ?? null right branch (line 578)
+        { id: 't-null-desc', title: 'Review account', description: null, isOverdue: false, isBlocking: false, dueAt: null, assignedTo: null },
+      ],
+    })
+    const state = buildDrillDownFromNormalisedDetail(workItem, detail)
+    const taskEvent = state.timeline.find((e) => e.summary.includes('Review account'))
+    expect(taskEvent).toBeDefined()
+    expect(taskEvent!.actor).toBe('Operations Team')  // assignedTo ?? 'Operations Team' right branch
+    expect(taskEvent!.detail).toBeNull()              // description ?? null right branch
+  })
+})
+
+describe('submitLiveEscalation — non-Error throw (line 700)', () => {
+  it('returns "Unknown error" message when a non-Error value is thrown', async () => {
+    const mod = await import('../../lib/api/complianceCaseManagement') as Record<string, unknown>
+    const mockSubmitRemediationAction = mod.__mockSubmitRemediationAction as ReturnType<typeof vi.fn>
+    // Throw a non-Error (string) to exercise the `err instanceof Error` false branch
+    mockSubmitRemediationAction.mockRejectedValueOnce('plain string error')
+    const result = await submitLiveEscalation(
+      { caseId: 'case-001', reason: 'other', note: '', destination: 'Ops' },
+      'valid-token',
+    )
+    expect(result.success).toBe(false)
+    expect(result.errorMessage).toContain('Unknown error')
+  })
+})

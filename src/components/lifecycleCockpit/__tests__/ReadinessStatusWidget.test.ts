@@ -205,4 +205,20 @@ describe('ReadinessStatusWidget', () => {
       }
     })
   })
+
+  describe('Recommendations section (line 155 — v-for branch)', () => {
+    it('renders recommendations list when no blockers are present (covers v-for on line 155)', () => {
+      // To show recommendations: recommendations.length > 0 AND blockers.length === 0
+      const statusWithRecsOnly = {
+        ...mockReadinessStatus,
+        blockers: [],   // no blockers → v-if condition becomes true
+        score: 80,
+        recommendations: ['Complete KYC setup', 'Test wallet integration', 'Add liquidity'],
+      }
+      const wrapper = mount(ReadinessStatusWidget, { props: { status: statusWithRecsOnly } })
+      // Recommendations section should now be visible
+      expect(wrapper.text()).toContain('Complete KYC setup')
+      expect(wrapper.text()).toContain('Test wallet integration')
+    })
+  })
 })

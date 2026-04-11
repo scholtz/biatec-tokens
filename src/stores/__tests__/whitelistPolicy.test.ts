@@ -679,4 +679,31 @@ describe("useWhitelistPolicyStore", () => {
       expect(store.eligibilityResult?.decision).toBe("denied");
     });
   });
+
+  // ── Error handling — non-Error thrown (lines 144, 191, 273) ─────────────────
+
+  describe("fetchPolicy error with non-Error thrown (line 191 false branch)", () => {
+    it("sets error to 'Failed to load policy' when a non-Error is thrown", async () => {
+      const store = useWhitelistPolicyStore();
+      // Mock setTimeout to throw a plain string (not an Error instance)
+      vi.spyOn(global, "setTimeout").mockImplementationOnce(() => {
+        throw "plain string error" as unknown as ReturnType<typeof setTimeout>;
+      });
+      const p = store.fetchPolicy("token-err");
+      await vi.runAllTimersAsync();
+      try { await p } catch { /* ignore */ }
+      // err instanceof Error === false → fallback message used
+      expect(store.error).toBe("Failed to load policy");
+      expect(store.isLoading).toBe(false);
+    });
+  });
+
+  describe("hasGaps computed — null policy branch (line 144 ?? fallback)", () => {
+    it("hasGaps returns false (0 > 0 = false) when policy is null", () => {
+      const store = useWhitelistPolicyStore();
+      // policy is null at initialization → policy.value?.gaps.length is undefined → ?? 0
+      expect(store.policy).toBeNull();
+      expect(store.hasGaps).toBe(false);
+    });
+  });
 });

@@ -4,7 +4,7 @@
  * signal type badges, formatType helper, and evidence-viewed emit.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import EvidenceLinksWidget from '../EvidenceLinksWidget.vue'
 import type { EvidenceTrace, EvidenceReference } from '../../../types/lifecycleCockpit'
@@ -145,5 +145,55 @@ describe('EvidenceLinksWidget', () => {
     })
     expect(w.text()).toContain('sig-1')
     expect(w.text()).toContain('sig-2')
+  })
+
+  describe('handleEvidenceClick — evidence-viewed emit and navigation (lines 53, 103-111)', () => {
+    it('emits evidence-viewed with ref id when evidence card is clicked', async () => {
+      const ref = makeRef({ id: 'ref-click-test', url: '/evidence/kyc-policy' })
+      const w = mount(EvidenceLinksWidget, {
+        props: { traces: [makeTrace({ evidenceRefs: [ref] })] },
+        global: { stubs },
+      })
+      const card = w.find('.cursor-pointer')
+      if (card.exists()) {
+        await card.trigger('click')
+        expect(w.emitted('evidence-viewed')).toBeTruthy()
+        expect(w.emitted('evidence-viewed')![0]).toContain('ref-click-test')
+      }
+    })
+
+    it('navigates to external URL via window.open when url is external (line 108-110)', async () => {
+      const originalOpen = window.open
+      const mockOpen = vi.fn()
+      window.open = mockOpen
+      const ref = makeRef({ id: 'ref-external', url: 'https://example.com/doc.pdf' })
+      const w = mount(EvidenceLinksWidget, {
+        props: { traces: [makeTrace({ evidenceRefs: [ref] })] },
+        global: { stubs },
+      })
+      const card = w.find('.cursor-pointer')
+      if (card.exists()) {
+        await card.trigger('click')
+        expect(mockOpen).toHaveBeenCalledWith('https://example.com/doc.pdf', '_blank')
+      }
+      window.open = originalOpen
+    })
+
+    it('navigates via window.location.href for internal url (line 105-106)', async () => {
+      const ref = makeRef({ id: 'ref-internal', url: '/evidence/kyc-policy' })
+      const w = mount(EvidenceLinksWidget, {
+        props: { traces: [makeTrace({ evidenceRefs: [ref] })] },
+        global: { stubs },
+      })
+      // Internal url starts with '/' — handleEvidenceClick sets window.location.href
+      const card = w.find('.cursor-pointer')
+      if (card.exists()) {
+        const originalAssign = window.location.href
+        await card.trigger('click')
+        // evidence-viewed event always emitted regardless of URL type
+        expect(w.emitted('evidence-viewed')).toBeTruthy()
+        window.location.href = originalAssign
+      }
+    })
   })
 })

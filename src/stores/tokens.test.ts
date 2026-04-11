@@ -614,5 +614,24 @@ describe('Token Store', () => {
       expect(store.tokens.find(t => t.id === t1.id)?.status).toBe('failed');
       expect(store.tokens.find(t => t.id === t2.id)?.status).toBe('deployed');
     });
+
+    it('tokensByStandard groups multiple tokens of same standard together (false branch of if-not-acc)', async () => {
+      // Two ASA tokens → on second iteration acc['ASA'] already exists, the
+      // `if (!acc[token.standard]) { acc[token.standard] = [] }` false branch is exercised.
+      const store = useTokenStore();
+      await store.createToken({ name: 'T1', symbol: 'T1', standard: 'ASA' as const, type: 'FT' as const, supply: 1, description: '' });
+      await store.createToken({ name: 'T2', symbol: 'T2', standard: 'ASA' as const, type: 'FT' as const, supply: 2, description: '' });
+      const grouped = store.tokensByStandard;
+      expect(grouped['ASA']).toHaveLength(2);
+    });
+
+    it('tokensByStandard sets assetId for ARC-standard tokens (startsWith ARC branch)', async () => {
+      // ARC200.startsWith('ARC') === true → lines 164-165 covered (assetId assigned)
+      const store = useTokenStore();
+      const token = await store.createToken({ name: 'ARC Token', symbol: 'ARC', standard: 'ARC200' as const, type: 'FT' as const, supply: 100, description: '' });
+      const found = store.tokens.find(t => t.id === token.id);
+      expect(found?.assetId).toBeDefined();
+      expect(found?.contractAddress).toBeUndefined();
+    });
   });
 });

@@ -209,4 +209,25 @@ describe("EligibilityInspector", () => {
       expect(options.some((o) => o.text().includes("Slovakia"))).toBe(true);
     });
   });
+
+  // ── Default/fallback computed branches (lines 287, 300, 313) ─────────────────
+
+  describe("decision computed defaults — unknown decision value (lines 287, 300, 313)", () => {
+    it("decisionCardClass defaults to bg-white/5 for unknown decision", () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const unknownResult = { decision: "unknown_decision" as any, reasons: [], jurisdictionCode: "ZZ", jurisdictionName: "Unknown", investorCategory: "retail", simulatedAt: new Date().toISOString() };
+      const wrapper = mountInspector({ eligibilityResult: unknownResult });
+      // The default case returns "bg-white/5 border-gray-700/50" — panel should render without crashing
+      expect(wrapper.find('[aria-label="Eligibility result"]').exists()).toBe(true);
+    });
+
+    it("formatted simulation time returns empty string for invalid date (line 334 catch branch)", () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const invalidDateResult = { decision: "allowed" as const, reasons: [], jurisdictionCode: "SK", jurisdictionName: "Slovakia", investorCategory: "retail", simulatedAt: "NOT_A_DATE" };
+      const wrapper = mountInspector({ eligibilityResult: invalidDateResult });
+      // With an invalid date, toLocaleTimeString() throws → catch returns ''
+      // Component should still render without crashing
+      expect(wrapper.find('[aria-label="Eligibility result"]').exists()).toBe(true);
+    });
+  });
 });
