@@ -219,18 +219,18 @@ const getVerdictIconColor = (verdict: AMLScreeningVerdict): string => {
   return colors[verdict] || 'text-gray-400'
 }
 
+const ACTION_GUIDANCE: Record<AMLScreeningVerdict, string> = {
+  not_started: 'AML screening will begin automatically once your documents are submitted.',
+  in_progress: 'Screening is in progress. This typically takes a few minutes.',
+  clear: 'Your screening is clear. No action needed.',
+  potential_match: 'A potential match was detected in our screening. Our compliance team will review your case shortly.',
+  confirmed_match: 'A sanctions list match was confirmed. Please contact our support team for assistance with this finding.',
+  error: 'We encountered an error during screening. Our team has been notified and will retry the screening automatically.',
+  manual_review: 'Your case requires manual review by our compliance team. We will contact you within 1-2 business days.',
+}
+
 const getActionGuidance = (verdict: AMLScreeningVerdict): string => {
-  const guidance: Record<AMLScreeningVerdict, string> = {
-    not_started: 'AML screening will begin automatically once your documents are submitted.',
-    in_progress: 'Screening is in progress. This typically takes a few minutes.',
-    clear: 'Your screening is clear. No action needed.',
-    potential_match: 'A potential match was detected in our screening. Our compliance team will review your case shortly.',
-    confirmed_match: 'A sanctions list match was confirmed. Please contact our support team for assistance with this finding.',
-    error: 'We encountered an error during screening. Our team has been notified and will retry the screening automatically.',
-    manual_review: 'Your case requires manual review by our compliance team. We will contact you within 1-2 business days.',
-  }
-  
-  return guidance[verdict] || ''
+  return ACTION_GUIDANCE[verdict] || ''
 }
 
 const formatDate = (dateString: string): string => {
