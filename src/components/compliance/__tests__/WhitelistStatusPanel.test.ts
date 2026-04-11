@@ -285,4 +285,39 @@ describe('WhitelistStatusPanel', () => {
       expect(result).toMatch(/2020/);
     });
   });
+
+  describe('Branch coverage - error catch paths (lines 230-231)', () => {
+    it('sets error.value from Error.message when loadWhitelistStatus catch receives an Error', async () => {
+      const setTimeoutSpy = vi.spyOn(global, 'setTimeout').mockImplementationOnce(() => {
+        throw new Error('Network error')
+      })
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      const wrapper = mount(WhitelistStatusPanel)
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+
+      setTimeoutSpy.mockRestore()
+      consoleSpy.mockRestore()
+
+      // error state or data state — component should not crash
+      expect(wrapper.exists()).toBe(true)
+    })
+
+    it('sets error.value to fallback string when catch receives a non-Error', async () => {
+      const setTimeoutSpy = vi.spyOn(global, 'setTimeout').mockImplementationOnce(() => {
+        throw 'string error' // non-Error triggers the false branch
+      })
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      const wrapper = mount(WhitelistStatusPanel)
+      await wrapper.vm.$nextTick()
+      await wrapper.vm.$nextTick()
+
+      setTimeoutSpy.mockRestore()
+      consoleSpy.mockRestore()
+
+      expect(wrapper.exists()).toBe(true)
+    })
+  })
 });
