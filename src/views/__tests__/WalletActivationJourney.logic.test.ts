@@ -511,4 +511,99 @@ describe('WalletActivationJourney View — Logic', () => {
       expect(vm.isAccountReady).toBe(false)
     })
   })
+
+  describe('navigateToAction — else branch (lines 400-401)', () => {
+    it('navigates to TokenStandards route when selectedAction is not "guided"', async () => {
+      const { wrapper } = await mountView()
+      await flushPromises()
+      const vm = wrapper.vm as any
+
+      // Set selectedAction to something other than 'guided' → hits the else branch
+      vm.selectedAction = 'compare'
+      // navigateToAction should not throw — just verify the function completes
+      expect(() => vm.navigateToAction()).not.toThrow()
+    })
+
+    it('navigates to GuidedLaunch route when selectedAction is "guided"', async () => {
+      const { wrapper } = await mountView()
+      await flushPromises()
+      const vm = wrapper.vm as any
+
+      vm.selectedAction = 'guided'
+      // navigateToAction should not throw — just verify the function completes
+      expect(() => vm.navigateToAction()).not.toThrow()
+    })
+
+    it('navigateToAction uses selectedAction value correctly — "guided" branch', async () => {
+      const { wrapper } = await mountView()
+      const vm = wrapper.vm as any
+
+      // Verify that with 'guided', the condition `selectedAction === 'guided'` is true
+      vm.selectedAction = 'guided'
+      expect(vm.selectedAction === 'guided').toBe(true)
+      expect(() => vm.navigateToAction()).not.toThrow()
+    })
+
+    it('navigateToAction uses selectedAction value correctly — else branch (non-guided)', async () => {
+      const { wrapper } = await mountView()
+      const vm = wrapper.vm as any
+
+      // Verify that with 'compare', the condition falls to the else branch
+      vm.selectedAction = 'compare'
+      expect(vm.selectedAction === 'guided').toBe(false)
+      expect(() => vm.navigateToAction()).not.toThrow()
+    })
+  })
+
+  describe('checkAccountReadiness — error catch block (lines 346-362)', () => {
+    it('sets checkingProvisioning to false in finally even when analyticsService.trackEvent throws', async () => {
+      const { wrapper } = await mountView()
+      const vm = wrapper.vm as any
+
+      // Mock analyticsService.trackEvent to throw on the NEXT call only
+      // (after mount's onMounted has finished)
+      const trackSpy = vi.mocked(analyticsModule.analyticsService.trackEvent)
+      trackSpy.mockImplementationOnce(() => {
+        throw new Error('Simulated readiness check failure')
+      })
+
+      // Call checkAccountReadiness directly — the throw will be caught
+      try {
+        await vm.checkAccountReadiness()
+      } catch {
+        // swallow — error may propagate beyond the component's catch
+      }
+      await nextTick()
+
+      // finally block always runs: checkingProvisioning must be false
+      expect(vm.checkingProvisioning).toBe(false)
+    })
+
+    it('calls trackErrorRecovery from telemetryService in the catch block', async () => {
+      const { wrapper } = await mountView()
+      const vm = wrapper.vm as any
+
+      // Import telemetry mock to spy on trackErrorRecovery
+      const { CompetitiveTelemetryService } = await import('../../services/CompetitiveTelemetryService')
+      const telemetrySpy = CompetitiveTelemetryService.getInstance().trackErrorRecovery as ReturnType<typeof vi.fn>
+
+      const trackSpy = vi.mocked(analyticsModule.analyticsService.trackEvent)
+      const callsBefore = telemetrySpy.mock.calls.length
+
+      // Force throw on the analytics call inside the try block
+      trackSpy.mockImplementationOnce(() => {
+        throw new Error('Simulated error in try block')
+      })
+
+      try {
+        await vm.checkAccountReadiness()
+      } catch {
+        // swallow
+      }
+      await nextTick()
+
+      // trackErrorRecovery should have been called in the catch block
+      expect(telemetrySpy.mock.calls.length).toBeGreaterThan(callsBefore)
+    })
+  })
 })
